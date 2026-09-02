@@ -1,0 +1,52 @@
+{
+  "seed": 20260902,
+  "horizon_days": 365.0,
+  "agent_count": 75000,
+  "locality_count": 72,
+  "burn_in_days": 30.0,
+  "include_insurgency": true,
+  "initial_insurgent_share": 0.001,
+  "observation_noise": 0.08,
+  "reporting_error": 0.12,
+  "movement_rate": 0.015,
+  "recruitment_rate": 0.001,
+  "contact_rate": 0.08,
+  "random_stream_namespace": "baseline",
+  "intervals": {
+    "patrol": 0.25,
+    "physical_refresh": 0.25,
+    "beliefs": 1.0,
+    "social_influence": 1.0,
+    "mobility": 1.0,
+    "recruitment": 7.0,
+    "governance": 30.0,
+    "economy": 30.0,
+    "checkpoint": 30.0
+  },
+  "social_network": {
+    "target_community_size": 100,
+    "minimum_community_size": 50,
+    "maximum_community_size": 150,
+    "mean_social_degree": 8.0,
+    "maximum_social_degree": 24,
+    "bridge_fraction": 0.03,
+    "behavior_update_rate": 0.12,
+    "household_tie_strength": 0.95,
+    "community_tie_strength": 0.65,
+    "bridge_tie_strength": 0.45,
+    "behavior_exposure_weight": 0.35,
+    "recruitment_exposure_weight": 0.25
+  },
+  "physical": {
+    "village_microzones": 3,
+    "town_microzones": 5,
+    "city_microzones": 8,
+    "extra_edge_probability": 0.22,
+    "presence_memory_days": 2.0,
+    "response_decay_hours": 0.75,
+    "patrol_presence_gain": 0.35,
+    "fixed_post_presence_gain": 0.25,
+    "zone_observation_noise": 0.12,
+    "patrol_route_randomness": 0.15
+  }
+}

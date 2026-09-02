@@ -1,0 +1,29 @@
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from pineland_sim import Simulation, SimulationConfig, generate_pineland
+
+
+class IOTests(unittest.TestCase):
+    def test_configuration_round_trip_and_result_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = SimulationConfig(agent_count=100, locality_count=17, horizon_days=1)
+            config.save(root / "scenario.json")
+            loaded = SimulationConfig.load(root / "scenario.json")
+            self.assertEqual(config.to_dict(), loaded.to_dict())
+            world = Simulation(generate_pineland(loaded)).run().world
+            world.write_results(root / "result")
+            summary = json.loads((root / "result" / "summary.json").read_text())
+            self.assertEqual(summary["districts"], 17)
+            self.assertTrue((root / "result" / "causal_ledger.jsonl").exists())
+            diagnostics = json.loads((root / "result" / "network_diagnostics.json").read_text())
+            self.assertEqual(diagnostics["nodes"], 100)
+            physical = json.loads((root / "result" / "physical_diagnostics.json").read_text())
+            self.assertGreaterEqual(physical["microzones"], 17 * 3)
+
+
+if __name__ == "__main__":
+    unittest.main()

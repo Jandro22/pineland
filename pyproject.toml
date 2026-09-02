@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pineland-coinsim"
+version = "0.1.0"
+description = "A multiscale, partially observed agent-based simulation of insurgency and counterinsurgency"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Pineland COIN-SIM contributors"}]
+dependencies = []
+
+[project.scripts]
+pineland-sim = "pineland_sim.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
