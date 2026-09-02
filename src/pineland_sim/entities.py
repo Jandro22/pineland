@@ -180,6 +180,7 @@ class SecurityPost:
     personnel: float
     fixed_presence: float
     available_fraction: float
+    formation_id: str | None = None
 
 
 @dataclass(slots=True)
@@ -201,6 +202,74 @@ class ActorZoneBelief:
     physical_control_estimate: float
     confidence: float
     updated_at: float
+
+
+@dataclass(slots=True)
+class CommandEdge:
+    node_a_id: str
+    node_b_id: str
+    organization_id: str
+    reliability: float
+    latency_hours: float
+
+
+@dataclass(slots=True)
+class SupplySource:
+    source_id: str
+    organization_id: str
+    locality_id: str
+    stock: float
+    capacity: float
+    production_per_day: float
+    operational: bool = True
+
+
+@dataclass(slots=True)
+class SupplyShipment:
+    shipment_id: str
+    organization_id: str
+    source_id: str
+    formation_id: str
+    origin_locality_id: str
+    destination_locality_id: str
+    route: list[str]
+    departed_at: float
+    arrives_at: float
+    quantity_sent: float
+    quantity_deliverable: float
+    loss: float
+    status: str = "in_transit"
+
+
+@dataclass(slots=True)
+class FormationMovementOrder:
+    order_id: str
+    formation_id: str
+    organization_id: str
+    origin_locality_id: str
+    destination_locality_id: str
+    route: list[str]
+    issued_at: float
+    execute_at: float
+    travel_time_hours: float
+    distance_km: float
+    supply_cost: float
+    command_reliability: float
+    command_latency_hours: float
+    status: str = "pending"
+    arrives_at: float | None = None
+
+
+@dataclass(slots=True)
+class ResourceFlow:
+    flow_id: str
+    time: float
+    flow_type: str
+    organization_id: str
+    locality_id: str
+    quantity: float
+    source_id: str | None = None
+    formation_id: str | None = None
 
 
 @dataclass(slots=True)
@@ -235,10 +304,27 @@ class ArmedFormation:
     command: float
     embeddedness: float
     fatigue: float = 0.0
+    availability: float = 0.85
+    supply_stock: float = 0.0
+    supply_capacity: float = 0.0
+    home_locality_id: str = ""
+    moving: bool = False
+
+    def supply_fraction(self) -> float:
+        return clamp(self.supply_stock / self.supply_capacity) if self.supply_capacity > 0 else clamp(self.sustainment)
+
+    def effective_readiness(self) -> float:
+        supply_effect = 0.2 + 0.8 * self.supply_fraction()
+        fatigue_effect = 1.0 - 0.65 * clamp(self.fatigue)
+        return clamp(self.readiness * supply_effect * fatigue_effect * clamp(self.command))
+
+    def available_personnel(self) -> float:
+        if self.moving:
+            return 0.0
+        return self.personnel * clamp(self.availability) * self.effective_readiness()
 
     def effective_strength(self) -> float:
-        supply = clamp(self.sustainment)
-        return max(1e-9, self.personnel * self.quality * self.cohesion * self.readiness * (0.5 + supply))
+        return max(1e-9, self.available_personnel() * self.quality * self.cohesion * (0.5 + self.information))
 
 
 @dataclass(slots=True)

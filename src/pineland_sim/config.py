@@ -8,6 +8,9 @@ from typing import Any
 
 @dataclass(slots=True)
 class ProcessIntervals:
+    command: float = 1.0
+    force_movement: float = 0.25
+    logistics: float = 1.0
     patrol: float = 0.25
     physical_refresh: float = 0.25
     beliefs: float = 1.0
@@ -73,6 +76,44 @@ class PhysicalModelConfig:
 
 
 @dataclass(slots=True)
+class LogisticsConfig:
+    formation_supply_days: float = 30.0
+    initial_supply_fraction: float = 0.8
+    presence_consumption_per_person_day: float = 0.75
+    movement_consumption_per_person_km: float = 0.02
+    patrol_consumption_per_person_hour: float = 0.002
+    source_capacity_per_resident: float = 0.05
+    source_daily_production_fraction: float = 0.03
+    resupply_trigger_fraction: float = 0.45
+    resupply_target_fraction: float = 0.85
+    shipment_loss_per_travel_hour: float = 0.002
+    convoy_speed_factor: float = 0.75
+    readiness_degradation_rate: float = 0.08
+    readiness_recovery_near_source: float = 0.025
+    readiness_recovery_remote: float = 0.006
+    availability_recovery_rate: float = 0.03
+    reallocation_rate: float = 0.04
+
+    def validate(self) -> None:
+        for name in ("formation_supply_days", "presence_consumption_per_person_day",
+                     "source_capacity_per_resident", "convoy_speed_factor"):
+            if getattr(self, name) <= 0:
+                raise ValueError(f"{name} must be positive")
+        for name in ("initial_supply_fraction", "source_daily_production_fraction",
+                     "resupply_trigger_fraction", "resupply_target_fraction",
+                     "readiness_degradation_rate", "readiness_recovery_near_source",
+                     "readiness_recovery_remote", "availability_recovery_rate", "reallocation_rate"):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+        if self.resupply_target_fraction < self.resupply_trigger_fraction:
+            raise ValueError("resupply target must be at least the trigger fraction")
+        if self.movement_consumption_per_person_km < 0 or self.patrol_consumption_per_person_hour < 0:
+            raise ValueError("movement and patrol consumption cannot be negative")
+        if self.shipment_loss_per_travel_hour < 0:
+            raise ValueError("shipment loss cannot be negative")
+
+
+@dataclass(slots=True)
 class SimulationConfig:
     seed: int = 20260902
     horizon_days: float = 365.0
@@ -90,6 +131,7 @@ class SimulationConfig:
     intervals: ProcessIntervals = field(default_factory=ProcessIntervals)
     social_network: SocialNetworkConfig = field(default_factory=SocialNetworkConfig)
     physical: PhysicalModelConfig = field(default_factory=PhysicalModelConfig)
+    logistics: LogisticsConfig = field(default_factory=LogisticsConfig)
 
     def validate(self) -> None:
         if self.agent_count < 1:
@@ -110,6 +152,7 @@ class SimulationConfig:
                 raise ValueError(f"interval {name} must be positive")
         self.social_network.validate()
         self.physical.validate()
+        self.logistics.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -123,6 +166,8 @@ class SimulationConfig:
             values["social_network"] = SocialNetworkConfig(**values["social_network"])
         if isinstance(values.get("physical"), dict):
             values["physical"] = PhysicalModelConfig(**values["physical"])
+        if isinstance(values.get("logistics"), dict):
+            values["logistics"] = LogisticsConfig(**values["logistics"])
         config = cls(**values)
         config.validate()
         return config

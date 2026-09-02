@@ -12,9 +12,11 @@ from .entities import (
     ActorZoneBelief,
     ArmedFormation,
     CausalContribution,
+    CommandEdge,
     District,
     EventLogEntry,
     Household,
+    FormationMovementOrder,
     Locality,
     Organization,
     Microzone,
@@ -24,6 +26,9 @@ from .entities import (
     SocialCommunity,
     SocialEdge,
     SecurityPost,
+    ResourceFlow,
+    SupplyShipment,
+    SupplySource,
     SyntheticRecord,
 )
 
@@ -45,6 +50,12 @@ class WorldState:
     security_posts: dict[str, SecurityPost] = field(default_factory=dict)
     patrols: dict[str, Patrol] = field(default_factory=dict)
     zone_beliefs: dict[tuple[str, str], ActorZoneBelief] = field(default_factory=dict)
+    command_edges: dict[tuple[str, str], CommandEdge] = field(default_factory=dict)
+    supply_sources: dict[str, SupplySource] = field(default_factory=dict)
+    supply_shipments: dict[str, SupplyShipment] = field(default_factory=dict)
+    movement_orders: dict[str, FormationMovementOrder] = field(default_factory=dict)
+    resource_flows: list[ResourceFlow] = field(default_factory=list)
+    control_cost_consumed: dict[str, float] = field(default_factory=dict)
     organizations: dict[str, Organization] = field(default_factory=dict)
     formations: dict[str, ArmedFormation] = field(default_factory=dict)
     beliefs: dict[tuple[str, str], ActorBelief] = field(default_factory=dict)
@@ -56,6 +67,10 @@ class WorldState:
     initial_population: float = 0.0
     cumulative_deaths: float = 0.0
     cumulative_external_inflow: float = 0.0
+    initial_supply_stock: float = 0.0
+    cumulative_supply_produced: float = 0.0
+    cumulative_supply_consumed: float = 0.0
+    cumulative_supply_lost: float = 0.0
 
     def weighted_population(self) -> float:
         return sum(person.weight for person in self.persons.values())
@@ -74,7 +89,8 @@ class WorldState:
                     if not 0.0 <= value <= 1.0:
                         raise AssertionError("control component outside [0, 1]")
         for formation in self.formations.values():
-            if formation.personnel < 0 or formation.sustainment < 0:
+            if (formation.personnel < 0 or formation.sustainment < 0 or formation.supply_stock < 0 or
+                    formation.supply_stock > formation.supply_capacity + tolerance):
                 raise AssertionError("negative formation stock")
         for organization in self.organizations.values():
             if organization.resources < -tolerance:
@@ -97,6 +113,30 @@ class WorldState:
         for patrol in self.patrols.values():
             if patrol.current_microzone_id not in self.microzones:
                 raise AssertionError("patrol references missing microzone")
+        for edge in self.command_edges.values():
+            if not 0 <= edge.reliability <= 1 or edge.latency_hours < 0:
+                raise AssertionError("invalid command edge reliability or latency")
+        for shipment in self.supply_shipments.values():
+            if shipment.quantity_sent < 0 or shipment.quantity_deliverable < 0 or shipment.loss < 0:
+                raise AssertionError("negative supply shipment quantity")
+            if abs(shipment.quantity_sent - shipment.quantity_deliverable - shipment.loss) > tolerance:
+                raise AssertionError("shipment quantities do not reconcile")
+        if self.supply_sources:
+            current_supply = sum(source.stock for source in self.supply_sources.values())
+            current_supply += sum(formation.supply_stock for formation in self.formations.values())
+            current_supply += sum(
+                shipment.quantity_deliverable for shipment in self.supply_shipments.values()
+                if shipment.status == "in_transit"
+            )
+            expected_supply = (self.initial_supply_stock + self.cumulative_supply_produced -
+                               self.cumulative_supply_consumed - self.cumulative_supply_lost)
+            if abs(current_supply - expected_supply) > max(tolerance, abs(expected_supply) * 1e-9):
+                raise AssertionError(
+                    f"supply conservation failed: current={current_supply}, expected={expected_supply}"
+                )
+            if any(source.stock < -tolerance or source.stock > source.capacity + tolerance
+                   for source in self.supply_sources.values()):
+                raise AssertionError("supply source outside stock bounds")
         for person in self.persons.values():
             if person.community_id not in self.social_communities:
                 raise AssertionError(f"person without valid social community: {person.person_id}")
@@ -127,6 +167,11 @@ class WorldState:
             "physical_edges": len(self.physical_edges),
             "security_posts": len(self.security_posts),
             "patrols": len(self.patrols),
+            "supply_sources": len(self.supply_sources),
+            "active_shipments": sum(shipment.status == "in_transit"
+                                    for shipment in self.supply_shipments.values()),
+            "movement_orders": len(self.movement_orders),
+            "supply_consumed": self.cumulative_supply_consumed,
             "organizations": len(self.organizations),
             "formations": len(self.formations),
             "events": len(self.event_log),
@@ -160,6 +205,7 @@ class WorldState:
     def write_results(self, output_dir: str | Path) -> None:
         from .networks import network_diagnostics
         from .physical import physical_diagnostics
+        from .logistics import logistics_diagnostics
 
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
@@ -178,6 +224,13 @@ class WorldState:
         )
         (output / "physical_diagnostics.json").write_text(
             json.dumps(physical_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "logistics_diagnostics.json").write_text(
+            json.dumps(logistics_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "resource_flows.jsonl").write_text(
+            "".join(json.dumps(asdict(flow)) + "\n" for flow in self.resource_flows),
+            encoding="utf-8",
         )
 
     def clone(self) -> "WorldState":

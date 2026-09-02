@@ -12,6 +12,10 @@ The current engine is intentionally dependency-light and transparent. Every impo
 - Language-aware communication weights, network exposure, civilian public-behavior choice, and community-to-locality aggregation.
 - Locality-internal physical graphs, microzones, fixed posts, belief-routed patrol paths, presence memory, and response-time fields.
 - Population-weighted upward aggregation from microzone physical control to locality physical control.
+- Timed formation movement orders over locality paths, constrained by terrain, infrastructure, mobility, command latency, and supply.
+- Conserved supply sources, shipments, losses, presence/activity consumption, readiness degradation/recovery, and availability.
+- Command graphs with explicit reliability and communications latency.
+- Assigned versus effective available strength and locality-level control-cost/sustainability metrics.
 - Government, military, police, parties, an optional insurgent organization, and armed formations.
 - Seven-dimensional control vectors for formal, physical, administrative, legal, fiscal, social, and expected control.
 - Connected locality graph with terrain-friction travel costs.
@@ -71,6 +75,8 @@ Each run produces:
 - `causal_ledger.jsonl`: mechanism-level contributions to each control transition.
 - `network_diagnostics.json`: community, degree, component, clustering, bridge, and language-compatibility measures.
 - `physical_diagnostics.json`: per-locality and per-zone control, presence-memory, and response-time diagnostics.
+- `logistics_diagnostics.json`: formation readiness, availability, stocks, orders, shipments, conservation, and control cost.
+- `resource_flows.jsonl`: auditable production, shipment, delivery, movement, patrol, and sustained-presence resource flows.
 
 The effective-control scalar is for dashboards only. Analysis should retain the complete seven-dimensional vectors and their trajectories.
 
@@ -80,16 +86,18 @@ The effective-control scalar is for dashboards only. Analysis should retain the 
 python -m unittest discover -s tests -v
 ```
 
-The suite covers bounded equations, scheduler ordering, district/locality generation, population conservation, seed reproducibility, the no-insurgency null model, independent forks, causal provenance, output persistence, household/community membership, network connectivity, language compatibility, bridge structure, and social influence.
+The suite covers bounded equations, scheduler ordering, population and supply conservation, seed reproducibility, null models, independent forks, causal provenance, output persistence, social structure and influence, microzone topology and routing, presence decay, command latency/reliability, movement availability, deployment cost, resupply, readiness degradation/recovery, and control-cost accounting.
 
 ## Architecture
 
-`entities.py` holds scientific state, `generator.py` constructs the synthetic country, `networks.py` builds and measures social structure, `physical.py` builds locality-internal geography and physical-control fields, `events.py` owns temporal ordering, `processes.py` contains explicit mechanisms, `simulation.py` coordinates execution, `analytics.py` derives measures, `experiments.py` runs paired counterfactuals, and `scaling.py` measures resolution sensitivity. This keeps transition equations independently testable and leaves room for optimized kernels or a Julia core later without changing the analysis-facing data contract.
+`entities.py` holds scientific state, `generator.py` constructs the synthetic country, `networks.py` builds and measures social structure, `physical.py` builds locality-internal geography and physical-control fields, `logistics.py` owns pathfinding, supply, movement, command, and control-cost mechanics, `events.py` owns temporal ordering, `processes.py` contains explicit transitions, `simulation.py` coordinates execution, `analytics.py` derives measures, `experiments.py` runs paired counterfactuals, and `scaling.py` measures resolution sensitivity. This keeps equations independently testable and leaves room for optimized kernels or a Julia core later without changing the analysis-facing data contract.
 
 ## Scope still ahead
 
-The current slice establishes the runtime spine, Phase 1 social structure, and Phase 2 physical occupation model but does not claim full scientific calibration. The next implementation phase should deepen military movement and logistics across localities without adding tactical detail. Later work includes endogenous organization birth/splitting, patronage allocation, foreign actor decision clocks, negotiation/demobilization/recurrence, global sensitivity/identifiability pipelines, columnar event storage, and the semantic-zoom analyst interface.
+The current development version establishes the runtime spine, Phase 1 social structure, Phase 2 physical occupation, and Phase 3 logistics/force projection without claiming scientific calibration. Detailed combat remains deliberately deferred. Later work includes detection and information fusion, endogenous organization birth/splitting, patronage allocation, foreign actor decision clocks, negotiation/demobilization/recurrence, global sensitivity/identifiability pipelines, columnar event storage, and the semantic-zoom analyst interface.
 
 Numeric values in code are transparent initial priors. They are not calibrated findings or policy recommendations.
 
-The continuation audit, resolved mismatches, benchmark snapshot, and remaining limitations are recorded in [`docs/implementation-audit.md`](docs/implementation-audit.md). Phase 1 parameter meanings and calibration status are in [`docs/parameters.md`](docs/parameters.md).
+The continuation audit, resolved mismatches, benchmark snapshot, and remaining limitations are recorded in [`docs/implementation-audit.md`](docs/implementation-audit.md). Parameter meanings and calibration status are in [`docs/parameters.md`](docs/parameters.md).
+
+The verified Phase 1 + Phase 2 baseline is preserved at commit `124df96` and annotated tag `v0.2.0`. Phase 3 work is an explicit development diff on top of that checkpoint.

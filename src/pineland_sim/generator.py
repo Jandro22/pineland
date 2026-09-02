@@ -16,6 +16,7 @@ from .entities import (
 from .world import WorldState, seeded_rng
 from .networks import generate_social_network
 from .physical import generate_physical_world
+from .logistics import generate_logistics_world
 
 
 DISTRICT_REGISTRY = (
@@ -176,6 +177,7 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
         strength = total_population * config.initial_insurgent_share
         world.formations["PRF-01"] = ArmedFormation("PRF-01", "insurgent", target, strength, .45, .7, .75, .65, .5, .7, .55, .75)
 
+    generate_logistics_world(world)
     generate_physical_world(world)
     generate_social_network(world)
 

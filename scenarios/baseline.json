@@ -13,6 +13,9 @@
   "contact_rate": 0.08,
   "random_stream_namespace": "baseline",
   "intervals": {
+    "command": 1.0,
+    "force_movement": 0.25,
+    "logistics": 1.0,
     "patrol": 0.25,
     "physical_refresh": 0.25,
     "beliefs": 1.0,
@@ -48,5 +51,23 @@
     "fixed_post_presence_gain": 0.25,
     "zone_observation_noise": 0.12,
     "patrol_route_randomness": 0.15
+  },
+  "logistics": {
+    "formation_supply_days": 30.0,
+    "initial_supply_fraction": 0.8,
+    "presence_consumption_per_person_day": 0.75,
+    "movement_consumption_per_person_km": 0.02,
+    "patrol_consumption_per_person_hour": 0.002,
+    "source_capacity_per_resident": 0.05,
+    "source_daily_production_fraction": 0.03,
+    "resupply_trigger_fraction": 0.45,
+    "resupply_target_fraction": 0.85,
+    "shipment_loss_per_travel_hour": 0.002,
+    "convoy_speed_factor": 0.75,
+    "readiness_degradation_rate": 0.08,
+    "readiness_recovery_near_source": 0.025,
+    "readiness_recovery_remote": 0.006,
+    "availability_recovery_rate": 0.03,
+    "reallocation_rate": 0.04
   }
 }

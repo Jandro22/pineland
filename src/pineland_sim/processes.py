@@ -16,6 +16,12 @@ from .entities import (
 from .events import ScheduledEvent
 from .networks import edge_between, refresh_community_aggregates
 from .physical import record_presence, recompute_microzone_control
+from .logistics import (
+    advance_movement_orders,
+    choose_reallocation_orders,
+    consume_formation_supply,
+    update_logistics,
+)
 from .world import WorldState, seeded_rng
 
 
@@ -101,6 +107,12 @@ class ProcessEngine:
         formation = self.world.formations.get(patrol.formation_id)
         if formation is None or formation.personnel <= 0:
             return {"affected_entity_ids": (patrol_id, patrol.formation_id)}
+        if formation.moving:
+            event.payload["next_interval"] = self.world.config.intervals.patrol
+            return {"locality_id": formation.locality_id,
+                    "actor_ids": (formation.organization_id,),
+                    "affected_entity_ids": (patrol_id, formation.formation_id),
+                    "unavailable_in_transit": 1.0}
         locality = self.world.localities[patrol.locality_id]
         current_zone = self.world.microzones[patrol.current_microzone_id]
         actual_control = current_zone.physical_control.get("government", 0.0)
@@ -137,14 +149,32 @@ class ProcessEngine:
             patrol.route_history.append(moved_to)
             patrol.available_at = self.world.time + travel_hours / 24
         event.payload["next_interval"] = max(self.world.config.intervals.patrol, travel_hours / 24)
-        supply_use = min(formation.sustainment, .0004 * travel_hours * (1 + formation.personnel / 1000))
-        formation.sustainment -= supply_use
+        supply_demand = (formation.available_personnel() *
+                         self.world.config.logistics.patrol_consumption_per_person_hour * travel_hours)
+        supply_use, supply_shortfall = consume_formation_supply(
+            self.world, formation.formation_id, supply_demand, "patrol_activity",
+            locality.locality_id, self.world.time,
+        )
+        if supply_shortfall:
+            formation.readiness = clamp(formation.readiness - .01 * supply_shortfall / max(1, supply_demand))
         formation.fatigue = clamp(formation.fatigue + .0008 * travel_hours)
         formation.readiness = clamp(formation.readiness - .0003 * travel_hours)
         return {"locality_id": locality.locality_id, "actor_ids": (formation.organization_id,),
                 "affected_entity_ids": (patrol_id, formation.formation_id), "presence": presence,
                 "sustainment": -supply_use, "from_microzone": current_zone.microzone_id,
                 "to_microzone": moved_to, "travel_time_hours": travel_hours, "severity": presence}
+
+    def on_command(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        orders = choose_reallocation_orders(self.world, self.world.time, self.rng)
+        return {"orders_issued": len(orders),
+                "orders_failed": sum(order.status == "failed_command" for order in orders),
+                "affected_entity_ids": tuple(order.order_id for order in orders)}
+
+    def on_force_movement(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        return advance_movement_orders(self.world, self.world.time)
+
+    def on_logistics(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        return update_logistics(self.world, self.world.time, event.payload["interval"])
 
     def on_physical_refresh(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         changed = 0
@@ -154,9 +184,23 @@ class ProcessEngine:
                 self.world, locality_id, "government", self.world.time
             )
             before = self.world.localities[locality_id].control["government"].physical
+            formations = [formation for formation in self.world.formations.values()
+                          if formation.locality_id == locality_id and formation.organization_id != "insurgent"]
+            reallocated = any(
+                post.locality_id == locality_id and post.formation_id and
+                (self.world.formations[post.formation_id].moving or
+                 self.world.formations[post.formation_id].locality_id != locality_id)
+                for post in self.world.security_posts.values()
+            )
+            constrained = any(formation.moving or formation.supply_fraction() < .4 or
+                              formation.command < .5 or formation.availability < .5
+                              for formation in formations)
+            mechanism = ("force_projection_reallocation" if reallocated else
+                         "logistics_constrained_physical_aggregation" if constrained else
+                         "microzone_physical_aggregation")
             self._set_control_dimension(
                 event_id, locality_id, "government", "physical", aggregate,
-                "microzone_physical_aggregation",
+                mechanism,
             )
             changed += aggregate != before
             total += aggregate
@@ -391,7 +435,8 @@ class ProcessEngine:
 
     def on_contact(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         locality_id = event.payload["locality_id"]
-        local = [f for f in self.world.formations.values() if f.locality_id == locality_id and f.personnel > 0]
+        local = [f for f in self.world.formations.values()
+                 if f.locality_id == locality_id and f.personnel > 0 and not f.moving]
         government = [f for f in local if self.world.organizations[f.organization_id].kind in {OrganizationKind.MILITARY, OrganizationKind.POLICE}]
         insurgents = [f for f in local if self.world.organizations[f.organization_id].kind is OrganizationKind.INSURGENT]
         if not government or not insurgents:

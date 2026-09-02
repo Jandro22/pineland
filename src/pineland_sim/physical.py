@@ -103,7 +103,8 @@ def generate_physical_world(world: WorldState) -> None:
         post_id = f"POST-{formation.formation_id}"
         world.security_posts[post_id] = SecurityPost(
             post_id, formation.organization_id, formation.locality_id, post_zone.microzone_id,
-            formation.personnel, fixed_presence=clamp(formation.personnel / 2_000), available_fraction=.4,
+            formation.personnel, fixed_presence=clamp(formation.personnel / 2_000),
+            available_fraction=.4, formation_id=formation.formation_id,
         )
         patrol_id = f"PATROL-{formation.formation_id}"
         world.patrols[patrol_id] = Patrol(
@@ -150,16 +151,26 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
     for post in world.security_posts.values():
         organization = world.organizations[post.organization_id]
         control_actor = "insurgent" if organization.kind.value == "insurgent" else "government"
-        if post.locality_id == locality_id and control_actor == actor and post.available_fraction > 0:
-            mobilization_delay = (1 - post.available_fraction) * world.config.physical.response_decay_hours
+        available_fraction = post.available_fraction
+        if post.formation_id:
+            formation = world.formations[post.formation_id]
+            if formation.moving or formation.locality_id != post.locality_id:
+                available_fraction = 0.0
+            else:
+                available_fraction *= formation.availability * formation.effective_readiness()
+        if post.locality_id == locality_id and control_actor == actor and available_fraction > 0:
+            mobilization_delay = (1 - available_fraction) * world.config.physical.response_decay_hours
             if mobilization_delay < distances[post.microzone_id]:
                 distances[post.microzone_id] = mobilization_delay
                 heapq.heappush(queue, (mobilization_delay, post.microzone_id))
     for patrol in world.patrols.values():
         organization = world.organizations[patrol.organization_id]
         control_actor = "insurgent" if organization.kind.value == "insurgent" else "government"
-        if patrol.locality_id == locality_id and control_actor == actor and patrol.available_at <= time:
-            dispatch_delay = (1 - patrol.response_fraction) * world.config.physical.response_decay_hours
+        formation = world.formations[patrol.formation_id]
+        effective_fraction = patrol.response_fraction * formation.availability * formation.effective_readiness()
+        if (patrol.locality_id == locality_id and control_actor == actor and
+                patrol.available_at <= time and not formation.moving and effective_fraction > 0):
+            dispatch_delay = (1 - effective_fraction) * world.config.physical.response_decay_hours
             if dispatch_delay < distances[patrol.current_microzone_id]:
                 distances[patrol.current_microzone_id] = dispatch_delay
                 heapq.heappush(queue, (dispatch_delay, patrol.current_microzone_id))
@@ -187,7 +198,14 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
         organization = world.organizations[post.organization_id]
         control_actor = "insurgent" if organization.kind.value == "insurgent" else "government"
         if control_actor == actor:
-            posts_by_zone[post.microzone_id] = posts_by_zone.get(post.microzone_id, 0.0) + post.fixed_presence
+            effective_presence = post.fixed_presence
+            if post.formation_id:
+                formation = world.formations[post.formation_id]
+                if formation.moving or formation.locality_id != post.locality_id:
+                    effective_presence = 0.0
+                else:
+                    effective_presence *= formation.availability * formation.effective_readiness()
+            posts_by_zone[post.microzone_id] = posts_by_zone.get(post.microzone_id, 0.0) + effective_presence
     aggregate = 0.0
     for zone in zones_in_locality(world, locality_id):
         memory = decay_presence(zone, actor, time, config.presence_memory_days)

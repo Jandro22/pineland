@@ -66,3 +66,13 @@ A final fixed-population, two-day scale comparison produced the following 25,000
 ## Remaining scientific limitations
 
 Phase 1 establishes network-mediated behavior but not a calibrated social model. Edge formation priors, behavior utilities, influence rates, and control coupling require sensitivity and identifiability analysis. Migration does not yet rewire social ties or retain explicitly decaying origin ties. Information messages are still summarized signals rather than persistent message objects with source attribution and aging. Those extensions should follow physical occupation and information-fusion milestones rather than being bundled into this phase.
+
+## Versioned checkpoint and Phase 3
+
+The verified Phase 1 + Phase 2 state was committed as `124df96` with message `v0.2 baseline: social networks and physical control` and annotated tag `v0.2.0` before Phase 3 began.
+
+Phase 3 adds formation-locality pathfinding, delayed movement orders, explicit command reliability and latency, conserved supply sources and shipments, movement/presence/patrol consumption, readiness and availability degradation/recovery, resource-flow exports, and locality control-cost diagnostics. Detailed combat remains deferred.
+
+The Phase 3 verification suite contains 34 passing tests. A 30-day, 1,000-agent smoke run processed 2,476 events, issued 24 movement orders (17 arrived, 4 supply-blocked, and 3 command-failed), and wrote 3,447 resource-flow records. Supply reconciled to a residual of approximately `7.04e-9` units. The run produced 969 `force_projection_reallocation` and 650 `logistics_constrained_physical_aggregation` provenance entries.
+
+The post-Phase-3 two-day 25,000-versus-75,000 comparison retained the same resolution behavior: government effective-control difference `-0.00000607`, insurgent effective-control difference `0.00000000113`, and maximum public-behavior share difference `0.00332`.

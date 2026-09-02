@@ -5,5 +5,4 @@ from .generator import generate_pineland
 from .simulation import Simulation, SimulationResult
 
 __all__ = ["Simulation", "SimulationConfig", "SimulationResult", "generate_pineland"]
-__version__ = "0.1.0"
-
+__version__ = "0.3.0.dev0"

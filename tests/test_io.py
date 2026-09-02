@@ -23,6 +23,9 @@ class IOTests(unittest.TestCase):
             self.assertEqual(diagnostics["nodes"], 100)
             physical = json.loads((root / "result" / "physical_diagnostics.json").read_text())
             self.assertGreaterEqual(physical["microzones"], 17 * 3)
+            logistics = json.loads((root / "result" / "logistics_diagnostics.json").read_text())
+            self.assertAlmostEqual(logistics["supply_conservation"]["residual"], 0.0)
+            self.assertTrue((root / "result" / "resource_flows.jsonl").read_text())
 
 
 if __name__ == "__main__":

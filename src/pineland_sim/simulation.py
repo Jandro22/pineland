@@ -34,6 +34,9 @@ class Simulation:
         for patrol_id in sorted(self.world.patrols):
             self.scheduler.schedule(0, "patrol", {"patrol_id": patrol_id}, priority=30)
         recurring = [
+            ("command", intervals.command, 20),
+            ("force_movement", intervals.force_movement, 25),
+            ("logistics", intervals.logistics, 27),
             ("physical_refresh", intervals.physical_refresh, 35),
             ("beliefs", intervals.beliefs, 40),
             ("social_influence", intervals.social_influence, 45),
@@ -59,6 +62,8 @@ class Simulation:
     def _schedule_contacts(self, current_time: float) -> None:
         occupied: dict[str, set[str]] = {}
         for formation in self.world.formations.values():
+            if formation.moving:
+                continue
             occupied.setdefault(formation.locality_id, set()).add(formation.organization_id)
         for locality_id, actors in occupied.items():
             if "insurgent" in actors and any(actor != "insurgent" for actor in actors):
