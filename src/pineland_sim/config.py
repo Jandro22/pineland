@@ -287,7 +287,7 @@ class OrganizationEcologyConfig:
 class PoliticalOrderConfig:
     enabled: bool = True
     interval_days: float = 30.0
-    election_interval_days: float = 180.0
+    election_interval_days: float = 1460.0
     federal_policy_budget: float = 120_000.0
     public_budget_share: float = 0.68
     patronage_share: float = 0.22
@@ -309,6 +309,40 @@ class PoliticalOrderConfig:
                 raise ValueError(f"{name} must be in [0, 1]")
         if abs(self.public_budget_share + self.patronage_share + self.private_diversion_share - 1) > 1e-9:
             raise ValueError("political budget shares must sum to one")
+
+
+@dataclass(slots=True)
+class ForeignAffairsConfig:
+    enabled: bool = True
+    interval_days: float = 30.0
+    neighbor_count: int = 5
+    migration_rate: float = 0.002
+    return_rate: float = 0.015
+    diaspora_remittance_rate: float = 0.025
+    diaspora_information_rate: float = 0.08
+    support_budget_fraction: float = 0.002
+    intervention_base_hazard: float = 0.015
+    rival_reaction: float = 0.35
+    interpreter_effect: float = 0.4
+    belief_noise: float = 0.18
+    host_transfer_efficiency: float = 0.35
+    host_crowding_out: float = 0.25
+    willingness_cost_weight: float = 0.35
+    willingness_casualty_weight: float = 0.45
+    withdrawal_threshold: float = 0.28
+    withdrawal_rate: float = 0.2
+
+    def validate(self) -> None:
+        if self.interval_days <= 0 or not 4 <= self.neighbor_count <= 6:
+            raise ValueError("foreign interval must be positive and neighbor_count in [4, 6]")
+        for name in ("migration_rate", "return_rate", "diaspora_remittance_rate",
+                     "diaspora_information_rate", "support_budget_fraction",
+                     "intervention_base_hazard", "rival_reaction", "interpreter_effect",
+                     "belief_noise", "host_transfer_efficiency", "host_crowding_out",
+                     "willingness_cost_weight", "willingness_casualty_weight",
+                     "withdrawal_threshold", "withdrawal_rate"):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
 
 
 @dataclass(slots=True)
@@ -334,6 +368,7 @@ class SimulationConfig:
     combat: CombatConfig = field(default_factory=CombatConfig)
     organization_ecology: OrganizationEcologyConfig = field(default_factory=OrganizationEcologyConfig)
     political_order: PoliticalOrderConfig = field(default_factory=PoliticalOrderConfig)
+    foreign_affairs: ForeignAffairsConfig = field(default_factory=ForeignAffairsConfig)
 
     def validate(self) -> None:
         if self.agent_count < 1:
@@ -359,6 +394,7 @@ class SimulationConfig:
         self.combat.validate()
         self.organization_ecology.validate()
         self.political_order.validate()
+        self.foreign_affairs.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -382,6 +418,8 @@ class SimulationConfig:
             values["organization_ecology"] = OrganizationEcologyConfig(**values["organization_ecology"])
         if isinstance(values.get("political_order"), dict):
             values["political_order"] = PoliticalOrderConfig(**values["political_order"])
+        if isinstance(values.get("foreign_affairs"), dict):
+            values["foreign_affairs"] = ForeignAffairsConfig(**values["foreign_affairs"])
         config = cls(**values)
         config.validate()
         return config

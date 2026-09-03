@@ -194,3 +194,36 @@ control difference `-0.00000405`, insurgent control difference `0.0000000228`,
 and maximum behavior-share difference `0.00144`. Ensemble onset diagnostics
 are tested separately because discrete births should not be interpreted as
 continuous paired outcomes.
+
+## Phase 8: foreign powers and internationalization
+
+Phase 8 adds five heterogeneous neighboring states, 17 first-class border
+segments, cross-border flight/migration/return, persistent diaspora links,
+conserved remittances, eight-component external support, sanctuary, sponsor
+dependence, foreign formations using the existing military engine, socially
+embedded interpreter-brokers, imperfect foreign beliefs, heterogeneous
+legitimacy effects, host dependence, capacity transfer/crowding-out, domestic
+willingness, rival reaction, and logistics-routed withdrawal. The production
+election interval is corrected to 1,460 days; accelerated calendars remain
+test-only.
+
+The Phase 8 suite contains 93 passing tests. A one-year, 1,000-agent integrated
+run processed 30,887 events with exact represented population of 8,800,000. It
+produced 12 external migrants/diaspora links, eight support events, 152 external
+transfer records, one active intervention, and one engagement. End-year host
+capacity was `42.33537`; foreign capacity was `0.005952`, for dependence
+`0.0001406`. The baseline did not trigger rival cascading (`R_E=0`) in this
+single realization.
+
+The final two-day 25,000-versus-75,000 scale check produced government-control
+difference `0.00001101`, insurgent-control difference `0.0000000236`, and
+maximum behavior-share difference `0.00144`.
+
+In the controlled ten-year A/B/C experiment, all interventions withdrew in year
+8 and B/C began with identical foreign capacity. Final aggregate host capacity
+was `30.28776` without intervention, `29.26238` under substitution, and
+`31.31315` under capacity building. Relative to A, B ended `3.385%` lower and C
+ended `3.385%` higher; the B-to-C gap was `2.05077` capacity units (`6.771%` of
+initial host capacity). Peak derived withdrawal shock was `0.005454` for B and
+`0.002928` for C, making the substitution shock `86.27%` larger. These are
+mechanism-verification results under uncalibrated priors, not empirical claims.

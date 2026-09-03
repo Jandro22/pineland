@@ -418,7 +418,8 @@ def process_organization_ecology(world, time: float, rng: random.Random) -> dict
             continue
         social_base = len(organization.member_ids) / max(1, len(world.persons))
         collapse_hazard = 1 - exp(-cfg.collapse_base_hazard * exp(2 * (1 - organization.cohesion) +
-                                                                      2 * losses - 3 * social_base))
+                                                                      2 * losses - 3 * social_base -
+                                                                      1.5 * organization.external_sanctuary))
         reason = ("resource_insolvency" if organization.resources <= 0 else
                   "cohesion_collapse" if organization.cohesion < .12 else
                   "social_base_loss" if not organization.member_ids else None)

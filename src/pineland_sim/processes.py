@@ -31,6 +31,7 @@ from .world import WorldState, seeded_rng
 from .combat import resolve_engagement
 from .organization_ecology import process_organization_ecology, recruit_and_retain
 from .political_order import process_political_order
+from .foreign_affairs import process_foreign_affairs
 
 
 class ProcessEngine:
@@ -258,6 +259,8 @@ class ProcessEngine:
         rate = self.world.config.movement_rate
         displaced_by_locality = {locality_id: 0.0 for locality_id in self.world.localities}
         for person in self.world.persons.values():
+            if person.external_state_id is not None:
+                continue
             if self.rng.random() >= rate:
                 continue
             origin = person.residence_locality_id
@@ -452,12 +455,18 @@ class ProcessEngine:
         result["actor_ids"] = tuple(filter(None, ("government", self.world.ruling_party_id)))
         return result
 
+    def on_foreign_affairs(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        result = process_foreign_affairs(self.world, self.world.time, event_id, self.rng)
+        result["actor_ids"] = tuple(sorted(self.world.foreign_states))
+        return result
+
     def on_contact(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         locality_id = event.payload["locality_id"]
         local = [f for f in self.world.formations.values()
                  if f.locality_id == locality_id and f.personnel > 0 and not f.moving and
                  f.operational_status == "effective"]
-        government = [f for f in local if self.world.organizations[f.organization_id].kind in {OrganizationKind.MILITARY, OrganizationKind.POLICE}]
+        government = [f for f in local if self.world.organizations[f.organization_id].kind in
+                      {OrganizationKind.MILITARY, OrganizationKind.POLICE, OrganizationKind.FOREIGN}]
         insurgents = [f for f in local if self.world.organizations[f.organization_id].kind is OrganizationKind.INSURGENT
                       and self.world.organizations[f.organization_id].status == "active"]
         if not government or not insurgents:

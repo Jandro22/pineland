@@ -126,6 +126,9 @@ class Person:
     government_legitimacy: float = 0.55
     party_legitimacy: dict[str, float] = field(default_factory=dict)
     political_access: float = 0.45
+    external_state_id: str | None = None
+    migration_status: str = "resident"
+    origin_tie_strength: float = 1.0
 
 
 @dataclass(slots=True)
@@ -409,6 +412,8 @@ class Organization:
     leader_id: str | None = None
     adaptation_rate: float = .12
     succession_count: int = 0
+    external_sanctuary: float = 0.0
+    sponsor_dependence: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -531,6 +536,119 @@ class Election:
 
 
 @dataclass(slots=True)
+class ForeignState:
+    state_id: str
+    name: str
+    resources: float
+    stability_preference: float
+    government_alignment: float
+    ideological_alignment: float
+    border_security_priority: float
+    regional_influence: float
+    commercial_interest: float
+    humanitarian_preference: float
+    cost_sensitivity: float
+    domestic_opposition: float
+    willingness: float
+    language_profile: dict[str, float]
+    opportunity: float
+    rival_ids: set[str] = field(default_factory=set)
+    cumulative_cost: float = 0.0
+    cumulative_casualties: float = 0.0
+
+
+@dataclass(slots=True)
+class BorderSegment:
+    border_id: str
+    foreign_state_id: str
+    district_id: str
+    locality_id: str
+    terrain_friction: float
+    infrastructure: float
+    legal_permeability: float
+    social_permeability: float
+    language_overlap: float
+    kinship_overlap: float
+    state_monitoring: float
+
+
+@dataclass(slots=True)
+class ExternalSupport:
+    support_id: str
+    time: float
+    foreign_state_id: str
+    recipient_id: str
+    components: dict[str, float]
+    strategic_alignment: float
+    delivered: bool = True
+
+    def total(self) -> float:
+        return sum(self.components.values())
+
+
+@dataclass(slots=True)
+class ExternalTransfer:
+    transfer_id: str
+    time: float
+    transfer_type: str
+    source_id: str
+    destination_id: str
+    amount: float
+    border_id: str | None
+    causal_event_id: str
+
+
+@dataclass(slots=True)
+class DiasporaLink:
+    link_id: str
+    person_id: str
+    foreign_state_id: str
+    origin_locality_id: str
+    social_strength: float
+    financial_capacity: float
+    information_reliability: float
+    created_at: float
+
+
+@dataclass(slots=True)
+class InterpreterBroker:
+    interpreter_id: str
+    person_id: str
+    foreign_state_id: str
+    locality_id: str
+    foreign_language: float
+    local_language: float
+    foreign_trust: float
+    local_trust: float
+    cultural_knowledge: float
+
+
+@dataclass(slots=True)
+class ForeignBelief:
+    foreign_state_id: str
+    locality_id: str
+    government_control_estimate: float
+    insurgent_presence_estimate: float
+    confidence: float
+    updated_at: float
+
+
+@dataclass(slots=True)
+class ForeignIntervention:
+    intervention_id: str
+    foreign_state_id: str
+    recipient_id: str
+    started_at: float
+    mode: str
+    provided_capacity: float
+    transfer_efficiency: float
+    crowding_out: float
+    force_formation_ids: set[str] = field(default_factory=set)
+    status: str = "active"
+    withdrawal_rate: float = 0.0
+
+
+@dataclass(slots=True)
 class ArmedFormation:
     formation_id: str
     organization_id: str
@@ -552,6 +670,8 @@ class ArmedFormation:
     moving: bool = False
     operational_status: str = "effective"
     cumulative_losses: float = 0.0
+    external_state_id: str | None = None
+    outside_pineland: bool = False
 
     def supply_fraction(self) -> float:
         return clamp(self.supply_stock / self.supply_capacity) if self.supply_capacity > 0 else clamp(self.sustainment)
@@ -562,7 +682,7 @@ class ArmedFormation:
         return clamp(self.readiness * supply_effect * fatigue_effect * clamp(self.command))
 
     def available_personnel(self) -> float:
-        if self.moving or self.operational_status == "ineffective":
+        if self.moving or self.outside_pineland or self.operational_status == "ineffective":
             return 0.0
         return self.personnel * clamp(self.availability) * self.effective_readiness()
 

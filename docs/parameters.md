@@ -148,7 +148,7 @@ trust, language comprehension, age decay, and recent corroboration.
 | Parameter | Meaning | Default |
 |---|---|---:|
 | `interval_days` | Policy and implementation cycle | 30 days |
-| `election_interval_days` | National election interval | 180 days |
+| `election_interval_days` | Constitutional national election interval | 1,460 days |
 | `federal_policy_budget` | Maximum budget allocated per political cycle | 120,000 |
 | `public_budget_share` | Intended public-provision share | 0.68 |
 | `patronage_share` | Intended coalition-patronage share | 0.22 |
@@ -159,3 +159,23 @@ trust, language comprehension, age decay, and recent corroboration.
 | `elite_broker_share` | Patronage routed through aligned local elites | 0.35 |
 | `peaceful_channel_strength` | Political-access displacement of armed mobilization | 0.50 |
 | `election_turnout_sensitivity` | Reserved turnout calibration coefficient | 1.40 |
+
+## Phase 8 foreign-affairs parameters
+
+| Parameter | Meaning | Default |
+|---|---|---:|
+| `interval_days` | Foreign-policy and cross-border update clock | 30 days |
+| `neighbor_count` | External states bordering Pineland | 5 |
+| `migration_rate` / `return_rate` | Cross-border departure and return rates | 0.002 / 0.015 |
+| `diaspora_remittance_rate` | External income transferred through diaspora links | 0.025 |
+| `diaspora_information_rate` | Diaspora political-message rate | 0.08 |
+| `support_budget_fraction` | Foreign resources considered per support cycle | 0.002 |
+| `intervention_base_hazard` | Baseline direct-intervention hazard | 0.015 |
+| `rival_reaction` | Strategic response to rival presence | 0.35 |
+| `interpreter_effect` | Interpreter reduction of foreign epistemic disadvantage | 0.40 |
+| `belief_noise` | Baseline foreign observation noise | 0.18 |
+| `host_transfer_efficiency` | Default host capacity-learning coefficient | 0.35 |
+| `host_crowding_out` | Default foreign substitution coefficient | 0.25 |
+| `willingness_cost_weight` | Domestic willingness sensitivity to cost | 0.35 |
+| `willingness_casualty_weight` | Domestic willingness sensitivity to casualties | 0.45 |
+| `withdrawal_threshold` / `withdrawal_rate` | Endogenous withdrawal trigger and speed | 0.28 / 0.20 |

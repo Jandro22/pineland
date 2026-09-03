@@ -28,6 +28,14 @@ from .entities import (
     PoliticalTransfer,
     PolicyImplementation,
     Election,
+    ForeignState,
+    BorderSegment,
+    ExternalSupport,
+    ExternalTransfer,
+    DiasporaLink,
+    InterpreterBroker,
+    ForeignBelief,
+    ForeignIntervention,
     Locality,
     Organization,
     OrganizationKind,
@@ -99,6 +107,15 @@ class WorldState:
     ruling_party_id: str | None = None
     private_diversion_stock: float = 0.0
     cumulative_public_spending: float = 0.0
+    foreign_states: dict[str, ForeignState] = field(default_factory=dict)
+    border_segments: dict[str, BorderSegment] = field(default_factory=dict)
+    external_support: list[ExternalSupport] = field(default_factory=list)
+    external_transfers: list[ExternalTransfer] = field(default_factory=list)
+    diaspora_links: dict[str, DiasporaLink] = field(default_factory=dict)
+    interpreter_brokers: dict[str, InterpreterBroker] = field(default_factory=dict)
+    foreign_beliefs: dict[tuple[str, str], ForeignBelief] = field(default_factory=dict)
+    foreign_interventions: dict[str, ForeignIntervention] = field(default_factory=dict)
+    cumulative_external_remittances: float = 0.0
     beliefs: dict[tuple[str, str], ActorBelief] = field(default_factory=dict)
     adjacency: dict[str, dict[str, float]] = field(default_factory=dict)
     event_log: list[EventLogEntry] = field(default_factory=list)
@@ -171,6 +188,17 @@ class WorldState:
         if any(branch.resources < -tolerance or branch.patronage_stock < -tolerance
                for branch in self.party_branches.values()):
             raise AssertionError("invalid party branch stock")
+        if any(state.resources < -tolerance or not 0 <= state.willingness <= 1
+               for state in self.foreign_states.values()):
+            raise AssertionError("invalid foreign-state stock")
+        if any(abs(support.total() - sum(support.components.values())) > tolerance or
+               any(value < 0 for value in support.components.values())
+               for support in self.external_support):
+            raise AssertionError("invalid external-support vector")
+        if any(not 0 <= border.legal_permeability <= 1 or
+               not 0 <= border.social_permeability <= 1
+               for border in self.border_segments.values()):
+            raise AssertionError("invalid border permeability")
         for microzone in self.microzones.values():
             if not 0 <= microzone.population_share <= 1:
                 raise AssertionError("microzone population share outside [0, 1]")
@@ -292,6 +320,10 @@ class WorldState:
             "party_branches": len(self.party_branches),
             "elections": len(self.elections),
             "ruling_party_id": self.ruling_party_id,
+            "foreign_states": len(self.foreign_states),
+            "border_segments": len(self.border_segments),
+            "external_migrants": sum(person.external_state_id is not None for person in self.persons.values()),
+            "foreign_interventions": sum(item.status == "active" for item in self.foreign_interventions.values()),
             "formations": len(self.formations),
             "engagements": len(self.engagements),
             "civilian_harm": self.cumulative_civilian_harm,
@@ -337,6 +369,7 @@ class WorldState:
         from .combat import combat_diagnostics
         from .organization_ecology import organization_ecology_diagnostics
         from .political_order import political_diagnostics
+        from .foreign_affairs import foreign_diagnostics
 
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
@@ -370,6 +403,17 @@ class WorldState:
         )
         (output / "political_diagnostics.json").write_text(
             json.dumps(political_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "foreign_diagnostics.json").write_text(
+            json.dumps(foreign_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "external_transfers.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.external_transfers),
+            encoding="utf-8",
+        )
+        (output / "external_support.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.external_support),
+            encoding="utf-8",
         )
         (output / "political_transfers.jsonl").write_text(
             "".join(json.dumps(asdict(item)) + "\n" for item in self.political_transfers),

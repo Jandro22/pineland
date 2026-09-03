@@ -16,6 +16,12 @@ corruption flows, local policy distortion, elite brokerage, institutional
 capacity, and peaceful political alternatives. See
 [the political-order model](docs/political-order.md).
 
+The `v0.8` development line adds neighboring states, first-class borders,
+cross-border migration and diaspora, decomposed external support, sanctuary,
+foreign formations, interpreters, imperfect foreign beliefs, host dependence,
+capacity transfer/crowding-out, foreign domestic politics, rivalry, and routed
+withdrawal. See [the foreign-affairs model](docs/foreign-affairs.md).
+
 Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.4 development line implements the runtime spine, social and physical structure, logistics, and explicit detection/information fusion described by the technical design specification.
 
 The current engine is intentionally dependency-light and transparent. Every important control change is written to a causal ledger, actors act on noisy estimates rather than world truth, population agents carry weights, and all randomness is split into deterministic named streams.
