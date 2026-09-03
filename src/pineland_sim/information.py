@@ -58,8 +58,8 @@ def initialize_information_world(world: WorldState) -> None:
     world.last_information_decay_at = world.time
     for observer_id in sorted(world.organizations):
         target_ids = {"government"}
-        if "insurgent" in world.organizations:
-            target_ids.add("insurgent")
+        target_ids.update(organization.organization_id for organization in world.organizations.values()
+                          if organization.kind is OrganizationKind.INSURGENT and organization.status == "active")
         for locality_id, locality in world.localities.items():
             for target_id in sorted(target_ids):
                 belief = ActorBelief(
@@ -76,9 +76,12 @@ def _logit(probability: float) -> float:
 
 def _target_actor_for_observer(world: WorldState, observer_actor_id: str) -> str | None:
     """Select the actor a source is primarily tasked to observe."""
-    if observer_actor_id == "insurgent":
+    observer = world.organizations.get(observer_actor_id)
+    if observer is not None and observer.kind is OrganizationKind.INSURGENT:
         return "government" if "government" in world.organizations else None
-    return "insurgent" if "insurgent" in world.organizations else None
+    insurgents = sorted(organization.organization_id for organization in world.organizations.values()
+                        if organization.kind is OrganizationKind.INSURGENT and organization.status == "active")
+    return insurgents[0] if insurgents else None
 
 
 def _observer_formation(world: WorldState, observer_id: str | None) -> ArmedFormation | None:
@@ -808,9 +811,10 @@ def generate_background_observations(world: WorldState, time: float,
                     world, "government", None, source_id, source_type,
                     locality_id, time, rng,
                 ))
-        if "insurgent" in world.organizations:
+        for insurgent_id in sorted(organization.organization_id for organization in world.organizations.values()
+                                   if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"):
             observations.extend(_observe_from_source(
-                world, "insurgent", None, community.community_id, "civilian",
+                world, insurgent_id, None, community.community_id, "civilian",
                 locality_id, time, rng,
             ))
         # A bridge/interpreter channel is only sampled where language diversity

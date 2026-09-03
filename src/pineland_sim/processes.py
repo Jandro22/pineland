@@ -29,6 +29,7 @@ from .information import (
 )
 from .world import WorldState, seeded_rng
 from .combat import resolve_engagement
+from .organization_ecology import process_organization_ecology, recruit_and_retain
 
 
 class ProcessEngine:
@@ -188,7 +189,8 @@ class ProcessEngine:
             )
             before = self.world.localities[locality_id].control["government"].physical
             formations = [formation for formation in self.world.formations.values()
-                          if formation.locality_id == locality_id and formation.organization_id != "insurgent"]
+                          if formation.locality_id == locality_id and
+                          self.world.organizations[formation.organization_id].kind is not OrganizationKind.INSURGENT]
             reallocated = any(
                 post.locality_id == locality_id and post.formation_id and
                 (self.world.formations[post.formation_id].moving or
@@ -230,7 +232,8 @@ class ProcessEngine:
         net = 0.0
         revenue = 0.0
         government = self.world.organizations["government"]
-        insurgent = self.world.organizations.get("insurgent")
+        insurgents = [organization for organization in self.world.organizations.values()
+                      if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"]
         for locality in self.world.localities.values():
             security = locality.control["government"].physical
             production = locality.economic_output * (.002 + .004 * locality.infrastructure) * (0.5 + .5 * security)
@@ -242,9 +245,9 @@ class ProcessEngine:
             tax = locality.economic_output * .0005 * locality.control["government"].fiscal
             government.resources += tax
             revenue += tax
-            if insurgent:
+            for insurgent in insurgents:
                 extraction = locality.economic_output * .00015 * locality.control["insurgent"].fiscal
-                insurgent.resources += extraction + insurgent.external_support / 12
+                insurgent.resources += extraction / max(1, len(insurgents)) + insurgent.external_support / 12
         return {"actor_ids": tuple(x for x in ("government", "insurgent") if x in self.world.organizations),
                 "net_output": net, "government_revenue": revenue}
 
@@ -297,7 +300,8 @@ class ProcessEngine:
         # Civilian expected control updates through trusted, imperfect local observations.
         noise = self.world.config.observation_noise
         perceived_actors = ["government"]
-        if "insurgent" in self.world.organizations:
+        if any(organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
+               for organization in self.world.organizations.values()):
             perceived_actors.append("insurgent")
         for person in self.world.persons.values():
             locality = self.world.localities[person.residence_locality_id]
@@ -343,7 +347,10 @@ class ProcessEngine:
             "migration": (0.0, 0.0),
             "neutral": (0.0, 0.0),
         }
-        insurgent_available = "insurgent" in self.world.organizations
+        insurgent_available = any(
+            organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
+            for organization in self.world.organizations.values()
+        )
         for person_id in sorted(self.world.persons):
             person = self.world.persons[person_id]
             neighbors = self.world.social_neighbors.get(person_id, ())
@@ -421,34 +428,20 @@ class ProcessEngine:
                 "affected_localities": len(set(locality_government_shift) | set(locality_insurgent_shift))}
 
     def on_recruitment(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
-        insurgent = self.world.organizations.get("insurgent")
-        if insurgent is None:
-            return {"recruits": 0.0, "exits": 0.0}
-        recruits = 0.0
-        exits = 0.0
-        rate = self.world.config.recruitment_rate
-        for person in self.world.persons.values():
-            if person.organization_id is None:
-                network = min(1, len(insurgent.member_ids) / max(1, len(self.world.persons)) * 15)
-                explicit_exposure = person.social_exposure.get("insurgent", 0.0)
-                recruitment_capability = clamp(.35 + .35 * insurgent.cohesion + .3 * min(1, insurgent.resources / 100_000))
-                utility = (2 * person.grievance + person.expected_control.get("insurgent", .1) +
-                           network + self.world.config.social_network.recruitment_exposure_weight * explicit_exposure +
-                           recruitment_capability - person.fear - 2.4)
-                if self.rng.random() < rate * logistic(utility):
-                    person.organization_id = "insurgent"
-                    insurgent.member_ids.add(person.person_id)
-                    recruits += person.weight
-            elif person.organization_id == "insurgent":
-                exit_probability = rate * logistic(person.fear + .7 - insurgent.cohesion - person.grievance)
-                if self.rng.random() < exit_probability:
-                    person.organization_id = None
-                    insurgent.member_ids.discard(person.person_id)
-                    exits += person.weight
-        if "PRF-01" in self.world.formations:
-            formation = self.world.formations["PRF-01"]
-            formation.personnel = max(0, formation.personnel + recruits - exits)
-        return {"actor_ids": ("insurgent",), "recruits": recruits, "exits": exits}
+        result = recruit_and_retain(self.world, self.world.time, self.rng)
+        result["actor_ids"] = tuple(o.organization_id for o in self.world.organizations.values()
+                                    if o.kind is OrganizationKind.INSURGENT and o.status == "active")
+        return result
+
+    def on_organization_ecology(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        result = process_organization_ecology(self.world, self.world.time, self.rng)
+        recruitment = recruit_and_retain(self.world, self.world.time, self.rng)
+        result.update({f"ecology_{key}": value for key, value in recruitment.items()})
+        result["affected_entity_ids"] = tuple(
+            transition.transition_id for transition in self.world.organization_transitions
+            if transition.time == self.world.time
+        )
+        return result
 
     def on_contact(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         locality_id = event.payload["locality_id"]
@@ -456,7 +449,8 @@ class ProcessEngine:
                  if f.locality_id == locality_id and f.personnel > 0 and not f.moving and
                  f.operational_status == "effective"]
         government = [f for f in local if self.world.organizations[f.organization_id].kind in {OrganizationKind.MILITARY, OrganizationKind.POLICE}]
-        insurgents = [f for f in local if self.world.organizations[f.organization_id].kind is OrganizationKind.INSURGENT]
+        insurgents = [f for f in local if self.world.organizations[f.organization_id].kind is OrganizationKind.INSURGENT
+                      and self.world.organizations[f.organization_id].status == "active"]
         if not government or not insurgents:
             return {"locality_id": locality_id, "contact": 0.0}
         g = max(government, key=lambda f: f.effective_strength())

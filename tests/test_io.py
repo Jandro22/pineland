@@ -27,6 +27,8 @@ class IOTests(unittest.TestCase):
             self.assertAlmostEqual(logistics["supply_conservation"]["residual"], 0.0)
             self.assertTrue((root / "result" / "combat_diagnostics.json").exists())
             self.assertTrue((root / "result" / "engagements.jsonl").exists())
+            self.assertTrue((root / "result" / "organization_ecology.json").exists())
+            self.assertTrue((root / "result" / "organization_transitions.jsonl").exists())
             self.assertTrue((root / "result" / "resource_flows.jsonl").read_text())
             information = json.loads((root / "result" / "information_diagnostics.json").read_text())
             self.assertIn("belief_error", information)

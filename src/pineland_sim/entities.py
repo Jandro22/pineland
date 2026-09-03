@@ -390,6 +390,61 @@ class Organization:
     institutional_quality: float
     member_ids: set[str] = field(default_factory=set)
     external_support: float = 0.0
+    capital: dict[str, float] = field(default_factory=lambda: {
+        "social": 0.0, "political": 0.0, "organizational": 0.0, "material": 0.0,
+    })
+    phenotype: dict[str, float] = field(default_factory=lambda: {
+        "centralization": .5, "political_investment": .5, "governance_investment": .5,
+        "dispersion": .5, "risk_tolerance": .5, "discipline": .5,
+        "local_embeddedness": .5, "resource_dependence": .5,
+    })
+    ideology: dict[str, float] = field(default_factory=lambda: {"reform": .5, "separatism": .0})
+    status: str = "active"
+    founded_at: float = 0.0
+    parent_ids: tuple[str, ...] = ()
+    leader_id: str | None = None
+    adaptation_rate: float = .12
+    succession_count: int = 0
+
+
+@dataclass(slots=True)
+class LeadershipAgent:
+    leader_id: str
+    organization_id: str
+    competence: float
+    charisma: float
+    risk_tolerance: float
+    ideological_rigidity: float
+    political_skill: float
+    organizational_skill: float
+    active: bool = True
+
+
+@dataclass(slots=True)
+class ProtoOrganization:
+    proto_id: str
+    community_id: str
+    locality_id: str
+    member_ids: set[str]
+    capital: dict[str, float]
+    ideology: dict[str, float]
+    leadership_potential: float
+    created_at: float
+    status: str = "mobilizing"
+
+
+@dataclass(slots=True)
+class OrganizationTransition:
+    transition_id: str
+    time: float
+    transition_type: str
+    parent_ids: tuple[str, ...]
+    child_ids: tuple[str, ...]
+    member_assignments: dict[str, tuple[str, ...]]
+    resource_assignments: dict[str, float]
+    formation_assignments: dict[str, tuple[str, ...]]
+    inherited_traits: dict[str, dict[str, float]]
+    causes: dict[str, float | str]
 
 
 @dataclass(slots=True)

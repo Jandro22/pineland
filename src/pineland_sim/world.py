@@ -19,8 +19,12 @@ from .entities import (
     FormationMovementOrder,
     InformationRelay,
     Engagement,
+    LeadershipAgent,
+    ProtoOrganization,
+    OrganizationTransition,
     Locality,
     Organization,
+    OrganizationKind,
     Microzone,
     Patrol,
     PhysicalEdge,
@@ -77,6 +81,9 @@ class WorldState:
     organizations: dict[str, Organization] = field(default_factory=dict)
     formations: dict[str, ArmedFormation] = field(default_factory=dict)
     engagements: dict[str, Engagement] = field(default_factory=dict)
+    leaders: dict[str, LeadershipAgent] = field(default_factory=dict)
+    proto_organizations: dict[str, ProtoOrganization] = field(default_factory=dict)
+    organization_transitions: list[OrganizationTransition] = field(default_factory=list)
     beliefs: dict[tuple[str, str], ActorBelief] = field(default_factory=dict)
     adjacency: dict[str, dict[str, float]] = field(default_factory=dict)
     event_log: list[EventLogEntry] = field(default_factory=list)
@@ -127,6 +134,21 @@ class WorldState:
         for organization in self.organizations.values():
             if organization.resources < -tolerance:
                 raise AssertionError("negative organization budget")
+            if any(not 0 <= value <= 1 for value in organization.capital.values()):
+                raise AssertionError("organizational capital outside [0, 1]")
+            if any(not 0 <= value <= 1 for value in organization.phenotype.values()):
+                raise AssertionError("organizational phenotype outside [0, 1]")
+            if any(person_id not in self.persons for person_id in organization.member_ids):
+                raise AssertionError("organization references missing member")
+        memberships = [person_id for organization in self.organizations.values()
+                       if organization.status == "active" for person_id in organization.member_ids]
+        if len(memberships) != len(set(memberships)):
+            raise AssertionError("person belongs to multiple active organizations")
+        for organization in self.organizations.values():
+            if organization.status == "active" and any(
+                    self.persons[pid].organization_id != organization.organization_id
+                    for pid in organization.member_ids):
+                raise AssertionError("active organization membership is not reciprocal")
         for microzone in self.microzones.values():
             if not 0 <= microzone.population_share <= 1:
                 raise AssertionError("microzone population share outside [0, 1]")
@@ -238,6 +260,12 @@ class WorldState:
             "movement_orders": len(self.movement_orders),
             "supply_consumed": self.cumulative_supply_consumed,
             "organizations": len(self.organizations),
+            "active_armed_organizations": sum(
+                organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
+                for organization in self.organizations.values()),
+            "proto_organizations": sum(proto.status == "mobilizing"
+                                        for proto in self.proto_organizations.values()),
+            "organization_transitions": len(self.organization_transitions),
             "formations": len(self.formations),
             "engagements": len(self.engagements),
             "civilian_harm": self.cumulative_civilian_harm,
@@ -281,6 +309,7 @@ class WorldState:
         from .logistics import logistics_diagnostics
         from .information import information_diagnostics
         from .combat import combat_diagnostics
+        from .organization_ecology import organization_ecology_diagnostics
 
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
@@ -308,6 +337,13 @@ class WorldState:
         )
         (output / "combat_diagnostics.json").write_text(
             json.dumps(combat_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "organization_ecology.json").write_text(
+            json.dumps(organization_ecology_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "organization_transitions.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.organization_transitions),
+            encoding="utf-8",
         )
         (output / "engagements.jsonl").write_text(
             "".join(json.dumps(asdict(engagement)) + "\n"

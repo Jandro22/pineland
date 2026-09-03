@@ -1,9 +1,14 @@
 # Pineland COIN-SIM
 
-The current `v0.5` development line adds spatial stochastic armed engagements,
+The `v0.5` baseline adds spatial stochastic armed engagements,
 attrition, cohesion failure, disengagement, conserved combat expenditure,
 civilian-harm observations, perceived momentum, and logistics-routed
 reinforcement. See [the combat model](docs/combat-model.md).
+
+The `v0.6` development line adds endogenous armed-organization ecology:
+probabilistic onset, organizational capital, recruitment composition,
+leadership, adaptation, fragmentation, merger, collapse, and reconstructable
+genealogy. See [the organization ecology model](docs/organization-ecology.md).
 
 Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.4 development line implements the runtime spine, social and physical structure, logistics, and explicit detection/information fusion described by the technical design specification.
 

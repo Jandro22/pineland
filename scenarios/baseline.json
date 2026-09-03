@@ -71,6 +71,24 @@
     "availability_recovery_rate": 0.03,
     "reallocation_rate": 0.04
   },
+  "organization_ecology": {
+    "enabled": true,
+    "interval_days": 7.0,
+    "proto_base_hazard": 0.004,
+    "birth_base_hazard": 0.003,
+    "proto_decay_rate": 0.08,
+    "split_base_hazard": 0.002,
+    "merger_base_hazard": 0.015,
+    "collapse_base_hazard": 0.004,
+    "succession_base_hazard": 0.006,
+    "adaptation_rate": 0.12,
+    "mutation_sigma": 0.035,
+    "minimum_proto_members": 3,
+    "minimum_formation_personnel": 75.0,
+    "onset_resource_fraction": 0.18,
+    "recruitment_diversity_penalty": 0.12,
+    "cohesion_loss_memory": 0.2
+  },
   "combat": {
     "interval_hours": 2.0,
     "base_attrition_rate": 0.012,

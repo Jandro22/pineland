@@ -133,3 +133,34 @@ units. The two-day 25,000-versus-75,000 comparison retained exact represented
 population and produced government-control difference `-0.0000061011`,
 insurgent-control difference `0.0000000159`, and maximum behavior-share
 difference `0.00316`.
+
+## Phase 6: endogenous armed-organization ecology
+
+Phase 6 introduces organizational capital, mobilized proto-organizations,
+probabilistic armed onset, recruit-composition effects, endogenous cohesion,
+strategic phenotype, explicit leadership and succession, adaptation,
+network/geography-structured fragmentation, merger, multi-path collapse, and a
+genealogical transition ledger. Political support, organization, and armed
+strength are now distinct state layers.
+
+Birth, split, merger, succession, proto-collapse, and armed-organization
+collapse record causal transition objects. Split and merger operations preserve
+member identity, resources, formations, and supply ownership while transferring
+command relationships. Collapse can disable a formation with nonzero manpower.
+Population and supply conservation remain world invariants, and active
+membership must be unique and reciprocal.
+
+The Phase 6 acceptance suite includes controlled peaceful-null and endogenous
+birth cases, a mixed probabilistic onset ensemble, a network-structure onset
+contrast, recruitment/cohesion tradeoffs, nonzero-manpower collapse,
+conservative split and merger, military-loss feedback, bounded adaptation,
+leadership succession, genealogy, and matched-seed reproducibility.
+
+The complete suite contains 66 passing tests. A 90-day, 1,000-agent integrated
+smoke run processed 7,641 events, retained the seeded armed organization, and
+preserved the represented population of 8,800,000 exactly. The two-day
+25,000-versus-75,000 scale check produced government-control difference
+`0.00018215`, insurgent-control difference `-0.000000657`, and maximum
+behavior-share difference `0.0180`, all within the established engineering
+tolerance. These checks establish implementation stability, not empirical
+calibration or long-horizon identifiability.

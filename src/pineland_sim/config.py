@@ -253,6 +253,37 @@ class CombatConfig:
 
 
 @dataclass(slots=True)
+class OrganizationEcologyConfig:
+    enabled: bool = True
+    interval_days: float = 7.0
+    proto_base_hazard: float = 0.004
+    birth_base_hazard: float = 0.003
+    proto_decay_rate: float = 0.08
+    split_base_hazard: float = 0.002
+    merger_base_hazard: float = 0.015
+    collapse_base_hazard: float = 0.004
+    succession_base_hazard: float = 0.006
+    adaptation_rate: float = 0.12
+    mutation_sigma: float = 0.035
+    minimum_proto_members: int = 3
+    minimum_formation_personnel: float = 75.0
+    onset_resource_fraction: float = 0.18
+    recruitment_diversity_penalty: float = 0.12
+    cohesion_loss_memory: float = 0.2
+
+    def validate(self) -> None:
+        if self.interval_days <= 0 or self.minimum_proto_members < 1 or self.minimum_formation_personnel < 0:
+            raise ValueError("invalid organization ecology interval or minimum size")
+        for name in ("proto_base_hazard", "birth_base_hazard", "proto_decay_rate",
+                     "split_base_hazard", "merger_base_hazard", "collapse_base_hazard",
+                     "succession_base_hazard",
+                     "adaptation_rate", "mutation_sigma", "onset_resource_fraction",
+                     "recruitment_diversity_penalty", "cohesion_loss_memory"):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+
+
+@dataclass(slots=True)
 class SimulationConfig:
     seed: int = 20260902
     horizon_days: float = 365.0
@@ -273,6 +304,7 @@ class SimulationConfig:
     logistics: LogisticsConfig = field(default_factory=LogisticsConfig)
     information: InformationConfig = field(default_factory=InformationConfig)
     combat: CombatConfig = field(default_factory=CombatConfig)
+    organization_ecology: OrganizationEcologyConfig = field(default_factory=OrganizationEcologyConfig)
 
     def validate(self) -> None:
         if self.agent_count < 1:
@@ -296,6 +328,7 @@ class SimulationConfig:
         self.logistics.validate()
         self.information.validate()
         self.combat.validate()
+        self.organization_ecology.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -315,6 +348,8 @@ class SimulationConfig:
             values["information"] = InformationConfig(**values["information"])
         if isinstance(values.get("combat"), dict):
             values["combat"] = CombatConfig(**values["combat"])
+        if isinstance(values.get("organization_ecology"), dict):
+            values["organization_ecology"] = OrganizationEcologyConfig(**values["organization_ecology"])
         config = cls(**values)
         config.validate()
         return config

@@ -18,6 +18,7 @@ from .networks import generate_social_network
 from .physical import generate_physical_world
 from .logistics import generate_logistics_world
 from .information import initialize_information_world
+from .organization_ecology import initialize_organization_ecology
 
 
 DISTRICT_REGISTRY = (
@@ -181,6 +182,7 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
     generate_logistics_world(world)
     generate_physical_world(world)
     generate_social_network(world)
+    initialize_organization_ecology(world)
 
     initialize_information_world(world)
     world.beliefs.clear()

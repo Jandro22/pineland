@@ -122,3 +122,23 @@ trust, language comprehension, age decay, and recent corroboration.
 | `civilian_exposure_rate` | Population-at-risk harm scaling | 0.00008 |
 | `momentum_learning_rate` | Expected-control response to perceived performance | 0.12 |
 | `reinforcement_threshold` | Fractional loss prompting an assistance request | 0.06 |
+
+## Phase 6 organization-ecology parameters
+
+| Parameter | Meaning | Default |
+|---|---|---:|
+| `interval_days` | Organizational lifecycle update interval | 7.0 |
+| `proto_base_hazard` | Baseline mobilized-cluster incubation hazard | 0.004 |
+| `birth_base_hazard` | Baseline proto-to-armed-organization hazard | 0.003 |
+| `proto_decay_rate` | Capital decay for unsuccessful proto-organizations | 0.08 |
+| `split_base_hazard` | Baseline fragmentation hazard | 0.002 |
+| `merger_base_hazard` | Baseline compatible-organization merger hazard | 0.015 |
+| `collapse_base_hazard` | Baseline organizational collapse hazard | 0.004 |
+| `succession_base_hazard` | Baseline leadership succession hazard | 0.006 |
+| `adaptation_rate` | Phenotype imitation rate | 0.12 |
+| `mutation_sigma` | Trait interpretation/mutation dispersion | 0.035 |
+| `minimum_proto_members` | Minimum representative agents in an incubating cluster | 3 |
+| `minimum_formation_personnel` | Minimum represented strength at armed onset | 75 |
+| `onset_resource_fraction` | Member-resource contribution at organization birth | 0.18 |
+| `recruitment_diversity_penalty` | Cohesion cost of heterogeneous intake | 0.12 |
+| `cohesion_loss_memory` | Organizational cohesion sensitivity to military losses | 0.20 |

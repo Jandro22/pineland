@@ -40,12 +40,14 @@ class Simulation:
             ("information", intervals.information, 38),
             ("physical_refresh", intervals.physical_refresh, 35),
             ("social_influence", intervals.social_influence, 45),
+            ("organization_ecology", self.world.config.organization_ecology.interval_days, 58),
             ("mobility", intervals.mobility, 50),
             ("governance", intervals.governance, 70),
             ("economy", intervals.economy, 80),
             ("checkpoint", intervals.checkpoint, 90),
         ]
-        if "insurgent" in self.world.organizations:
+        if any(organization.kind.value == "insurgent" and organization.status == "active"
+               for organization in self.world.organizations.values()):
             recurring.append(("recruitment", intervals.recruitment, 60))
         for event_type, interval, priority in recurring:
             self.scheduler.schedule(0, event_type, {"interval": interval}, priority=priority)
@@ -66,7 +68,10 @@ class Simulation:
                 continue
             occupied.setdefault(formation.locality_id, set()).add(formation.organization_id)
         for locality_id, actors in occupied.items():
-            if "insurgent" in actors and any(actor != "insurgent" for actor in actors):
+            insurgents = {actor for actor in actors
+                          if self.world.organizations[actor].kind.value == "insurgent" and
+                          self.world.organizations[actor].status == "active"}
+            if insurgents and any(actor not in insurgents for actor in actors):
                 self.scheduler.schedule(current_time + self.rng.random(), "contact", {"locality_id": locality_id}, priority=20)
 
     def run(self, until: float | None = None, max_events: int | None = None) -> SimulationResult:
