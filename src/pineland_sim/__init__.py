@@ -1,12 +1,13 @@
 """Pineland COIN-SIM research engine."""
 
-from .config import (CombatConfig, ForeignAffairsConfig, InformationConfig, OrganizationEcologyConfig,
+from .config import (CombatConfig, ForeignAffairsConfig, InformationConfig, OrganizationEcologyConfig, PeaceProcessConfig,
                      PoliticalOrderConfig, SimulationConfig)
 from .entities import (BorderSegment, DiasporaLink, Election, Engagement, ExternalSupport,
                        ExternalTransfer, ForeignBelief, ForeignIntervention, ForeignState,
                        InterpreterBroker, LeadershipAgent, LocalElite, Observation,
                        OrganizationTransition, PartyBranch, PoliticalInstitution,
                        PoliticalTransfer, PolicyImplementation, ProtoOrganization)
+from .entities import AgreementProvision, Negotiation, PeaceAgreement, PeaceTransition
 from .generator import generate_pineland
 from .simulation import Simulation, SimulationResult
 
@@ -18,4 +19,6 @@ __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "Exter
            "PolicyImplementation", "ProtoOrganization", "LocalElite", "Election",
            "Simulation", "SimulationConfig",
            "SimulationResult", "generate_pineland"]
-__version__ = "0.8.0"
+__all__ += ["AgreementProvision", "Negotiation", "PeaceAgreement", "PeaceProcessConfig",
+            "PeaceTransition"]
+__version__ = "0.9.0"

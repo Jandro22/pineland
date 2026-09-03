@@ -1,5 +1,14 @@
 # Continuation audit and Phase 4 implementation report
 
+## Phase 9 closure
+
+Version 0.9 adds persistent negotiations, explicit agreement provisions, faction-level
+acceptance and spoilers, ceasefire violation, gradual implementation, conserved DDR stocks,
+armed-to-political organizational conversion, foreign mediation and sponsor pressure, and
+endogenous recurrence. The matched unified/fragmented experiment and its interpretation are
+documented in `peace-process.md`; the phase is covered by 15 focused tests in addition to all
+prior regression tests.
+
 ## Pre-change verification
 
 The inherited runtime passed all 12 tests and completed a 1,000-agent, 30-day smoke trajectory with 72 localities, 18 formations, and 2,275 events. The four established outputs were structurally valid:

@@ -36,6 +36,10 @@ from .entities import (
     InterpreterBroker,
     ForeignBelief,
     ForeignIntervention,
+    Negotiation,
+    PeaceAgreement,
+    AgreementProvision,
+    PeaceTransition,
     Locality,
     Organization,
     OrganizationKind,
@@ -115,6 +119,13 @@ class WorldState:
     interpreter_brokers: dict[str, InterpreterBroker] = field(default_factory=dict)
     foreign_beliefs: dict[tuple[str, str], ForeignBelief] = field(default_factory=dict)
     foreign_interventions: dict[str, ForeignIntervention] = field(default_factory=dict)
+    negotiations: dict[str, Negotiation] = field(default_factory=dict)
+    peace_agreements: dict[str, PeaceAgreement] = field(default_factory=dict)
+    agreement_provisions: dict[str, AgreementProvision] = field(default_factory=dict)
+    peace_transitions: list[PeaceTransition] = field(default_factory=list)
+    ceasefires: dict[str, str] = field(default_factory=dict)
+    demobilized_personnel: float = 0.0
+    demobilized_arms: float = 0.0
     cumulative_external_remittances: float = 0.0
     beliefs: dict[tuple[str, str], ActorBelief] = field(default_factory=dict)
     adjacency: dict[str, dict[str, float]] = field(default_factory=dict)
@@ -199,6 +210,11 @@ class WorldState:
                not 0 <= border.social_permeability <= 1
                for border in self.border_segments.values()):
             raise AssertionError("invalid border permeability")
+        if any(not 0 <= item.progress <= item.target + tolerance
+               for item in self.agreement_provisions.values()):
+            raise AssertionError("agreement provision progress outside bounds")
+        if self.demobilized_personnel < -tolerance or self.demobilized_arms < -tolerance:
+            raise AssertionError("negative demobilized stock")
         for microzone in self.microzones.values():
             if not 0 <= microzone.population_share <= 1:
                 raise AssertionError("microzone population share outside [0, 1]")
@@ -245,6 +261,7 @@ class WorldState:
         if self.supply_sources:
             current_supply = sum(source.stock for source in self.supply_sources.values())
             current_supply += sum(formation.supply_stock for formation in self.formations.values())
+            current_supply += self.demobilized_arms
             current_supply += sum(
                 shipment.quantity_deliverable for shipment in self.supply_shipments.values()
                 if shipment.status == "in_transit"
@@ -324,6 +341,11 @@ class WorldState:
             "border_segments": len(self.border_segments),
             "external_migrants": sum(person.external_state_id is not None for person in self.persons.values()),
             "foreign_interventions": sum(item.status == "active" for item in self.foreign_interventions.values()),
+            "negotiations": len(self.negotiations),
+            "peace_agreements": len(self.peace_agreements),
+            "active_ceasefires": sum(status == "active" for status in self.ceasefires.values()),
+            "demobilized_personnel": self.demobilized_personnel,
+            "conflict_recurrences": sum(t.transition_type == "recurrence" for t in self.peace_transitions),
             "formations": len(self.formations),
             "engagements": len(self.engagements),
             "civilian_harm": self.cumulative_civilian_harm,
@@ -370,6 +392,7 @@ class WorldState:
         from .organization_ecology import organization_ecology_diagnostics
         from .political_order import political_diagnostics
         from .foreign_affairs import foreign_diagnostics
+        from .peace_process import peace_diagnostics
 
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
@@ -406,6 +429,17 @@ class WorldState:
         )
         (output / "foreign_diagnostics.json").write_text(
             json.dumps(foreign_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "peace_diagnostics.json").write_text(
+            json.dumps(peace_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "peace_transitions.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.peace_transitions),
+            encoding="utf-8",
+        )
+        (output / "peace_agreements.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.peace_agreements.values()),
+            encoding="utf-8",
         )
         (output / "external_transfers.jsonl").write_text(
             "".join(json.dumps(asdict(item)) + "\n" for item in self.external_transfers),

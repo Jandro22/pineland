@@ -346,6 +346,38 @@ class ForeignAffairsConfig:
 
 
 @dataclass(slots=True)
+class PeaceProcessConfig:
+    enabled: bool = True
+    interval_days: float = 30.0
+    negotiation_base_hazard: float = 0.08
+    agreement_base_hazard: float = 0.12
+    ceasefire_violation_rate: float = 0.025
+    implementation_rate: float = 0.055
+    demobilization_rate: float = 0.10
+    recurrence_base_hazard: float = 0.0025
+    battlefield_expectation_weight: float = 0.75
+    credibility_weight: float = 1.1
+    fragmentation_penalty: float = 1.4
+    spoiler_penalty: float = 1.0
+    foreign_influence_weight: float = 0.6
+    political_capital_retention: float = 0.68
+    resource_conversion_rate: float = 0.72
+
+    def validate(self) -> None:
+        if self.interval_days <= 0:
+            raise ValueError("peace-process interval must be positive")
+        for name in ("negotiation_base_hazard", "agreement_base_hazard",
+                     "ceasefire_violation_rate", "implementation_rate",
+                     "demobilization_rate", "recurrence_base_hazard",
+                     "battlefield_expectation_weight", "credibility_weight",
+                     "fragmentation_penalty", "spoiler_penalty",
+                     "foreign_influence_weight", "political_capital_retention",
+                     "resource_conversion_rate"):
+            if not 0 <= getattr(self, name) <= 1.5:
+                raise ValueError(f"{name} must be in [0, 1.5]")
+
+
+@dataclass(slots=True)
 class SimulationConfig:
     seed: int = 20260902
     horizon_days: float = 365.0
@@ -369,6 +401,7 @@ class SimulationConfig:
     organization_ecology: OrganizationEcologyConfig = field(default_factory=OrganizationEcologyConfig)
     political_order: PoliticalOrderConfig = field(default_factory=PoliticalOrderConfig)
     foreign_affairs: ForeignAffairsConfig = field(default_factory=ForeignAffairsConfig)
+    peace_process: PeaceProcessConfig = field(default_factory=PeaceProcessConfig)
 
     def validate(self) -> None:
         if self.agent_count < 1:
@@ -395,6 +428,7 @@ class SimulationConfig:
         self.organization_ecology.validate()
         self.political_order.validate()
         self.foreign_affairs.validate()
+        self.peace_process.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -420,6 +454,8 @@ class SimulationConfig:
             values["political_order"] = PoliticalOrderConfig(**values["political_order"])
         if isinstance(values.get("foreign_affairs"), dict):
             values["foreign_affairs"] = ForeignAffairsConfig(**values["foreign_affairs"])
+        if isinstance(values.get("peace_process"), dict):
+            values["peace_process"] = PeaceProcessConfig(**values["peace_process"])
         config = cls(**values)
         config.validate()
         return config

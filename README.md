@@ -1,5 +1,9 @@
 # Pineland COIN-SIM
 
+Version 0.9 adds endogenous bargaining, ceasefires, provision-level settlement implementation,
+demobilization, armed-to-political organizational transformation, spoilers, foreign guarantees,
+and conflict recurrence. See `docs/peace-process.md`.
+
 The `v0.5` baseline adds spatial stochastic armed engagements,
 attrition, cohesion failure, disengagement, conserved combat expenditure,
 civilian-harm observations, perceived momentum, and logistics-routed

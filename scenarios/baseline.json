@@ -140,6 +140,23 @@
     "momentum_learning_rate": 0.12,
     "reinforcement_threshold": 0.06
   },
+  "peace_process": {
+    "enabled": true,
+    "interval_days": 30.0,
+    "negotiation_base_hazard": 0.08,
+    "agreement_base_hazard": 0.12,
+    "ceasefire_violation_rate": 0.025,
+    "implementation_rate": 0.055,
+    "demobilization_rate": 0.1,
+    "recurrence_base_hazard": 0.0025,
+    "battlefield_expectation_weight": 0.75,
+    "credibility_weight": 1.1,
+    "fragmentation_penalty": 1.4,
+    "spoiler_penalty": 1.0,
+    "foreign_influence_weight": 0.6,
+    "political_capital_retention": 0.68,
+    "resource_conversion_rate": 0.72
+  },
   "information": {
     "prior_confidence": 0.28,
     "default_decay_rate": 0.08,

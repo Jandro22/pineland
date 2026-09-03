@@ -32,6 +32,7 @@ from .combat import resolve_engagement
 from .organization_ecology import process_organization_ecology, recruit_and_retain
 from .political_order import process_political_order
 from .foreign_affairs import process_foreign_affairs
+from .peace_process import process_peace
 
 
 class ProcessEngine:
@@ -458,6 +459,12 @@ class ProcessEngine:
     def on_foreign_affairs(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         result = process_foreign_affairs(self.world, self.world.time, event_id, self.rng)
         result["actor_ids"] = tuple(sorted(self.world.foreign_states))
+        return result
+
+    def on_peace_process(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        result = process_peace(self.world, self.world.time, event_id, self.rng)
+        result["actor_ids"] = tuple(sorted({actor for item in self.world.negotiations.values()
+                                            for actor in (item.government_id, *item.insurgent_ids)}))
         return result
 
     def on_contact(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:

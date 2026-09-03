@@ -649,6 +649,65 @@ class ForeignIntervention:
 
 
 @dataclass(slots=True)
+class Negotiation:
+    negotiation_id: str
+    government_id: str
+    insurgent_ids: tuple[str, ...]
+    initiated_at: float
+    war_values: dict[str, float]
+    peace_values: dict[str, float]
+    bargaining_surplus: dict[str, float]
+    credibility: float
+    fragmentation: float
+    foreign_mediator_ids: tuple[str, ...] = ()
+    status: str = "active"
+    concluded_at: float | None = None
+
+
+@dataclass(slots=True)
+class AgreementProvision:
+    provision_id: str
+    agreement_id: str
+    provision_type: str
+    target: float
+    progress: float
+    government_will: float
+    insurgent_will: float
+    institutional_resistance: float
+    monitoring: float
+    status: str = "pending"
+
+
+@dataclass(slots=True)
+class PeaceAgreement:
+    agreement_id: str
+    negotiation_id: str
+    signed_at: float
+    government_id: str
+    signatory_ids: tuple[str, ...]
+    rejecting_faction_ids: tuple[str, ...]
+    provision_ids: tuple[str, ...]
+    credibility: float
+    foreign_guarantor_ids: tuple[str, ...] = ()
+    status: str = "signed"
+    completed_at: float | None = None
+    failed_at: float | None = None
+
+
+@dataclass(slots=True)
+class PeaceTransition:
+    transition_id: str
+    time: float
+    transition_type: str
+    agreement_id: str | None
+    actor_ids: tuple[str, ...]
+    personnel: float = 0.0
+    arms: float = 0.0
+    resources: float = 0.0
+    causes: dict[str, float | str] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class ArmedFormation:
     formation_id: str
     organization_id: str
