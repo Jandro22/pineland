@@ -1,6 +1,8 @@
 # Parameter registry
 
-All values below are uncalibrated priors exposed through `SimulationConfig.social_network`. They define transparent starting behavior, not empirical findings.
+All values below are uncalibrated priors exposed through the corresponding
+`SimulationConfig` sections. They define transparent starting behavior, not
+empirical findings.
 
 | Name | Meaning | Units / bounds | Default | Calibration status |
 |---|---|---:|---:|---|
@@ -63,3 +65,41 @@ Supply is measured in abstract person-sustainment units. Distances are synthetic
 | `intervals.command` | Command decision interval | days | 1.0 | Numerical schedule |
 | `intervals.force_movement` | Pending/deployed movement-order update interval | days | 0.25 | Numerical schedule |
 | `intervals.logistics` | Production, consumption, shipment, and recovery interval | days | 1.0 | Numerical schedule |
+
+## Phase 4 observation and intelligence
+
+Information parameters are exposed through `SimulationConfig.information`.
+They are uncalibrated priors intended for sensitivity and identifiability
+work, not empirical estimates.
+
+| Name | Meaning | Units / bounds | Default |
+|---|---|---:|---:|
+| `prior_confidence` | Initial precision of an actor's information prior | [0, 1] | 0.28 |
+| `default_decay_rate` | Confidence decay for general/control information | /day, nonnegative | 0.08 |
+| `mobile_decay_rate` | Confidence decay for mobile or activity reports | /day, nonnegative | 0.55 |
+| `static_decay_rate` | Confidence decay for administrative/static reports | /day, nonnegative | 0.025 |
+| `road_decay_rate` | Confidence decay for road/infrastructure reports | /day, nonnegative | 0.045 |
+| `formation_decay_rate` | Confidence decay for formation-presence information | /day, nonnegative | 0.65 |
+| `true_positive_rate` | Baseline formation detection probability before conditions | [0, 1] | 0.72 |
+| `false_positive_rate` | Baseline false-alarm probability when no target is present | [0, 1] | 0.035 |
+| `attribution_error_rate` | Probability that a positive detection is attributed to the wrong organization | [0, 1] | 0.08 |
+| `contact_true_positive_rate` | Baseline detection probability for a candidate contact | [0, 1] | 0.82 |
+| `contact_false_positive_rate` | Contact false-alarm probability | [0, 1] | 0.02 |
+| `civilian_report_rate` | Availability rate for civilian reporting | [0, 1] | 0.18 |
+| `social_report_rate` | Availability rate for network-mediated reporting | [0, 1] | 0.22 |
+| `administrative_report_rate` | Availability rate for government administrative reports | [0, 1] | 0.28 |
+| `elite_report_rate` | Availability rate for political/local elite reports | [0, 1] | 0.16 |
+| `member_report_rate` | Availability rate for organization-member reports | [0, 1] | 0.35 |
+| `fixed_post_report_rate` | Availability rate for fixed security-post reports | [0, 1] | 0.72 |
+| `patrol_report_rate` | Patrol report availability multiplier | [0, 1] | 1.0 |
+| `relay_base_reliability` | Fallback command-network reliability for unmodeled source nodes | [0, 1] | 0.86 |
+| `relay_max_hops` | Maximum command-network relay path length | positive count | 8 |
+| `contradiction_penalty` | Confidence penalty for disagreement across evidence | [0, 1] | 0.45 |
+| `corroboration_bonus` | Weight bonus for independent recent reports | [0, 1] | 0.12 |
+| `intervals.information` | Collection, fusion, aging, and relay-delivery interval | days | 0.25 |
+
+`source_trust`, `source_coverage`, and `source_latency_hours` are maps keyed by
+source type (`patrol`, `fixed_post`, `civilian`, `social_network`,
+`administrative`, `organization_member`, `political_elite`, `interpreter`, and
+`contact`). Observation weight multiplies intrinsic confidence, source quality,
+trust, language comprehension, age decay, and recent corroboration.

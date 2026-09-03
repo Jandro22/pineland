@@ -17,6 +17,7 @@ from .world import WorldState, seeded_rng
 from .networks import generate_social_network
 from .physical import generate_physical_world
 from .logistics import generate_logistics_world
+from .information import initialize_information_world
 
 
 DISTRICT_REGISTRY = (
@@ -181,12 +182,30 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
     generate_physical_world(world)
     generate_social_network(world)
 
+    initialize_information_world(world)
+    world.beliefs.clear()
     for organization_id in world.organizations:
         for locality_id, locality in world.localities.items():
             true = locality.control["insurgent" if organization_id == "insurgent" else "government"]
             noise = config.observation_noise
             estimate = ControlVector(**{k: max(0, min(1, v + rng.uniform(-noise, noise))) for k, v in true.to_dict().items()})
-            world.beliefs[(organization_id, locality_id)] = ActorBelief(organization_id, locality_id, estimate, .45, 0)
+            world.beliefs[(organization_id, locality_id)] = ActorBelief(
+                organization_id, locality_id, estimate,
+                config.information.prior_confidence, 0,
+            )
+            target_actor = "insurgent" if organization_id == "insurgent" else "government"
+            world.control_beliefs[(organization_id, target_actor, locality_id)] = ActorBelief(
+                organization_id, locality_id, ControlVector(**estimate.to_dict()),
+                config.information.prior_confidence, 0,
+            )
+            # Opposing-side estimates begin as broad priors rather than a hidden
+            # copy of truth. They are populated only by source observations.
+            opposing_actor = "government" if target_actor == "insurgent" else "insurgent"
+            if opposing_actor in world.organizations:
+                world.control_beliefs[(organization_id, opposing_actor, locality_id)] = ActorBelief(
+                    organization_id, locality_id, ControlVector(*([.5] * 7)),
+                    config.information.prior_confidence, 0,
+                )
 
     world.initial_population = world.weighted_population()
     world.assert_invariants()

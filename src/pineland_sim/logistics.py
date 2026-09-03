@@ -76,9 +76,22 @@ def shortest_locality_path(world: WorldState, origin_id: str, destination_id: st
 def command_metrics(world: WorldState, organization_id: str,
                     target_node_id: str) -> tuple[float, float]:
     """Return maximum-reliability path and its cumulative latency from organization HQ."""
-    origin = f"CMD:{organization_id}"
-    if origin == target_node_id:
-        return 1.0, 0.0
+    _, reliability, latency = command_path(world, organization_id, target_node_id,
+                                           f"CMD:{organization_id}")
+    return reliability, latency
+
+
+def command_path(world: WorldState, organization_id: str, source_node_id: str,
+                 destination_node_id: str) -> tuple[list[str], float, float]:
+    """Return a high-reliability command route and its additive latency.
+
+    Command edges are stored as undirected physical communication links, but
+    callers provide a directed information flow.  Reliability compounds across
+    the selected path and latency adds across hops, so a local node can possess
+    an observation before the headquarters does.
+    """
+    if source_node_id == destination_node_id:
+        return [source_node_id], 1.0, 0.0
     adjacency: dict[str, list[tuple[str, CommandEdge]]] = {}
     for edge in world.command_edges.values():
         if edge.organization_id != organization_id:
@@ -86,20 +99,26 @@ def command_metrics(world: WorldState, organization_id: str,
         adjacency.setdefault(edge.node_a_id, []).append((edge.node_b_id, edge))
         adjacency.setdefault(edge.node_b_id, []).append((edge.node_a_id, edge))
     # Minimize negative log reliability, with latency as deterministic tie-breaker.
-    scores = {origin: (0.0, 0.0)}
-    queue = [(0.0, 0.0, origin)]
+    scores = {source_node_id: (0.0, 0.0)}
+    previous: dict[str, str] = {}
+    queue = [(0.0, 0.0, source_node_id)]
     while queue:
         risk, latency, node = heapq.heappop(queue)
         if (risk, latency) != scores[node]:
             continue
-        if node == target_node_id:
-            return exp(-risk), latency
+        if node == destination_node_id:
+            route = [node]
+            while route[-1] != source_node_id:
+                route.append(previous[route[-1]])
+            route.reverse()
+            return route, exp(-risk), latency
         for neighbor, edge in adjacency.get(node, ()):
             candidate = (risk - log(max(1e-12, edge.reliability)), latency + edge.latency_hours)
             if candidate < scores.get(neighbor, (inf, inf)):
                 scores[neighbor] = candidate
+                previous[neighbor] = node
                 heapq.heappush(queue, (*candidate, neighbor))
-    return 0.0, inf
+    return [], 0.0, inf
 
 
 def _record_flow(world: WorldState, time: float, flow_type: str, organization_id: str,
@@ -212,6 +231,7 @@ def choose_reallocation_orders(world: WorldState, time: float, rng) -> list[Form
         for locality_id in candidates:
             belief = world.beliefs.get((formation.organization_id, locality_id))
             estimated = belief.control_estimate.physical if belief else .5
+            confidence = belief.confidence if belief else 0.0
             route, _, travel_hours = shortest_locality_path(
                 world, formation.locality_id, locality_id, formation.mobility
             )
@@ -222,7 +242,12 @@ def choose_reallocation_orders(world: WorldState, time: float, rng) -> list[Form
                 need = estimated
             else:
                 need = 1 - estimated
-            utilities.append(exp(max(-8, min(8, 2.0 * need + .5 * importance - .03 * travel_hours))))
+            # Commanders act on perceived need and confidence, never on truth.
+            # Low-confidence areas retain a small exploratory value rather than
+            # disappearing from the decision set.
+            perceived_need = need * (.55 + .45 * confidence) + .18 * (1 - confidence)
+            utilities.append(exp(max(-8, min(8, 2.0 * perceived_need +
+                                               .5 * importance - .03 * travel_hours))))
         destination = rng.choices(candidates, weights=utilities, k=1)[0]
         orders.append(create_movement_order(world, formation.formation_id, destination, time, rng))
     return orders

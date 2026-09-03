@@ -1,8 +1,10 @@
 """Pineland COIN-SIM research engine."""
 
-from .config import SimulationConfig
+from .config import InformationConfig, SimulationConfig
+from .entities import Observation
 from .generator import generate_pineland
 from .simulation import Simulation, SimulationResult
 
-__all__ = ["Simulation", "SimulationConfig", "SimulationResult", "generate_pineland"]
-__version__ = "0.3.0.dev0"
+__all__ = ["InformationConfig", "Observation", "Simulation", "SimulationConfig",
+           "SimulationResult", "generate_pineland"]
+__version__ = "0.4.0"

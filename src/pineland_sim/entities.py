@@ -202,6 +202,109 @@ class ActorZoneBelief:
     physical_control_estimate: float
     confidence: float
     updated_at: float
+    last_reliable_observation_at: float = -1.0e9
+    evidence_count: int = 0
+    contradiction_index: float = 0.0
+
+
+@dataclass(slots=True)
+class Observation:
+    """A source-generated, time-stamped claim about the conflict environment.
+
+    The object deliberately stores an estimated value, never the true state that
+    was used to generate it.  ``confidence`` is intrinsic source confidence;
+    ``effective_confidence`` applies age decay at the time a recipient consumes
+    the observation.
+    """
+
+    observation_id: str
+    target_id: str | None
+    locality_id: str
+    timestamp: float
+    source_id: str
+    source_type: str
+    observation_type: str
+    estimated_value: dict[str, Any]
+    confidence: float
+    provenance: dict[str, Any]
+    observer_actor_id: str
+    microzone_id: str | None = None
+    observer_node_id: str | None = None
+    quality: float = 0.5
+    decay_rate: float = 0.1
+    target_actor_id: str | None = None
+    target_formation_id: str | None = None
+    received_at: float | None = None
+
+    def effective_confidence(self, time: float) -> float:
+        elapsed = max(0.0, time - self.timestamp)
+        return clamp(self.confidence * self.quality * exp(-max(0.0, self.decay_rate) * elapsed))
+
+    def confidence_at(self, time: float) -> float:
+        return self.effective_confidence(time)
+
+    def age(self, time: float) -> float:
+        return max(0.0, time - self.timestamp)
+
+    @property
+    def source(self) -> str:
+        return self.source_id
+
+    @property
+    def target(self) -> str | None:
+        return self.target_id
+
+    @property
+    def subject(self) -> str | None:
+        return self.target_id
+
+    @property
+    def location(self) -> str:
+        return self.microzone_id or self.locality_id
+
+    @property
+    def estimated_state(self) -> dict[str, Any]:
+        return self.estimated_value
+
+    @property
+    def value(self) -> dict[str, Any]:
+        return self.estimated_value
+
+
+@dataclass(slots=True)
+class PresenceBelief:
+    """Actor- or command-node-local belief about an organization's presence."""
+
+    observer_id: str
+    target_actor_id: str
+    locality_id: str
+    presence_estimate: float = 0.0
+    confidence: float = 0.0
+    updated_at: float = 0.0
+    last_reliable_observation_at: float = -1.0e9
+    evidence_count: int = 0
+    contradiction_index: float = 0.0
+    target_id: str | None = None
+    microzone_id: str | None = None
+    personnel_estimate: float = 0.0
+
+
+@dataclass(slots=True)
+class InformationRelay:
+    """A delayed, probabilistically successful command-network transmission."""
+
+    relay_id: str
+    observation_id: str
+    organization_id: str
+    source_node_id: str
+    destination_node_id: str
+    route: list[str]
+    sent_at: float
+    arrives_at: float
+    reliability: float
+    latency_hours: float
+    status: str = "in_transit"
+    delivered_at: float | None = None
 
 
 @dataclass(slots=True)
@@ -334,6 +437,9 @@ class ActorBelief:
     control_estimate: ControlVector
     confidence: float
     updated_at: float
+    last_reliable_observation_at: float = -1.0e9
+    evidence_count: int = 0
+    contradiction_index: float = 0.0
 
 
 @dataclass(slots=True)

@@ -11,6 +11,7 @@ class ProcessIntervals:
     command: float = 1.0
     force_movement: float = 0.25
     logistics: float = 1.0
+    information: float = 0.25
     patrol: float = 0.25
     physical_refresh: float = 0.25
     beliefs: float = 1.0
@@ -114,6 +115,111 @@ class LogisticsConfig:
 
 
 @dataclass(slots=True)
+class InformationConfig:
+    """Transparent priors for source heterogeneity, detection, and fusion.
+
+    Rates are deliberately exposed as configuration rather than hidden in
+    process code so sensitivity analysis can vary information independently of
+    force projection and combat.
+    """
+
+    prior_confidence: float = 0.28
+    default_decay_rate: float = 0.08
+    mobile_decay_rate: float = 0.55
+    static_decay_rate: float = 0.025
+    road_decay_rate: float = 0.045
+    formation_decay_rate: float = 0.65
+    true_positive_rate: float = 0.72
+    false_positive_rate: float = 0.035
+    attribution_error_rate: float = 0.08
+    contact_true_positive_rate: float = 0.82
+    contact_false_positive_rate: float = 0.02
+    detection_pressure_bonus: float = 0.65
+    detection_exposure_bonus: float = 0.7
+    detection_language_bonus: float = 0.5
+    detection_observability_bonus: float = 0.7
+    detection_terrain_penalty: float = 0.55
+    detection_readiness_bonus: float = 0.55
+    civilian_report_rate: float = 0.18
+    social_report_rate: float = 0.22
+    administrative_report_rate: float = 0.28
+    elite_report_rate: float = 0.16
+    member_report_rate: float = 0.35
+    fixed_post_report_rate: float = 0.72
+    patrol_report_rate: float = 1.0
+    relay_base_reliability: float = 0.86
+    relay_max_hops: int = 8
+    contradiction_penalty: float = 0.45
+    corroboration_bonus: float = 0.12
+    negative_report_confidence: float = 0.52
+    positive_report_confidence: float = 0.9
+    source_trust: dict[str, float] = field(default_factory=lambda: {
+        "patrol": 0.88,
+        "fixed_post": 0.8,
+        "civilian": 0.55,
+        "social_network": 0.62,
+        "administrative": 0.72,
+        "organization_member": 0.76,
+        "political_elite": 0.58,
+        "interpreter": 0.72,
+        "contact": 0.9,
+    })
+    source_coverage: dict[str, float] = field(default_factory=lambda: {
+        "patrol": 0.82,
+        "fixed_post": 0.65,
+        "civilian": 0.42,
+        "social_network": 0.48,
+        "administrative": 0.55,
+        "organization_member": 0.58,
+        "political_elite": 0.35,
+        "interpreter": 0.52,
+        "contact": 0.95,
+    })
+    source_latency_hours: dict[str, float] = field(default_factory=lambda: {
+        "patrol": 0.2,
+        "fixed_post": 0.4,
+        "civilian": 8.0,
+        "social_network": 5.0,
+        "administrative": 12.0,
+        "organization_member": 2.0,
+        "political_elite": 24.0,
+        "interpreter": 10.0,
+        "contact": 0.1,
+    })
+
+    def validate(self) -> None:
+        bounded = (
+            "prior_confidence", "true_positive_rate", "false_positive_rate",
+            "attribution_error_rate",
+            "contact_true_positive_rate", "contact_false_positive_rate",
+            "civilian_report_rate", "social_report_rate", "administrative_report_rate",
+            "elite_report_rate", "member_report_rate", "fixed_post_report_rate",
+            "patrol_report_rate", "relay_base_reliability", "contradiction_penalty",
+            "corroboration_bonus", "negative_report_confidence", "positive_report_confidence",
+        )
+        for name in bounded:
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+        for name in ("default_decay_rate", "mobile_decay_rate", "static_decay_rate",
+                     "road_decay_rate", "formation_decay_rate", "detection_pressure_bonus",
+                     "detection_exposure_bonus", "detection_language_bonus",
+                     "detection_observability_bonus", "detection_terrain_penalty",
+                     "detection_readiness_bonus"):
+            if getattr(self, name) < 0:
+                raise ValueError(f"{name} cannot be negative")
+        if self.relay_max_hops < 1:
+            raise ValueError("relay_max_hops must be positive")
+        for source_map_name in ("source_trust", "source_coverage"):
+            source_map = getattr(self, source_map_name)
+            for source, value in source_map.items():
+                if not 0 <= value <= 1:
+                    raise ValueError(f"{source_map_name}[{source}] must be in [0, 1]")
+        for source, value in self.source_latency_hours.items():
+            if value < 0:
+                raise ValueError(f"source_latency_hours[{source}] cannot be negative")
+
+
+@dataclass(slots=True)
 class SimulationConfig:
     seed: int = 20260902
     horizon_days: float = 365.0
@@ -132,6 +238,7 @@ class SimulationConfig:
     social_network: SocialNetworkConfig = field(default_factory=SocialNetworkConfig)
     physical: PhysicalModelConfig = field(default_factory=PhysicalModelConfig)
     logistics: LogisticsConfig = field(default_factory=LogisticsConfig)
+    information: InformationConfig = field(default_factory=InformationConfig)
 
     def validate(self) -> None:
         if self.agent_count < 1:
@@ -153,6 +260,7 @@ class SimulationConfig:
         self.social_network.validate()
         self.physical.validate()
         self.logistics.validate()
+        self.information.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -168,6 +276,8 @@ class SimulationConfig:
             values["physical"] = PhysicalModelConfig(**values["physical"])
         if isinstance(values.get("logistics"), dict):
             values["logistics"] = LogisticsConfig(**values["logistics"])
+        if isinstance(values.get("information"), dict):
+            values["information"] = InformationConfig(**values["information"])
         config = cls(**values)
         config.validate()
         return config

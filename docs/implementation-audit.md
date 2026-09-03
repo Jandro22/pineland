@@ -1,4 +1,4 @@
-# Continuation audit and Phase 1 implementation report
+# Continuation audit and Phase 4 implementation report
 
 ## Pre-change verification
 
@@ -65,7 +65,7 @@ A final fixed-population, two-day scale comparison produced the following 25,000
 
 ## Remaining scientific limitations
 
-Phase 1 establishes network-mediated behavior but not a calibrated social model. Edge formation priors, behavior utilities, influence rates, and control coupling require sensitivity and identifiability analysis. Migration does not yet rewire social ties or retain explicitly decaying origin ties. Information messages are still summarized signals rather than persistent message objects with source attribution and aging. Those extensions should follow physical occupation and information-fusion milestones rather than being bundled into this phase.
+Phase 1 establishes network-mediated behavior but not a calibrated social model. Edge formation priors, behavior utilities, influence rates, and control coupling require sensitivity and identifiability analysis. Migration does not yet rewire social ties or retain explicitly decaying origin ties. Those extensions should follow physical occupation and information-fusion milestones rather than being bundled into this phase.
 
 ## Versioned checkpoint and Phase 3
 
@@ -76,3 +76,36 @@ Phase 3 adds formation-locality pathfinding, delayed movement orders, explicit c
 The Phase 3 verification suite contains 34 passing tests. A 30-day, 1,000-agent smoke run processed 2,476 events, issued 24 movement orders (17 arrived, 4 supply-blocked, and 3 command-failed), and wrote 3,447 resource-flow records. Supply reconciled to a residual of approximately `7.04e-9` units. The run produced 969 `force_projection_reallocation` and 650 `logistics_constrained_physical_aggregation` provenance entries.
 
 The post-Phase-3 two-day 25,000-versus-75,000 comparison retained the same resolution behavior: government effective-control difference `-0.00000607`, insurgent effective-control difference `0.00000000113`, and maximum public-behavior share difference `0.00332`.
+
+## Phase 4 delivered
+
+Phase 4 freezes the scientific question as: what can each actor actually know
+about the conflict environment, and how does that knowledge affect action?
+
+- First-class `Observation` objects carry target/subject, locality or
+  microzone, timestamp, source ID/type, estimated values, confidence, quality,
+  and provenance.
+- Patrols, fixed posts, civilians, social networks, administrative channels,
+  organization members, political/local elites, interpreters, and contact
+  events are separate source classes with heterogeneous coverage, trust,
+  latency, language comprehension, and decay.
+- Formation detection uses condition-dependent true-positive and false-positive
+  probabilities and a configurable attribution-error rate. Negative observations
+  are retained, enabling false negatives and contradictory evidence without
+  last-write-wins behavior.
+- Control and presence beliefs use confidence-weighted fusion. Confidence ages;
+  `information_age` records the time since the last reliable observation.
+- Local node beliefs are immediately available while `InformationRelay` objects
+  propagate evidence through command graphs with finite latency and compounded
+  reliability. Movement leaves prior beliefs stale until new evidence arrives.
+- Analyst-only `belief_error`, source mix, age, relay, presence-belief, and
+  detection diagnostics are exported separately from actor state.
+- Candidate contact events now depend on source detections and an explicit
+  activity hazard. The inherited coarse combat placeholder remains only for
+  compatibility; detailed combat is still Phase 5.
+
+The Phase 4 suite contains 43 passing tests. Population and supply conservation,
+matched-seed reproducibility, the no-insurgency null, and the existing
+resolution-sensitivity checks remain passing. A 1,000-agent, 30-day information
+smoke produced approximately 32,390 observations and 32,390 auditable command relays while
+retaining the Phase 3 supply and control diagnostics.

@@ -22,6 +22,11 @@ from .logistics import (
     consume_formation_supply,
     update_logistics,
 )
+from .information import (
+    observe_patrol,
+    observe_target,
+    process_information,
+)
 from .world import WorldState, seeded_rng
 
 
@@ -115,17 +120,8 @@ class ProcessEngine:
                     "unavailable_in_transit": 1.0}
         locality = self.world.localities[patrol.locality_id]
         current_zone = self.world.microzones[patrol.current_microzone_id]
-        actual_control = current_zone.physical_control.get("government", 0.0)
+        observations = observe_patrol(self.world, patrol.patrol_id, self.world.time, self.rng)
         belief = self.world.zone_beliefs[(formation.organization_id, current_zone.microzone_id)]
-        observed = clamp(actual_control + self.rng.normalvariate(
-            0, self.world.config.physical.zone_observation_noise * (1 - current_zone.observability)
-        ))
-        alpha = .25 + .35 * current_zone.observability
-        belief.physical_control_estimate = clamp(
-            belief.physical_control_estimate + alpha * (observed - belief.physical_control_estimate)
-        )
-        belief.confidence = clamp(belief.confidence + .08 * current_zone.observability)
-        belief.updated_at = self.world.time
         presence = (self.world.config.physical.patrol_presence_gain * formation.effective_strength() /
                     max(250.0, locality.population * .002))
         record_presence(self.world, current_zone.microzone_id, "government", presence, self.world.time)
@@ -138,7 +134,9 @@ class ProcessEngine:
             for candidate in candidates:
                 zone_belief = self.world.zone_beliefs[(formation.organization_id, candidate)]
                 edge = self.world.physical_edges[self.world.physical_neighbors[current_zone.microzone_id][candidate]]
-                perceived_need = 1 - zone_belief.physical_control_estimate
+                perceived_need = ((1 - zone_belief.physical_control_estimate) *
+                                  (.55 + .45 * zone_belief.confidence) +
+                                  .18 * (1 - zone_belief.confidence))
                 route_noise = self.rng.uniform(0, self.world.config.physical.patrol_route_randomness)
                 score = 2.5 * perceived_need - edge.travel_time_hours / self.world.config.physical.response_decay_hours + route_noise
                 weights.append(exp(max(-8, min(8, score))))
@@ -162,7 +160,11 @@ class ProcessEngine:
         return {"locality_id": locality.locality_id, "actor_ids": (formation.organization_id,),
                 "affected_entity_ids": (patrol_id, formation.formation_id), "presence": presence,
                 "sustainment": -supply_use, "from_microzone": current_zone.microzone_id,
-                "to_microzone": moved_to, "travel_time_hours": travel_hours, "severity": presence}
+                "to_microzone": moved_to, "travel_time_hours": travel_hours, "severity": presence,
+                "observation_ids": tuple(item.observation_id for item in observations),
+                "observations_by_actor": {
+                    formation.organization_id: tuple(item.observation_id for item in observations)
+                }}
 
     def on_command(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         orders = choose_reallocation_orders(self.world, self.world.time, self.rng)
@@ -279,24 +281,20 @@ class ProcessEngine:
         return {"affected_entity_ids": (), "moved_population": moved, "new_displaced_population": displaced}
 
     def on_beliefs(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
-        updates = 0
+        # Compatibility handler for callers that still schedule ``beliefs``.
+        # Information now arrives through explicit observations and command
+        # relays; this handler never reads truth into an actor belief.
+        result = process_information(self.world, self.world.time, self.rng)
+        updates = result["generated"]
         error_total = 0.0
-        noise = self.world.config.observation_noise
         for (actor_id, locality_id), belief in self.world.beliefs.items():
-            truth_actor = "insurgent" if actor_id == "insurgent" else "government"
-            truth = self.world.localities[locality_id].control[truth_actor]
-            organization = self.world.organizations[actor_id]
-            access = clamp(.25 + .5 * organization.local_knowledge)
-            alpha = .08 + .25 * access
-            for dimension, true_value in truth.to_dict().items():
-                observed = clamp(true_value + self.rng.normalvariate(0, noise * (1.1 - access)))
-                old = getattr(belief.control_estimate, dimension)
-                setattr(belief.control_estimate, dimension, clamp(old + alpha * (observed - old)))
-                error_total += abs(getattr(belief.control_estimate, dimension) - true_value)
-                updates += 1
-            belief.confidence = clamp(belief.confidence + .01 * access)
-            belief.updated_at = self.world.time
+            target_actor = "insurgent" if actor_id == "insurgent" else "government"
+            control = self.world.localities[locality_id].control.get(target_actor)
+            if control is not None:
+                error_total += sum(abs(getattr(belief.control_estimate, key) - value)
+                                   for key, value in control.to_dict().items()) / 7
         # Civilian expected control updates through trusted, imperfect local observations.
+        noise = self.world.config.observation_noise
         perceived_actors = ["government"]
         if "insurgent" in self.world.organizations:
             perceived_actors.append("insurgent")
@@ -307,7 +305,25 @@ class ProcessEngine:
                 trust = person.trust.get(actor, .2)
                 old = person.expected_control.get(actor, .2)
                 person.expected_control[actor] = clamp(old + .12 * trust * (observed - old))
-        return {"belief_updates": updates, "mean_absolute_error": error_total / max(1, updates)}
+        return {"belief_updates": updates, "relays_delivered": result["relays_delivered"],
+                "relays_dropped": result["relays_dropped"],
+                # This value is a diagnostic attached to the event only; actor
+                # policy hooks never receive it as a state variable.
+                "mean_absolute_error": error_total / max(1, len(self.world.beliefs))}
+
+    def on_information(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        result = process_information(self.world, self.world.time, self.rng)
+        observations_by_actor: dict[str, tuple[str, ...]] = {}
+        for observation_id in result["observation_ids"]:
+            observation = self.world.observations[observation_id]
+            observations_by_actor.setdefault(observation.observer_actor_id, tuple())
+            observations_by_actor[observation.observer_actor_id] += (observation_id,)
+        return {"information_generated": result["generated"],
+                "observation_ids": result["observation_ids"],
+                "relays_delivered": result["relays_delivered"],
+                "relays_dropped": result["relays_dropped"],
+                "active_relays": result["active_relays"],
+                "observations_by_actor": observations_by_actor}
 
     def on_social_influence(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         """Translate explicit neighbor signals into exposure and observable behavior."""
@@ -444,9 +460,57 @@ class ProcessEngine:
         g = max(government, key=lambda f: f.effective_strength())
         i = max(insurgents, key=lambda f: f.effective_strength())
         locality = self.world.localities[locality_id]
-        detection = logistic(-2 + 1.2 * g.information + locality.observability + g.embeddedness - i.embeddedness)
-        if self.rng.random() >= detection * self.world.config.contact_rate:
-            return {"locality_id": locality_id, "actor_ids": (g.organization_id, i.organization_id), "contact": 0.0}
+        g_observation = observe_target(
+            self.world, g.organization_id, g.formation_id, f"CONTACT:{g.formation_id}:{i.formation_id}",
+            "contact", locality_id, i.organization_id, self.world.time, self.rng,
+            i.formation_id,
+        )
+        i_observation = observe_target(
+            self.world, i.organization_id, i.formation_id, f"CONTACT:{i.formation_id}:{g.formation_id}",
+            "contact", locality_id, g.organization_id, self.world.time, self.rng,
+            g.formation_id,
+        )
+        detected_by = tuple(
+            actor for actor, observation in ((g.organization_id, g_observation),
+                                             (i.organization_id, i_observation))
+            if observation is not None and observation.estimated_value.get("detected", False)
+        )
+        activity = clamp(g.effective_readiness() * i.effective_readiness())
+        proximity = 1.0  # candidate scheduler currently emits same-locality pairs
+        detection_factor = sum(
+            float(item.estimated_value.get("detection_probability", 0.0))
+            for item in (g_observation, i_observation) if item is not None
+        ) / max(1, sum(item is not None for item in (g_observation, i_observation)))
+        contact_hazard = 1 - exp(
+            -self.world.config.contact_rate * proximity * detection_factor * activity
+        )
+        if not detected_by or self.rng.random() >= contact_hazard:
+            return {"locality_id": locality_id, "actor_ids": (g.organization_id, i.organization_id),
+                    "contact": 0.0, "detected_by": detected_by,
+                    "proximity": proximity, "detection_factor": detection_factor,
+                    "contact_hazard": contact_hazard,
+                    "disengaged": 0.0,
+                    "information_asymmetry": float(len(detected_by) == 1),
+                    "observation_ids": tuple(item.observation_id for item in (g_observation, i_observation)
+                                              if item is not None),
+                    "observations_by_actor": {
+                        g.organization_id: tuple(item.observation_id for item in (g_observation,) if item),
+                        i.organization_id: tuple(item.observation_id for item in (i_observation,) if item),
+                    }}
+        surprise = float(len(detected_by) == 1)
+        disengaged = float(len(detected_by) == 1 and self.rng.random() < .35)
+        if disengaged:
+            return {"locality_id": locality_id, "actor_ids": (g.organization_id, i.organization_id),
+                    "affected_entity_ids": (g.formation_id, i.formation_id), "contact": 1.0,
+                    "detected_by": detected_by, "contact_hazard": contact_hazard,
+                    "proximity": proximity, "detection_factor": detection_factor,
+                    "disengaged": disengaged, "information_asymmetry": surprise,
+                    "observation_ids": tuple(item.observation_id for item in (g_observation, i_observation)
+                                              if item is not None),
+                    "observations_by_actor": {
+                        g.organization_id: tuple(item.observation_id for item in (g_observation,) if item),
+                        i.organization_id: tuple(item.observation_id for item in (i_observation,) if item),
+                    }, "severity": 0.0}
         advantage = log(g.effective_strength()) - log(i.effective_strength()) + self.rng.normalvariate(0, .35)
         government_wins = self.rng.random() < logistic(advantage)
         intensity = min(.08, .005 + self.rng.expovariate(45))
@@ -466,6 +530,17 @@ class ProcessEngine:
         return {"locality_id": locality_id, "actor_ids": (g.organization_id, i.organization_id),
                 "affected_entity_ids": (g.formation_id, i.formation_id), "contact": 1.0,
                 "government_losses": -g_loss, "insurgent_losses": -i_loss, "control_shift": shift,
+                "detected_by": detected_by, "contact_hazard": contact_hazard,
+                "proximity": proximity, "detection_factor": detection_factor,
+                "surprise_information_asymmetry": float(len(detected_by) == 1),
+                "information_asymmetry": surprise,
+                "disengaged": disengaged,
+                "observation_ids": tuple(item.observation_id for item in (g_observation, i_observation)
+                                          if item is not None),
+                "observations_by_actor": {
+                    g.organization_id: tuple(item.observation_id for item in (g_observation,) if item),
+                    i.organization_id: tuple(item.observation_id for item in (i_observation,) if item),
+                },
                 "severity": intensity * 10}
 
     def on_checkpoint(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:

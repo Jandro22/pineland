@@ -26,6 +26,11 @@ class IOTests(unittest.TestCase):
             logistics = json.loads((root / "result" / "logistics_diagnostics.json").read_text())
             self.assertAlmostEqual(logistics["supply_conservation"]["residual"], 0.0)
             self.assertTrue((root / "result" / "resource_flows.jsonl").read_text())
+            information = json.loads((root / "result" / "information_diagnostics.json").read_text())
+            self.assertIn("belief_error", information)
+            self.assertIn("information_age", information)
+            self.assertTrue((root / "result" / "observations.jsonl").read_text())
+            self.assertTrue((root / "result" / "information_relays.jsonl").read_text())
 
 
 if __name__ == "__main__":

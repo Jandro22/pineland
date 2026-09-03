@@ -1,0 +1,1019 @@
+from __future__ import annotations
+
+"""Detection, observation, fusion, and organizational information flow.
+
+This module is intentionally separate from physical control and combat.  It
+implements the information chain::
+
+    true state -> heterogeneous observation -> actor-local belief -> decision
+
+Actors receive only the observation and its fused belief.  Truth is used here
+only by the environment while sampling an observation, and analyst-only error
+is calculated in :func:`information_diagnostics`.
+"""
+
+from dataclasses import asdict
+from bisect import bisect_left, bisect_right
+from math import exp, log
+import random
+from typing import Any, Iterable
+
+from .entities import (
+    ActorBelief,
+    ActorZoneBelief,
+    ArmedFormation,
+    ControlVector,
+    InformationRelay,
+    Observation,
+    OrganizationKind,
+    PresenceBelief,
+    clamp,
+    logistic,
+)
+from .logistics import command_path
+from .world import WorldState, seeded_rng
+
+
+OBSERVATION_SOURCE_TYPES = (
+    "patrol", "fixed_post", "civilian", "social_network", "administrative",
+    "organization_member", "political_elite", "interpreter", "contact",
+)
+
+
+def initialize_information_world(world: WorldState) -> None:
+    """Create actor priors and clear run-specific observation state."""
+    world.observations.clear()
+    world.observation_index.clear()
+    world.information_relays.clear()
+    world.presence_beliefs.clear()
+    world.node_presence_beliefs.clear()
+    world.control_beliefs.clear()
+    world.information_detections = {
+        "true_positive": 0,
+        "false_positive": 0,
+        "false_negative": 0,
+        "true_negative": 0,
+    }
+    world.information_detection_by_source.clear()
+    world.last_information_decay_at = world.time
+    for observer_id in sorted(world.organizations):
+        target_ids = {"government"}
+        if "insurgent" in world.organizations:
+            target_ids.add("insurgent")
+        for locality_id, locality in world.localities.items():
+            for target_id in sorted(target_ids):
+                belief = ActorBelief(
+                    observer_id, locality_id, ControlVector(*([.5] * 7)),
+                    world.config.information.prior_confidence, world.time,
+                )
+                world.control_beliefs[(observer_id, target_id, locality_id)] = belief
+
+
+def _logit(probability: float) -> float:
+    probability = clamp(probability, 1e-6, 1 - 1e-6)
+    return log(probability / (1 - probability))
+
+
+def _target_actor_for_observer(world: WorldState, observer_actor_id: str) -> str | None:
+    """Select the actor a source is primarily tasked to observe."""
+    if observer_actor_id == "insurgent":
+        return "government" if "government" in world.organizations else None
+    return "insurgent" if "insurgent" in world.organizations else None
+
+
+def _observer_formation(world: WorldState, observer_id: str | None) -> ArmedFormation | None:
+    if observer_id is None:
+        return None
+    return world.formations.get(observer_id)
+
+
+def language_comprehension(world: WorldState, observer_actor_id: str,
+                           locality_id: str, source_type: str,
+                           source_id: str | None = None) -> float:
+    """Return effective language comprehension, retaining a nonzero floor.
+
+    Civilian and elite channels inherit the local community language profile;
+    organization-member channels inherit formation information.  Interpreters
+    improve transmission but do not make an otherwise inaccessible report
+    perfect.
+    """
+    organization = world.organizations.get(observer_actor_id)
+    if organization is None:
+        return 0.25
+    district = world.districts[world.localities[locality_id].district_id]
+    primary = district.language_pattern.split("/")[0]
+    if source_type in {"civilian", "social_network", "political_elite", "interpreter"}:
+        base = 0.28 + 0.48 * organization.local_knowledge
+        if primary != "FS":
+            base -= 0.18
+        if "/" in district.language_pattern:
+            base += 0.07
+        if source_type == "interpreter":
+            base += 0.2
+        # A source community can still have a bilingual bridge member.
+        if source_id and source_id in world.social_communities:
+            community = world.social_communities[source_id]
+            base = 0.22 + 0.62 * max(community.language_profile.values(), default=.2)
+            if source_type == "interpreter":
+                base += 0.15
+        return clamp(base, .08, 1.0)
+    formation = _observer_formation(world, source_id)
+    if formation is not None:
+        return clamp(.35 + .55 * formation.information + .1 * organization.local_knowledge,
+                     .1, 1.0)
+    return clamp(.45 + .45 * organization.local_knowledge, .1, 1.0)
+
+
+def source_trust(world: WorldState, observer_actor_id: str, source_type: str,
+                 locality_id: str, source_id: str | None = None) -> float:
+    config = world.config.information
+    trust = config.source_trust.get(source_type, .5)
+    organization = world.organizations.get(observer_actor_id)
+    if organization is not None:
+        trust *= .7 + .3 * clamp(organization.accountability)
+    if source_type == "civilian" or source_type == "social_network":
+        communities = [community for community in world.social_communities.values()
+                       if community.locality_id == locality_id]
+        if source_id in world.social_communities:
+            community = world.social_communities[source_id]
+            cooperation = (community.government_cooperation if observer_actor_id != "insurgent"
+                           else community.insurgent_sympathy)
+            trust *= .7 + .6 * clamp(cooperation)
+    return clamp(trust, .02, 1.0)
+
+
+def source_quality(world: WorldState, observer_actor_id: str, source_type: str,
+                   locality_id: str, source_id: str | None = None,
+                   rng: random.Random | None = None) -> float:
+    config = world.config.information
+    quality = config.source_coverage.get(source_type, .4)
+    locality = world.localities[locality_id]
+    quality *= .55 + .45 * locality.observability
+    quality *= .55 + .45 * language_comprehension(
+        world, observer_actor_id, locality_id, source_type, source_id
+    )
+    if rng is not None:
+        quality *= .85 + .3 * rng.random()
+    return clamp(quality)
+
+
+def _decay_rate(world: WorldState, observation_type: str,
+                target_formation_id: str | None = None) -> float:
+    config = world.config.information
+    if target_formation_id is not None or observation_type in {"presence", "detection"}:
+        return config.formation_decay_rate
+    if observation_type in {"road", "infrastructure"}:
+        return config.road_decay_rate
+    if observation_type in {"physical_control", "control"}:
+        return config.default_decay_rate
+    if observation_type in {"administrative", "governance"}:
+        return config.static_decay_rate
+    return config.mobile_decay_rate
+
+
+def _primary_zone(world: WorldState, locality_id: str) -> str | None:
+    zones = [zone for zone in world.microzones.values() if zone.locality_id == locality_id]
+    return max(zones, key=lambda zone: zone.population_share).microzone_id if zones else None
+
+
+def _actual_target_presence(world: WorldState, target_actor_id: str,
+                            locality_id: str, target_formation_id: str | None = None,
+                            microzone_id: str | None = None) -> tuple[bool, float, str | None]:
+    formations = [formation for formation in world.formations.values()
+                  if formation.organization_id == target_actor_id and
+                  formation.personnel > 0 and not formation.moving and
+                  formation.locality_id == locality_id]
+    if target_formation_id is not None:
+        formations = [formation for formation in formations
+                      if formation.formation_id == target_formation_id]
+    if microzone_id is not None:
+        patrol_by_formation = {patrol.formation_id: patrol for patrol in world.patrols.values()}
+        formations = [formation for formation in formations
+                      if (patrol_by_formation.get(formation.formation_id) is not None and
+                          patrol_by_formation[formation.formation_id].current_microzone_id == microzone_id)]
+    personnel = sum(formation.personnel for formation in formations)
+    chosen = max(formations, key=lambda formation: formation.personnel).formation_id if formations else None
+    return bool(formations), personnel, chosen
+
+
+def detection_probability(world: WorldState, observer_id: str,
+                          target_formation_id: str | None, locality_id: str,
+                          source_type: str = "patrol", microzone_id: str | None = None) -> float:
+    """Condition-dependent true-positive probability.
+
+    Pressure/readiness, exposure, language, observability, and terrain all
+    enter the logit.  This is a detection model, not a combat model.
+    """
+    config = world.config.information
+    observer_formation = _observer_formation(world, observer_id)
+    observer_actor_id = (observer_formation.organization_id if observer_formation
+                         else observer_id if observer_id in world.organizations else "government")
+    locality = world.localities[locality_id]
+    zone_observability = locality.observability
+    if microzone_id and microzone_id in world.microzones:
+        zone_observability = world.microzones[microzone_id].observability
+    readiness = (observer_formation.effective_readiness() if observer_formation else
+                 clamp(world.organizations.get(observer_actor_id).institutional_quality
+                       if observer_actor_id in world.organizations else .5))
+    target = world.formations.get(target_formation_id) if target_formation_id else None
+    target_embeddedness = target.embeddedness if target else .5
+    language = language_comprehension(world, observer_actor_id, locality_id,
+                                      source_type, observer_id)
+    pressure = clamp((observer_formation.effective_strength() / max(1, observer_formation.personnel * 2)
+                      if observer_formation else .5))
+    exposure = clamp(.35 + .45 * zone_observability - .25 * target_embeddedness)
+    terrain_penalty = clamp(locality.terrain_friction / 2.5)
+    base = config.contact_true_positive_rate if source_type == "contact" else config.true_positive_rate
+    if base <= 0:
+        return 0.0
+    if base >= 1:
+        return 1.0
+    score = (_logit(base) + config.detection_pressure_bonus * pressure +
+             config.detection_exposure_bonus * exposure +
+             config.detection_language_bonus * language +
+             config.detection_observability_bonus * zone_observability +
+             config.detection_readiness_bonus * readiness -
+             config.detection_terrain_penalty * terrain_penalty)
+    return clamp(logistic(score))
+
+
+def false_positive_probability(world: WorldState, observer_id: str, locality_id: str,
+                               source_type: str = "patrol",
+                               microzone_id: str | None = None) -> float:
+    config = world.config.information
+    locality = world.localities[locality_id]
+    observability = locality.observability
+    if microzone_id and microzone_id in world.microzones:
+        observability = world.microzones[microzone_id].observability
+    base = config.contact_false_positive_rate if source_type == "contact" else config.false_positive_rate
+    if base <= 0:
+        return 0.0
+    if base >= 1:
+        return 1.0
+    # Difficult terrain and poor comprehension make ambiguous reports more likely.
+    language = language_comprehension(world,
+                                      _observer_formation(world, observer_id).organization_id
+                                      if _observer_formation(world, observer_id) else observer_id,
+                                      locality_id, source_type, observer_id)
+    score = _logit(base) + .3 * (1 - observability) + .25 * (1 - language)
+    return clamp(logistic(score))
+
+
+def _new_observation(world: WorldState, *, observer_actor_id: str, observer_node_id: str | None,
+                     target_id: str | None, target_actor_id: str | None,
+                     target_formation_id: str | None, locality_id: str,
+                     microzone_id: str | None, timestamp: float, source_id: str,
+                     source_type: str, observation_type: str,
+                     estimated_value: dict[str, Any], quality: float,
+                     confidence: float, provenance: dict[str, Any]) -> Observation:
+    observation_id = f"OBS{len(world.observations) + 1:010d}"
+    observation = Observation(
+        observation_id=observation_id,
+        target_id=target_id,
+        locality_id=locality_id,
+        timestamp=timestamp,
+        source_id=source_id,
+        source_type=source_type,
+        observation_type=observation_type,
+        estimated_value=estimated_value,
+        confidence=clamp(confidence),
+        provenance=provenance,
+        observer_actor_id=observer_actor_id,
+        microzone_id=microzone_id,
+        observer_node_id=observer_node_id,
+        quality=clamp(quality),
+        decay_rate=_decay_rate(world, observation_type, target_formation_id),
+        target_actor_id=target_actor_id,
+        target_formation_id=target_formation_id,
+        received_at=timestamp,
+    )
+    world.observations[observation_id] = observation
+    index_key = (observation.target_actor_id or "*", observation.locality_id,
+                 observation.observation_type)
+    world.observation_index.setdefault(index_key, []).append(observation.timestamp)
+    return observation
+
+
+def _presence_key(observer_id: str, target_actor_id: str, locality_id: str,
+                  target_id: str | None, microzone_id: str | None) -> tuple[str, str, str, str]:
+    # Keep microzone in the key while allowing an organization-level wildcard.
+    location_key = f"{locality_id}:{microzone_id or '*'}"
+    return observer_id, target_actor_id, location_key, target_id or "*"
+
+
+def _fuse_scalar(old: float, prior_confidence: float, value: float, weight: float,
+                 contradiction: float, penalty: float) -> tuple[float, float, float]:
+    prior = max(.02, prior_confidence)
+    new_value = (prior * old + weight * value) / (prior + weight)
+    disagreement = abs(value - old)
+    contradiction = contradiction + weight * disagreement
+    confidence = clamp((prior + weight) / (1.0 + prior + weight) *
+                       exp(-penalty * contradiction))
+    return clamp(new_value), confidence, contradiction
+
+
+def _ensure_control_belief(world: WorldState, observer_id: str, target_actor_id: str,
+                           locality_id: str) -> ActorBelief:
+    key = (observer_id, target_actor_id, locality_id)
+    belief = getattr(world, "control_beliefs", {}).get(key)
+    if belief is None:
+        # Dynamic beliefs begin as an uninformative prior; only a generated
+        # observation may move them toward the underlying state.
+        belief = ActorBelief(observer_id, locality_id, ControlVector(*([.5] * 7)),
+                             world.config.information.prior_confidence, 0.0)
+        world.control_beliefs[key] = belief
+    return belief
+
+
+def _fuse_control(world: WorldState, observation: Observation, recipient_id: str,
+                  time: float, weight: float) -> None:
+    target_actor_id = observation.target_actor_id
+    if target_actor_id is None:
+        return
+    value = observation.estimated_value
+    control_values = value.get("control")
+    physical_value = value.get("physical_control")
+    if not isinstance(control_values, dict) and physical_value is None:
+        return
+    belief = _ensure_control_belief(world, recipient_id, target_actor_id, observation.locality_id)
+    if isinstance(control_values, dict):
+        values = control_values
+    else:
+        values = {"physical": physical_value}
+    prior_confidence = belief.confidence
+    for dimension, observed in values.items():
+        if dimension not in belief.control_estimate.to_dict():
+            continue
+        old = getattr(belief.control_estimate, dimension)
+        new, confidence, contradiction = _fuse_scalar(
+            old, prior_confidence, clamp(float(observed)), weight,
+            belief.contradiction_index, world.config.information.contradiction_penalty,
+        )
+        setattr(belief.control_estimate, dimension, new)
+        belief.confidence = confidence
+        belief.contradiction_index = contradiction
+    belief.updated_at = time
+    belief.evidence_count += 1
+    if weight >= .12:
+        belief.last_reliable_observation_at = time
+    if observation.microzone_id and "physical" in values:
+        zone_actor = (world.formations[recipient_id].organization_id
+                      if recipient_id in world.formations else recipient_id)
+        zone_belief = world.zone_beliefs.get((zone_actor, observation.microzone_id))
+        if zone_belief is not None:
+            old_zone = zone_belief.physical_control_estimate
+            prior_zone = max(.02, zone_belief.confidence)
+            zone_value, zone_confidence, zone_contradiction = _fuse_scalar(
+                old_zone, prior_zone, clamp(float(values["physical"])), weight,
+                zone_belief.contradiction_index,
+                world.config.information.contradiction_penalty,
+            )
+            zone_belief.physical_control_estimate = zone_value
+            zone_belief.confidence = zone_confidence
+            zone_belief.contradiction_index = zone_contradiction
+            zone_belief.updated_at = time
+            zone_belief.evidence_count += 1
+            if weight >= .12:
+                zone_belief.last_reliable_observation_at = time
+    # Existing beliefs remain the backward-compatible perceived state used by
+    # the Phase 3 movement policy when the observed actor is the observer's side.
+    if (target_actor_id == "insurgent" and recipient_id == "insurgent") or \
+            (target_actor_id == "government" and recipient_id != "insurgent"):
+        legacy = world.beliefs.get((recipient_id, observation.locality_id))
+        if legacy is not None:
+            legacy.control_estimate = ControlVector(**belief.control_estimate.to_dict())
+            legacy.confidence = belief.confidence
+            legacy.updated_at = belief.updated_at
+            legacy.last_reliable_observation_at = belief.last_reliable_observation_at
+            legacy.evidence_count = belief.evidence_count
+            legacy.contradiction_index = belief.contradiction_index
+
+
+def _ensure_presence_belief(world: WorldState, observer_id: str, target_actor_id: str,
+                            locality_id: str, target_id: str | None,
+                            microzone_id: str | None, node: bool) -> PresenceBelief:
+    container = world.node_presence_beliefs if node else world.presence_beliefs
+    key = _presence_key(observer_id, target_actor_id, locality_id, target_id, microzone_id)
+    belief = container.get(key)
+    if belief is None:
+        belief = PresenceBelief(observer_id, target_actor_id, locality_id,
+                                0.0, world.config.information.prior_confidence, 0.0,
+                                target_id=target_id, microzone_id=microzone_id)
+        container[key] = belief
+    return belief
+
+
+def get_presence_belief(world: WorldState, observer_id: str, target_actor_id: str,
+                        locality_id: str, target_id: str | None = None,
+                        microzone_id: str | None = None,
+                        node: bool = False) -> PresenceBelief | None:
+    """Return a fused presence belief using the public key dimensions."""
+    container = world.node_presence_beliefs if node else world.presence_beliefs
+    return container.get(_presence_key(
+        observer_id, target_actor_id, locality_id, target_id, microzone_id
+    ))
+
+
+presence_belief = get_presence_belief
+
+
+def _fuse_presence(world: WorldState, observation: Observation, recipient_id: str,
+                   time: float, weight: float, node: bool = False) -> None:
+    target_actor_id = observation.target_actor_id
+    if target_actor_id is None or "presence" not in observation.estimated_value:
+        return
+    target_id = observation.target_id or observation.target_formation_id
+    presence = clamp(float(observation.estimated_value.get("presence", 0.0)))
+    personnel = max(0.0, float(observation.estimated_value.get("personnel", 0.0)))
+    keys = [target_id]
+    if target_id is not None:
+        keys.append(None)
+    for key_target in keys:
+        belief = _ensure_presence_belief(
+            world, recipient_id, target_actor_id, observation.locality_id,
+            key_target, observation.microzone_id, node,
+        )
+        new, confidence, contradiction = _fuse_scalar(
+            belief.presence_estimate, belief.confidence, presence, weight,
+            belief.contradiction_index, world.config.information.contradiction_penalty,
+        )
+        belief.presence_estimate = new
+        belief.personnel_estimate = ((belief.personnel_estimate * max(.02, belief.confidence) +
+                                      personnel * weight) /
+                                     (max(.02, belief.confidence) + weight))
+        belief.confidence = confidence
+        belief.contradiction_index = contradiction
+        belief.updated_at = time
+        belief.evidence_count += 1
+        if weight >= .12:
+            belief.last_reliable_observation_at = time
+
+
+def fuse_observation(world: WorldState, observation: Observation, recipient_id: str,
+                     time: float | None = None, node: bool = False) -> float:
+    """Fuse one observation into a recipient's local belief state.
+
+    Returns the effective evidence weight used by the estimator.  No world
+    truth is consulted here, which makes the function safe for policy code and
+    straightforward to unit test with hand-built contradictory reports.
+    """
+    time = observation.timestamp if time is None else time
+    recipient_actor = (recipient_id if recipient_id in world.organizations else
+                       world.formations[recipient_id].organization_id
+                       if recipient_id in world.formations else observation.observer_actor_id)
+    trust = source_trust(world, recipient_actor, observation.source_type,
+                         observation.locality_id, observation.source_id)
+    language = language_comprehension(
+        world, recipient_actor,
+        observation.locality_id, observation.source_type, observation.source_id,
+    )
+    age_quality = exp(-observation.decay_rate * max(0.0, time - observation.timestamp))
+    index_key = (observation.target_actor_id or "*", observation.locality_id,
+                 observation.observation_type)
+    timestamps = world.observation_index.get(index_key, ())
+    corroboration = max(
+        0,
+        bisect_right(timestamps, observation.timestamp + 3.0) -
+        bisect_left(timestamps, observation.timestamp - 3.0) - 1,
+    )
+    weight = clamp(observation.confidence * observation.quality * trust * language * age_quality *
+                   (1 + world.config.information.corroboration_bonus * min(3, corroboration)))
+    if observation.observation_type in {"presence", "detection"}:
+        _fuse_presence(world, observation, recipient_id, time, weight, node=node)
+    _fuse_control(world, observation, recipient_id, time, weight)
+    return weight
+
+
+def _queue_relay(world: WorldState, observation: Observation, time: float) -> InformationRelay | None:
+    observer = observation.observer_actor_id
+    destination = f"CMD:{observer}"
+    source = observation.observer_node_id or observation.source_id
+    if source == destination:
+        return None
+    route, reliability, latency = command_path(world, observer, source, destination)
+    if not route:
+        # Reports from civilian, administrative, or elite channels have no
+        # explicit node, so use a transparent organization-level fallback.
+        route = [source, destination]
+        reliability = world.config.information.relay_base_reliability
+        organization = world.organizations.get(observer)
+        if organization is not None:
+            reliability *= .7 + .3 * organization.institutional_quality
+        latency = 0.0
+    if len(route) - 1 > world.config.information.relay_max_hops:
+        route = route[:world.config.information.relay_max_hops + 1]
+        reliability = max(.01, reliability)
+    latency += world.config.information.source_latency_hours.get(
+        observation.source_type, 0.0
+    )
+    relay_id = f"IR{len(world.information_relays) + 1:010d}"
+    relay = InformationRelay(
+        relay_id, observation.observation_id, observer, source, destination,
+        route, time, time + max(0.0, latency) / 24, clamp(reliability),
+        max(0.0, latency),
+    )
+    world.information_relays[relay_id] = relay
+    return relay
+
+
+def ingest_observation(world: WorldState, observation: Observation,
+                       time: float | None = None, rng: random.Random | None = None) -> float:
+    """Deliver an observation locally and enqueue its headquarters relay."""
+    time = observation.timestamp if time is None else time
+    observation.received_at = time
+    headquarters = f"CMD:{observation.observer_actor_id}"
+    if observation.observer_node_id and observation.observer_node_id != headquarters:
+        # A field node receives the report immediately; headquarters gets only
+        # the delayed relay below. This preserves organizational knowledge
+        # geography instead of collapsing local and national beliefs.
+        local_weight = fuse_observation(
+            world, observation, observation.observer_node_id, time, node=True
+        )
+    else:
+        local_weight = fuse_observation(world, observation, observation.observer_actor_id, time)
+    _queue_relay(world, observation, time)
+    return local_weight
+
+
+def observe_target(world: WorldState, observer_actor_id: str, observer_node_id: str | None,
+                   source_id: str, source_type: str, locality_id: str,
+                   target_actor_id: str, time: float, rng: random.Random,
+                   target_formation_id: str | None = None,
+                   microzone_id: str | None = None,
+                   record_negative: bool = True,
+                   force_detection: bool | None = None) -> Observation | None:
+    """Generate and ingest a positive/negative detection claim.
+
+    Negative claims are retained as low-confidence evidence, allowing
+    contradictory reports to increase uncertainty rather than triggering
+    last-write-wins updates.  False positives carry no target formation ID and
+    therefore never instantiate phantom world entities.
+    """
+    present, personnel, actual_id = _actual_target_presence(
+        world, target_actor_id, locality_id, target_formation_id, microzone_id
+    )
+    if present:
+        probability = detection_probability(
+            world, observer_node_id or observer_actor_id, actual_id or target_formation_id,
+            locality_id, source_type, microzone_id,
+        )
+    else:
+        probability = false_positive_probability(
+            world, observer_node_id or observer_actor_id, locality_id, source_type, microzone_id
+        )
+    detected = force_detection if force_detection is not None else rng.random() < probability
+    outcome = (("true_positive" if detected else "false_negative") if present else
+               ("false_positive" if detected else "true_negative"))
+    world.information_detections[outcome] += 1
+    by_source = world.information_detection_by_source.setdefault(
+        source_type, {"true_positive": 0, "false_positive": 0,
+                      "false_negative": 0, "true_negative": 0}
+    )
+    by_source[outcome] += 1
+    if not detected and not record_negative:
+        return None
+    quality = source_quality(world, observer_actor_id, source_type, locality_id, source_id, rng)
+    trust = source_trust(world, observer_actor_id, source_type, locality_id, source_id)
+    confidence = (world.config.information.positive_report_confidence if detected else
+                  world.config.information.negative_report_confidence)
+    # Personnel estimates are intentionally coarse and noisy; observers never
+    # receive the exact formation personnel value.
+    estimate = personnel * (0.65 + .7 * rng.random()) if detected else 0.0
+    if not present and detected:
+        estimate = max(1.0, rng.uniform(20.0, 250.0))
+    attribution_mistake = bool(
+        present and detected and
+        rng.random() < world.config.information.attribution_error_rate
+    )
+    reported_target_actor = target_actor_id
+    if attribution_mistake:
+        alternate = "government" if target_actor_id == "insurgent" else "insurgent"
+        if alternate in world.organizations:
+            reported_target_actor = alternate
+    target_id = (actual_id if present and detected and target_formation_id is not None and
+                 not attribution_mistake else target_formation_id
+                 if target_formation_id is not None and not attribution_mistake else None)
+    estimated = {
+        "presence": 1.0 if detected else 0.0,
+        "personnel": estimate,
+        "detection_probability": probability,
+        "detected": detected,
+        "attribution_confidence": .25 if attribution_mistake else .9,
+    }
+    provenance = {
+        "source_type": source_type,
+        "source_trust": trust,
+        "language_comprehension": language_comprehension(
+            world, observer_actor_id, locality_id, source_type, source_id
+        ),
+        "conditioned_probability": probability,
+        "collection_context": "formation_detection" if target_formation_id else "area_report",
+    }
+    observation = _new_observation(
+        world, observer_actor_id=observer_actor_id,
+        observer_node_id=observer_node_id, target_id=target_id,
+        target_actor_id=reported_target_actor, target_formation_id=target_id,
+        locality_id=locality_id, microzone_id=microzone_id, timestamp=time,
+        source_id=source_id, source_type=source_type, observation_type="detection",
+        estimated_value=estimated, quality=quality, confidence=confidence,
+        provenance=provenance,
+    )
+    ingest_observation(world, observation, time, rng)
+    return observation
+
+
+def observe_control(world: WorldState, observer_actor_id: str, observer_node_id: str | None,
+                    source_id: str, source_type: str, locality_id: str,
+                    target_actor_id: str, time: float, rng: random.Random,
+                    microzone_id: str | None = None) -> Observation:
+    vector = world.localities[locality_id].control.get(target_actor_id, ControlVector())
+    quality = source_quality(world, observer_actor_id, source_type, locality_id, source_id, rng)
+    trust = source_trust(world, observer_actor_id, source_type, locality_id, source_id)
+    language = language_comprehension(world, observer_actor_id, locality_id, source_type, source_id)
+    noise = world.config.observation_noise * (1.35 - .55 * quality * language)
+    estimated_control = {
+        dimension: clamp(value + rng.uniform(-noise, noise))
+        for dimension, value in vector.to_dict().items()
+    }
+    observation = _new_observation(
+        world, observer_actor_id=observer_actor_id,
+        observer_node_id=observer_node_id, target_id=target_actor_id,
+        target_actor_id=target_actor_id, target_formation_id=None,
+        locality_id=locality_id, microzone_id=microzone_id, timestamp=time,
+        source_id=source_id, source_type=source_type,
+        observation_type="physical_control",
+        estimated_value={"control": estimated_control,
+                         "physical_control": estimated_control["physical"]},
+        quality=quality, confidence=clamp(.45 + .45 * trust * language),
+        provenance={"source_type": source_type, "source_trust": trust,
+                    "language_comprehension": language,
+                    "estimated_from": "locality_or_microzone_field"},
+    )
+    ingest_observation(world, observation, time, rng)
+    return observation
+
+
+def observe_patrol(world: WorldState, patrol_id: str, time: float,
+                   rng: random.Random) -> list[Observation]:
+    patrol = world.patrols[patrol_id]
+    formation = world.formations.get(patrol.formation_id)
+    if formation is None or formation.moving:
+        return []
+    observer = formation.organization_id
+    target_actor = _target_actor_for_observer(world, observer)
+    observations: list[Observation] = []
+    collect = rng.random() < world.config.information.patrol_report_rate
+    if target_actor and collect:
+        targets = [item for item in world.formations.values()
+                   if item.organization_id == target_actor and item.personnel > 0 and
+                   item.locality_id == formation.locality_id and not item.moving]
+        if targets:
+            for target in targets:
+                observation = observe_target(
+                    world, observer, formation.formation_id, patrol_id, "patrol",
+                    formation.locality_id, target_actor, time, rng,
+                    target.formation_id, patrol.current_microzone_id, True,
+                )
+                if observation:
+                    observations.append(observation)
+        else:
+            # A patrol can report a false alarm without creating a formation.
+            observation = observe_target(
+                world, observer, formation.formation_id, patrol_id, "patrol",
+                formation.locality_id, target_actor, time, rng,
+                None, patrol.current_microzone_id, True,
+            )
+            if observation:
+                observations.append(observation)
+    if collect:
+        observations.append(observe_control(
+            world, observer, formation.formation_id, patrol_id, "patrol",
+            formation.locality_id,
+            observer if observer in world.localities[formation.locality_id].control else "government",
+            time, rng, microzone_id=patrol.current_microzone_id,
+        ))
+    return observations
+
+
+def _report_probability(world: WorldState, observer_actor_id: str, locality_id: str,
+                        source_type: str, source_id: str | None) -> float:
+    config = world.config.information
+    rates = {
+        "civilian": config.civilian_report_rate,
+        "social_network": config.social_report_rate,
+        "administrative": config.administrative_report_rate,
+        "political_elite": config.elite_report_rate,
+        "organization_member": config.member_report_rate,
+        "fixed_post": config.fixed_post_report_rate,
+    }
+    probability = rates.get(source_type, .2)
+    locality = world.localities[locality_id]
+    if source_type == "administrative":
+        probability *= .35 + .95 * clamp(locality.administrative_capacity)
+    elif source_type == "political_elite":
+        probability *= .45 + .65 * clamp(locality.governance.get("representation", .5))
+    if source_id in world.social_communities:
+        community = world.social_communities[source_id]
+        cooperation = (community.government_cooperation if observer_actor_id != "insurgent"
+                       else community.insurgent_sympathy)
+        probability *= .35 + 1.1 * clamp(cooperation)
+    return clamp(probability)
+
+
+def _observe_from_source(world: WorldState, observer_actor_id: str, observer_node_id: str | None,
+                         source_id: str, source_type: str, locality_id: str,
+                         time: float, rng: random.Random) -> list[Observation]:
+    target_actor = _target_actor_for_observer(world, observer_actor_id)
+    local_node = observer_node_id or source_id
+    if rng.random() >= _report_probability(
+            world, observer_actor_id, locality_id, source_type, source_id):
+        return []
+    if not target_actor:
+        # A no-insurgency world still has administrative and physical
+        # information; it simply cannot emit a claim about a nonexistent
+        # opposing organization.
+        target_control = (observer_actor_id if observer_actor_id in
+                          world.localities[locality_id].control else "government")
+        return [observe_control(
+            world, observer_actor_id, local_node, source_id, source_type,
+            locality_id, target_control, time, rng, _primary_zone(world, locality_id),
+        )]
+    targets = [formation for formation in world.formations.values()
+               if formation.organization_id == target_actor and formation.personnel > 0 and
+               formation.locality_id == locality_id and not formation.moving]
+    microzone = _primary_zone(world, locality_id)
+    observations: list[Observation] = []
+    if targets:
+        # Civilian/social/admin reports generally attribute to an organization,
+        # while a member or interpreter can identify a formation.
+        target = targets[0]
+        target_id = target.formation_id if source_type in {"organization_member", "interpreter"} else None
+        observations.append(observe_target(
+            world, observer_actor_id, local_node, source_id, source_type,
+            locality_id, target_actor, time, rng, target_id, microzone, True,
+        ))
+    else:
+        observations.append(observe_target(
+            world, observer_actor_id, local_node, source_id, source_type,
+            locality_id, target_actor, time, rng, None, microzone, True,
+        ))
+    observations.append(observe_control(
+        world, observer_actor_id, local_node, source_id, source_type,
+        locality_id, observer_actor_id if observer_actor_id in world.localities[locality_id].control
+        else "government", time, rng, microzone,
+    ))
+    return [observation for observation in observations if observation is not None]
+
+
+def generate_background_observations(world: WorldState, time: float,
+                                     rng: random.Random | None = None) -> list[Observation]:
+    """Generate fixed-post, civilian, social, administrative, elite, and member reports."""
+    rng = rng or seeded_rng(world.config, f"information:{time:.6f}")
+    observations: list[Observation] = []
+    for post in sorted(world.security_posts.values(), key=lambda item: item.post_id):
+        if post.available_fraction <= 0:
+            continue
+        observer = post.organization_id
+        formation = world.formations.get(post.formation_id) if post.formation_id else None
+        if formation and (formation.moving or formation.available_personnel() <= 0):
+            continue
+        observations.extend(_observe_from_source(
+            world, observer, post.formation_id or post.post_id, post.post_id,
+            "fixed_post", post.locality_id, time, rng,
+        ))
+
+    for locality_id in sorted(world.localities):
+        communities = [community for community in world.social_communities.values()
+                       if community.locality_id == locality_id]
+        if not communities:
+            continue
+        community = rng.choices(
+            communities,
+            weights=[max(1, len(item.member_ids)) for item in communities], k=1
+        )[0]
+        # Civilian and social channels are deliberately independent: cooperation
+        # improves source access, but neither channel creates physical presence.
+        for source_type in ("civilian", "social_network"):
+            if "government" in world.organizations:
+                observations.extend(_observe_from_source(
+                    world, "government", None, community.community_id, source_type,
+                    locality_id, time, rng,
+                ))
+        if "government" in world.organizations:
+            for source_type, source_id in (
+                ("administrative", f"ADMIN:{locality_id}"),
+                ("political_elite", f"ELITE:{community.community_id}"),
+            ):
+                observations.extend(_observe_from_source(
+                    world, "government", None, source_id, source_type,
+                    locality_id, time, rng,
+                ))
+        if "insurgent" in world.organizations:
+            observations.extend(_observe_from_source(
+                world, "insurgent", None, community.community_id, "civilian",
+                locality_id, time, rng,
+            ))
+        # A bridge/interpreter channel is only sampled where language diversity
+        # makes it meaningful; it degrades less than an untranslated report.
+        district = world.districts[world.localities[locality_id].district_id]
+        if "/" in district.language_pattern and "government" in world.organizations:
+            observations.extend(_observe_from_source(
+                world, "government", None, community.community_id, "interpreter",
+                locality_id, time, rng,
+            ))
+
+    for formation in sorted(world.formations.values(), key=lambda item: item.formation_id):
+        if formation.moving or formation.available_personnel() <= 0:
+            continue
+        observations.extend(_observe_from_source(
+            world, formation.organization_id, formation.formation_id,
+            formation.formation_id, "organization_member", formation.locality_id,
+            time, rng,
+        ))
+    return observations
+
+
+def _decay_belief_container(container: dict, time: float, rate: float) -> None:
+    for belief in container.values():
+        if not hasattr(belief, "confidence"):
+            continue
+        # The caller supplies the elapsed interval externally; this function is
+        # retained for readable separation in decay_information.
+        belief.confidence = clamp(belief.confidence * exp(-rate))
+
+
+def decay_information(world: WorldState, time: float) -> None:
+    """Age confidence without overwriting the estimate itself."""
+    previous = getattr(world, "last_information_decay_at", 0.0)
+    elapsed = max(0.0, time - previous)
+    if elapsed <= 0:
+        return
+    config = world.config.information
+    for belief in world.beliefs.values():
+        belief.confidence = clamp(belief.confidence * exp(-config.default_decay_rate * elapsed))
+    for belief in getattr(world, "control_beliefs", {}).values():
+        belief.confidence = clamp(belief.confidence * exp(-config.default_decay_rate * elapsed))
+    for belief in world.zone_beliefs.values():
+        belief.confidence = clamp(belief.confidence * exp(-config.formation_decay_rate * elapsed))
+    for belief in world.presence_beliefs.values():
+        rate = config.formation_decay_rate if belief.target_id else config.default_decay_rate
+        belief.confidence = clamp(belief.confidence * exp(-rate * elapsed))
+    for belief in world.node_presence_beliefs.values():
+        rate = config.formation_decay_rate if belief.target_id else config.default_decay_rate
+        belief.confidence = clamp(belief.confidence * exp(-rate * elapsed))
+    world.last_information_decay_at = time
+
+
+def process_information(world: WorldState, time: float,
+                        rng: random.Random | None = None) -> dict[str, Any]:
+    """Age beliefs, generate reports, and deliver due command-network relays."""
+    rng = rng or seeded_rng(world.config, f"information-process:{time:.6f}")
+    decay_information(world, time)
+    generated = generate_background_observations(world, time, rng)
+    delivered = dropped = 0
+    delivered_ids: list[str] = []
+    for relay in sorted(world.information_relays.values(), key=lambda item: item.relay_id):
+        if relay.status != "in_transit" or relay.arrives_at > time:
+            continue
+        observation = world.observations.get(relay.observation_id)
+        if observation is None:
+            relay.status = "dropped"
+            dropped += 1
+            continue
+        if rng.random() <= relay.reliability:
+            relay.status = "delivered"
+            relay.delivered_at = time
+            observation.received_at = time
+            fuse_observation(world, observation, relay.organization_id, time)
+            fuse_observation(world, observation, relay.destination_node_id, time, node=True)
+            delivered += 1
+            delivered_ids.append(observation.observation_id)
+        else:
+            relay.status = "dropped"
+            dropped += 1
+    return {"generated": len(generated),
+            "observation_ids": tuple(item.observation_id for item in generated),
+            "relays_delivered": delivered,
+            "delivered_observation_ids": tuple(delivered_ids),
+            "relays_dropped": dropped,
+            "active_relays": sum(relay.status == "in_transit"
+                                  for relay in world.information_relays.values())}
+
+
+def information_age(world: WorldState, observer_id: str, locality_id: str,
+                    target_actor_id: str | None = None, target_id: str | None = None,
+                    time: float | None = None, node: bool = False) -> float:
+    """Return age in days of the last reliable observation, or infinity."""
+    time = world.time if time is None else time
+    target_actor_id = target_actor_id or _target_actor_for_observer(world, observer_id)
+    if target_actor_id is None:
+        return float("inf")
+    container = world.node_presence_beliefs if node else world.presence_beliefs
+    candidates = [belief for belief in container.values()
+                  if belief.observer_id == observer_id and
+                  belief.target_actor_id == target_actor_id and
+                  belief.locality_id == locality_id and
+                  (target_id is None or belief.target_id == target_id)]
+    if not candidates:
+        belief = world.control_beliefs.get((observer_id, target_actor_id, locality_id)) \
+            if hasattr(world, "control_beliefs") else None
+        last = belief.last_reliable_observation_at if belief else -1.0e9
+    else:
+        last = max(item.last_reliable_observation_at for item in candidates)
+    return float("inf") if last < -1.0e8 else max(0.0, time - last)
+
+
+def _true_presence(world: WorldState, target_actor_id: str, locality_id: str) -> float:
+    present, _, _ = _actual_target_presence(world, target_actor_id, locality_id)
+    return 1.0 if present else 0.0
+
+
+def belief_error(world: WorldState, observer_id: str, locality_id: str,
+                 target_actor_id: str | None = None) -> float:
+    """Analyst-only mean absolute error for a locality belief."""
+    target_actor_id = target_actor_id or _target_actor_for_observer(world, observer_id)
+    if target_actor_id is None:
+        return 0.0
+    control = world.localities[locality_id].control.get(target_actor_id, ControlVector())
+    belief = (world.control_beliefs.get((observer_id, target_actor_id, locality_id))
+              if hasattr(world, "control_beliefs") else None)
+    if belief is None:
+        return 1.0
+    dimensions = control.to_dict()
+    estimate = belief.control_estimate.to_dict()
+    return sum(abs(estimate[key] - dimensions[key]) for key in dimensions) / len(dimensions)
+
+
+def _belief_record(belief: Any, time: float) -> dict[str, Any]:
+    last = getattr(belief, "last_reliable_observation_at", -1.0e9)
+    return {
+        "estimate": (belief.presence_estimate if hasattr(belief, "presence_estimate")
+                     else belief.control_estimate.to_dict()),
+        "confidence": belief.confidence,
+        "updated_at": belief.updated_at,
+        "last_reliable_observation_at": None if last < -1.0e8 else last,
+        "age_days": None if last < -1.0e8 else max(0.0, time - last),
+        "evidence_count": belief.evidence_count,
+        "contradiction_index": belief.contradiction_index,
+    }
+
+
+def information_diagnostics(world: WorldState) -> dict[str, Any]:
+    """Return analyst-facing information age, error, source, and relay measures."""
+    by_type: dict[str, int] = {}
+    by_source: dict[str, int] = {}
+    for observation in world.observations.values():
+        by_type[observation.observation_type] = by_type.get(observation.observation_type, 0) + 1
+        by_source[observation.source_type] = by_source.get(observation.source_type, 0) + 1
+    ages: dict[str, dict[str, float]] = {}
+    node_ages: dict[str, dict[str, float]] = {}
+    errors: dict[str, dict[str, float]] = {}
+    confidence: dict[str, dict[str, float]] = {}
+    for observer_id in sorted(world.organizations):
+        ages[observer_id] = {}
+        errors[observer_id] = {}
+        confidence[observer_id] = {}
+        for locality_id in sorted(world.localities):
+            age = information_age(world, observer_id, locality_id, time=world.time)
+            ages[observer_id][locality_id] = age
+            errors[observer_id][locality_id] = belief_error(world, observer_id, locality_id)
+            target = _target_actor_for_observer(world, observer_id)
+            belief = (world.control_beliefs.get((observer_id, target, locality_id))
+                      if target and hasattr(world, "control_beliefs") else None)
+            confidence[observer_id][locality_id] = belief.confidence if belief else 0.0
+    for belief in world.node_presence_beliefs.values():
+        last = belief.last_reliable_observation_at
+        age = float("inf") if last < -1.0e8 else max(0.0, world.time - last)
+        node_ages.setdefault(belief.observer_id, {})[belief.locality_id] = min(
+            age, node_ages.get(belief.observer_id, {}).get(belief.locality_id, float("inf"))
+        )
+    return {
+        "observations": len(world.observations),
+        "observations_by_type": by_type,
+        "observations_by_source": by_source,
+        "relays": {relay_id: asdict(relay)
+                    for relay_id, relay in world.information_relays.items()},
+        "active_relays": sum(relay.status == "in_transit"
+                              for relay in world.information_relays.values()),
+        "information_age": ages,
+        "node_information_age": node_ages,
+        "belief_error": errors,
+        "belief_confidence": confidence,
+        "control_beliefs": {
+            ":".join(key): _belief_record(belief, world.time)
+            for key, belief in world.control_beliefs.items()
+        },
+        "detection_counts": dict(world.information_detections),
+        "detection_counts_by_source": {
+            source: dict(counts)
+            for source, counts in world.information_detection_by_source.items()
+        },
+        "presence_beliefs": {
+            ":".join(key): _belief_record(belief, world.time)
+            for key, belief in world.presence_beliefs.items()
+        },
+        "node_presence_beliefs": {
+            ":".join(key): _belief_record(belief, world.time)
+            for key, belief in world.node_presence_beliefs.items()
+        },
+    }
