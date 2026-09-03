@@ -1,0 +1,13 @@
+{
+  "schema_version": "0.10.0",
+  "family": "all",
+  "source": "EXAMPLE ONLY — replace with an unseen documented empirical aggregate",
+  "source_population_case": "illustrative held-out case/time window",
+  "split": "holdout",
+  "targets": {
+    "event_frequency": {"value": 0.02, "weight": 1.0, "tolerance": 0.05},
+    "control_persistence": {"value": 0.90, "weight": 1.0, "tolerance": 0.20},
+    "organization_fragmentation": {"value": 1.0, "weight": 1.0, "tolerance": 1.0},
+    "recurrence": {"value": 0.0, "weight": 1.0, "tolerance": 1.0}
+  }
+}

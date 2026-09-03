@@ -9,6 +9,16 @@ endogenous recurrence. The matched unified/fragmented experiment and its interpr
 documented in `peace-process.md`; the phase is covered by 15 focused tests in addition to all
 prior regression tests.
 
+## v0.10 research-validation closure
+
+Version 0.10 deliberately adds no new conflict-domain mechanisms. It provides
+a complete scalar-parameter provenance registry, explicit sourced target
+contracts, Latin-hypercube global sensitivity and interaction screening,
+practical-equivalence identifiability labels, train/holdout calibration
+workflow, and a capability-aware null/proxy/reduced/full model ladder. The
+release reports inactive or non-identifiable mechanisms as findings rather
+than forcing a positive conclusion. See `research-validation.md`.
+
 ## Pre-change verification
 
 The inherited runtime passed all 12 tests and completed a 1,000-agent, 30-day smoke trajectory with 72 localities, 18 formations, and 2,275 events. The four established outputs were structurally valid:

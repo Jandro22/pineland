@@ -11,6 +11,8 @@ from .generator import generate_pineland
 from .simulation import Simulation
 from .networks import write_network_snapshot
 from .scaling import compare_agent_scales
+from .validation import (calibrate_and_validate, global_sensitivity, model_ladder,
+                         parameter_registry, registry_document, bargaining_stress_test)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,6 +42,44 @@ def build_parser() -> argparse.ArgumentParser:
     scale.add_argument("--agents", type=int, nargs="+", required=True)
     scale.add_argument("--days", type=float, default=30.0)
     scale.add_argument("--output", type=Path, default=Path("outputs/scale-comparison.json"))
+    registry = subparsers.add_parser("parameter-registry", help="write the complete parameter provenance registry")
+    registry.add_argument("--config", type=Path)
+    registry.add_argument("--output", type=Path, default=Path("outputs/parameter-registry.json"))
+    sensitivity = subparsers.add_parser("sensitivity", help="run Latin-hypercube global sensitivity screening")
+    sensitivity.add_argument("--config", type=Path)
+    sensitivity.add_argument("--samples", type=int, default=32)
+    sensitivity.add_argument("--repetitions", type=int, default=1)
+    sensitivity.add_argument("--outcomes", nargs="+", default=["government_control", "implementation", "recurrence"])
+    sensitivity.add_argument("--parameters", nargs="+")
+    sensitivity.add_argument("--agents", type=int, default=250)
+    sensitivity.add_argument("--days", type=float, default=180)
+    sensitivity.add_argument("--seed", type=int)
+    sensitivity.add_argument("--output", type=Path, default=Path("outputs/sensitivity.json"))
+    validate = subparsers.add_parser("validate", help="calibrate on one target contract and score a holdout contract")
+    validate.add_argument("--config", type=Path)
+    validate.add_argument("--training", type=Path, required=True)
+    validate.add_argument("--holdout", type=Path, required=True)
+    validate.add_argument("--samples", type=int, default=32)
+    validate.add_argument("--parameters", nargs="+")
+    validate.add_argument("--agents", type=int, default=250)
+    validate.add_argument("--days", type=float, default=180)
+    validate.add_argument("--seed", type=int)
+    validate.add_argument("--output", type=Path, default=Path("outputs/validation.json"))
+    ladder = subparsers.add_parser("model-ladder", help="compare null, proxy, reduced, and full models")
+    ladder.add_argument("--config", type=Path)
+    ladder.add_argument("--targets", type=Path, required=True)
+    ladder.add_argument("--agents", type=int, default=250)
+    ladder.add_argument("--days", type=float, default=180)
+    ladder.add_argument("--seed", type=int)
+    ladder.add_argument("--output", type=Path, default=Path("outputs/model-ladder.json"))
+    bargaining = subparsers.add_parser("bargaining-stress", help="test agreement ceilings across controlled regimes")
+    bargaining.add_argument("--config", type=Path)
+    bargaining.add_argument("--replications", type=int, default=100)
+    bargaining.add_argument("--months", type=int, default=24)
+    bargaining.add_argument("--agents", type=int, default=250)
+    bargaining.add_argument("--days", type=float, default=1)
+    bargaining.add_argument("--seed", type=int)
+    bargaining.add_argument("--output", type=Path, default=Path("outputs/bargaining-stress.json"))
     return parser
 
 
@@ -61,6 +101,11 @@ def main(argv: list[str] | None = None) -> int:
         print(args.path)
         return 0
     config = _config(args)
+    if args.command == "parameter-registry":
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(registry_document(config), indent=2), encoding="utf-8")
+        print(json.dumps({"parameters": len(parameter_registry(config)), "output": str(args.output)}, indent=2))
+        return 0
     if args.command == "run":
         result = Simulation(generate_pineland(config)).run()
         result.world.write_results(args.output)
@@ -74,6 +119,33 @@ def main(argv: list[str] | None = None) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(comparison, indent=2), encoding="utf-8")
         print(json.dumps(comparison, indent=2))
+        return 0
+    if args.command == "sensitivity":
+        result = global_sensitivity(config, args.outcomes, args.samples, args.parameters, args.repetitions)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result["analysis"], indent=2))
+        return 0
+    if args.command == "validate":
+        training = json.loads(args.training.read_text(encoding="utf-8"))
+        holdout = json.loads(args.holdout.read_text(encoding="utf-8"))
+        result = calibrate_and_validate(config, training, holdout, args.samples, args.parameters)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result["out_of_sample"], indent=2))
+        return 0
+    if args.command == "model-ladder":
+        targets = json.loads(args.targets.read_text(encoding="utf-8"))
+        result = model_ladder(config, targets)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps({name: item["score"] for name, item in result["models"].items()}, indent=2))
+        return 0
+    if args.command == "bargaining-stress":
+        result = bargaining_stress_test(config, replications=args.replications, months=args.months)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
         return 0
     outcomes, summary = run_paired_experiment(config, governance_surge(args.multiplier), args.repetitions)
     args.output.parent.mkdir(parents=True, exist_ok=True)

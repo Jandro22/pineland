@@ -1,0 +1,13 @@
+{
+  "schema_version": "0.10.0",
+  "family": "all",
+  "source": "EXAMPLE ONLY — replace with documented empirical aggregate data",
+  "source_population_case": "illustrative training case/time window",
+  "split": "training",
+  "targets": {
+    "government_control": {"value": 0.55, "weight": 1.0, "tolerance": 0.10},
+    "insurgent_control": {"value": 0.01, "weight": 1.0, "tolerance": 0.02},
+    "external_migration_share": {"value": 0.01, "weight": 1.0, "tolerance": 0.02},
+    "implementation": {"value": 0.10, "weight": 1.0, "tolerance": 0.10}
+  }
+}

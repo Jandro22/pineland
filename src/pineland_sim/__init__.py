@@ -10,6 +10,7 @@ from .entities import (BorderSegment, DiasporaLink, Election, Engagement, Extern
 from .entities import AgreementProvision, Negotiation, PeaceAgreement, PeaceTransition
 from .generator import generate_pineland
 from .simulation import Simulation, SimulationResult
+from .validation import ParameterSpec, empirical_target_contract, parameter_registry
 
 __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "ExternalSupport",
            "ExternalTransfer", "ForeignAffairsConfig", "ForeignBelief", "ForeignIntervention",
@@ -21,4 +22,5 @@ __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "Exter
            "SimulationResult", "generate_pineland"]
 __all__ += ["AgreementProvision", "Negotiation", "PeaceAgreement", "PeaceProcessConfig",
             "PeaceTransition"]
-__version__ = "0.9.0"
+__all__ += ["ParameterSpec", "empirical_target_contract", "parameter_registry"]
+__version__ = "0.10.0"
