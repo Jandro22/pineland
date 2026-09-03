@@ -68,4 +68,6 @@ This dashboard diagnostic is not a calibrated welfare function. Its purpose is t
 
 ## Scope boundary
 
-Phase 3 does not deepen combat. The inherited coarse contact event remains only for regression coverage. Formation routing, stocks, command, readiness, availability, presence, and control costs are tested independently before a later combat phase.
+Logistics remains a distinct stock-and-flow subsystem. The bounded combat
+resolver consumes its formation stocks and readiness, while territorial control
+is still updated only by the physical refresh process.

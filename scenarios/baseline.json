@@ -102,6 +102,7 @@
     "capacity_learning_rate": 0.012,
     "capacity_decay_rate": 0.008,
     "patronage_capacity_damage": 0.018,
+    "patronage_decay_rate": 0.035,
     "elite_broker_share": 0.35,
     "peaceful_channel_strength": 0.5,
     "election_turnout_sensitivity": 1.4
@@ -120,6 +121,7 @@
     "mutation_sigma": 0.035,
     "minimum_proto_members": 3,
     "minimum_formation_personnel": 75.0,
+    "fighter_conversion_fraction": 0.08,
     "onset_resource_fraction": 0.18,
     "recruitment_diversity_penalty": 0.12,
     "cohesion_loss_memory": 0.2
@@ -185,6 +187,7 @@
     "relay_base_reliability": 0.86,
     "relay_max_hops": 8,
     "contradiction_penalty": 0.45,
+    "contradiction_memory_days": 30.0,
     "corroboration_bonus": 0.12,
     "negative_report_confidence": 0.52,
     "positive_report_confidence": 0.9,
@@ -221,5 +224,14 @@
       "interpreter": 10.0,
       "contact": 0.1
     }
+  },
+  "recording": {
+    "enabled": true,
+    "base_logit": -1.5,
+    "severity_weight": 1.8,
+    "access_weight": 1.2,
+    "remoteness_penalty": 0.9,
+    "severity_noise": 0.12,
+    "geocoding_error_rate": 0.12
   }
 }

@@ -231,8 +231,11 @@ def process_peace(world, time: float, event_id: str, rng: random.Random) -> dict
             initiated = 1
     for negotiation in [n for n in world.negotiations.values() if n.status == "active"]:
         joint = min(negotiation.bargaining_surplus.values())
-        spoiler = negotiation.fragmentation
         foreign = .1 * len(negotiation.foreign_mediator_ids)
+        # Fragmentation is the pre-agreement coordination cost.  A spoiler is
+        # a distinct post-signatory actor/violation and must not be assigned
+        # the same value here as a second penalty.
+        spoiler = 0.0
         hazard = cfg.agreement_base_hazard * logistic(2.8 * joint +
                  cfg.credibility_weight * negotiation.credibility -
                  cfg.fragmentation_penalty * negotiation.fragmentation -

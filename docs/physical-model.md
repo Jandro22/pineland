@@ -38,4 +38,8 @@ This permits repeated patrol of mistakenly perceived weak zones and neglect of d
 
 ## Scope boundary
 
-Phase 2 does not add combat mechanics. The inherited coarse contact process retains personnel, readiness, expected-control, and social effects, but it no longer writes directly to locality physical control. Physical combat effects require explicit microzone locations and belong in a later bounded extension.
+Combat remains a separate bounded process and never writes territorial control
+directly. Both government and insurgent formations carry explicit microzone
+positions; runtime presence, response, and locality aggregation are symmetric.
+Combat effects reach physical control only through subsequent formation state,
+presence, and response refreshes.

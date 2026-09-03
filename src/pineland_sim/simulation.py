@@ -26,6 +26,7 @@ class Simulation:
         self.rng = seeded_rng(world.config, "event-scheduling")
         self.processes = ProcessEngine(world)
         self._initialized = False
+        self._recruitment_clock_started = False
 
     def initialize(self) -> None:
         if self._initialized:
@@ -38,6 +39,7 @@ class Simulation:
             ("force_movement", intervals.force_movement, 25),
             ("logistics", intervals.logistics, 27),
             ("information", intervals.information, 38),
+            ("beliefs", intervals.beliefs, 42),
             ("physical_refresh", intervals.physical_refresh, 35),
             ("social_influence", intervals.social_influence, 45),
             ("organization_ecology", self.world.config.organization_ecology.interval_days, 58),
@@ -49,11 +51,12 @@ class Simulation:
             ("economy", intervals.economy, 80),
             ("checkpoint", intervals.checkpoint, 90),
         ]
-        if any(organization.kind.value == "insurgent" and organization.status == "active"
-               for organization in self.world.organizations.values()):
-            recurring.append(("recruitment", intervals.recruitment, 60))
         for event_type, interval, priority in recurring:
             self.scheduler.schedule(0, event_type, {"interval": interval}, priority=priority)
+        if any(organization.kind.value == "insurgent" and organization.status == "active"
+               for organization in self.world.organizations.values()):
+            self.scheduler.schedule(0, "recruitment", {"interval": intervals.recruitment}, priority=60)
+            self._recruitment_clock_started = True
         self._initialized = True
 
     def _reschedule(self, event_type: str, payload: dict, current_time: float) -> None:
@@ -65,17 +68,20 @@ class Simulation:
             self.scheduler.schedule(current_time + interval, event_type, payload)
 
     def _schedule_contacts(self, current_time: float) -> None:
-        occupied: dict[str, set[str]] = {}
+        occupied: dict[tuple[str, str], set[str]] = {}
         for formation in self.world.formations.values():
-            if formation.moving:
+            if formation.moving or formation.current_microzone_id not in self.world.microzones:
                 continue
-            occupied.setdefault(formation.locality_id, set()).add(formation.organization_id)
-        for locality_id, actors in occupied.items():
+            occupied.setdefault((formation.locality_id, formation.current_microzone_id), set()).add(
+                formation.organization_id)
+        for (locality_id, microzone_id), actors in occupied.items():
             insurgents = {actor for actor in actors
                           if self.world.organizations[actor].kind.value == "insurgent" and
                           self.world.organizations[actor].status == "active"}
             if insurgents and any(actor not in insurgents for actor in actors):
-                self.scheduler.schedule(current_time + self.rng.random(), "contact", {"locality_id": locality_id}, priority=20)
+                self.scheduler.schedule(
+                    current_time + self.rng.random(), "contact",
+                    {"locality_id": locality_id, "microzone_id": microzone_id}, priority=20)
 
     def run(self, until: float | None = None, max_events: int | None = None) -> SimulationResult:
         self.initialize()
@@ -93,6 +99,11 @@ class Simulation:
             if self.policy_hook:
                 self.policy_hook(self.world, event.time)
             self.processes.execute(event)
+            if (not self._recruitment_clock_started and
+                    any(organization.kind.value == "insurgent" and organization.status == "active"
+                        for organization in self.world.organizations.values())):
+                self.scheduler.schedule(event.time, "recruitment", {"interval": intervals.recruitment}, priority=60)
+                self._recruitment_clock_started = True
             self._reschedule(event.event_type, event.payload, event.time)
             day = int(event.time)
             if day != last_contact_day:

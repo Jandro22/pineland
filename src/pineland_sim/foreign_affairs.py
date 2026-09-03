@@ -235,13 +235,15 @@ def begin_intervention(world, state: ForeignState, time: float, mode: str,
                                    .9, .38, .72, .68, .12, external_state_id=state.state_id)
         formation.supply_capacity = personnel * world.config.logistics.formation_supply_days
         formation.supply_stock = formation.supply_capacity * .75
-        world.initial_supply_stock += formation.supply_stock
+        # Runtime intervention materiel is an external inflow, not a rewrite
+        # of the generated baseline stock.
+        world.cumulative_supply_produced += formation.supply_stock
         world.formations[fid] = formation
         _add_command_edge(world, f"CMD:{oid}", fid, oid, .7, 7.0)
         sid = f"SUP-{oid}"
         world.supply_sources[sid] = SupplySource(sid, oid, border.locality_id,
                                                  12000, 18000, 350)
-        world.initial_supply_stock += 12000
+        world.cumulative_supply_produced += 12000
         zone = max((z for z in world.microzones.values() if z.locality_id == border.locality_id),
                    key=lambda z: z.population_share)
         pid = f"PATROL-{fid}"

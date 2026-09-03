@@ -29,4 +29,4 @@ __all__ += ["ParameterSpec", "empirical_target_contract", "parameter_registry"]
 __all__ += ["CasePackage", "EmpiricalTarget", "RawObservation", "TransformationRecord",
             "aggregate_observations", "build_case_package", "load_case_package",
             "load_raw_observations", "recorded_vs_true_metrics"]
-__version__ = "0.11.0"
+__version__ = "0.11.1"

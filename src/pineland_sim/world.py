@@ -78,6 +78,7 @@ class WorldState:
     zone_beliefs: dict[tuple[str, str], ActorZoneBelief] = field(default_factory=dict)
     observations: dict[str, Observation] = field(default_factory=dict)
     observation_index: dict[tuple[str, str, str], list[float]] = field(default_factory=dict)
+    observation_source_index: dict[tuple[str, str, str], list[tuple[float, str]]] = field(default_factory=dict)
     information_relays: dict[str, InformationRelay] = field(default_factory=dict)
     presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     node_presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
@@ -102,6 +103,7 @@ class WorldState:
     leaders: dict[str, LeadershipAgent] = field(default_factory=dict)
     proto_organizations: dict[str, ProtoOrganization] = field(default_factory=dict)
     organization_transitions: list[OrganizationTransition] = field(default_factory=list)
+    organization_eligibility_log: list[dict[str, Any]] = field(default_factory=list)
     political_institutions: dict[str, PoliticalInstitution] = field(default_factory=dict)
     party_branches: dict[str, PartyBranch] = field(default_factory=dict)
     local_elites: dict[str, LocalElite] = field(default_factory=dict)
@@ -140,6 +142,7 @@ class WorldState:
     cumulative_supply_produced: float = 0.0
     cumulative_supply_consumed: float = 0.0
     cumulative_supply_lost: float = 0.0
+    cumulative_resource_to_supply: float = 0.0
     cumulative_civilian_harm: float = 0.0
 
     @property
@@ -174,6 +177,11 @@ class WorldState:
             if (not 0 <= formation.cohesion <= 1 or not 0 <= formation.readiness <= 1 or
                     formation.cumulative_losses < 0):
                 raise AssertionError("invalid formation combat state")
+            if formation.current_microzone_id is not None:
+                if formation.current_microzone_id not in self.microzones:
+                    raise AssertionError("formation references missing microzone")
+                if self.microzones[formation.current_microzone_id].locality_id != formation.locality_id:
+                    raise AssertionError("formation microzone is outside its locality")
         for organization in self.organizations.values():
             if organization.resources < -tolerance:
                 raise AssertionError("negative organization budget")
@@ -266,8 +274,9 @@ class WorldState:
                 shipment.quantity_deliverable for shipment in self.supply_shipments.values()
                 if shipment.status == "in_transit"
             )
-            expected_supply = (self.initial_supply_stock + self.cumulative_supply_produced -
-                               self.cumulative_supply_consumed - self.cumulative_supply_lost)
+            expected_supply = (self.initial_supply_stock + self.cumulative_supply_produced +
+                               self.cumulative_resource_to_supply - self.cumulative_supply_consumed -
+                               self.cumulative_supply_lost)
             if abs(current_supply - expected_supply) > max(tolerance, abs(expected_supply) * 1e-9):
                 raise AssertionError(
                     f"supply conservation failed: current={current_supply}, expected={expected_supply}"
@@ -333,6 +342,7 @@ class WorldState:
             "proto_organizations": sum(proto.status == "mobilizing"
                                         for proto in self.proto_organizations.values()),
             "organization_transitions": len(self.organization_transitions),
+            "organization_eligibility_periods": len(self.organization_eligibility_log),
             "political_institutions": len(self.political_institutions),
             "party_branches": len(self.party_branches),
             "elections": len(self.elections),
@@ -351,10 +361,28 @@ class WorldState:
             "civilian_harm": self.cumulative_civilian_harm,
             "events": len(self.event_log),
             "synthetic_records": sum(record.recorded for record in self.synthetic_records),
+            "synthetic_recording_rate": (
+                sum(record.recorded for record in self.synthetic_records) /
+                max(1, len(self.synthetic_records))
+            ),
+            "cumulative_resource_to_supply": self.cumulative_resource_to_supply,
+            "supply_conservation_residual": self.supply_conservation_residual(),
             "mean_government_effective_control": sum(government_control) / len(government_control),
             "mean_insurgent_effective_control": sum(insurgent_control) / len(insurgent_control),
             "detection_counts": dict(self.information_detections),
         }
+
+    def supply_conservation_residual(self) -> float:
+        """Current minus expected supply under the explicit stock ledger."""
+        current = sum(source.stock for source in self.supply_sources.values())
+        current += sum(formation.supply_stock for formation in self.formations.values())
+        current += self.demobilized_arms
+        current += sum(shipment.quantity_deliverable for shipment in self.supply_shipments.values()
+                       if shipment.status == "in_transit")
+        expected = (self.initial_supply_stock + self.cumulative_supply_produced +
+                    self.cumulative_resource_to_supply - self.cumulative_supply_consumed -
+                    self.cumulative_supply_lost)
+        return current - expected
 
     def checkpoint(self) -> dict[str, Any]:
         snapshot = {
@@ -393,6 +421,8 @@ class WorldState:
         from .political_order import political_diagnostics
         from .foreign_affairs import foreign_diagnostics
         from .peace_process import peace_diagnostics
+        from .recording import recording_diagnostics
+        from .integrity import causal_integrity_diagnostics
         from .empirical import recorded_vs_true_metrics, recorded_synthetic_observations
 
         output = Path(output_dir)
@@ -425,6 +455,10 @@ class WorldState:
         (output / "organization_ecology.json").write_text(
             json.dumps(organization_ecology_diagnostics(self), indent=2), encoding="utf-8"
         )
+        (output / "organization_eligibility.jsonl").write_text(
+            "".join(json.dumps(row) + "\n" for row in self.organization_eligibility_log),
+            encoding="utf-8",
+        )
         (output / "political_diagnostics.json").write_text(
             json.dumps(political_diagnostics(self), indent=2), encoding="utf-8"
         )
@@ -444,6 +478,12 @@ class WorldState:
         )
         (output / "recorded_vs_true_metrics.json").write_text(
             json.dumps(recorded_vs_true_metrics(self), indent=2), encoding="utf-8"
+        )
+        (output / "recording_diagnostics.json").write_text(
+            json.dumps(recording_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "causal_integrity_diagnostics.json").write_text(
+            json.dumps(causal_integrity_diagnostics(self), indent=2), encoding="utf-8"
         )
         (output / "peace_agreements.jsonl").write_text(
             "".join(json.dumps(asdict(item)) + "\n" for item in self.peace_agreements.values()),

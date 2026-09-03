@@ -6,6 +6,7 @@ from statistics import mean
 
 from .entities import (
     ActorZoneBelief,
+    ControlVector,
     Microzone,
     Patrol,
     PhysicalEdge,
@@ -96,10 +97,11 @@ def generate_physical_world(world: WorldState) -> None:
         )
 
     for formation in world.formations.values():
-        if formation.organization_id == "insurgent":
-            continue
         locality_zones = zones_in_locality(world, formation.locality_id)
         post_zone = max(locality_zones, key=lambda zone: zone.population_share)
+        formation.current_microzone_id = post_zone.microzone_id
+        if world.organizations[formation.organization_id].kind.value == "insurgent":
+            continue
         post_id = f"POST-{formation.formation_id}"
         world.security_posts[post_id] = SecurityPost(
             post_id, formation.organization_id, formation.locality_id, post_zone.microzone_id,
@@ -113,9 +115,13 @@ def generate_physical_world(world: WorldState) -> None:
         )
 
     # Initial true control is generated from topology, posts, and response fields.
+    actors = ("government", "insurgent") if any(
+        organization.kind.value == "insurgent" and organization.status == "active"
+        for organization in world.organizations.values()) else ("government",)
     for locality_id in world.localities:
-        aggregate = recompute_microzone_control(world, locality_id, "government", 0.0)
-        world.localities[locality_id].control["government"].physical = aggregate
+        for actor in actors:
+            aggregate = recompute_microzone_control(world, locality_id, actor, 0.0)
+            world.localities[locality_id].control.setdefault(actor, ControlVector()).physical = aggregate
 
     for actor_id in world.organizations:
         for zone in world.microzones.values():
@@ -174,6 +180,23 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
             if dispatch_delay < distances[patrol.current_microzone_id]:
                 distances[patrol.current_microzone_id] = dispatch_delay
                 heapq.heappush(queue, (dispatch_delay, patrol.current_microzone_id))
+    # A formation remains a physical response source even when it has no
+    # patrol object (the normal case for insurgent formations).  Its explicit
+    # current microzone is the source location; this keeps both sides
+    # symmetric and removes the former patrol-only presence assumption.
+    for formation in world.formations.values():
+        organization = world.organizations[formation.organization_id]
+        control_actor = "insurgent" if organization.kind.value == "insurgent" else "government"
+        if (formation.locality_id != locality_id or control_actor != actor or
+                formation.moving or formation.personnel <= 0 or
+                formation.current_microzone_id not in distances):
+            continue
+        effective_fraction = .30 * formation.availability * formation.effective_readiness()
+        if effective_fraction > 0:
+            dispatch_delay = (1 - effective_fraction) * world.config.physical.response_decay_hours
+            if dispatch_delay < distances[formation.current_microzone_id]:
+                distances[formation.current_microzone_id] = dispatch_delay
+                heapq.heappush(queue, (dispatch_delay, formation.current_microzone_id))
     while queue:
         distance, zone_id = heapq.heappop(queue)
         if distance != distances[zone_id]:
@@ -190,6 +213,16 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
 def recompute_microzone_control(world: WorldState, locality_id: str,
                                 actor: str, time: float) -> float:
     config = world.config.physical
+    # Public test/policy hooks may relocate a formation by locality only.  Keep
+    # the explicit microzone state coherent at the next physical refresh.
+    local_zones = zones_in_locality(world, locality_id)
+    if local_zones:
+        default_zone = max(local_zones, key=lambda zone: zone.population_share).microzone_id
+        for formation in world.formations.values():
+            if formation.locality_id == locality_id and (
+                    formation.current_microzone_id not in world.microzones or
+                    world.microzones[formation.current_microzone_id].locality_id != locality_id):
+                formation.current_microzone_id = default_zone
     times = response_times(world, locality_id, actor, time)
     posts_by_zone: dict[str, float] = {}
     for post in world.security_posts.values():
@@ -206,10 +239,25 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
                 else:
                     effective_presence *= formation.availability * formation.effective_readiness()
             posts_by_zone[post.microzone_id] = posts_by_zone.get(post.microzone_id, 0.0) + effective_presence
+    formations_by_zone: dict[str, float] = {}
+    locality = world.localities[locality_id]
+    for formation in world.formations.values():
+        organization = world.organizations[formation.organization_id]
+        control_actor = "insurgent" if organization.kind.value == "insurgent" else "government"
+        if (control_actor != actor or formation.locality_id != locality_id or
+                formation.moving or formation.personnel <= 0 or
+                formation.current_microzone_id not in world.microzones):
+            continue
+        strength = formation.effective_strength()
+        formations_by_zone[formation.current_microzone_id] = (
+            formations_by_zone.get(formation.current_microzone_id, 0.0) +
+            config.patrol_presence_gain * strength / max(250.0, locality.population * .002))
     aggregate = 0.0
     for zone in zones_in_locality(world, locality_id):
         memory = decay_presence(zone, actor, time, config.presence_memory_days)
-        presence = 1 - exp(-(memory + config.fixed_post_presence_gain * posts_by_zone.get(zone.microzone_id, 0.0)))
+        presence = 1 - exp(-(memory +
+                             config.fixed_post_presence_gain * posts_by_zone.get(zone.microzone_id, 0.0) +
+                             formations_by_zone.get(zone.microzone_id, 0.0)))
         response = 0.0 if times[zone.microzone_id] == inf else exp(-times[zone.microzone_id] / config.response_decay_hours)
         zone.physical_control[actor] = clamp(.55 * presence + .45 * response)
         aggregate += zone.population_share * zone.physical_control[actor]
@@ -221,7 +269,9 @@ def physical_diagnostics(world: WorldState) -> dict:
     for locality_id in world.localities:
         zones = zones_in_locality(world, locality_id)
         values = [zone.physical_control.get("government", 0.0) for zone in zones]
+        insurgent_values = [zone.physical_control.get("insurgent", 0.0) for zone in zones]
         times = response_times(world, locality_id, "government", world.time)
+        insurgent_times = response_times(world, locality_id, "insurgent", world.time)
         locality_ranges[locality_id] = {
             "minimum": min(values), "mean": mean(values), "maximum": max(values),
             "range": max(values) - min(values),
@@ -232,6 +282,11 @@ def physical_diagnostics(world: WorldState) -> dict:
                     "presence_memory": zone.presence_memory.get("government", 0.0),
                     "response_time_hours": None if times[zone.microzone_id] == inf else times[zone.microzone_id],
                 }
+                for zone in zones
+            },
+            "insurgent_mean": mean(insurgent_values),
+            "insurgent_response_time_hours": {
+                zone.microzone_id: None if insurgent_times[zone.microzone_id] == inf else insurgent_times[zone.microzone_id]
                 for zone in zones
             },
         }

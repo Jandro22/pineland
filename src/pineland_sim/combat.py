@@ -9,12 +9,17 @@ from __future__ import annotations
 from math import exp, log
 import random
 
-from .entities import ArmedFormation, CausalContribution, Engagement, Observation, clamp, logistic
+from .entities import (ArmedFormation, CausalContribution, Engagement, Observation,
+                       OrganizationKind, clamp, logistic)
 from .information import ingest_observation
 from .logistics import consume_formation_supply, create_movement_order
 
 
 def formation_microzone(world, formation: ArmedFormation) -> str:
+    if formation.current_microzone_id in world.microzones:
+        zone = world.microzones[formation.current_microzone_id]
+        if zone.locality_id == formation.locality_id:
+            return zone.microzone_id
     patrol = next((p for p in world.patrols.values()
                    if p.formation_id == formation.formation_id and p.locality_id == formation.locality_id), None)
     if patrol is not None:
@@ -41,7 +46,7 @@ def _capability(formation: ArmedFormation, zone, initiative: float) -> float:
     embedded = .55 + .45 * formation.embeddedness
     return max(1e-9, (max(1.0, formation.available_personnel()) ** .72) *
                formation.quality * max(.05, formation.cohesion) *
-               max(.05, formation.effective_readiness()) * observation *
+               observation *
                (mobility ** .35) * embedded * initiative)
 
 
@@ -92,7 +97,8 @@ def _update_perceived_momentum(world, locality_id: str, signal: float,
         person.expected_control["government"] = clamp(
             old + config.momentum_learning_rate * (interpretation - .5) - .04 * attribution
         )
-        if "insurgent" in world.organizations:
+        if any(org.kind is OrganizationKind.INSURGENT and org.status == "active"
+               for org in world.organizations.values()):
             old_i = person.expected_control.get("insurgent", .1)
             person.expected_control["insurgent"] = clamp(
                 old_i + config.momentum_learning_rate * (.5 - interpretation) + .02 * attribution
@@ -199,8 +205,18 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
     )
     # Population response consumes the reported values, not the true tactical
     # state. The two audiences can therefore interpret the same event differently.
-    reported_signal = sum(float(o.estimated_value["momentum"]) for o in observations) / 2
-    reported_harm = sum(float(o.estimated_value["civilian_harm"]) for o in observations) / 2
+    # Convert each audience's noisy report into a common government-advantage
+    # frame before pooling.  Averaging opposing audience perspectives directly
+    # would mechanically cancel the signal toward 0.5.
+    government_signals = []
+    for observation in observations:
+        organization = world.organizations.get(observation.observer_actor_id)
+        value = float(observation.estimated_value["momentum"])
+        if organization is not None and organization.kind is OrganizationKind.INSURGENT:
+            value = 1 - value
+        government_signals.append(value)
+    reported_signal = sum(government_signals) / max(1, len(government_signals))
+    reported_harm = sum(float(o.estimated_value["civilian_harm"]) for o in observations) / max(1, len(observations))
     _update_perceived_momentum(world, locality.locality_id, reported_signal, reported_harm, rng)
     engagement = Engagement(
         engagement_id, event_id, time, locality.locality_id, zone_id,

@@ -114,9 +114,14 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
             world.adjacency[locality_id] = {}
 
     locality_ids = sorted(world.localities)
-    # Guaranteed connected national ring plus denser within-district links.
-    for i, locality_id in enumerate(locality_ids):
-        neighbor = locality_ids[(i + 1) % len(locality_ids)]
+    # The national backbone is a deterministic spatial permutation, not an
+    # identifier-order ring.  A dedicated stream makes topology reproducible
+    # without perturbing population and household draws above.
+    geographic_order = list(locality_ids)
+    seeded_rng(config, "national-geography").shuffle(geographic_order)
+    # Guaranteed connected national backbone plus denser within-district links.
+    for i, locality_id in enumerate(geographic_order):
+        neighbor = geographic_order[(i + 1) % len(geographic_order)]
         cost = (world.localities[locality_id].terrain_friction + world.localities[neighbor].terrain_friction) / 2
         world.adjacency[locality_id][neighbor] = cost
         world.adjacency[neighbor][locality_id] = cost
@@ -192,14 +197,17 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
     world.beliefs.clear()
     for organization_id in world.organizations:
         for locality_id, locality in world.localities.items():
-            true = locality.control["insurgent" if organization_id == "insurgent" else "government"]
-            noise = config.observation_noise
-            estimate = ControlVector(**{k: max(0, min(1, v + rng.uniform(-noise, noise))) for k, v in true.to_dict().items()})
+            # Actor-facing priors are deliberately uninformative.  They are
+            # moved only by observations; hidden control is retained for
+            # analyst diagnostics and environmental processes.
+            estimate = ControlVector(*([.5] * 7))
+            target_actor = ("insurgent" if organization_id in world.organizations and
+                            world.organizations[organization_id].kind is OrganizationKind.INSURGENT
+                            else "government")
             world.beliefs[(organization_id, locality_id)] = ActorBelief(
                 organization_id, locality_id, estimate,
                 config.information.prior_confidence, 0,
             )
-            target_actor = "insurgent" if organization_id == "insurgent" else "government"
             world.control_beliefs[(organization_id, target_actor, locality_id)] = ActorBelief(
                 organization_id, locality_id, ControlVector(**estimate.to_dict()),
                 config.information.prior_confidence, 0,

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from itertools import combinations
 from math import exp
 import random
 
@@ -109,6 +110,10 @@ def _mobilization_score(world, community) -> tuple[float, list]:
     return score, mobilized
 
 
+def _mean_representation_weight(world) -> float:
+    return sum(person.weight for person in world.persons.values()) / max(1, len(world.persons))
+
+
 def form_proto_organizations(world, time: float, rng: random.Random) -> list[ProtoOrganization]:
     cfg = world.config.organization_ecology
     active_communities = {p.community_id for p in world.proto_organizations.values() if p.status == "mobilizing"}
@@ -117,7 +122,7 @@ def form_proto_organizations(world, time: float, rng: random.Random) -> list[Pro
         if community.community_id in active_communities:
             continue
         score, mobilized = _mobilization_score(world, community)
-        if len(mobilized) < cfg.minimum_proto_members:
+        if sum(person.weight for person in mobilized) < cfg.minimum_proto_members * _mean_representation_weight(world):
             continue
         locality = world.localities[community.locality_id]
         repression = locality.control["government"].physical
@@ -180,15 +185,21 @@ def mature_proto(world, proto: ProtoOrganization, time: float, rng: random.Rando
         zone.physical_control.setdefault("insurgent", 0.0)
     _create_leader(world, organization, rng)
     personnel = max(cfg.minimum_formation_personnel,
-                    sum(world.persons[pid].weight for pid in proto.member_ids) * .08)
+                    sum(world.persons[pid].weight for pid in proto.member_ids) * cfg.fighter_conversion_fraction)
     fid = f"{oid.upper()}-F01"
     formation = ArmedFormation(fid, oid, proto.locality_id, personnel, .35, organization.cohesion,
                                .55, .45, .45, .55, .45, organization.local_knowledge)
     formation.supply_capacity = personnel * world.config.logistics.formation_supply_days
-    formation.supply_stock = min(formation.supply_capacity * .25, contributed)
+    # Startup materiel is converted from the proto's contributed resources;
+    # it is not also injected into the global supply baseline.
+    formation.supply_stock = min(formation.supply_capacity * .25, organization.resources)
+    organization.resources -= formation.supply_stock
+    world.cumulative_resource_to_supply += formation.supply_stock
     formation.sustainment = formation.supply_fraction()
+    local_zones = [z for z in world.microzones.values() if z.locality_id == proto.locality_id]
+    if local_zones:
+        formation.current_microzone_id = max(local_zones, key=lambda z: z.population_share).microzone_id
     world.formations[fid] = formation
-    world.initial_supply_stock += formation.supply_stock
     _add_command_edge(world, f"CMD:{oid}", fid, oid, .45, 8.0)
     proto.status = "matured"
     _transition(world, time, "birth", (proto.proto_id,), (oid,), {oid: proto.member_ids},
@@ -219,14 +230,15 @@ def recruit_and_retain(world, time: float, rng: random.Random) -> dict[str, floa
                                                   cfg.recruitment_diversity_penalty * diversity /
                                                   max(10, len(organization.member_ids)))
                     if formations:
-                        formations[0].personnel += person.weight
+                        formations[0].personnel += person.weight * cfg.fighter_conversion_fraction
             elif person.organization_id == organization.organization_id:
                 if rng.random() < rate * logistic(person.fear + .7 - organization.cohesion - person.grievance):
                     person.organization_id = None
                     organization.member_ids.discard(person.person_id)
                     exits += person.weight
                     if formations:
-                        formations[0].personnel = max(0, formations[0].personnel - person.weight)
+                        formations[0].personnel = max(
+                            0, formations[0].personnel - person.weight * cfg.fighter_conversion_fraction)
     return {"recruits": recruits, "exits": exits}
 
 
@@ -255,7 +267,7 @@ def split_organization(world, organization_id: str, time: float, rng: random.Ran
     for pid in members:
         person = world.persons[pid]
         groups.setdefault(person.community_id or person.residence_locality_id, []).append(pid)
-    ordered = sorted(groups.values(), key=lambda group: (-len(group), group[0]))
+    ordered = sorted(groups.values(), key=lambda group: (-sum(world.persons[pid].weight for pid in group), group[0]))
     faction_a = set(ordered[0])
     faction_b = set(members) - faction_a
     if not faction_b:
@@ -384,8 +396,12 @@ def process_organization_ecology(world, time: float, rng: random.Random) -> dict
         formations = [f for f in world.formations.values() if f.organization_id == organization.organization_id]
         losses = sum(f.cumulative_losses for f in formations) / max(1, sum(f.personnel + f.cumulative_losses for f in formations))
         member_people = [world.persons[pid] for pid in organization.member_ids]
-        identity_variance = (sum(abs(p.identities.get("federal", .5) - .5) for p in member_people) /
-                             max(1, len(member_people)))
+        represented_weight = sum(p.weight for p in member_people)
+        mean_identity = (sum(p.weight * p.identities.get("federal", .5) for p in member_people) /
+                         max(1e-9, represented_weight))
+        identity_variance = (sum(p.weight * (p.identities.get("federal", .5) - mean_identity) ** 2
+                                 for p in member_people) /
+                             max(1e-9, represented_weight))
         organization.cohesion = clamp(organization.cohesion +
                                       .025 * organization.capital["social"] -
                                       cfg.cohesion_loss_memory * losses - .02 * identity_variance)
@@ -412,11 +428,21 @@ def process_organization_ecology(world, time: float, rng: random.Random) -> dict
                          "new_leader": successor.leader_id})
         split_hazard = 1 - exp(-cfg.split_base_hazard * exp(2 * identity_variance + 3 * losses -
                                                             2 * organization.cohesion))
-        if len(organization.member_ids) >= 4 and rng.random() < split_hazard:
+        split_eligible = represented_weight >= 4 * _mean_representation_weight(world)
+        split_draw = rng.random() if split_eligible else None
+        world.organization_eligibility_log.append({
+            "time": time, "organization_id": organization.organization_id,
+            "eligible": split_eligible, "represented_members": represented_weight,
+            "identity_variance": identity_variance, "losses": losses,
+            "cohesion": organization.cohesion, "split_hazard": split_hazard,
+            "draw": split_draw,
+            "split": bool(split_draw is not None and split_draw < split_hazard),
+        })
+        if split_eligible and split_draw < split_hazard:
             split_organization(world, organization.organization_id, time, rng)
             splits += 1
             continue
-        social_base = len(organization.member_ids) / max(1, len(world.persons))
+        social_base = represented_weight / max(1e-9, sum(person.weight for person in world.persons.values()))
         collapse_hazard = 1 - exp(-cfg.collapse_base_hazard * exp(2 * (1 - organization.cohesion) +
                                                                       2 * losses - 3 * social_base -
                                                                       1.5 * organization.external_sanctuary))
@@ -428,12 +454,16 @@ def process_organization_ecology(world, time: float, rng: random.Random) -> dict
             collapses += 1
     active = armed_organizations(world)
     if len(active) >= 2:
-        first, second = active[0], active[1]
-        compatibility = 1 - sum(abs(first.ideology.get(k, .5) - second.ideology.get(k, .5))
-                                for k in set(first.ideology) | set(second.ideology)) / max(1, len(set(first.ideology) | set(second.ideology)))
-        hazard = cfg.merger_base_hazard * compatibility * (2 - first.cohesion - second.cohesion) / 2
+        candidates = []
+        for first, second in combinations(active, 2):
+            keys = set(first.ideology) | set(second.ideology)
+            compatibility = 1 - sum(abs(first.ideology.get(k, .5) - second.ideology.get(k, .5))
+                                    for k in keys) / max(1, len(keys))
+            hazard = cfg.merger_base_hazard * compatibility * (2 - first.cohesion - second.cohesion) / 2
+            candidates.append((hazard, first.organization_id, second.organization_id))
+        hazard, first_id, second_id = max(candidates, key=lambda item: (item[0], item[1], item[2]))
         if rng.random() < hazard:
-            merge_organizations(world, first.organization_id, second.organization_id, time, rng)
+            merge_organizations(world, first_id, second_id, time, rng)
             mergers = 1
     return {"proto_created": len(created), "births": births, "splits": splits,
             "mergers": mergers, "collapses": collapses,
@@ -456,6 +486,14 @@ def organization_ecology_diagnostics(world) -> dict:
         "proto_organizations": len(world.proto_organizations),
         "transition_counts": {kind: sum(t.transition_type == kind for t in world.organization_transitions)
                               for kind in ("birth", "proto_collapse", "split", "merge", "collapse")},
+        "eligibility": {
+            "periods": len(world.organization_eligibility_log),
+            "eligible_periods": sum(row["eligible"] for row in world.organization_eligibility_log),
+            "splits_given_eligible": (
+                sum(row["split"] for row in world.organization_eligibility_log if row["eligible"]) /
+                max(1, sum(row["eligible"] for row in world.organization_eligibility_log))
+            ),
+        },
         "genealogy": {o.organization_id: genealogy(world, o.organization_id)
                       for o in world.organizations.values() if o.kind is OrganizationKind.INSURGENT},
     }

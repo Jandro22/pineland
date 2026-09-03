@@ -28,7 +28,7 @@ from .information import (
     process_information,
 )
 from .world import WorldState, seeded_rng
-from .combat import resolve_engagement
+from .combat import formation_microzone, resolve_engagement
 from .organization_ecology import process_organization_ecology, recruit_and_retain
 from .political_order import process_political_order
 from .foreign_affairs import process_foreign_affairs
@@ -61,7 +61,13 @@ class ProcessEngine:
         affected = tuple(result.pop("affected_entity_ids", ()))
         observations = result.pop("observations_by_actor", {})
         severity = float(result.pop("severity", sum(abs(v) for v in result.values() if isinstance(v, (int, float)))))
-        synthetic = self._synthetic_record(event_id, event.event_type, locality_id, severity, actors[0] if actors else None)
+        observation_ids = [observation_id for ids in observations.values() for observation_id in ids]
+        source_types = {self.world.observations[observation_id].source_type
+                        for observation_id in observation_ids if observation_id in self.world.observations}
+        source_type = (next(iter(source_types)) if len(source_types) == 1 else
+                       "mixed" if source_types else "process_event")
+        synthetic = self._synthetic_record(event_id, event.event_type, locality_id, severity,
+                                           actors[0] if actors else None, source_type)
         log_entry = EventLogEntry(
             event_id, event.time, event.event_type, locality_id, actors, affected, result,
             event.causal_parent_ids, observations, synthetic,
@@ -94,7 +100,12 @@ class ProcessEngine:
             )
 
     def _synthetic_record(self, event_id: str, event_type: str, locality_id: str | None,
-                          severity: float, actor: str | None) -> SyntheticRecord:
+                          severity: float, actor: str | None,
+                          source_type: str = "process_event") -> SyntheticRecord:
+        cfg = self.world.config.recording
+        if not cfg.enabled:
+            return SyntheticRecord(event_id, self.world.time, locality_id, event_type, False,
+                                   0.0, actor, False, 0.0, source_type)
         if locality_id is None:
             access = .5
             remoteness = .5
@@ -102,12 +113,16 @@ class ProcessEngine:
             locality = self.world.localities[locality_id]
             access = locality.observability
             remoteness = clamp(locality.terrain_friction / 2.5)
-        probability = logistic(-1.5 + 1.8 * min(1, severity) + 1.2 * access - .9 * remoteness)
+        probability = logistic(cfg.base_logit + cfg.severity_weight * min(1, severity) +
+                               cfg.access_weight * access - cfg.remoteness_penalty * remoteness)
         recorded = self.rng.random() < probability
-        error = self.world.config.reporting_error
+        error = cfg.severity_noise
+        geocoding_error = recorded and self.rng.random() < cfg.geocoding_error_rate
+        geocoding_distance = (self.rng.expovariate(1 / max(1.0, 2.0 + 18.0 * remoteness))
+                              if geocoding_error else 0.0)
         return SyntheticRecord(event_id, self.world.time, locality_id, event_type, recorded,
                                max(0, severity * self.rng.uniform(1 - error, 1 + error)), actor,
-                               recorded and self.rng.random() < error)
+                               geocoding_error, geocoding_distance, source_type)
 
     def on_patrol(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         patrol_id = event.payload["patrol_id"]
@@ -187,31 +202,30 @@ class ProcessEngine:
         changed = 0
         total = 0.0
         for locality_id in sorted(self.world.localities):
-            aggregate = recompute_microzone_control(
-                self.world, locality_id, "government", self.world.time
-            )
-            before = self.world.localities[locality_id].control["government"].physical
-            formations = [formation for formation in self.world.formations.values()
-                          if formation.locality_id == locality_id and
-                          self.world.organizations[formation.organization_id].kind is not OrganizationKind.INSURGENT]
-            reallocated = any(
-                post.locality_id == locality_id and post.formation_id and
-                (self.world.formations[post.formation_id].moving or
-                 self.world.formations[post.formation_id].locality_id != locality_id)
-                for post in self.world.security_posts.values()
-            )
-            constrained = any(formation.moving or formation.supply_fraction() < .4 or
-                              formation.command < .5 or formation.availability < .5
-                              for formation in formations)
-            mechanism = ("force_projection_reallocation" if reallocated else
-                         "logistics_constrained_physical_aggregation" if constrained else
-                         "microzone_physical_aggregation")
-            self._set_control_dimension(
-                event_id, locality_id, "government", "physical", aggregate,
-                mechanism,
-            )
-            changed += aggregate != before
-            total += aggregate
+            actors = ["government"]
+            if any(organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
+                   for organization in self.world.organizations.values()):
+                actors.append("insurgent")
+            for actor in actors:
+                aggregate = recompute_microzone_control(
+                    self.world, locality_id, actor, self.world.time
+                )
+                before = self.world.localities[locality_id].control.setdefault(
+                    actor, ControlVector()).physical
+                formations = [formation for formation in self.world.formations.values()
+                              if formation.locality_id == locality_id and
+                              (actor == "insurgent") ==
+                              (self.world.organizations[formation.organization_id].kind is OrganizationKind.INSURGENT)]
+                constrained = any(formation.moving or formation.supply_fraction() < .4 or
+                                  formation.command < .5 or formation.availability < .5
+                                  for formation in formations)
+                mechanism = (f"logistics_constrained_{actor}_physical_aggregation"
+                             if constrained else f"{actor}_microzone_physical_aggregation")
+                self._set_control_dimension(event_id, locality_id, actor, "physical", aggregate,
+                                            mechanism)
+                changed += aggregate != before
+                if actor == "government":
+                    total += aggregate
         return {"localities_changed": changed,
                 "mean_physical_control": total / max(1, len(self.world.localities))}
 
@@ -272,7 +286,9 @@ class ProcessEngine:
             utilities = []
             for destination in candidates:
                 locality = self.world.localities[destination]
-                security = person.expected_control.get("government", .5) * locality.control["government"].physical
+                # Mobility is a policy response to the person's belief, not a
+                # hidden read of realized destination control.
+                security = person.expected_control.get("government", .5)
                 livelihood = log(max(2, locality.economic_output / max(1, locality.population)))
                 utilities.append(exp(max(-10, min(10, 1.2 * security + .1 * livelihood - neighbors[destination]))))
             destination = self.rng.choices(candidates, weights=utilities, k=1)[0]
@@ -290,36 +306,28 @@ class ProcessEngine:
         return {"affected_entity_ids": (), "moved_population": moved, "new_displaced_population": displaced}
 
     def on_beliefs(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
-        # Compatibility handler for callers that still schedule ``beliefs``.
-        # Information now arrives through explicit observations and command
-        # relays; this handler never reads truth into an actor belief.
-        result = process_information(self.world, self.world.time, self.rng)
-        updates = result["generated"]
-        error_total = 0.0
-        for (actor_id, locality_id), belief in self.world.beliefs.items():
-            target_actor = "insurgent" if actor_id == "insurgent" else "government"
-            control = self.world.localities[locality_id].control.get(target_actor)
-            if control is not None:
-                error_total += sum(abs(getattr(belief.control_estimate, key) - value)
-                                   for key, value in control.to_dict().items()) / 7
-        # Civilian expected control updates through trusted, imperfect local observations.
+        # Beliefs are updated from local social signals only.  Realized control
+        # is intentionally unavailable to this actor-facing process.
+        updates = 0
         noise = self.world.config.observation_noise
         perceived_actors = ["government"]
         if any(organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
                for organization in self.world.organizations.values()):
             perceived_actors.append("insurgent")
         for person in self.world.persons.values():
-            locality = self.world.localities[person.residence_locality_id]
+            community = self.world.social_communities.get(person.community_id)
+            if community is None:
+                continue
             for actor in perceived_actors:
-                observed = clamp(locality.control[actor].expected + self.rng.normalvariate(0, noise))
+                signal = (community.government_cooperation if actor == "government"
+                          else community.insurgent_sympathy)
+                observed = clamp(signal + self.rng.normalvariate(0, noise))
                 trust = person.trust.get(actor, .2)
                 old = person.expected_control.get(actor, .2)
                 person.expected_control[actor] = clamp(old + .12 * trust * (observed - old))
-        return {"belief_updates": updates, "relays_delivered": result["relays_delivered"],
-                "relays_dropped": result["relays_dropped"],
-                # This value is a diagnostic attached to the event only; actor
-                # policy hooks never receive it as a state variable.
-                "mean_absolute_error": error_total / max(1, len(self.world.beliefs))}
+                updates += 1
+        return {"belief_updates": updates, "relays_delivered": 0,
+                "relays_dropped": 0}
 
     def on_information(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         result = process_information(self.world, self.world.time, self.rng)
@@ -370,7 +378,8 @@ class ProcessEngine:
                 # below prevents agent resolution from becoming raw influence.
                 influence = edge.weight * edge.trust * edge.represented_relationships
                 neighbor_government, neighbor_insurgent = behavior_score.get(neighbor.public_behavior, (0.0, 0.0))
-                if neighbor.organization_id == "insurgent":
+                neighbor_org = self.world.organizations.get(neighbor.organization_id or "")
+                if neighbor_org is not None and neighbor_org.kind is OrganizationKind.INSURGENT:
                     neighbor_insurgent = max(1.0, neighbor_insurgent)
                 if not insurgent_available:
                     neighbor_insurgent = 0.0
@@ -443,8 +452,6 @@ class ProcessEngine:
 
     def on_organization_ecology(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         result = process_organization_ecology(self.world, self.world.time, self.rng)
-        recruitment = recruit_and_retain(self.world, self.world.time, self.rng)
-        result.update({f"ecology_{key}": value for key, value in recruitment.items()})
         result["affected_entity_ids"] = tuple(
             transition.transition_id for transition in self.world.organization_transitions
             if transition.time == self.world.time
@@ -469,9 +476,11 @@ class ProcessEngine:
 
     def on_contact(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         locality_id = event.payload["locality_id"]
+        microzone_id = event.payload.get("microzone_id")
         local = [f for f in self.world.formations.values()
                  if f.locality_id == locality_id and f.personnel > 0 and not f.moving and
-                 f.operational_status == "effective"]
+                 f.operational_status == "effective" and
+                 (microzone_id is None or formation_microzone(self.world, f) == microzone_id)]
         government = [f for f in local if self.world.organizations[f.organization_id].kind in
                       {OrganizationKind.MILITARY, OrganizationKind.POLICE, OrganizationKind.FOREIGN}]
         insurgents = [f for f in local if self.world.organizations[f.organization_id].kind is OrganizationKind.INSURGENT
@@ -484,12 +493,12 @@ class ProcessEngine:
         g_observation = observe_target(
             self.world, g.organization_id, g.formation_id, f"CONTACT:{g.formation_id}:{i.formation_id}",
             "contact", locality_id, i.organization_id, self.world.time, self.rng,
-            i.formation_id,
+            i.formation_id, microzone_id=microzone_id,
         )
         i_observation = observe_target(
             self.world, i.organization_id, i.formation_id, f"CONTACT:{i.formation_id}:{g.formation_id}",
             "contact", locality_id, g.organization_id, self.world.time, self.rng,
-            g.formation_id,
+            g.formation_id, microzone_id=microzone_id,
         )
         detected_by = tuple(
             actor for actor, observation in ((g.organization_id, g_observation),

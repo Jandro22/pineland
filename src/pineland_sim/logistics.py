@@ -283,13 +283,14 @@ def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | f
             formation.fatigue = clamp(formation.fatigue + .015 * order.travel_time_hours / 24)
             formation.readiness = clamp(formation.readiness - .01 * order.travel_time_hours / 24)
             formation.availability = clamp(formation.availability - .05)
+            zones = [zone for zone in world.microzones.values()
+                     if zone.locality_id == formation.locality_id]
+            destination_zone = max(zones, key=lambda zone: zone.population_share)
+            formation.current_microzone_id = destination_zone.microzone_id
             patrol = next((item for item in world.patrols.values()
                            if item.formation_id == formation.formation_id), None)
             if patrol:
                 patrol.locality_id = formation.locality_id
-                zones = [zone for zone in world.microzones.values()
-                         if zone.locality_id == formation.locality_id]
-                destination_zone = max(zones, key=lambda zone: zone.population_share)
                 patrol.current_microzone_id = destination_zone.microzone_id
                 patrol.route_history.append(destination_zone.microzone_id)
                 patrol.available_at = time

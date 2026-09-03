@@ -27,7 +27,7 @@ foreign formations, interpreters, imperfect foreign beliefs, host dependence,
 capacity transfer/crowding-out, foreign domestic politics, rivalry, and routed
 withdrawal. See [the foreign-affairs model](docs/foreign-affairs.md).
 
-Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.4 development line implements the runtime spine, social and physical structure, logistics, and explicit detection/information fusion described by the technical design specification.
+Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.11.1 development line implements the runtime spine, social and physical structure, logistics, spatial combat, endogenous organization ecology, political order, foreign affairs, peace processes, and explicit detection/information fusion described by the technical design specification. It remains a research prototype; numeric priors are not calibrated findings.
 
 The current engine is intentionally dependency-light and transparent. Every important control change is written to a causal ledger, actors act on noisy estimates rather than world truth, population agents carry weights, and all randomness is split into deterministic named streams.
 
@@ -110,6 +110,9 @@ Each run produces:
 - `information_diagnostics.json`: source mix, confidence, information age, command-relay state, detection counts, presence beliefs, and analyst-only belief error.
 - `observations.jsonl`: first-class source observations with timestamps, estimated values, provenance, quality, and decay rates.
 - `information_relays.jsonl`: command-network transmission attempts, route, latency, reliability, and delivery status.
+- `recording_diagnostics.json`: generated-versus-recorded recall, event-type strata, geocoding-error rate, and distance distribution.
+- `organization_eligibility.jsonl`: represented-size eligibility, split-hazard components, and realized conditional draws.
+- `causal_integrity_diagnostics.json`: cross-stock residuals, side-symmetric physical reach, belief-confidence health, recruitment-clock, patronage, and pathology warnings.
 
 The effective-control scalar is for dashboards only. Analysis should retain the complete seven-dimensional vectors and their trajectories.
 
@@ -127,10 +130,12 @@ The suite covers bounded equations, scheduler ordering, population and supply co
 
 ## Scope still ahead
 
-The current development version establishes the runtime spine, Phase 1 social structure, Phase 2 physical occupation, Phase 3 logistics/force projection, and Phase 4 observation/intelligence with evidence-based partial information without claiming scientific calibration. Detailed combat resolution remains deliberately deferred; the inherited contact placeholder is retained only as a compatibility path. Later work includes endogenous organization birth/splitting, patronage allocation, foreign actor decision clocks, negotiation/demobilization/recurrence, global sensitivity/identifiability pipelines, columnar event storage, and the semantic-zoom analyst interface.
+The implemented conflict lifecycle is complete through combat, organizational ecology, political order, foreign affairs, and bargaining/DDR/recurrence. Remaining work is research validation rather than missing runtime plumbing: multi-seed resolution ladders, parameter recovery, global sensitivity, measurement-model calibration, mechanism ablations, long-horizon pathology monitoring, richer geography, and optional columnar/interactive analyst outputs.
 
 Numeric values in code are transparent initial priors. They are not calibrated findings or policy recommendations.
 
 The continuation audit, resolved mismatches, benchmark snapshot, and remaining limitations are recorded in [`docs/implementation-audit.md`](docs/implementation-audit.md). Parameter meanings and calibration status are in [`docs/parameters.md`](docs/parameters.md).
+
+The v0.11.1 causal-integrity repairs and adversarial validation protocol are recorded in [`docs/causal-integrity-v0.11.1.md`](docs/causal-integrity-v0.11.1.md).
 
 The verified Phase 1 + Phase 2 baseline is preserved at commit `124df96` and annotated tag `v0.2.0`. Phase 3 is preserved at commit `0b68d34` and annotated tag `v0.3.0`. Phase 4 observation/intelligence work is an explicit development diff on top of that checkpoint.

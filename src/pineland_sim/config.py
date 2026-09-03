@@ -150,6 +150,7 @@ class InformationConfig:
     relay_base_reliability: float = 0.86
     relay_max_hops: int = 8
     contradiction_penalty: float = 0.45
+    contradiction_memory_days: float = 30.0
     corroboration_bonus: float = 0.12
     negative_report_confidence: float = 0.52
     positive_report_confidence: float = 0.9
@@ -207,6 +208,8 @@ class InformationConfig:
                      "detection_readiness_bonus"):
             if getattr(self, name) < 0:
                 raise ValueError(f"{name} cannot be negative")
+        if self.contradiction_memory_days <= 0:
+            raise ValueError("contradiction_memory_days must be positive")
         if self.relay_max_hops < 1:
             raise ValueError("relay_max_hops must be positive")
         for source_map_name in ("source_trust", "source_coverage"):
@@ -267,6 +270,7 @@ class OrganizationEcologyConfig:
     mutation_sigma: float = 0.035
     minimum_proto_members: int = 3
     minimum_formation_personnel: float = 75.0
+    fighter_conversion_fraction: float = .08
     onset_resource_fraction: float = 0.18
     recruitment_diversity_penalty: float = 0.12
     cohesion_loss_memory: float = 0.2
@@ -278,7 +282,8 @@ class OrganizationEcologyConfig:
                      "split_base_hazard", "merger_base_hazard", "collapse_base_hazard",
                      "succession_base_hazard",
                      "adaptation_rate", "mutation_sigma", "onset_resource_fraction",
-                     "recruitment_diversity_penalty", "cohesion_loss_memory"):
+                     "recruitment_diversity_penalty", "cohesion_loss_memory",
+                     "fighter_conversion_fraction"):
             if not 0 <= getattr(self, name) <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
 
@@ -295,6 +300,7 @@ class PoliticalOrderConfig:
     capacity_learning_rate: float = 0.012
     capacity_decay_rate: float = 0.008
     patronage_capacity_damage: float = 0.018
+    patronage_decay_rate: float = 0.035
     elite_broker_share: float = 0.35
     peaceful_channel_strength: float = 0.5
     election_turnout_sensitivity: float = 1.4
@@ -304,11 +310,30 @@ class PoliticalOrderConfig:
             raise ValueError("invalid political interval or budget")
         for name in ("public_budget_share", "patronage_share", "private_diversion_share",
                      "capacity_learning_rate", "capacity_decay_rate", "patronage_capacity_damage",
-                     "elite_broker_share", "peaceful_channel_strength"):
+                     "patronage_decay_rate", "elite_broker_share", "peaceful_channel_strength"):
             if not 0 <= getattr(self, name) <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
         if abs(self.public_budget_share + self.patronage_share + self.private_diversion_share - 1) > 1e-9:
             raise ValueError("political budget shares must sum to one")
+
+
+@dataclass(slots=True)
+class RecordingConfig:
+    """Observation model for synthetic event-recording, separate from reporting error."""
+
+    enabled: bool = True
+    base_logit: float = -1.5
+    severity_weight: float = 1.8
+    access_weight: float = 1.2
+    remoteness_penalty: float = 0.9
+    severity_noise: float = 0.12
+    geocoding_error_rate: float = 0.12
+
+    def validate(self) -> None:
+        if self.severity_noise < 0 or self.geocoding_error_rate < 0:
+            raise ValueError("recording noise parameters cannot be negative")
+        if not 0 <= self.geocoding_error_rate <= 1:
+            raise ValueError("geocoding_error_rate must be in [0, 1]")
 
 
 @dataclass(slots=True)
@@ -402,6 +427,7 @@ class SimulationConfig:
     political_order: PoliticalOrderConfig = field(default_factory=PoliticalOrderConfig)
     foreign_affairs: ForeignAffairsConfig = field(default_factory=ForeignAffairsConfig)
     peace_process: PeaceProcessConfig = field(default_factory=PeaceProcessConfig)
+    recording: RecordingConfig = field(default_factory=RecordingConfig)
 
     def validate(self) -> None:
         if self.agent_count < 1:
@@ -429,6 +455,7 @@ class SimulationConfig:
         self.political_order.validate()
         self.foreign_affairs.validate()
         self.peace_process.validate()
+        self.recording.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -456,6 +483,8 @@ class SimulationConfig:
             values["foreign_affairs"] = ForeignAffairsConfig(**values["foreign_affairs"])
         if isinstance(values.get("peace_process"), dict):
             values["peace_process"] = PeaceProcessConfig(**values["peace_process"])
+        if isinstance(values.get("recording"), dict):
+            values["recording"] = RecordingConfig(**values["recording"])
         config = cls(**values)
         config.validate()
         return config

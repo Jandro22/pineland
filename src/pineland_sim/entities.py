@@ -731,6 +731,7 @@ class ArmedFormation:
     cumulative_losses: float = 0.0
     external_state_id: str | None = None
     outside_pineland: bool = False
+    current_microzone_id: str | None = None
 
     def supply_fraction(self) -> float:
         return clamp(self.supply_stock / self.supply_capacity) if self.supply_capacity > 0 else clamp(self.sustainment)
@@ -804,6 +805,8 @@ class SyntheticRecord:
     reported_severity: float
     reported_actor: str | None
     geocoding_error: bool
+    geocoding_error_distance_km: float = 0.0
+    source_type: str = "process_event"
 
 
 @dataclass(slots=True)

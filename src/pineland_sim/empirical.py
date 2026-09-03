@@ -178,7 +178,8 @@ def recorded_synthetic_observations(world) -> list[RawObservation]:
                            record.event_type, record.reported_severity, "Pineland synthetic record",
                            recorded_uncertainty=.5 if record.geocoding_error else .2,
                            metadata={"reported_actor": record.reported_actor,
-                                     "geocoding_error": record.geocoding_error})
+                                     "geocoding_error": record.geocoding_error,
+                                     "geocoding_error_distance_km": record.geocoding_error_distance_km})
             for record in world.synthetic_records if record.recorded]
 
 

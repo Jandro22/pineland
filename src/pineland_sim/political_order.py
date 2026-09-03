@@ -95,6 +95,12 @@ def process_political_order(world, time: float, event_id: str, rng: random.Rando
     cfg = world.config.political_order
     if not cfg.enabled:
         return {"budget": 0.0, "implementations": 0, "election": False}
+    decay_factor = exp(-cfg.patronage_decay_rate * cfg.interval_days / 365.0)
+    patronage_decay = 0.0
+    for branch in world.party_branches.values():
+        before = branch.patronage_stock
+        branch.patronage_stock *= decay_factor
+        patronage_decay += before - branch.patronage_stock
     government = world.organizations["government"]
     budget = min(government.resources, cfg.federal_policy_budget)
     government.resources -= budget
@@ -187,6 +193,7 @@ def process_political_order(world, time: float, event_id: str, rng: random.Rando
         election = True
     return {"budget": budget, "public_spending": public_total,
             "patronage": patronage_total, "private_diversion": private_total,
+            "patronage_decay": patronage_decay,
             "implementations": implementations, "election": election}
 
 
