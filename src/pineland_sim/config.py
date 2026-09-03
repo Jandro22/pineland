@@ -77,6 +77,22 @@ class PhysicalModelConfig:
 
 
 @dataclass(slots=True)
+class GeographyConfig:
+    """Spatial-topology controls for the synthetic national locality graph."""
+
+    nearest_neighbors: int = 2
+    district_hub_links: bool = True
+    coordinate_jitter_km: float = 18.0
+    national_backbone: str = "spatial_mst"
+
+    def validate(self) -> None:
+        if self.nearest_neighbors < 1 or self.coordinate_jitter_km < 0:
+            raise ValueError("geography neighbour count and coordinate jitter must be nonnegative")
+        if self.national_backbone not in {"spatial_mst", "knn"}:
+            raise ValueError("unsupported national geography backbone")
+
+
+@dataclass(slots=True)
 class LogisticsConfig:
     formation_supply_days: float = 30.0
     initial_supply_fraction: float = 0.8
@@ -94,6 +110,8 @@ class LogisticsConfig:
     readiness_recovery_remote: float = 0.006
     availability_recovery_rate: float = 0.03
     reallocation_rate: float = 0.04
+    route_interdiction_enabled: bool = False
+    route_interdiction_rate: float = 0.0
 
     def validate(self) -> None:
         for name in ("formation_supply_days", "presence_consumption_per_person_day",
@@ -112,6 +130,8 @@ class LogisticsConfig:
             raise ValueError("movement and patrol consumption cannot be negative")
         if self.shipment_loss_per_travel_hour < 0:
             raise ValueError("shipment loss cannot be negative")
+        if self.route_interdiction_rate < 0:
+            raise ValueError("route interdiction rate cannot be negative")
 
 
 @dataclass(slots=True)
@@ -140,6 +160,7 @@ class InformationConfig:
     detection_observability_bonus: float = 0.7
     detection_terrain_penalty: float = 0.55
     detection_readiness_bonus: float = 0.55
+    insurgent_concealment: float = 0.25
     civilian_report_rate: float = 0.18
     social_report_rate: float = 0.22
     administrative_report_rate: float = 0.28
@@ -147,10 +168,12 @@ class InformationConfig:
     member_report_rate: float = 0.35
     fixed_post_report_rate: float = 0.72
     patrol_report_rate: float = 1.0
+    interpreter_report_rate: float = 0.72
     relay_base_reliability: float = 0.86
     relay_max_hops: int = 8
     contradiction_penalty: float = 0.45
     contradiction_memory_days: float = 30.0
+    language_fusion_weight: float = 1.0
     corroboration_bonus: float = 0.12
     negative_report_confidence: float = 0.52
     positive_report_confidence: float = 0.9
@@ -187,6 +210,15 @@ class InformationConfig:
         "interpreter": 10.0,
         "contact": 0.1,
     })
+    # Reports sharing a collection pipeline are not fully independent.  These
+    # coefficients attenuate corroboration while retaining distinct source
+    # identity in the evidence ledger.
+    source_correlation: dict[str, float] = field(default_factory=lambda: {
+        "patrol": .15, "fixed_post": .25, "civilian": .55,
+        "social_network": .65, "administrative": .35,
+        "organization_member": .20, "political_elite": .50,
+        "interpreter": .30, "contact": .10,
+    })
 
     def validate(self) -> None:
         bounded = (
@@ -195,7 +227,7 @@ class InformationConfig:
             "contact_true_positive_rate", "contact_false_positive_rate",
             "civilian_report_rate", "social_report_rate", "administrative_report_rate",
             "elite_report_rate", "member_report_rate", "fixed_post_report_rate",
-            "patrol_report_rate", "relay_base_reliability", "contradiction_penalty",
+            "patrol_report_rate", "interpreter_report_rate", "relay_base_reliability", "contradiction_penalty",
             "corroboration_bonus", "negative_report_confidence", "positive_report_confidence",
         )
         for name in bounded:
@@ -205,11 +237,15 @@ class InformationConfig:
                      "road_decay_rate", "formation_decay_rate", "detection_pressure_bonus",
                      "detection_exposure_bonus", "detection_language_bonus",
                      "detection_observability_bonus", "detection_terrain_penalty",
-                     "detection_readiness_bonus"):
+            "detection_readiness_bonus"):
             if getattr(self, name) < 0:
                 raise ValueError(f"{name} cannot be negative")
+        if not 0 <= self.insurgent_concealment <= 1:
+            raise ValueError("insurgent_concealment must be in [0, 1]")
         if self.contradiction_memory_days <= 0:
             raise ValueError("contradiction_memory_days must be positive")
+        if self.language_fusion_weight < 0:
+            raise ValueError("language_fusion_weight cannot be negative")
         if self.relay_max_hops < 1:
             raise ValueError("relay_max_hops must be positive")
         for source_map_name in ("source_trust", "source_coverage"):
@@ -220,6 +256,9 @@ class InformationConfig:
         for source, value in self.source_latency_hours.items():
             if value < 0:
                 raise ValueError(f"source_latency_hours[{source}] cannot be negative")
+        for source, value in self.source_correlation.items():
+            if not 0 <= value <= 1:
+                raise ValueError(f"source_correlation[{source}] must be in [0, 1]")
 
 
 @dataclass(slots=True)
@@ -269,6 +308,8 @@ class OrganizationEcologyConfig:
     adaptation_rate: float = 0.12
     mutation_sigma: float = 0.035
     minimum_proto_members: int = 3
+    minimum_proto_represented_population: float = 1_000.0
+    minimum_split_represented_population: float = 1_500.0
     minimum_formation_personnel: float = 75.0
     fighter_conversion_fraction: float = .08
     onset_resource_fraction: float = 0.18
@@ -276,7 +317,10 @@ class OrganizationEcologyConfig:
     cohesion_loss_memory: float = 0.2
 
     def validate(self) -> None:
-        if self.interval_days <= 0 or self.minimum_proto_members < 1 or self.minimum_formation_personnel < 0:
+        if (self.interval_days <= 0 or self.minimum_proto_members < 1 or
+                self.minimum_proto_represented_population <= 0 or
+                self.minimum_split_represented_population <= 0 or
+                self.minimum_formation_personnel < 0):
             raise ValueError("invalid organization ecology interval or minimum size")
         for name in ("proto_base_hazard", "birth_base_hazard", "proto_decay_rate",
                      "split_base_hazard", "merger_base_hazard", "collapse_base_hazard",
@@ -328,12 +372,48 @@ class RecordingConfig:
     remoteness_penalty: float = 0.9
     severity_noise: float = 0.12
     geocoding_error_rate: float = 0.12
+    geocoding_scale_km: float = 2.0
+    false_event_rate: float = 0.0
+    # Source-specific observation operators.  Missing channels inherit the
+    # top-level defaults, so old scenario files remain valid.
+    source_channels: dict[str, dict[str, float]] = field(default_factory=lambda: {
+        "default": {"base_logit": -1.5, "severity_weight": 1.8,
+                     "access_weight": 1.2, "remoteness_penalty": .9,
+                     "severity_noise": .12, "geocoding_error_rate": .12,
+                     "geocoding_scale_km": 2.0},
+        "contact": {"base_logit": -1.0, "severity_weight": 2.2,
+                    "access_weight": 1.3, "remoteness_penalty": .65,
+                    "severity_noise": .10, "geocoding_error_rate": .08,
+                    "geocoding_scale_km": 1.5},
+        "patrol": {"base_logit": -1.35, "severity_weight": 1.7,
+                   "access_weight": 1.4, "remoteness_penalty": .7,
+                   "severity_noise": .10, "geocoding_error_rate": .06,
+                   "geocoding_scale_km": 1.0},
+        "administrative": {"base_logit": -1.8, "severity_weight": 1.4,
+                           "access_weight": 1.6, "remoteness_penalty": .45,
+                           "severity_noise": .15, "geocoding_error_rate": .05,
+                           "geocoding_scale_km": .8},
+    })
 
     def validate(self) -> None:
-        if self.severity_noise < 0 or self.geocoding_error_rate < 0:
+        if self.severity_noise < 0 or self.geocoding_error_rate < 0 or self.geocoding_scale_km <= 0:
             raise ValueError("recording noise parameters cannot be negative")
         if not 0 <= self.geocoding_error_rate <= 1:
             raise ValueError("geocoding_error_rate must be in [0, 1]")
+        if not 0 <= self.false_event_rate <= 1:
+            raise ValueError("false_event_rate must be in [0, 1]")
+        for channel, values in self.source_channels.items():
+            for key in ("base_logit", "severity_weight", "access_weight", "remoteness_penalty",
+                        "severity_noise", "geocoding_error_rate", "geocoding_scale_km"):
+                if key not in values:
+                    continue
+                value = values[key]
+                if key == "geocoding_error_rate" and not 0 <= value <= 1:
+                    raise ValueError(f"source_channels[{channel}].{key} must be in [0, 1]")
+                if key == "geocoding_scale_km" and value <= 0:
+                    raise ValueError(f"source_channels[{channel}].{key} must be positive")
+                if key not in {"base_logit", "geocoding_error_rate", "geocoding_scale_km"} and value < 0:
+                    raise ValueError(f"source_channels[{channel}].{key} cannot be negative")
 
 
 @dataclass(slots=True)
@@ -408,7 +488,9 @@ class SimulationConfig:
     horizon_days: float = 365.0
     agent_count: int = 75_000
     locality_count: int = 72
-    burn_in_days: float = 30.0
+    # Library callers default to no warm-up; the bundled baseline scenario
+    # opts into a 30-day unrecorded stabilization phase explicitly.
+    burn_in_days: float = 0.0
     include_insurgency: bool = True
     initial_insurgent_share: float = 0.001
     observation_noise: float = 0.08
@@ -420,6 +502,7 @@ class SimulationConfig:
     intervals: ProcessIntervals = field(default_factory=ProcessIntervals)
     social_network: SocialNetworkConfig = field(default_factory=SocialNetworkConfig)
     physical: PhysicalModelConfig = field(default_factory=PhysicalModelConfig)
+    geography: GeographyConfig = field(default_factory=GeographyConfig)
     logistics: LogisticsConfig = field(default_factory=LogisticsConfig)
     information: InformationConfig = field(default_factory=InformationConfig)
     combat: CombatConfig = field(default_factory=CombatConfig)
@@ -436,6 +519,8 @@ class SimulationConfig:
             raise ValueError("locality_count must be at least 17")
         if self.horizon_days <= 0:
             raise ValueError("horizon_days must be positive")
+        if self.burn_in_days < 0:
+            raise ValueError("burn_in_days cannot be negative")
         for name in ("initial_insurgent_share", "observation_noise", "reporting_error"):
             value = getattr(self, name)
             if not 0 <= value <= 1:
@@ -448,6 +533,7 @@ class SimulationConfig:
                 raise ValueError(f"interval {name} must be positive")
         self.social_network.validate()
         self.physical.validate()
+        self.geography.validate()
         self.logistics.validate()
         self.information.validate()
         self.combat.validate()
@@ -469,6 +555,8 @@ class SimulationConfig:
             values["social_network"] = SocialNetworkConfig(**values["social_network"])
         if isinstance(values.get("physical"), dict):
             values["physical"] = PhysicalModelConfig(**values["physical"])
+        if isinstance(values.get("geography"), dict):
+            values["geography"] = GeographyConfig(**values["geography"])
         if isinstance(values.get("logistics"), dict):
             values["logistics"] = LogisticsConfig(**values["logistics"])
         if isinstance(values.get("information"), dict):

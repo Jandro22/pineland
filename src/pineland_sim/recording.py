@@ -15,6 +15,8 @@ def recording_diagnostics(world) -> dict:
     generated = list(world.event_log)
     records = {record.event_id: record for record in world.synthetic_records}
     recorded = [record for record in records.values() if record.recorded]
+    false_records = [record for record in recorded if record.event_type == "false_event"]
+    true_records = [record for record in recorded if record.event_type != "false_event"]
 
     def strata(key):
         by_key: dict[str, dict[str, float | int | None]] = {}
@@ -27,8 +29,8 @@ def recording_diagnostics(world) -> dict:
                 "generated_events": len(events),
                 "recorded_events": len(rows),
                 "recall_p_recorded_given_true": len(rows) / max(1, len(events)),
-                "precision": None,
-                "false_events_per_locality_day": 0.0,
+                "precision": (None if not recorded else len(true_records) / len(recorded)),
+                "false_events_per_locality_day": len(false_records) / max(1, len(world.localities) * max(1.0, world.time)),
             }
         return by_key
     by_type = strata(lambda event, record: event.event_type if event is not None else record.event_type)
@@ -41,9 +43,9 @@ def recording_diagnostics(world) -> dict:
         "generated_events": len(generated),
         "recorded_events": len(recorded),
         "recording_rate": len(recorded) / max(1, len(generated)),
-        "precision": None,
+        "precision": (None if not recorded else len(true_records) / len(recorded)),
         "recall_p_recorded_given_true": len(recorded) / max(1, len(generated)),
-        "false_events_per_locality_day": 0.0,
+        "false_events_per_locality_day": len(false_records) / max(1, len(world.localities) * max(1.0, world.time)),
         "geocoding_error_rate": mean(geocoding_flags) if geocoding_flags else 0.0,
         "geocoding_error_distance_km": {
             "mean": mean(geocoding_distances) if geocoding_distances else 0.0,
@@ -52,5 +54,6 @@ def recording_diagnostics(world) -> dict:
         },
         "by_event_type": by_type,
         "by_source_type": by_source,
-        "model_note": "precision is undefined until an explicit false-event generator is enabled",
+        "model_note": ("precision is estimated from explicit false_event records"
+                       if false_records else "precision is undefined until an explicit false-event generator is enabled"),
     }

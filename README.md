@@ -1,6 +1,6 @@
 # Pineland COIN-SIM
 
-Version 0.11 adds an empirical-data boundary, provenance-preserving case
+Version 0.12 adds an empirical-data boundary, provenance-preserving case
 packages, measurement-error-aware targets, fragmentation forensics, synthetic
 parameter recovery, and question-specific parameter registries. See
 `docs/empirical-benchmarking.md`.
@@ -27,9 +27,9 @@ foreign formations, interpreters, imperfect foreign beliefs, host dependence,
 capacity transfer/crowding-out, foreign domestic politics, rivalry, and routed
 withdrawal. See [the foreign-affairs model](docs/foreign-affairs.md).
 
-Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.11.1 development line implements the runtime spine, social and physical structure, logistics, spatial combat, endogenous organization ecology, political order, foreign affairs, peace processes, and explicit detection/information fusion described by the technical design specification. It remains a research prototype; numeric priors are not calibrated findings.
+Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.12.0 development line implements the runtime spine, social and physical structure, logistics, spatial combat, endogenous organization ecology, political order, foreign affairs, peace processes, and explicit detection/information fusion described by the technical design specification. It remains a research prototype; numeric priors are not calibrated findings.
 
-The current engine is intentionally dependency-light and transparent. Every important control change is written to a causal ledger, actors act on noisy estimates rather than world truth, population agents carry weights, and all randomness is split into deterministic named streams.
+The current engine is intentionally dependency-light and transparent. Every important control change is written to a causal ledger, actors act on noisy estimates rather than world truth, population agents carry weights, and all randomness is split into deterministic named streams. Version 0.12 also records cross-stock transactions and sparse state deltas, executes an explicitly unrecorded burn-in when configured, uses spatially generated locality links, and exposes adversarial validation batteries for firewall, scheduler, conservation, recording, resolution, sensitivity, recovery, and foreign-withdrawal diagnostics.
 
 ## Implemented foundation
 
@@ -113,6 +113,9 @@ Each run produces:
 - `recording_diagnostics.json`: generated-versus-recorded recall, event-type strata, geocoding-error rate, and distance distribution.
 - `organization_eligibility.jsonl`: represented-size eligibility, split-hazard components, and realized conditional draws.
 - `causal_integrity_diagnostics.json`: cross-stock residuals, side-symmetric physical reach, belief-confidence health, recruitment-clock, patronage, and pathology warnings.
+- `stock_transactions.jsonl`: event-boundary material/manpower deltas with stock class and boundary provenance.
+- `state_deltas.jsonl`: sparse control, formation, belief, and organization changes keyed to event IDs.
+- `stock_ledger_diagnostics.json`: initial/current aggregate stocks and conservation residuals.
 
 The effective-control scalar is for dashboards only. Analysis should retain the complete seven-dimensional vectors and their trajectories.
 
@@ -136,6 +139,6 @@ Numeric values in code are transparent initial priors. They are not calibrated f
 
 The continuation audit, resolved mismatches, benchmark snapshot, and remaining limitations are recorded in [`docs/implementation-audit.md`](docs/implementation-audit.md). Parameter meanings and calibration status are in [`docs/parameters.md`](docs/parameters.md).
 
-The v0.11.1 causal-integrity repairs and adversarial validation protocol are recorded in [`docs/causal-integrity-v0.11.1.md`](docs/causal-integrity-v0.11.1.md).
+The v0.11.1 causal-integrity repairs and adversarial validation protocol are recorded in [`docs/causal-integrity-v0.11.1.md`](docs/causal-integrity-v0.11.1.md). The v0.12.0 publication-audit closure and numeric validation batteries are documented in [`docs/research-audit-v0.12.0.md`](docs/research-audit-v0.12.0.md).
 
 The verified Phase 1 + Phase 2 baseline is preserved at commit `124df96` and annotated tag `v0.2.0`. Phase 3 is preserved at commit `0b68d34` and annotated tag `v0.3.0`. Phase 4 observation/intelligence work is an explicit development diff on top of that checkpoint.

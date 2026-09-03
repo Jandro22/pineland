@@ -7,6 +7,7 @@ from typing import Any
 
 from .entities import (
     CommandEdge,
+    ControlVector,
     FormationMovementOrder,
     OrganizationKind,
     ResourceFlow,
@@ -397,6 +398,12 @@ def update_logistics(world: WorldState, time: float, delta_days: float) -> dict[
         desired_delivery = max(0.0, formation.supply_capacity * config.resupply_target_fraction -
                                formation.supply_stock)
         efficiency = exp(-config.shipment_loss_per_travel_hour * travel_hours)
+        interdiction_loss = 0.0
+        if config.route_interdiction_enabled and config.route_interdiction_rate > 0:
+            route_risk = sum(world.localities[lid].control.get("insurgent", ControlVector()).physical
+                             for lid in route) / max(1, len(route))
+            interdiction_loss = config.route_interdiction_rate * route_risk * max(1.0, travel_hours / 24)
+            efficiency *= exp(-interdiction_loss)
         quantity_sent = min(source.stock, desired_delivery / max(efficiency, 1e-9))
         quantity_deliverable = quantity_sent * efficiency
         shipment_loss = quantity_sent - quantity_deliverable
@@ -469,6 +476,10 @@ def logistics_diagnostics(world: WorldState) -> dict[str, Any]:
         "movement_orders": {order_id: asdict(order) for order_id, order in world.movement_orders.items()},
         "shipments": {shipment_id: asdict(shipment)
                       for shipment_id, shipment in world.supply_shipments.items()},
+        "route_interdiction": {
+            "enabled": world.config.logistics.route_interdiction_enabled,
+            "rate": world.config.logistics.route_interdiction_rate,
+        },
         "control_cost": {locality_id: control_cost(world, locality_id)
                          for locality_id in world.localities},
     }

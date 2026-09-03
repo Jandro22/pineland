@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass, fields, is_dataclass
 from math import sqrt
 import random
 from statistics import mean, pstdev
-from typing import Any
+from typing import Any, Mapping
 
 from .config import SimulationConfig
 from .generator import generate_pineland
@@ -57,9 +57,33 @@ SAMPLE_BOUNDS: dict[str, tuple[float, float, str, str]] = {
     "peace_process.recurrence_base_hazard": (.0001, .05, r"\lambda_{recur}", "probability/cycle"),
 }
 
+# Provenance is intentionally explicit even where no external estimate has
+# yet been supplied.  Empty provenance used to make engineering constants look
+# like empirical quantities in exported registries.
+PARAMETER_PROVENANCE: dict[str, tuple[str, str | None, str]] = {
+    "recruitment_rate": ("experimental treatment", "synthetic recovery required", "uncalibrated"),
+    "contact_rate": ("experimental treatment", "synthetic recovery required", "uncalibrated"),
+    "information": ("empirical estimand", "source-specific observation calibration required", "uncalibrated"),
+    "recording": ("empirical estimand", "recording calibration required", "uncalibrated"),
+    "physical": ("structural/scaling coefficient", "mechanism validation required", "uncalibrated"),
+    "geography": ("engineering prior", "synthetic spatial generator", "engineering"),
+    "intervals": ("numerical safeguard", "event-scheduling contract", "fixed"),
+    "organization_ecology": ("experimental treatment", "synthetic recovery required", "uncalibrated"),
+    "foreign_affairs": ("literature prior", "case-specific intervention evidence required", "uncalibrated"),
+    "peace_process": ("literature prior", "case-specific settlement evidence required", "uncalibrated"),
+}
+
 
 def _flatten(value: Any, prefix: str = "") -> dict[str, Any]:
     result = {}
+    if isinstance(value, Mapping):
+        for key, child in sorted(value.items(), key=lambda item: str(item[0])):
+            name = f"{prefix}.{key}" if prefix else str(key)
+            if isinstance(child, Mapping):
+                result.update(_flatten(child, name))
+            elif isinstance(child, (int, float, bool, str)):
+                result[name] = child
+        return result
     for item in fields(value):
         name = f"{prefix}.{item.name}" if prefix else item.name
         child = getattr(value, item.name)
@@ -77,23 +101,28 @@ def parameter_registry(config: SimulationConfig | None = None) -> list[Parameter
     for name, value in sorted(_flatten(config).items()):
         bound = SAMPLE_BOUNDS.get(name)
         subsystem = name.split(".")[0] if "." in name else "core"
+        provenance_key = name.split(".")[0]
+        provenance_kind, provenance_source, provenance_status = PARAMETER_PROVENANCE.get(
+            provenance_key, ("engineering prior", "not yet mapped to an empirical source", "unassessed"))
         if bound:
             lower, upper, symbol, units = bound
-            kind, status, confidence = "prior", "uncalibrated", "low"
+            kind, status, confidence = provenance_kind, provenance_status, "low"
         elif name.endswith("interval_days") or name.startswith("intervals."):
-            lower = upper = None; symbol = name; units = "days"; kind = "numerical schedule"; status = "fixed"; confidence = "high"
+            lower = upper = None; symbol = name; units = "days"; kind = "numerical safeguard"; status = "fixed"; confidence = "high"
         elif isinstance(value, bool) or name.endswith("count") or name.endswith("members"):
             lower = upper = None; symbol = name; units = "structural"; kind = "fixed structural assumption"; status = "fixed"; confidence = "medium"
         else:
-            lower = upper = None; symbol = name; units = "model units"; kind = "prior"; status = "unassessed"; confidence = "low"
+            lower = upper = None; symbol = name; units = "model units"; kind = provenance_kind; status = provenance_status; confidence = "low"
+        source_population = ("case-specific observed population; declare in case package"
+                             if kind in {"empirical estimand", "literature prior"} else None)
         result.append(ParameterSpec(symbol, name, units, subsystem, value, lower, upper, kind,
-                                    None, None, confidence, status))
+                                    provenance_source, source_population, confidence, status))
     return result
 
 
 def registry_document(config: SimulationConfig | None = None) -> dict[str, Any]:
     specs = parameter_registry(config)
-    return {"schema_version": "0.10.0", "parameters": [asdict(x) for x in specs],
+    return {"schema_version": "0.12.0", "parameters": [asdict(x) for x in specs],
             "counts": {kind: sum(x.assumption_type == kind for x in specs)
                        for kind in sorted({x.assumption_type for x in specs})}}
 
@@ -102,8 +131,11 @@ def set_parameter(config: SimulationConfig, path: str, value: float) -> None:
     target: Any = config
     pieces = path.split(".")
     for name in pieces[:-1]:
-        target = getattr(target, name)
-    setattr(target, pieces[-1], value)
+        target = target[name] if isinstance(target, Mapping) else getattr(target, name)
+    if isinstance(target, dict):
+        target[pieces[-1]] = value
+    else:
+        setattr(target, pieces[-1], value)
 
 
 def _event_metrics(world) -> dict[str, float]:
@@ -283,7 +315,8 @@ def calibrate_and_validate(config: SimulationConfig, training: dict[str, Any], h
             "sensitivity": sensitivity["analysis"]}
 
 
-def model_ladder(config: SimulationConfig, contract: dict[str, Any], seed: int | None = None) -> dict[str, Any]:
+def model_ladder(config: SimulationConfig, contract: dict[str, Any], seed: int | None = None,
+                 holdout_contract: dict[str, Any] | None = None) -> dict[str, Any]:
     """Compare null, self-exciting statistical proxy, reduced ABM, and full ABM fairly."""
     rng = random.Random(config.seed if seed is None else seed)
     horizon = config.horizon_days
@@ -312,9 +345,30 @@ def model_ladder(config: SimulationConfig, contract: dict[str, Any], seed: int |
     for name, (metrics, capabilities) in models.items():
         applicable = {key: value for key, value in contract["targets"].items() if key in capabilities}
         score = score_targets(metrics, {**contract, "targets": applicable}) if applicable else None
-        scored_models[name] = {"metrics": metrics, "capabilities": sorted(capabilities), "score": score}
+        holdout_score = None
+        if holdout_contract is not None:
+            holdout_targets = {key: value for key, value in holdout_contract["targets"].items()
+                               if key in capabilities}
+            holdout_score = (score_targets(metrics, {**holdout_contract, "targets": holdout_targets})
+                             if holdout_targets else None)
+        scored_models[name] = {"metrics": metrics, "capabilities": sorted(capabilities),
+                               "score": score, "holdout_score": holdout_score}
     return {"models": scored_models,
+            "training_split": contract.get("split", "training"),
+            "holdout_split": holdout_contract.get("split", "holdout") if holdout_contract else None,
             "interpretation": "Lower mean normalized error is better; the proxy is intentionally limited to event clustering."}
+
+
+def model_ladder_holdout(config: SimulationConfig, training_contract: dict[str, Any],
+                         holdout_contract: dict[str, Any], seed: int | None = None) -> dict[str, Any]:
+    """Run the model ladder with identical capabilities and a designated holdout.
+
+    The statistical proxies and reduced/full ABMs are scored on exactly the same
+    holdout target definitions; a model cannot win by receiving a different
+    information set or metric family.
+    """
+    return model_ladder(config, training_contract, seed=seed,
+                        holdout_contract=holdout_contract)
 
 
 def bargaining_stress_test(config: SimulationConfig, regimes: list[dict[str, float]] | None = None,

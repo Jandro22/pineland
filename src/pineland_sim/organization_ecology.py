@@ -103,7 +103,10 @@ def _mobilization_score(world, community) -> tuple[float, list]:
                  (p.public_behavior in {"protest", "insurgent_sympathy", "armed_participation"}
                   or p.grievance > .55)]
     grievance = sum(p.grievance for p in people) / len(people)
-    reach = min(1.0, len(community.bridge_member_ids) / max(1, len(people)) * 5)
+    represented_people = sum(person.weight for person in people)
+    bridge_weight = sum(world.persons[pid].weight for pid in community.bridge_member_ids
+                        if pid in world.persons)
+    reach = min(1.0, bridge_weight / max(1.0, represented_people) * 5)
     access = sum(p.political_access for p in people) / len(people)
     score = clamp(.3 * grievance + .3 * community.cohesion + .2 * community.insurgent_sympathy +
                   .2 * reach - world.config.political_order.peaceful_channel_strength * .25 * access)
@@ -122,14 +125,26 @@ def form_proto_organizations(world, time: float, rng: random.Random) -> list[Pro
         if community.community_id in active_communities:
             continue
         score, mobilized = _mobilization_score(world, community)
-        if sum(person.weight for person in mobilized) < cfg.minimum_proto_members * _mean_representation_weight(world):
+        mobilized_weight = sum(person.weight for person in mobilized)
+        minimum_proto_weight = max(
+            cfg.minimum_proto_represented_population,
+            cfg.minimum_proto_members * _mean_representation_weight(world),
+        )
+        if mobilized_weight < minimum_proto_weight:
             continue
         locality = world.localities[community.locality_id]
         repression = locality.control["government"].physical
         hazard = 1 - exp(-cfg.proto_base_hazard * exp(2.2 * score - 1.4 * repression))
         if rng.random() >= hazard:
             continue
-        selected = sorted(mobilized, key=lambda p: (-p.grievance, p.person_id))[:max(cfg.minimum_proto_members, len(mobilized) // 2)]
+        selected = []
+        selected_weight = 0.0
+        target_weight = max(minimum_proto_weight, mobilized_weight * .5)
+        for person in sorted(mobilized, key=lambda p: (-p.grievance, p.person_id)):
+            selected.append(person)
+            selected_weight += person.weight
+            if selected_weight >= target_weight:
+                break
         proto = ProtoOrganization(
             f"PROTO{len(world.proto_organizations) + 1:07d}", community.community_id,
             community.locality_id, {p.person_id for p in selected},
@@ -158,6 +173,18 @@ def mature_proto(world, proto: ProtoOrganization, time: float, rng: random.Rando
             _transition(world, time, "proto_collapse", (proto.proto_id,), (), {}, {}, {},
                         {"capital": capital})
         return None
+    # Check represented manpower before mutating civilian ownership or
+    # transferring resources.  A weighted representative can satisfy a
+    # capital/onset draw while still being too small to field a viable
+    # formation; that proto must collapse atomically, without leaving people
+    # assigned to a non-existent organization or consuming startup resources.
+    represented_members = sum(world.persons[pid].weight for pid in proto.member_ids)
+    personnel = represented_members * cfg.fighter_conversion_fraction
+    if personnel < cfg.minimum_formation_personnel:
+        proto.status = "collapsed"
+        _transition(world, time, "proto_collapse", (proto.proto_id,), (), {}, {}, {},
+                    {"reason": "insufficient_represented_manpower", "personnel": personnel})
+        return None
     oid = f"armed-{len([o for o in world.organizations if o.startswith('armed-')]) + 1:03d}"
     contributed = sum(world.persons[pid].resources * cfg.onset_resource_fraction for pid in proto.member_ids)
     for pid in proto.member_ids:
@@ -184,8 +211,6 @@ def mature_proto(world, proto: ProtoOrganization, time: float, rng: random.Rando
         zone.physical_control.setdefault(oid, 0.0)
         zone.physical_control.setdefault("insurgent", 0.0)
     _create_leader(world, organization, rng)
-    personnel = max(cfg.minimum_formation_personnel,
-                    sum(world.persons[pid].weight for pid in proto.member_ids) * cfg.fighter_conversion_fraction)
     fid = f"{oid.upper()}-F01"
     formation = ArmedFormation(fid, oid, proto.locality_id, personnel, .35, organization.cohesion,
                                .55, .45, .45, .55, .45, organization.local_knowledge)
@@ -273,7 +298,9 @@ def split_organization(world, organization_id: str, time: float, rng: random.Ran
     if not faction_b:
         pivot = max(1, len(members) // 3)
         faction_a, faction_b = set(sorted(members)[:-pivot]), set(sorted(members)[-pivot:])
-    shares = [len(faction_a) / len(members), len(faction_b) / len(members)]
+    total_weight = sum(world.persons[pid].weight for pid in members)
+    shares = [sum(world.persons[pid].weight for pid in faction) / max(1e-9, total_weight)
+              for faction in (faction_a, faction_b)]
     children = []
     parent_leader = world.leaders.get(parent.leader_id or "")
     for index, (faction, share) in enumerate(zip((faction_a, faction_b), shares), 1):
@@ -428,7 +455,7 @@ def process_organization_ecology(world, time: float, rng: random.Random) -> dict
                          "new_leader": successor.leader_id})
         split_hazard = 1 - exp(-cfg.split_base_hazard * exp(2 * identity_variance + 3 * losses -
                                                             2 * organization.cohesion))
-        split_eligible = represented_weight >= 4 * _mean_representation_weight(world)
+        split_eligible = represented_weight >= cfg.minimum_split_represented_population
         split_draw = rng.random() if split_eligible else None
         world.organization_eligibility_log.append({
             "time": time, "organization_id": organization.organization_id,

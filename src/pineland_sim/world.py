@@ -56,6 +56,8 @@ from .entities import (
     SupplyShipment,
     SupplySource,
     SyntheticRecord,
+    StockTransaction,
+    StateDelta,
 )
 
 
@@ -63,6 +65,7 @@ from .entities import (
 class WorldState:
     config: SimulationConfig
     time: float = 0.0
+    in_burn_in: bool = False
     districts: dict[str, District] = field(default_factory=dict)
     localities: dict[str, Locality] = field(default_factory=dict)
     households: dict[str, Household] = field(default_factory=dict)
@@ -144,6 +147,9 @@ class WorldState:
     cumulative_supply_lost: float = 0.0
     cumulative_resource_to_supply: float = 0.0
     cumulative_civilian_harm: float = 0.0
+    stock_transactions: list[StockTransaction] = field(default_factory=list)
+    state_deltas: list[StateDelta] = field(default_factory=list)
+    initial_tracked_stocks: dict[str, float] = field(default_factory=dict)
 
     @property
     def observation_records(self) -> list[Observation]:
@@ -154,11 +160,144 @@ class WorldState:
     def reports(self) -> list[Observation]:
         return self.observation_records
 
+    def truth_view(self):
+        from .views import WorldTruthView
+        return WorldTruthView(self)
+
+    def belief_view(self, actor_id: str | None = None):
+        from .views import ActorBeliefView
+        return ActorBeliefView(self, actor_id)
+
+    def record_view(self):
+        from .views import EmpiricalRecordView
+        return EmpiricalRecordView(self)
+
     def weighted_population(self) -> float:
         return sum(person.weight for person in self.persons.values())
 
     def formation_personnel(self) -> float:
         return sum(formation.personnel for formation in self.formations.values())
+
+    def tracked_stock_totals(self) -> dict[str, float]:
+        """Aggregate every tracked material/manpower stock by domain.
+
+        These are deliberately aggregates for cheap event-boundary snapshots;
+        detailed entity-level histories remain in the domain ledgers.
+        """
+        return {
+            "person_resources": sum(person.resources for person in self.persons.values()),
+            "organization_resources": sum(org.resources for org in self.organizations.values()),
+            "institution_resources": sum(item.resources for item in self.political_institutions.values()),
+            "party_branch_resources": sum(item.resources + item.patronage_stock
+                                           for item in self.party_branches.values()),
+            "foreign_resources": sum(state.resources for state in self.foreign_states.values()),
+            "private_diversion": self.private_diversion_stock,
+            "military_supply": (
+                sum(source.stock for source in self.supply_sources.values()) +
+                sum(formation.supply_stock for formation in self.formations.values()) +
+                self.demobilized_arms +
+                sum(shipment.quantity_deliverable for shipment in self.supply_shipments.values()
+                    if shipment.status == "in_transit")
+            ),
+            "formation_personnel": self.formation_personnel(),
+            "demobilized_personnel": self.demobilized_personnel,
+        }
+
+    def initialize_stock_ledger(self) -> None:
+        self.initial_tracked_stocks = self.tracked_stock_totals()
+
+    def record_stock_transactions(self, event_id: str, event_type: str,
+                                  before: dict[str, float], after: dict[str, float]) -> None:
+        for stock_name in sorted(set(before) | set(after)):
+            old, new = before.get(stock_name, 0.0), after.get(stock_name, 0.0)
+            delta = new - old
+            if abs(delta) <= 1e-12:
+                continue
+            stock_class = "manpower" if stock_name in {"formation_personnel", "demobilized_personnel"} else "material"
+            self.stock_transactions.append(StockTransaction(
+                f"ST{len(self.stock_transactions) + 1:012d}", self.time, event_id,
+                event_type, stock_class, stock_name, old, new, delta,
+                "boundary" if event_type in {"economy", "governance", "political_order", "foreign_affairs"} else "internal",
+            ))
+
+    def stock_ledger_residual(self, stock_name: str | None = None) -> float:
+        current = self.tracked_stock_totals()
+        names = [stock_name] if stock_name else list(current)
+        residual = 0.0
+        for name in names:
+            initial = self.initial_tracked_stocks.get(name, current.get(name, 0.0))
+            delta = sum(item.delta for item in self.stock_transactions if item.stock_name == name)
+            residual += current.get(name, 0.0) - initial - delta
+        return residual
+
+    def stock_ledger_diagnostics(self) -> dict[str, Any]:
+        """Return cross-domain ledger coverage and conversion diagnostics."""
+        by_class: dict[str, dict[str, float]] = {}
+        by_boundary: dict[str, float] = {}
+        for item in self.stock_transactions:
+            by_class.setdefault(item.stock_class, {"positive": 0.0, "negative": 0.0, "net": 0.0})
+            bucket = by_class[item.stock_class]
+            bucket["positive" if item.delta >= 0 else "negative"] += abs(item.delta)
+            bucket["net"] += item.delta
+            by_boundary[item.boundary] = by_boundary.get(item.boundary, 0.0) + item.delta
+        return {
+            "initial": dict(self.initial_tracked_stocks),
+            "current": self.tracked_stock_totals(),
+            "residual": self.stock_ledger_residual(),
+            "by_class": by_class,
+            "by_boundary_net": by_boundary,
+            "resource_to_supply_conversion": self.cumulative_resource_to_supply,
+            "transaction_count": len(self.stock_transactions),
+            "event_coverage": len({item.event_id for item in self.stock_transactions}),
+            "warning": ("cross-domain totals are a diagnostic ledger, not a claim that "
+                        "every exogenous economic flow is observed"
+                        if any(item.boundary == "boundary" for item in self.stock_transactions) else None),
+        }
+
+    def record_state_delta(self, event_id: str, event_type: str,
+                           before_controls: dict[str, dict[str, dict[str, float]]],
+                           before_formations: dict[str, dict[str, Any]] | None = None,
+                           organization_ids: tuple[str, ...] = ()) -> None:
+        control_changes: dict[str, dict[str, float]] = {}
+        for locality_id, locality in self.localities.items():
+            for actor, vector in locality.control.items():
+                before = before_controls.get(locality_id, {}).get(actor, {})
+                for dimension, value in vector.to_dict().items():
+                    # A newly created locality/actor has an implicit zero
+                    # baseline, so its initial control is an auditable state
+                    # change rather than being silently dropped.
+                    delta = value - before.get(dimension, 0.0)
+                    if abs(delta) > 1e-12:
+                        control_changes.setdefault(f"{locality_id}:{actor}", {})[dimension] = delta
+        all_formations = {
+            formation.formation_id: {
+                "organization_id": formation.organization_id,
+                "locality_id": formation.locality_id,
+                "microzone_id": formation.current_microzone_id,
+                "personnel": formation.personnel,
+                "supply_stock": formation.supply_stock,
+                "readiness": formation.readiness,
+                "availability": formation.availability,
+            }
+            for formation in self.formations.values()
+        }
+        if before_formations is None:
+            formations = all_formations
+        else:
+            formations = {
+                formation_id: state for formation_id, state in all_formations.items()
+                if before_formations.get(formation_id) != state
+            }
+        confidence = [belief.confidence for belief in self.control_beliefs.values()]
+        belief_state = {
+            "mean_confidence": (sum(confidence) / len(confidence) if confidence else 0.0),
+            "belief_count": float(len(self.control_beliefs)),
+            "observation_count": float(len(self.observations)),
+        }
+        self.state_deltas.append(StateDelta(
+            event_id, self.time, event_type, control_changes, formations,
+            belief_state, tuple(sorted(set(organization_ids))),
+        ))
 
     def assert_invariants(self, tolerance: float = 1e-6) -> None:
         resident = self.weighted_population()
@@ -252,7 +391,7 @@ class WorldState:
         for observation in self.observations.values():
             if not 0 <= observation.confidence <= 1 or observation.quality < 0 or observation.quality > 1:
                 raise AssertionError("observation confidence or quality outside [0, 1]")
-            if observation.decay_rate < 0 or observation.timestamp < 0:
+            if observation.decay_rate < 0 or (observation.timestamp < 0 and not self.in_burn_in):
                 raise AssertionError("invalid observation age metadata")
         for relay in self.information_relays.values():
             if not 0 <= relay.reliability <= 1 or relay.arrives_at < relay.sent_at:
@@ -367,6 +506,9 @@ class WorldState:
             ),
             "cumulative_resource_to_supply": self.cumulative_resource_to_supply,
             "supply_conservation_residual": self.supply_conservation_residual(),
+            "stock_ledger_transactions": len(self.stock_transactions),
+            "stock_ledger_residual": self.stock_ledger_residual(),
+            "state_delta_records": len(self.state_deltas),
             "mean_government_effective_control": sum(government_control) / len(government_control),
             "mean_insurgent_effective_control": sum(insurgent_control) / len(insurgent_control),
             "detection_counts": dict(self.information_detections),
@@ -406,6 +548,20 @@ class WorldState:
                 "observations": len(self.observations),
                 "active_relays": sum(relay.status == "in_transit"
                                       for relay in self.information_relays.values()),
+            },
+            "pathology": {
+                "patronage_total": sum(branch.patronage_stock for branch in self.party_branches.values()),
+                "patronage_max": max((branch.patronage_stock for branch in self.party_branches.values()), default=0.0),
+                "belief_mean_confidence": (
+                    sum(belief.confidence for belief in self.control_beliefs.values()) /
+                    max(1, len(self.control_beliefs))),
+                "active_insurgent_organizations": sum(
+                    organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
+                    for organization in self.organizations.values()),
+                "eligibility_periods": len(self.organization_eligibility_log),
+                "eligible_periods": sum(row["eligible"] for row in self.organization_eligibility_log),
+                "stock_ledger_residual": self.stock_ledger_residual(),
+                "supply_residual": self.supply_conservation_residual(),
             },
         }
         self.checkpoints.append(snapshot)
@@ -484,6 +640,18 @@ class WorldState:
         )
         (output / "causal_integrity_diagnostics.json").write_text(
             json.dumps(causal_integrity_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "stock_transactions.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.stock_transactions),
+            encoding="utf-8",
+        )
+        (output / "state_deltas.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.state_deltas),
+            encoding="utf-8",
+        )
+        (output / "stock_ledger_diagnostics.json").write_text(
+            json.dumps(self.stock_ledger_diagnostics(), indent=2),
+            encoding="utf-8",
         )
         (output / "peace_agreements.jsonl").write_text(
             "".join(json.dumps(asdict(item)) + "\n" for item in self.peace_agreements.values()),

@@ -17,9 +17,10 @@ class ScheduledEvent:
 
 
 class EventScheduler:
-    def __init__(self) -> None:
+    def __init__(self, allow_negative: bool = False) -> None:
         self._queue: list[ScheduledEvent] = []
         self._sequence = count()
+        self.allow_negative = allow_negative
 
     def schedule(
         self,
@@ -29,7 +30,7 @@ class EventScheduler:
         priority: int = 100,
         causal_parent_ids: tuple[str, ...] = (),
     ) -> ScheduledEvent:
-        if time < 0:
+        if time < 0 and not self.allow_negative:
             raise ValueError("event time cannot be negative")
         event = ScheduledEvent(time, priority, next(self._sequence), event_type, payload or {}, causal_parent_ids)
         heapq.heappush(self._queue, event)
@@ -45,4 +46,3 @@ class EventScheduler:
 
     def __len__(self) -> int:
         return len(self._queue)
-

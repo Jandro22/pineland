@@ -1,5 +1,21 @@
 # Continuation audit and Phase 4 implementation report
 
+## v0.12 publication-audit closure
+
+The v0.11 pre-publication findings were re-audited and repaired before the
+v0.12.0 release. The authoritative current status is the executable battery
+and closure record in [`research-audit-v0.12.0.md`](research-audit-v0.12.0.md):
+burn-in is explicit and unrecorded, expected-control updates are scheduled,
+recruitment has one owner/clock, insurgent detection and physical reach are
+formation-position based, actor decisions use belief views, organization
+thresholds use represented population, startup supply is a one-time resource
+conversion, identity dispersion is weighted within-group variance, combat
+readiness is not applied twice, and fragmentation/spoiler penalties are
+separate. Cross-stock transactions, sparse state deltas, source-specific
+recording calibration, multi-seed resolution, recovery, ablation, and
+long-horizon diagnostics are now executable. The remaining items below are
+empirical validation work, not undocumented runtime defects.
+
 ## Phase 9 closure
 
 Version 0.9 adds persistent negotiations, explicit agreement provisions, faction-level
@@ -47,10 +63,10 @@ The inherited runtime passed all 12 tests and completed a 1,000-agent, 30-day sm
 | No-insurgency worlds retained phantom insurgent control and allowed insurgent-sympathy behavior | Corrected and covered by a stronger null test |
 | Social-edge semantics and representative-weight behavior were implicit | Resolved with aggregate-channel semantics, harmonic multiplicity, normalized exposure, and scale tooling |
 | Language compatibility was applied once in edge weight and again during influence | Corrected; language and trust are now distinct and compatibility is applied once |
-| `burn_in_days` is configured but not executed as a distinct unrecorded phase | Open; schedule for runtime lifecycle work |
-| Most transition constants remain local code priors | Open; Phase 1 parameters documented, broader registry still required |
+| `burn_in_days` is configured but not executed as a distinct unrecorded phase | Resolved in v0.12.0 with explicit negative-time warm-up and time-zero re-baselining |
+| Most transition constants remain local code priors | Resolved as a provenance/documentation boundary; empirical calibration remains open by design |
 | Internal locality physical graphs and response-time mechanics were absent | Resolved in Phase 2 |
-| District headline aggregation did not expose dispersion/topology | Improved with `district_control_distribution`; richer corridor/island metrics remain open |
+| District headline aggregation did not expose dispersion/topology | Improved with `district_control_distribution` and spatially generated national links |
 | JSON checkpoint size will grow rapidly at research scale | Open; retain current contract until columnar storage is added |
 
 ## Phase 1 delivered

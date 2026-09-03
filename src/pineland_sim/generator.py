@@ -14,6 +14,7 @@ from .entities import (
     Person,
 )
 from .world import WorldState, seeded_rng
+from math import cos, pi, sin, hypot
 from .networks import generate_social_network
 from .physical import generate_physical_world
 from .logistics import generate_logistics_world
@@ -43,6 +44,18 @@ DISTRICT_REGISTRY = (
     ("D17", "Alder", 350_000, "north-central plateau", .38, "FS/AR", "agriculture and transport", .7),
 )
 
+# A transparent synthetic map.  Coordinates are not a historical claim; they
+# provide a stable spatial reference so locality connectivity follows distance
+# and terrain rather than identifier order.
+DISTRICT_COORDINATES = {
+    "D01": (0.0, 0.0), "D02": (-72.0, 64.0), "D03": (-45.0, 86.0),
+    "D04": (-54.0, 32.0), "D05": (-82.0, 4.0), "D06": (-38.0, -12.0),
+    "D07": (-8.0, -34.0), "D08": (12.0, -8.0), "D09": (-8.0, 28.0),
+    "D10": (22.0, 36.0), "D11": (58.0, 34.0), "D12": (78.0, 12.0),
+    "D13": (92.0, -18.0), "D14": (50.0, -28.0), "D15": (14.0, -58.0),
+    "D16": (-52.0, -66.0), "D17": (18.0, 68.0),
+}
+
 
 def _language_vector(pattern: str, rng) -> dict[str, float]:
     primary = pattern.split("/")[0]
@@ -60,6 +73,7 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
     config = config or SimulationConfig()
     config.validate()
     rng = seeded_rng(config, "world-generation")
+    geography_rng = seeded_rng(config, "geography-generation")
     world = WorldState(config=config)
 
     for row in DISTRICT_REGISTRY:
@@ -105,8 +119,16 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
                     "government": ControlVector(.98, .72, capacity, capacity * .85, capacity * .65, .52, .7),
                 },
                 governance={"security": .55, "justice": capacity * .75, "administration": capacity,
-                            "services": capacity * .8, "representation": .5, "leakage": rng.uniform(.05, .28)},
+                             "services": capacity * .8, "representation": .5, "leakage": rng.uniform(.05, .28)},
             )
+            center_x, center_y = DISTRICT_COORDINATES[district_id]
+            if index == 0:
+                locality.x_km, locality.y_km = center_x, center_y
+            else:
+                angle = 2 * pi * (index - 1) / max(1, count - 1)
+                radius = geography_rng.uniform(10.0, max(10.0, config.geography.coordinate_jitter_km))
+                locality.x_km = center_x + radius * cos(angle)
+                locality.y_km = center_y + radius * sin(angle)
             if config.include_insurgency:
                 locality.control["insurgent"] = ControlVector(0, .01, 0, .01, .01, .04, .08)
             world.localities[locality_id] = locality
@@ -114,23 +136,52 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
             world.adjacency[locality_id] = {}
 
     locality_ids = sorted(world.localities)
-    # The national backbone is a deterministic spatial permutation, not an
-    # identifier-order ring.  A dedicated stream makes topology reproducible
-    # without perturbing population and household draws above.
-    geographic_order = list(locality_ids)
-    seeded_rng(config, "national-geography").shuffle(geographic_order)
-    # Guaranteed connected national backbone plus denser within-district links.
-    for i, locality_id in enumerate(geographic_order):
-        neighbor = geographic_order[(i + 1) % len(geographic_order)]
-        cost = (world.localities[locality_id].terrain_friction + world.localities[neighbor].terrain_friction) / 2
-        world.adjacency[locality_id][neighbor] = cost
-        world.adjacency[neighbor][locality_id] = cost
-    for district in world.districts.values():
-        hub = district.locality_ids[0]
-        for locality_id in district.locality_ids[1:]:
-            cost = (world.localities[hub].terrain_friction + world.localities[locality_id].terrain_friction) / 2
-            world.adjacency[hub][locality_id] = cost
-            world.adjacency[locality_id][hub] = cost
+
+    def connect(first_id: str, second_id: str) -> None:
+        if first_id == second_id:
+            return
+        first, second = world.localities[first_id], world.localities[second_id]
+        distance = max(.5, hypot(first.x_km - second.x_km, first.y_km - second.y_km))
+        terrain = (first.terrain_friction + second.terrain_friction) / 2
+        # Retain the historical terrain-cost interface while deriving the
+        # distance term from explicit coordinates.
+        cost = terrain * (.65 + distance / 55.0)
+        world.adjacency[first_id][second_id] = min(world.adjacency[first_id].get(second_id, 1e9), cost)
+        world.adjacency[second_id][first_id] = world.adjacency[first_id][second_id]
+
+    # Spatial minimum-spanning backbone: each locality attaches to the nearest
+    # already-connected locality, guaranteeing connectivity without an
+    # identifier-order corridor.
+    connected = [min(locality_ids, key=lambda lid: (world.localities[lid].x_km ** 2 +
+                                                    world.localities[lid].y_km ** 2, lid))]
+    remaining_ids = [lid for lid in locality_ids if lid not in connected]
+    while remaining_ids:
+        candidate = min(
+            ((hypot(world.localities[left].x_km - world.localities[right].x_km,
+                    world.localities[left].y_km - world.localities[right].y_km), left, right)
+             for right in remaining_ids for left in connected),
+            key=lambda item: (item[0], item[1], item[2]),
+        )
+        _, left, right = candidate
+        connect(left, right)
+        connected.append(right)
+        remaining_ids.remove(right)
+
+    # Add local nearest-neighbour roads and optional district hub roads.
+    k = config.geography.nearest_neighbors
+    for locality_id in locality_ids:
+        nearest = sorted(
+            (other for other in locality_ids if other != locality_id),
+            key=lambda other: (hypot(world.localities[locality_id].x_km - world.localities[other].x_km,
+                                     world.localities[locality_id].y_km - world.localities[other].y_km), other),
+        )[:k]
+        for other in nearest:
+            connect(locality_id, other)
+    if config.geography.district_hub_links:
+        for district in world.districts.values():
+            hub = district.locality_ids[0]
+            for locality_id in district.locality_ids[1:]:
+                connect(hub, locality_id)
 
     government = Organization("government", "Federal Republic", OrganizationKind.GOVERNMENT, 2_500_000, .72, .7, .55, .55, .8, .7, .7)
     military = Organization("fdf", "Federal Defense Force", OrganizationKind.MILITARY, 600_000, .75, .78, .58, .42, .72, .75, .76)
@@ -222,5 +273,6 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
                 )
 
     world.initial_population = world.weighted_population()
+    world.initialize_stock_ledger()
     world.assert_invariants()
     return world

@@ -154,8 +154,8 @@ def _foreign_belief_update(world, state: ForeignState, time: float, rng: random.
                                b.local_trust * b.cultural_knowledge for b in interpreters), default=0)
     for border in (b for b in world.border_segments.values() if b.foreign_state_id == state.state_id):
         # Foreign actors consume the host's imperfect belief, never true control.
-        host = world.beliefs.get(("government", border.locality_id))
-        host_estimate = host.control_estimate.physical if host else .5
+        host_estimate = world.belief_view("government").locality_control(
+            border.locality_id, "government", "government").physical
         noise = cfg.belief_noise * (1 - cfg.interpreter_effect * interpreter_quality)
         belief = world.foreign_beliefs.setdefault((state.state_id, border.locality_id),
                                                    ForeignBelief(state.state_id, border.locality_id, .5, .2, 0, time))
@@ -307,11 +307,17 @@ def process_foreign_affairs(world, time: float, event_id: str, rng: random.Rando
             contribution = sum(world.formations[fid].effective_strength() for fid in intervention.force_formation_ids
                                if fid in world.formations) / 25
             intervention.provided_capacity = contribution
+            intervention.peak_provided_capacity = max(intervention.peak_provided_capacity, contribution)
             local = [i for i in world.political_institutions.values() if i.level in {"district", "municipal"}]
             for institution in local:
-                institution.capacity = clamp(institution.capacity +
-                    .002 * intervention.transfer_efficiency * contribution / max(1, len(local)) -
-                    .002 * intervention.crowding_out * contribution / max(1, len(local)))
+                transfer_gain = (.002 * intervention.transfer_efficiency * contribution /
+                                 max(1, len(local)))
+                crowding_loss = (.002 * intervention.crowding_out * contribution /
+                                  max(1, len(local)))
+                institution.capacity = clamp(institution.capacity + transfer_gain - crowding_loss)
+                intervention.cumulative_retained_host_capacity += transfer_gain
+                intervention.cumulative_crowding_out += crowding_loss
+            intervention.cumulative_transferred_capacity += contribution * intervention.transfer_efficiency
             formations = [world.formations[fid] for fid in intervention.force_formation_ids
                           if fid in world.formations]
             for formation in formations:
@@ -344,6 +350,7 @@ def process_foreign_affairs(world, time: float, event_id: str, rng: random.Rando
                     formation.outside_pineland = True
                     formation.availability = 0
             if all(world.formations[fid].outside_pineland for fid in intervention.force_formation_ids):
+                intervention.withdrawn_capacity = intervention.provided_capacity
                 intervention.status = "withdrawn"
                 intervention.provided_capacity = 0
                 withdrawals += 1
@@ -360,12 +367,28 @@ def foreign_diagnostics(world) -> dict:
                              {j.foreign_state_id for j in world.foreign_interventions.values()
                               if j.started_at <= i.started_at and j.intervention_id != i.intervention_id})
                         for i in world.foreign_interventions.values())
+    interventions = list(world.foreign_interventions.values())
+    gross_transfer = sum(i.cumulative_transferred_capacity for i in interventions)
+    retained = sum(i.cumulative_retained_host_capacity for i in interventions)
+    crowding = sum(i.cumulative_crowding_out for i in interventions)
+    withdrawn = sum(i.withdrawn_capacity for i in interventions)
     return {**metrics, "foreign_states": len(world.foreign_states),
             "border_segments": len(world.border_segments), "active_interventions": active,
             "external_support_events": len(world.external_support),
             "external_transfers": len(world.external_transfers),
             "diaspora_links": len(world.diaspora_links),
             "externalization_reproduction": rival_induced / max(1, len(world.foreign_interventions)),
+            "capacity_decomposition": {
+                "gross_transferred_capacity": gross_transfer,
+                "retained_host_capacity": retained,
+                "crowding_out_capacity": crowding,
+                "net_host_capacity_change": retained - crowding,
+                "withdrawn_capacity": withdrawn,
+                "active_peak_capacity": sum(i.peak_provided_capacity for i in interventions),
+                "retention_ratio": retained / max(1e-9, gross_transfer),
+                "substitution_ratio": crowding / max(1e-9, gross_transfer),
+                "withdrawal_ratio": withdrawn / max(1e-9, sum(i.peak_provided_capacity for i in interventions)),
+            },
             "beliefs": {f"{sid}:{lid}": {"government_control": b.government_control_estimate,
                                            "insurgent_presence": b.insurgent_presence_estimate,
                                            "confidence": b.confidence}
@@ -398,11 +421,18 @@ def run_intervention_comparison(world, years: int = 10, withdrawal_year: int = 8
             process_foreign_affairs(trial, month * 30.0, f"X-{label}-{month}", rng)
             if month % 12 == 0:
                 metrics = dependence_metrics(trial)
+                intervention_metrics = {
+                    "gross_transferred_capacity": intervention.cumulative_transferred_capacity if intervention else 0.0,
+                    "retained_host_capacity": intervention.cumulative_retained_host_capacity if intervention else 0.0,
+                    "crowding_out_capacity": intervention.cumulative_crowding_out if intervention else 0.0,
+                    "withdrawn_capacity": intervention.withdrawn_capacity if intervention else 0.0,
+                }
                 trajectory.append({"year": month // 12,
                                    "host_capacity": metrics["host_capacity"],
                                    "foreign_capacity": metrics["foreign_capacity"],
                                    "dependence": metrics["dependence"],
-                                   "withdrawal_shock": metrics["withdrawal_shock"]})
+                                   "withdrawal_shock": metrics["withdrawal_shock"],
+                                   **intervention_metrics})
         results[label] = {"trajectory": trajectory, "final": trajectory[-1],
                           "withdrawal_shock_peak": withdrawal_shock_peak,
                           "pre_withdrawal": trajectory[min(max(0, withdrawal_year-1), len(trajectory)-1)]}

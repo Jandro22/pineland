@@ -56,6 +56,21 @@ class EmpiricalTarget:
     missing: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class ConstructCorrespondence:
+    """Explicit mapping from a theoretical construct to observed evidence."""
+
+    metric: str
+    theoretical_construct: str
+    simulation_latent_variable: str
+    simulation_observable: str
+    empirical_observable: str
+    transformation: str
+    observation_model: str
+    known_mismatch: str
+    calibration_status: str
+
+
 @dataclass(slots=True)
 class CasePackage:
     case_id: str
@@ -68,6 +83,7 @@ class CasePackage:
     transformations: list[TransformationRecord] = field(default_factory=list)
     missing_metrics: tuple[str, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
+    construct_correspondence: list[ConstructCorrespondence] = field(default_factory=list)
 
     def target_contract(self, source: str | None = None) -> dict[str, Any]:
         values = {target.metric: target.value for target in self.targets if not target.missing}
@@ -80,6 +96,12 @@ class CasePackage:
             contract["targets"][metric]["weight"] = weights[metric]
             contract["targets"][metric]["tolerance"] = max(1e-12, tolerances[metric])
         contract["missing_metrics"] = list(self.missing_metrics)
+        contract["construct_correspondence"] = {
+            row.metric: asdict(row) for row in self.construct_correspondence
+        }
+        contract["construct_correspondence_missing"] = sorted(
+            set(values) - {row.metric for row in self.construct_correspondence}
+        )
         contract["case_metadata"] = {"name": self.name, "time_window": self.time_window,
                                       "geography": self.geography}
         return contract
@@ -147,9 +169,11 @@ def build_case_package(case_id: str, name: str, observations: list[RawObservatio
                        target_specs: list[dict[str, Any]],
                        *, description: str = "", time_window: dict[str, str] | None = None,
                        geography: dict[str, Any] | None = None,
-                       missing_metrics: tuple[str, ...] = (), metadata: dict[str, Any] | None = None) -> CasePackage:
+                       missing_metrics: tuple[str, ...] = (), metadata: dict[str, Any] | None = None,
+                       construct_correspondence: list[ConstructCorrespondence] | None = None) -> CasePackage:
     package = CasePackage(case_id, name, description, time_window or {}, geography or {}, observations,
-                          missing_metrics=missing_metrics, metadata=metadata or {})
+                          missing_metrics=missing_metrics, metadata=metadata or {},
+                          construct_correspondence=construct_correspondence or [])
     for spec in target_specs:
         selected = [row for row in observations if row.measure == spec["measure"]]
         target, transform = aggregate_observations(selected, spec["metric"], spec.get("operation", "mean"),
@@ -157,6 +181,23 @@ def build_case_package(case_id: str, name: str, observations: list[RawObservatio
             spec.get("uncertainty"), tuple(spec.get("assumptions", ())))
         package.targets.append(target); package.transformations.append(transform)
     return package
+
+
+def build_construct_correspondence(metric: str, *, theoretical_construct: str,
+                                  simulation_latent_variable: str,
+                                  simulation_observable: str,
+                                  empirical_observable: str,
+                                  transformation: str,
+                                  observation_model: str,
+                                  known_mismatch: str,
+                                  calibration_status: str = "training") -> ConstructCorrespondence:
+    """Require every calibration metric to declare its construct mapping."""
+    values = (metric, theoretical_construct, simulation_latent_variable,
+              simulation_observable, empirical_observable, transformation,
+              observation_model, known_mismatch, calibration_status)
+    if any(not str(value).strip() for value in values):
+        raise ValueError("construct correspondence fields cannot be blank")
+    return ConstructCorrespondence(*values)
 
 
 def save_case_package(package: CasePackage, path: str | Path) -> None:
@@ -169,6 +210,8 @@ def load_case_package(path: str | Path) -> CasePackage:
     payload["observations"] = [RawObservation(**row) for row in payload.get("observations", [])]
     payload["targets"] = [EmpiricalTarget(**row) for row in payload.get("targets", [])]
     payload["transformations"] = [TransformationRecord(**row) for row in payload.get("transformations", [])]
+    payload["construct_correspondence"] = [ConstructCorrespondence(**row)
+                                            for row in payload.get("construct_correspondence", [])]
     return CasePackage(**payload)
 
 
@@ -204,7 +247,7 @@ def recorded_vs_true_metrics(world) -> dict[str, dict[str, float]]:
 
 def case_catalog(paths: Iterable[str | Path]) -> dict[str, Any]:
     packages = [load_case_package(path) for path in paths]
-    return {"schema_version": "0.11.0", "cases": [
+    return {"schema_version": "0.12.0", "cases": [
         {"case_id": p.case_id, "name": p.name, "targets": [t.metric for t in p.targets],
          "missing_metrics": list(p.missing_metrics), "source": p.metadata.get("source")}
         for p in packages]}

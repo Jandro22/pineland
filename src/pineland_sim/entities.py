@@ -88,6 +88,11 @@ class Locality:
     violence: float = 0.0
     disruption: float = 0.0
     displaced_population: float = 0.0
+    # Synthetic geographic coordinates (kilometres in the generated national
+    # reference frame).  They are optional so older case packages remain
+    # loadable, but new worlds use them for spatially meaningful connectivity.
+    x_km: float = 0.0
+    y_km: float = 0.0
 
 
 @dataclass(slots=True)
@@ -129,6 +134,9 @@ class Person:
     external_state_id: str | None = None
     migration_status: str = "resident"
     origin_tie_strength: float = 1.0
+    # Destination-specific expectations are sparse and populated for adjacent
+    # localities by the scheduled beliefs process.
+    expected_control_by_locality: dict[str, dict[str, float]] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -646,6 +654,11 @@ class ForeignIntervention:
     force_formation_ids: set[str] = field(default_factory=set)
     status: str = "active"
     withdrawal_rate: float = 0.0
+    cumulative_transferred_capacity: float = 0.0
+    cumulative_retained_host_capacity: float = 0.0
+    cumulative_crowding_out: float = 0.0
+    peak_provided_capacity: float = 0.0
+    withdrawn_capacity: float = 0.0
 
 
 @dataclass(slots=True)
@@ -823,3 +836,38 @@ class EventLogEntry:
     synthetic_record: SyntheticRecord | None
     random_stream_id: str
     parameter_snapshot_id: str
+
+
+@dataclass(slots=True)
+class StockTransaction:
+    """Cross-domain material/manpower delta recorded at event boundaries.
+
+    A transaction is an audit record, not a second source of truth.  It makes
+    conversions (for example civilian resources to formation supply) visible
+    across ledgers and lets validation reconcile all stocks without guessing
+    which subsystem performed a mutation.
+    """
+
+    transaction_id: str
+    time: float
+    event_id: str
+    event_type: str
+    stock_class: str
+    stock_name: str
+    before: float
+    after: float
+    delta: float
+    boundary: str = "internal"
+
+
+@dataclass(slots=True)
+class StateDelta:
+    """Sparse event-time state needed for causal-microscope reconstruction."""
+
+    event_id: str
+    time: float
+    event_type: str
+    control_changes: dict[str, dict[str, float]]
+    formation_state: dict[str, dict[str, Any]]
+    belief_state: dict[str, float]
+    organization_ids: tuple[str, ...]

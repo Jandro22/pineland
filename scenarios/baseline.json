@@ -53,6 +53,12 @@
     "zone_observation_noise": 0.12,
     "patrol_route_randomness": 0.15
   },
+  "geography": {
+    "nearest_neighbors": 2,
+    "district_hub_links": true,
+    "coordinate_jitter_km": 18.0,
+    "national_backbone": "spatial_mst"
+  },
   "logistics": {
     "formation_supply_days": 30.0,
     "initial_supply_fraction": 0.8,
@@ -120,6 +126,8 @@
     "adaptation_rate": 0.12,
     "mutation_sigma": 0.035,
     "minimum_proto_members": 3,
+    "minimum_proto_represented_population": 1000.0,
+    "minimum_split_represented_population": 1500.0,
     "minimum_formation_personnel": 75.0,
     "fighter_conversion_fraction": 0.08,
     "onset_resource_fraction": 0.18,
@@ -188,6 +196,7 @@
     "relay_max_hops": 8,
     "contradiction_penalty": 0.45,
     "contradiction_memory_days": 30.0,
+    "language_fusion_weight": 1.0,
     "corroboration_bonus": 0.12,
     "negative_report_confidence": 0.52,
     "positive_report_confidence": 0.9,

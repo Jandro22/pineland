@@ -28,6 +28,24 @@ def causal_integrity_diagnostics(world) -> dict:
         warnings.append("insurgent_physical_reach_missing")
     if belief_confidence and mean(belief_confidence) < .02:
         warnings.append("belief_confidence_collapse")
+    stock_report = world.stock_ledger_diagnostics()
+    stock_residual = stock_report["residual"]
+    if abs(stock_residual) > 1e-6:
+        warnings.append("cross_stock_ledger_residual")
+    if active_insurgents and not world.organization_eligibility_log:
+        warnings.append("fragmentation_eligibility_not_logged")
+    if active_insurgents and world.time >= 365 and not eligible:
+        warnings.append("fragmentation_eligibility_floor")
+    momentum = [engagement.perceived_momentum_signal for engagement in world.engagements.values()]
+    if momentum and mean(abs(value - .5) for value in momentum) < .02:
+        warnings.append("combat_momentum_cancellation")
+    patronage_series = [snapshot.get("pathology", {}).get("patronage_total", 0.0)
+                        for snapshot in world.checkpoints]
+    if len(patronage_series) >= 4 and patronage_series[-1] > max(patronage_series[:-1]) * 1.5:
+        warnings.append("runaway_patronage")
+    event_counts = {}
+    for entry in world.event_log:
+        event_counts[entry.event_type] = event_counts.get(entry.event_type, 0) + 1
     return {
         "supply_conservation_residual": residual,
         "active_insurgent_organizations": len(active_insurgents),
@@ -53,5 +71,28 @@ def causal_integrity_diagnostics(world) -> dict:
             "maximum_branch": max((branch.patronage_stock for branch in world.party_branches.values()),
                                    default=0.0),
         },
+        "stock_ledger": {
+            "transactions": len(world.stock_transactions),
+            "residual": stock_residual,
+            "initial": dict(world.initial_tracked_stocks),
+            "current": world.tracked_stock_totals(),
+            "by_class": stock_report["by_class"],
+            "by_boundary_net": stock_report["by_boundary_net"],
+            "resource_to_supply_conversion": stock_report["resource_to_supply_conversion"],
+        },
+        "pathology_watchlist": {
+            "checkpoint_count": len(world.checkpoints),
+            "patronage_series": patronage_series,
+            "belief_confidence_series": [snapshot.get("pathology", {}).get("belief_mean_confidence", 0.0)
+                                          for snapshot in world.checkpoints],
+            "active_insurgent_series": [snapshot.get("pathology", {}).get("active_insurgent_organizations", 0)
+                                         for snapshot in world.checkpoints],
+            "eligibility_series": [snapshot.get("pathology", {}).get("eligible_periods", 0)
+                                   for snapshot in world.checkpoints],
+            "event_counts": event_counts,
+            "momentum_mean_absolute_deviation": (
+                mean(abs(value - .5) for value in momentum) if momentum else None),
+        },
+        "state_delta_records": len(world.state_deltas),
         "warnings": warnings,
     }

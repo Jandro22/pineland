@@ -1,6 +1,6 @@
 """Pineland COIN-SIM research engine."""
 
-from .config import (CombatConfig, ForeignAffairsConfig, InformationConfig, OrganizationEcologyConfig, PeaceProcessConfig,
+from .config import (CombatConfig, ForeignAffairsConfig, GeographyConfig, InformationConfig, OrganizationEcologyConfig, PeaceProcessConfig,
                      PoliticalOrderConfig, SimulationConfig)
 from .entities import (BorderSegment, DiasporaLink, Election, Engagement, ExternalSupport,
                        ExternalTransfer, ForeignBelief, ForeignIntervention, ForeignState,
@@ -10,14 +10,22 @@ from .entities import (BorderSegment, DiasporaLink, Election, Engagement, Extern
 from .entities import AgreementProvision, Negotiation, PeaceAgreement, PeaceTransition
 from .generator import generate_pineland
 from .simulation import Simulation, SimulationResult
-from .validation import ParameterSpec, empirical_target_contract, parameter_registry
-from .empirical import (CasePackage, EmpiricalTarget, RawObservation, TransformationRecord,
+from .validation import (ParameterSpec, empirical_target_contract, parameter_registry,
+                         model_ladder_holdout)
+from .empirical import (CasePackage, ConstructCorrespondence, EmpiricalTarget, RawObservation, TransformationRecord,
                         aggregate_observations, build_case_package, load_case_package,
-                        load_raw_observations, recorded_vs_true_metrics)
+                        load_raw_observations, recorded_vs_true_metrics, build_construct_correspondence)
+from .research_audit import (causal_ledger_audit, foreign_withdrawal_diagnostics,
+                             initialization_ensemble, long_horizon_diagnostics,
+                             fragmentation_bargaining_ablation, language_factorial,
+                             mechanism_ablation, morris_sensitivity, null_and_extreme_checks,
+                             parameter_recovery_ensemble, recording_calibration,
+                             resolution_ladder, scheduler_audit, truth_firewall_check,
+                             variance_sensitivity)
 
 __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "ExternalSupport",
            "ExternalTransfer", "ForeignAffairsConfig", "ForeignBelief", "ForeignIntervention",
-           "ForeignState", "InformationConfig", "InterpreterBroker", "LeadershipAgent", "Observation",
+           "ForeignState", "GeographyConfig", "InformationConfig", "InterpreterBroker", "LeadershipAgent", "Observation",
            "OrganizationEcologyConfig", "OrganizationTransition", "PartyBranch",
            "PoliticalInstitution", "PoliticalOrderConfig", "PoliticalTransfer",
            "PolicyImplementation", "ProtoOrganization", "LocalElite", "Election",
@@ -26,7 +34,13 @@ __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "Exter
 __all__ += ["AgreementProvision", "Negotiation", "PeaceAgreement", "PeaceProcessConfig",
             "PeaceTransition"]
 __all__ += ["ParameterSpec", "empirical_target_contract", "parameter_registry"]
-__all__ += ["CasePackage", "EmpiricalTarget", "RawObservation", "TransformationRecord",
+__all__ += ["CasePackage", "ConstructCorrespondence", "EmpiricalTarget", "RawObservation", "TransformationRecord",
             "aggregate_observations", "build_case_package", "load_case_package",
-            "load_raw_observations", "recorded_vs_true_metrics"]
-__version__ = "0.11.1"
+            "load_raw_observations", "recorded_vs_true_metrics", "build_construct_correspondence",
+            "model_ladder_holdout", "causal_ledger_audit", "foreign_withdrawal_diagnostics",
+            "initialization_ensemble", "long_horizon_diagnostics", "mechanism_ablation",
+            "fragmentation_bargaining_ablation", "language_factorial",
+            "morris_sensitivity", "null_and_extreme_checks", "parameter_recovery_ensemble",
+            "recording_calibration", "resolution_ladder", "scheduler_audit",
+            "truth_firewall_check", "variance_sensitivity"]
+__version__ = "0.12.0"

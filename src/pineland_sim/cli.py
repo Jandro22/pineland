@@ -15,6 +15,9 @@ from .validation import (calibrate_and_validate, global_sensitivity, model_ladde
                          parameter_registry, registry_document, bargaining_stress_test,
                          fragmentation_forensic, parameter_recovery_experiment,
                          question_specific_registry)
+from .research_audit import (causal_ledger_audit, foreign_withdrawal_diagnostics,
+                             null_and_extreme_checks, recording_calibration,
+                             scheduler_audit, truth_firewall_check)
 from .empirical import case_catalog
 
 
@@ -108,6 +111,12 @@ def build_parser() -> argparse.ArgumentParser:
     qregistry.add_argument("question", choices=["insurgency_onset", "fragmentation", "recurrence", "foreign_dependence", "control"])
     qregistry.add_argument("--config", type=Path)
     qregistry.add_argument("--output", type=Path, default=Path("outputs/question-registry.json"))
+    audit = subparsers.add_parser("audit", help="run executable causal-integrity and measurement audits")
+    audit.add_argument("--config", type=Path)
+    audit.add_argument("--agents", type=int, default=250)
+    audit.add_argument("--days", type=float, default=30.0)
+    audit.add_argument("--recording-repetitions", type=int, default=200)
+    audit.add_argument("--output", type=Path, default=Path("outputs/research-audit.json"))
     return parser
 
 
@@ -198,6 +207,20 @@ def main(argv: list[str] | None = None) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(json.dumps({"question": args.question, "parameters": len(result["parameters"])}, indent=2))
+        return 0
+    if args.command == "audit":
+        config.agent_count = args.agents
+        config.horizon_days = args.days
+        result = {
+            "truth_firewall": truth_firewall_check(config, min(2.0, args.days)),
+            "scheduler": scheduler_audit(config, args.days),
+            "causal_ledger": causal_ledger_audit(config, min(7.0, args.days)),
+            "null_and_extreme": null_and_extreme_checks(config),
+            "recording": recording_calibration(config, args.recording_repetitions),
+        }
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
         return 0
     outcomes, summary = run_paired_experiment(config, governance_surge(args.multiplier), args.repetitions)
     args.output.parent.mkdir(parents=True, exist_ok=True)

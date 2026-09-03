@@ -249,6 +249,12 @@ def detection_probability(world: WorldState, observer_id: str,
              config.detection_observability_bonus * zone_observability +
              config.detection_readiness_bonus * readiness -
              config.detection_terrain_penalty * terrain_penalty)
+    if target is not None and target.organization_id in world.organizations:
+        organization = world.organizations[target.organization_id]
+        if organization.kind is OrganizationKind.INSURGENT:
+            concealment = config.insurgent_concealment * (
+                .5 + .5 * organization.phenotype.get("dispersion", .5))
+            score -= .9 * concealment
     return clamp(logistic(score))
 
 
@@ -504,8 +510,15 @@ def fuse_observation(world: WorldState, observation: Observation, recipient_id: 
         source_id for timestamp, source_id in world.observation_source_index.get(index_key, ())
         if abs(timestamp - observation.timestamp) <= 3.0 and source_id != observation.source_id
     }
-    corroboration = len(corroborating_sources)
-    weight = clamp(observation.confidence * observation.quality * trust * language * age_quality *
+    # Distinct source IDs remain visible, but correlated collection channels
+    # contribute less than independent corroboration.  This prevents a burst
+    # of reports copied from one administrative or social pipeline from being
+    # treated as independent evidence.
+    source_correlation = world.config.information.source_correlation.get(
+        observation.source_type, .5)
+    corroboration = sum(1.0 - source_correlation for source_id in corroborating_sources)
+    weight = clamp(observation.confidence * observation.quality * trust *
+                   (language ** world.config.information.language_fusion_weight) * age_quality *
                    (1 + world.config.information.corroboration_bonus * min(3, corroboration)))
     if observation.observation_type in {"presence", "detection"}:
         _fuse_presence(world, observation, recipient_id, time, weight, node=node)
@@ -736,6 +749,7 @@ def _report_probability(world: WorldState, observer_actor_id: str, locality_id: 
         "political_elite": config.elite_report_rate,
         "organization_member": config.member_report_rate,
         "fixed_post": config.fixed_post_report_rate,
+        "interpreter": config.interpreter_report_rate,
     }
     probability = rates.get(source_type, .2)
     locality = world.localities[locality_id]
