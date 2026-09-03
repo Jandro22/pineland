@@ -103,7 +103,9 @@ def _mobilization_score(world, community) -> tuple[float, list]:
                   or p.grievance > .55)]
     grievance = sum(p.grievance for p in people) / len(people)
     reach = min(1.0, len(community.bridge_member_ids) / max(1, len(people)) * 5)
-    score = clamp(.3 * grievance + .3 * community.cohesion + .2 * community.insurgent_sympathy + .2 * reach)
+    access = sum(p.political_access for p in people) / len(people)
+    score = clamp(.3 * grievance + .3 * community.cohesion + .2 * community.insurgent_sympathy +
+                  .2 * reach - world.config.political_order.peaceful_channel_strength * .25 * access)
     return score, mobilized
 
 
@@ -206,7 +208,8 @@ def recruit_and_retain(world, time: float, rng: random.Random) -> dict[str, floa
                                                        person.social_exposure.get("insurgent", 0.0))
                 compatibility = 1 - abs(person.identities.get("federal", .5) - organization.ideology.get("reform", .5))
                 probability = rate * logistic(1.5 * person.grievance + exposure + compatibility +
-                                              organization.capital["social"] - person.fear - 2.6)
+                                              organization.capital["social"] - person.fear - 2.6 -
+                                              world.config.political_order.peaceful_channel_strength * person.political_access)
                 if rng.random() < probability:
                     person.organization_id = organization.organization_id
                     organization.member_ids.add(person.person_id)

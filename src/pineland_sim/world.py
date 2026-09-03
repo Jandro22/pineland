@@ -22,6 +22,12 @@ from .entities import (
     LeadershipAgent,
     ProtoOrganization,
     OrganizationTransition,
+    PoliticalInstitution,
+    PartyBranch,
+    LocalElite,
+    PoliticalTransfer,
+    PolicyImplementation,
+    Election,
     Locality,
     Organization,
     OrganizationKind,
@@ -84,6 +90,15 @@ class WorldState:
     leaders: dict[str, LeadershipAgent] = field(default_factory=dict)
     proto_organizations: dict[str, ProtoOrganization] = field(default_factory=dict)
     organization_transitions: list[OrganizationTransition] = field(default_factory=list)
+    political_institutions: dict[str, PoliticalInstitution] = field(default_factory=dict)
+    party_branches: dict[str, PartyBranch] = field(default_factory=dict)
+    local_elites: dict[str, LocalElite] = field(default_factory=dict)
+    political_transfers: list[PoliticalTransfer] = field(default_factory=list)
+    policy_implementations: list[PolicyImplementation] = field(default_factory=list)
+    elections: list[Election] = field(default_factory=list)
+    ruling_party_id: str | None = None
+    private_diversion_stock: float = 0.0
+    cumulative_public_spending: float = 0.0
     beliefs: dict[tuple[str, str], ActorBelief] = field(default_factory=dict)
     adjacency: dict[str, dict[str, float]] = field(default_factory=dict)
     event_log: list[EventLogEntry] = field(default_factory=list)
@@ -141,14 +156,21 @@ class WorldState:
             if any(person_id not in self.persons for person_id in organization.member_ids):
                 raise AssertionError("organization references missing member")
         memberships = [person_id for organization in self.organizations.values()
-                       if organization.status == "active" for person_id in organization.member_ids]
+                       if organization.status == "active" and organization.kind is OrganizationKind.INSURGENT
+                       for person_id in organization.member_ids]
         if len(memberships) != len(set(memberships)):
             raise AssertionError("person belongs to multiple active organizations")
         for organization in self.organizations.values():
-            if organization.status == "active" and any(
+            if (organization.status == "active" and organization.kind is OrganizationKind.INSURGENT and any(
                     self.persons[pid].organization_id != organization.organization_id
-                    for pid in organization.member_ids):
+                    for pid in organization.member_ids)):
                 raise AssertionError("active organization membership is not reciprocal")
+        if any(institution.resources < -tolerance or not 0 <= institution.capacity <= 1
+               for institution in self.political_institutions.values()):
+            raise AssertionError("invalid political institution state")
+        if any(branch.resources < -tolerance or branch.patronage_stock < -tolerance
+               for branch in self.party_branches.values()):
+            raise AssertionError("invalid party branch stock")
         for microzone in self.microzones.values():
             if not 0 <= microzone.population_share <= 1:
                 raise AssertionError("microzone population share outside [0, 1]")
@@ -266,6 +288,10 @@ class WorldState:
             "proto_organizations": sum(proto.status == "mobilizing"
                                         for proto in self.proto_organizations.values()),
             "organization_transitions": len(self.organization_transitions),
+            "political_institutions": len(self.political_institutions),
+            "party_branches": len(self.party_branches),
+            "elections": len(self.elections),
+            "ruling_party_id": self.ruling_party_id,
             "formations": len(self.formations),
             "engagements": len(self.engagements),
             "civilian_harm": self.cumulative_civilian_harm,
@@ -310,6 +336,7 @@ class WorldState:
         from .information import information_diagnostics
         from .combat import combat_diagnostics
         from .organization_ecology import organization_ecology_diagnostics
+        from .political_order import political_diagnostics
 
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
@@ -340,6 +367,21 @@ class WorldState:
         )
         (output / "organization_ecology.json").write_text(
             json.dumps(organization_ecology_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "political_diagnostics.json").write_text(
+            json.dumps(political_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "political_transfers.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.political_transfers),
+            encoding="utf-8",
+        )
+        (output / "policy_implementations.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.policy_implementations),
+            encoding="utf-8",
+        )
+        (output / "elections.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in self.elections),
+            encoding="utf-8",
         )
         (output / "organization_transitions.jsonl").write_text(
             "".join(json.dumps(asdict(item)) + "\n" for item in self.organization_transitions),

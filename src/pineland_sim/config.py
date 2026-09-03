@@ -284,6 +284,34 @@ class OrganizationEcologyConfig:
 
 
 @dataclass(slots=True)
+class PoliticalOrderConfig:
+    enabled: bool = True
+    interval_days: float = 30.0
+    election_interval_days: float = 180.0
+    federal_policy_budget: float = 120_000.0
+    public_budget_share: float = 0.68
+    patronage_share: float = 0.22
+    private_diversion_share: float = 0.10
+    capacity_learning_rate: float = 0.012
+    capacity_decay_rate: float = 0.008
+    patronage_capacity_damage: float = 0.018
+    elite_broker_share: float = 0.35
+    peaceful_channel_strength: float = 0.5
+    election_turnout_sensitivity: float = 1.4
+
+    def validate(self) -> None:
+        if self.interval_days <= 0 or self.election_interval_days <= 0 or self.federal_policy_budget < 0:
+            raise ValueError("invalid political interval or budget")
+        for name in ("public_budget_share", "patronage_share", "private_diversion_share",
+                     "capacity_learning_rate", "capacity_decay_rate", "patronage_capacity_damage",
+                     "elite_broker_share", "peaceful_channel_strength"):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+        if abs(self.public_budget_share + self.patronage_share + self.private_diversion_share - 1) > 1e-9:
+            raise ValueError("political budget shares must sum to one")
+
+
+@dataclass(slots=True)
 class SimulationConfig:
     seed: int = 20260902
     horizon_days: float = 365.0
@@ -305,6 +333,7 @@ class SimulationConfig:
     information: InformationConfig = field(default_factory=InformationConfig)
     combat: CombatConfig = field(default_factory=CombatConfig)
     organization_ecology: OrganizationEcologyConfig = field(default_factory=OrganizationEcologyConfig)
+    political_order: PoliticalOrderConfig = field(default_factory=PoliticalOrderConfig)
 
     def validate(self) -> None:
         if self.agent_count < 1:
@@ -329,6 +358,7 @@ class SimulationConfig:
         self.information.validate()
         self.combat.validate()
         self.organization_ecology.validate()
+        self.political_order.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -350,6 +380,8 @@ class SimulationConfig:
             values["combat"] = CombatConfig(**values["combat"])
         if isinstance(values.get("organization_ecology"), dict):
             values["organization_ecology"] = OrganizationEcologyConfig(**values["organization_ecology"])
+        if isinstance(values.get("political_order"), dict):
+            values["political_order"] = PoliticalOrderConfig(**values["political_order"])
         config = cls(**values)
         config.validate()
         return config

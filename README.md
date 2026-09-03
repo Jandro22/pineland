@@ -10,6 +10,12 @@ probabilistic onset, organizational capital, recruitment composition,
 leadership, adaptation, fragmentation, merger, collapse, and reconstructable
 genealogy. See [the organization ecology model](docs/organization-ecology.md).
 
+The `v0.7` development line adds political institutions, local party branches,
+elections, distinct state/government/party legitimacy, conserved patronage and
+corruption flows, local policy distortion, elite brokerage, institutional
+capacity, and peaceful political alternatives. See
+[the political-order model](docs/political-order.md).
+
 Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.4 development line implements the runtime spine, social and physical structure, logistics, and explicit detection/information fusion described by the technical design specification.
 
 The current engine is intentionally dependency-light and transparent. Every important control change is written to a causal ledger, actors act on noisy estimates rather than world truth, population agents carry weights, and all randomness is split into deterministic named streams.

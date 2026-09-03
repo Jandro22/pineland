@@ -67,3 +67,41 @@ def compare_agent_scales(config: SimulationConfig, agent_counts: list[int],
         })
     return {"runs": [asdict(result) for result in results], "comparisons": comparisons,
             "interpretation": "Resolution sensitivity diagnostic; similarity is assessed, not assumed."}
+
+
+def compare_political_onset_ensembles(config: SimulationConfig, agent_counts: list[int],
+                                      horizon_days: float, seeds: list[int]) -> dict[str, Any]:
+    """Compare political behavior and endogenous onset as distributions by resolution."""
+    if len(agent_counts) < 2 or not seeds:
+        raise ValueError("provide at least two resolutions and one seed")
+    ensembles = []
+    for count in agent_counts:
+        samples = []
+        for seed in seeds:
+            run_config = SimulationConfig.from_dict(config.to_dict())
+            run_config.agent_count = count
+            run_config.seed = seed
+            run_config.horizon_days = horizon_days
+            world = Simulation(generate_pineland(run_config)).run().world
+            samples.append({
+                "seed": seed,
+                "onset": any(t.transition_type == "birth" for t in world.organization_transitions),
+                "armed_share": _behavior_shares(world).get("armed_participation", 0.0),
+                "peaceful_share": sum(_behavior_shares(world).get(key, 0.0)
+                                      for key in ("party_participation", "civil_society", "protest")),
+            })
+        ensembles.append({
+            "agent_count": count, "samples": samples,
+            "onset_probability": sum(sample["onset"] for sample in samples) / len(samples),
+            "mean_armed_share": sum(sample["armed_share"] for sample in samples) / len(samples),
+            "mean_peaceful_share": sum(sample["peaceful_share"] for sample in samples) / len(samples),
+        })
+    reference = ensembles[-1]
+    return {"ensembles": ensembles, "comparisons": [{
+        "agent_count": item["agent_count"],
+        "reference_agent_count": reference["agent_count"],
+        "onset_probability_difference": item["onset_probability"] - reference["onset_probability"],
+        "armed_share_difference": item["mean_armed_share"] - reference["mean_armed_share"],
+        "peaceful_share_difference": item["mean_peaceful_share"] - reference["mean_peaceful_share"],
+    } for item in ensembles[:-1]],
+            "interpretation": "Ensemble distribution diagnostic; individual onset trajectories are not paired as continuous outcomes."}

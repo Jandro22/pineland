@@ -122,6 +122,10 @@ class Person:
     displaced: bool = False
     community_id: str | None = None
     social_exposure: dict[str, float] = field(default_factory=dict)
+    state_legitimacy: float = 0.65
+    government_legitimacy: float = 0.55
+    party_legitimacy: dict[str, float] = field(default_factory=dict)
+    political_access: float = 0.45
 
 
 @dataclass(slots=True)
@@ -445,6 +449,85 @@ class OrganizationTransition:
     formation_assignments: dict[str, tuple[str, ...]]
     inherited_traits: dict[str, dict[str, float]]
     causes: dict[str, float | str]
+
+
+@dataclass(slots=True)
+class PoliticalInstitution:
+    institution_id: str
+    name: str
+    institution_type: str
+    level: str
+    locality_id: str | None
+    district_id: str | None
+    capacity: float
+    autonomy: float
+    compliance: float
+    reach: float
+    integrity: float
+    resources: float
+    governing_party_id: str | None = None
+
+
+@dataclass(slots=True)
+class PartyBranch:
+    branch_id: str
+    party_id: str
+    locality_id: str
+    member_ids: set[str]
+    resources: float
+    patronage_stock: float
+    electoral_support: float
+    institutional_influence: float
+    broker_ids: set[str] = field(default_factory=set)
+
+
+@dataclass(slots=True)
+class LocalElite:
+    elite_id: str
+    person_id: str
+    locality_id: str
+    elite_type: str
+    network_centrality: float
+    resources: float
+    legitimacy: float
+    institutional_ties: float
+    party_alignment: str | None
+
+
+@dataclass(slots=True)
+class PoliticalTransfer:
+    transfer_id: str
+    time: float
+    transfer_type: str
+    source_id: str
+    destination_id: str
+    locality_id: str | None
+    amount: float
+    purpose: str
+
+
+@dataclass(slots=True)
+class PolicyImplementation:
+    implementation_id: str
+    time: float
+    institution_id: str
+    locality_id: str
+    budget: float
+    public_spending: float
+    patronage: float
+    private_diversion: float
+    implementation_quality: float
+    service_output: dict[str, float]
+
+
+@dataclass(slots=True)
+class Election:
+    election_id: str
+    time: float
+    votes: dict[str, float]
+    abstention: float
+    winner_party_id: str
+    prior_ruling_party_id: str | None
 
 
 @dataclass(slots=True)

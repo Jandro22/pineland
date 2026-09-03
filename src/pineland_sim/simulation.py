@@ -41,6 +41,7 @@ class Simulation:
             ("physical_refresh", intervals.physical_refresh, 35),
             ("social_influence", intervals.social_influence, 45),
             ("organization_ecology", self.world.config.organization_ecology.interval_days, 58),
+            ("political_order", self.world.config.political_order.interval_days, 57),
             ("mobility", intervals.mobility, 50),
             ("governance", intervals.governance, 70),
             ("economy", intervals.economy, 80),

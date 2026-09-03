@@ -30,6 +30,7 @@ from .information import (
 from .world import WorldState, seeded_rng
 from .combat import resolve_engagement
 from .organization_ecology import process_organization_ecology, recruit_and_retain
+from .political_order import process_political_order
 
 
 class ProcessEngine:
@@ -387,14 +388,17 @@ class ProcessEngine:
                 "government_cooperation": (party_affinity + expected_government +
                                            self.world.config.social_network.behavior_exposure_weight * government_signal -
                                            person.grievance - .4 * person.fear),
-                "party_participation": party_affinity + person.efficacy - .5 * person.fear,
-                "civil_society": .5 + person.efficacy - .3 * person.fear,
-                "protest": 1.2 * person.grievance + person.efficacy - person.fear,
+                "party_participation": party_affinity + person.efficacy + person.political_access - .5 * person.fear,
+                "civil_society": .5 + person.efficacy + .6 * person.political_access - .3 * person.fear,
+                "protest": 1.2 * person.grievance + person.efficacy + .25 * person.political_access - person.fear,
                 "insurgent_sympathy": (1.2 * person.grievance + expected_insurgent +
                                        self.world.config.social_network.behavior_exposure_weight * insurgent_signal - person.fear),
-                "armed_participation": ((1.5 if person.organization_id == "insurgent" else -1.5) +
+                "armed_participation": ((1.5 if person.organization_id and
+                                          self.world.organizations.get(person.organization_id) and
+                                          self.world.organizations[person.organization_id].kind is OrganizationKind.INSURGENT else -1.5) +
                                         person.grievance +
-                                        self.world.config.social_network.behavior_exposure_weight * insurgent_signal - person.fear),
+                                        self.world.config.social_network.behavior_exposure_weight * insurgent_signal - person.fear -
+                                        self.world.config.political_order.peaceful_channel_strength * person.political_access),
                 "migration": (1.4 if person.displaced else -.8) + person.fear - expected_government,
             }
             if not insurgent_available:
@@ -441,6 +445,11 @@ class ProcessEngine:
             transition.transition_id for transition in self.world.organization_transitions
             if transition.time == self.world.time
         )
+        return result
+
+    def on_political_order(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        result = process_political_order(self.world, self.world.time, event_id, self.rng)
+        result["actor_ids"] = tuple(filter(None, ("government", self.world.ruling_party_id)))
         return result
 
     def on_contact(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:

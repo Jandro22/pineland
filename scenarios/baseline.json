@@ -71,6 +71,21 @@
     "availability_recovery_rate": 0.03,
     "reallocation_rate": 0.04
   },
+  "political_order": {
+    "enabled": true,
+    "interval_days": 30.0,
+    "election_interval_days": 180.0,
+    "federal_policy_budget": 120000.0,
+    "public_budget_share": 0.68,
+    "patronage_share": 0.22,
+    "private_diversion_share": 0.10,
+    "capacity_learning_rate": 0.012,
+    "capacity_decay_rate": 0.008,
+    "patronage_capacity_damage": 0.018,
+    "elite_broker_share": 0.35,
+    "peaceful_channel_strength": 0.5,
+    "election_turnout_sensitivity": 1.4
+  },
   "organization_ecology": {
     "enabled": true,
     "interval_days": 7.0,

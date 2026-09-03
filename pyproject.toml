@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pineland-coinsim"
-version = "0.6.0"
+version = "0.7.0"
 description = "A multiscale, partially observed agent-based simulation of insurgency and counterinsurgency"
 readme = "README.md"
 requires-python = ">=3.11"

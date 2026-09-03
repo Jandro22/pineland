@@ -164,3 +164,33 @@ preserved the represented population of 8,800,000 exactly. The two-day
 behavior-share difference `0.0180`, all within the established engineering
 tolerance. These checks establish implementation stability, not empirical
 calibration or long-horizon identifiability.
+
+## Phase 7: political order and governance competition
+
+Phase 7 separates state, incumbent-government, and party legitimacy and creates
+a federal, district, and municipal institutional ecosystem. Parties now have
+local branches and overlapping membership; explicit local elites broker among
+branches, institutions, and communities. Elections change ruling-party and
+institutional influence without directly changing locality control.
+
+Federal policy budgets flow through auditable public, patronage, broker, and
+private-diversion transfers. Corruption redistributes resources. Local autonomy,
+reach, compliance, integrity, and capacity generate heterogeneous policy
+implementation and five-dimensional governance output. Institutional capacity
+moves slowly and can deteriorate while patronage improves incumbent loyalty.
+
+Political access raises peaceful participation and reduces Phase 6 onset and
+recruitment pressure, closing the competition loop between institutional and
+armed mobilization. Outputs include political diagnostics plus transfer,
+implementation, and election ledgers. Scale analysis now includes ensemble
+distributions for political behavior and stochastic armed onset.
+
+The Phase 7 suite contains 78 passing tests. A 210-day, 1,000-agent integrated
+run processed 17,777 events, held represented population exactly at 8,800,000,
+completed two elections, changed the ruling party to `party-2`, exercised 95
+institutions and 216 local party branches, and emitted 2,788 political-transfer
+records. The final two-day 25,000-versus-75,000 comparison produced government
+control difference `-0.00000405`, insurgent control difference `0.0000000228`,
+and maximum behavior-share difference `0.00144`. Ensemble onset diagnostics
+are tested separately because discrete births should not be interpreted as
+continuous paired outcomes.

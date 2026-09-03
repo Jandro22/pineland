@@ -142,3 +142,20 @@ trust, language comprehension, age decay, and recent corroboration.
 | `onset_resource_fraction` | Member-resource contribution at organization birth | 0.18 |
 | `recruitment_diversity_penalty` | Cohesion cost of heterogeneous intake | 0.12 |
 | `cohesion_loss_memory` | Organizational cohesion sensitivity to military losses | 0.20 |
+
+## Phase 7 political-order parameters
+
+| Parameter | Meaning | Default |
+|---|---|---:|
+| `interval_days` | Policy and implementation cycle | 30 days |
+| `election_interval_days` | National election interval | 180 days |
+| `federal_policy_budget` | Maximum budget allocated per political cycle | 120,000 |
+| `public_budget_share` | Intended public-provision share | 0.68 |
+| `patronage_share` | Intended coalition-patronage share | 0.22 |
+| `private_diversion_share` | Initial private-diversion share | 0.10 |
+| `capacity_learning_rate` | Slow institutional learning rate | 0.012 |
+| `capacity_decay_rate` | Capacity loss under poor implementation | 0.008 |
+| `patronage_capacity_damage` | Integrity/capacity damage from patronage | 0.018 |
+| `elite_broker_share` | Patronage routed through aligned local elites | 0.35 |
+| `peaceful_channel_strength` | Political-access displacement of armed mobilization | 0.50 |
+| `election_turnout_sensitivity` | Reserved turnout calibration coefficient | 1.40 |
