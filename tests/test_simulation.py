@@ -46,6 +46,7 @@ class SimulationTests(unittest.TestCase):
         self.assertTrue(all(person.social_exposure.get("insurgent", 0.0) == 0
                             for person in world.persons.values()))
         self.assertEqual(sum(1 for entry in world.event_log if entry.event_type == "contact"), 0)
+        self.assertFalse(world.engagements)
         world.assert_invariants()
 
     def test_paired_worlds_start_identically(self):

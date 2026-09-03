@@ -220,6 +220,39 @@ class InformationConfig:
 
 
 @dataclass(slots=True)
+class CombatConfig:
+    """Mechanistic priors for a bounded engagement interval."""
+
+    interval_hours: float = 2.0
+    base_attrition_rate: float = 0.012
+    stochastic_sigma: float = 0.42
+    max_loss_fraction: float = 0.12
+    cohesion_loss_multiplier: float = 1.8
+    readiness_cost_multiplier: float = 1.1
+    supply_per_person_hour: float = 0.035
+    ineffective_cohesion: float = 0.22
+    ineffective_readiness: float = 0.18
+    disengagement_base: float = 0.16
+    surprise_initiative: float = 0.28
+    civilian_exposure_rate: float = 0.00008
+    momentum_learning_rate: float = 0.12
+    reinforcement_threshold: float = 0.06
+
+    def validate(self) -> None:
+        for name in ("interval_hours", "base_attrition_rate", "max_loss_fraction",
+                     "cohesion_loss_multiplier", "readiness_cost_multiplier",
+                     "supply_per_person_hour", "stochastic_sigma",
+                     "civilian_exposure_rate"):
+            if getattr(self, name) < 0:
+                raise ValueError(f"{name} cannot be negative")
+        for name in ("ineffective_cohesion", "ineffective_readiness",
+                     "disengagement_base", "surprise_initiative",
+                     "momentum_learning_rate", "reinforcement_threshold"):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+
+
+@dataclass(slots=True)
 class SimulationConfig:
     seed: int = 20260902
     horizon_days: float = 365.0
@@ -239,6 +272,7 @@ class SimulationConfig:
     physical: PhysicalModelConfig = field(default_factory=PhysicalModelConfig)
     logistics: LogisticsConfig = field(default_factory=LogisticsConfig)
     information: InformationConfig = field(default_factory=InformationConfig)
+    combat: CombatConfig = field(default_factory=CombatConfig)
 
     def validate(self) -> None:
         if self.agent_count < 1:
@@ -261,6 +295,7 @@ class SimulationConfig:
         self.physical.validate()
         self.logistics.validate()
         self.information.validate()
+        self.combat.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -278,6 +313,8 @@ class SimulationConfig:
             values["logistics"] = LogisticsConfig(**values["logistics"])
         if isinstance(values.get("information"), dict):
             values["information"] = InformationConfig(**values["information"])
+        if isinstance(values.get("combat"), dict):
+            values["combat"] = CombatConfig(**values["combat"])
         config = cls(**values)
         config.validate()
         return config

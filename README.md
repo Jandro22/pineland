@@ -1,5 +1,10 @@
 # Pineland COIN-SIM
 
+The current `v0.5` development line adds spatial stochastic armed engagements,
+attrition, cohesion failure, disengagement, conserved combat expenditure,
+civilian-harm observations, perceived momentum, and logistics-routed
+reinforcement. See [the combat model](docs/combat-model.md).
+
 Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.4 development line implements the runtime spine, social and physical structure, logistics, and explicit detection/information fusion described by the technical design specification.
 
 The current engine is intentionally dependency-light and transparent. Every important control change is written to a causal ledger, actors act on noisy estimates rather than world truth, population agents carry weights, and all randomness is split into deterministic named streams.

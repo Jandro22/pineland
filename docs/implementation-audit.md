@@ -109,3 +109,27 @@ matched-seed reproducibility, the no-insurgency null, and the existing
 resolution-sensitivity checks remain passing. A 1,000-agent, 30-day information
 smoke produced approximately 32,390 observations and 32,390 auditable command relays while
 retaining the Phase 3 supply and control diagnostics.
+
+## Phase 5: armed contact and tactical consequences
+
+Phase 5 replaces the inherited coarse contact resolver with persistent,
+microzone-located `Engagement` records. Relative capability consumes actual
+formation personnel, quality, cohesion, readiness, command, supply,
+embeddedness, detection state, and terrain-mediated mobility/exposure.
+Stochastic attrition, readiness and cohesion damage, supply expenditure,
+disengagement, temporary ineffectiveness, and existing-formation reinforcement
+orders are explicit outputs. No combat function writes physical control.
+
+Civilian harm is spatial and stochastic. It produces explicit noisy engagement
+observations and heterogeneous perceived-momentum updates; political effects do
+not bypass observation and attribution. The causal ledger records formation
+degradation, which reduces patrol/presence capacity and is converted into
+control only by later physical refreshes.
+
+The Phase 5 suite contains 53 passing tests. A 30-day 1,000-agent smoke run
+processed 2,566 events and one realized engagement while preserving population
+and supply invariants. Its engagement produced 2.06 represented civilian-harm
+units. The two-day 25,000-versus-75,000 comparison retained exact represented
+population and produced government-control difference `-0.0000061011`,
+insurgent-control difference `0.0000000159`, and maximum behavior-share
+difference `0.00316`.

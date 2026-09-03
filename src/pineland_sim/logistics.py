@@ -378,6 +378,12 @@ def update_logistics(world: WorldState, time: float, delta_days: float) -> dict[
                 formation.availability + config.availability_recovery_rate * delta_days
             )
             formation.fatigue = clamp(formation.fatigue - recovery * delta_days)
+            formation.cohesion = clamp(formation.cohesion + .35 * recovery * delta_days)
+            combat = world.config.combat
+            if (formation.operational_status == "ineffective" and
+                    formation.cohesion > combat.ineffective_cohesion * 1.35 and
+                    formation.effective_readiness() > combat.ineffective_readiness * 1.35):
+                formation.operational_status = "effective"
 
         active_shipment = any(shipment.formation_id == formation.formation_id and
                               shipment.status == "in_transit"

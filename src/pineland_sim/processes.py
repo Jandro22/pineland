@@ -28,6 +28,7 @@ from .information import (
     process_information,
 )
 from .world import WorldState, seeded_rng
+from .combat import resolve_engagement
 
 
 class ProcessEngine:
@@ -110,7 +111,7 @@ class ProcessEngine:
         if patrol is None:
             return {"affected_entity_ids": (patrol_id,)}
         formation = self.world.formations.get(patrol.formation_id)
-        if formation is None or formation.personnel <= 0:
+        if formation is None or formation.personnel <= 0 or formation.operational_status == "ineffective":
             return {"affected_entity_ids": (patrol_id, patrol.formation_id)}
         if formation.moving:
             event.payload["next_interval"] = self.world.config.intervals.patrol
@@ -452,7 +453,8 @@ class ProcessEngine:
     def on_contact(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         locality_id = event.payload["locality_id"]
         local = [f for f in self.world.formations.values()
-                 if f.locality_id == locality_id and f.personnel > 0 and not f.moving]
+                 if f.locality_id == locality_id and f.personnel > 0 and not f.moving and
+                 f.operational_status == "effective"]
         government = [f for f in local if self.world.organizations[f.organization_id].kind in {OrganizationKind.MILITARY, OrganizationKind.POLICE}]
         insurgents = [f for f in local if self.world.organizations[f.organization_id].kind is OrganizationKind.INSURGENT]
         if not government or not insurgents:
@@ -497,51 +499,32 @@ class ProcessEngine:
                         g.organization_id: tuple(item.observation_id for item in (g_observation,) if item),
                         i.organization_id: tuple(item.observation_id for item in (i_observation,) if item),
                     }}
-        surprise = float(len(detected_by) == 1)
-        disengaged = float(len(detected_by) == 1 and self.rng.random() < .35)
-        if disengaged:
-            return {"locality_id": locality_id, "actor_ids": (g.organization_id, i.organization_id),
-                    "affected_entity_ids": (g.formation_id, i.formation_id), "contact": 1.0,
-                    "detected_by": detected_by, "contact_hazard": contact_hazard,
-                    "proximity": proximity, "detection_factor": detection_factor,
-                    "disengaged": disengaged, "information_asymmetry": surprise,
-                    "observation_ids": tuple(item.observation_id for item in (g_observation, i_observation)
-                                              if item is not None),
-                    "observations_by_actor": {
-                        g.organization_id: tuple(item.observation_id for item in (g_observation,) if item),
-                        i.organization_id: tuple(item.observation_id for item in (i_observation,) if item),
-                    }, "severity": 0.0}
-        advantage = log(g.effective_strength()) - log(i.effective_strength()) + self.rng.normalvariate(0, .35)
-        government_wins = self.rng.random() < logistic(advantage)
-        intensity = min(.08, .005 + self.rng.expovariate(45))
-        g_loss = g.personnel * intensity * (.55 if government_wins else 1.0)
-        i_loss = i.personnel * intensity * (1.0 if government_wins else .55)
-        g.personnel = max(0, g.personnel - g_loss)
-        i.personnel = max(0, i.personnel - i_loss)
-        g.readiness = clamp(g.readiness - intensity * .7)
-        i.readiness = clamp(i.readiness - intensity * .7)
-        locality.violence = clamp(locality.violence * .85 + intensity * 3)
-        shift = intensity * (.8 if government_wins else -.8)
-        # Phase 2 physical control is generated only by microzone occupation.
-        # Coarse combat retains perception/social effects until combat is given
-        # an explicit microzone location in a later phase.
-        self._control(event_id, locality_id, "government", "combat", expected=shift * .6, social=-abs(shift) * .1)
-        self._control(event_id, locality_id, "insurgent", "combat", expected=-shift * .6)
+        engagement, outcome_observations = resolve_engagement(
+            self.world, event_id, g, i, detected_by, self.world.time, self.rng
+        )
+        all_observations = tuple(item for item in (g_observation, i_observation) if item is not None) + outcome_observations
         return {"locality_id": locality_id, "actor_ids": (g.organization_id, i.organization_id),
                 "affected_entity_ids": (g.formation_id, i.formation_id), "contact": 1.0,
-                "government_losses": -g_loss, "insurgent_losses": -i_loss, "control_shift": shift,
+                "engagement_id": engagement.engagement_id,
+                "government_losses": -engagement.personnel_losses[g.formation_id],
+                "insurgent_losses": -engagement.personnel_losses[i.formation_id],
+                "civilian_harm": engagement.civilian_harm,
                 "detected_by": detected_by, "contact_hazard": contact_hazard,
                 "proximity": proximity, "detection_factor": detection_factor,
                 "surprise_information_asymmetry": float(len(detected_by) == 1),
-                "information_asymmetry": surprise,
-                "disengaged": disengaged,
-                "observation_ids": tuple(item.observation_id for item in (g_observation, i_observation)
-                                          if item is not None),
+                "information_asymmetry": float(len(detected_by) == 1),
+                "disengaged": engagement.disengaged,
+                "ineffective": engagement.ineffective,
+                "reinforcement_order_ids": engagement.reinforcement_order_ids,
+                "observation_ids": tuple(item.observation_id for item in all_observations),
                 "observations_by_actor": {
-                    g.organization_id: tuple(item.observation_id for item in (g_observation,) if item),
-                    i.organization_id: tuple(item.observation_id for item in (i_observation,) if item),
+                    g.organization_id: tuple(item.observation_id for item in all_observations
+                                             if item.observer_actor_id == g.organization_id),
+                    i.organization_id: tuple(item.observation_id for item in all_observations
+                                             if item.observer_actor_id == i.organization_id),
                 },
-                "severity": intensity * 10}
+                "severity": min(1.0, sum(engagement.personnel_losses.values()) /
+                                max(1.0, g.personnel + i.personnel))}
 
     def on_checkpoint(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         self.world.assert_invariants()

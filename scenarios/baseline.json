@@ -71,6 +71,22 @@
     "availability_recovery_rate": 0.03,
     "reallocation_rate": 0.04
   },
+  "combat": {
+    "interval_hours": 2.0,
+    "base_attrition_rate": 0.012,
+    "stochastic_sigma": 0.42,
+    "max_loss_fraction": 0.12,
+    "cohesion_loss_multiplier": 1.8,
+    "readiness_cost_multiplier": 1.1,
+    "supply_per_person_hour": 0.035,
+    "ineffective_cohesion": 0.22,
+    "ineffective_readiness": 0.18,
+    "disengagement_base": 0.16,
+    "surprise_initiative": 0.28,
+    "civilian_exposure_rate": 0.00008,
+    "momentum_learning_rate": 0.12,
+    "reinforcement_threshold": 0.06
+  },
   "information": {
     "prior_confidence": 0.28,
     "default_decay_rate": 0.08,

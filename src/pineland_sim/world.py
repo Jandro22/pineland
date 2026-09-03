@@ -18,6 +18,7 @@ from .entities import (
     Household,
     FormationMovementOrder,
     InformationRelay,
+    Engagement,
     Locality,
     Organization,
     Microzone,
@@ -75,6 +76,7 @@ class WorldState:
     control_cost_consumed: dict[str, float] = field(default_factory=dict)
     organizations: dict[str, Organization] = field(default_factory=dict)
     formations: dict[str, ArmedFormation] = field(default_factory=dict)
+    engagements: dict[str, Engagement] = field(default_factory=dict)
     beliefs: dict[tuple[str, str], ActorBelief] = field(default_factory=dict)
     adjacency: dict[str, dict[str, float]] = field(default_factory=dict)
     event_log: list[EventLogEntry] = field(default_factory=list)
@@ -88,6 +90,7 @@ class WorldState:
     cumulative_supply_produced: float = 0.0
     cumulative_supply_consumed: float = 0.0
     cumulative_supply_lost: float = 0.0
+    cumulative_civilian_harm: float = 0.0
 
     @property
     def observation_records(self) -> list[Observation]:
@@ -118,6 +121,9 @@ class WorldState:
             if (formation.personnel < 0 or formation.sustainment < 0 or formation.supply_stock < 0 or
                     formation.supply_stock > formation.supply_capacity + tolerance):
                 raise AssertionError("negative formation stock")
+            if (not 0 <= formation.cohesion <= 1 or not 0 <= formation.readiness <= 1 or
+                    formation.cumulative_losses < 0):
+                raise AssertionError("invalid formation combat state")
         for organization in self.organizations.values():
             if organization.resources < -tolerance:
                 raise AssertionError("negative organization budget")
@@ -233,6 +239,8 @@ class WorldState:
             "supply_consumed": self.cumulative_supply_consumed,
             "organizations": len(self.organizations),
             "formations": len(self.formations),
+            "engagements": len(self.engagements),
+            "civilian_harm": self.cumulative_civilian_harm,
             "events": len(self.event_log),
             "synthetic_records": sum(record.recorded for record in self.synthetic_records),
             "mean_government_effective_control": sum(government_control) / len(government_control),
@@ -272,6 +280,7 @@ class WorldState:
         from .physical import physical_diagnostics
         from .logistics import logistics_diagnostics
         from .information import information_diagnostics
+        from .combat import combat_diagnostics
 
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
@@ -296,6 +305,13 @@ class WorldState:
         )
         (output / "information_diagnostics.json").write_text(
             json.dumps(information_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "combat_diagnostics.json").write_text(
+            json.dumps(combat_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "engagements.jsonl").write_text(
+            "".join(json.dumps(asdict(engagement)) + "\n"
+                    for engagement in self.engagements.values()), encoding="utf-8"
         )
         (output / "observations.jsonl").write_text(
             "".join(json.dumps(asdict(observation)) + "\n"

@@ -103,3 +103,22 @@ source type (`patrol`, `fixed_post`, `civilian`, `social_network`,
 `administrative`, `organization_member`, `political_elite`, `interpreter`, and
 `contact`). Observation weight multiplies intrinsic confidence, source quality,
 trust, language comprehension, age decay, and recent corroboration.
+
+## Phase 5 combat parameters
+
+| Parameter | Meaning | Default |
+|---|---|---:|
+| `interval_hours` | Duration represented by one engagement resolution | 2.0 |
+| `base_attrition_rate` | Baseline fractional attrition hazard | 0.012 |
+| `stochastic_sigma` | Lognormal tactical outcome dispersion | 0.42 |
+| `max_loss_fraction` | Per-interval personnel-loss ceiling | 0.12 |
+| `cohesion_loss_multiplier` | Converts exposure/loss into cohesion damage | 1.8 |
+| `readiness_cost_multiplier` | Converts engagement intensity into readiness loss | 1.1 |
+| `supply_per_person_hour` | Engagement supply demand | 0.035 |
+| `ineffective_cohesion` | Cohesion ineffectiveness threshold | 0.22 |
+| `ineffective_readiness` | Effective-readiness ineffectiveness threshold | 0.18 |
+| `disengagement_base` | Baseline opportunity to disengage | 0.16 |
+| `surprise_initiative` | First-interval initiative from asymmetric detection | 0.28 |
+| `civilian_exposure_rate` | Population-at-risk harm scaling | 0.00008 |
+| `momentum_learning_rate` | Expected-control response to perceived performance | 0.12 |
+| `reinforcement_threshold` | Fractional loss prompting an assistance request | 0.06 |

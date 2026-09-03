@@ -412,6 +412,8 @@ class ArmedFormation:
     supply_capacity: float = 0.0
     home_locality_id: str = ""
     moving: bool = False
+    operational_status: str = "effective"
+    cumulative_losses: float = 0.0
 
     def supply_fraction(self) -> float:
         return clamp(self.supply_stock / self.supply_capacity) if self.supply_capacity > 0 else clamp(self.sustainment)
@@ -422,12 +424,35 @@ class ArmedFormation:
         return clamp(self.readiness * supply_effect * fatigue_effect * clamp(self.command))
 
     def available_personnel(self) -> float:
-        if self.moving:
+        if self.moving or self.operational_status == "ineffective":
             return 0.0
         return self.personnel * clamp(self.availability) * self.effective_readiness()
 
     def effective_strength(self) -> float:
         return max(1e-9, self.available_personnel() * self.quality * self.cohesion * (0.5 + self.information))
+
+
+@dataclass(slots=True)
+class Engagement:
+    engagement_id: str
+    event_id: str
+    time: float
+    locality_id: str
+    microzone_id: str
+    formation_a_id: str
+    formation_b_id: str
+    detected_by: tuple[str, ...]
+    initiative: dict[str, float]
+    effective_capability: dict[str, float]
+    personnel_losses: dict[str, float]
+    cohesion_losses: dict[str, float]
+    readiness_losses: dict[str, float]
+    supply_consumed: dict[str, float]
+    civilian_harm: float
+    disengaged: tuple[str, ...]
+    ineffective: tuple[str, ...]
+    reinforcement_order_ids: tuple[str, ...]
+    perceived_momentum_signal: float
 
 
 @dataclass(slots=True)
