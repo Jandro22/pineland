@@ -1,0 +1,18 @@
+{
+  "case_id": "illustrative-pineland",
+  "name": "Illustrative Pineland benchmark case",
+  "description": "Schema fixture only; no historical conflict data is asserted.",
+  "time_window": {"start": "2000-01", "end": "2000-12"},
+  "geography": {"level": "synthetic-locality", "coverage": "illustrative"},
+  "observations": [
+    {"observation_id": "OBS-1", "case_id": "illustrative-pineland", "timestamp": "2000-01", "geography": "L0001", "measure": "violent_events", "value": 4, "source": "EXAMPLE ONLY", "recorded_uncertainty": 1.0, "metadata": {"duration": 1}},
+    {"observation_id": "OBS-2", "case_id": "illustrative-pineland", "timestamp": "2000-02", "geography": "L0001", "measure": "violent_events", "value": 6, "source": "EXAMPLE ONLY", "recorded_uncertainty": 1.0, "metadata": {"duration": 1}},
+    {"observation_id": "OBS-3", "case_id": "illustrative-pineland", "timestamp": "2000-03", "geography": "L0002", "measure": "violent_events", "value": 2, "source": "EXAMPLE ONLY", "recorded_uncertainty": 0.5, "metadata": {"duration": 1}}
+  ],
+  "targets": [
+    {"metric": "event_frequency", "value": 4.0, "uncertainty": 1.0, "weight": 1.0, "transformation_id": "TR-example", "case_id": "illustrative-pineland", "split": "training", "missing": false}
+  ],
+  "transformations": [],
+  "missing_metrics": ["organization_fragmentation", "recurrence"],
+  "metadata": {"source": "EXAMPLE ONLY — replace with cited case evidence", "family": "conflict_events", "split": "training"}
+}

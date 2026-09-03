@@ -12,7 +12,10 @@ from .simulation import Simulation
 from .networks import write_network_snapshot
 from .scaling import compare_agent_scales
 from .validation import (calibrate_and_validate, global_sensitivity, model_ladder,
-                         parameter_registry, registry_document, bargaining_stress_test)
+                         parameter_registry, registry_document, bargaining_stress_test,
+                         fragmentation_forensic, parameter_recovery_experiment,
+                         question_specific_registry)
+from .empirical import case_catalog
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -80,6 +83,31 @@ def build_parser() -> argparse.ArgumentParser:
     bargaining.add_argument("--days", type=float, default=1)
     bargaining.add_argument("--seed", type=int)
     bargaining.add_argument("--output", type=Path, default=Path("outputs/bargaining-stress.json"))
+    cases = subparsers.add_parser("case-catalog", help="summarize empirical case packages")
+    cases.add_argument("paths", type=Path, nargs="+")
+    cases.add_argument("--output", type=Path, default=Path("outputs/case-catalog.json"))
+    forensic = subparsers.add_parser("fragmentation-forensic", help="diagnose a fragmentation benchmark miss")
+    forensic.add_argument("--config", type=Path)
+    forensic.add_argument("--target", type=float, required=True)
+    forensic.add_argument("--samples", type=int, default=24)
+    forensic.add_argument("--repetitions", type=int, default=2)
+    forensic.add_argument("--agents", type=int, default=250)
+    forensic.add_argument("--days", type=float, default=180)
+    forensic.add_argument("--seed", type=int)
+    forensic.add_argument("--output", type=Path, default=Path("outputs/fragmentation-forensic.json"))
+    recovery = subparsers.add_parser("parameter-recovery", help="recover a hidden synthetic parameter vector")
+    recovery.add_argument("--config", type=Path)
+    recovery.add_argument("--samples", type=int, default=24)
+    recovery.add_argument("--repetitions", type=int, default=1)
+    recovery.add_argument("--parameters", nargs="+")
+    recovery.add_argument("--agents", type=int, default=250)
+    recovery.add_argument("--days", type=float, default=180)
+    recovery.add_argument("--seed", type=int)
+    recovery.add_argument("--output", type=Path, default=Path("outputs/parameter-recovery.json"))
+    qregistry = subparsers.add_parser("question-registry", help="write a question-specific parameter subset")
+    qregistry.add_argument("question", choices=["insurgency_onset", "fragmentation", "recurrence", "foreign_dependence", "control"])
+    qregistry.add_argument("--config", type=Path)
+    qregistry.add_argument("--output", type=Path, default=Path("outputs/question-registry.json"))
     return parser
 
 
@@ -146,6 +174,30 @@ def main(argv: list[str] | None = None) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "case-catalog":
+        result = case_catalog(args.paths)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "fragmentation-forensic":
+        result = fragmentation_forensic(config, args.target, args.samples, args.repetitions)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "parameter-recovery":
+        result = parameter_recovery_experiment(config, args.parameters, args.samples, args.repetitions)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "question-registry":
+        result = question_specific_registry(args.question, config)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps({"question": args.question, "parameters": len(result["parameters"])}, indent=2))
         return 0
     outcomes, summary = run_paired_experiment(config, governance_surge(args.multiplier), args.repetitions)
     args.output.parent.mkdir(parents=True, exist_ok=True)

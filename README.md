@@ -1,8 +1,9 @@
 # Pineland COIN-SIM
 
-Version 0.10 adds calibration, global sensitivity, practical identifiability,
-out-of-sample target contracts, and null/reduced/full model-ladder comparison.
-See `docs/research-validation.md`.
+Version 0.11 adds an empirical-data boundary, provenance-preserving case
+packages, measurement-error-aware targets, fragmentation forensics, synthetic
+parameter recovery, and question-specific parameter registries. See
+`docs/empirical-benchmarking.md`.
 
 The `v0.5` baseline adds spatial stochastic armed engagements,
 attrition, cohesion failure, disengagement, conserved combat expenditure,

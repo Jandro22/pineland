@@ -393,6 +393,7 @@ class WorldState:
         from .political_order import political_diagnostics
         from .foreign_affairs import foreign_diagnostics
         from .peace_process import peace_diagnostics
+        from .empirical import recorded_vs_true_metrics, recorded_synthetic_observations
 
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
@@ -436,6 +437,13 @@ class WorldState:
         (output / "peace_transitions.jsonl").write_text(
             "".join(json.dumps(asdict(item)) + "\n" for item in self.peace_transitions),
             encoding="utf-8",
+        )
+        (output / "recorded_empirical_observations.jsonl").write_text(
+            "".join(json.dumps(asdict(item)) + "\n" for item in recorded_synthetic_observations(self)),
+            encoding="utf-8",
+        )
+        (output / "recorded_vs_true_metrics.json").write_text(
+            json.dumps(recorded_vs_true_metrics(self), indent=2), encoding="utf-8"
         )
         (output / "peace_agreements.jsonl").write_text(
             "".join(json.dumps(asdict(item)) + "\n" for item in self.peace_agreements.values()),

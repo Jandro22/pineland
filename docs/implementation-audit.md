@@ -19,6 +19,14 @@ workflow, and a capability-aware null/proxy/reduced/full model ladder. The
 release reports inactive or non-identifiable mechanisms as findings rather
 than forcing a positive conclusion. See `research-validation.md`.
 
+## v0.11 empirical-benchmarking closure
+
+Version 0.11 adds the case-library/evidence boundary, source-hashed
+transformation records, uncertainty-aware empirical targets, recorded-versus-
+true observation diagnostics, focused fragmentation forensic analysis,
+synthetic parameter recovery, and question-specific active parameter sets.
+Bundled case data is explicitly illustrative and is not a historical dataset.
+
 ## Pre-change verification
 
 The inherited runtime passed all 12 tests and completed a 1,000-agent, 30-day smoke trajectory with 72 localities, 18 formations, and 2,275 events. The four established outputs were structurally valid:

@@ -46,6 +46,8 @@ SAMPLE_BOUNDS: dict[str, tuple[float, float, str, str]] = {
     "combat.base_attrition_rate": (.003, .04, r"\alpha_{combat}", "fraction/engagement"),
     "organization_ecology.birth_base_hazard": (.0003, .02, r"\lambda_{birth}", "probability/cycle"),
     "organization_ecology.split_base_hazard": (.0002, .03, r"\lambda_{split}", "probability/cycle"),
+    "organization_ecology.collapse_base_hazard": (.0002, .03, r"\lambda_{collapse}", "probability/cycle"),
+    "organization_ecology.succession_base_hazard": (.0002, .03, r"\lambda_{succession}", "probability/cycle"),
     "political_order.peaceful_channel_strength": (.05, .95, r"\pi_{peace}", "share"),
     "foreign_affairs.migration_rate": (.0001, .02, r"m_{out}", "probability/cycle"),
     "foreign_affairs.intervention_base_hazard": (0.0, .12, r"\lambda_{foreign}", "probability/cycle"),
@@ -362,3 +364,92 @@ def bargaining_stress_test(config: SimulationConfig, regimes: list[dict[str, flo
                         "recurrence_probability": mean(x["recurrence"] for x in outcomes)})
     return {"method": "controlled common-opportunity bargaining stress test", "months": months,
             "replications": replications, "regimes": results}
+
+
+QUESTION_PARAMETER_SETS: dict[str, tuple[str, ...]] = {
+    "insurgency_onset": ("recruitment_rate", "social_network.behavior_update_rate",
+                         "political_order.peaceful_channel_strength",
+                         "organization_ecology.birth_base_hazard"),
+    "fragmentation": ("organization_ecology.split_base_hazard",
+                       "organization_ecology.birth_base_hazard",
+                       "combat.base_attrition_rate", "recruitment_rate"),
+    "recurrence": ("peace_process.implementation_rate", "peace_process.recurrence_base_hazard",
+                   "peace_process.agreement_base_hazard", "peace_process.negotiation_base_hazard"),
+    "foreign_dependence": ("foreign_affairs.intervention_base_hazard", "foreign_affairs.migration_rate",
+                           "political_order.peaceful_channel_strength"),
+    "control": ("contact_rate", "combat.base_attrition_rate", "recruitment_rate",
+                "social_network.behavior_update_rate"),
+}
+
+
+def question_parameter_subset(question: str, config: SimulationConfig | None = None) -> list[str]:
+    """Return a defensible active inference set without rewriting the simulator."""
+    normalized = question.lower().replace("-", "_").replace(" ", "_")
+    for name, parameters in QUESTION_PARAMETER_SETS.items():
+        if name in normalized or normalized in name:
+            return list(parameters)
+    raise ValueError(f"unknown research question {question!r}; choose one of {sorted(QUESTION_PARAMETER_SETS)}")
+
+
+def question_specific_registry(question: str, config: SimulationConfig | None = None) -> dict[str, Any]:
+    config = config or SimulationConfig()
+    active = set(question_parameter_subset(question, config))
+    return {"question": question, "parameters": [asdict(item) for item in parameter_registry(config)
+                                                   if item.code_name in active],
+            "excluded_parameter_count": len(parameter_registry(config)) - len(active)}
+
+
+def fragmentation_forensic(config: SimulationConfig, empirical_target: float,
+                           samples: int = 24, repetitions: int = 2) -> dict[str, Any]:
+    """Diagnose fragmentation misses as parameter, measurement, or structural problems."""
+    parameters = ["organization_ecology.birth_base_hazard", "organization_ecology.split_base_hazard",
+                  "organization_ecology.collapse_base_hazard", "organization_ecology.succession_base_hazard",
+                  "combat.base_attrition_rate", "recruitment_rate"]
+    sensitivity = global_sensitivity(config, ["organization_fragmentation"], samples, parameters, repetitions)
+    contract = empirical_target_contract({"organization_fragmentation": empirical_target}, "organizations",
+                                        "focused fragmentation benchmark", "fragmentation-forensic", "training")
+    identification = practical_identifiability(sensitivity, contract)
+    best = min(((score_targets(row["outcomes"], contract)["mean_normalized_error"], row)
+                for row in sensitivity["records"]), key=lambda item: item[0])
+    ranked = sensitivity["analysis"]["organization_fragmentation"]["main_effect_screen"]
+    if best[0] > 2.0:
+        diagnosis = "structural model problem or measurement mismatch"
+    elif all(item["status"] == "non-identifiable" for item in identification["parameters"].values()):
+        diagnosis = "parameter problem with weak identifiability"
+    else:
+        diagnosis = "parameter problem: at least one focused lever can reproduce the target"
+    return {"diagnosis": diagnosis, "best_normalized_error": best[0],
+            "best_parameters": best[1]["parameters"], "sensitivity": ranked,
+            "identifiability": identification, "target": empirical_target}
+
+
+def parameter_recovery_experiment(config: SimulationConfig, parameters: list[str] | None = None,
+                                  samples: int = 24, repetitions: int = 1) -> dict[str, Any]:
+    """Hide a known synthetic vector, generate recorded targets, and attempt recovery."""
+    parameters = parameters or ["recruitment_rate", "contact_rate",
+                                "peace_process.implementation_rate"]
+    truth_draw = latin_hypercube(2, parameters, config.seed + 17)[1]
+    truth_config = SimulationConfig.from_dict(config.to_dict()); truth_config.seed = config.seed + 1717
+    for path, value in truth_draw.items(): set_parameter(truth_config, path, value)
+    truth_metrics = run_model(truth_config)
+    # Synthetic target uncertainty simulates an imperfect recorded history.
+    contract = empirical_target_contract({key: truth_metrics[key] for key in ("government_control", "implementation")},
+                                        "all", "synthetic recorded history", "parameter-recovery", "training")
+    sensitivity = global_sensitivity(config, list(contract["targets"]), samples, parameters, repetitions)
+    scored = [(score_targets(row["outcomes"], contract)["mean_normalized_error"], row)
+              for row in sensitivity["records"]]
+    best_error, best = min(scored, key=lambda item: item[0])
+    recovered = best["parameters"]
+    comparison = {}
+    for path in parameters:
+        lo, hi, _, _ = SAMPLE_BOUNDS[path]
+        comparison[path] = {"true": truth_draw[path], "recovered": recovered[path],
+                            "absolute_error": abs(truth_draw[path] - recovered[path]),
+                            "normalized_error": abs(truth_draw[path] - recovered[path]) / (hi - lo)}
+    mean_parameter_error = mean(item["normalized_error"] for item in comparison.values())
+    status = "recovered" if mean_parameter_error < .25 else "partially recovered" if mean_parameter_error < .60 else "not recovered"
+    return {"method": "synthetic parameter recovery from recorded target contract", "truth": truth_draw,
+            "target_metrics": {key: truth_metrics[key] for key in contract["targets"]},
+            "best_training_error": best_error, "recovered": recovered,
+            "comparison": comparison, "mean_normalized_parameter_error": mean_parameter_error,
+            "status": status, "identifiability": practical_identifiability(sensitivity, contract)}

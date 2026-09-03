@@ -36,6 +36,8 @@ class IOTests(unittest.TestCase):
             self.assertTrue((root / "result" / "foreign_diagnostics.json").exists())
             self.assertTrue((root / "result" / "peace_diagnostics.json").exists())
             self.assertTrue((root / "result" / "peace_transitions.jsonl").exists())
+            self.assertTrue((root / "result" / "recorded_empirical_observations.jsonl").exists())
+            self.assertTrue((root / "result" / "recorded_vs_true_metrics.json").exists())
             self.assertTrue((root / "result" / "external_transfers.jsonl").exists())
             self.assertTrue((root / "result" / "external_support.jsonl").exists())
             self.assertTrue((root / "result" / "resource_flows.jsonl").read_text())
