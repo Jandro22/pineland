@@ -1,0 +1,19 @@
+{
+  "baseline_model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+  "candidate_model_sha256": "65cf7308996d78d94862f8672d1ea5d176ae4269c744e5524330148981f4c5b6",
+  "days": 180,
+  "agents": 750,
+  "localities": 300,
+  "speedup": 1.527038500451588,
+  "runtime_reduction_fraction": 0.3451376637168795,
+  "exact_comparisons": {
+    "decision_state": true,
+    "trajectory": true,
+    "records": true,
+    "event_counts": true
+  },
+  "historical_scores_used": false,
+  "full_horizon_speedup_measured": false,
+  "running_frozen_jobs_modified": false,
+  "timing_limitation": "Single sequential pair on shared laptop while frozen historical workers were active; not a controlled distribution of timings."
+}

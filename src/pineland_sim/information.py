@@ -14,6 +14,7 @@ is calculated in :func:`information_diagnostics`.
 
 from collections import deque
 from dataclasses import asdict
+from functools import partial
 from math import exp, log
 import random
 from typing import Any, Iterable
@@ -31,7 +32,7 @@ from .entities import (
     clamp,
     logistic,
 )
-from .logistics import command_path
+from .logistics import command_path, command_route_batch
 from .timebase import reference_probability
 from .world import WorldState, seeded_rng
 
@@ -203,11 +204,10 @@ def _actual_target_presence(world: WorldState, target_actor_id: str,
                             locality_id: str, target_formation_id: str | None = None,
                             microzone_id: str | None = None) -> tuple[bool, float, str | None]:
     formations = [formation for formation in world.formations.values()
-                  if ((target_actor_id == "insurgent" and
+                  if formation.locality_id == locality_id and ((target_actor_id == "insurgent" and
                        _is_insurgent_actor(world, formation.organization_id)) or
                       formation.organization_id == target_actor_id) and
-                  formation.personnel > 0 and not formation.moving and
-                  formation.locality_id == locality_id]
+                  formation.personnel > 0 and not formation.moving]
     if target_formation_id is not None:
         formations = [formation for formation in formations
                       if formation.formation_id == target_formation_id]
@@ -847,7 +847,8 @@ def _report_probability(world: WorldState, observer_actor_id: str, locality_id: 
 
 def _observe_from_source(world: WorldState, observer_actor_id: str, observer_node_id: str | None,
                          source_id: str, source_type: str, locality_id: str,
-                         time: float, rng: random.Random) -> list[Observation]:
+                         time: float, rng: random.Random, *,
+                         _formations_by_locality=None) -> list[Observation]:
     target_actor = _target_actor_for_observer(world, observer_actor_id)
     local_node = observer_node_id or source_id
     if rng.random() >= _report_probability(
@@ -863,11 +864,13 @@ def _observe_from_source(world: WorldState, observer_actor_id: str, observer_nod
             world, observer_actor_id, local_node, source_id, source_type,
             locality_id, target_control, time, rng, _primary_zone(world, locality_id),
         )]
-    targets = [formation for formation in world.formations.values()
-               if ((target_actor == "insurgent" and
+    local_formations = (world.formations.values() if _formations_by_locality is None
+                        else _formations_by_locality.get(locality_id, ()))
+    targets = [formation for formation in local_formations
+               if formation.locality_id == locality_id and ((target_actor == "insurgent" and
                     _is_insurgent_actor(world, formation.organization_id)) or
                    formation.organization_id == target_actor) and formation.personnel > 0 and
-               formation.locality_id == locality_id and not formation.moving]
+               not formation.moving]
     microzone = _primary_zone(world, locality_id)
     observations: list[Observation] = []
     if targets:
@@ -896,6 +899,13 @@ def generate_background_observations(world: WorldState, time: float,
                                      rng: random.Random | None = None) -> list[Observation]:
     """Generate fixed-post, civilian, social, administrative, elite, and member reports."""
     rng = rng or seeded_rng(world.config, f"information:{time:.6f}")
+    formations_by_locality = {}
+    for formation in world.formations.values():
+        formations_by_locality.setdefault(formation.locality_id, []).append(formation)
+    communities_by_locality = {}
+    for community in world.social_communities.values():
+        communities_by_locality.setdefault(community.locality_id, []).append(community)
+    observe = partial(_observe_from_source, _formations_by_locality=formations_by_locality)
     observations: list[Observation] = []
     for post in sorted(world.security_posts.values(), key=lambda item: item.post_id):
         if post.available_fraction <= 0:
@@ -904,34 +914,33 @@ def generate_background_observations(world: WorldState, time: float,
         formation = world.formations.get(post.formation_id) if post.formation_id else None
         if formation and (formation.moving or formation.available_personnel() <= 0):
             continue
-        observations.extend(_observe_from_source(
+        observations.extend(observe(
             world, observer, post.formation_id or post.post_id, post.post_id,
             "fixed_post", post.locality_id, time, rng,
         ))
 
     for locality_id in sorted(world.localities):
-        communities = [community for community in world.social_communities.values()
-                       if community.locality_id == locality_id]
+        communities = communities_by_locality.get(locality_id, ())
         if not communities:
             # Administrative, elite-brokerage, and interpretation channels are
             # locality capabilities, not literal sampled civilians.  Preserve
             # them in populated coarse-resolution localities even when no
             # representative resident/community happened to be instantiated.
             if "government" in world.organizations:
-                observations.extend(_observe_from_source(
+                observations.extend(observe(
                     world, "government", None, f"ADMIN:{locality_id}",
                     "administrative", locality_id, time, rng,
                 ))
                 if clamp(world.localities[locality_id].governance.get(
                         "elite_access_capacity",
                         1.0 if world.localities[locality_id].population > 0 else 0.0)):
-                    observations.extend(_observe_from_source(
+                    observations.extend(observe(
                         world, "government", None, f"ELITE-CAP:{locality_id}",
                         "political_elite", locality_id, time, rng,
                     ))
                 district = world.districts[world.localities[locality_id].district_id]
                 if "/" in district.language_pattern and world.localities[locality_id].population > 0:
-                    observations.extend(_observe_from_source(
+                    observations.extend(observe(
                         world, "government", None, f"INTERPRETER-CAP:{locality_id}",
                         "interpreter", locality_id, time, rng,
                     ))
@@ -945,7 +954,7 @@ def generate_background_observations(world: WorldState, time: float,
         # improves source access, but neither channel creates physical presence.
         for source_type in ("civilian", "social_network"):
             if "government" in world.organizations:
-                observations.extend(_observe_from_source(
+                observations.extend(observe(
                     world, "government", None, community.community_id, source_type,
                     locality_id, time, rng,
                 ))
@@ -954,13 +963,13 @@ def generate_background_observations(world: WorldState, time: float,
                 ("administrative", f"ADMIN:{locality_id}"),
                 ("political_elite", f"ELITE:{community.community_id}"),
             ):
-                observations.extend(_observe_from_source(
+                observations.extend(observe(
                     world, "government", None, source_id, source_type,
                     locality_id, time, rng,
                 ))
         for insurgent_id in sorted(organization.organization_id for organization in world.organizations.values()
                                    if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"):
-            observations.extend(_observe_from_source(
+            observations.extend(observe(
                 world, insurgent_id, None, community.community_id, "civilian",
                 locality_id, time, rng,
             ))
@@ -968,7 +977,7 @@ def generate_background_observations(world: WorldState, time: float,
         # makes it meaningful; it degrades less than an untranslated report.
         district = world.districts[world.localities[locality_id].district_id]
         if "/" in district.language_pattern and "government" in world.organizations:
-            observations.extend(_observe_from_source(
+            observations.extend(observe(
                 world, "government", None, community.community_id, "interpreter",
                 locality_id, time, rng,
             ))
@@ -976,7 +985,7 @@ def generate_background_observations(world: WorldState, time: float,
     for formation in sorted(world.formations.values(), key=lambda item: item.formation_id):
         if formation.moving or formation.available_personnel() <= 0:
             continue
-        observations.extend(_observe_from_source(
+        observations.extend(observe(
             world, formation.organization_id, formation.formation_id,
             formation.formation_id, "organization_member", formation.locality_id,
             time, rng,
@@ -1020,7 +1029,8 @@ def process_information(world: WorldState, time: float,
     """Age beliefs, generate reports, and deliver due command-network relays."""
     rng = rng or seeded_rng(world.config, f"information-process:{time:.6f}")
     decay_information(world, time)
-    generated = generate_background_observations(world, time, rng)
+    with command_route_batch(world):
+        generated = generate_background_observations(world, time, rng)
     delivered = dropped = 0
     delivered_ids: list[str] = []
     for relay_id in sorted(world.active_information_relays):

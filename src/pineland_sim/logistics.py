@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import asdict
 import heapq
 from math import exp, inf, log
@@ -185,6 +187,29 @@ def command_metrics(world: WorldState, organization_id: str,
     return reliability, latency
 
 
+_command_route_batch = ContextVar("command_route_batch", default=None)
+
+
+@contextmanager
+def command_route_batch(world: WorldState):
+    """Reuse routes during report generation, which cannot mutate command edges.
+
+    Scoped to this call/context: no persistent cache, world fields, or stale
+    paths across topology changes. Edge insertion and Dijkstra tie order remain
+    unchanged. Cached route lists are copied before returning them to callers.
+    """
+    adjacency = {}
+    for edge in world.command_edges.values():
+        graph = adjacency.setdefault(edge.organization_id, {})
+        graph.setdefault(edge.node_a_id, []).append((edge.node_b_id, edge))
+        graph.setdefault(edge.node_b_id, []).append((edge.node_a_id, edge))
+    token = _command_route_batch.set((world, adjacency, {}))
+    try:
+        yield
+    finally:
+        _command_route_batch.reset(token)
+
+
 def command_path(world: WorldState, organization_id: str, source_node_id: str,
                  destination_node_id: str) -> tuple[list[str], float, float]:
     """Return a high-reliability command route and its additive latency.
@@ -194,14 +219,31 @@ def command_path(world: WorldState, organization_id: str, source_node_id: str,
     the selected path and latency adds across hops, so a local node can possess
     an observation before the headquarters does.
     """
+    batch = _command_route_batch.get()
+    if batch is None or batch[0] is not world:
+        return _solve_command_path(world, organization_id, source_node_id, destination_node_id)
+    _, graphs, routes = batch
+    key = (organization_id, source_node_id, destination_node_id)
+    if key not in routes:
+        path, reliability, latency = _solve_command_path(
+            world, organization_id, source_node_id, destination_node_id,
+            graphs.get(organization_id, {}))
+        routes[key] = (tuple(path), reliability, latency)
+    path, reliability, latency = routes[key]
+    return list(path), reliability, latency
+
+
+def _solve_command_path(world, organization_id, source_node_id, destination_node_id,
+                        adjacency=None):
     if source_node_id == destination_node_id:
         return [source_node_id], 1.0, 0.0
-    adjacency: dict[str, list[tuple[str, CommandEdge]]] = {}
-    for edge in world.command_edges.values():
-        if edge.organization_id != organization_id:
-            continue
-        adjacency.setdefault(edge.node_a_id, []).append((edge.node_b_id, edge))
-        adjacency.setdefault(edge.node_b_id, []).append((edge.node_a_id, edge))
+    if adjacency is None:
+        adjacency = {}
+        for edge in world.command_edges.values():
+            if edge.organization_id != organization_id:
+                continue
+            adjacency.setdefault(edge.node_a_id, []).append((edge.node_b_id, edge))
+            adjacency.setdefault(edge.node_b_id, []).append((edge.node_a_id, edge))
     # Minimize negative log reliability, with latency as deterministic tie-breaker.
     scores = {source_node_id: (0.0, 0.0)}
     previous: dict[str, str] = {}
@@ -601,6 +643,9 @@ def choose_reallocation_orders(
     world: WorldState, time: float, rng, *, interval_days: float = 1.0
 ) -> list[FormationMovementOrder]:
     orders = []
+    pending_formations = {order.formation_id for order in world.movement_orders.values()
+                          if order.status in {"pending", "moving"}}
+    route_cache = {}
     maximum_population = max(
         locality.population for locality in world.localities.values()
     )
@@ -612,22 +657,21 @@ def choose_reallocation_orders(
         if (formation.moving or formation.outside_pineland or formation.personnel <= 0 or
                 formation.operational_status != "effective" or
                 formation.deployable_personnel() <= 0 or
-                any(order.formation_id == formation.formation_id and
-                    order.status in {"pending", "moving"}
-                    for order in world.movement_orders.values())):
+                formation.formation_id in pending_formations):
             continue
         if rng.random() >= decision_probability:
             continue
-        route_metrics = _shortest_locality_route_metrics(
-            world, formation.locality_id, formation.mobility
-        )
+        route_key = (formation.locality_id, formation.mobility)
+        if route_key not in route_cache:
+            route_cache[route_key] = _shortest_locality_route_metrics(
+                world, formation.locality_id, formation.mobility)
+        route_metrics = route_cache[route_key]
         candidates: list[str] = []
         utilities = []
         if world.organizations[formation.organization_id].kind is OrganizationKind.INSURGENT:
-            foothold_cache.setdefault(
-                formation.organization_id,
-                _local_armed_footholds(world, formation.organization_id),
-            )
+            if formation.organization_id not in foothold_cache:
+                foothold_cache[formation.organization_id] = _local_armed_footholds(
+                    world, formation.organization_id)
         moving_personnel = formation.personnel * formation.availability
         for locality_id in sorted(world.localities):
             route, distance_km, travel_hours = route_metrics[locality_id]

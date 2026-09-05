@@ -19,6 +19,7 @@ from .physical import (
     advance_patrol_presence_memory,
     ensure_zone_belief,
     recompute_contested_controls,
+    physical_refresh_sources,
 )
 from .logistics import (
     advance_movement_orders,
@@ -89,12 +90,14 @@ class ProcessEngine:
         }:
             advance_patrol_presence_memory(self.world, self.world.time)
         if self._injected_rng is None:
-            self.rng = self._process_rngs.setdefault(
-                event.event_type, seeded_rng(self.world.config, f"process:{event.event_type}")
-            )
-        self._recording_rng = self._recording_rngs.setdefault(
-            event.event_type, seeded_rng(self.world.config, f"recording:{event.event_type}")
-        )
+            if event.event_type not in self._process_rngs:
+                self._process_rngs[event.event_type] = seeded_rng(
+                    self.world.config, f"process:{event.event_type}")
+            self.rng = self._process_rngs[event.event_type]
+        if event.event_type not in self._recording_rngs:
+            self._recording_rngs[event.event_type] = seeded_rng(
+                self.world.config, f"recording:{event.event_type}")
+        self._recording_rng = self._recording_rngs[event.event_type]
         self.world.active_event_id = event_id
         before_stocks = self.world.tracked_stock_totals()
         forensic = self.world.config.output_mode == "forensic"
@@ -421,8 +424,10 @@ class ProcessEngine:
     def on_physical_refresh(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         changed = 0
         total = 0.0
+        sources = physical_refresh_sources(self.world, self.world.time)
         for locality_id in sorted(self.world.localities):
-            aggregates = recompute_contested_controls(self.world, locality_id, self.world.time)
+            aggregates = recompute_contested_controls(self.world, locality_id, self.world.time,
+                                                     _sources=sources[locality_id])
             for actor, aggregate in aggregates.items():
                 before = self.world.localities[locality_id].control.setdefault(
                     actor, ControlVector()).physical
@@ -437,8 +442,8 @@ class ProcessEngine:
                         )
                     return formation.organization_id == actor
 
-                formations = [formation for formation in self.world.formations.values()
-                              if formation.locality_id == locality_id and matches_actor(formation)]
+                formations = [formation for formation in sources[locality_id][0]
+                              if matches_actor(formation)]
                 constrained = any(formation.moving or formation.supply_fraction() < .4 or
                                   formation.command < .5 or formation.availability < .5
                                   for formation in formations)

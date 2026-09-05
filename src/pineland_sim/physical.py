@@ -288,7 +288,27 @@ def advance_patrol_presence_memory(world: WorldState, time: float,
     return total_contribution
 
 
-def response_times(world: WorldState, locality_id: str, actor: str, time: float) -> dict[str, float]:
+def physical_refresh_sources(world: WorldState, time: float) -> dict:
+    """Ephemeral, insertion-ordered indexes for a control-only refresh."""
+    advance_patrol_presence_memory(world, time)
+    sources = {locality_id: ([], []) for locality_id in world.localities}
+    for formation in world.formations.values():
+        if formation.locality_id in sources:
+            sources[formation.locality_id][0].append(formation)
+    for patrol in world.patrols.values():
+        if patrol.locality_id in sources:
+            sources[patrol.locality_id][1].append(patrol)
+    return sources
+
+
+def _local_sources(world: WorldState, locality_id: str) -> tuple:
+    return ([f for f in world.formations.values() if f.locality_id == locality_id],
+            [p for p in world.patrols.values() if p.locality_id == locality_id])
+
+
+def response_times(world: WorldState, locality_id: str, actor: str, time: float,
+                   *, _sources=None) -> dict[str, float]:
+    formations, patrols = _sources if _sources is not None else _local_sources(world, locality_id)
     zone_ids = [zone.microzone_id for zone in zones_in_locality(world, locality_id)]
     distances = {zone_id: inf for zone_id in zone_ids}
     queue: list[tuple[float, str]] = []
@@ -309,7 +329,7 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
             if mobilization_delay < distances[post.microzone_id]:
                 distances[post.microzone_id] = mobilization_delay
                 heapq.heappush(queue, (mobilization_delay, post.microzone_id))
-    for patrol in world.patrols.values():
+    for patrol in patrols:
         formation = world.formations[patrol.formation_id]
         effective_fraction = (
             patrol.response_fraction * formation.availability * formation.effective_readiness()
@@ -327,7 +347,7 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
     # patrol object (the normal case for insurgent formations).  Its explicit
     # current microzone is the source location; this keeps both sides
     # symmetric and removes the former patrol-only presence assumption.
-    for formation in world.formations.values():
+    for formation in formations:
         if (formation.locality_id != locality_id or
                 not _actor_matches_organization(world, formation.organization_id, actor) or
                 formation.moving or formation.outside_pineland or
@@ -355,23 +375,26 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
 
 def recompute_microzone_control(world: WorldState, locality_id: str,
                                 actor: str, time: float,
-                                apply_contestation: bool = True) -> float:
+                                apply_contestation: bool = True, *, _sources=None) -> float:
     config = world.config.physical
     # Direct callers receive the same completed patrol-memory accounting as a
     # scheduled physical refresh. Repeated calls at the same time are idempotent
     # because each patrol tracks its own accounting boundary.
-    advance_patrol_presence_memory(world, time)
+    if _sources is None:
+        advance_patrol_presence_memory(world, time)
+        _sources = _local_sources(world, locality_id)
+    formations, patrols = _sources
     # Public test/policy hooks may relocate a formation by locality only.  Keep
     # the explicit microzone state coherent at the next physical refresh.
     local_zones = zones_in_locality(world, locality_id)
     if local_zones:
         default_zone = max(local_zones, key=lambda zone: zone.population_share).microzone_id
-        for formation in world.formations.values():
+        for formation in formations:
             if formation.locality_id == locality_id and (
                     formation.current_microzone_id not in world.microzones or
                     world.microzones[formation.current_microzone_id].locality_id != locality_id):
                 formation.current_microzone_id = default_zone
-    times = response_times(world, locality_id, actor, time)
+    times = response_times(world, locality_id, actor, time, _sources=_sources)
     posts_by_zone: dict[str, float] = {}
     for post in posts_in_locality(world, locality_id):
         if _actor_matches_organization(world, post.organization_id, actor):
@@ -387,7 +410,7 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
             posts_by_zone[post.microzone_id] = posts_by_zone.get(post.microzone_id, 0.0) + effective_presence
     formations_by_zone: dict[str, float] = {}
     locality = world.localities[locality_id]
-    for formation in world.formations.values():
+    for formation in formations:
         if (not _actor_matches_organization(world, formation.organization_id, actor) or
                 formation.locality_id != locality_id or
                 formation.moving or formation.outside_pineland or
@@ -416,7 +439,7 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
             # contestation, then expose the contested value through this
             # backwards-compatible public helper.
             recompute_microzone_control(world, locality_id, opponent, time,
-                                        apply_contestation=False)
+                                        apply_contestation=False, _sources=_sources)
             adjusted = 0.0
             for zone in zones_in_locality(world, locality_id):
                 value = zone.physical_control.get(actor, 0.0)
@@ -428,7 +451,7 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
 
 
 def recompute_contested_controls(world: WorldState, locality_id: str, time: float,
-                                 competition_strength: float = .35) -> dict[str, float]:
+                                 competition_strength: float = .35, *, _sources=None) -> dict[str, float]:
     """Recompute side-level and franchise-level physical reach.
 
     Raw reach is generated independently from posts, presence and response;
@@ -438,6 +461,9 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
     hostility is a separate theory layer and must not be smuggled into physical
     aggregation merely because two organizations coexist.
     """
+    if _sources is None:
+        advance_patrol_presence_memory(world, time)
+        _sources = _local_sources(world, locality_id)
     actors = ["government"]
     active_insurgents = sorted(
         organization.organization_id
@@ -451,7 +477,7 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
     raw_zones: dict[str, dict[str, float]] = {}
     for actor in actors:
         raw_aggregate[actor] = recompute_microzone_control(
-            world, locality_id, actor, time, apply_contestation=False)
+            world, locality_id, actor, time, apply_contestation=False, _sources=_sources)
         raw_zones[actor] = {
             zone.microzone_id: zone.physical_control.get(actor, 0.0)
             for zone in zones_in_locality(world, locality_id)
