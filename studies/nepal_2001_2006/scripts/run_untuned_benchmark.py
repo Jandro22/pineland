@@ -235,8 +235,18 @@ def run_seed(seed: int, agent_count: int, variant: str = "E_combined",
 
 def atomic_json(path: Path, payload: dict) -> None:
     temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    with temporary.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
     temporary.replace(path)
+
+
+def run_seed_to_file(seed: int, agent_count: int, variant: str, path: Path) -> dict:
+    """Keep full trajectories in the worker; send only completion metadata."""
+    payload = run_seed(seed, agent_count, variant)
+    atomic_json(path, payload)
+    return {"completed_seed": seed, "runtime_seconds": payload["runtime_seconds"],
+            "contacts": len(payload["contacts"])}
 
 
 def main() -> None:
@@ -286,15 +296,12 @@ def main() -> None:
                       if prior_manifest_path.exists() and not args.force else None)
     started = time.perf_counter()
     if pending:
-        with ProcessPoolExecutor(max_workers=min(args.workers, len(pending))) as executor:
-            futures = {executor.submit(run_seed, seed, args.agent_count, args.variant): seed for seed in pending}
+        with ProcessPoolExecutor(max_workers=min(args.workers, len(pending)),
+                                 max_tasks_per_child=1) as executor:
+            futures = {executor.submit(run_seed_to_file, seed, args.agent_count, args.variant,
+                                       expected[seed]): seed for seed in pending}
             for future in as_completed(futures):
-                seed = futures[future]
-                payload = future.result()
-                atomic_json(expected[seed], payload)
-                print(json.dumps({"completed_seed": seed,
-                                  "runtime_seconds": payload["runtime_seconds"],
-                                  "contacts": len(payload["contacts"])}), flush=True)
+                print(json.dumps(future.result()), flush=True)
 
     files = [expected[seed] for seed in sorted(args.seeds)]
     results = [json.loads(path.read_text(encoding="utf-8")) for path in files]
