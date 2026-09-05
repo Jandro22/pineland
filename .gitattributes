@@ -1,0 +1,3 @@
+# Frozen validation manifests are byte-hashed by the research test suite.
+# Force stable checkout bytes regardless of the user's global core.autocrlf.
+studies/nepal_2001_2006/config/split_manifest.json text eol=lf
