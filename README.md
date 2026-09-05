@@ -115,6 +115,26 @@ pineland-sim scale-check --config scenarios/baseline.json `
 
 The baseline configuration uses the specification target of 75,000 weighted agents. Start with smaller populations during development and benchmark 25,000, 75,000, and 150,000 agents before calibration runs.
 
+### Repository hygiene
+
+Generated empirical runs can be much larger than the source tree.  Use the
+dry-run-first cleanup utility before manually deleting anything:
+
+```powershell
+python scripts/cleanup_generated_artifacts.py
+python scripts/cleanup_generated_artifacts.py --apply --safety-age-hours 6
+```
+
+The utility only deletes explicitly disposable smoke/probe/cache trees and
+refuses deletion if Git tracks anything inside a candidate.  On Windows/NTFS it
+also LZX-compresses stale run, result, raw/processed-data, and generated-output
+trees in place.  Compression is transparent: paths and file bytes are unchanged,
+so retained negative results and provenance remain available for later analysis
+or publication.  Trees modified inside the safety window are skipped to avoid
+interfering with active runs.  Scratch/cache directories such as `tmp/`,
+`.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, and coverage output are ignored
+by Git.
+
 Run the publication-readiness smoke battery (add `--full` for the powered
 resolution/sensitivity/recovery runs):
 
