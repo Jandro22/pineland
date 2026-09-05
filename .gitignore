@@ -8,4 +8,9 @@ build/
 dist/
 outputs/
 studies/*/data/raw/
+studies/*/data/processed/
 studies/*/runs/
+studies/*/results/
+studies/research_program/benchmarks/
+studies/research_program/predictive_competition/
+studies/research_program/*.latest.txt
