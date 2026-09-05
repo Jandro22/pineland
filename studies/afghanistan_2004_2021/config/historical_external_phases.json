@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "afghanistan_2004_2021",
+  "purpose": "Dated exogenous chronology for Afghanistan-specific international intervention and withdrawal. This file declares historical phase boundaries and mission roles only; it does not tune model capacity magnitudes to violence outcomes.",
+  "parameter_fit": false,
+  "benchmark_violence_used": false,
+  "phases": [
+    {
+      "phase_id": "isaf_north_west_expansion",
+      "start_date": "2004-01-01",
+      "end_date": "2006-07-30",
+      "coalition_mission": "ISAF expansion plus separate US-led OEF combat mission",
+      "coalition_combat_role": "mixed",
+      "afghan_security_lead": false,
+      "notes": "NATO-led ISAF expanded north and west while the separate US-led coalition continued operations elsewhere."
+    },
+    {
+      "phase_id": "isaf_nationwide_combat",
+      "start_date": "2006-07-31",
+      "end_date": "2010-12-31",
+      "coalition_mission": "NATO-led ISAF nationwide security mission",
+      "coalition_combat_role": "combat",
+      "afghan_security_lead": false,
+      "notes": "ISAF assumed the southern region on 31 July 2006 and the eastern region on 5 October 2006, completing nationwide expansion."
+    },
+    {
+      "phase_id": "security_transition",
+      "start_date": "2011-01-01",
+      "end_date": "2013-06-17",
+      "coalition_mission": "ISAF combat and security-force assistance during transition",
+      "coalition_combat_role": "declining_combat",
+      "afghan_security_lead": false,
+      "notes": "The Inteqal transition to Afghan security lead began in 2011."
+    },
+    {
+      "phase_id": "afghan_national_lead",
+      "start_date": "2013-06-18",
+      "end_date": "2014-12-31",
+      "coalition_mission": "ISAF enabling and security-force assistance",
+      "coalition_combat_role": "supporting",
+      "afghan_security_lead": true,
+      "notes": "Afghan forces took the lead for security nationwide on 18 June 2013; transition completed and ISAF ended in December 2014."
+    },
+    {
+      "phase_id": "resolute_support_initial",
+      "start_date": "2015-01-01",
+      "end_date": "2017-10-31",
+      "coalition_mission": "Resolute Support train, advise and assist",
+      "coalition_combat_role": "noncombat_mission",
+      "afghan_security_lead": true,
+      "notes": "Resolute Support began 1 January 2015 as a NATO-led non-combat mission. Separate US counterterrorism activity is not represented by this phase label and must be sourced separately before implementation."
+    },
+    {
+      "phase_id": "resolute_support_reinforced",
+      "start_date": "2017-11-01",
+      "end_date": "2020-02-28",
+      "coalition_mission": "Resolute Support train, advise and assist",
+      "coalition_combat_role": "noncombat_mission",
+      "afghan_security_lead": true,
+      "notes": "RSM troop-contributing countries confirmed an increase from about 13,000 to about 16,000 troops in November 2017."
+    },
+    {
+      "phase_id": "doha_drawdown",
+      "start_date": "2020-02-29",
+      "end_date": "2021-04-30",
+      "coalition_mission": "Resolute Support under withdrawal agreement horizon",
+      "coalition_combat_role": "noncombat_mission_drawdown",
+      "afghan_security_lead": true,
+      "notes": "The United States and Taliban signed the Doha agreement on 29 February 2020, including withdrawal of international forces."
+    },
+    {
+      "phase_id": "final_withdrawal",
+      "start_date": "2021-05-01",
+      "end_date": "2021-08-15",
+      "coalition_mission": "Resolute Support withdrawal",
+      "coalition_combat_role": "withdrawing",
+      "afghan_security_lead": true,
+      "notes": "NATO Allies began the final RSM withdrawal on 1 May 2021; the benchmark ends on 15 August 2021."
+    }
+  ],
+  "sources": [
+    {
+      "title": "ISAF's mission in Afghanistan (2001-2014)",
+      "publisher": "NATO",
+      "url": "https://www.nato.int/en/what-we-do/operations-and-missions/isafs-mission-in-afghanistan-2001-2014"
+    },
+    {
+      "title": "Inteqal: Transition to Afghan lead (2011-2014)",
+      "publisher": "NATO",
+      "url": "https://www.nato.int/en/what-we-do/operations-and-missions/inteqal-transition-to-afghan-lead-2011-2014"
+    },
+    {
+      "title": "Resolute Support Mission in Afghanistan (2015-2021)",
+      "publisher": "NATO",
+      "url": "https://www.nato.int/en/what-we-do/operations-and-missions/resolute-support-mission-in-afghanistan-2015-2021"
+    },
+    {
+      "title": "Agreement for Bringing Peace to Afghanistan",
+      "publisher": "U.S. Department of State",
+      "url": "https://2017-2021.state.gov/agreement-for-bringing-peace-to-afghanistan/",
+      "date": "2020-02-29"
+    }
+  ],
+  "quantitative_mapping_status": "UNSPECIFIED_PENDING_SOURCE_AUDIT",
+  "implementation_rule": "Do not map qualitative mission phases to model force/capacity values until independent quantitative or categorical evidence supports that mapping."
+}

@@ -1,0 +1,509 @@
+{
+  "cells": [
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": 1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "insurgent",
+      "recruitment_intensity": 0.8224179572605875,
+      "rooted": true,
+      "rootedness": {
+        "home_district_share": 1.0,
+        "home_locality_share": 1.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": -1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "insurgent",
+      "recruitment_intensity": 0.508203267571671,
+      "rooted": false,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": 1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "government",
+      "recruitment_intensity": 0.8240107776573349,
+      "rooted": true,
+      "rootedness": {
+        "home_district_share": 1.0,
+        "home_locality_share": 1.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": -1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "government",
+      "recruitment_intensity": 0.5109384677052649,
+      "rooted": false,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": 1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "military",
+      "recruitment_intensity": 0.7890245418634942,
+      "rooted": true,
+      "rootedness": {
+        "home_district_share": 1.0,
+        "home_locality_share": 1.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": -1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "military",
+      "recruitment_intensity": 0.4548869223836045,
+      "rooted": false,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": 1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "police",
+      "recruitment_intensity": 0.8080505009794124,
+      "rooted": true,
+      "rootedness": {
+        "home_district_share": 1.0,
+        "home_locality_share": 1.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": -1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "police",
+      "recruitment_intensity": 0.48435317218328977,
+      "rooted": false,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": 1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "foreign",
+      "recruitment_intensity": 0.8311594047338678,
+      "rooted": true,
+      "rootedness": {
+        "home_district_share": 1.0,
+        "home_locality_share": 1.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": -1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "foreign",
+      "recruitment_intensity": 0.5234494231046513,
+      "rooted": false,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": 1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "party",
+      "recruitment_intensity": 0.8176820344883323,
+      "rooted": true,
+      "rootedness": {
+        "home_district_share": 1.0,
+        "home_locality_share": 1.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": -1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "party",
+      "recruitment_intensity": 0.5001803310303701,
+      "rooted": false,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": 1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "civic",
+      "recruitment_intensity": 0.800795284308089,
+      "rooted": true,
+      "rootedness": {
+        "home_district_share": 1.0,
+        "home_locality_share": 1.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    },
+    {
+      "civilian_reporting_probability": 0.17999999999999994,
+      "coercive_backlash_inputs": {
+        "candidate_fear": 0.0,
+        "candidate_grievance": 1.0,
+        "civilian_harm": 0.0
+      },
+      "concealment_embeddedness_input": 0.5,
+      "constituency_congruence": -1.0,
+      "defection_inputs": {
+        "cohesion": 0.6,
+        "discipline": 0.6,
+        "local_control": 0.0
+      },
+      "effective_control": 0.0,
+      "information_language_comprehension": 0.52,
+      "kind": "civic",
+      "recruitment_intensity": 0.4728448267504282,
+      "rooted": false,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 24444.444444444445
+      },
+      "survival_social_base": 0.8455240174672489,
+      "taxation_extraction_opportunity": 0.0
+    }
+  ],
+  "consequence_assessment_direct_rootedness_effect": {
+    "coercive_backlash": false,
+    "concealment_or_sanctuary": false,
+    "defection": false,
+    "effective_control": false,
+    "information_access": false,
+    "organization_survival": false,
+    "recruitment": true,
+    "reporting": false,
+    "taxation_or_extraction": false
+  },
+  "contrasts_by_actor_kind": {
+    "civic": {
+      "constituency_congruence_difference": 2.0,
+      "outcome_differences": {
+        "civilian_reporting_probability": 0.0,
+        "concealment_embeddedness_input": 0.0,
+        "effective_control": 0.0,
+        "information_language_comprehension": 0.0,
+        "recruitment_intensity": 0.3279504575576608,
+        "survival_social_base": 0.0,
+        "taxation_extraction_opportunity": 0.0
+      }
+    },
+    "foreign": {
+      "constituency_congruence_difference": 2.0,
+      "outcome_differences": {
+        "civilian_reporting_probability": 0.0,
+        "concealment_embeddedness_input": 0.0,
+        "effective_control": 0.0,
+        "information_language_comprehension": 0.0,
+        "recruitment_intensity": 0.3077099816292166,
+        "survival_social_base": 0.0,
+        "taxation_extraction_opportunity": 0.0
+      }
+    },
+    "government": {
+      "constituency_congruence_difference": 2.0,
+      "outcome_differences": {
+        "civilian_reporting_probability": 0.0,
+        "concealment_embeddedness_input": 0.0,
+        "effective_control": 0.0,
+        "information_language_comprehension": 0.0,
+        "recruitment_intensity": 0.31307230995207,
+        "survival_social_base": 0.0,
+        "taxation_extraction_opportunity": 0.0
+      }
+    },
+    "insurgent": {
+      "constituency_congruence_difference": 2.0,
+      "outcome_differences": {
+        "civilian_reporting_probability": 0.0,
+        "concealment_embeddedness_input": 0.0,
+        "effective_control": 0.0,
+        "information_language_comprehension": 0.0,
+        "recruitment_intensity": 0.3142146896889165,
+        "survival_social_base": 0.0,
+        "taxation_extraction_opportunity": 0.0
+      }
+    },
+    "military": {
+      "constituency_congruence_difference": 2.0,
+      "outcome_differences": {
+        "civilian_reporting_probability": 0.0,
+        "concealment_embeddedness_input": 0.0,
+        "effective_control": 0.0,
+        "information_language_comprehension": 0.0,
+        "recruitment_intensity": 0.33413761947988974,
+        "survival_social_base": 0.0,
+        "taxation_extraction_opportunity": 0.0
+      }
+    },
+    "party": {
+      "constituency_congruence_difference": 2.0,
+      "outcome_differences": {
+        "civilian_reporting_probability": 0.0,
+        "concealment_embeddedness_input": 0.0,
+        "effective_control": 0.0,
+        "information_language_comprehension": 0.0,
+        "recruitment_intensity": 0.31750170345796225,
+        "survival_social_base": 0.0,
+        "taxation_extraction_opportunity": 0.0
+      }
+    },
+    "police": {
+      "constituency_congruence_difference": 2.0,
+      "outcome_differences": {
+        "civilian_reporting_probability": 0.0,
+        "concealment_embeddedness_input": 0.0,
+        "effective_control": 0.0,
+        "information_language_comprehension": 0.0,
+        "recruitment_intensity": 0.3236973287961227,
+        "survival_social_base": 0.0,
+        "taxation_extraction_opportunity": 0.0
+      }
+    }
+  },
+  "core_model_modified": false,
+  "held_fixed": [
+    "seed",
+    "current residence",
+    "represented membership",
+    "organization traits",
+    "candidate traits",
+    "geography",
+    "language",
+    "control state"
+  ],
+  "historical_outcomes_used": false,
+  "measurement_symmetry": {
+    "actor_kinds": [
+      "insurgent",
+      "government",
+      "military",
+      "police",
+      "foreign",
+      "party",
+      "civic"
+    ],
+    "constituency_congruence_operator_kind_invariant": true,
+    "interpretation": "The rootedness/congruence measurement operator is actor-kind neutral, but the live transition consequences are not yet institutionally specified for every actor.",
+    "transition_symmetry_established": false
+  },
+  "negative_result": "Under a matched home-origin intervention, direct effects are identified for recruitment but not for information, reporting, concealment, extraction, survival, defection, backlash, or effective control. These nulls are retained; no missing transition is added.",
+  "schema_version": "1.0.0",
+  "status": "synthetic_matched_world_franchise_consequence_and_symmetry_audit",
+  "treatment": "member home-origin rootedness"
+}

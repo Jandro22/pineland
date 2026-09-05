@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "nepal_2001_2006",
+  "comparison_boundary": "recorded synthetic two-sided engagement history versus recorded historical two-sided state-based history",
+  "latent_state": {
+    "description": "Pineland latent armed presence, engagements, control, logistics, and information state",
+    "not_directly_observed": true
+  },
+  "primary_observation_stream": {
+    "source_id": "ucdp_ged_26_1",
+    "observed_construct": "recorded lethal organized political violence",
+    "unit": "historical district-week",
+    "event_fields": ["date_start", "date_end", "dyad_name", "type_of_violence", "latitude", "longitude", "where_prec", "low", "best", "high"],
+    "missingness": ["national-level location records are retained as unmapped", "date/location precision flags are retained", "source coverage is not assumed complete"],
+    "severity": "fatality interval low/best/high; no latent-fatality correction applied",
+    "alignment_note": "The primary target is two-sided state-based violence; one-sided violence is retained as an observational diagnostic. Pineland contact records represent realized two-sided engagements, so incidence is construct-aligned but remains a stress test rather than an identified fatality-rate map."
+  },
+  "secondary_observation_stream": {
+    "source_id": "insec_complete_report",
+    "observed_construct": "cumulative victim profile by district",
+    "unit": "district cumulative total",
+    "period": "1996-02-13 through 2006-11-21",
+    "role": "independent spatial cross-check only",
+    "missingness": ["Mustang is not listed in the linked report table", "no district-week date field in the extracted table"]
+  },
+  "synthetic_observation_operator": {
+    "source": "Pineland recording configuration and synthetic records",
+    "recorded_fields": ["event_type", "recorded", "reported_severity", "reported_actor", "geocoding_error", "geocoding_error_distance_km"],
+    "contact_mapping": "a recorded Pineland contact is retained as a synthetic recorded engagement target; it is not relabeled as a UCDP fatality",
+    "false_events": "kept separate from latent event truth and excluded from primary contact counts",
+    "severity_mapping_to_fatalities": "not identified and prohibited"
+  },
+  "calibration_guard": {
+    "allowed_parameters": ["contact_rate", "combat.base_attrition_rate"],
+    "allowed_data": "training split only",
+    "status": "not_licensed_before_semantic-and-support check",
+    "reason": "The untuned model emits sparse engagement records and no identified mapping from unitless reported severity to UCDP fatalities; fitting a two-parameter count/severity bridge would confound event semantics with reporting and is therefore not performed."
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "status": "live_core_snapshot_not_certified",
+  "captured_at": "2026-09-05",
+  "repository": {
+    "commit_hash": "76a02bbf2f1f329a512dbffb2760199b28dc4c8a",
+    "model_sha256": "12ce71b3dbeac742307c1acf2ae46745e1011c3b3cb48cd59723db9ed97d51b9",
+    "tracked_diff_sha256": "a8ee32d41af81020abdfc9c6a368a617357e4e1e380f7cac5c4a009f50ce108e",
+    "dirty_tree": true
+  },
+  "stability_check": {
+    "samples": 3,
+    "interval_seconds": 1,
+    "model_hash_equal": true,
+    "tracked_diff_hash_equal": true
+  },
+  "active_freeze": {
+    "freeze_id": "pineland-core-transfer-v3",
+    "model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+    "tracked_diff_sha256": "3879ef400ff2f08f56f1884410924af04777bf507dc6711dbdb637c742c4ad76",
+    "matches_live_snapshot": false
+  },
+  "audit_stage": "transfer_paused_classified_core_drift_pending_impact",
+  "bounded_current_core_preflights": [
+    {
+      "artifact": "studies/nepal_2001_2006/results/post_structural_repair/structural_repair_manifest.json",
+      "scope": "Nepal construct and initialization invariants",
+      "historical_outcomes_used": false,
+      "transfer_claim": false
+    },
+    {
+      "artifact": "studies/research_program/afghanistan_initialization_preflight.json",
+      "scope": "Afghanistan stock, geography, sanctuary, and supply initialization",
+      "historical_outcomes_used": false,
+      "transfer_claim": false
+    },
+    {
+      "artifact": "studies/research_program/afghanistan_current_core_smoke_preflight.json",
+      "scope": "Afghanistan one-seed 30-day current-core impact diagnostic",
+      "historical_outcomes_used": true,
+      "historical_parameter_fitting": false,
+      "transfer_claim": false
+    },
+    {
+      "artifact": "studies/research_program/afghanistan_current_core_year_preflight.json",
+      "scope": "Afghanistan one-seed 365-day snapshot-bound impact diagnostic (older source snapshot)",
+      "historical_outcomes_used": true,
+      "historical_parameter_fitting": false,
+      "transfer_claim": false
+    },
+    {
+      "artifact": "studies/research_program/contact_challenge_current_core_pilot.json",
+      "scope": "Four-cell synthetic contact/presence pathway pilot",
+      "historical_outcomes_used": false,
+      "transfer_claim": false
+    },
+    {
+      "artifact": "studies/research_program/afghanistan_contact_hazard_sensitivity.json",
+      "scope": "Four fixed contact-rate multipliers over 90 days (older source snapshot)",
+      "historical_outcomes_used": true,
+      "historical_parameter_fitting": false,
+      "transfer_claim": false
+    },
+    {
+      "artifact": "studies/research_program/nepal_current_core_smoke_preflight.json",
+      "scope": "Nepal repaired-geography one-seed 30-day current-core diagnostic",
+      "historical_outcomes_used": false,
+      "transfer_claim": false
+    }
+  ],
+  "new_unsettled_core_areas": [
+    "src/pineland_sim/config.py",
+    "src/pineland_sim/physical.py and src/pineland_sim/processes.py",
+    "src/pineland_sim/logistics.py, src/pineland_sim/organization_ecology.py, and src/pineland_sim/networks.py",
+    "src/pineland_sim/combat.py and src/pineland_sim/entities.py",
+    "src/pineland_sim/timebase.py",
+    "broad interval scaling in foreign affairs, political order, peace process, and simulation"
+  ],
+  "interpretation": "The live source was stable across the latest bounded check at the recorded hashes but has changed repeatedly during this task and remains uncertified. Short current-core preflights were rerun on this snapshot. Existing long-horizon and synthetic pilots remain valid only for their own content-addressed source snapshots and cannot be pooled with this current snapshot without a new certificate and impact assessment."
+}

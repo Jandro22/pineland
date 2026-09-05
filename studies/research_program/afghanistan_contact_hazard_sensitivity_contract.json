@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "status": "preregistered_current_core_contact_hazard_sensitivity_not_fit",
+  "study_id": "afghanistan_2004_2021",
+  "seed": 20040101,
+  "taliban_initial_strength": 7500.0,
+  "horizon_days": 90.0,
+  "contact_rate_baseline": 0.08,
+  "contact_rate_multipliers": [0.5, 1.0, 2.0, 4.0],
+  "historical_outcomes_used": true,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "fixed_conditions": [
+    "same seed and Afghanistan historical initialization",
+    "same 90-day horizon",
+    "same 7,500-person Taliban strength",
+    "same historical coalition schedule",
+    "no parameter fitting or selection by historical score"
+  ],
+  "predeclared_outputs": [
+    "latent and recorded contact counts",
+    "contact hazard draws and passes",
+    "hazard mean and expected contacts",
+    "active province-week counts",
+    "supply and stock ledger gates",
+    "model and repository stability hashes"
+  ],
+  "interpretation_rule": "A monotone contact response supports hazard limitation but does not establish historical validity, actor reproduction, or a general theory. A flat response shifts attention to detection, spatial co-presence, readiness, or recording gates."
+}

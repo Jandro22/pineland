@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "vietnam_1955_1975",
+  "status": "frozen",
+  "outcomes": {
+    "violence": {"source": "NARA VCIIA/SITRA", "recorded_not_latent": true, "unit": "province-week"},
+    "control_or_presence": {"source": "NARA HES", "recorded_not_latent": true, "unit": "hamlet-month", "ordinal": true},
+    "institutional_capacity": {"source": "NARA NAPE/TFARS", "recorded_not_latent": true, "unit": "district-month"}
+  },
+  "rules": [
+    "HES ratings are ordinal observations and are not treated as direct latent control.",
+    "Archival gaps are explicit missingness, not zero operations or zero violence.",
+    "UCDP is not used to fill the pre-1989 NARA coverage gap.",
+    "No holdout outcome is used to alter the observation operator."
+  ]
+}

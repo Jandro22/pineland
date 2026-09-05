@@ -13,11 +13,33 @@ from pineland_sim.information import (
     information_diagnostics,
     observe_target,
     process_information,
+    _prune_information_history,
 )
 from pineland_sim.world import seeded_rng
 
 
 class InformationTests(unittest.TestCase):
+    def test_pruning_never_reuses_observation_or_relay_identity(self):
+        world = generate_pineland(SimulationConfig(
+            agent_count=100, locality_count=17, horizon_days=5, seed=1410))
+        world.config.information.observation_retention_days = .1
+        g, i = world.formations["FDF-01"], world.formations["PRF-01"]
+        i.locality_id, i.current_microzone_id = g.locality_id, g.current_microzone_id
+        first = observe_target(world, "fdf", g.formation_id, "TEST:1", "contact",
+                               g.locality_id, "insurgent", 0.0, random.Random(1),
+                               i.formation_id, microzone_id=g.current_microzone_id,
+                               force_detection=True)
+        first_sequence = world.next_observation_sequence
+        first_relay_sequence = world.next_information_relay_sequence
+        _prune_information_history(world, 1.0)
+        second = observe_target(world, "fdf", g.formation_id, "TEST:2", "contact",
+                                g.locality_id, "insurgent", 2.0, random.Random(2),
+                                i.formation_id, microzone_id=g.current_microzone_id,
+                                force_detection=True)
+        self.assertNotEqual(first.observation_id, second.observation_id)
+        self.assertGreater(world.next_observation_sequence, first_sequence)
+        self.assertGreaterEqual(world.next_information_relay_sequence, first_relay_sequence)
+
     def setUp(self):
         self.world = generate_pineland(SimulationConfig(
             agent_count=500, locality_count=24, horizon_days=5, seed=1404,

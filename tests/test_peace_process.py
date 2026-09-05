@@ -88,6 +88,35 @@ class PeaceProcessTests(unittest.TestCase):
             sum(f.supply_stock for f in world.formations.values()) + world.demobilized_arms)
         world.assert_invariants()
 
+    def test_completed_peace_demobilizes_pending_local_manpower_pool(self):
+        world = make_world()
+        org = world.organizations["insurgent"]
+        locality_id = next(f.locality_id for f in world.formations.values()
+                           if f.organization_id == org.organization_id)
+        before_stocks = world.tracked_stock_totals()
+        world.organization_manpower_pools[(org.organization_id, locality_id)] = 55.0
+        world.record_stock_transactions(
+            "T-POOL-PEACE", "test", before_stocks, world.tracked_stock_totals()
+        )
+        agreement = sign_agreement(world, initiate_negotiation(world, 0), 0, ZeroRng())
+        for provision_id in agreement.provision_ids:
+            provision = world.agreement_provisions[provision_id]
+            provision.progress = provision.target
+        before = world.demobilized_personnel
+        process_peace(world, 30, "E", ZeroRng())
+        self.assertEqual(agreement.status, "completed")
+        self.assertNotIn((org.organization_id, locality_id), world.organization_manpower_pools)
+        self.assertAlmostEqual(world.demobilized_personnel - before, 55.0 + sum(
+            transition.personnel for transition in world.peace_transitions
+            if transition.transition_type == "demobilization" and
+            not transition.causes.get("pending_local_manpower_pool")
+        ))
+        self.assertTrue(any(
+            transition.causes.get("pending_local_manpower_pool")
+            for transition in world.peace_transitions
+        ))
+        world.assert_invariants()
+
     def test_political_transformation_preserves_members_resources_and_capital(self):
         world = make_world()
         org = world.organizations["insurgent"]

@@ -1,0 +1,153 @@
+{
+  "schema_version": "1.0.0",
+  "status": "candidate_theory_not_general",
+  "theory_name": "competitive_local_reproduction",
+  "scope": "A provisional cross-case mechanism for insurgent persistence and counterinsurgency interruption; no efficacy or transfer claim is licensed.",
+  "candidate_cycle": [
+    "local_access",
+    "information",
+    "mobilization",
+    "armed_presence",
+    "control",
+    "civilian_expectations",
+    "future_access"
+  ],
+  "binding_conditions": [
+    "viable exposure or contact opportunity",
+    "an initiation, mobilization, or recruitment response",
+    "local sustainment sufficient for renewal"
+  ],
+  "claims": [
+    {
+      "id": "C1",
+      "claim": "Insurgent persistence may be better represented by viable local reproduction than by national manpower or violence totals alone, conditional on a stable case-specific observation process.",
+      "status": "candidate_supported_by_cross_case_event_proxy_not_empirical_generalization",
+      "evidence": [
+        "docs/candidate-theory-synthesis-2026-09-05.md",
+        "studies/research_program/theory_extraction_protocol.json",
+        "studies/research_program/outcome_measurement_contract.json",
+        "studies/research_program/harmonized_historical_event_signatures.json",
+        "studies/research_program/historical_signature_competitor_benchmark.json",
+        "studies/research_program/historical_assignment_sensitivity.json",
+        "studies/research_program/actor_continuity_diagnostic.json",
+        "studies/nepal_2001_2006/results/post_structural_repair/structural_repair_manifest.json",
+        "studies/research_program/afghanistan_initialization_preflight.json",
+        "studies/research_program/afghanistan_current_core_year_preflight.json",
+        "studies/research_program/afghanistan_contact_hazard_sensitivity.json"
+      ],
+      "missing": [
+        "preregistered cross-case holdout comparison against reduced manpower and violence-only competitors",
+        "full historical current-core impact assessment for Nepal and Afghanistan beyond initialization",
+        "independent measurement validation of local reproduction",
+        "stability of local-renewal lift across case-native event strata",
+        "case-cross hazard-scale identification without outcome fitting",
+        "control and joint-outcome improvement beyond violence-only prediction"
+      ],
+      "falsifier": "A simpler model predicts held-out control and joint outcomes at least as well across the preregistered cases, or the local-renewal lift disappears under actor-identity and reporting-persistence alternatives."
+    },
+    {
+      "id": "C2",
+      "claim": "Exposure/contact, initiation or recruitment, and local sustainment are conjunctive prerequisites for reproduction.",
+      "status": "strong_synthetic_constraint_not_historical_result",
+        "evidence": [
+          "studies/research_program/spatial_factorial_pilot_assessment.json",
+        "studies/research_program/spatial_factorial_contact_challenge_pilot_assessment.json",
+        "studies/research_program/contact_challenge_eight_seed_replication.json",
+        "studies/research_program/contact_challenge_eight_seed_replication_manifest.json",
+        "studies/research_program/contact_challenge_current_core_pilot.json",
+        "studies/research_program/spatial_reproduction_identification_recovery.json",
+        "studies/research_program/actor_continuity_diagnostic.json",
+        "studies/nepal_2001_2006/results/post_structural_repair/structural_repair_manifest.json",
+        "studies/research_program/afghanistan_initialization_preflight.json"
+        ],
+        "missing": [
+          "superseding-certified-core multi-seed challenge replication",
+          "case-level activation genealogy with parent attribution",
+          "complete assignment and split sensitivity analysis"
+      ],
+      "falsifier": "A mechanism can reproduce local episodes reliably when one of the three conditions is deliberately removed."
+    },
+    {
+      "id": "C3",
+      "claim": "Geographic adjacency can shape renewal and spatial concentration, but adjacency alone is not evidence of reproduction.",
+      "status": "recorded_dyad_proxy_with_mixed_temporal_direction_not_reproduction",
+      "evidence": [
+        "studies/research_program/spatial_factorial_pilot_c2afb.json",
+        "studies/research_program/spatial_factorial_pilot_assessment.json",
+        "studies/research_program/event_only_spatial_signature_diagnostic.json",
+        "studies/research_program/harmonized_historical_event_signatures.json",
+        "studies/research_program/historical_assignment_sensitivity.json",
+        "studies/research_program/actor_continuity_diagnostic.json"
+      ],
+      "missing": [
+        "verified actor- or parent-attributed adjacent activation beyond recorded dyad labels",
+        "parent-attributed geographic propagation",
+        "cross-case holdout comparison with common observation operators"
+      ],
+      "falsifier": "Neighbor restriction fails to change adjacent activation or spatial concentration once contact and activation pathways are exercised, or recorded-dyad adjacency does not exceed reverse-time and topology-label nulls."
+    },
+    {
+      "id": "C4",
+      "claim": "Persistent presence matters through a memory/control pathway, not as static occupancy alone.",
+      "status": "pathway_recovered_outcome_effect_unresolved",
+        "evidence": [
+        "studies/research_program/spatial_factorial_contact_challenge_pilot_c2afb.json",
+        "studies/research_program/contact_challenge_eight_seed_replication.json",
+        "studies/research_program/contact_challenge_eight_seed_replication_manifest.json",
+        "studies/research_program/contact_challenge_current_core_pilot.json",
+        "studies/research_program/spatial_mechanism_channels.json",
+          "studies/afghanistan_2004_2021/results/control_observation_synthetic_recovery.json",
+          "tests/test_spatial_process_repair.py"
+        ],
+        "missing": [
+          "certified-core revalidation of the eight-seed challenge",
+          "control and expectation outcomes beyond memory stock",
+          "cross-case presence/operator validation"
+      ],
+      "falsifier": "Formation-memory treatment changes neither local control nor renewal when contact and focal exposure are held available."
+    },
+    {
+      "id": "C5",
+      "claim": "Counterinsurgency succeeds when it interrupts local reproduction with persistent credible security, information, governance, and changed expectations.",
+      "status": "policy_candidate_not_efficacy_claim",
+      "evidence": [
+        "docs/candidate-theory-synthesis-2026-09-05.md",
+        "studies/research_program/coin_interventions.json",
+        "studies/research_program/outcome_measurement_contract.json"
+      ],
+      "missing": [
+        "preregistered intervention runs",
+        "joint control/harm/capacity outcomes",
+        "holdout and reduced-model comparisons in at least two cases"
+      ],
+      "falsifier": "Interventions that interrupt the proposed cycle do not improve declared control or joint outcomes, or only reduce violence while worsening harm and dependence."
+    },
+    {
+      "id": "C6",
+      "claim": "Insurgent movement is plausibly a portfolio of frontier expansion, foothold consolidation, stronghold retention, and uncertainty-driven exploration, constrained by route risk and sanctuary access.",
+      "status": "synthetic_structural_validation_only",
+      "evidence": [
+        "studies/research_program/insurgent_portfolio_synthetic_validation.json",
+        "tests/test_reallocation_theory.py",
+        "studies/research_program/spatial_mechanism_channels.json"
+      ],
+      "missing": [
+        "historical movement reconstruction",
+        "cross-case holdout comparison against simpler movement models",
+        "evidence that the portfolio changes local reproduction rather than only trajectories"
+      ],
+      "falsifier": "A simpler movement rule matches held-out spatial concentration and local-control outcomes, or the declared route/sanctuary monotonicities fail in a settled implementation."
+    }
+  ],
+  "promotion_rule": "No claim becomes a stable general theory until its missing evidence is satisfied in the case ladder, the simplest competitors are beaten on frozen holdouts, and the active core has a superseding reproducibility certificate.",
+  "current_blockers": [
+    "live core hash continues to change and does not match the active freeze",
+    "Nepal and Afghanistan artifacts are bound to earlier source snapshots",
+    "current-core Nepal and Afghanistan initialization preflights pass, but no full historical transfer impact has been licensed",
+    "adjacent activation and historical parent-attributed reproduction remain unidentified",
+    "the four-case violence-only adjacency contrasts show no robust temporal-direction margin",
+    "stratum sensitivity is descriptive, while incomplete location assignment and Nepal monthly split mixing remain unresolved",
+    "current-core hazard sensitivity is single-case and fixed-seed; it does not identify a transferable hazard scale"
+  ],
+  "interpretation": "This matrix is a disciplined candidate-theory ledger. It records what the accumulated evidence constrains without converting synthetic pathway recovery into a general empirical law."
+}

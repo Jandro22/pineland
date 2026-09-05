@@ -1,0 +1,222 @@
+{
+  "schema_version": "1.0.0",
+  "status": "planned_outputs_not_results",
+  "figures": [
+    {
+      "id": "F1",
+      "working_title": "Epistemic architecture of Pineland",
+      "purpose": "Show latent world state, actor-local belief formation, action selection, event generation, observation, and researcher-facing records as separate layers.",
+      "buildability": "safe_now",
+      "numerical_result": false,
+      "dependencies": [
+        "docs/information-model.md",
+        "docs/odd-model.md",
+        "docs/research-readiness.md"
+      ]
+    },
+    {
+      "id": "F2",
+      "working_title": "Stock-flow and organizational reproduction architecture",
+      "purpose": "Show membership, unfielded manpower, formations, material stocks, local access, information, control, and episode reproduction without asserting that any candidate cycle is empirically established.",
+      "buildability": "safe_now_as_neutral_mechanism_map",
+      "numerical_result": false,
+      "dependencies": [
+        "../mechanism_registry.json",
+        "docs/organization-ecology.md",
+        "docs/logistics-model.md",
+        "docs/physical-model.md"
+      ]
+    },
+    {
+      "id": "F3",
+      "working_title": "Identification ladder from synthetic truth to comparative holdout",
+      "purpose": "Depict the distinction between software invariants, synthetic identification, historical measurement, frozen prediction, transfer, and theory promotion.",
+      "buildability": "safe_now",
+      "numerical_result": false,
+      "dependencies": [
+        "../theory_extraction_protocol.json",
+        "../case_ladder.json",
+        "../comparative_theory_promotion_matrix.json"
+      ]
+    },
+    {
+      "id": "F4",
+      "working_title": "Synthetic recovery and placebo diagnostics",
+      "purpose": "Report recovery of final-paper estimands and observation operators under known truth.",
+      "buildability": "shell_now_numbers_regenerate_for_final_release",
+      "numerical_result": true,
+      "dependencies": [
+        "../spatial_reproduction_identification_recovery.json",
+        "../spatial_reproduction_identification_recovery_manifest.json"
+      ]
+    },
+    {
+      "id": "F5",
+      "working_title": "Case ladder and observation coverage",
+      "purpose": "Show case roles, periods, units, measurement availability, missingness, and eligibility without treating incomplete cases as null outcomes.",
+      "buildability": "shell_now_data_update_as_case_construction_advances",
+      "numerical_result": true,
+      "dependencies": [
+        "../case_ladder.json",
+        "../case_readiness_snapshot.json",
+        "../historical_assignment_sensitivity.json"
+      ]
+    },
+    {
+      "id": "F6",
+      "working_title": "Frozen holdout comparison across cases",
+      "purpose": "Compare full, reduced, and simple statistical models on the construct actually claimed.",
+      "buildability": "blocked",
+      "numerical_result": true,
+      "unlock": [
+        "eligible transfer cases",
+        "final frozen observation operators",
+        "current-core run provenance"
+      ]
+    },
+    {
+      "id": "F7",
+      "working_title": "Cross-case mechanism survival map",
+      "purpose": "Show support, contradiction, null, non-identification, and missing evidence by mechanism and case.",
+      "buildability": "shell_now_final_cells_blocked",
+      "numerical_result": false,
+      "dependencies": [
+        "../comparative_theory_promotion_matrix.json"
+      ]
+    },
+    {
+      "id": "F8",
+      "working_title": "Scope conditions and theory boundary",
+      "purpose": "Map where the surviving theory is supported, contradicted, or not identified.",
+      "buildability": "blocked_until_cross_case_adjudication",
+      "numerical_result": false
+    }
+  ],
+  "tables": [
+    {
+      "id": "T1",
+      "working_title": "Constructs, latent states, actor beliefs, and observables",
+      "buildability": "safe_now",
+      "required_columns": [
+        "construct",
+        "theoretical_role",
+        "latent_state",
+        "actor_information",
+        "recorded_observable",
+        "observation_operator",
+        "known_mismatch"
+      ]
+    },
+    {
+      "id": "T2",
+      "working_title": "Model assumptions by epistemic status",
+      "buildability": "safe_now",
+      "required_columns": [
+        "assumption_or_parameter",
+        "category",
+        "source_or_justification",
+        "case_specific",
+        "estimated",
+        "uncertainty",
+        "falsification_test"
+      ],
+      "category_vocabulary": [
+        "structural_assumption",
+        "engineering_prior",
+        "case_input",
+        "calibrated_parameter",
+        "latent_state",
+        "actor_belief",
+        "recorded_observable"
+      ]
+    },
+    {
+      "id": "T3",
+      "working_title": "Estimands and identification requirements",
+      "buildability": "safe_now",
+      "required_columns": [
+        "estimand",
+        "unit",
+        "target_construct",
+        "identification_requirements",
+        "censoring_rule",
+        "competing_risks",
+        "synthetic_recovery_gate"
+      ]
+    },
+    {
+      "id": "T4",
+      "working_title": "Comparative case design",
+      "buildability": "safe_now_and_update",
+      "required_columns": [
+        "case",
+        "role",
+        "period",
+        "unit",
+        "case_inputs",
+        "observation_operators",
+        "holdouts",
+        "current_eligibility"
+      ]
+    },
+    {
+      "id": "T5",
+      "working_title": "Competitor and ablation specification",
+      "buildability": "safe_now",
+      "required_columns": [
+        "target_claim",
+        "full_model",
+        "reduced_model",
+        "statistical_competitor",
+        "ablation",
+        "predicted_signature",
+        "falsifier"
+      ]
+    },
+    {
+      "id": "T6",
+      "working_title": "Historical holdout performance",
+      "buildability": "blocked",
+      "required_columns": [
+        "case",
+        "outcome",
+        "model",
+        "split",
+        "score",
+        "uncertainty",
+        "measurement_variant",
+        "source_hash"
+      ]
+    },
+    {
+      "id": "T7",
+      "working_title": "Mechanism promotion matrix",
+      "buildability": "shell_now_final_status_blocked",
+      "required_columns": [
+        "claim",
+        "case",
+        "eligible_evidence",
+        "result_status",
+        "competitor_result",
+        "measurement_robustness",
+        "scope_condition",
+        "promotion_decision"
+      ]
+    },
+    {
+      "id": "T8",
+      "working_title": "Negative results, failed transfers, and unresolved identification",
+      "buildability": "safe_now_and_continuous",
+      "required_columns": [
+        "artifact",
+        "question",
+        "negative_or_null_result",
+        "what_it_rules_out",
+        "what_it_does_not_rule_out",
+        "preserved_under_hash",
+        "superseded_or_current"
+      ]
+    }
+  ]
+}
+

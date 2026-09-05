@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0.0",
+  "status": "claim_language_governance_not_result",
+  "purpose": "Keep manuscript wording mechanically aligned with the strongest evidence actually licensed.",
+  "levels": [
+    {
+      "level": 0,
+      "id": "conceptual_candidate",
+      "minimum_evidence": [
+        "mechanism is theoretically explicit",
+        "falsifier is declared"
+      ],
+      "allowed_phrasing": [
+        "candidate mechanism",
+        "hypothesis",
+        "theory under test",
+        "proposed explanation"
+      ],
+      "forbidden_phrasing": [
+        "demonstrates",
+        "establishes",
+        "general law",
+        "validated theory"
+      ]
+    },
+    {
+      "level": 1,
+      "id": "synthetically_identified",
+      "minimum_evidence": [
+        "known-truth recovery",
+        "relevant null and placebo recovery",
+        "source and RNG provenance"
+      ],
+      "allowed_phrasing": [
+        "the estimand is recoverable under the synthetic test",
+        "the pathway is exercised in controlled worlds",
+        "the implementation reproduces the preregistered synthetic contrast"
+      ],
+      "forbidden_phrasing": [
+        "historically supported",
+        "empirically general",
+        "causes real-world outcomes"
+      ]
+    },
+    {
+      "level": 2,
+      "id": "case_supported",
+      "minimum_evidence": [
+        "eligible frozen historical case",
+        "prospective observation operator",
+        "frozen holdout",
+        "uncertainty reported"
+      ],
+      "allowed_phrasing": [
+        "supported in this case",
+        "consistent with the preregistered case prediction",
+        "improves held-out performance in this case"
+      ],
+      "forbidden_phrasing": [
+        "general",
+        "universal",
+        "cross-case law"
+      ]
+    },
+    {
+      "level": 3,
+      "id": "transfer_supported",
+      "minimum_evidence": [
+        "same mechanism survives at least two eligible transfer cases",
+        "simpler competitors are adjudicated",
+        "measurement and case-input sensitivity do not reverse the result"
+      ],
+      "allowed_phrasing": [
+        "transfers across the tested cases",
+        "cross-case support",
+        "robust across the preregistered transfer set"
+      ],
+      "forbidden_phrasing": [
+        "universal",
+        "all insurgencies",
+        "policy efficacy established"
+      ]
+    },
+    {
+      "level": 4,
+      "id": "general_theory_supported",
+      "minimum_evidence": [
+        "all paper-level promotion gates satisfied",
+        "scope conditions stated",
+        "major negative and boundary cases retained",
+        "construct-specific predictive or explanatory advantage demonstrated"
+      ],
+      "allowed_phrasing": [
+        "general theory within the stated scope conditions",
+        "generalizable mechanism across the tested domain"
+      ],
+      "forbidden_phrasing": [
+        "unconditional universal law",
+        "certainty beyond the tested domain"
+      ]
+    }
+  ],
+  "causal_language_rule": "Historical causal wording requires an identified intervention or mechanism contrast appropriate to the claim; synthetic mechanism recovery alone is insufficient.",
+  "prediction_language_rule": "Prediction claims must identify the outcome, holdout, comparator, and observation definition. Predicting violence does not license wording about control.",
+  "policy_language_rule": "Policy-effectiveness language requires the multidimensional outcome vector and cannot be licensed by a violence-only improvement.",
+  "current_maximum_general_theory_level": 0
+}
+

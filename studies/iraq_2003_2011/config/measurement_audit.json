@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "iraq_2003_2011",
+  "status": "frozen",
+  "outcomes": {
+    "violence": {"source": "UCDP GED", "recorded_not_latent": true, "unit": "district-week"},
+    "civilian_harm": {"source": "UCDP One-sided Violence", "recorded_not_latent": true, "unit": "district-month"},
+    "control_or_presence": {"source": "SIGIR Rusafa", "scope": "anchor district only", "not_substituted_by_violence": true}
+  },
+  "rules": [
+    "Rusafa observations are an independent anchor slice, not a whole-Iraq control proxy.",
+    "Recorded violence is not treated as direct control evidence.",
+    "Missing control observations remain missing; no interpolation across districts is licensed.",
+    "No holdout outcome is used to alter the observation operator."
+  ]
+}

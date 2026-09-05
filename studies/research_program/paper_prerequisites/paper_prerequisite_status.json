@@ -1,0 +1,177 @@
+{
+  "schema_version": "1.0.0",
+  "status": "paper_prerequisites_in_progress_not_manuscript_result",
+  "paper_target": "substantive_general_theory_with_general_methods_contribution",
+  "live_repository": {
+    "available": true,
+    "model_sha256": "12d8634174c56c29a62aca9a7fc609fdfcd312d327ef858152c5d8d2f8e5c387",
+    "commit_hash": "76a02bbf2f1f329a512dbffb2760199b28dc4c8a",
+    "tracked_diff_sha256": "f2d646463a1c12bcb563816dbbea1b67c3c68125e328719aeccfdd778625ba10"
+  },
+  "active_freeze": {
+    "freeze_id": "pineland-core-transfer-v4",
+    "model_sha256": "5c6e1599671745cb4425cd1cde1afd9101094ee70ec50576e55799bceadcfbb9",
+    "commit": "76a02bbf2f1f329a512dbffb2760199b28dc4c8a",
+    "tracked_diff_sha256": "527ba71f9e858961dd775f7af9b2287b3cce7a74470f560b8e9dc8382e549524"
+  },
+  "paper_gates": {
+    "research_declared_unfinished": true,
+    "candidate_theory_remains_replaceable": true,
+    "core_matches_active_freeze": false,
+    "mechanism_statuses_remain_unresolved": true,
+    "two_eligible_transfer_cases": false,
+    "stable_general_theory_licensed": false,
+    "multidimensional_outcomes_declared": true,
+    "negative_result_ledger_active": true,
+    "claim_language_starts_conservative": true
+  },
+  "publication_claims_unlocked": false,
+  "eligible_transfer_cases": [],
+  "eligible_transfer_case_count": 0,
+  "safe_to_build_now": {
+    "section_ids": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8",
+      "S9",
+      "S10",
+      "S11"
+    ],
+    "figure_ids": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F7"
+    ],
+    "table_ids": [
+      "T1",
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T7",
+      "T8"
+    ],
+    "literature_domains": [
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5",
+      "L6",
+      "L7",
+      "L8",
+      "L9",
+      "L10"
+    ],
+    "reproducibility_schema": true,
+    "negative_result_ledger": true
+  },
+  "blocked_from_finalization": {
+    "section_ids": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8",
+      "S9",
+      "S10",
+      "S11"
+    ],
+    "figure_ids": [
+      "F6",
+      "F8"
+    ],
+    "table_ids": [
+      "T6"
+    ],
+    "final_abstract": true,
+    "final_general_theory_propositions": true,
+    "final_policy_implications": true
+  },
+  "research_program_state": {
+    "case_statuses": {
+      "nepal_2001_2006": "completed_falsification",
+      "afghanistan_2004_2021": "legacy_failed_first_transfer_revalidation_required",
+      "colombia": "data_construction",
+      "iraq": "data_construction",
+      "vietnam": "data_construction"
+    },
+    "candidate_binding_conditions": [
+      "viable local exposure or contact opportunity",
+      "an initiation, mobilization, or recruitment response",
+      "local sustainment sufficient for episode renewal"
+    ],
+    "candidate_negative_constraints": [
+      "adjacency alone is not treated as reproduction",
+      "a violence-only adjacency contrast that does not exceed a temporal-lead placebo is not treated as propagation",
+      "static formation presence alone is not treated as persistence",
+      "violence totals alone are not treated as control"
+    ]
+  },
+  "input_artifacts": [
+    {
+      "path": "studies/research_program/core_freeze.json",
+      "sha256": "2a2c5a4b7232e8463ebeb28726d6cbdacba095660389e3d44cc2a677ecf07d08"
+    },
+    {
+      "path": "studies/research_program/case_ladder.json",
+      "sha256": "54a566c7eaf51457e1bfa1658a834828563e767b3a677e644680ec4d54d0bfa4"
+    },
+    {
+      "path": "studies/research_program/theory_extraction_protocol.json",
+      "sha256": "13acd4af58059affbde932ac3605dda6acb9820083ff318d458465759ea3a3c8"
+    },
+    {
+      "path": "studies/research_program/comparative_theory_promotion_matrix.json",
+      "sha256": "2d97bf8a0a0aa94fcd6438b00b7c7af436276c46aaf32aa2378a0c828f7a41dc"
+    },
+    {
+      "path": "studies/research_program/mechanism_registry.json",
+      "sha256": "3acd5f40c4020c611dbf6c74b4d12a039e8c2fb64ed1a4d69fcb8082e05044a4"
+    },
+    {
+      "path": "studies/research_program/outcome_measurement_contract.json",
+      "sha256": "dfba18e8e770978861f992b7233ca62e2e252088d309923b317d8d95a1d9511f"
+    },
+    {
+      "path": "studies/research_program/paper_prerequisites/manuscript_architecture.json",
+      "sha256": "5574c182bcb6b8641a93f0c2200cf4c855da33ac558f38c2c0179d75aacfc17e"
+    },
+    {
+      "path": "studies/research_program/paper_prerequisites/figure_table_registry.json",
+      "sha256": "caf579b704dc6631246e3100fd93ea2348732378e4602082d658341dc2b95305"
+    },
+    {
+      "path": "studies/research_program/paper_prerequisites/claim_language_contract.json",
+      "sha256": "f9ead8fc81d1e632abcd3c5403c295d04f2c4af7c25f9de8cab6f090fd103efd"
+    },
+    {
+      "path": "studies/research_program/paper_prerequisites/contribution_contract.json",
+      "sha256": "7fe2c05d6d9bd439ff12d1dde65abaec94bc9b927e7ec46f6a948b7970b24034"
+    },
+    {
+      "path": "studies/research_program/paper_prerequisites/literature_gap_matrix.json",
+      "sha256": "073db49e61f1b0e2dd8ad5c8598c1fc823d7caaf92cf08212759f148af0a043f"
+    },
+    {
+      "path": "studies/research_program/paper_prerequisites/reproducibility_appendix_contract.json",
+      "sha256": "90d56ac8fdd777291734523500564de7de3a4e0cd20ba741d7037065d7eff010"
+    },
+    {
+      "path": "studies/research_program/paper_prerequisites/negative_result_ledger.json",
+      "sha256": "68b844bfb35db6b3f11b8e4a869a68b0061ce79694167fb4af4cfdc688efad2e"
+    }
+  ],
+  "interpretation": "This artifact reports what paper infrastructure can be built without promoting unfinished research. False publication_claims_unlocked is the expected state until final provenance, comparative transfer, and theory-promotion gates are all satisfied."
+}

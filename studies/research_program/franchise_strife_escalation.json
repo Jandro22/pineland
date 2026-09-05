@@ -1,0 +1,111 @@
+{
+  "all_recovery_gates_pass": true,
+  "base_structural_state": {
+    "constituency_contest": 0.9,
+    "contact_overlap": 0.85,
+    "genealogical_proximity": 0.75,
+    "ideological_distance": 0.55,
+    "leader_bargaining_skill": 0.35,
+    "leader_hardline": 0.8,
+    "mean_cohesion": 0.75,
+    "resource_stress": 0.7,
+    "support_fragmentation": 0.5
+  },
+  "candidate_theory": "relational bargaining under constituency competition",
+  "falsification_program": [
+    "Contact intervention: identical dyads with versus without overlap; direct interaction signatures must vanish without contact.",
+    "Constituency-balance intervention: hold total support fixed while moving monopoly to 50/50 support; rivalry/hostile pressure rises only under overlap.",
+    "Ideology x genealogy factorial: convergence and shared lineage favor accommodation but must not force merger.",
+    "Stress x cohesion factorial: low-cohesion stress favors exit/merger pressure; hostile strife also requires negative relationship memory and sufficient cohesion/capacity.",
+    "Leadership substitution: vary only risk, rigidity, and political skill; hardline leaders raise escalation pressure while political skill raises accommodation.",
+    "Relationship-history intervention: hold every structural covariate fixed and reverse dyadic memory; regime signatures must diverge.",
+    "Shuffled-dyad placebo: permuting relationship histories across structurally matched dyads should destroy a genuine history-outcome association."
+  ],
+  "live_semantics_audit": {
+    "armed_interfranchise_strife": "not implemented and not identified by current structural state alone",
+    "defection_to_rival": "not implemented: incumbents are restricted to their current organization in recruitment candidate selection",
+    "genealogy": "implemented through organization parent_ids and transition records",
+    "leadership": "implemented per organization, not as persistent dyadic memory",
+    "merger": "implemented: compatibility x low-cohesion x contact-overlap hazard",
+    "nonviolent_rivalry": "implemented implicitly: unaffiliated recruits choose among accessible franchises"
+  },
+  "minimal_missing_construct": {
+    "domain": [
+      -1.0,
+      1.0
+    ],
+    "future_update_evidence": [
+      "recruitment displacement or poaching",
+      "resource or sanctuary bargains",
+      "credible cooperation",
+      "leadership succession",
+      "split or merger lineage history",
+      "costly hostile interactions only if independently justified later"
+    ],
+    "interpretation": "negative=hostile; zero=unresolved; positive=cooperative",
+    "name": "persistent_interfranchise_relationship_memory",
+    "why_needed": "Current live states encode opportunity, stakes, capability, and bargaining pressure but no dyadic path-dependent disposition that separates accommodation from hostility."
+  },
+  "recovery_gates": {
+    "balanced_constituency_competition_raises_hostile_strife": true,
+    "bargaining_skill_raises_cooperation": true,
+    "contact_is_opportunity_gate": true,
+    "hardline_leadership_raises_hostile_strife": true,
+    "ideological_distance_raises_hostile_strife": true,
+    "ideological_distance_suppresses_cooperation": true,
+    "relation_memory_changes_regime_with_structure_fixed": true
+  },
+  "relationship_sweep": [
+    {
+      "indices": {
+        "armed_strife": 0.3852934453125001,
+        "cooperation": 0.05928749999999999,
+        "defection": 0.133875,
+        "merger": 0.03972262499999999,
+        "nonviolent_rivalry": 0.20750625
+      },
+      "relationship_memory": -1.0
+    },
+    {
+      "indices": {
+        "armed_strife": 0.19264672265625005,
+        "cooperation": 0.05928749999999999,
+        "defection": 0.08032500000000001,
+        "merger": 0.03972262499999999,
+        "nonviolent_rivalry": 0.400190625
+      },
+      "relationship_memory": -0.5
+    },
+    {
+      "indices": {
+        "armed_strife": 0.0,
+        "cooperation": 0.05928749999999999,
+        "defection": 0.026775,
+        "merger": 0.03972262499999999,
+        "nonviolent_rivalry": 0.592875
+      },
+      "relationship_memory": 0.0
+    },
+    {
+      "indices": {
+        "armed_strife": 0.0,
+        "cooperation": 0.1778625,
+        "defection": 0.026775,
+        "merger": 0.11916787499999999,
+        "nonviolent_rivalry": 0.400190625
+      },
+      "relationship_memory": 0.5
+    },
+    {
+      "indices": {
+        "armed_strife": 0.0,
+        "cooperation": 0.29643749999999996,
+        "defection": 0.026775,
+        "merger": 0.19861312499999995,
+        "nonviolent_rivalry": 0.20750625
+      },
+      "relationship_memory": 1.0
+    }
+  ],
+  "status": "diagnostic_only_no_core_combat_added"
+}

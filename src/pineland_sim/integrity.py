@@ -17,7 +17,10 @@ def causal_integrity_diagnostics(world) -> dict:
     belief_confidence = [belief.confidence for belief in world.control_beliefs.values()]
     contradictions = [belief.contradiction_index for belief in world.control_beliefs.values()]
     eligible = [row for row in world.organization_eligibility_log if row["eligible"]]
-    recruitment_events = sum(entry.event_type == "recruitment" for entry in world.event_log)
+    event_counts = dict(getattr(world, "event_counts", {}))
+    for entry in world.event_log:
+        event_counts[entry.event_type] = event_counts.get(entry.event_type, 0) + 1
+    recruitment_events = event_counts.get("recruitment", 0)
     warnings = []
     residual = world.supply_conservation_residual()
     if abs(residual) > 1e-6:
@@ -29,9 +32,12 @@ def causal_integrity_diagnostics(world) -> dict:
     if belief_confidence and mean(belief_confidence) < .02:
         warnings.append("belief_confidence_collapse")
     stock_report = world.stock_ledger_diagnostics()
+    accounting_report = world.global_accounting_diagnostics()
     stock_residual = stock_report["residual"]
     if abs(stock_residual) > 1e-6:
         warnings.append("cross_stock_ledger_residual")
+    if accounting_report["max_abs_stock_residual"] > 1e-6 or abs(accounting_report["population_residual"]) > 1e-6:
+        warnings.append("global_accounting_residual")
     if active_insurgents and not world.organization_eligibility_log:
         warnings.append("fragmentation_eligibility_not_logged")
     if active_insurgents and world.time >= 365 and not eligible:
@@ -43,9 +49,6 @@ def causal_integrity_diagnostics(world) -> dict:
                         for snapshot in world.checkpoints]
     if len(patronage_series) >= 4 and patronage_series[-1] > max(patronage_series[:-1]) * 1.5:
         warnings.append("runaway_patronage")
-    event_counts = {}
-    for entry in world.event_log:
-        event_counts[entry.event_type] = event_counts.get(entry.event_type, 0) + 1
     return {
         "supply_conservation_residual": residual,
         "active_insurgent_organizations": len(active_insurgents),
@@ -79,7 +82,10 @@ def causal_integrity_diagnostics(world) -> dict:
             "by_class": stock_report["by_class"],
             "by_boundary_net": stock_report["by_boundary_net"],
             "resource_to_supply_conversion": stock_report["resource_to_supply_conversion"],
+            "by_flow_kind_net": stock_report.get("by_flow_kind_net", {}),
+            "flow_kind_summary": accounting_report.get("flow_kind_summary", {}),
         },
+        "global_accounting": accounting_report,
         "pathology_watchlist": {
             "checkpoint_count": len(world.checkpoints),
             "patronage_series": patronage_series,

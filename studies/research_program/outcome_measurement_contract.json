@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "status": "measurement_contract_not_calibration",
+  "outcomes": {
+    "violence": {
+      "latent_construct": "armed_event_intensity",
+      "observation_operator": "case-specific event-reporting model",
+      "required_fields": ["latent_events", "recorded_events", "fatality_or_severity_interval"],
+      "proxy_forbidden": ["control", "presence"]
+    },
+    "control": {
+      "latent_construct": "local_actor_effective_control_vector",
+      "observation_operator": "case-specific declared P(observed control category | both actors' seven-dimensional latent control vectors), frozen prospectively before scoring",
+      "required_fields": ["formal", "physical", "administrative", "legal", "fiscal", "social", "expected"],
+      "proxy_forbidden": ["violence", "unregistered effective-control dashboard scalar"]
+    },
+    "civilian_harm": {
+      "latent_construct": "civilian_costs_from_conflict_and_policy",
+      "observation_operator": "civilian-harm source and measurement audit",
+      "required_fields": ["direct_harm", "displacement_or_resource_loss", "uncertainty_interval"],
+      "proxy_forbidden": []
+    },
+    "institutional_capacity": {
+      "latent_construct": "durable_local_governance_and_security_capacity",
+      "observation_operator": "independent institutional or service-delivery evidence",
+      "required_fields": ["local_capacity", "continuity", "post_support_capacity"],
+      "proxy_forbidden": ["foreign_force_stock"]
+    },
+    "insurgent_regeneration": {
+      "latent_construct": "future viable insurgent locality activation-episode reproduction",
+      "observation_operator": "parent-attributed activation protocol",
+      "required_fields": ["activation_id", "viability", "activation_day", "activation_end_day", "parent_activation_id_or_edge_table", "parent_pathway", "right_censoring"],
+      "proxy_forbidden": ["event_count_alone"]
+    },
+    "foreign_dependence": {
+      "latent_construct": "marginal_local_outcome dependence on external support",
+      "observation_operator": "support-removal counterfactual with stock/accounting audit",
+      "required_fields": ["local_capacity", "foreign_support", "post_support_outcome"],
+      "proxy_forbidden": ["foreign_personnel_count_alone"]
+    },
+    "recurrence": {
+      "latent_construct": "conflict reactivation after apparent settlement or withdrawal",
+      "observation_operator": "declared recurrence window and event/organization evidence",
+      "required_fields": ["settlement_or_withdrawal_time", "recurrence_window", "reactivation"],
+      "proxy_forbidden": ["short_term_violence_suppression"]
+    }
+  },
+  "rules": [
+    "Every outcome must retain its own uncertainty interval.",
+    "No outcome may be replaced by a violence proxy.",
+    "Case-specific observation operators must be frozen before holdout scoring.",
+    "A missing outcome is reported as missing, never silently imputed from another outcome."
+  ]
+}

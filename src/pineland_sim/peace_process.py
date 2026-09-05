@@ -6,6 +6,7 @@ import random
 
 from .entities import (AgreementProvision, Organization, OrganizationKind, PartyBranch,
                        PeaceAgreement, PeaceTransition, Negotiation, clamp, logistic)
+from .timebase import reference_probability, reference_scale
 
 
 PROVISION_TYPES = ("ceasefire", "security_reform", "political_incorporation",
@@ -17,47 +18,167 @@ def _armed_strength(world, organization_id: str) -> float:
                if f.organization_id == organization_id and not f.outside_pineland)
 
 
+def _armed_personnel(world, organization_id: str) -> float:
+    return sum(f.deployable_personnel() for f in world.formations.values()
+               if f.organization_id == organization_id and not f.outside_pineland)
+
+
+def _belief_target_matches(world, belief_target_id: str, target_side: str) -> bool:
+    if belief_target_id == target_side:
+        return True
+    organization = world.organizations.get(belief_target_id)
+    if organization is None:
+        return False
+    if target_side == "insurgent":
+        return organization.kind is OrganizationKind.INSURGENT
+    if target_side == "government":
+        return organization.kind in {OrganizationKind.MILITARY, OrganizationKind.POLICE}
+    return False
+
+
+def _perceived_opponent_personnel(world, observer_id: str,
+                                  target_side: str) -> float:
+    """Fuse actor-held presence estimates without consulting target truth."""
+    beliefs = [
+        belief for belief in world.presence_beliefs.values()
+        if belief.observer_id == observer_id and belief.evidence_count > 0 and
+        _belief_target_matches(world, belief.target_actor_id, target_side)
+    ]
+    prior = (world.config.force_structure.insurgent_target_personnel
+             if target_side == "insurgent"
+             else world.config.force_structure.government_target_personnel)
+    if not beliefs:
+        return prior
+    specific = {}
+    generic = {}
+    for belief in beliefs:
+        if belief.target_id is not None:
+            current = specific.get(belief.target_id)
+            if current is None or (belief.updated_at, belief.confidence) > (
+                    current.updated_at, current.confidence):
+                specific[belief.target_id] = belief
+        else:
+            key = (belief.locality_id, belief.microzone_id)
+            current = generic.get(key)
+            if current is None or (belief.updated_at, belief.confidence) > (
+                    current.updated_at, current.confidence):
+                generic[key] = belief
+    selected = specific.values() if specific else generic.values()
+    return sum(max(0.0, belief.personnel_estimate) for belief in selected)
+
+
 def _fragmentation(world, insurgents) -> float:
     if not insurgents:
         return 0.0
-    total = sum(max(1.0, _armed_strength(world, o.organization_id)) for o in insurgents)
-    largest = max(max(1.0, _armed_strength(world, o.organization_id)) for o in insurgents)
-    structural = 1 - largest / total
+    # Negotiating-faction count is public/directly experienced at the table;
+    # exact hidden battlefield strengths are not.
+    structural = 1 - 1 / len(insurgents)
     internal = sum((1 - o.cohesion) + .5 * (1 - o.phenotype["centralization"])
                    for o in insurgents) / (1.5 * len(insurgents))
     return clamp(.65 * structural + .35 * internal)
 
 
-def bargaining_values(world, insurgents=None) -> dict[str, dict[str, float]]:
+def _perceived_locality_scalar(world, observer_id: str, locality_id: str,
+                               target_actor_id: str, dimension: str,
+                               perspective: str) -> float:
+    """Return a bargaining actor's estimate, or analyst truth on request."""
+    if perspective == "truth":
+        vector = world.localities[locality_id].control.get(target_actor_id)
+        return float(getattr(vector, dimension, 0.0)) if vector is not None else 0.0
+    view = world.belief_view(observer_id)
+    vector = view.locality_control(locality_id, target_actor_id)
+    return float(getattr(vector, dimension, .5))
+
+
+def _perceived_locality_effective(world, observer_id: str, locality_id: str,
+                                  target_actor_id: str, perspective: str) -> float:
+    if perspective == "truth":
+        vector = world.localities[locality_id].control.get(target_actor_id)
+        return vector.effective() if vector is not None else 0.0
+    return world.belief_view(observer_id).locality_control(locality_id, target_actor_id).effective()
+
+
+def _perceived_violence(world, observer_id: str, locality_id: str,
+                        perspective: str) -> float:
+    if perspective == "truth":
+        return clamp(world.localities[locality_id].violence)
+    return clamp(world.belief_view(observer_id).locality_violence(locality_id,
+                                                                  observer_id,
+                                                                  "government"))
+
+
+def bargaining_values(world, insurgents=None, *, perspective: str = "belief") -> dict[str, dict[str, float]]:
+    """Compute actor-facing bargaining values without hidden-state reads.
+
+    ``perspective='belief'`` is the default used by negotiations.  Analysts
+    may request ``perspective='truth'`` for a diagnostic counterfactual, but
+    that path is never used by the process engine.
+    """
+    if perspective not in {"belief", "truth"}:
+        raise ValueError("perspective must be 'belief' or 'truth'")
     insurgents = insurgents or [o for o in world.organizations.values()
                                 if o.kind is OrganizationKind.INSURGENT and o.status == "active"]
     government = world.organizations["government"]
-    g_strength = _armed_strength(world, "fdf") + _armed_strength(world, "police")
-    i_strength = sum(_armed_strength(world, o.organization_id) for o in insurgents)
-    total = max(1.0, g_strength + i_strength)
-    violence = sum(l.violence for l in world.localities.values()) / max(1, len(world.localities))
-    control = sum(l.control["government"].effective() for l in world.localities.values()) / max(1, len(world.localities))
+    if perspective == "truth":
+        g_strength = _armed_strength(world, "fdf") + _armed_strength(world, "police")
+        i_strength = sum(_armed_strength(world, o.organization_id) for o in insurgents)
+        total = max(1.0, g_strength + i_strength)
+        g_future = g_strength / total
+    else:
+        # Own force state is command-known.  Opposing force state is estimated
+        # from delivered presence beliefs with an explicit order-of-battle prior.
+        g_strength = _armed_personnel(world, "fdf") + _armed_personnel(world, "police")
+        perceived_i_strength = _perceived_opponent_personnel(
+            world, government.organization_id, "insurgent"
+        )
+        g_future = g_strength / max(1.0, g_strength + perceived_i_strength)
+    government_id = government.organization_id
+    government_control = [
+        _perceived_locality_effective(world, government_id, locality_id, "government", perspective)
+        for locality_id in world.localities
+    ]
+    government_violence = [
+        _perceived_violence(world, government_id, locality_id, perspective)
+        for locality_id in world.localities
+    ]
+    control = sum(government_control) / max(1, len(government_control))
+    violence = sum(government_violence) / max(1, len(government_violence))
     foreign_pressure = sum(s.willingness * s.humanitarian_preference for s in world.foreign_states.values()) / max(1, len(world.foreign_states))
     result = {}
-    g_future = g_strength / total
     g_war = clamp(.35 + .45 * g_future + .2 * control - .3 * violence)
     g_peace = clamp(.56 + .14 * control + .08 * foreign_pressure)
     result[government.organization_id] = {"war": g_war, "peace": g_peace,
                                           "surplus": g_peace - g_war,
                                           "future_power": g_future}
     for org in insurgents:
-        strength = _armed_strength(world, org.organization_id)
-        future = strength / total
-        grievance = sum(world.persons[p].grievance * world.persons[p].weight for p in org.member_ids
-                        if p in world.persons) / max(1.0, sum(world.persons[p].weight for p in org.member_ids
-                                                            if p in world.persons))
+        if perspective == "truth":
+            strength = _armed_strength(world, org.organization_id)
+            future = strength / total
+        else:
+            strength = _armed_personnel(world, org.organization_id)
+            perceived_government_strength = _perceived_opponent_personnel(
+                world, org.organization_id, "government"
+            )
+            future = strength / max(1.0, strength + perceived_government_strength)
+        grievance = sum(world.persons[p].grievance * world.persons[p].weight *
+                        world.persons[p].armed_fraction for p in org.member_ids
+                        if p in world.persons) / max(1.0, sum(
+                            world.persons[p].weight * world.persons[p].armed_fraction
+                            for p in org.member_ids if p in world.persons))
         concessions = .42 + .24 * org.capital["political"] + .15 * grievance
-        war = clamp(.18 + .62 * future + .14 * org.external_sanctuary - .18 * violence)
+        actor_violence = sum(_perceived_violence(world, org.organization_id, locality_id, perspective)
+                             for locality_id in world.localities) / max(1, len(world.localities))
+        war = clamp(.18 + .62 * future + .14 * org.external_sanctuary - .18 * actor_violence)
         risk = .20 * (1 - government.accountability) + .15 * (1 - org.cohesion)
         peace = clamp(concessions - risk + .08 * foreign_pressure)
         result[org.organization_id] = {"war": war, "peace": peace,
                                        "surplus": peace - war, "future_power": future}
     return result
+
+
+def true_bargaining_values(world, insurgents=None) -> dict[str, dict[str, float]]:
+    """Analyst-only counterfactual using realized control and violence."""
+    return bargaining_values(world, insurgents, perspective="truth")
 
 
 def initiate_negotiation(world, time: float, insurgents=None) -> Negotiation:
@@ -163,8 +284,12 @@ def _ensure_party(world, org: Organization, agreement: PeaceAgreement, time: flo
 
 
 def _implement(world, agreement: PeaceAgreement, time: float, event_id: str,
-               rng: random.Random) -> tuple[int, float]:
+               rng: random.Random, interval_days: float | None = None) -> tuple[int, float]:
     cfg = world.config.peace_process
+    interval_days = cfg.interval_days if interval_days is None else float(interval_days)
+    if interval_days < 0:
+        raise ValueError("peace-process interval_days cannot be negative")
+    cycle_scale = reference_scale(interval_days, 30.0)
     signatories = [world.organizations[x] for x in agreement.signatory_ids]
     spoilers = len(agreement.rejecting_faction_ids) + sum(world.ceasefires.get(x) == "violated"
                                                           for x in agreement.signatory_ids)
@@ -176,9 +301,13 @@ def _implement(world, agreement: PeaceAgreement, time: float, event_id: str,
         if p.status == "completed":
             completed += 1
             continue
-        increment = cfg.implementation_rate * clamp(.35 * capacity + .25 * p.government_will +
-                    .25 * p.insurgent_will + .3 * p.monitoring - .12 * spoilers -
-                    .2 * p.institutional_resistance + rng.normalvariate(0, .025))
+        increment = (
+            cfg.implementation_rate *
+            clamp(.35 * capacity + .25 * p.government_will +
+                  .25 * p.insurgent_will + .3 * p.monitoring - .12 * spoilers -
+                  .2 * p.institutional_resistance + rng.normalvariate(0, .025)) *
+            cycle_scale
+        )
         p.progress = min(p.target, p.progress + increment)
         total_increment += increment
         p.status = "completed" if p.progress >= p.target - 1e-9 else ("implementing" if increment else "stalled")
@@ -192,7 +321,12 @@ def _implement(world, agreement: PeaceAgreement, time: float, event_id: str,
     if demob.progress > .15:
         for org in signatories:
             for formation in [f for f in world.formations.values() if f.organization_id == org.organization_id]:
-                amount = min(formation.personnel, formation.personnel * cfg.demobilization_rate * demob.progress)
+                demobilization_probability = reference_probability(
+                    clamp(cfg.demobilization_rate * demob.progress),
+                    interval_days,
+                    30.0,
+                )
+                amount = formation.personnel * demobilization_probability
                 arms = min(formation.supply_stock, amount * formation.supply_fraction())
                 formation.personnel -= amount
                 formation.supply_stock -= arms
@@ -208,15 +342,42 @@ def _implement(world, agreement: PeaceAgreement, time: float, event_id: str,
     if completed == len(agreement.provision_ids):
         agreement.status, agreement.completed_at = "completed", time
         for org in signatories:
+            pooled_demobilized = 0.0
+            for key, quantity in list(world.organization_manpower_pools.items()):
+                if key[0] == org.organization_id:
+                    pooled_demobilized += quantity
+                    del world.organization_manpower_pools[key]
+            world.demobilized_personnel += pooled_demobilized
+            if pooled_demobilized:
+                world.peace_transitions.append(PeaceTransition(
+                    f"PX{len(world.peace_transitions)+1:07d}", time, "demobilization",
+                    agreement.agreement_id, (org.organization_id,), pooled_demobilized, 0.0, 0,
+                    {"pending_local_manpower_pool": True}))
             org.status = "political"
             world.ceasefires[org.organization_id] = "settled"
     return completed, total_increment
 
 
-def process_peace(world, time: float, event_id: str, rng: random.Random) -> dict:
+def process_peace(world, time: float, event_id: str, rng: random.Random,
+                  interval_days: float | None = None) -> dict:
     cfg = world.config.peace_process
     if not cfg.enabled:
         return {"initiated": 0, "signed": 0, "recurrences": 0}
+    interval_days = cfg.interval_days if interval_days is None else float(interval_days)
+    if interval_days < 0:
+        raise ValueError("peace-process interval_days cannot be negative")
+    if interval_days == 0:
+        return {
+            "initiated": 0, "signed": 0, "violations": 0,
+            "recurrences": 0, "provisions_completed": 0,
+            "implementation_increment": 0.0,
+            "fragmentation": _fragmentation(
+                world,
+                [o for o in world.organizations.values()
+                 if o.kind is OrganizationKind.INSURGENT and o.status == "active"],
+            ),
+        }
+    before_stocks = world.tracked_stock_totals()
     active = [o for o in world.organizations.values()
               if o.kind is OrganizationKind.INSURGENT and o.status == "active"]
     initiated = signed = violations = recurrences = provisions_completed = 0
@@ -225,7 +386,10 @@ def process_peace(world, time: float, event_id: str, rng: random.Random) -> dict
         values = bargaining_values(world, active)
         joint = min(values["government"]["surplus"],
                     max(values[o.organization_id]["surplus"] for o in active))
-        hazard = cfg.negotiation_base_hazard * logistic(3.5 * joint + .8)
+        reference_hazard = clamp(
+            cfg.negotiation_base_hazard * logistic(3.5 * joint + .8)
+        )
+        hazard = reference_probability(reference_hazard, interval_days, 30.0)
         if rng.random() < hazard:
             initiate_negotiation(world, time, active)
             initiated = 1
@@ -236,10 +400,16 @@ def process_peace(world, time: float, event_id: str, rng: random.Random) -> dict
         # a distinct post-signatory actor/violation and must not be assigned
         # the same value here as a second penalty.
         spoiler = 0.0
-        hazard = cfg.agreement_base_hazard * logistic(2.8 * joint +
-                 cfg.credibility_weight * negotiation.credibility -
-                 cfg.fragmentation_penalty * negotiation.fragmentation -
-                 cfg.spoiler_penalty * spoiler + cfg.foreign_influence_weight * foreign)
+        reference_hazard = clamp(
+            cfg.agreement_base_hazard * logistic(
+                2.8 * joint +
+                cfg.credibility_weight * negotiation.credibility -
+                cfg.fragmentation_penalty * negotiation.fragmentation -
+                cfg.spoiler_penalty * spoiler +
+                cfg.foreign_influence_weight * foreign
+            )
+        )
+        hazard = reference_probability(reference_hazard, interval_days, 30.0)
         if rng.random() < hazard:
             sign_agreement(world, negotiation, time, rng)
             signed += 1
@@ -247,23 +417,44 @@ def process_peace(world, time: float, event_id: str, rng: random.Random) -> dict
         agreement.status = "implementing"
         for oid in agreement.signatory_ids:
             org = world.organizations[oid]
-            violation_hazard = cfg.ceasefire_violation_rate * (1 + agreement.rejecting_faction_ids.__len__()) * \
-                               (1 - agreement.credibility) * (1 + org.phenotype["risk_tolerance"])
+            reference_violation_hazard = clamp(
+                cfg.ceasefire_violation_rate *
+                (1 + len(agreement.rejecting_faction_ids)) *
+                (1 - agreement.credibility) *
+                (1 + org.phenotype["risk_tolerance"])
+            )
+            violation_hazard = reference_probability(
+                reference_violation_hazard, interval_days, 30.0
+            )
             if world.ceasefires.get(oid) == "active" and rng.random() < violation_hazard:
                 world.ceasefires[oid] = "violated"
                 violations += 1
                 world.peace_transitions.append(PeaceTransition(
                     f"PX{len(world.peace_transitions)+1:07d}", time, "ceasefire_violation",
                     agreement.agreement_id, (oid,), causes={"hazard": violation_hazard}))
-        complete, delta = _implement(world, agreement, time, event_id, rng)
+        complete, delta = _implement(
+            world, agreement, time, event_id, rng, interval_days=interval_days
+        )
         provisions_completed += complete
         implementation += delta
         unmet = sum(1 - world.agreement_provisions[p].progress for p in agreement.provision_ids) / len(agreement.provision_ids)
         power_shift = abs(bargaining_values(world).get("government", {"future_power": .5})["future_power"] - .5)
-        recurrence_hazard = cfg.recurrence_base_hazard * exp(1.2 * unmet +
-                            1.1 * len(agreement.rejecting_faction_ids) + .7 * power_shift +
-                            .8 * sum(world.ceasefires.get(x) == "violated" for x in agreement.signatory_ids))
-        if time - agreement.signed_at >= 365 and rng.random() < min(.95, recurrence_hazard):
+        reference_recurrence_hazard = min(
+            .95,
+            cfg.recurrence_base_hazard * exp(
+                1.2 * unmet +
+                1.1 * len(agreement.rejecting_faction_ids) +
+                .7 * power_shift +
+                .8 * sum(
+                    world.ceasefires.get(x) == "violated"
+                    for x in agreement.signatory_ids
+                )
+            ),
+        )
+        recurrence_hazard = reference_probability(
+            reference_recurrence_hazard, interval_days, 30.0
+        )
+        if time - agreement.signed_at >= 365 and rng.random() < recurrence_hazard:
             agreement.status, agreement.failed_at = "failed", time
             for oid in agreement.signatory_ids:
                 org = world.organizations[oid]
@@ -276,6 +467,9 @@ def process_peace(world, time: float, event_id: str, rng: random.Random) -> dict
                 agreement.agreement_id, agreement.signatory_ids,
                 causes={"hazard": recurrence_hazard, "unimplemented_terms": unmet,
                         "power_shift": power_shift}))
+    if world.active_event_id is None:
+        world.record_stock_transactions(event_id, "peace_process", before_stocks,
+                                         world.tracked_stock_totals())
     return {"initiated": initiated, "signed": signed, "violations": violations,
             "recurrences": recurrences, "provisions_completed": provisions_completed,
             "implementation_increment": implementation,

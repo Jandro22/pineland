@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "status": "challenge_pathway_reproduced_current_snapshot_full_acceptance_pending",
+  "experiment_id": "synthetic_spatial_contact_challenge_v1",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "artifact_model_sha256": "9c48b52b269064cc8642f745d13414cfa50ae803de6abf16dc49b6e6f93d2ff6",
+  "current_live_model_sha256_at_assessment": "71d3fc1e35425f874b2f9e57ee6a587b89a4c673f6e50f253925d77c74b6d2b1",
+  "current_core_warning": "The challenge artifact is valid only for its content-addressed 9c48b5 snapshot; the live source changed afterward and remains uncertified.",
+  "contract": {
+    "path": "studies/research_program/spatial_factorial_contact_challenge_contract.json",
+    "sha256": "92d1f66b240471b1a1a2e4542828957947372807fd7678399b4ef0d6c08af92c"
+  },
+  "pilot": {
+    "path": "studies/research_program/spatial_factorial_contact_challenge_pilot.json",
+    "sha256": "d649f49228a2c513296ba7621f6b3aa378713545b688cbc208d8910bba069a4e",
+    "seed_count": 1,
+    "horizon_days": 14
+  },
+  "additional_pilot": {
+    "path": "studies/research_program/spatial_factorial_contact_challenge_pilot_seed8812.json",
+    "sha256": "4c29876b64d684d94f30d1a91af941ccef12678872b333cea077c05226f3d211",
+    "seed": 8812,
+    "horizon_days": 14,
+    "artifact_model_sha256": "71d3fc1e35425f874b2f9e57ee6a587b89a4c673f6e50f253925d77c74b6d2b1"
+  },
+  "current_snapshot_pilot": {
+    "path": "studies/research_program/spatial_factorial_contact_challenge_pilot_c2afb.json",
+    "sha256": "c4f4b1e412f913d137acfced2e2c62e4d51eaa3b2ea2ffc5e6dbd37b835e7047",
+    "manifest": "studies/research_program/spatial_factorial_contact_challenge_pilot_c2afb_manifest.json",
+    "manifest_sha256": "f9f11c3e7e534f624d13923d8d5b3948eefca7a1bdad97bba20d64749526d2d4",
+    "artifact_model_sha256": "c2afb84e010320d40faf18f8491165c6f79e6c177bc21edd34f96af248c36aed",
+    "seed": 8811,
+    "horizon_days": 14
+  },
+  "findings": [
+    "Both adequacy seeds produced latent focal contacts in all four challenge cells under the declared forced-detection condition, and the c2afb8 current-snapshot challenge did the same.",
+    "The symmetric stationary-formation-memory treatment raised final total presence memory for both government and insurgent actors relative to patrol-only memory in both seeds.",
+    "The memory contrast did not yet move 7-day renewal or adjacent activation in this one-seed, 14-day pilot.",
+    "Supply residuals remained within floating-point tolerance and source hashes were stable."
+  ],
+  "interpretation": "The challenge successfully exercises the contact and presence-memory pathways, so the original factorial's zero-contact design failure is repaired at the pilot level. The adequacy runs span 9c48b5, 71d3fc, and c2afb8 source snapshots, so they are not a same-core replication and remain insufficient for a mechanism or general-theory claim.",
+  "remaining_gate": [
+    "run all eight preregistered challenge seeds after the core certificate is settled or a synthetic-only exception is explicitly documented",
+    "recover the declared presence-memory and control estimands with matched-seed uncertainty",
+    "retain adjacent activation as unassessed until the challenge generates a declared post-initial activation",
+    "do not pool challenge results with historical or transfer evidence"
+  ],
+  "acceptance_gate_passed": false
+}

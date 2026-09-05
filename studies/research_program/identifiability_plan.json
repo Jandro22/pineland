@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "status": "precalibration_identifiability_triage",
+  "global_calibration_prohibited": true,
+  "maximum_active_parameters_per_question": 15,
+  "questions": [
+    {
+      "question_id": "spatial_persistence",
+      "estimands": ["same_area_renewal_rate", "control_persistence"],
+      "mechanisms": ["presence memory", "recruitment access", "organization survival", "contact recurrence"],
+      "active_parameters": ["physical.presence_memory_days", "recruitment_rate", "organization_ecology.recruitment_requires_access", "organization_ecology.collapse_base_hazard", "contact_rate"],
+      "required_recovery": "Recover episode continuity separately from post-extinction reactivation; distinguish persistence-memory from contact-rate interventions; pass aggregation and right-censoring checks in synthetic matched worlds."
+    },
+    {
+      "question_id": "adjacent_propagation",
+      "estimands": ["neighbor_activation_rate", "R_I"],
+      "mechanisms": ["movement", "social bridges", "local formation generation"],
+      "active_parameters": ["movement_rate", "social_network.bridge_fraction", "social_network.recruitment_exposure_weight", "organization_ecology.birth_base_hazard", "organization_ecology.minimum_formation_personnel", "organization_ecology.fighter_conversion_fraction"],
+      "required_recovery": "Recover known parent-attributed propagation under multi-parent uncertainty and competing background activation; reject spatial-frailty, degree-confounded, common-shock, lead-exposure, and shuffled-topology nulls; recover neighbor dose response and gross-versus-net R_I with dependence-aware uncertainty."
+    },
+    {
+      "question_id": "violence_observation",
+      "estimands": ["latent_contact_rate", "recording_recall", "geocoding_error"],
+      "mechanisms": ["contact", "detection", "reporting", "geocoding"],
+      "active_parameters": ["contact_rate", "information.contact_true_positive_rate", "information.contact_false_positive_rate", "recording.base_logit", "recording.access_weight", "recording.remoteness_penalty", "recording.geocoding_error_rate"],
+      "required_recovery": "Recover latent incidence separately from reporting and location error in synthetic recorded histories."
+    },
+    {
+      "question_id": "control_observation",
+      "estimands": ["SIGAR_category_probability", "district_control_rank"],
+      "mechanisms": ["latent physical control", "administrative control", "ordinal observation"],
+      "active_parameters": ["physical.presence_memory_days", "physical.response_decay_hours", "political_order.capacity_learning_rate", "political_order.capacity_decay_rate", "combat.base_attrition_rate"],
+      "required_recovery": "Recover synthetic ordinal categories from retained seven-dimensional states; operator weights and cutpoints remain fixed."
+    },
+    {
+      "question_id": "manpower_control_coupling",
+      "estimands": ["fielded_share_of_mobilized", "control_per_fielded_person", "viable_locality_count"],
+      "mechanisms": ["fighter conversion", "formation threshold", "supply reach", "control feedback"],
+      "active_parameters": ["organization_ecology.fighter_conversion_fraction", "organization_ecology.minimum_formation_personnel", "logistics.organization_sustainment_coverage", "logistics.presence_consumption_per_person_day", "physical.formation_presence_gain", "physical.fixed_post_presence_gain", "recruitment_rate"],
+      "required_recovery": "Distinguish excessive mobilization from failed fielding, reach, and control conversion in synthetic stock-balanced scenarios."
+    },
+    {
+      "question_id": "sanctuary_dependence",
+      "estimands": ["border_area_persistence", "post_support_control", "R_I"],
+      "mechanisms": ["external support", "route loss", "host transfer", "diaspora resources"],
+      "active_parameters": ["foreign_affairs.support_budget_fraction", "foreign_affairs.host_transfer_efficiency", "foreign_affairs.host_crowding_out", "logistics.shipment_loss_per_travel_hour", "logistics.route_interdiction_rate", "foreign_affairs.diaspora_remittance_rate"],
+      "required_recovery": "Recover the marginal effect of matched sanctuary removal with material conservation and no outcome fitting."
+    }
+  ]
+}

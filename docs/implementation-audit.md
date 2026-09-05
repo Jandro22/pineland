@@ -1,5 +1,11 @@
 # Continuation audit and Phase 4 implementation report
 
+> **Status note:** the numbered phase sections below are a development-history
+> record. They describe what was true at each checkpoint, not the current live
+> mechanism contract. Current semantics are synchronized in
+> [`odd-model.md`](odd-model.md), with subsystem details in the logistics,
+> information, combat, organization-ecology, and social-network documents.
+
 ## v0.12 publication-audit closure
 
 The v0.11 pre-publication findings were re-audited and repaired before the
@@ -114,7 +120,12 @@ Phase 1 establishes network-mediated behavior but not a calibrated social model.
 
 The verified Phase 1 + Phase 2 state was committed as `124df96` with message `v0.2 baseline: social networks and physical control` and annotated tag `v0.2.0` before Phase 3 began.
 
-Phase 3 adds formation-locality pathfinding, delayed movement orders, explicit command reliability and latency, conserved supply sources and shipments, movement/presence/patrol consumption, readiness and availability degradation/recovery, resource-flow exports, and locality control-cost diagnostics. Detailed combat remains deferred.
+At the Phase 3 checkpoint, formation-locality pathfinding, delayed movement
+orders, explicit command reliability and latency, conserved supply sources and
+shipments, movement/presence/patrol consumption, readiness and availability
+degradation/recovery, resource-flow exports, and locality control-cost
+diagnostics were added. Detailed combat was deferred **at that checkpoint** and
+was implemented in Phase 5; it is not deferred in the current model.
 
 The Phase 3 verification suite contains 34 passing tests. A 30-day, 1,000-agent smoke run processed 2,476 events, issued 24 movement orders (17 arrived, 4 supply-blocked, and 3 command-failed), and wrote 3,447 resource-flow records. Supply reconciled to a residual of approximately `7.04e-9` units. The run produced 969 `force_projection_reallocation` and 650 `logistics_constrained_physical_aggregation` provenance entries.
 
@@ -143,9 +154,12 @@ about the conflict environment, and how does that knowledge affect action?
   reliability. Movement leaves prior beliefs stale until new evidence arrives.
 - Analyst-only `belief_error`, source mix, age, relay, presence-belief, and
   detection diagnostics are exported separately from actor state.
-- Candidate contact events now depend on source detections and an explicit
-  activity hazard. The inherited coarse combat placeholder remains only for
-  compatibility; detailed combat is still Phase 5.
+- At the Phase 4 checkpoint, candidate contact events performed source
+  detections and used an explicit activity hazard. The current default
+  `directional_pairwise` implementation no longer performs a fresh sensing
+  draw merely because the contact scheduler scans; it consumes existing
+  actor-local presence beliefs and uses competing directional initiation
+  hazards. See [`information-model.md`](information-model.md).
 
 The Phase 4 suite contains 43 passing tests. Population and supply conservation,
 matched-seed reproducibility, the no-insurgency null, and the existing
@@ -156,9 +170,12 @@ retaining the Phase 3 supply and control diagnostics.
 ## Phase 5: armed contact and tactical consequences
 
 Phase 5 replaces the inherited coarse contact resolver with persistent,
-microzone-located `Engagement` records. Relative capability consumes actual
-formation personnel, quality, cohesion, readiness, command, supply,
-embeddedness, detection state, and terrain-mediated mobility/exposure.
+microzone-located `Engagement` records. In the current resolver, relative
+capability uses `available_personnel()` (which already contains availability
+and effective readiness), then quality, cohesion, observability,
+terrain-mediated mobility, embeddedness, and first-interval initiative.
+Effective readiness already contains fatigue, supply, and command, so those
+terms are not multiplied into capability a second time.
 Stochastic attrition, readiness and cohesion damage, supply expenditure,
 disengagement, temporary ineffectiveness, and existing-formation reinforcement
 orders are explicit outputs. No combat function writes physical control.

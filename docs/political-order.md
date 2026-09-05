@@ -15,8 +15,13 @@ therefore be implemented, delayed, distorted, or diverted differently locally.
 
 Political parties have explicit locality branches, overlapping membership,
 resources, patronage stocks, electoral support, institutional influence, and
-elite brokers. Local elites are selected from socially central residents and
-carry resources, legitimacy, institutional ties, and political alignment.
+elite brokers. Elite access is a locality-level represented social capability,
+not a count of sampled elite persons. When a suitable resident representative
+exists, one socially central resident can anchor the aggregate capability for
+attribution and transfer records; a finer simulation does not create two extra
+substantive elites merely because it sampled more residents. A populated
+locality therefore retains elite brokerage access even when coarse population
+sampling places no explicit resident anchor there.
 
 ## Fiscal and governance flow
 

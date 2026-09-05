@@ -1,0 +1,20 @@
+{
+  "artifact": {
+    "path": "studies/research_program/afghanistan_contact_hazard_sensitivity.json",
+    "sha256": "8ea393ef8846901883a498cec4c7cb88caf235910b17c51bf6853fc16cad0c0c"
+  },
+  "builder": {
+    "path": "studies/research_program/scripts/run_afghanistan_contact_hazard_sensitivity.py",
+    "sha256": "522d97cf2ff5ca48a5a9b96109e0493b387b124546ddebc20aaa30fd18a0115e"
+  },
+  "contract": {
+    "path": "studies/research_program/afghanistan_contact_hazard_sensitivity_contract.json",
+    "sha256": "09e1539c5c7e2be1417da8e12049801a59751ec402616014c923ea7a41c06151"
+  },
+  "core_change_licensed": false,
+  "historical_outcomes_used": true,
+  "historical_parameter_fitting": false,
+  "model_sha256": "e0d2d0c5e4c58d9d837afdcdf6658ad9e8c08d7970baabdb6121c297c58335ae",
+  "schema_version": "1.0.0",
+  "status": "current_core_contact_hazard_sensitivity_manifest"
+}

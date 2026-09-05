@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0.0",
+  "status": "paper_claim_evidence_matrix_not_general_theory",
+  "stable_general_theory_licensed": false,
+  "eligible_transfer_case_count": 0,
+  "claims": [
+    {
+      "claim_id": "C1",
+      "candidate_claim": "Conditional on a stable case-specific observation process, local reproduction may predict persistence better than national manpower or violence totals alone.",
+      "current_result": "candidate_only",
+      "current_language_level": 0,
+      "current_language_status": "conceptual_candidate",
+      "minimum_promotion_evidence": [
+        "two eligible cases",
+        "frozen holdout comparison against manpower-only and violence-only competitors",
+        "identified local-reproduction observation operator"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "general_theory_language_licensed": false
+    },
+    {
+      "claim_id": "C2",
+      "candidate_claim": "Exposure/contact, initiation or recruitment, and local sustainment are conjunctive prerequisites for reproduction.",
+      "current_result": "strong_synthetic_constraint_not_historical",
+      "current_language_level": 1,
+      "current_language_status": "synthetically_identified",
+      "minimum_promotion_evidence": [
+        "superseding-certified-core multi-seed challenge replication",
+        "historical activation genealogy or an equivalent identified measurement",
+        "at least two eligible cases showing the predicted negative constraint"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "general_theory_language_licensed": false
+    },
+    {
+      "claim_id": "C3",
+      "candidate_claim": "Adjacency can shape renewal and concentration, but adjacency alone is not evidence of reproduction.",
+      "current_result": "descriptive_violence_proxy_support_with_placebo_not_reproduction",
+      "current_language_level": 0,
+      "current_language_status": "conceptual_candidate",
+      "minimum_promotion_evidence": [
+        "parent-attributed geographic propagation",
+        "topology and temporal-placebo validation",
+        "historical nonzero adjacent activation in at least two eligible cases"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "general_theory_language_licensed": false
+    },
+    {
+      "claim_id": "C4",
+      "candidate_claim": "Persistent presence matters through memory and control, not static occupancy alone.",
+      "current_result": "pathway_recovered_outcome_effect_unresolved",
+      "current_language_level": 1,
+      "current_language_status": "synthetically_identified",
+      "minimum_promotion_evidence": [
+        "superseding-certified-core eight-seed presence challenge",
+        "control and expectation outcomes beyond memory stock",
+        "independent presence/operator validation in at least two eligible cases"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "general_theory_language_licensed": false
+    },
+    {
+      "claim_id": "C5",
+      "candidate_claim": "Counterinsurgency succeeds when it interrupts local reproduction with persistent credible security, information, governance, and changed expectations.",
+      "current_result": "policy_candidate_not_efficacy_claim",
+      "current_language_level": 0,
+      "current_language_status": "conceptual_candidate",
+      "minimum_promotion_evidence": [
+        "preregistered intervention runs",
+        "joint control, harm, capacity, regeneration, dependence, and recurrence outcomes",
+        "holdout and reduced-model comparisons in at least two eligible cases"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "general_theory_language_licensed": false
+    },
+    {
+      "claim_id": "C6",
+      "candidate_claim": "Insurgent movement is a portfolio of frontier expansion, foothold consolidation, stronghold retention, and uncertainty-driven exploration constrained by route risk and sanctuary access.",
+      "current_result": "synthetic_structural_validation_only",
+      "current_language_level": 1,
+      "current_language_status": "synthetically_identified",
+      "minimum_promotion_evidence": [
+        "historical movement reconstruction",
+        "frozen holdout comparison against simpler movement rules",
+        "evidence that movement changes local reproduction rather than only trajectories"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "general_theory_language_licensed": false
+    }
+  ],
+  "rule": "This matrix can lag only toward weaker language. It must never promote a claim from synthetic, descriptive, legacy, or ineligible case evidence into historical or general support.",
+  "source_artifacts": [
+    {
+      "path": "studies/research_program/comparative_theory_promotion_matrix.json",
+      "sha256": "2d97bf8a0a0aa94fcd6438b00b7c7af436276c46aaf32aa2378a0c828f7a41dc"
+    },
+    {
+      "path": "studies/research_program/paper_prerequisites/claim_language_contract.json",
+      "sha256": "f9ead8fc81d1e632abcd3c5403c295d04f2c4af7c25f9de8cab6f090fd103efd"
+    }
+  ]
+}

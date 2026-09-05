@@ -11,8 +11,8 @@ import random
 
 from .entities import (ArmedFormation, CausalContribution, Engagement, Observation,
                        OrganizationKind, clamp, logistic)
-from .information import ingest_observation
-from .logistics import consume_formation_supply, create_movement_order
+from .information import get_presence_belief, ingest_observation
+from .logistics import choose_withdrawal_order, consume_formation_supply, create_movement_order
 
 
 def formation_microzone(world, formation: ArmedFormation) -> str:
@@ -44,7 +44,7 @@ def _capability(formation: ArmedFormation, zone, initiative: float) -> float:
     mobility = clamp(formation.mobility / max(.35, zone.terrain_friction), .15, 1.0)
     observation = .35 + .65 * zone.observability
     embedded = .55 + .45 * formation.embeddedness
-    return max(1e-9, (max(1.0, formation.available_personnel()) ** .72) *
+    return max(1e-9, (max(0.0, formation.available_personnel()) ** .72) *
                formation.quality * max(.05, formation.cohesion) *
                observation *
                (mobility ** .35) * embedded * initiative)
@@ -53,7 +53,8 @@ def _capability(formation: ArmedFormation, zone, initiative: float) -> float:
 def _event_observation(world, observer: ArmedFormation, target: ArmedFormation,
                        engagement_id: str, microzone_id: str, time: float,
                        signal: float, civilian_harm: float, rng: random.Random) -> Observation:
-    oid = f"OBS{len(world.observations) + 1:010d}"
+    oid = f"OBS{world.next_observation_sequence:010d}"
+    world.next_observation_sequence += 1
     noise = world.config.reporting_error
     perceived = clamp(signal + rng.normalvariate(0, noise))
     attributed_actor = (observer.organization_id
@@ -112,20 +113,81 @@ def _reinforcement(world, formation: ArmedFormation, opponent: ArmedFormation,
     if loss_fraction < world.config.combat.reinforcement_threshold:
         return None
     candidates = [f for f in world.formations.values()
-                  if f.organization_id == formation.organization_id and
-                  f.formation_id != formation.formation_id and not f.moving and
-                  f.locality_id != formation.locality_id and f.operational_status == "effective"]
+                   if f.organization_id == formation.organization_id and
+                   f.formation_id != formation.formation_id and not f.moving and
+                   not f.outside_pineland and f.personnel > 0 and
+                   f.deployable_personnel() > 0 and
+                   f.locality_id != formation.locality_id and
+                   f.operational_status == "effective"]
     if not candidates:
         return None
     candidate = max(candidates, key=operational_effectiveness)
-    return create_movement_order(world, candidate.formation_id, formation.locality_id, time, rng)
+    return create_movement_order(
+        world, candidate.formation_id, formation.locality_id, time, rng,
+        purpose="reinforcement",
+    )
+
+
+def _perceived_disadvantage(world, observer: ArmedFormation, opponent: ArmedFormation,
+                            microzone_id: str, own_personnel_reference: float) -> float:
+    """Actor-local estimate of relative manpower for disengagement.
+
+    Contact observations are fused first at the observing formation's command
+    node.  Disengagement may consume that estimate, but never the opponent's
+    realized personnel/quality/cohesion/readiness.  With no quantitative
+    estimate the formation uses a neutral parity prior after directly
+    experiencing contact.
+    """
+    candidates = (
+        get_presence_belief(
+            world, observer.formation_id, opponent.organization_id,
+            observer.locality_id, opponent.formation_id, microzone_id, node=True,
+        ),
+        get_presence_belief(
+            world, observer.formation_id, opponent.organization_id,
+            observer.locality_id, None, microzone_id, node=True,
+        ),
+        get_presence_belief(
+            world, observer.organization_id, opponent.organization_id,
+            observer.locality_id, opponent.formation_id, microzone_id,
+        ),
+        get_presence_belief(
+            world, observer.organization_id, opponent.organization_id,
+            observer.locality_id, None, microzone_id,
+        ),
+    )
+    estimated_personnel = None
+    for belief in candidates:
+        if (belief is not None and belief.evidence_count > 0 and
+                belief.personnel_estimate > 0):
+            estimated_personnel = belief.personnel_estimate
+            break
+    own_reference = max(1.0, own_personnel_reference)
+    if estimated_personnel is None:
+        estimated_personnel = own_reference
+    return max(-3.0, min(3.0, log(max(1.0, estimated_personnel) / own_reference)))
 
 
 def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormation,
                        detected_by: tuple[str, ...], time: float,
-                       rng: random.Random) -> tuple[Engagement, tuple[Observation, ...]]:
+                       rng: random.Random, *, initiator_organization_id: str | None = None,
+                       contact_cause: str = "unspecified") -> tuple[Engagement, tuple[Observation, ...]]:
     cfg = world.config.combat
+    for formation in (a, b):
+        if (formation.operational_status != "effective" or formation.personnel <= 0 or
+                formation.moving or formation.outside_pineland):
+            raise ValueError(
+                f"combat-ineligible formation: {formation.formation_id} "
+                f"status={formation.operational_status} "
+                f"personnel={formation.personnel:.6f} moving={formation.moving} "
+                f"outside_pineland={formation.outside_pineland} "
+                f"effective_readiness={formation.effective_readiness():.6f}"
+            )
+    if a.locality_id != b.locality_id:
+        raise ValueError("combat-ineligible formations are not in the same locality")
     zone_id = formation_microzone(world, a)
+    if formation_microzone(world, b) != zone_id:
+        raise ValueError("combat-ineligible formations are not in the same microzone")
     zone = world.microzones[zone_id]
     aware_a = a.organization_id in detected_by
     aware_b = b.organization_id in detected_by
@@ -142,21 +204,33 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
     frac_b = cfg.base_attrition_rate * exposure * exp(.45 * advantage + rng.normalvariate(0, cfg.stochastic_sigma))
     frac_a = min(cfg.max_loss_fraction, frac_a)
     frac_b = min(cfg.max_loss_fraction, frac_b)
-    losses = {a.formation_id: min(a.personnel, a.personnel * frac_a),
-              b.formation_id: min(b.personnel, b.personnel * frac_b)}
+    # Availability constrains what a formation can put into the fight, not
+    # whether its assigned personnel can be struck.  Applying availability a
+    # second time to casualties would perversely make an unready/resting target
+    # safer from an involuntary attack.
+    losses = {
+        a.formation_id: min(a.personnel, a.personnel * frac_a),
+        b.formation_id: min(b.personnel, b.personnel * frac_b),
+    }
 
     before_cohesion = {a.formation_id: a.cohesion, b.formation_id: b.cohesion}
     before_readiness = {a.formation_id: a.readiness, b.formation_id: b.readiness}
     supply_used: dict[str, float] = {}
     disengaged: list[str] = []
     ineffective: list[str] = []
-    for formation, fraction in ((a, frac_a), (b, frac_b)):
+    for formation, opponent in ((a, b), (b, a)):
         formation.personnel -= losses[formation.formation_id]
         formation.cumulative_losses += losses[formation.formation_id]
-        cohesion_loss = cfg.cohesion_loss_multiplier * fraction * (1.25 - formation.quality)
+        realized_fraction = losses[formation.formation_id] / max(
+            1e-12, formation.personnel + losses[formation.formation_id]
+        )
+        cohesion_loss = cfg.cohesion_loss_multiplier * realized_fraction * (1.25 - formation.quality)
         formation.cohesion = clamp(formation.cohesion - cohesion_loss)
-        formation.readiness = clamp(formation.readiness - cfg.readiness_cost_multiplier * fraction)
-        demand = (max(0.0, formation.personnel) * cfg.interval_hours *
+        formation.readiness = clamp(
+            formation.readiness - cfg.readiness_cost_multiplier * realized_fraction
+        )
+        demand = (max(0.0, formation.personnel) * clamp(formation.availability) *
+                  cfg.interval_hours *
                   cfg.supply_per_person_hour * (.7 + .3 * exposure))
         consumed, shortfall = consume_formation_supply(
             world, formation.formation_id, demand, "combat_expenditure", formation.locality_id, time)
@@ -164,9 +238,17 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
         if shortfall:
             formation.readiness = clamp(formation.readiness - .08 * shortfall / max(1.0, demand))
             formation.cohesion = clamp(formation.cohesion - .04 * shortfall / max(1.0, demand))
-        perceived_disadvantage = -advantage if formation is a else advantage
-        remain = logistic(1.1 * formation.cohesion + formation.effective_readiness() +
-                          formation.command - 2.1 * fraction - perceived_disadvantage)
+        own_personnel_reference = max(
+            1.0, (formation.personnel + losses[formation.formation_id]) *
+            clamp(formation.availability)
+        )
+        perceived_disadvantage = _perceived_disadvantage(
+            world, formation, opponent, zone_id, own_personnel_reference
+        )
+        # Command is already part of effective readiness. Adding it again here
+        # double-counted command connectivity in the disengagement decision.
+        remain = logistic(1.1 * formation.cohesion + formation.effective_readiness() -
+                          2.1 * realized_fraction - perceived_disadvantage)
         if rng.random() < cfg.disengagement_base + (1 - remain) * .55:
             disengaged.append(formation.formation_id)
             formation.availability = clamp(formation.availability - .12)
@@ -193,9 +275,17 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
                      intensity * exposure * rng.expovariate(1.0))
     world.cumulative_civilian_harm += civilian_harm
     signal = logistic((frac_b - frac_a) * 18 + .35 * advantage)
+    withdrawal_ids = []
+    for formation_id in disengaged:
+        order = choose_withdrawal_order(world, formation_id, time, rng)
+        if order is not None:
+            withdrawal_ids.append(order.order_id)
     reinforcement_ids = []
-    for formation, opponent, fraction in ((a, b, frac_a), (b, a, frac_b)):
-        order = _reinforcement(world, formation, opponent, fraction, time, rng)
+    for formation, opponent in ((a, b), (b, a)):
+        loss_fraction = losses[formation.formation_id] / max(
+            1e-12, formation.personnel + losses[formation.formation_id]
+        )
+        order = _reinforcement(world, formation, opponent, loss_fraction, time, rng)
         if order is not None:
             reinforcement_ids.append(order.order_id)
     engagement_id = f"ENG{len(world.engagements) + 1:010d}"
@@ -226,7 +316,8 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
         {fid: before_cohesion[fid] - world.formations[fid].cohesion for fid in before_cohesion},
         {fid: before_readiness[fid] - world.formations[fid].readiness for fid in before_readiness},
         supply_used, civilian_harm, tuple(disengaged), tuple(ineffective),
-        tuple(reinforcement_ids), signal,
+        tuple(reinforcement_ids), signal, initiator_organization_id, contact_cause,
+        tuple(withdrawal_ids),
     )
     world.engagements[engagement_id] = engagement
     return engagement, observations
@@ -244,7 +335,8 @@ def combat_diagnostics(world) -> dict:
              "locality_id": e.locality_id, "microzone_id": e.microzone_id,
              "losses": e.personnel_losses, "disengaged": e.disengaged,
              "civilian_harm": e.civilian_harm,
-             "reinforcement_order_ids": e.reinforcement_order_ids}
+             "reinforcement_order_ids": e.reinforcement_order_ids,
+             "withdrawal_order_ids": e.withdrawal_order_ids}
             for e in world.engagements.values()
         ],
     }

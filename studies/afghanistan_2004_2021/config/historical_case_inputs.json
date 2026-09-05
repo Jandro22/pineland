@@ -1,0 +1,393 @@
+{
+  "benchmark_violence_used": false,
+  "control_validation": {
+    "aggregation": "SIGAR-population-weighted mean for many-to-one mappings",
+    "benchmark_units": 401,
+    "control_401_file": "data/processed/sigar_oct2017_control_401.csv",
+    "crosswalk_file": "data/processed/sigar_407_to_401_crosswalk.csv",
+    "mapped_benchmark_units": 400,
+    "missing_benchmark_district_ids": [
+      "AF2409"
+    ],
+    "outcome_used_for_initialization": false,
+    "scale": {
+      "Contested": 0.5,
+      "GIRoA Control": 1.0,
+      "GIRoA Influence": 0.75,
+      "INS Control": 0.0,
+      "INS Influence": 0.25
+    },
+    "source_date": "2017-10-15",
+    "source_units": 407
+  },
+  "initialization": {
+    "ana": {
+      "date": "2004-01-01",
+      "formation_count": 12,
+      "locality_ids": [
+        "AF0101-HQ"
+      ],
+      "location_rule": "central_corps_kabul_at_benchmark_open",
+      "personnel": 6500,
+      "source_id": "un_s_2003_1212",
+      "source_observation": "30 Dec 2003: 12 ANA battalions trained/established, 6,500 personnel all ranks"
+    },
+    "anp": {
+      "date": "2004-01-01",
+      "location_rule": "population_proportional_across_401_district_posts",
+      "not_claimed": "exact 1 Jan 2004 police headcount or district deployment",
+      "personnel": 6000,
+      "source_id": "gao_04_403_state_comment",
+      "source_observation": "spring 2004 State comment: rapidly growing police force numbers over 6,000; 8,800+ fielded by 29 Apr 2004 testimony",
+      "value_semantics": "conservative_floor_carried_back_from_spring_2004"
+    },
+    "taliban": {
+      "anchor_weights": {
+        "AF1211-HQ": 4,
+        "AF1214-HQ": 8,
+        "AF1401-HQ": 4,
+        "AF2603-HQ": 4,
+        "AF2607-HQ": 11,
+        "AF2711-HQ": 21,
+        "AF2712-HQ": 4,
+        "AF3004-HQ": 4
+      },
+      "date_semantics": "early insurgency full-time fighter uncertainty",
+      "default_transfer_scenario": 7500,
+      "location_rule": "2003_preperiod_event_anchor_weighted",
+      "personnel_envelope": [
+        5000,
+        7500,
+        10000
+      ],
+      "source_id": "rand_mg595",
+      "source_observation": "several thousand full-time Taliban fighters; estimates ranged from 5,000 to 10,000; author interviews across 2004-2006"
+    }
+  },
+  "international_forces": {
+    "initial_locality_ids": [
+      "AF0302-HQ",
+      "AF2701-HQ",
+      "AF0101-HQ",
+      "AF1901-HQ"
+    ],
+    "initial_location_rule": "neutral equal allocation within documented 2004 operational footprint; aggregate stock only, no inferred country-by-country tactical distribution",
+    "later_rsm_footprint_reference": [
+      "AF0101-HQ",
+      "AF0302-HQ",
+      "AF2101-HQ",
+      "AF3201-HQ",
+      "AF2701-HQ",
+      "AF0701-HQ"
+    ],
+    "later_rsm_footprint_semantics": "Kabul/Bagram hub plus Mazar-e Sharif, Herat, Kandahar and Laghman regional commands; retained as provenance/diagnostic rather than forcing tactical movement",
+    "organization_id": "coalition",
+    "stock_schedule": [
+      {
+        "date": "2004-01-01",
+        "observation_type": "annual_average",
+        "other": 7700,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 24400,
+        "us": 16700
+      },
+      {
+        "date": "2005-01-01",
+        "observation_type": "annual_average",
+        "other": 8900,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 26700,
+        "us": 17800
+      },
+      {
+        "date": "2006-01-01",
+        "observation_type": "annual_average",
+        "other": 16200,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 38300,
+        "us": 22100
+      },
+      {
+        "date": "2007-01-01",
+        "observation_type": "annual_average",
+        "other": 24500,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 49200,
+        "us": 24700
+      },
+      {
+        "date": "2008-01-01",
+        "observation_type": "annual_average",
+        "other": 29700,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 61500,
+        "us": 31800
+      },
+      {
+        "date": "2009-01-01",
+        "observation_type": "annual_average",
+        "other": 33800,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 101800,
+        "us": 68000
+      },
+      {
+        "date": "2010-01-01",
+        "observation_type": "annual_average",
+        "other": 40500,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 130500,
+        "us": 90000
+      },
+      {
+        "date": "2011-01-01",
+        "observation_type": "annual_average",
+        "other": 41300,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 131300,
+        "us": 90000
+      },
+      {
+        "date": "2012-01-01",
+        "observation_type": "annual_average",
+        "other": 37900,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 105900,
+        "us": 68000
+      },
+      {
+        "date": "2013-01-01",
+        "observation_type": "annual_average",
+        "other": 27100,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 87100,
+        "us": 60000
+      },
+      {
+        "date": "2014-01-01",
+        "observation_type": "annual_average",
+        "other": 15500,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 44500,
+        "us": 29000
+      },
+      {
+        "date": "2015-01-01",
+        "observation_type": "annual_average",
+        "other": 6700,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 13600,
+        "us": 6900
+      },
+      {
+        "date": "2016-01-01",
+        "observation_type": "annual_average",
+        "other": 5900,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 12900,
+        "us": 7000
+      },
+      {
+        "date": "2017-01-01",
+        "observation_type": "annual_average",
+        "other": 6400,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_overrides_current_machine_table",
+        "total": 20400,
+        "us": 14000
+      },
+      {
+        "date": "2018-01-01",
+        "observation_type": "annual_average",
+        "other": 7600,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_overrides_current_machine_table",
+        "total": 21600,
+        "us": 14000
+      },
+      {
+        "date": "2019-01-01",
+        "observation_type": "annual_average",
+        "other": 8100,
+        "source_id": "brookings_afghanistan_index_2020",
+        "source_version_note": "archived_publication_matches_machine_table",
+        "total": 16600,
+        "us": 8500
+      },
+      {
+        "date": "2020-01-01",
+        "observation_type": "quarterly_snapshot",
+        "other": 10530,
+        "source_id": "lead_ig_ofs_2020_q1",
+        "total": 23530,
+        "us": 13000
+      },
+      {
+        "date": "2020-07-13",
+        "observation_type": "dated_snapshot",
+        "other": 7937,
+        "source_id": "dod_2020_07_14_plus_nato_2020_06",
+        "total": 16537,
+        "us": 8600
+      },
+      {
+        "date": "2020-11-17",
+        "observation_type": "dated_snapshot",
+        "other": 7856,
+        "source_id": "dod_2020_11_17_plus_lead_ig_2020_q4",
+        "total": 12356,
+        "us": 4500
+      },
+      {
+        "date": "2021-01-15",
+        "observation_type": "dated_us_plus_february_nato_snapshot",
+        "other": 7092,
+        "source_id": "dod_2021_01_15_plus_nato_2021_02",
+        "total": 9592,
+        "us": 2500
+      },
+      {
+        "date": "2021-07-12",
+        "observation_type": "residual_diplomatic_security_force",
+        "other": 0,
+        "source_id": "post_retrograde_residual_force",
+        "total": 650,
+        "us": 650
+      },
+      {
+        "date": "2021-08-15",
+        "observation_type": "evacuation_security_surge",
+        "other": 0,
+        "source_id": "dod_state_joint_statement_2021_08_15",
+        "total": 6000,
+        "us": 6000
+      }
+    ]
+  },
+  "pakistan": {
+    "border_derivation": "COD 401 district boundaries intersected with independent Natural Earth 1:10m Pakistan national boundary using 0.01-degree geometry tolerance",
+    "border_district_ids": [
+      "AF0507",
+      "AF0608",
+      "AF0610",
+      "AF0611",
+      "AF0614",
+      "AF0615",
+      "AF0617",
+      "AF0618",
+      "AF0619",
+      "AF0620",
+      "AF0622",
+      "AF1208",
+      "AF1214",
+      "AF1215",
+      "AF1218",
+      "AF1219",
+      "AF1307",
+      "AF1311",
+      "AF1401",
+      "AF1403",
+      "AF1404",
+      "AF1408",
+      "AF1411",
+      "AF1413",
+      "AF1502",
+      "AF1505",
+      "AF1506",
+      "AF1508",
+      "AF1510",
+      "AF1512",
+      "AF1515",
+      "AF1606",
+      "AF1608",
+      "AF1725",
+      "AF1726",
+      "AF1728",
+      "AF2610",
+      "AF2708",
+      "AF2711",
+      "AF2714",
+      "AF2715",
+      "AF2716",
+      "AF3006",
+      "AF3013",
+      "AF3404"
+    ],
+    "model_mapping": {
+      "semantics": "binary observed sanctuary availability mapped to the full presence indicator; not an estimate of Pakistani support intensity",
+      "taliban_external_sanctuary": 1.0
+    },
+    "sanctuary_capability_present": true,
+    "sanctuary_evidence": "Taliban senior leadership in Quetta; second shura in FATA; Haqqani support base in Waziristan/Miranshah/Mir Ali",
+    "source_id": "rand_mg595",
+    "state_id": "pakistan"
+  },
+  "parameter_fit": false,
+  "schema_version": "1.0.0",
+  "sources": {
+    "brookings_afghanistan_index_2020": {
+      "local_file": "data/raw/brookings_afghanistan_index_2020.pdf",
+      "machine_table": "data/raw/brookings_troop_levels_2001_2019.csv",
+      "machine_table_sha256": "bdf1c586cb5cc99ce8e080967e3196e468d606dec2a8769c633b24f4e3cb10e0",
+      "sha256": "5f66cb26ad7ce3111471c02f7aa88e998ad3b034a5b8f3cb5468a4bae076a151",
+      "url": "https://www.brookings.edu/articles/afghanistan-index/"
+    },
+    "dod_2020_07_14_plus_nato_2020_06": {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/2274035/statement-from-chief-pentagon-spokesperson-jonathan-hoffman-on-135-days-since-t/"
+    },
+    "dod_2020_11_17_plus_lead_ig_2020_q4": {
+      "url": "https://www.defense.gov/News/News-Stories/article/article/2418416/"
+    },
+    "dod_2021_01_15_plus_nato_2021_02": {
+      "nato_local_file": "data/raw/nato_rsm_2021_02.pdf",
+      "nato_sha256": "3de7a002c8385049c8aee6fd6d507df7315571a9c41e8f344943eec4c611aa70",
+      "url": "https://www.defense.gov/News/Releases/Release/Article/2473337/statement-by-acting-defense-secretary-christopher-miller-on-force-levels-in-afg/"
+    },
+    "dod_state_joint_statement_2021_08_15": {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/2732053/joint-statement-from-the-department-of-state-and-department-of-defense-update-o/"
+    },
+    "gao_04_403_state_comment": {
+      "url": "https://www.gao.gov/products/gao-04-403"
+    },
+    "lead_ig_ofs_2020_q1": {
+      "url": "https://media.defense.gov/2020/Nov/17/2002536762/-1/-1/1/LEAD%20INSPECTOR%20GENERAL%20FOR%20OPERATION%20FREEDOM%27S%20SENTINEL.PDF"
+    },
+    "natural_earth_admin0_10m": {
+      "local_file": "data/raw/natural_earth_admin0_10m.geojson",
+      "sha256": "239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255",
+      "url": "https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_10m_admin_0_countries.geojson"
+    },
+    "post_retrograde_residual_force": {
+      "note": "650 residual diplomatic-security personnel is a secondary historical count retained only for the post-retrograde stock",
+      "url": "https://www.defense.gov/News/Transcripts/Transcript/Article/2702966/secretary-of-defense-austin-and-chairman-of-the-joint-chiefs-of-staff-gen-mille/"
+    },
+    "rand_mg595": {
+      "local_file": "data/raw/rand_mg595.pdf",
+      "sha256": "3be5d4ba5ea4699daa6b92d5a7e2143cb147bda2ee77fd88b6fc217865469128",
+      "url": "https://www.rand.org/pubs/monographs/MG595.html"
+    },
+    "sigar_2018_01_30_addendum": {
+      "local_file": "data/raw/sigar_2018_01_30_addendum.pdf",
+      "sha256": "d8a3e3f34ddff56744bff31103c68a98072fa8d53cdea88d10199dd6776f5d26"
+    },
+    "un_s_2003_1212": {
+      "local_file": "data/raw/un_s_2003_1212.pdf",
+      "sha256": "ad667f7f6c7b750d989eb7300987550974b7914be1803b5e70065821c54f2fe4",
+      "url": "https://digitallibrary.un.org/record/510126/files/S_2003_1212-EN.pdf"
+    }
+  },
+  "study_id": "afghanistan_2004_2021"
+}

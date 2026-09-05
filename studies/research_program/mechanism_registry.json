@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "theory_status": "candidate_to_be_falsified",
+  "candidate_theory": "Competitive local reproduction",
+  "insurgent_cycle": [
+    "local_access",
+    "information",
+    "mobilization",
+    "armed_presence",
+    "control",
+    "expectations",
+    "future_access"
+  ],
+  "state_interrupt_cycle": [
+    "persistent_presence",
+    "information_acquisition",
+    "credible_security_and_governance",
+    "changed_civilian_expectations",
+    "durable_control"
+  ],
+  "cross_case_questions": [
+    "Which mechanisms repeatedly affect persistence?",
+    "Which mechanisms repeatedly affect diffusion?",
+    "Which mechanisms repeatedly affect local control transitions?",
+    "Which mechanisms explain collapse and recurrence?",
+    "Which mechanisms add predictive value beyond reduced and statistical models?"
+  ],
+  "reproduction_quantity": {
+    "symbol": "R_I_components",
+    "status": "decomposed_estimands_not_claim",
+    "primary_estimands": [
+      {
+        "id": "local_endogenous_ignition",
+        "unit": "locally ignited viable footholds per observed locality"
+      },
+      {
+        "id": "parent_attributed_cross_local_colonization",
+        "unit": "non-relocation cross-local children per complete-followup parent"
+      },
+      {
+        "id": "foothold_deepening_force_formation",
+        "unit": "fielded-force transitions per complete-followup foothold parent"
+      },
+      {
+        "id": "post_establishment_survival",
+        "unit": "share of observable establishments surviving a fixed window"
+      }
+    ],
+    "secondary_quantity": {
+      "id": "durable_cross_local_reproduction_yield",
+      "derivation": "colonization_yield * deepening_probability * survival_probability",
+      "status": "secondary_diagnostic_not_omnibus_R_I"
+    },
+    "legacy_scalar_R_I": "deprecated_compatibility_only",
+    "minimum_identification_requirements": [
+      "predeclared viability threshold",
+      "parent-locality attribution with uncertainty",
+      "episode identifiers for repeated locality activation",
+      "gross-versus-net reproduction distinction with predeclared parent-child overlap",
+      "competing-risk/pathway attribution including spontaneous background activation",
+      "time horizon",
+      "right-censoring and viability-ascertainment protocol",
+      "dependence-aware uncertainty across independent simulation runs",
+      "spatial-frailty, lead-exposure, and topology-placebo recovery",
+      "case-specific measurement model",
+      "synthetic recovery",
+      "cross-case stability analysis"
+    ]
+  },
+  "competitor_classes": [
+    "district_or_province_shrunk_rate",
+    "self_exciting_point_process",
+    "autoregressive_count_or_binary_model",
+    "reduced_pineland_mechanism_sets"
+  ],
+  "value_tests": [
+    "held_out violence prediction",
+    "held_out control transitions",
+    "joint reproduction of violence and control",
+    "mechanism-specific cross-case transfer",
+    "policy counterfactual discrimination"
+  ],
+  "coin_outcome_vector": [
+    "violence",
+    "control",
+    "civilian_harm",
+    "institutional_capacity",
+    "insurgent_regeneration",
+    "foreign_dependence",
+    "recurrence"
+  ],
+  "coin_gate": "No COIN efficacy claim before at least two genuine transfer cases and simple-competitor comparison on control or joint outcomes."
+}

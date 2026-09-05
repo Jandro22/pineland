@@ -8,6 +8,7 @@ from typing import Any
 
 @dataclass(slots=True)
 class ProcessIntervals:
+    contact: float = 1.0
     command: float = 1.0
     force_movement: float = 0.25
     logistics: float = 1.0
@@ -25,6 +26,12 @@ class ProcessIntervals:
 
 @dataclass(slots=True)
 class SocialNetworkConfig:
+    # Community-size controls are stable represented-population units rather
+    # than literal sampled-agent counts.  At the default 120 residents/unit,
+    # target_community_size=100 means roughly 12,000 represented residents.
+    # Keeping the legacy size knobs as units preserves configuration/API
+    # compatibility while removing resolution from the substantive partition.
+    community_size_unit_population: float = 120.0
     target_community_size: int = 100
     minimum_community_size: int = 50
     maximum_community_size: int = 150
@@ -37,8 +44,14 @@ class SocialNetworkConfig:
     bridge_tie_strength: float = 0.45
     behavior_exposure_weight: float = 0.35
     recruitment_exposure_weight: float = 0.25
+    # When disabled, edge generation preserves topology and tie counts but
+    # removes the language-compatibility multiplier.  This supports a clean
+    # topology/detection/fusion factorial without changing the latent people.
+    language_topology_enabled: bool = True
 
     def validate(self) -> None:
+        if self.community_size_unit_population <= 0:
+            raise ValueError("community_size_unit_population must be positive")
         if not 1 <= self.minimum_community_size <= self.target_community_size <= self.maximum_community_size:
             raise ValueError("community sizes must satisfy 1 <= minimum <= target <= maximum")
         if not 1 <= self.mean_social_degree <= self.maximum_social_degree:
@@ -60,15 +73,21 @@ class PhysicalModelConfig:
     extra_edge_probability: float = 0.22
     presence_memory_days: float = 2.0
     response_decay_hours: float = 0.75
-    patrol_presence_gain: float = 0.35
+    # Instantaneous fielded-formation occupation and patrol-written memory are
+    # distinct mechanisms. Both are dimensionless normalized-strength gains,
+    # but only explicit patrol dwell writes the decaying memory stock.
+    formation_presence_gain: float = 0.35
+    patrol_memory_gain: float = 0.35
     fixed_post_presence_gain: float = 0.25
     zone_observation_noise: float = 0.12
     patrol_route_randomness: float = 0.15
+    adaptive_patrol_routing: bool = True
 
     def validate(self) -> None:
         if not 2 <= self.village_microzones <= self.town_microzones <= self.city_microzones:
             raise ValueError("microzone counts must satisfy 2 <= village <= town <= city")
-        for name in ("extra_edge_probability", "patrol_presence_gain", "fixed_post_presence_gain",
+        for name in ("extra_edge_probability", "formation_presence_gain", "patrol_memory_gain",
+                     "fixed_post_presence_gain",
                      "zone_observation_noise", "patrol_route_randomness"):
             if not 0 <= getattr(self, name) <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
@@ -101,6 +120,10 @@ class LogisticsConfig:
     patrol_consumption_per_person_hour: float = 0.002
     source_capacity_per_resident: float = 0.05
     source_daily_production_fraction: float = 0.03
+    source_capacity_model: str = "organization_manpower"
+    # Ex ante sustainment reserve above stationary presence demand.  This is
+    # an engineering prior, not a conflict-event calibration target.
+    organization_sustainment_coverage: float = 1.20
     resupply_trigger_fraction: float = 0.45
     resupply_target_fraction: float = 0.85
     shipment_loss_per_travel_hour: float = 0.002
@@ -110,6 +133,19 @@ class LogisticsConfig:
     readiness_recovery_remote: float = 0.006
     availability_recovery_rate: float = 0.03
     reallocation_rate: float = 0.04
+    # Insurgent reallocation is deliberately a mixture of frontier expansion,
+    # pre-existing clandestine footholds, stronghold consolidation, and
+    # uncertainty-driven exploration.  These are structural theory weights,
+    # not case-fitted coefficients.
+    insurgent_frontier_weight: float = 0.50
+    insurgent_foothold_weight: float = 0.25
+    insurgent_stronghold_weight: float = 0.15
+    reallocation_exploration_weight: float = 0.10
+    # Random-utility scale terms shared by state-aligned and insurgent
+    # reallocation.  They are exposed theory priors, not case-fit constants.
+    reallocation_strategic_weight: float = 2.0
+    reallocation_importance_weight: float = 0.5
+    reallocation_travel_time_weight: float = 0.03
     route_interdiction_enabled: bool = False
     route_interdiction_rate: float = 0.0
 
@@ -121,9 +157,21 @@ class LogisticsConfig:
         for name in ("initial_supply_fraction", "source_daily_production_fraction",
                      "resupply_trigger_fraction", "resupply_target_fraction",
                      "readiness_degradation_rate", "readiness_recovery_near_source",
-                     "readiness_recovery_remote", "availability_recovery_rate", "reallocation_rate"):
+                     "readiness_recovery_remote", "availability_recovery_rate", "reallocation_rate",
+                     "insurgent_frontier_weight", "insurgent_foothold_weight",
+                     "insurgent_stronghold_weight", "reallocation_exploration_weight"):
             if not 0 <= getattr(self, name) <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
+        insurgent_weights = (
+            self.insurgent_frontier_weight + self.insurgent_foothold_weight +
+            self.insurgent_stronghold_weight + self.reallocation_exploration_weight
+        )
+        if abs(insurgent_weights - 1.0) > 1e-9:
+            raise ValueError("insurgent reallocation structural weights must sum to 1")
+        for name in ("reallocation_strategic_weight", "reallocation_importance_weight",
+                     "reallocation_travel_time_weight"):
+            if getattr(self, name) < 0:
+                raise ValueError(f"{name} cannot be negative")
         if self.resupply_target_fraction < self.resupply_trigger_fraction:
             raise ValueError("resupply target must be at least the trigger fraction")
         if self.movement_consumption_per_person_km < 0 or self.patrol_consumption_per_person_hour < 0:
@@ -132,6 +180,28 @@ class LogisticsConfig:
             raise ValueError("shipment loss cannot be negative")
         if self.route_interdiction_rate < 0:
             raise ValueError("route interdiction rate cannot be negative")
+        if self.source_capacity_model not in {"organization_manpower", "population_catchment"}:
+            raise ValueError("unsupported source capacity model")
+        if self.organization_sustainment_coverage <= 0:
+            raise ValueError("organization sustainment coverage must be positive")
+
+
+@dataclass(slots=True)
+class ForceStructureConfig:
+    """Outcome-independent mapping from represented manpower to force tokens."""
+
+    mode: str = "manpower_decomposition"
+    government_target_personnel: float = 3_500.0
+    insurgent_target_personnel: float = 1_000.0
+    maximum_initial_formations_per_side: int = 64
+
+    def validate(self) -> None:
+        if self.mode not in {"legacy", "manpower_decomposition"}:
+            raise ValueError("unsupported force-structure mode")
+        if min(self.government_target_personnel, self.insurgent_target_personnel) <= 0:
+            raise ValueError("target formation personnel must be positive")
+        if self.maximum_initial_formations_per_side < 1:
+            raise ValueError("maximum initial formations must be positive")
 
 
 @dataclass(slots=True)
@@ -177,6 +247,11 @@ class InformationConfig:
     corroboration_bonus: float = 0.12
     negative_report_confidence: float = 0.52
     positive_report_confidence: float = 0.9
+    # Optional bounded-memory retention for long analytical runs.  Zero keeps
+    # the complete evidence archive (the historical/default behavior); a
+    # positive value is only appropriate when the requested output is an
+    # ensemble/target stream and the retained belief state is the estimand.
+    observation_retention_days: float = 0.0
     source_trust: dict[str, float] = field(default_factory=lambda: {
         "patrol": 0.88,
         "fixed_post": 0.8,
@@ -244,6 +319,8 @@ class InformationConfig:
             raise ValueError("insurgent_concealment must be in [0, 1]")
         if self.contradiction_memory_days <= 0:
             raise ValueError("contradiction_memory_days must be positive")
+        if self.observation_retention_days < 0:
+            raise ValueError("observation_retention_days cannot be negative")
         if self.language_fusion_weight < 0:
             raise ValueError("language_fusion_weight cannot be negative")
         if self.relay_max_hops < 1:
@@ -279,6 +356,19 @@ class CombatConfig:
     civilian_exposure_rate: float = 0.00008
     momentum_learning_rate: float = 0.12
     reinforcement_threshold: float = 0.06
+    # Contact occurrence is distinct from combat capability.  The repaired
+    # default treats supply as a continuous capability constraint rather than
+    # a symmetric hard encounter gate; ``hard_gate`` is retained as a forensic
+    # counterfactual for provenance.
+    contact_supply_rule: str = "no_gate"
+    contact_ammunition_floor: float = 0.05
+    # Fraction of the physical co-presence rate attributable to accidental
+    # encounter rather than deliberate detection and initiation.
+    accidental_contact_fraction: float = 0.05
+    contact_opportunity_model: str = "directional_pairwise"
+    # v5 separates organization/action/event support.  Legacy contact-only
+    # scheduling remains available for exact historical/provenance replay.
+    organized_action_architecture: str = "multichannel_v5"
 
     def validate(self) -> None:
         for name in ("interval_hours", "base_attrition_rate", "max_loss_fraction",
@@ -289,9 +379,23 @@ class CombatConfig:
                 raise ValueError(f"{name} cannot be negative")
         for name in ("ineffective_cohesion", "ineffective_readiness",
                      "disengagement_base", "surprise_initiative",
-                     "momentum_learning_rate", "reinforcement_threshold"):
+                     "momentum_learning_rate", "reinforcement_threshold",
+                     "accidental_contact_fraction"):
             if not 0 <= getattr(self, name) <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
+        if self.contact_supply_rule not in {
+            "hard_gate", "no_gate", "continuous", "ammunition_floor",
+            "initiation_asymmetry",
+        }:
+            raise ValueError("unsupported contact_supply_rule")
+        if not 0 <= self.contact_ammunition_floor <= 1:
+            raise ValueError("contact_ammunition_floor must be in [0, 1]")
+        if self.contact_opportunity_model not in {"legacy_symmetric", "directional_pairwise"}:
+            raise ValueError("unsupported contact opportunity model")
+        if self.organized_action_architecture not in {
+            "legacy_contact_only", "multichannel_v5"
+        }:
+            raise ValueError("unsupported organized action architecture")
 
 
 @dataclass(slots=True)
@@ -308,26 +412,52 @@ class OrganizationEcologyConfig:
     adaptation_rate: float = 0.12
     mutation_sigma: float = 0.035
     minimum_proto_members: int = 3
+    # Backward-compatible serialization field.  It is not used as a
+    # substantive onset threshold because raw representative counts are
+    # resolution-dependent; use minimum_proto_represented_population.
     minimum_proto_represented_population: float = 1_000.0
     minimum_split_represented_population: float = 1_500.0
     minimum_formation_personnel: float = 75.0
     fighter_conversion_fraction: float = .08
+    # A representative person is internally divided into equal recruitment
+    # subcohorts.  Recruitment/exit hazards act on those subcohorts rather
+    # than on the person's entire represented weight at once.  This is a
+    # numerical-resolution control, not an empirical fit parameter.
+    recruitment_subcohorts: int = 20
+    recruitment_requires_access: bool = True
+    # Utility-scale effect of constituency/franchise congruence.  A locally
+    # rooted organization is more attractive to civilians whose local/district
+    # identities are salient; an externally implanted franchise is less so.
+    # This is a general-theory prior, not a case-fit coefficient.
+    local_rootedness_weight: float = 0.75
+    # Conditional probability that a person who fully exits armed membership
+    # retains an insurgent-sympathetic public signal. The default 1.0 preserves
+    # the former hard-coded behavior while exposing it as a falsifiable theory.
+    exit_sympathy_retention: float = 1.0
     onset_resource_fraction: float = 0.18
     recruitment_diversity_penalty: float = 0.12
     cohesion_loss_memory: float = 0.2
+    # Actor-specific existence conditioning for empirical designs. During a
+    # supplied interval, identity-changing split, collapse, and merger
+    # transitions are suppressed; operations and other internal evolution
+    # remain endogenous.
+    observed_active_intervals: dict[str, list[list[float]]] = field(default_factory=dict)
 
     def validate(self) -> None:
         if (self.interval_days <= 0 or self.minimum_proto_members < 1 or
                 self.minimum_proto_represented_population <= 0 or
                 self.minimum_split_represented_population <= 0 or
-                self.minimum_formation_personnel < 0):
+                self.minimum_formation_personnel < 0 or
+                self.recruitment_subcohorts < 1):
             raise ValueError("invalid organization ecology interval or minimum size")
+        if not 0 <= self.local_rootedness_weight <= 3:
+            raise ValueError("local_rootedness_weight must be in [0, 3]")
         for name in ("proto_base_hazard", "birth_base_hazard", "proto_decay_rate",
                      "split_base_hazard", "merger_base_hazard", "collapse_base_hazard",
                      "succession_base_hazard",
                      "adaptation_rate", "mutation_sigma", "onset_resource_fraction",
                      "recruitment_diversity_penalty", "cohesion_loss_memory",
-                     "fighter_conversion_fraction"):
+                     "fighter_conversion_fraction", "exit_sympathy_retention"):
             if not 0 <= getattr(self, name) <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
 
@@ -497,13 +627,24 @@ class SimulationConfig:
     reporting_error: float = 0.12
     movement_rate: float = 0.015
     recruitment_rate: float = 0.001
+    # Membership loss/retention is a distinct organizational process from
+    # recruitment.  The baseline prior intentionally matches recruitment_rate
+    # to preserve the pre-split numerical baseline while allowing synthetic
+    # experiments to vary mobilization and retention independently.
+    membership_exit_rate: float = 0.001
     contact_rate: float = 0.08
     random_stream_namespace: str = "baseline"
+    # Output fidelity is deliberately orthogonal to the stochastic model.
+    # ``forensic`` retains every event/state delta; ``ensemble`` retains
+    # compact event summaries; ``calibration`` retains only aggregate counters
+    # and target-relevant state.  Process RNG streams remain unchanged.
+    output_mode: str = "forensic"
     intervals: ProcessIntervals = field(default_factory=ProcessIntervals)
     social_network: SocialNetworkConfig = field(default_factory=SocialNetworkConfig)
     physical: PhysicalModelConfig = field(default_factory=PhysicalModelConfig)
     geography: GeographyConfig = field(default_factory=GeographyConfig)
     logistics: LogisticsConfig = field(default_factory=LogisticsConfig)
+    force_structure: ForceStructureConfig = field(default_factory=ForceStructureConfig)
     information: InformationConfig = field(default_factory=InformationConfig)
     combat: CombatConfig = field(default_factory=CombatConfig)
     organization_ecology: OrganizationEcologyConfig = field(default_factory=OrganizationEcologyConfig)
@@ -519,13 +660,16 @@ class SimulationConfig:
             raise ValueError("locality_count must be at least 17")
         if self.horizon_days <= 0:
             raise ValueError("horizon_days must be positive")
+        if self.output_mode not in {"forensic", "ensemble", "calibration"}:
+            raise ValueError("output_mode must be forensic, ensemble, or calibration")
         if self.burn_in_days < 0:
             raise ValueError("burn_in_days cannot be negative")
         for name in ("initial_insurgent_share", "observation_noise", "reporting_error"):
             value = getattr(self, name)
             if not 0 <= value <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
-        for name in ("movement_rate", "recruitment_rate", "contact_rate"):
+        for name in ("movement_rate", "recruitment_rate", "membership_exit_rate",
+                     "contact_rate"):
             if getattr(self, name) < 0:
                 raise ValueError(f"{name} cannot be negative")
         for name, value in asdict(self.intervals).items():
@@ -535,6 +679,7 @@ class SimulationConfig:
         self.physical.validate()
         self.geography.validate()
         self.logistics.validate()
+        self.force_structure.validate()
         self.information.validate()
         self.combat.validate()
         self.organization_ecology.validate()
@@ -549,20 +694,44 @@ class SimulationConfig:
     @classmethod
     def from_dict(cls, values: dict[str, Any]) -> "SimulationConfig":
         values = dict(values)
+        # Legacy configurations used recruitment_rate as the common hazard
+        # scale for both joining and exit.  Preserve that exact behavior when
+        # reading an old serialized configuration, while new configs can set
+        # the two theoretically distinct rates independently.
+        if "membership_exit_rate" not in values:
+            values["membership_exit_rate"] = float(values.get("recruitment_rate", 0.001))
         if isinstance(values.get("intervals"), dict):
             values["intervals"] = ProcessIntervals(**values["intervals"])
         if isinstance(values.get("social_network"), dict):
             values["social_network"] = SocialNetworkConfig(**values["social_network"])
         if isinstance(values.get("physical"), dict):
-            values["physical"] = PhysicalModelConfig(**values["physical"])
+            physical_values = dict(values["physical"])
+            # Backward-compatible migration from the former single gain.  The
+            # old value controlled both current formation presence and patrol
+            # memory. Preserve its numeric prior for legacy files while
+            # splitting the live mechanisms into independent fields.
+            legacy_gain = physical_values.pop("patrol_presence_gain", None)
+            if legacy_gain is not None:
+                physical_values.setdefault("formation_presence_gain", legacy_gain)
+                physical_values.setdefault("patrol_memory_gain", legacy_gain)
+            values["physical"] = PhysicalModelConfig(**physical_values)
         if isinstance(values.get("geography"), dict):
             values["geography"] = GeographyConfig(**values["geography"])
         if isinstance(values.get("logistics"), dict):
             values["logistics"] = LogisticsConfig(**values["logistics"])
+        if isinstance(values.get("force_structure"), dict):
+            values["force_structure"] = ForceStructureConfig(**values["force_structure"])
         if isinstance(values.get("information"), dict):
             values["information"] = InformationConfig(**values["information"])
         if isinstance(values.get("combat"), dict):
-            values["combat"] = CombatConfig(**values["combat"])
+            combat_values = dict(values["combat"])
+            # Serialized pre-v0.13 configurations had no action-architecture
+            # field and therefore describe the contact-only model. Preserve
+            # exact replay instead of silently inheriting the new default.
+            combat_values.setdefault(
+                "organized_action_architecture", "legacy_contact_only"
+            )
+            values["combat"] = CombatConfig(**combat_values)
         if isinstance(values.get("organization_ecology"), dict):
             values["organization_ecology"] = OrganizationEcologyConfig(**values["organization_ecology"])
         if isinstance(values.get("political_order"), dict):

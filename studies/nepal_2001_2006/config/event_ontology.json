@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "nepal_2001_2006",
+  "status": "frozen_construct_correction",
+  "primary_target": {
+    "id": "two_sided_state_based",
+    "historical_source": "UCDP GED 26.1",
+    "historical_filter": "type_of_violence=1 and dyad_name=Government of Nepal - CPN-M",
+    "simulation_observable": "realized latent and recorded Pineland contact/engagement",
+    "role": "primary event-process benchmark",
+    "fatality_mapping": "not applied"
+  },
+  "one_sided_diagnostics": [
+    {
+      "id": "state_one_sided",
+      "historical_filter": "type_of_violence=3 and dyad_name=Government of Nepal - Civilians",
+      "simulation_observable": null,
+      "role": "observational diagnostic only"
+    },
+    {
+      "id": "maoist_one_sided",
+      "historical_filter": "type_of_violence=3 and dyad_name=CPN-M - Civilians",
+      "simulation_observable": null,
+      "role": "observational diagnostic only"
+    }
+  ],
+  "prohibitions": [
+    "Do not pool one-sided violence into the two-sided contact target.",
+    "Do not relabel unitless Pineland severity as UCDP fatalities.",
+    "Do not tune contact parameters before nondegenerate synthetic validation and a frozen construct check."
+  ]
+}

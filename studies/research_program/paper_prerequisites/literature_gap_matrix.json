@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0.0",
+  "status": "literature_workplan_not_review_conclusion",
+  "source_registry": "docs/Pineland COIN-SIM Research Bibliography v0.1.md",
+  "rule": "Literature is organized by the inferential job it must perform, not by whether it agrees with the current candidate theory.",
+  "domains": [
+    {
+      "id": "L1",
+      "domain": "insurgency organization and mobilization",
+      "questions": [
+        "What mechanisms explain recruitment, mobilization, organizational survival, fragmentation, and recurrence?",
+        "Which theories operate at local versus national scale?"
+      ],
+      "paper_use": "substantive mechanism priors and rival explanations",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L2",
+      "domain": "territorial control and political order",
+      "questions": [
+        "How is control defined beyond violence?",
+        "Which dimensions of formal, physical, administrative, legal, fiscal, social, and expected control are theoretically distinct?"
+      ],
+      "paper_use": "construct validity and outcome definition",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L3",
+      "domain": "spatial diffusion, persistence, and self-excitation",
+      "questions": [
+        "What observable patterns distinguish persistence, relocation, diffusion, common shocks, and spatial frailty?",
+        "What null and placebo structures are standard or defensible?"
+      ],
+      "paper_use": "rival explanations and statistical competitors",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L4",
+      "domain": "information, concealment, intelligence, and partial observability",
+      "questions": [
+        "How do actors act on beliefs rather than analyst truth?",
+        "How should reporting, detection, attribution, and geocoding error enter inference?"
+      ],
+      "paper_use": "epistemic architecture and observation model",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L5",
+      "domain": "logistics, force generation, sanctuary, and movement",
+      "questions": [
+        "How do stocks, flows, route risk, sanctuary, sustainment, and local force generation constrain operational presence?",
+        "Which mechanisms have testable spatial signatures?"
+      ],
+      "paper_use": "mechanism specification and ablations",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L6",
+      "domain": "agent-based model validation and generative explanation",
+      "questions": [
+        "What distinguishes verification, calibration, validation, prediction, explanation, and theory testing in simulation?",
+        "What standards exist for sensitivity, replication, and pattern-oriented validation?"
+      ],
+      "paper_use": "general methods contribution",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L7",
+      "domain": "causal identification and mechanism testing in simulation",
+      "questions": [
+        "How should controlled synthetic interventions, ablations, recovery tests, and competing mechanisms be interpreted?",
+        "What evidence is required before moving from synthetic identification to historical causal language?"
+      ],
+      "paper_use": "claim ladder and falsification logic",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L8",
+      "domain": "measurement error and latent-state observation",
+      "questions": [
+        "How are latent political or conflict states mapped to noisy ordinal, event, or presence observations?",
+        "How should missingness and assignment uncertainty propagate into model comparison?"
+      ],
+      "paper_use": "observation operators and robustness",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L9",
+      "domain": "comparative prediction and model competition",
+      "questions": [
+        "What constitutes a fair frozen-holdout comparison between structural simulation, reduced structural models, and statistical baselines?",
+        "How should cross-case transfer be evaluated without refitting the theory to each result?"
+      ],
+      "paper_use": "empirical adjudication design",
+      "safe_to_compile_now": true
+    },
+    {
+      "id": "L10",
+      "domain": "counterinsurgency intervention and policy evaluation",
+      "questions": [
+        "Which outcomes besides violence define success or failure?",
+        "How should harm, capacity, dependence, regeneration, and recurrence constrain intervention claims?"
+      ],
+      "paper_use": "eventual implications only after theory and transfer gates",
+      "safe_to_compile_now": true,
+      "final_policy_synthesis_blocked": true
+    }
+  ],
+  "extraction_fields_per_source": [
+    "full_citation",
+    "literature_domain",
+    "construct_or_mechanism",
+    "unit_of_analysis",
+    "causal_or_descriptive_claim",
+    "data_or_method",
+    "scope_conditions",
+    "relevant_measurement_definition",
+    "prediction_or_falsifier",
+    "relationship_to_pineland",
+    "supports_or_challenges_candidate",
+    "notes_for_rival_model"
+  ]
+}
+

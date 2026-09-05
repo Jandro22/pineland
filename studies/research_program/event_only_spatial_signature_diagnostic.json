@@ -1,0 +1,456 @@
+{
+  "cases": [
+    {
+      "case_id": "colombia_1984_2016",
+      "guard": "Event recurrence and adjacency are descriptive violence proxies. Missing control/presence and actor identity prevent causal reproduction or transfer claims.",
+      "metrics": [
+        {
+          "adjacent_exposure_activation": {
+            "denominator": 5190,
+            "numerator": 470,
+            "rate": 0.0905587668593449
+          },
+          "horizon_months": 1,
+          "inactive_unit_activation": {
+            "denominator": 364897,
+            "numerator": 7311,
+            "rate": 0.020035790921821773
+          },
+          "same_unit_renewal": {
+            "denominator": 9968,
+            "numerator": 2659,
+            "rate": 0.26675361155698235
+          },
+          "temporal_lead_placebo": {
+            "denominator": 5189,
+            "numerator": 469,
+            "rate": 0.09038350356523416
+          }
+        },
+        {
+          "adjacent_exposure_activation": {
+            "denominator": 5187,
+            "numerator": 503,
+            "rate": 0.09697320223636013
+          },
+          "horizon_months": 2,
+          "inactive_unit_activation": {
+            "denominator": 363784,
+            "numerator": 7407,
+            "rate": 0.020360983440723065
+          },
+          "same_unit_renewal": {
+            "denominator": 9962,
+            "numerator": 2557,
+            "rate": 0.2566753663922907
+          },
+          "temporal_lead_placebo": {
+            "denominator": 5185,
+            "numerator": 504,
+            "rate": 0.09720347155255545
+          }
+        },
+        {
+          "adjacent_exposure_activation": {
+            "denominator": 5177,
+            "numerator": 477,
+            "rate": 0.09213830403708712
+          },
+          "horizon_months": 4,
+          "inactive_unit_activation": {
+            "denominator": 361561,
+            "numerator": 7514,
+            "rate": 0.020782108689819976
+          },
+          "same_unit_renewal": {
+            "denominator": 9947,
+            "numerator": 2443,
+            "rate": 0.24560168895144266
+          },
+          "temporal_lead_placebo": {
+            "denominator": 5183,
+            "numerator": 470,
+            "rate": 0.09068107273779664
+          }
+        },
+        {
+          "adjacent_exposure_activation": {
+            "denominator": 5151,
+            "numerator": 480,
+            "rate": 0.093185789167152
+          },
+          "horizon_months": 8,
+          "inactive_unit_activation": {
+            "denominator": 357113,
+            "numerator": 7692,
+            "rate": 0.02153940069389801
+          },
+          "same_unit_renewal": {
+            "denominator": 9919,
+            "numerator": 2255,
+            "rate": 0.22734146587357595
+          },
+          "temporal_lead_placebo": {
+            "denominator": 5178,
+            "numerator": 509,
+            "rate": 0.09830050212437234
+          }
+        }
+      ],
+      "panel_scope": {
+        "event_rows": 9973,
+        "event_units": 882,
+        "event_units_unmatched_to_topology": [],
+        "months": 336,
+        "period_end": "2016-12",
+        "period_start": "1989-01",
+        "topology_units": 1119,
+        "unit": "GADM level-2 geography"
+      },
+      "provenance": [
+        {
+          "path": "studies/colombia_1984_2016/data/processed/ucdp_colombia_1984_2016_geography_month_panel.csv",
+          "sha256": "944e057a973029611782d50a3b9ce47d55454ddf38a86c3ff945bd12b4406898"
+        },
+        {
+          "path": "studies/colombia_1984_2016/data/raw/gadm41_COL_2.json.zip",
+          "sha256": "557aa8699b9b6f3928bc3cfa87371ccc618677304322386ca7d7b9e954a55dc0"
+        }
+      ],
+      "status": "violence_proxy_signature_not_case_ready",
+      "topology_label_shuffle_null": {
+        "metrics": [
+          {
+            "adjacent_exposure_activation": {
+              "denominator": 6399,
+              "numerator": 293,
+              "rate": 0.045788404438193465
+            },
+            "horizon_months": 1,
+            "inactive_unit_activation": {
+              "denominator": 364897,
+              "numerator": 7311,
+              "rate": 0.020035790921821773
+            },
+            "same_unit_renewal": {
+              "denominator": 9968,
+              "numerator": 2659,
+              "rate": 0.26675361155698235
+            },
+            "temporal_lead_placebo": {
+              "denominator": 6403,
+              "numerator": 291,
+              "rate": 0.045447446509448694
+            }
+          },
+          {
+            "adjacent_exposure_activation": {
+              "denominator": 6395,
+              "numerator": 296,
+              "rate": 0.04628616106333073
+            },
+            "horizon_months": 2,
+            "inactive_unit_activation": {
+              "denominator": 363784,
+              "numerator": 7407,
+              "rate": 0.020360983440723065
+            },
+            "same_unit_renewal": {
+              "denominator": 9962,
+              "numerator": 2557,
+              "rate": 0.2566753663922907
+            },
+            "temporal_lead_placebo": {
+              "denominator": 6395,
+              "numerator": 305,
+              "rate": 0.04769351055512119
+            }
+          },
+          {
+            "adjacent_exposure_activation": {
+              "denominator": 6385,
+              "numerator": 278,
+              "rate": 0.043539545810493345
+            },
+            "horizon_months": 4,
+            "inactive_unit_activation": {
+              "denominator": 361561,
+              "numerator": 7514,
+              "rate": 0.020782108689819976
+            },
+            "same_unit_renewal": {
+              "denominator": 9947,
+              "numerator": 2443,
+              "rate": 0.24560168895144266
+            },
+            "temporal_lead_placebo": {
+              "denominator": 6386,
+              "numerator": 292,
+              "rate": 0.04572502348888193
+            }
+          },
+          {
+            "adjacent_exposure_activation": {
+              "denominator": 6371,
+              "numerator": 279,
+              "rate": 0.04379218333071731
+            },
+            "horizon_months": 8,
+            "inactive_unit_activation": {
+              "denominator": 357113,
+              "numerator": 7692,
+              "rate": 0.02153940069389801
+            },
+            "same_unit_renewal": {
+              "denominator": 9919,
+              "numerator": 2255,
+              "rate": 0.22734146587357595
+            },
+            "temporal_lead_placebo": {
+              "denominator": 6381,
+              "numerator": 290,
+              "rate": 0.04544742203416392
+            }
+          }
+        ],
+        "seed": 20260905
+      }
+    },
+    {
+      "case_id": "iraq_2003_2011",
+      "guard": "Event recurrence and adjacency are descriptive violence proxies. Missing control/presence and actor identity prevent causal reproduction or transfer claims.",
+      "metrics": [
+        {
+          "adjacent_exposure_activation": {
+            "denominator": 1692,
+            "numerator": 136,
+            "rate": 0.08037825059101655
+          },
+          "horizon_months": 1,
+          "inactive_unit_activation": {
+            "denominator": 9581,
+            "numerator": 560,
+            "rate": 0.05844901367289427
+          },
+          "same_unit_renewal": {
+            "denominator": 1129,
+            "numerator": 566,
+            "rate": 0.5013286093888397
+          },
+          "temporal_lead_placebo": {
+            "denominator": 1679,
+            "numerator": 133,
+            "rate": 0.07921381774865992
+          }
+        },
+        {
+          "adjacent_exposure_activation": {
+            "denominator": 1682,
+            "numerator": 139,
+            "rate": 0.08263971462544589
+          },
+          "horizon_months": 2,
+          "inactive_unit_activation": {
+            "denominator": 9486,
+            "numerator": 569,
+            "rate": 0.0599831330381615
+          },
+          "same_unit_renewal": {
+            "denominator": 1122,
+            "numerator": 538,
+            "rate": 0.47950089126559714
+          },
+          "temporal_lead_placebo": {
+            "denominator": 1653,
+            "numerator": 124,
+            "rate": 0.0750151240169389
+          }
+        },
+        {
+          "adjacent_exposure_activation": {
+            "denominator": 1651,
+            "numerator": 146,
+            "rate": 0.08843125378558449
+          },
+          "horizon_months": 4,
+          "inactive_unit_activation": {
+            "denominator": 9305,
+            "numerator": 602,
+            "rate": 0.0646963997850618
+          },
+          "same_unit_renewal": {
+            "denominator": 1099,
+            "numerator": 504,
+            "rate": 0.4585987261146497
+          },
+          "temporal_lead_placebo": {
+            "denominator": 1651,
+            "numerator": 135,
+            "rate": 0.08176862507571168
+          }
+        },
+        {
+          "adjacent_exposure_activation": {
+            "denominator": 1583,
+            "numerator": 153,
+            "rate": 0.09665192672141504
+          },
+          "horizon_months": 8,
+          "inactive_unit_activation": {
+            "denominator": 8951,
+            "numerator": 627,
+            "rate": 0.07004803932521506
+          },
+          "same_unit_renewal": {
+            "denominator": 1045,
+            "numerator": 473,
+            "rate": 0.45263157894736844
+          },
+          "temporal_lead_placebo": {
+            "denominator": 1641,
+            "numerator": 131,
+            "rate": 0.07982937233394272
+          }
+        }
+      ],
+      "panel_scope": {
+        "event_rows": 1141,
+        "event_units": 67,
+        "event_units_unmatched_to_topology": [],
+        "months": 106,
+        "period_end": "2011-12",
+        "period_start": "2003-03",
+        "topology_units": 102,
+        "unit": "GADM level-2 geography"
+      },
+      "provenance": [
+        {
+          "path": "studies/iraq_2003_2011/data/processed/ucdp_iraq_2003_2011_geography_month_panel.csv",
+          "sha256": "6f751ce79e9286c020a683e3e3ec1fa55a094637cb7af4339953aeccad038de1"
+        },
+        {
+          "path": "studies/iraq_2003_2011/data/raw/gadm41_IRQ_2.json.zip",
+          "sha256": "bfbcf24f0b1efd44767103a5238ca63490981f288531770b171fb7790ba87e79"
+        }
+      ],
+      "status": "violence_proxy_signature_not_case_ready",
+      "topology_label_shuffle_null": {
+        "metrics": [
+          {
+            "adjacent_exposure_activation": {
+              "denominator": 1561,
+              "numerator": 71,
+              "rate": 0.04548366431774504
+            },
+            "horizon_months": 1,
+            "inactive_unit_activation": {
+              "denominator": 9581,
+              "numerator": 560,
+              "rate": 0.05844901367289427
+            },
+            "same_unit_renewal": {
+              "denominator": 1129,
+              "numerator": 566,
+              "rate": 0.5013286093888397
+            },
+            "temporal_lead_placebo": {
+              "denominator": 1556,
+              "numerator": 72,
+              "rate": 0.04627249357326478
+            }
+          },
+          {
+            "adjacent_exposure_activation": {
+              "denominator": 1554,
+              "numerator": 66,
+              "rate": 0.04247104247104247
+            },
+            "horizon_months": 2,
+            "inactive_unit_activation": {
+              "denominator": 9486,
+              "numerator": 569,
+              "rate": 0.0599831330381615
+            },
+            "same_unit_renewal": {
+              "denominator": 1122,
+              "numerator": 538,
+              "rate": 0.47950089126559714
+            },
+            "temporal_lead_placebo": {
+              "denominator": 1528,
+              "numerator": 60,
+              "rate": 0.03926701570680628
+            }
+          },
+          {
+            "adjacent_exposure_activation": {
+              "denominator": 1517,
+              "numerator": 67,
+              "rate": 0.044166117336849046
+            },
+            "horizon_months": 4,
+            "inactive_unit_activation": {
+              "denominator": 9305,
+              "numerator": 602,
+              "rate": 0.0646963997850618
+            },
+            "same_unit_renewal": {
+              "denominator": 1099,
+              "numerator": 504,
+              "rate": 0.4585987261146497
+            },
+            "temporal_lead_placebo": {
+              "denominator": 1526,
+              "numerator": 64,
+              "rate": 0.04193971166448231
+            }
+          },
+          {
+            "adjacent_exposure_activation": {
+              "denominator": 1438,
+              "numerator": 80,
+              "rate": 0.055632823365785816
+            },
+            "horizon_months": 8,
+            "inactive_unit_activation": {
+              "denominator": 8951,
+              "numerator": 627,
+              "rate": 0.07004803932521506
+            },
+            "same_unit_renewal": {
+              "denominator": 1045,
+              "numerator": 473,
+              "rate": 0.45263157894736844
+            },
+            "temporal_lead_placebo": {
+              "denominator": 1523,
+              "numerator": 70,
+              "rate": 0.04596191726854892
+            }
+          }
+        ],
+        "seed": 20260905
+      }
+    }
+  ],
+  "complete_grid_rule": "All GADM units are crossed with the declared observed-data period; absent event rows are represented as zero only within the event-observation proxy.",
+  "core_change_licensed": false,
+  "historical_outcomes_used": true,
+  "historical_parameter_fitting": false,
+  "interpretation_guard": "These metrics test whether violence events exhibit renewal or spatial clustering. They do not identify insurgent local reproduction, actor transmission, control, or COIN efficacy.",
+  "measurement_limitations": [
+    "event rows are a violence-observation proxy and do not identify actor-level reproduction",
+    "unassigned or low-confidence event locations are not equivalent to verified zero activity",
+    "Colombia and Iraq event classes are case-native UCDP aggregates rather than a common insurgent outcome",
+    "topology nulls use full endpoint relabeling and preserve graph symmetry and degree sequence"
+  ],
+  "program_id": "comparative-insurgency-v1",
+  "promotion_decision": {
+    "reason": "Control/presence joins, actor identity, and case-level measurement models remain incomplete.",
+    "stable_general_theory_licensed": false
+  },
+  "schema_version": "1.0.0",
+  "status": "event_only_spatial_signature_diagnostic_not_causal",
+  "topology_method": "GADM level-2 polygon touch adjacency",
+  "topology_null_definition": "uniform random permutation of both graph endpoints, preserving node labels, symmetry, degree sequence, and no self-loops"
+}

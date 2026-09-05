@@ -16,9 +16,14 @@ from .validation import (calibrate_and_validate, global_sensitivity, model_ladde
                          fragmentation_forensic, parameter_recovery_experiment,
                          question_specific_registry)
 from .research_audit import (causal_ledger_audit, foreign_withdrawal_diagnostics,
-                             null_and_extreme_checks, recording_calibration,
-                             scheduler_audit, truth_firewall_check)
-from .empirical import case_catalog
+                             language_factorial, long_horizon_diagnostics,
+                             null_and_extreme_checks, output_mode_benchmark,
+                             recording_calibration, resolution_ladder,
+                             scheduler_audit, topology_ablation,
+                             truth_firewall_check, truth_firewall_battery,
+                             representative_agent_audit, publication_readiness_report,
+                             long_horizon_ensemble)
+from .empirical import case_catalog, first_paper_experiment_spec
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,6 +37,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--agents", type=int)
     run.add_argument("--days", type=float)
     run.add_argument("--seed", type=int)
+    run.add_argument("--output-mode", choices=["forensic", "ensemble", "calibration"],
+                     help="retained output fidelity; dynamics are unchanged")
     run.add_argument("--network-snapshot", type=Path, help="optional social graph debug export")
     run.add_argument("--debug-agent", action="append", default=[])
     run.add_argument("--debug-community", action="append", default=[])
@@ -117,12 +124,72 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--days", type=float, default=30.0)
     audit.add_argument("--recording-repetitions", type=int, default=200)
     audit.add_argument("--output", type=Path, default=Path("outputs/research-audit.json"))
+    benchmark = subparsers.add_parser("output-benchmark", help="benchmark lossless output modes")
+    benchmark.add_argument("--config", type=Path)
+    benchmark.add_argument("--agents", type=int, default=250)
+    benchmark.add_argument("--days", type=float, default=30.0)
+    benchmark.add_argument("--seed", type=int)
+    benchmark.add_argument("--output", type=Path, default=Path("outputs/output-benchmark.json"))
+    topology = subparsers.add_parser("topology-ablation", help="compare original, rewired, and random-mixing graphs")
+    topology.add_argument("--config", type=Path)
+    topology.add_argument("--agents", type=int, default=250)
+    topology.add_argument("--days", type=float, default=30.0)
+    topology.add_argument("--seed", type=int)
+    topology.add_argument("--swaps", type=int)
+    topology.add_argument("--output", type=Path, default=Path("outputs/topology-ablation.json"))
+    language = subparsers.add_parser("language-factorial", help="run the eight-cell language factorial")
+    language.add_argument("--config", type=Path)
+    language.add_argument("--agents", type=int, default=250)
+    language.add_argument("--days", type=float, default=30.0)
+    language.add_argument("--seed", type=int)
+    language.add_argument("--repetitions", type=int, default=8)
+    language.add_argument("--workers", type=int, help="parallel workers (default: up to 8 cores)")
+    language.add_argument("--output", type=Path, default=Path("outputs/language-factorial.json"))
+    resolution = subparsers.add_parser("resolution-audit", help="run the powered resolution ladder")
+    resolution.add_argument("--config", type=Path)
+    resolution.add_argument("--agents", type=int, nargs="+", default=[25_000, 75_000, 250_000])
+    resolution.add_argument("--days", type=float, default=30.0)
+    resolution.add_argument("--seeds", type=int, nargs="+", default=[1, 2, 3])
+    resolution.add_argument("--output", type=Path, default=Path("outputs/resolution-audit.json"))
+    longrun = subparsers.add_parser("long-horizon", help="run multi-year pathology diagnostics")
+    longrun.add_argument("--config", type=Path)
+    longrun.add_argument("--agents", type=int, default=250)
+    longrun.add_argument("--years", type=int, default=5)
+    longrun.add_argument("--seed", type=int)
+    longrun.add_argument("--seeds", type=int, nargs="+")
+    longrun.add_argument("--output", type=Path, default=Path("outputs/long-horizon.json"))
+    paper = subparsers.add_parser("paper-spec", help="emit the first-paper empirical experiment contract")
+    paper.add_argument("--output", type=Path, default=Path("outputs/first-paper-spec.json"))
+    firewall = subparsers.add_parser("truth-firewall", help="run the decision-level hidden-state metamorphic battery")
+    firewall.add_argument("--config", type=Path)
+    firewall.add_argument("--agents", type=int, default=250)
+    firewall.add_argument("--days", type=float, default=2.0)
+    firewall.add_argument("--seed", type=int)
+    firewall.add_argument("--output", type=Path, default=Path("outputs/truth-firewall.json"))
+    representative = subparsers.add_parser("representative-audit", help="audit representative-agent and household semantics")
+    representative.add_argument("--config", type=Path)
+    representative.add_argument("--agents", type=int, default=250)
+    representative.add_argument("--days", type=float, default=2.0)
+    representative.add_argument("--seed", type=int)
+    representative.add_argument("--output", type=Path, default=Path("outputs/representative-audit.json"))
+    readiness = subparsers.add_parser("readiness-report", help="produce the publication-readiness report")
+    readiness.add_argument("--config", type=Path)
+    readiness.add_argument("--agents", type=int, default=250)
+    readiness.add_argument("--days", type=float, default=2.0)
+    readiness.add_argument("--years", type=int, default=1)
+    readiness.add_argument("--seed", type=int)
+    readiness.add_argument("--language-repetitions", type=int, default=8)
+    readiness.add_argument("--workers", type=int, help="parallel workers (default: up to 8 cores)")
+    readiness.add_argument("--full", action="store_true", help="also run powered resolution/sensitivity/recovery batteries")
+    readiness.add_argument("--long-horizon", action="store_true", help="include the multi-year pathology run")
+    readiness.add_argument("--output", type=Path, default=Path("outputs/publication-readiness.json"))
     return parser
 
 
 def _config(args) -> SimulationConfig:
     config = SimulationConfig.load(args.config) if getattr(args, "config", None) else SimulationConfig()
-    for argument, attribute in (("agents", "agent_count"), ("days", "horizon_days"), ("seed", "seed")):
+    for argument, attribute in (("agents", "agent_count"), ("days", "horizon_days"), ("seed", "seed"),
+                                ("output_mode", "output_mode")):
         value = getattr(args, argument, None)
         if value is not None and not isinstance(value, list):
             setattr(config, attribute, value)
@@ -213,6 +280,8 @@ def main(argv: list[str] | None = None) -> int:
         config.horizon_days = args.days
         result = {
             "truth_firewall": truth_firewall_check(config, min(2.0, args.days)),
+            "truth_firewall_battery": truth_firewall_battery(config, min(2.0, args.days)),
+            "representative_agents": representative_agent_audit(config, min(2.0, args.days)),
             "scheduler": scheduler_audit(config, args.days),
             "causal_ledger": causal_ledger_audit(config, min(7.0, args.days)),
             "null_and_extreme": null_and_extreme_checks(config),
@@ -221,6 +290,75 @@ def main(argv: list[str] | None = None) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "output-benchmark":
+        result = output_mode_benchmark(config, args.days)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "topology-ablation":
+        result = topology_ablation(config, args.days, args.swaps)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "language-factorial":
+        result = language_factorial(config, args.days, args.repetitions, args.workers)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "resolution-audit":
+        config.agent_count = max(args.agents)
+        config.horizon_days = args.days
+        result = resolution_ladder(config, args.agents, args.seeds, args.days)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps({"agent_counts": result["agent_counts"], "seeds": result["seeds"],
+                          "comparisons": result["comparisons"]}, indent=2))
+        return 0
+    if args.command == "long-horizon":
+        result = (long_horizon_ensemble(config, args.years, args.seeds)
+                  if args.seeds else long_horizon_diagnostics(config, args.years))
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps({"years": result["years"], "warnings": result["warnings"],
+                          "all_pass": result.get("all_pass", not result["warnings"]),
+                          "stock_residual": result.get("stock_residual"),
+                          "supply_residual": result.get("supply_residual"),
+                          "final_distributions": result.get("final_distributions")}, indent=2))
+        return 0
+    if args.command == "paper-spec":
+        result = first_paper_experiment_spec()
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "truth-firewall":
+        result = truth_firewall_battery(config, args.days)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "representative-audit":
+        result = representative_agent_audit(config, args.days)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "readiness-report":
+        result = publication_readiness_report(
+            config, horizon_days=args.days, long_horizon_years=args.years,
+            language_repetitions=args.language_repetitions, run_expensive=args.full,
+            run_long_horizon=args.long_horizon, workers=args.workers)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(json.dumps({"methods_paper_readiness_score": result["methods_paper_readiness_score"],
+                          "substantive_paper_readiness_score": result["substantive_paper_readiness_score"],
+                          "closed_questions": result["closed_questions"],
+                          "open_or_conditional_questions": result["open_or_conditional_questions"],
+                          "runtime_seconds": result["runtime_seconds"]}, indent=2))
         return 0
     outcomes, summary = run_paired_experiment(config, governance_surge(args.multiplier), args.repetitions)
     args.output.parent.mkdir(parents=True, exist_ok=True)

@@ -43,8 +43,13 @@ Their low initial embeddedness and language knowledge create an epistemic
 disadvantage.
 
 Foreign beliefs are noisy transformations of host beliefs, never ground truth.
-Interpreter-brokers are real socially central Pineland residents. Their two-way
-language, trust, and cultural knowledge improve confidence without creating
+Interpretation/brokerage is a represented border-locality capability derived
+from language overlap, social permeability, and kinship access. A sampled
+socially central resident may anchor that channel and improve its quality
+through two-way language, trust, and cultural knowledge, but the anchor is not
+the existence condition for the capability. Thus a populated border locality
+does not lose all interpretation merely because a coarse representative-agent
+draw sampled no resident there, and interpretation still does not create
 perfect information.
 
 Foreign presence produces heterogeneous legitimacy effects through local

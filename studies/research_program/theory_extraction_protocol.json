@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0.0",
+  "status": "candidate_theory_protocol_not_result",
+  "candidate_cycle": [
+    "local_access",
+    "information",
+    "mobilization",
+    "armed_presence",
+    "control",
+    "expectations",
+    "future_access"
+  ],
+  "state_interrupt_cycle": [
+    "persistent_presence",
+    "information_acquisition",
+    "credible_security_and_governance",
+    "changed_civilian_expectations",
+    "durable_control"
+  ],
+  "candidate_binding_conditions": [
+    "viable local exposure or contact opportunity",
+    "an initiation, mobilization, or recruitment response",
+    "local sustainment sufficient for episode renewal"
+  ],
+  "candidate_negative_constraints": [
+    "adjacency alone is not treated as reproduction",
+    "a violence-only adjacency contrast that does not exceed a temporal-lead placebo is not treated as propagation",
+    "static formation presence alone is not treated as persistence",
+    "violence totals alone are not treated as control"
+  ],
+  "mechanism_statuses": {
+    "local_access": "unresolved",
+    "information": "unresolved",
+    "mobilization": "unresolved",
+    "armed_presence": "unresolved",
+    "control": "unresolved",
+    "expectations": "unresolved",
+    "future_access": "unresolved"
+  },
+  "survival_criteria": [
+    "predeclared mechanism direction replicates in at least two cases",
+    "mechanism improves a frozen holdout outcome beyond reduced models",
+    "mechanism adds value for control or joint outcomes, not violence only",
+    "direction survives case-input and measurement uncertainty",
+    "any geographic propagation claim exceeds topology-label and temporal-lead placebos",
+    "effect is not explained by a simpler statistical competitor",
+    "mechanism remains interpretable without holdout refitting"
+  ],
+  "falsifiers": [
+    "mechanism direction reverses across transfer cases",
+    "reduced model matches held-out control and joint outcomes",
+    "effect disappears under measurement-model alternatives",
+    "mechanism requires case-specific tuning to survive",
+    "mechanism changes violence but not the declared downstream construct"
+  ],
+  "required_outputs_per_case": [
+    "mechanism ablation matrix",
+    "reduced-model comparison",
+    "simple statistical competitor scores",
+    "control_or_presence validation",
+    "topology and temporal-lead placebo diagnostics",
+    "joint violence_control score",
+    "uncertainty decomposition",
+    "negative-result narrative"
+  ],
+  "claim_rule": "No mechanism is promoted from unresolved to general until every survival criterion is met in the preregistered case ladder."
+}

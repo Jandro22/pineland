@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "synthetic_spatial_contact_challenge_v1",
+  "parent_experiment_id": "synthetic_spatial_reproduction_factorial_v1",
+  "status": "preregistered_synthetic_challenge_not_run",
+  "purpose": "Exercise the contact and presence-memory pathway that the baseline factorial left unobserved, without fitting historical outcomes or changing core equations.",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "design": {
+    "seeds": [8811, 8812, 8813, 8814, 8815, 8816, 8817, 8818],
+    "agent_count": 120,
+    "locality_count": 17,
+    "horizon_days": 14,
+    "matched_seed_assignment": true,
+    "organization_ecology_enabled": false,
+    "contact_rate": 5.0,
+    "contact_supply_rule": "no_gate",
+    "force_detection": true,
+    "focal_pair": {
+      "government_formation_id": "FDF-01",
+      "insurgent_formation_id": "PRF-01",
+      "initialization": [
+        "co-locate the insurgent focal formation with the government focal formation at the government's generated locality and microzone",
+        "set both focal formations effective, available, rested, fully supplied, and command-capable",
+        "set the insurgent organization active",
+        "re-baseline initial supply after fixture normalization"
+      ]
+    },
+    "factors": {
+      "presence_memory": [
+        "government_patrol_only",
+        "symmetric_stationary_formation_memory"
+      ],
+      "destination_choice": [
+        "current_live_policy",
+        "geographic_neighbor_restricted"
+      ]
+    },
+    "cells": 4
+  },
+  "primary_estimands": [
+    "latent_contact_rate",
+    "same_locality_renewal_rate_7d",
+    "presence_memory_change",
+    "local_government_control_change",
+    "adjacent_activation_rate"
+  ],
+  "secondary_diagnostics": [
+    "contact_funnel_gate_counts",
+    "movement_count",
+    "focal_formation_readiness",
+    "focal_formation_supply_fraction",
+    "supply_conservation_residual",
+    "recorded_vs_latent_contact_gap"
+  ],
+  "acceptance_gate": "Every matched seed must produce at least one latent focal contact, source hashes must remain stable, supply residuals must remain within tolerance, and the challenge must recover a declared contact/presence contrast before any interpretation of the parent factorial is attempted.",
+  "falsifiers": [
+    "a focal pair remains co-located and effective but produces no latent contact in a seed",
+    "the memory treatment changes neither presence memory nor the declared control outcome",
+    "recorded contacts are mistaken for latent contacts",
+    "supply conservation fails",
+    "any cell changes the live model hash during execution"
+  ],
+  "interpretation": "This challenge isolates a mechanism pathway; it is not a historical fit, a transfer test, an efficacy estimate, or a license to modify the core. Failure is evidence that the challenge or observation operator is still inadequate, not evidence for a general theory."
+}

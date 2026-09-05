@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "program_id": "comparative-insurgency-v1",
+  "completion_rule": "The program is complete only when every stage is complete and at least two genuine transfer cases pass the preregistered control/joint-outcome gates without holdout refitting.",
+  "stages": [
+    {
+      "stage": 1,
+      "name": "freeze_and_reproducibility",
+      "status": "complete",
+      "evidence": ["outputs/final_release/RELEASE_CERTIFICATE_LIVE.json", "studies/research_program/core_freeze.json"],
+      "remaining": []
+    },
+    {
+      "stage": 2,
+      "name": "nepal_development_and_falsification",
+      "status": "complete_falsification",
+      "evidence": ["studies/nepal_2001_2006/results/nepal_benchmark_report.md", "studies/research_program/nepal_mechanism_evidence.json"],
+      "remaining": ["Do not reinterpret the zero-recorded-contact result as a successful violence reconstruction."]
+    },
+    {
+      "stage": 3,
+      "name": "afghanistan_first_transfer",
+      "status": "legacy_falsification_revalidation_required",
+      "evidence": ["studies/afghanistan_2004_2021/results/transfer_test_v1/control_target_ensemble_v2/transfer_decision.json", "studies/afghanistan_2004_2021/results/transfer_test_v1/control_target_ensemble_v2/spatial_reproduction_diagnostic.json", "studies/afghanistan_2004_2021/results/transfer_test_v1/control_target_ensemble_v2/CURRENT_CORE_REVALIDATION_REQUIRED.json"],
+      "remaining": ["Do not tune the failed transfer. The v2 target ensemble is superseded by the live v3 core; rerun the predeclared target gate against v3 before treating the failure as current-core evidence. The prospective control operator still requires a new predeclared run and cannot rescore discarded v1 vector state."]
+    },
+    {
+      "stage": 4,
+      "name": "comparative_case_ladder",
+      "status": "data_construction",
+      "evidence": ["studies/research_program/case_ladder.json", "studies/research_program/case_readiness_snapshot.json", "studies/colombia_1984_2016/config/case_contract.json", "studies/iraq_2003_2011/config/case_contract.json", "studies/vietnam_1955_1975/config/case_contract.json"],
+      "remaining": ["Complete heterogeneous control/presence joins and measurement panels for Colombia, Iraq, and Vietnam; direct-source gaps and explicit not-reported intervals remain run blockers; then run frozen holdouts."]
+    },
+    {
+      "stage": 5,
+      "name": "theory_extraction",
+      "status": "candidate_not_claimed",
+      "evidence": ["studies/research_program/theory_extraction_protocol.json", "studies/research_program/mechanism_registry.json", "studies/research_program/spatial_reproduction_identification_recovery.json", "studies/research_program/spatial_reproduction_identification_recovery_manifest.json"],
+      "remaining": ["Replicate mechanism directions in at least two transfer cases and satisfy every survival criterion; the synthetic recovery battery licenses estimands only, not a general mechanism claim."]
+    },
+    {
+      "stage": 6,
+      "name": "simple_competitor_and_reduced_model_tests",
+      "status": "violence_complete_control_blocked_on_training_data",
+      "evidence": ["studies/afghanistan_2004_2021/results/competitors/competitor_scores.csv", "studies/afghanistan_2004_2021/results/transfer_test_v1/control_target_ensemble_v2/transfer_comparison.json", "studies/afghanistan_2004_2021/config/control_competitor_plan.json"],
+      "remaining": ["Acquire and harmonize pre-target longitudinal control observations, then run the implemented training-only control competitors; never use the October 2017 target mean as training."]
+    },
+    {
+      "stage": 7,
+      "name": "coin_science",
+      "status": "preregistered_design_only",
+      "evidence": ["studies/research_program/coin_interventions.json", "studies/research_program/outcome_measurement_contract.json"],
+      "remaining": ["No efficacy claim until two transfer cases pass control/joint-outcome gates."]
+    },
+    {
+      "stage": 8,
+      "name": "research_program_artifact",
+      "status": "active",
+      "evidence": ["studies/research_program/README.md", "studies/research_program/moonshot_checklist.json"],
+      "remaining": ["Complete comparative evidence, theory extraction, and falsifiable COIN implications before claiming resolution."]
+    }
+  ]
+}

@@ -1,0 +1,1039 @@
+{
+  "cases": [
+    {
+      "brier_lift_over_baseline": {
+        "baseline": 0.0,
+        "local_plus_neighbor": 0.08751823129251268,
+        "local_state": 0.0690694174800732,
+        "neighbor_exposure": 0.04831007098004192
+      },
+      "case_id": "nepal_2001_2006",
+      "holdout_scores": {
+        "baseline": {
+          "brier": 0.29024974629356376,
+          "log_loss": 0.7741470022249319
+        },
+        "local_plus_neighbor": {
+          "brier": 0.20273151500105108,
+          "log_loss": 0.5925412733384234
+        },
+        "local_state": {
+          "brier": 0.22118032881349056,
+          "log_loss": 0.6372029469358577
+        },
+        "neighbor_exposure": {
+          "brier": 0.24193967531352184,
+          "log_loss": 0.6707378269683699
+        }
+      },
+      "interpretation": "Predictive association only. Local renewal is an observation feature, not identified insurgent reproduction.",
+      "panel_scope": {
+        "event_units": 75,
+        "months": 61,
+        "split_counts": {
+          "geographic_validation": 2592,
+          "strict_joint_holdout": 1584,
+          "temporal_validation": 5841,
+          "training": 9558
+        },
+        "topology_units": 75,
+        "unmatched_event_units": []
+      },
+      "provenance": [
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_week_panel.csv",
+          "sha256": "bc9596cc8d0cc639f3d78ca06a5e3a077c03923d4121b9181b568a3da4208200"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_adjacency.json",
+          "sha256": "67c2b479e9fe5e3be5414af3aa85325bbfdf3dcab07c1609b3e5f41f088cf3f4"
+        }
+      ],
+      "rolling_origin": {
+        "note": "Deterministic blocked-prefix sensitivity analysis; not preregistered and not a causal test.",
+        "positive_brier_lift_counts": {
+          "local_plus_neighbor": 3,
+          "local_state": 3,
+          "neighbor_exposure": 2
+        },
+        "test_fraction": 0.1,
+        "train_fractions": [
+          0.5,
+          0.6,
+          0.7
+        ],
+        "windows": [
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.03260587406660548,
+              "local_state": 0.023942144594377185,
+              "neighbor_exposure": 0.015923406604468504
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.23911911580732256,
+                "log_loss": 0.6713283519309291
+              },
+              "local_plus_neighbor": {
+                "brier": 0.20651324174071709,
+                "log_loss": 0.6023365938359952
+              },
+              "local_state": {
+                "brier": 0.21517697121294538,
+                "log_loss": 0.6209778268483179
+              },
+              "neighbor_exposure": {
+                "brier": 0.22319570920285406,
+                "log_loss": 0.6382423377469043
+              }
+            },
+            "test_end_month_exclusive": "2004-11",
+            "test_records": 450,
+            "train_end_month_exclusive": "2004-05",
+            "train_fraction": 0.5,
+            "train_records": 2175
+          },
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.012307236382295361,
+              "local_state": 0.014237198217453534,
+              "neighbor_exposure": -0.0027068510438895965
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.2430671812298143,
+                "log_loss": 0.679229121956606
+              },
+              "local_plus_neighbor": {
+                "brier": 0.23075994484751894,
+                "log_loss": 0.6548181931916291
+              },
+              "local_state": {
+                "brier": 0.22882998301236077,
+                "log_loss": 0.649950328095841
+              },
+              "neighbor_exposure": {
+                "brier": 0.2457740322737039,
+                "log_loss": 0.6858626942939767
+              }
+            },
+            "test_end_month_exclusive": "2005-05",
+            "test_records": 450,
+            "train_end_month_exclusive": "2004-11",
+            "train_fraction": 0.6,
+            "train_records": 2625
+          },
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.02532562992678286,
+              "local_state": 0.02309685383432003,
+              "neighbor_exposure": 0.001728763037795289
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.27524348402321835,
+                "log_loss": 0.7439575859698583
+              },
+              "local_plus_neighbor": {
+                "brier": 0.2499178540964355,
+                "log_loss": 0.6964761553685821
+              },
+              "local_state": {
+                "brier": 0.2521466301888983,
+                "log_loss": 0.7012907272469694
+              },
+              "neighbor_exposure": {
+                "brier": 0.27351472098542307,
+                "log_loss": 0.7400488685628321
+              }
+            },
+            "test_end_month_exclusive": "2005-11",
+            "test_records": 450,
+            "train_end_month_exclusive": "2005-05",
+            "train_fraction": 0.7,
+            "train_records": 3075
+          }
+        ]
+      },
+      "split": {
+        "boundary_month": "2005-05",
+        "note": "Exploratory for Colombia and Iraq; not a replacement for their missing frozen case holdouts.",
+        "preregistered": false,
+        "train_fraction": 0.7,
+        "type": "deterministic_temporal_holdout"
+      },
+      "stratum_sensitivity": [
+        {
+          "brier_lift_over_baseline": {
+            "baseline": 0.0,
+            "local_plus_neighbor": 0.0787372359865269,
+            "local_state": 0.05193657238265667,
+            "neighbor_exposure": 0.0585664125054349
+          },
+          "holdout_scores": {
+            "baseline": {
+              "brier": 0.22677718773352493,
+              "log_loss": 0.6466277412847873
+            },
+            "local_plus_neighbor": {
+              "brier": 0.14803995174699802,
+              "log_loss": 0.46325397553856307
+            },
+            "local_state": {
+              "brier": 0.17484061535086826,
+              "log_loss": 0.5375267966223772
+            },
+            "neighbor_exposure": {
+              "brier": 0.16821077522809003,
+              "log_loss": 0.508892830789013
+            }
+          },
+          "interpretation": "Case-native event-class sensitivity only; not a common insurgent outcome or actor-identification result.",
+          "source_columns": [
+            "government_maoist_state_based_events"
+          ],
+          "stratum": "government_maoist_state_based",
+          "test_records": 1425,
+          "train_records": 3075
+        },
+        {
+          "brier_lift_over_baseline": {
+            "baseline": 0.0,
+            "local_plus_neighbor": 0.003005716553276243,
+            "local_state": 0.0021447691062239232,
+            "neighbor_exposure": 0.0016263851997167303
+          },
+          "holdout_scores": {
+            "baseline": {
+              "brier": 0.054869936514933826,
+              "log_loss": 0.23784701325669536
+            },
+            "local_plus_neighbor": {
+              "brier": 0.05186421996165758,
+              "log_loss": 0.22262810413377546
+            },
+            "local_state": {
+              "brier": 0.0527251674087099,
+              "log_loss": 0.22743893331351808
+            },
+            "neighbor_exposure": {
+              "brier": 0.053243551315217096,
+              "log_loss": 0.2293007042552529
+            }
+          },
+          "interpretation": "Case-native event-class sensitivity only; not a common insurgent outcome or actor-identification result.",
+          "source_columns": [
+            "state_one_sided_events"
+          ],
+          "stratum": "state_one_sided",
+          "test_records": 1425,
+          "train_records": 3075
+        },
+        {
+          "brier_lift_over_baseline": {
+            "baseline": 0.0,
+            "local_plus_neighbor": 0.007045609596266017,
+            "local_state": 0.004559938022570931,
+            "neighbor_exposure": 0.0036711828880224423
+          },
+          "holdout_scores": {
+            "baseline": {
+              "brier": 0.08227497885182729,
+              "log_loss": 0.3199006916585445
+            },
+            "local_plus_neighbor": {
+              "brier": 0.07522936925556127,
+              "log_loss": 0.29181768388845647
+            },
+            "local_state": {
+              "brier": 0.07771504082925636,
+              "log_loss": 0.3018221595082037
+            },
+            "neighbor_exposure": {
+              "brier": 0.07860379596380485,
+              "log_loss": 0.3048774505963839
+            }
+          },
+          "interpretation": "Case-native event-class sensitivity only; not a common insurgent outcome or actor-identification result.",
+          "source_columns": [
+            "maoist_one_sided_events"
+          ],
+          "stratum": "maoist_one_sided",
+          "test_records": 1425,
+          "train_records": 3075
+        }
+      ],
+      "training_fit": {
+        "baseline": 0.5661358466038349,
+        "local_plus_neighbor": {
+          "False|False": 0.21069182389937108,
+          "False|True": 0.4386973180076628,
+          "True|False": 0.3392857142857143,
+          "True|True": 0.7213213213213213
+        },
+        "local_state": {
+          "False": 0.38529411764705884,
+          "True": 0.7091332169866201
+        },
+        "n": 3075,
+        "neighbor_exposure": {
+          "False": 0.22849462365591397,
+          "True": 0.6124861470262283
+        }
+      }
+    },
+    {
+      "brier_lift_over_baseline": {
+        "baseline": 0.0,
+        "local_plus_neighbor": 0.02334769587267667,
+        "local_state": 0.019679100605403038,
+        "neighbor_exposure": 0.008371321827890493
+      },
+      "case_id": "afghanistan_2004_2021",
+      "holdout_scores": {
+        "baseline": {
+          "brier": 0.14624120737453725,
+          "log_loss": 0.4847654776965494
+        },
+        "local_plus_neighbor": {
+          "brier": 0.12289351150186058,
+          "log_loss": 0.4023547190644369
+        },
+        "local_state": {
+          "brier": 0.1265621067691342,
+          "log_loss": 0.421235193570096
+        },
+        "neighbor_exposure": {
+          "brier": 0.13786988554664675,
+          "log_loss": 0.4478205262710365
+        }
+      },
+      "interpretation": "Predictive association only. Local renewal is an observation feature, not identified insurgent reproduction.",
+      "panel_scope": {
+        "event_units": 401,
+        "months": 212,
+        "split_counts": {
+          "geographic_validation": 13068,
+          "strict_joint_holdout": 7920,
+          "temporal_validation": 24160,
+          "training": 39864
+        },
+        "topology_units": 401,
+        "unmatched_event_units": []
+      },
+      "provenance": [
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_month_panel.csv",
+          "sha256": "79dd03383b953557bb44aae8acda1b0038900b676a6135739128038e4be0d8b9"
+        },
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_adjacency.json",
+          "sha256": "be253bc51e60853b85b2ca468c4d11791994230e527882ff9d59bf7c01832a26"
+        }
+      ],
+      "rolling_origin": {
+        "note": "Deterministic blocked-prefix sensitivity analysis; not preregistered and not a causal test.",
+        "positive_brier_lift_counts": {
+          "local_plus_neighbor": 3,
+          "local_state": 3,
+          "neighbor_exposure": 3
+        },
+        "test_fraction": 0.1,
+        "train_fractions": [
+          0.5,
+          0.6,
+          0.7
+        ],
+        "windows": [
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.011904004979058566,
+              "local_state": 0.009501538314300784,
+              "neighbor_exposure": 0.004873795478405288
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.10709111177441738,
+                "log_loss": 0.37795951756958773
+              },
+              "local_plus_neighbor": {
+                "brier": 0.09518710679535881,
+                "log_loss": 0.3295711905906002
+              },
+              "local_state": {
+                "brier": 0.0975895734601166,
+                "log_loss": 0.3444995461694017
+              },
+              "neighbor_exposure": {
+                "brier": 0.10221731629601209,
+                "log_loss": 0.35355870281671886
+              }
+            },
+            "test_end_month_exclusive": "2014-08",
+            "test_records": 8421,
+            "train_end_month_exclusive": "2012-11",
+            "train_fraction": 0.5,
+            "train_records": 42105
+          },
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.011562056599469753,
+              "local_state": 0.009629109739586417,
+              "neighbor_exposure": 0.0038508712021729646
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.11352882653958113,
+                "log_loss": 0.3940930811080422
+              },
+              "local_plus_neighbor": {
+                "brier": 0.10196676994011138,
+                "log_loss": 0.34994716893583194
+              },
+              "local_state": {
+                "brier": 0.10389971679999471,
+                "log_loss": 0.3610849838353285
+              },
+              "neighbor_exposure": {
+                "brier": 0.10967795533740816,
+                "log_loss": 0.37718669156635076
+              }
+            },
+            "test_end_month_exclusive": "2016-05",
+            "test_records": 8421,
+            "train_end_month_exclusive": "2014-08",
+            "train_fraction": 0.6,
+            "train_records": 50526
+          },
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.013258916587773326,
+              "local_state": 0.0110936065386181,
+              "neighbor_exposure": 0.004334705102922665
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.11043721658708704,
+                "log_loss": 0.3833643364842326
+              },
+              "local_plus_neighbor": {
+                "brier": 0.09717829999931371,
+                "log_loss": 0.3335278592337114
+              },
+              "local_state": {
+                "brier": 0.09934361004846894,
+                "log_loss": 0.3448491695713381
+              },
+              "neighbor_exposure": {
+                "brier": 0.10610251148416437,
+                "log_loss": 0.36298244473493185
+              }
+            },
+            "test_end_month_exclusive": "2018-02",
+            "test_records": 8421,
+            "train_end_month_exclusive": "2016-05",
+            "train_fraction": 0.7,
+            "train_records": 58947
+          }
+        ]
+      },
+      "split": {
+        "boundary_month": "2016-05",
+        "note": "Exploratory for Colombia and Iraq; not a replacement for their missing frozen case holdouts.",
+        "preregistered": false,
+        "train_fraction": 0.7,
+        "type": "deterministic_temporal_holdout"
+      },
+      "stratum_sensitivity": [
+        {
+          "brier_lift_over_baseline": {
+            "baseline": 0.0,
+            "local_plus_neighbor": 0.019440884872781047,
+            "local_state": 0.016271011792707832,
+            "neighbor_exposure": 0.006953284071311738
+          },
+          "holdout_scores": {
+            "baseline": {
+              "brier": 0.13303685488863298,
+              "log_loss": 0.4498679789237152
+            },
+            "local_plus_neighbor": {
+              "brier": 0.11359597001585194,
+              "log_loss": 0.3774885666695843
+            },
+            "local_state": {
+              "brier": 0.11676584309592515,
+              "log_loss": 0.3948131745637564
+            },
+            "neighbor_exposure": {
+              "brier": 0.12608357081732124,
+              "log_loss": 0.4175467773155243
+            }
+          },
+          "interpretation": "Case-native event-class sensitivity only; not a common insurgent outcome or actor-identification result.",
+          "source_columns": [
+            "taliban_state_based_events"
+          ],
+          "stratum": "taliban_state_based",
+          "test_records": 25664,
+          "train_records": 58947
+        },
+        {
+          "brier_lift_over_baseline": {
+            "baseline": 0.0,
+            "local_plus_neighbor": 0.00013800976881775222,
+            "local_state": 0.00012689501112896073,
+            "neighbor_exposure": 9.626283545859093e-06
+          },
+          "holdout_scores": {
+            "baseline": {
+              "brier": 0.012817100083978182,
+              "log_loss": 0.07211680176515277
+            },
+            "local_plus_neighbor": {
+              "brier": 0.01267909031516043,
+              "log_loss": 0.06897139835234659
+            },
+            "local_state": {
+              "brier": 0.012690205072849221,
+              "log_loss": 0.06926845204134573
+            },
+            "neighbor_exposure": {
+              "brier": 0.012807473800432323,
+              "log_loss": 0.07176973425173748
+            }
+          },
+          "interpretation": "Case-native event-class sensitivity only; not a common insurgent outcome or actor-identification result.",
+          "source_columns": [
+            "taliban_one_sided_events"
+          ],
+          "stratum": "taliban_one_sided",
+          "test_records": 25664,
+          "train_records": 58947
+        },
+        {
+          "brier_lift_over_baseline": {
+            "baseline": 0.0,
+            "local_plus_neighbor": -2.4890471095064827e-05,
+            "local_state": -2.1820443066802734e-05,
+            "neighbor_exposure": -6.334550318597642e-06
+          },
+          "holdout_scores": {
+            "baseline": {
+              "brier": 0.0005454417946650817,
+              "log_loss": 0.005303710128184353
+            },
+            "local_plus_neighbor": {
+              "brier": 0.0005703322657601465,
+              "log_loss": 0.005553092982686153
+            },
+            "local_state": {
+              "brier": 0.0005672622377318844,
+              "log_loss": 0.005425376109799915
+            },
+            "neighbor_exposure": {
+              "brier": 0.0005517763449836793,
+              "log_loss": 0.0054522702043524034
+            }
+          },
+          "interpretation": "Case-native event-class sensitivity only; not a common insurgent outcome or actor-identification result.",
+          "source_columns": [
+            "taliban_faction_nonstate_events",
+            "taliban_faction_state_based_events"
+          ],
+          "stratum": "taliban_faction",
+          "test_records": 25664,
+          "train_records": 58947
+        },
+        {
+          "brier_lift_over_baseline": {
+            "baseline": 0.0,
+            "local_plus_neighbor": -6.071048881911394e-06,
+            "local_state": -5.479216129067625e-06,
+            "neighbor_exposure": -5.918285569564245e-07
+          },
+          "holdout_scores": {
+            "baseline": {
+              "brier": 0.0014020553434774341,
+              "log_loss": 0.01179017826486098
+            },
+            "local_plus_neighbor": {
+              "brier": 0.0014081263923593455,
+              "log_loss": 0.011841463636695637
+            },
+            "local_state": {
+              "brier": 0.0014075345596065018,
+              "log_loss": 0.011880059577840494
+            },
+            "neighbor_exposure": {
+              "brier": 0.0014026471720343906,
+              "log_loss": 0.011751574285307664
+            }
+          },
+          "interpretation": "Case-native event-class sensitivity only; not a common insurgent outcome or actor-identification result.",
+          "source_columns": [
+            "government_one_sided_events"
+          ],
+          "stratum": "government_one_sided",
+          "test_records": 25664,
+          "train_records": 58947
+        },
+        {
+          "brier_lift_over_baseline": {
+            "baseline": 0.0,
+            "local_plus_neighbor": -1.743807553445108e-05,
+            "local_state": -9.741271054596371e-06,
+            "neighbor_exposure": -7.696804480420826e-06
+          },
+          "holdout_scores": {
+            "baseline": {
+              "brier": 0.00015584707514871798,
+              "log_loss": 0.0015916914905732896
+            },
+            "local_plus_neighbor": {
+              "brier": 0.00017328515068316906,
+              "log_loss": 0.0017099048446959939
+            },
+            "local_state": {
+              "brier": 0.00016558834620331435,
+              "log_loss": 0.0016365182248357865
+            },
+            "neighbor_exposure": {
+              "brier": 0.0001635438796291388,
+              "log_loss": 0.0016650781126689785
+            }
+          },
+          "interpretation": "Case-native event-class sensitivity only; not a common insurgent outcome or actor-identification result.",
+          "source_columns": [
+            "external_state_based_events"
+          ],
+          "stratum": "external_state_based",
+          "test_records": 25664,
+          "train_records": 58947
+        }
+      ],
+      "training_fit": {
+        "baseline": 0.0886868309894994,
+        "local_plus_neighbor": {
+          "False|False": 0.036312700106723585,
+          "False|True": 0.1202601546201988,
+          "True|False": 0.30599889928453494,
+          "True|True": 0.4029761904761905
+        },
+        "local_state": {
+          "False": 0.06173757810175543,
+          "True": 0.3688888888888889
+        },
+        "n": 58947,
+        "neighbor_exposure": {
+          "False": 0.04875938414556559,
+          "True": 0.16854904354904354
+        }
+      }
+    },
+    {
+      "brier_lift_over_baseline": {
+        "baseline": 0.0,
+        "local_plus_neighbor": 0.0004460744037477213,
+        "local_state": 0.00038762459389495105,
+        "neighbor_exposure": 0.00010389258360294674
+      },
+      "case_id": "colombia_1984_2016",
+      "holdout_scores": {
+        "baseline": {
+          "brier": 0.00667286355414423,
+          "log_loss": 0.05542783532833675
+        },
+        "local_plus_neighbor": {
+          "brier": 0.0062267891503965086,
+          "log_loss": 0.04668125321533655
+        },
+        "local_state": {
+          "brier": 0.006285238960249279,
+          "log_loss": 0.04770387921122087
+        },
+        "neighbor_exposure": {
+          "brier": 0.006568970970541283,
+          "log_loss": 0.053623541898985334
+        }
+      },
+      "interpretation": "Predictive association only. Local renewal is an observation feature, not identified insurgent reproduction.",
+      "panel_scope": {
+        "event_units": 882,
+        "months": 336,
+        "split_counts": {
+          "not_declared": 9973
+        },
+        "topology_units": 1119,
+        "unmatched_event_units": []
+      },
+      "provenance": [
+        {
+          "path": "studies/colombia_1984_2016/data/processed/ucdp_colombia_1984_2016_geography_month_panel.csv",
+          "sha256": "944e057a973029611782d50a3b9ce47d55454ddf38a86c3ff945bd12b4406898"
+        },
+        {
+          "path": "studies/colombia_1984_2016/data/raw/gadm41_COL_2.json.zip",
+          "sha256": "557aa8699b9b6f3928bc3cfa87371ccc618677304322386ca7d7b9e954a55dc0"
+        }
+      ],
+      "rolling_origin": {
+        "note": "Deterministic blocked-prefix sensitivity analysis; not preregistered and not a causal test.",
+        "positive_brier_lift_counts": {
+          "local_plus_neighbor": 3,
+          "local_state": 3,
+          "neighbor_exposure": 2
+        },
+        "test_fraction": 0.1,
+        "train_fractions": [
+          0.5,
+          0.6,
+          0.7
+        ],
+        "windows": [
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.008598978564197612,
+              "local_state": 0.008148499665660072,
+              "neighbor_exposure": 0.0010051983071615728
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.08586324382459094,
+                "log_loss": 0.3499239689702745
+              },
+              "local_plus_neighbor": {
+                "brier": 0.07726426526039333,
+                "log_loss": 0.29941674022210013
+              },
+              "local_state": {
+                "brier": 0.07771474415893087,
+                "log_loss": 0.3028835994445847
+              },
+              "neighbor_exposure": {
+                "brier": 0.08485804551742937,
+                "log_loss": 0.3419496442948417
+              }
+            },
+            "test_end_month_exclusive": "2005-11",
+            "test_records": 38046,
+            "train_end_month_exclusive": "2003-01",
+            "train_fraction": 0.5,
+            "train_records": 186873
+          },
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.0005007016172785574,
+              "local_state": 0.000517013793148037,
+              "neighbor_exposure": -4.300582063842748e-05
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.023556239619148944,
+                "log_loss": 0.1159422159889194
+              },
+              "local_plus_neighbor": {
+                "brier": 0.023055538001870386,
+                "log_loss": 0.10867448431650902
+              },
+              "local_state": {
+                "brier": 0.023039225826000907,
+                "log_loss": 0.10890156712001438
+              },
+              "neighbor_exposure": {
+                "brier": 0.02359924543978737,
+                "log_loss": 0.11552808277725174
+              }
+            },
+            "test_end_month_exclusive": "2008-08",
+            "test_records": 38046,
+            "train_end_month_exclusive": "2005-10",
+            "train_fraction": 0.6,
+            "train_records": 223800
+          },
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.00040140856019918285,
+              "local_state": 0.0003308224090647384,
+              "neighbor_exposure": 0.00010544809113520112
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.010762140896287834,
+                "log_loss": 0.06995648156524198
+              },
+              "local_plus_neighbor": {
+                "brier": 0.010360732336088651,
+                "log_loss": 0.06205971292932663
+              },
+              "local_state": {
+                "brier": 0.010431318487223095,
+                "log_loss": 0.06293443400159691
+              },
+              "neighbor_exposure": {
+                "brier": 0.010656692805152633,
+                "log_loss": 0.0682425161807392
+              }
+            },
+            "test_end_month_exclusive": "2011-06",
+            "test_records": 38046,
+            "train_end_month_exclusive": "2008-08",
+            "train_fraction": 0.7,
+            "train_records": 261846
+          }
+        ]
+      },
+      "split": {
+        "boundary_month": "2008-08",
+        "note": "Exploratory for Colombia and Iraq; not a replacement for their missing frozen case holdouts.",
+        "preregistered": false,
+        "train_fraction": 0.7,
+        "type": "deterministic_temporal_holdout"
+      },
+      "stratum_sensitivity": [],
+      "training_fit": {
+        "baseline": 0.0355664354892915,
+        "local_plus_neighbor": {
+          "False|False": 0.0253685625153862,
+          "False|True": 0.09595642153781689,
+          "True|False": 0.2677090736792229,
+          "True|True": 0.36619718309859156
+        },
+        "local_state": {
+          "False": 0.026698817697321013,
+          "True": 0.27668962548428755
+        },
+        "n": 261846,
+        "neighbor_exposure": {
+          "False": 0.033349334769559806,
+          "True": 0.136759736795305
+        }
+      }
+    },
+    {
+      "brier_lift_over_baseline": {
+        "baseline": 0.0,
+        "local_plus_neighbor": 0.014952253711399327,
+        "local_state": 0.014803037759172244,
+        "neighbor_exposure": 0.0008041910036690608
+      },
+      "case_id": "iraq_2003_2011",
+      "holdout_scores": {
+        "baseline": {
+          "brier": 0.08476415291934827,
+          "log_loss": 0.31134683257975687
+        },
+        "local_plus_neighbor": {
+          "brier": 0.06981189920794895,
+          "log_loss": 0.25511202490757456
+        },
+        "local_state": {
+          "brier": 0.06996111516017603,
+          "log_loss": 0.25638983779305413
+        },
+        "neighbor_exposure": {
+          "brier": 0.08395996191567921,
+          "log_loss": 0.30741367343419396
+        }
+      },
+      "interpretation": "Predictive association only. Local renewal is an observation feature, not identified insurgent reproduction.",
+      "panel_scope": {
+        "event_units": 67,
+        "months": 106,
+        "split_counts": {
+          "not_declared": 1141
+        },
+        "topology_units": 102,
+        "unmatched_event_units": []
+      },
+      "provenance": [
+        {
+          "path": "studies/iraq_2003_2011/data/processed/ucdp_iraq_2003_2011_geography_month_panel.csv",
+          "sha256": "6f751ce79e9286c020a683e3e3ec1fa55a094637cb7af4339953aeccad038de1"
+        },
+        {
+          "path": "studies/iraq_2003_2011/data/raw/gadm41_IRQ_2.json.zip",
+          "sha256": "bfbcf24f0b1efd44767103a5238ca63490981f288531770b171fb7790ba87e79"
+        }
+      ],
+      "rolling_origin": {
+        "note": "Deterministic blocked-prefix sensitivity analysis; not preregistered and not a causal test.",
+        "positive_brier_lift_counts": {
+          "local_plus_neighbor": 3,
+          "local_state": 3,
+          "neighbor_exposure": 2
+        },
+        "test_fraction": 0.1,
+        "train_fractions": [
+          0.5,
+          0.6,
+          0.7
+        ],
+        "windows": [
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.026157887541583824,
+              "local_state": 0.0262664450543479,
+              "neighbor_exposure": 4.766023664866392e-05
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.12341336619201802,
+                "log_loss": 0.4151069200232718
+              },
+              "local_plus_neighbor": {
+                "brier": 0.0972554786504342,
+                "log_loss": 0.3346183543780416
+              },
+              "local_state": {
+                "brier": 0.09714692113767012,
+                "log_loss": 0.33475062909763664
+              },
+              "neighbor_exposure": {
+                "brier": 0.12336570595536936,
+                "log_loss": 0.41517566856425625
+              }
+            },
+            "test_end_month_exclusive": "2008-07",
+            "test_records": 1122,
+            "train_end_month_exclusive": "2007-08",
+            "train_fraction": 0.5,
+            "train_records": 5304
+          },
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.00991954473694176,
+              "local_state": 0.009904893357867567,
+              "neighbor_exposure": -2.571685939425916e-05
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.07910279843941401,
+                "log_loss": 0.29674679360250644
+              },
+              "local_plus_neighbor": {
+                "brier": 0.06918325370247225,
+                "log_loss": 0.254017689358785
+              },
+              "local_state": {
+                "brier": 0.06919790508154644,
+                "log_loss": 0.25415645790646646
+              },
+              "neighbor_exposure": {
+                "brier": 0.07912851529880827,
+                "log_loss": 0.2966215020123359
+              }
+            },
+            "test_end_month_exclusive": "2009-05",
+            "test_records": 1122,
+            "train_end_month_exclusive": "2008-06",
+            "train_fraction": 0.6,
+            "train_records": 6324
+          },
+          {
+            "brier_lift_over_baseline": {
+              "baseline": 0.0,
+              "local_plus_neighbor": 0.012266890311893056,
+              "local_state": 0.012181441995124269,
+              "neighbor_exposure": 0.00028933913444614823
+            },
+            "scores": {
+              "baseline": {
+                "brier": 0.0642823956231319,
+                "log_loss": 0.2565102383015014
+              },
+              "local_plus_neighbor": {
+                "brier": 0.052015505311238844,
+                "log_loss": 0.20262833701868696
+              },
+              "local_state": {
+                "brier": 0.05210095362800763,
+                "log_loss": 0.20345586720898715
+              },
+              "neighbor_exposure": {
+                "brier": 0.06399305648868575,
+                "log_loss": 0.25482714588308714
+              }
+            },
+            "test_end_month_exclusive": "2010-04",
+            "test_records": 1122,
+            "train_end_month_exclusive": "2009-05",
+            "train_fraction": 0.7,
+            "train_records": 7446
+          }
+        ]
+      },
+      "split": {
+        "boundary_month": "2009-05",
+        "note": "Exploratory for Colombia and Iraq; not a replacement for their missing frozen case holdouts.",
+        "preregistered": false,
+        "train_fraction": 0.7,
+        "type": "deterministic_temporal_holdout"
+      },
+      "stratum_sensitivity": [],
+      "training_fit": {
+        "baseline": 0.11049946294307196,
+        "local_plus_neighbor": {
+          "False|False": 0.058801706547950285,
+          "False|True": 0.0681265206812652,
+          "True|False": 0.5109243697478991,
+          "True|True": 0.5148936170212766
+        },
+        "local_state": {
+          "False": 0.06040471156750227,
+          "True": 0.5120772946859904
+        },
+        "n": 7446,
+        "neighbor_exposure": {
+          "False": 0.1036096256684492,
+          "True": 0.13915416098226466
+        }
+      }
+    }
+  ],
+  "core_change_licensed": false,
+  "historical_outcomes_used": true,
+  "historical_parameter_fitting": false,
+  "measurement_limitations": [
+    "event-unit persistence is an observation proxy and does not identify actor-level reproduction",
+    "unassigned or low-confidence event locations are represented only through the available panel and require assignment-sensitivity analysis",
+    "Nepal monthly aggregation mixes weekly source split labels, so this benchmark is exploratory rather than a frozen holdout",
+    "case-native event classes differ across the four panels and are not a common insurgent outcome"
+  ],
+  "models": [
+    "global_baseline",
+    "local_renewal_state",
+    "neighbor_exposure",
+    "local_plus_neighbor"
+  ],
+  "negative_constraints": [
+    "training-only predictive lift does not identify a causal mechanism",
+    "violence-only holdout scores cannot establish control or COIN efficacy",
+    "a candidate must beat simpler models in frozen, preregistered holdouts in at least two eligible cases"
+  ],
+  "program_id": "comparative-insurgency-v1",
+  "promotion_decision": {
+    "reason": "These are observation-only exploratory competitors; current-core provenance and complete case measurement joins are still missing.",
+    "stable_general_theory_licensed": false
+  },
+  "schema_version": "1.0.0",
+  "sensitivity_analysis": "rolling_origin_blocked_temporal_prefixes",
+  "simulator_parameter_fitting": false,
+  "smoothing": {
+    "alpha": 1.0,
+    "method": "Laplace"
+  },
+  "status": "training_only_simple_competitor_benchmark_not_causal",
+  "stratum_sensitivity_definition": "Nepal and Afghanistan receive the same simple-competitor screen within case-native event columns; these are measurement checks, not pooled outcomes."
+}

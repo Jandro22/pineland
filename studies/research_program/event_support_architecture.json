@@ -1,0 +1,24 @@
+{
+  "conclusion": "current_conflict_event_support_is_formation_encounter_limited",
+  "core_modified": false,
+  "findings": {
+    "absence_event_frequency": 0.0,
+    "absence_insurgent_control": 0.0,
+    "conflict_event_metric_is_contact_only": true,
+    "contact_support_with_opposing_colocated_formation": 1,
+    "contact_support_without_opposing_colocated_formation": 0,
+    "dominance_event_frequency": 0.0,
+    "dominance_insurgent_control": 0.030852545582975902,
+    "institutional_target_present": true,
+    "insurgent_capacity_present_without_opposing_formation": true
+  },
+  "historical_outcomes_used": false,
+  "rejection_tests": {
+    "nonfielded_target_channel_missing": true,
+    "opposing_formation_restores_contact_support": true,
+    "rate_scaling_cannot_expand_zero_support": true,
+    "violence_zero_does_not_identify_organizational_state": true
+  },
+  "schema_version": "pineland.event_support_architecture.v1",
+  "seed": 2026090621
+}

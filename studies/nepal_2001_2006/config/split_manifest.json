@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "status": "frozen_before_fit",
+  "frozen_at_utc": "2026-09-04T00:00:00Z",
+  "spatial_definition": {
+    "training_geography": "all historical districts outside the Eastern Development Region",
+    "geographic_holdout": "all 16 historical Eastern Development Region districts",
+    "district_registry": "districts.csv"
+  },
+  "temporal_definition": {
+    "training_start": "2001-11-26",
+    "training_end": "2004-12-31",
+    "validation_start": "2005-01-01",
+    "validation_end": "2006-11-21"
+  },
+  "splits": {
+    "training": {"eastern": false, "start": "2001-11-26", "end": "2004-12-31"},
+    "temporal_validation": {"eastern": false, "start": "2005-01-01", "end": "2006-11-21"},
+    "geographic_validation": {"eastern": true, "start": "2001-11-26", "end": "2004-12-31"},
+    "strict_joint_holdout": {"eastern": true, "start": "2005-01-01", "end": "2006-11-21"}
+  },
+  "held_out_outcomes_may_enter_calibration": false,
+  "validation_may_refit": false
+}

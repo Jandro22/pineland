@@ -1,0 +1,1774 @@
+{
+  "conditions": {
+    "baseline": {
+      "final_member_mass": {
+        "D01-L02": 24444.444444444445,
+        "D01-L03": 24444.444444444445,
+        "D01-L04": 24444.444444444445
+      },
+      "final_survival_social_base": 0.9493980357753474,
+      "final_viable_fielded_personnel": {
+        "D01-L02": 1955.5555555555557,
+        "D01-L03": 1955.5555555555557,
+        "D01-L04": 1955.5555555555557
+      },
+      "generations": [
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 1,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.14796040123768928,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 977.7777777777778,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.5,
+            "D01-L04": 0.0
+          },
+          "generation": 2,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9451524007741609,
+          "physical_control": {
+            "D01-L02": 0.15175665063343607,
+            "D01-L03": 0.1685245202579994,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 1955.5555555555557,
+            "formations_created": 2.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 24444.444444444445
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 1955.5555555555557,
+            "D01-L03": 977.7777777777778,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.5,
+            "D01-L04": 1.0
+          },
+          "generation": 3,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 24444.444444444445,
+            "D01-L04": 12222.222222222223
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9484482150899798,
+          "physical_control": {
+            "D01-L02": 0.1516567390134053,
+            "D01-L03": 0.18340021615822297,
+            "D01-L04": 0.15222712240966288
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 1955.5555555555557,
+            "formations_created": 2.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 24444.444444444445
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 1955.5555555555557,
+            "D01-L03": 1955.5555555555557,
+            "D01-L04": 977.7777777777778
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "generation": 4,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 24444.444444444445,
+            "D01-L04": 24444.444444444445
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9493980357753474,
+          "physical_control": {
+            "D01-L02": 0.1515968070436549,
+            "D01-L03": 0.18340021615822297,
+            "D01-L04": 0.15888549864765716
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 1955.5555555555557,
+            "D01-L03": 1955.5555555555557,
+            "D01-L04": 1955.5555555555557
+          }
+        }
+      ],
+      "intervention": {
+        "block_fielded_force_presence": false,
+        "block_local_member_access": false,
+        "block_persistence": false,
+        "block_social_bridging": false,
+        "remove_source_after_generation": null,
+        "restore_control_state": false
+      }
+    },
+    "clandestine_after_source_cut": {
+      "final_member_mass": {
+        "D01-L02": 24444.444444444445,
+        "D01-L03": 24444.444444444445,
+        "D01-L04": 24444.444444444445
+      },
+      "final_survival_social_base": 0.9493980357753474,
+      "final_viable_fielded_personnel": {
+        "D01-L02": 0.0,
+        "D01-L03": 0.0,
+        "D01-L04": 0.0
+      },
+      "generations": [
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 1,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.5,
+            "D01-L04": 0.0
+          },
+          "generation": 2,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9451524007741609,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 2933.3333333333335,
+            "formations_created": 3.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 36666.66666666667
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.5,
+            "D01-L04": 1.0
+          },
+          "generation": 3,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 24444.444444444445,
+            "D01-L04": 12222.222222222223
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9484482150899798,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 1955.5555555555557,
+            "formations_created": 2.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 24444.444444444445
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "generation": 4,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 24444.444444444445,
+            "D01-L04": 24444.444444444445
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9493980357753474,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        }
+      ],
+      "intervention": {
+        "block_fielded_force_presence": true,
+        "block_local_member_access": false,
+        "block_persistence": false,
+        "block_social_bridging": false,
+        "remove_source_after_generation": 1,
+        "restore_control_state": false
+      }
+    },
+    "no_fielded_force_presence": {
+      "final_member_mass": {
+        "D01-L02": 24444.444444444445,
+        "D01-L03": 24444.444444444445,
+        "D01-L04": 24444.444444444445
+      },
+      "final_survival_social_base": 0.9493980357753474,
+      "final_viable_fielded_personnel": {
+        "D01-L02": 0.0,
+        "D01-L03": 0.0,
+        "D01-L04": 0.0
+      },
+      "generations": [
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 1,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.5,
+            "D01-L04": 0.0
+          },
+          "generation": 2,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9451524007741609,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 1955.5555555555557,
+            "formations_created": 2.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 24444.444444444445
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.5,
+            "D01-L04": 1.0
+          },
+          "generation": 3,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 24444.444444444445,
+            "D01-L04": 12222.222222222223
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9484482150899798,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 1955.5555555555557,
+            "formations_created": 2.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 24444.444444444445
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "generation": 4,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 24444.444444444445,
+            "D01-L04": 24444.444444444445
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9493980357753474,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        }
+      ],
+      "intervention": {
+        "block_fielded_force_presence": true,
+        "block_local_member_access": false,
+        "block_persistence": false,
+        "block_social_bridging": false,
+        "remove_source_after_generation": null,
+        "restore_control_state": false
+      }
+    },
+    "no_local_member_access": {
+      "final_member_mass": {
+        "D01-L02": 24444.444444444445,
+        "D01-L03": 24444.444444444445,
+        "D01-L04": 24444.444444444445
+      },
+      "final_survival_social_base": 0.9493980357753474,
+      "final_viable_fielded_personnel": {
+        "D01-L02": 1955.5555555555557,
+        "D01-L03": 1955.5555555555557,
+        "D01-L04": 1955.5555555555557
+      },
+      "generations": [
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 1,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.14796040123768928,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 977.7777777777778,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.5,
+            "D01-L04": 0.0
+          },
+          "generation": 2,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9451524007741609,
+          "physical_control": {
+            "D01-L02": 0.15175665063343607,
+            "D01-L03": 0.1685245202579994,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 1955.5555555555557,
+            "formations_created": 2.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 24444.444444444445
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 1955.5555555555557,
+            "D01-L03": 977.7777777777778,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.5,
+            "D01-L04": 1.0
+          },
+          "generation": 3,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 24444.444444444445,
+            "D01-L04": 12222.222222222223
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9484482150899798,
+          "physical_control": {
+            "D01-L02": 0.1516567390134053,
+            "D01-L03": 0.18340021615822297,
+            "D01-L04": 0.15222712240966288
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 1955.5555555555557,
+            "formations_created": 2.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 24444.444444444445
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 1955.5555555555557,
+            "D01-L03": 1955.5555555555557,
+            "D01-L04": 977.7777777777778
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "generation": 4,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "member_mass": {
+            "D01-L02": 24444.444444444445,
+            "D01-L03": 24444.444444444445,
+            "D01-L04": 24444.444444444445
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9493980357753474,
+          "physical_control": {
+            "D01-L02": 0.1515968070436549,
+            "D01-L03": 0.18340021615822297,
+            "D01-L04": 0.15888549864765716
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 1955.5555555555557,
+            "D01-L03": 1955.5555555555557,
+            "D01-L04": 1955.5555555555557
+          }
+        }
+      ],
+      "intervention": {
+        "block_fielded_force_presence": false,
+        "block_local_member_access": true,
+        "block_persistence": false,
+        "block_social_bridging": false,
+        "remove_source_after_generation": null,
+        "restore_control_state": false
+      }
+    },
+    "no_local_or_field_access": {
+      "final_member_mass": {
+        "D01-L02": 12222.222222222223,
+        "D01-L03": 12222.222222222223,
+        "D01-L04": 12222.222222222223
+      },
+      "final_survival_social_base": 0.9360701652598679,
+      "final_viable_fielded_personnel": {
+        "D01-L02": 0.0,
+        "D01-L03": 0.0,
+        "D01-L04": 0.0
+      },
+      "generations": [
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 1,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.5,
+            "D01-L04": 0.0
+          },
+          "generation": 2,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.932818100691604,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.5,
+            "D01-L04": 1.0
+          },
+          "generation": 3,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 12222.222222222223
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 12222.222222222223
+          },
+          "organization_survival_social_base": 0.9360701652598679,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 1.0,
+            "D01-L03": 1.0,
+            "D01-L04": 1.0
+          },
+          "generation": 4,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 12222.222222222223,
+            "D01-L04": 12222.222222222223
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9360701652598679,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 0.0,
+            "formations_created": 0.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 0.0
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        }
+      ],
+      "intervention": {
+        "block_fielded_force_presence": true,
+        "block_local_member_access": true,
+        "block_persistence": false,
+        "block_social_bridging": false,
+        "remove_source_after_generation": null,
+        "restore_control_state": false
+      }
+    },
+    "no_persistence": {
+      "final_member_mass": {
+        "D01-L02": 12222.222222222223,
+        "D01-L03": 0.0,
+        "D01-L04": 0.0
+      },
+      "final_survival_social_base": 0.9264417819529559,
+      "final_viable_fielded_personnel": {
+        "D01-L02": 977.7777777777778,
+        "D01-L03": 0.0,
+        "D01-L04": 0.0
+      },
+      "generations": [
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 1,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.14796040123768928,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 977.7777777777778,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 2,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.14780560182458727,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 977.7777777777778,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 3,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.1477134107128743,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 977.7777777777778,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 1.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.5,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 4,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 12222.222222222223,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9264417819529559,
+          "physical_control": {
+            "D01-L02": 0.14765810988883868,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 977.7777777777778,
+            "formations_created": 1.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 12222.222222222223
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 977.7777777777778,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        }
+      ],
+      "intervention": {
+        "block_fielded_force_presence": false,
+        "block_local_member_access": false,
+        "block_persistence": true,
+        "block_social_bridging": false,
+        "remove_source_after_generation": null,
+        "restore_control_state": false
+      }
+    },
+    "no_social_bridging": {
+      "final_member_mass": {
+        "D01-L02": 0.0,
+        "D01-L03": 0.0,
+        "D01-L04": 0.0
+      },
+      "final_survival_social_base": 0.9082773109243697,
+      "final_viable_fielded_personnel": {
+        "D01-L02": 0.0,
+        "D01-L03": 0.0,
+        "D01-L04": 0.0
+      },
+      "generations": [
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 1,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9082773109243697,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 0.0,
+            "formations_created": 0.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 0.0
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 2,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9082773109243697,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 0.0,
+            "formations_created": 0.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 0.0
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 3,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9082773109243697,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 0.0,
+            "formations_created": 0.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 0.0
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        },
+        {
+          "bridge_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "bridge_insurgent_exposure": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "generation": 4,
+          "local_candidate_armed_fraction": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "new_member_mass": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "organization_survival_social_base": 0.9082773109243697,
+          "physical_control": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          },
+          "recruitment_result": {
+            "exits": 0.0,
+            "fighter_exits": 0.0,
+            "fighter_recruits": 0.0,
+            "formations_created": 0.0,
+            "local_manpower_pools": 0.0,
+            "membership_repairs": 0.0,
+            "recruits": 0.0
+          },
+          "social_control": {
+            "D01-L02": 0.04,
+            "D01-L03": 0.04,
+            "D01-L04": 0.04
+          },
+          "viable_fielded_personnel": {
+            "D01-L02": 0.0,
+            "D01-L03": 0.0,
+            "D01-L04": 0.0
+          }
+        }
+      ],
+      "intervention": {
+        "block_fielded_force_presence": false,
+        "block_local_member_access": false,
+        "block_persistence": false,
+        "block_social_bridging": true,
+        "remove_source_after_generation": null,
+        "restore_control_state": false
+      }
+    }
+  },
+  "contrasts": {
+    "baseline_minus_no_bridge_final_member_mass": {
+      "D01-L02": 24444.444444444445,
+      "D01-L03": 24444.444444444445,
+      "D01-L04": 24444.444444444445
+    },
+    "baseline_minus_no_field_presence_local_fraction": {
+      "D01-L02": 0.0,
+      "D01-L03": 0.0,
+      "D01-L04": 0.0
+    },
+    "baseline_minus_no_member_access_local_fraction": {
+      "D01-L02": 0.0,
+      "D01-L03": 0.0,
+      "D01-L04": 0.0
+    },
+    "combined_local_access_ablation_local_fraction": {
+      "D01-L02": 0.0,
+      "D01-L03": 0.0,
+      "D01-L04": 0.0
+    }
+  },
+  "design": {
+    "common_draw": 0.25,
+    "generations": 4,
+    "interventions": {
+      "fielded_force_presence": "make insurgent formations ineffective and unavailable while preserving armed member state",
+      "local_armed_membership_access": "hide incumbent residence only while live recruitment snapshots local armed-member access",
+      "persistence_exit": "force recruited members to exit and neutralize the remaining public social signal at each generation boundary",
+      "social_bridging": "remove only cross-local bridge edges",
+      "social_control_placebo": "restore social-control state after influence while preserving social exposure and behavior"
+    },
+    "localities": {
+      "bridge_person_ids": {
+        "D01-L02": "P00000049",
+        "D01-L03": "P00000133",
+        "D01-L04": "P00000198"
+      },
+      "local_candidate_ids": {
+        "D01-L02": "P00000050",
+        "D01-L03": "P00000134",
+        "D01-L04": "P00000199"
+      },
+      "organization_id": "insurgent",
+      "source_locality": "D01-L01",
+      "source_person_id": "P00000117",
+      "target_localities": [
+        "D01-L02",
+        "D01-L03",
+        "D01-L04"
+      ]
+    },
+    "same_tick_cascades": "excluded by the live frozen access snapshot"
+  },
+  "exit_only_residual_signal": {
+    "after_exit_armed_fraction": 0.0,
+    "after_exit_public_behavior": "insurgent_sympathy",
+    "before_exit_armed_fraction": 1.0,
+    "downstream_armed_fraction_after_recruitment": 1.0,
+    "downstream_armed_fraction_before_recruitment": 0.0,
+    "downstream_exposure_after_member_exit": 0.35,
+    "removed_represented_member_mass": 12222.222222222223
+  },
+  "gates": {
+    "armed_membership_generates_social_and_physical_side_effects": true,
+    "bridge_ablation_blocks_cross_local_reproduction": true,
+    "clandestine_membership_renews_without_viable_field_presence_after_source_cut": true,
+    "cross_local_social_chain_survives_both_local_access_ablations": true,
+    "field_presence_ablation_removes_viable_force_but_not_renewal": true,
+    "full_persistence_break_stops_next_generation": true,
+    "local_member_and_field_access_are_redundant_amplifiers": true,
+    "membership_exit_leaves_residual_social_signal": true,
+    "renewal_reaches_successive_cross_local_generations": true,
+    "social_control_state_is_not_a_recruitment_mediator": true
+  },
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "live_mechanism_audit": {
+    "clandestine_self_sustain_without_fielded_presence": true,
+    "control_mediation": {
+      "fielded_formation_presence_enters_recruitment_access": true,
+      "interpretation": "Control is downstream in this loop. The causal inputs back into recruitment are social exposure, local armed-member access, and effective local formation access. Restoring social-control state does not change the matched membership trajectory.",
+      "physical_control_level_enters_recruitment_hazard": false,
+      "social_control_level_enters_recruitment_hazard": false
+    },
+    "identified_loop": [
+      "cross-local public behavior writes social exposure",
+      "social exposure supplies recruitment access and enters recruitment intensity",
+      "recruitment writes fractional armed membership",
+      "armed membership supplies future local member access",
+      "armed membership converts into local fighter manpower",
+      "fighter manpower can materialize an effective local formation",
+      "armed members broadcast future insurgent social signal",
+      "member mass raises organization survival social base"
+    ],
+    "persistence_layers": {
+      "armed_membership": "supports local recruitment access and fighter-manpower generation",
+      "public_sympathy_after_exit": "live member exit removes armed membership but leaves insurgent sympathy, which can continue cross-local exposure"
+    },
+    "renewing_positive_feedback_loop_present": true
+  },
+  "passed": true,
+  "schema_version": "1.0.0",
+  "seed": 20260905,
+  "social_control_mediation": {
+    "downstream_bridge_armed_fraction_with_control_restored": 1.0,
+    "downstream_bridge_armed_fraction_with_control_retained": 1.0,
+    "downstream_member_mass_with_control_restored": 12222.222222222223,
+    "downstream_member_mass_with_control_retained": 12222.222222222223,
+    "first_locality_social_control_delta": 0.00020428933312532926,
+    "membership_trajectory_identical_after_control_restore": true,
+    "observer_behavior_after_exposure": "insurgent_sympathy",
+    "observer_person_id": "P00000051",
+    "social_control_after": {
+      "D01-L02": 0.04020428933312533,
+      "D01-L03": 0.04058881702644725,
+      "D01-L04": 0.040369301633824003
+    },
+    "social_control_before": {
+      "D01-L02": 0.04,
+      "D01-L03": 0.04,
+      "D01-L04": 0.04
+    }
+  },
+  "status": "synthetic_general_theory_intervention_study"
+}

@@ -30,6 +30,50 @@ class ResearchAuditTests(unittest.TestCase):
         self.assertFalse(world.in_burn_in)
         self.assertGreater(world.initial_population, 0.0)
 
+    def test_burn_in_rebases_flow_ledgers_and_counters_without_deleting_state(self):
+        config = self.config(burn_in_days=7.0, horizon_days=1.0)
+        simulation = Simulation(generate_pineland(config))
+        simulation.initialize()
+        world = simulation.world
+        self.assertEqual(world.time, 0.0)
+        self.assertFalse(world.resource_flows)
+        self.assertFalse(world.engagements)
+        self.assertFalse(world.political_transfers)
+        self.assertFalse(world.policy_implementations)
+        self.assertFalse(world.external_transfers)
+        self.assertFalse(world.peace_transitions)
+        self.assertEqual(world.cumulative_civilian_harm, 0.0)
+        self.assertEqual(world.cumulative_public_spending, 0.0)
+        self.assertEqual(world.cumulative_external_remittances, 0.0)
+        self.assertTrue(all(value == 0.0 for value in world.control_cost_consumed.values()))
+        self.assertTrue(all(formation.cumulative_losses == 0.0
+                            for formation in world.formations.values()))
+        self.assertTrue(all(value == 0 for value in world.information_detections.values()))
+        # Burn-in establishes a real initial state; it must not erase the
+        # organizations/formations/resources that embody that state.
+        self.assertTrue(world.organizations)
+        self.assertTrue(world.formations)
+        self.assertGreater(world.initial_supply_stock, 0.0)
+
+    def test_burn_in_does_not_execute_observed_recurring_clocks_at_zero_twice(self):
+        config = self.config(burn_in_days=1.0, horizon_days=1.0)
+        simulation = Simulation(generate_pineland(config))
+        seen = []
+        original_execute = simulation.processes.execute
+
+        def recording_execute(event):
+            seen.append((event.time, event.event_type))
+            return original_execute(event)
+
+        simulation.processes.execute = recording_execute
+        simulation.initialize()
+        zero_events = [event_type for time, event_type in seen if time == 0.0]
+        self.assertTrue(zero_events)
+        self.assertTrue(all(
+            event_type in {"contact", "organized_action"}
+            for event_type in zero_events
+        ))
+
     def test_audit_batteries_pass_on_small_world(self):
         config = self.config()
         self.assertTrue(truth_firewall_check(config, 1.0)["pass"])

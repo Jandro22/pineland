@@ -1,0 +1,20 @@
+{
+  "artifact": {
+    "path": "studies/research_program/nepal_current_core_smoke_preflight.json",
+    "sha256": "14fb22493ae9613fa1f3728b85a1c289642a33dfbef62ecca21493a77f8541ff"
+  },
+  "builder": {
+    "path": "studies/research_program/scripts/run_nepal_current_core_smoke_preflight.py",
+    "sha256": "eec1950b99e5a52f267d9ee49df3e41fedb895d6a13bb1214d5386f1b26212a3"
+  },
+  "case": {
+    "path": "studies/nepal_2001_2006/config/case_environment_repaired.json",
+    "sha256": "1455da9aa1f063db1660553342a41558afbaae062968cd88988f8c4fa549d589"
+  },
+  "core_change_licensed": false,
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "model_sha256": "5c6e1599671745cb4425cd1cde1afd9101094ee70ec50576e55799bceadcfbb9",
+  "schema_version": "1.0.0",
+  "status": "current_core_nepal_smoke_diagnostic_manifest"
+}

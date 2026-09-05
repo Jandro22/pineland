@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "status": "working_paper_infrastructure_not_result",
+  "paper_target": "substantive_general_theory_with_general_methods_contribution",
+  "research_status": "unfinished",
+  "contribution_layers": {
+    "substantive_theory": {
+      "goal": "Explain transferable local processes of insurgent establishment, reproduction, persistence, relocation, control, collapse, and recurrence.",
+      "current_status": "candidate_theory_under_construction",
+      "must_not_be_replaced_by": [
+        "violence totals alone",
+        "national manpower totals alone",
+        "a single scalar control score",
+        "one-case fit"
+      ]
+    },
+    "general_method": {
+      "goal": "Provide a falsifiable partially observed mechanism-based simulation framework with explicit latent state, actor beliefs, observation operators, provenance, synthetic identification, and competitor tests.",
+      "current_status": "substantial_infrastructure_exists_but_final_method_frozen_version_not_selected",
+      "must_demonstrate": [
+        "truth-belief-record separation",
+        "represented-population semantics",
+        "stock-flow accounting",
+        "timebase invariance",
+        "synthetic recovery of key estimands",
+        "measurement-operator recovery",
+        "resolution sensitivity",
+        "reproducible source and artifact binding"
+      ]
+    },
+    "comparative_empirical_adjudication": {
+      "goal": "Test the same general mechanisms across heterogeneous cases using frozen case inputs, observation models, holdouts, and simpler competitors.",
+      "current_status": "in_progress_not_generalized",
+      "minimum_generalization_basis": [
+        "at least two eligible genuine transfer cases",
+        "no holdout refitting",
+        "independent control or presence evidence where the claim concerns control or presence",
+        "measurement and case-input uncertainty",
+        "preserved negative results"
+      ]
+    }
+  },
+  "candidate_theory_reference": "../theory_extraction_protocol.json",
+  "candidate_theory_is_replaceable": true,
+  "durable_paper_infrastructure": [
+    "epistemic separation",
+    "construct correspondence",
+    "estimand definitions",
+    "evidence-promotion ladder",
+    "comparative case protocol",
+    "competitor protocol",
+    "negative-result preservation",
+    "reproducibility and provenance"
+  ],
+  "publication_level_gates": [
+    {
+      "id": "G1",
+      "gate": "final_core_provenance",
+      "requirement": "The source used for final historical claims has a settled reproducibility certificate and every reported run is bound to it."
+    },
+    {
+      "id": "G2",
+      "gate": "synthetic_identification",
+      "requirement": "Each central estimand and observation operator used in the paper passes prospective synthetic recovery and relevant null/placebo tests."
+    },
+    {
+      "id": "G3",
+      "gate": "comparative_transfer",
+      "requirement": "At least two genuine transfer cases supply eligible historical evidence for any claim described as general."
+    },
+    {
+      "id": "G4",
+      "gate": "competitor_adjudication",
+      "requirement": "The claimed mechanism adds held-out value beyond simpler statistical and reduced-mechanism competitors for the construct actually claimed."
+    },
+    {
+      "id": "G5",
+      "gate": "measurement_robustness",
+      "requirement": "Claim direction survives predeclared plausible observation-model, assignment, case-input, and reporting alternatives."
+    },
+    {
+      "id": "G6",
+      "gate": "negative_results",
+      "requirement": "Nulls, reversals, failed transfers, and failed mechanism cells are reported rather than repaired away or omitted."
+    },
+    {
+      "id": "G7",
+      "gate": "substantive_outcome_alignment",
+      "requirement": "Violence is not used as a substitute for control, civilian harm, capacity, regeneration, dependence, or recurrence."
+    }
+  ],
+  "currently_forbidden_conclusions": [
+    "Pineland has established a stable general theory of insurgency.",
+    "The candidate local-reproduction theory is historically validated.",
+    "A mechanism is causal because it works in a synthetic world.",
+    "A violence predictor is therefore a predictor of control.",
+    "A COIN intervention is effective because it reduces simulated violence.",
+    "A legacy case run produced under an earlier core is evidence for the current core."
+  ]
+}
+

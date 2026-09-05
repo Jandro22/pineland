@@ -1,0 +1,80 @@
+{
+  "available_evidence": {
+    "control_presence_cases": {
+      "colombia_1984_2016": {
+        "run_license": false,
+        "status": "partial_longitudinal_point_inventory"
+      },
+      "iraq_2003_2011": {
+        "run_license": false,
+        "status": "anchor_only_longitudinal_panel"
+      },
+      "vietnam_1955_1975": {
+        "run_license": false,
+        "status": "longitudinal_hamlet_instrument_panel"
+      }
+    },
+    "violence_signature_benchmark": {
+      "path": "studies/research_program/historical_signature_competitor_benchmark.json",
+      "scope": "Event activation only; not control and not fitted reproduction predictions.",
+      "sha256": "12bf11c9a408d1348d5d77e4eea7b50ff45cc19ca09dff47a8efdaa8012292b4"
+    }
+  },
+  "blocking_evidence": [
+    "Nepal v4 is complete and remains a preserved failure to beat simple models on all three holdouts; it is not relabeled as v5 evidence.",
+    "The newly frozen v5 core has not yet been scored on any historical holdout. Nepal requires one once-only v5 rerun on the identical frozen rows.",
+    "Afghanistan requires the declared v5 initialization -> smoke -> one-year -> full-horizon ladder before an aligned predictive verdict.",
+    "Colombia/Iraq/Vietnam control-presence transfer tests remain unlicensed until case-specific crosswalks, candidate predictions, covariates, and holdouts are frozen."
+  ],
+  "candidate_requirements": {
+    "all_required_covariates_available": false,
+    "frozen_candidate_predictions_present": "v4_nepal_only_v5_none_yet",
+    "same_holdout_rows_as_competitors": "v4_nepal_true_v5_revalidation_pending",
+    "two_transfer_cases": false
+  },
+  "coin_science_authorized": false,
+  "completed_case_results": {
+    "afghanistan_2004_2021": {
+      "core": "pineland-core-transfer-v4",
+      "final_predictive_verdict_available": false,
+      "full_horizon": "not_running",
+      "initialization": "passed",
+      "one_year": "passed_diagnostic_only",
+      "smoke": "passed",
+      "status": "legacy_v4_partial_ladder_v5_rerun_required"
+    },
+    "nepal_2001_2006": {
+      "candidate_parameter_fit": false,
+      "core": "pineland-core-transfer-v4",
+      "decision_path": "studies/research_program/predictive_competition/nepal_v4/decision.json",
+      "decision_sha256": "c0b1b67acbb7768c09d838b224867100fa23df8a4d91f4701d4fa3fe95ca88cf",
+      "ensemble_members": 8,
+      "holdout_refit": false,
+      "holdout_wins": 0,
+      "holdouts_scored": 3,
+      "identical_rows": true,
+      "negative_result_preserved": true,
+      "status": "complete_failed_predictive_competition",
+      "verdict": "simple_models_not_beaten_on_all_holdouts"
+    }
+  },
+  "frozen_core": {
+    "freeze_id": "pineland-core-transfer-v5",
+    "historical_revalidation_required": true,
+    "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+    "version": "0.13.0"
+  },
+  "gate_passed": false,
+  "next_valid_test": "Run the frozen v5 historical ladder without model edits: Nepal once on its identical eight-seed holdouts and simple competitors; Afghanistan initialization -> smoke -> one-year -> full horizon, then identical-row scoring. Preserve every negative result.",
+  "question": "Does competitive local reproduction predict held-out control/presence better than simpler alternatives?",
+  "required_competitors": [
+    "national_manpower",
+    "violence_autoregression",
+    "local_persistence_only",
+    "static_geography",
+    "government_force_ratio",
+    "simple_spatial_diffusion"
+  ],
+  "schema_version": "1.1.0",
+  "verdict": "v5_frozen_historical_revalidation_pending_nepal_v4_failure_preserved"
+}

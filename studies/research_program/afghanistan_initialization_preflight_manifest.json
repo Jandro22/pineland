@@ -1,0 +1,16 @@
+{
+  "artifact": {
+    "path": "studies/research_program/afghanistan_initialization_preflight.json",
+    "sha256": "5b94ea78eef2de98a46180298cb92ee9fbdf46f7ae479026b0d9212ab6958044"
+  },
+  "builder": {
+    "path": "studies/research_program/scripts/run_afghanistan_initialization_preflight.py",
+    "sha256": "c778b2c941da55dedc93250d7f3b28e16aae5bc38c5551aac73e9b1b54529ffb"
+  },
+  "core_change_licensed": false,
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "model_sha256": "5c6e1599671745cb4425cd1cde1afd9101094ee70ec50576e55799bceadcfbb9",
+  "schema_version": "1.0.0",
+  "status": "current_core_initialization_preflight_manifest"
+}

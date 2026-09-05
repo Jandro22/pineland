@@ -1,0 +1,1078 @@
+{
+  "baseline": {
+    "mean_distinct_new_foothold_sites": 14.333333333333334,
+    "mean_finite_horizon_site_colonization_yield": 1.7222222222222223,
+    "mean_new_site_persistence_probability": 1.0,
+    "mean_new_site_to_fielded_force_probability": 0.5365079365079365
+  },
+  "channel_ranking_by_mean_lost_new_sites": [
+    {
+      "condition": "no_strategic_force_reallocation",
+      "mean_lost_new_sites": 5.666666666666667,
+      "rank": 1
+    },
+    {
+      "condition": "no_colonization_transport_channels",
+      "mean_lost_new_sites": 5.666666666666667,
+      "rank": 2
+    },
+    {
+      "condition": "no_cross_local_social",
+      "mean_lost_new_sites": 4,
+      "rank": 3
+    },
+    {
+      "condition": "no_person_mobility",
+      "mean_lost_new_sites": 3.3333333333333335,
+      "rank": 4
+    },
+    {
+      "condition": "no_social_or_person_mobility",
+      "mean_lost_new_sites": 2.6666666666666665,
+      "rank": 5
+    }
+  ],
+  "core_equations_modified_by_study": false,
+  "design": {
+    "agents": 700,
+    "conditions": {
+      "baseline": {},
+      "no_colonization_transport_channels": {
+        "cross_local_social": true,
+        "force_reallocation": true,
+        "person_mobility": true
+      },
+      "no_cross_local_social": {
+        "cross_local_social": true
+      },
+      "no_person_mobility": {
+        "person_mobility": true
+      },
+      "no_social_or_person_mobility": {
+        "cross_local_social": true,
+        "person_mobility": true
+      },
+      "no_strategic_force_reallocation": {
+        "force_reallocation": true
+      }
+    },
+    "days": 60.0,
+    "localities": 34,
+    "matched_initial_world_within_seed": true,
+    "seeds": [
+      2026090501,
+      2026090502,
+      2026090503
+    ]
+  },
+  "estimand": {
+    "colonization": "first noninitial member_foothold_present activation in a locality absent from the initial foothold set",
+    "finite_horizon_site_colonization_yield": "distinct new foothold sites / initial foothold sites",
+    "relocation": "reported separately and never counted as a new armed-member foothold by itself",
+    "unit": "locality-level armed-member foothold site"
+  },
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "interpretation_rule": "A positive paired loss under a channel ablation is evidence that the channel contributes to finite-horizon site colonization. Non-monotone or zero effects are preserved and reject a simple necessary-channel claim. The study does not tune any rate to produce supercriticality.",
+  "matched_channel_interventions_applied": true,
+  "paired_channel_effects": {
+    "no_colonization_transport_channels": {
+      "all_pairs_nonnegative": true,
+      "mean_lost_new_sites": 5.666666666666667,
+      "median_lost_new_sites": 5,
+      "paired_runs": [
+        {
+          "baseline_new_sites": 15,
+          "condition_new_sites": 11,
+          "lost_new_sites": 4,
+          "seed": 2026090501
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 6,
+          "lost_new_sites": 8,
+          "seed": 2026090502
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 9,
+          "lost_new_sites": 5,
+          "seed": 2026090503
+        }
+      ]
+    },
+    "no_cross_local_social": {
+      "all_pairs_nonnegative": true,
+      "mean_lost_new_sites": 4,
+      "median_lost_new_sites": 4,
+      "paired_runs": [
+        {
+          "baseline_new_sites": 15,
+          "condition_new_sites": 12,
+          "lost_new_sites": 3,
+          "seed": 2026090501
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 9,
+          "lost_new_sites": 5,
+          "seed": 2026090502
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 10,
+          "lost_new_sites": 4,
+          "seed": 2026090503
+        }
+      ]
+    },
+    "no_person_mobility": {
+      "all_pairs_nonnegative": true,
+      "mean_lost_new_sites": 3.3333333333333335,
+      "median_lost_new_sites": 4,
+      "paired_runs": [
+        {
+          "baseline_new_sites": 15,
+          "condition_new_sites": 11,
+          "lost_new_sites": 4,
+          "seed": 2026090501
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 9,
+          "lost_new_sites": 5,
+          "seed": 2026090502
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 13,
+          "lost_new_sites": 1,
+          "seed": 2026090503
+        }
+      ]
+    },
+    "no_social_or_person_mobility": {
+      "all_pairs_nonnegative": true,
+      "mean_lost_new_sites": 2.6666666666666665,
+      "median_lost_new_sites": 4,
+      "paired_runs": [
+        {
+          "baseline_new_sites": 15,
+          "condition_new_sites": 11,
+          "lost_new_sites": 4,
+          "seed": 2026090501
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 14,
+          "lost_new_sites": 0,
+          "seed": 2026090502
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 10,
+          "lost_new_sites": 4,
+          "seed": 2026090503
+        }
+      ]
+    },
+    "no_strategic_force_reallocation": {
+      "all_pairs_nonnegative": true,
+      "mean_lost_new_sites": 5.666666666666667,
+      "median_lost_new_sites": 5,
+      "paired_runs": [
+        {
+          "baseline_new_sites": 15,
+          "condition_new_sites": 7,
+          "lost_new_sites": 8,
+          "seed": 2026090501
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 9,
+          "lost_new_sites": 5,
+          "seed": 2026090502
+        },
+        {
+          "baseline_new_sites": 14,
+          "condition_new_sites": 10,
+          "lost_new_sites": 4,
+          "seed": 2026090503
+        }
+      ]
+    }
+  },
+  "runs": [
+    {
+      "colonization_causes": {
+        "armed_member_migration": 2,
+        "formation_seeded_local_recruitment": 7,
+        "local_recruitment": 6
+      },
+      "colonization_episodes": 15,
+      "condition": "baseline",
+      "cross_local_parent_edge_mass": 2.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 15,
+      "events_processed": 2946,
+      "finite_horizon_site_colonization_yield": 1.6666666666666667,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000053",
+        "D01-L02": "ACT-00000035",
+        "D01-L03": "ACT-00000047",
+        "D05-L01": "ACT-00000031",
+        "D06-L01": "ACT-00000048",
+        "D06-L02": "ACT-00000083",
+        "D07-L01": "ACT-00000028",
+        "D08-L01": "ACT-00000036",
+        "D09-L01": "ACT-00000042",
+        "D09-L02": "ACT-00000037",
+        "D11-L01": "ACT-00000073",
+        "D11-L02": "ACT-00000062",
+        "D12-L01": "ACT-00000049",
+        "D15-L01": "ACT-00000077",
+        "D17-L01": "ACT-00000063"
+      },
+      "gross_formation_relocation_activations": 13,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 84,
+      "initial_foothold_episodes": 9,
+      "initial_foothold_sites": 9,
+      "intervention": {},
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.9333333333333333,
+      "new_site_to_fielded_force_probability": 0.4666666666666667,
+      "new_sites_reaching_fielded_force": 7,
+      "new_sites_reaching_saturated_access": 14,
+      "parented_colonization_episode_share": 0.6,
+      "persistence_eligible_new_sites": 12,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 12,
+      "person_movement_rate": 0.015,
+      "seed": 2026090501,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "armed_member_migration": 3,
+        "formation_seeded_local_recruitment": 5,
+        "local_recruitment": 4
+      },
+      "colonization_episodes": 12,
+      "condition": "no_cross_local_social",
+      "cross_local_parent_edge_mass": 3.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 12,
+      "events_processed": 2974,
+      "finite_horizon_site_colonization_yield": 1.3333333333333333,
+      "first_colonization_activation_ids": {
+        "D01-L03": "ACT-00000056",
+        "D05-L01": "ACT-00000044",
+        "D06-L01": "ACT-00000035",
+        "D06-L02": "ACT-00000049",
+        "D07-L01": "ACT-00000028",
+        "D08-L01": "ACT-00000036",
+        "D10-L01": "ACT-00000045",
+        "D10-L02": "ACT-00000046",
+        "D11-L01": "ACT-00000037",
+        "D12-L01": "ACT-00000047",
+        "D14-L01": "ACT-00000051",
+        "D14-L02": "ACT-00000067"
+      },
+      "gross_formation_relocation_activations": 10,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 84,
+      "initial_foothold_episodes": 9,
+      "initial_foothold_sites": 9,
+      "intervention": {
+        "cross_local_social": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.9166666666666666,
+      "new_site_to_fielded_force_probability": 0.4166666666666667,
+      "new_sites_reaching_fielded_force": 5,
+      "new_sites_reaching_saturated_access": 11,
+      "parented_colonization_episode_share": 0.6666666666666666,
+      "persistence_eligible_new_sites": 11,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 11,
+      "person_movement_rate": 0.015,
+      "seed": 2026090501,
+      "social_edge_instances_suppressed": 11835,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "formation_seeded_local_recruitment": 5,
+        "local_recruitment": 6
+      },
+      "colonization_episodes": 11,
+      "condition": "no_person_mobility",
+      "cross_local_parent_edge_mass": 0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 11,
+      "events_processed": 3021,
+      "finite_horizon_site_colonization_yield": 1.2222222222222223,
+      "first_colonization_activation_ids": {
+        "D01-L02": "ACT-00000042",
+        "D01-L03": "ACT-00000047",
+        "D05-L01": "ACT-00000029",
+        "D06-L01": "ACT-00000048",
+        "D08-L01": "ACT-00000033",
+        "D08-L02": "ACT-00000043",
+        "D09-L01": "ACT-00000044",
+        "D09-L02": "ACT-00000034",
+        "D11-L01": "ACT-00000062",
+        "D14-L01": "ACT-00000063",
+        "D17-L02": "ACT-00000054"
+      },
+      "gross_formation_relocation_activations": 14,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 84,
+      "initial_foothold_episodes": 9,
+      "initial_foothold_sites": 9,
+      "intervention": {
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.9090909090909091,
+      "new_site_to_fielded_force_probability": 0.5454545454545454,
+      "new_sites_reaching_fielded_force": 6,
+      "new_sites_reaching_saturated_access": 10,
+      "parented_colonization_episode_share": 0.45454545454545453,
+      "persistence_eligible_new_sites": 11,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 11,
+      "person_movement_rate": 0.0,
+      "seed": 2026090501,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "armed_member_migration": 2,
+        "local_recruitment": 5
+      },
+      "colonization_episodes": 7,
+      "condition": "no_strategic_force_reallocation",
+      "cross_local_parent_edge_mass": 2.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 7,
+      "events_processed": 2950,
+      "finite_horizon_site_colonization_yield": 0.7777777777777778,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000041",
+        "D01-L02": "ACT-00000032",
+        "D01-L03": "ACT-00000040",
+        "D06-L01": "ACT-00000030",
+        "D06-L02": "ACT-00000038",
+        "D07-L01": "ACT-00000028",
+        "D09-L02": "ACT-00000039"
+      },
+      "gross_formation_relocation_activations": 0,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 84,
+      "initial_foothold_episodes": 9,
+      "initial_foothold_sites": 9,
+      "intervention": {
+        "force_reallocation": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.7142857142857143,
+      "new_site_to_fielded_force_probability": 0.42857142857142855,
+      "new_sites_reaching_fielded_force": 3,
+      "new_sites_reaching_saturated_access": 5,
+      "parented_colonization_episode_share": 0.2857142857142857,
+      "persistence_eligible_new_sites": 5,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 5,
+      "person_movement_rate": 0.015,
+      "seed": 2026090501,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.0
+    },
+    {
+      "colonization_causes": {
+        "formation_seeded_local_recruitment": 6,
+        "local_recruitment": 5
+      },
+      "colonization_episodes": 11,
+      "condition": "no_social_or_person_mobility",
+      "cross_local_parent_edge_mass": 0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 11,
+      "events_processed": 2973,
+      "finite_horizon_site_colonization_yield": 1.2222222222222223,
+      "first_colonization_activation_ids": {
+        "D01-L03": "ACT-00000040",
+        "D05-L01": "ACT-00000033",
+        "D06-L02": "ACT-00000031",
+        "D09-L01": "ACT-00000045",
+        "D10-L01": "ACT-00000046",
+        "D11-L01": "ACT-00000041",
+        "D11-L02": "ACT-00000036",
+        "D12-L01": "ACT-00000054",
+        "D14-L01": "ACT-00000055",
+        "D17-L01": "ACT-00000063",
+        "D17-L02": "ACT-00000037"
+      },
+      "gross_formation_relocation_activations": 14,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 84,
+      "initial_foothold_episodes": 9,
+      "initial_foothold_sites": 9,
+      "intervention": {
+        "cross_local_social": true,
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.6363636363636364,
+      "new_site_to_fielded_force_probability": 0.18181818181818182,
+      "new_sites_reaching_fielded_force": 2,
+      "new_sites_reaching_saturated_access": 7,
+      "parented_colonization_episode_share": 0.5454545454545454,
+      "persistence_eligible_new_sites": 8,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 8,
+      "person_movement_rate": 0.0,
+      "seed": 2026090501,
+      "social_edge_instances_suppressed": 5124,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "local_recruitment": 11
+      },
+      "colonization_episodes": 11,
+      "condition": "no_colonization_transport_channels",
+      "cross_local_parent_edge_mass": 0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 11,
+      "events_processed": 2988,
+      "finite_horizon_site_colonization_yield": 1.2222222222222223,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000036",
+        "D01-L02": "ACT-00000043",
+        "D01-L03": "ACT-00000044",
+        "D06-L01": "ACT-00000031",
+        "D08-L01": "ACT-00000028",
+        "D09-L01": "ACT-00000029",
+        "D09-L02": "ACT-00000030",
+        "D10-L01": "ACT-00000051",
+        "D11-L02": "ACT-00000038",
+        "D12-L01": "ACT-00000037",
+        "D15-L01": "ACT-00000052"
+      },
+      "gross_formation_relocation_activations": 0,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 84,
+      "initial_foothold_episodes": 9,
+      "initial_foothold_sites": 9,
+      "intervention": {
+        "cross_local_social": true,
+        "force_reallocation": true,
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.7272727272727273,
+      "new_site_to_fielded_force_probability": 0.7272727272727273,
+      "new_sites_reaching_fielded_force": 8,
+      "new_sites_reaching_saturated_access": 8,
+      "parented_colonization_episode_share": 0.0,
+      "persistence_eligible_new_sites": 9,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 9,
+      "person_movement_rate": 0.0,
+      "seed": 2026090501,
+      "social_edge_instances_suppressed": 5124,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.0
+    },
+    {
+      "colonization_causes": {
+        "armed_member_migration": 2,
+        "formation_seeded_local_recruitment": 6,
+        "local_recruitment": 6
+      },
+      "colonization_episodes": 14,
+      "condition": "baseline",
+      "cross_local_parent_edge_mass": 2.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 14,
+      "events_processed": 2941,
+      "finite_horizon_site_colonization_yield": 1.75,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000042",
+        "D01-L02": "ACT-00000027",
+        "D01-L03": "ACT-00000066",
+        "D03-L03": "ACT-00000034",
+        "D04-L01": "ACT-00000046",
+        "D06-L01": "ACT-00000050",
+        "D06-L03": "ACT-00000047",
+        "D07-L01": "ACT-00000048",
+        "D08-L01": "ACT-00000057",
+        "D09-L01": "ACT-00000051",
+        "D10-L03": "ACT-00000065",
+        "D11-L02": "ACT-00000058",
+        "D12-L04": "ACT-00000028",
+        "D15-L01": "ACT-00000029"
+      },
+      "gross_formation_relocation_activations": 13,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 97,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {},
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.7142857142857143,
+      "new_site_to_fielded_force_probability": 0.42857142857142855,
+      "new_sites_reaching_fielded_force": 6,
+      "new_sites_reaching_saturated_access": 10,
+      "parented_colonization_episode_share": 0.5714285714285714,
+      "persistence_eligible_new_sites": 10,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 10,
+      "person_movement_rate": 0.015,
+      "seed": 2026090502,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "armed_member_migration": 1,
+        "formation_seeded_local_recruitment": 7,
+        "local_recruitment": 1
+      },
+      "colonization_episodes": 9,
+      "condition": "no_cross_local_social",
+      "cross_local_parent_edge_mass": 1.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 9,
+      "events_processed": 2933,
+      "finite_horizon_site_colonization_yield": 1.125,
+      "first_colonization_activation_ids": {
+        "D01-L02": "ACT-00000027",
+        "D02-L02": "ACT-00000055",
+        "D04-L01": "ACT-00000044",
+        "D08-L01": "ACT-00000033",
+        "D12-L04": "ACT-00000052",
+        "D15-L01": "ACT-00000053",
+        "D15-L02": "ACT-00000054",
+        "D17-L01": "ACT-00000036",
+        "D17-L02": "ACT-00000045"
+      },
+      "gross_formation_relocation_activations": 13,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 97,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "cross_local_social": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.4444444444444444,
+      "new_site_to_fielded_force_probability": 0.1111111111111111,
+      "new_sites_reaching_fielded_force": 1,
+      "new_sites_reaching_saturated_access": 4,
+      "parented_colonization_episode_share": 0.8888888888888888,
+      "persistence_eligible_new_sites": 3,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 3,
+      "person_movement_rate": 0.015,
+      "seed": 2026090502,
+      "social_edge_instances_suppressed": 9712,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "formation_seeded_local_recruitment": 4,
+        "local_recruitment": 5
+      },
+      "colonization_episodes": 9,
+      "condition": "no_person_mobility",
+      "cross_local_parent_edge_mass": 0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 9,
+      "events_processed": 3042,
+      "finite_horizon_site_colonization_yield": 1.125,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000038",
+        "D01-L02": "ACT-00000027",
+        "D04-L01": "ACT-00000039",
+        "D09-L01": "ACT-00000053",
+        "D11-L01": "ACT-00000054",
+        "D12-L01": "ACT-00000060",
+        "D12-L04": "ACT-00000028",
+        "D14-L01": "ACT-00000031",
+        "D15-L01": "ACT-00000029"
+      },
+      "gross_formation_relocation_activations": 19,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 97,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.8888888888888888,
+      "new_site_to_fielded_force_probability": 0.5555555555555556,
+      "new_sites_reaching_fielded_force": 5,
+      "new_sites_reaching_saturated_access": 8,
+      "parented_colonization_episode_share": 0.4444444444444444,
+      "persistence_eligible_new_sites": 8,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 8,
+      "person_movement_rate": 0.0,
+      "seed": 2026090502,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "armed_member_migration": 2,
+        "local_recruitment": 7
+      },
+      "colonization_episodes": 9,
+      "condition": "no_strategic_force_reallocation",
+      "cross_local_parent_edge_mass": 2.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 9,
+      "events_processed": 2905,
+      "finite_horizon_site_colonization_yield": 1.125,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000033",
+        "D01-L03": "ACT-00000046",
+        "D03-L03": "ACT-00000032",
+        "D04-L01": "ACT-00000028",
+        "D07-L01": "ACT-00000041",
+        "D08-L01": "ACT-00000026",
+        "D11-L02": "ACT-00000034",
+        "D15-L01": "ACT-00000027",
+        "D17-L01": "ACT-00000029"
+      },
+      "gross_formation_relocation_activations": 0,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 97,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "force_reallocation": true
+      },
+      "new_site_persistence_probability": 0.875,
+      "new_site_to_access_probability": 0.6666666666666666,
+      "new_site_to_fielded_force_probability": 0.6666666666666666,
+      "new_sites_reaching_fielded_force": 6,
+      "new_sites_reaching_saturated_access": 6,
+      "parented_colonization_episode_share": 0.2222222222222222,
+      "persistence_eligible_new_sites": 8,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 7,
+      "person_movement_rate": 0.015,
+      "seed": 2026090502,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.0
+    },
+    {
+      "colonization_causes": {
+        "cross_local_social_recruitment": 1,
+        "formation_seeded_local_recruitment": 9,
+        "local_recruitment": 4
+      },
+      "colonization_episodes": 14,
+      "condition": "no_social_or_person_mobility",
+      "cross_local_parent_edge_mass": 1.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 14,
+      "events_processed": 2906,
+      "finite_horizon_site_colonization_yield": 1.75,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000053",
+        "D01-L02": "ACT-00000027",
+        "D04-L01": "ACT-00000035",
+        "D06-L01": "ACT-00000063",
+        "D06-L03": "ACT-00000054",
+        "D08-L01": "ACT-00000055",
+        "D09-L01": "ACT-00000064",
+        "D10-L01": "ACT-00000045",
+        "D11-L01": "ACT-00000065",
+        "D11-L02": "ACT-00000046",
+        "D12-L01": "ACT-00000047",
+        "D14-L01": "ACT-00000066",
+        "D15-L01": "ACT-00000030",
+        "D17-L01": "ACT-00000036"
+      },
+      "gross_formation_relocation_activations": 14,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 97,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "cross_local_social": true,
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.5714285714285714,
+      "new_site_to_fielded_force_probability": 0.35714285714285715,
+      "new_sites_reaching_fielded_force": 5,
+      "new_sites_reaching_saturated_access": 8,
+      "parented_colonization_episode_share": 0.7142857142857143,
+      "persistence_eligible_new_sites": 7,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 7,
+      "person_movement_rate": 0.0,
+      "seed": 2026090502,
+      "social_edge_instances_suppressed": 5917,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "local_recruitment": 6
+      },
+      "colonization_episodes": 6,
+      "condition": "no_colonization_transport_channels",
+      "cross_local_parent_edge_mass": 0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 6,
+      "events_processed": 2908,
+      "finite_horizon_site_colonization_yield": 0.75,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000035",
+        "D04-L01": "ACT-00000026",
+        "D11-L01": "ACT-00000027",
+        "D12-L04": "ACT-00000036",
+        "D14-L01": "ACT-00000039",
+        "D15-L02": "ACT-00000030"
+      },
+      "gross_formation_relocation_activations": 0,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 97,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "cross_local_social": true,
+        "force_reallocation": true,
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.6666666666666666,
+      "new_site_to_fielded_force_probability": 0.6666666666666666,
+      "new_sites_reaching_fielded_force": 4,
+      "new_sites_reaching_saturated_access": 4,
+      "parented_colonization_episode_share": 0.0,
+      "persistence_eligible_new_sites": 4,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 4,
+      "person_movement_rate": 0.0,
+      "seed": 2026090502,
+      "social_edge_instances_suppressed": 5917,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.0
+    },
+    {
+      "colonization_causes": {
+        "armed_member_migration": 2,
+        "cross_local_social_recruitment": 1,
+        "formation_seeded_local_recruitment": 2,
+        "local_recruitment": 9
+      },
+      "colonization_episodes": 14,
+      "condition": "baseline",
+      "cross_local_parent_edge_mass": 3.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 14,
+      "events_processed": 3014,
+      "finite_horizon_site_colonization_yield": 1.75,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000042",
+        "D01-L02": "ACT-00000047",
+        "D04-L01": "ACT-00000068",
+        "D05-L01": "ACT-00000073",
+        "D06-L01": "ACT-00000027",
+        "D07-L01": "ACT-00000048",
+        "D08-L01": "ACT-00000058",
+        "D10-L01": "ACT-00000038",
+        "D11-L03": "ACT-00000049",
+        "D14-L01": "ACT-00000035",
+        "D14-L03": "ACT-00000043",
+        "D15-L01": "ACT-00000028",
+        "D15-L05": "ACT-00000065",
+        "D17-L01": "ACT-00000030"
+      },
+      "gross_formation_relocation_activations": 12,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 94,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {},
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.7857142857142857,
+      "new_site_to_fielded_force_probability": 0.7142857142857143,
+      "new_sites_reaching_fielded_force": 10,
+      "new_sites_reaching_saturated_access": 11,
+      "parented_colonization_episode_share": 0.35714285714285715,
+      "persistence_eligible_new_sites": 10,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 10,
+      "person_movement_rate": 0.015,
+      "seed": 2026090503,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "formation_seeded_local_recruitment": 3,
+        "local_recruitment": 7
+      },
+      "colonization_episodes": 10,
+      "condition": "no_cross_local_social",
+      "cross_local_parent_edge_mass": 0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 10,
+      "events_processed": 2958,
+      "finite_horizon_site_colonization_yield": 1.25,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000036",
+        "D01-L02": "ACT-00000027",
+        "D01-L04": "ACT-00000029",
+        "D08-L01": "ACT-00000050",
+        "D09-L01": "ACT-00000028",
+        "D10-L01": "ACT-00000051",
+        "D11-L01": "ACT-00000030",
+        "D11-L02": "ACT-00000057",
+        "D14-L03": "ACT-00000037",
+        "D15-L01": "ACT-00000058"
+      },
+      "gross_formation_relocation_activations": 15,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 94,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "cross_local_social": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.9,
+      "new_site_to_fielded_force_probability": 0.6,
+      "new_sites_reaching_fielded_force": 6,
+      "new_sites_reaching_saturated_access": 9,
+      "parented_colonization_episode_share": 0.3,
+      "persistence_eligible_new_sites": 8,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 8,
+      "person_movement_rate": 0.015,
+      "seed": 2026090503,
+      "social_edge_instances_suppressed": 9267,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "cross_local_social_recruitment": 2,
+        "formation_seeded_local_recruitment": 4,
+        "local_recruitment": 7
+      },
+      "colonization_episodes": 13,
+      "condition": "no_person_mobility",
+      "cross_local_parent_edge_mass": 2.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 13,
+      "events_processed": 3073,
+      "finite_horizon_site_colonization_yield": 1.625,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000030",
+        "D01-L02": "ACT-00000042",
+        "D04-L01": "ACT-00000058",
+        "D06-L01": "ACT-00000027",
+        "D07-L01": "ACT-00000035",
+        "D09-L01": "ACT-00000048",
+        "D10-L01": "ACT-00000049",
+        "D11-L01": "ACT-00000065",
+        "D11-L03": "ACT-00000043",
+        "D14-L01": "ACT-00000059",
+        "D14-L03": "ACT-00000066",
+        "D15-L01": "ACT-00000028",
+        "D15-L05": "ACT-00000044"
+      },
+      "gross_formation_relocation_activations": 15,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 94,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.7692307692307693,
+      "new_site_to_fielded_force_probability": 0.6923076923076923,
+      "new_sites_reaching_fielded_force": 9,
+      "new_sites_reaching_saturated_access": 10,
+      "parented_colonization_episode_share": 0.46153846153846156,
+      "persistence_eligible_new_sites": 9,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 9,
+      "person_movement_rate": 0.0,
+      "seed": 2026090503,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "armed_member_migration": 1,
+        "local_recruitment": 9
+      },
+      "colonization_episodes": 10,
+      "condition": "no_strategic_force_reallocation",
+      "cross_local_parent_edge_mass": 1.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 10,
+      "events_processed": 2852,
+      "finite_horizon_site_colonization_yield": 1.25,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000037",
+        "D01-L02": "ACT-00000034",
+        "D05-L01": "ACT-00000045",
+        "D07-L01": "ACT-00000038",
+        "D08-L01": "ACT-00000028",
+        "D11-L02": "ACT-00000029",
+        "D11-L03": "ACT-00000039",
+        "D12-L02": "ACT-00000027",
+        "D14-L01": "ACT-00000040",
+        "D17-L01": "ACT-00000026"
+      },
+      "gross_formation_relocation_activations": 0,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 94,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "force_reallocation": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.9,
+      "new_site_to_fielded_force_probability": 0.9,
+      "new_sites_reaching_fielded_force": 9,
+      "new_sites_reaching_saturated_access": 9,
+      "parented_colonization_episode_share": 0.1,
+      "persistence_eligible_new_sites": 9,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 9,
+      "person_movement_rate": 0.015,
+      "seed": 2026090503,
+      "social_edge_instances_suppressed": 0,
+      "social_suppression_ticks": 0,
+      "strategic_reallocation_rate": 0.0
+    },
+    {
+      "colonization_causes": {
+        "formation_seeded_local_recruitment": 1,
+        "local_recruitment": 9
+      },
+      "colonization_episodes": 10,
+      "condition": "no_social_or_person_mobility",
+      "cross_local_parent_edge_mass": 0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 10,
+      "events_processed": 3018,
+      "finite_horizon_site_colonization_yield": 1.25,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000043",
+        "D01-L02": "ACT-00000027",
+        "D01-L03": "ACT-00000049",
+        "D05-L01": "ACT-00000035",
+        "D08-L01": "ACT-00000050",
+        "D09-L01": "ACT-00000028",
+        "D11-L01": "ACT-00000029",
+        "D11-L03": "ACT-00000044",
+        "D14-L01": "ACT-00000045",
+        "D17-L01": "ACT-00000061"
+      },
+      "gross_formation_relocation_activations": 12,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 94,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "cross_local_social": true,
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.8,
+      "new_site_to_fielded_force_probability": 0.7,
+      "new_sites_reaching_fielded_force": 7,
+      "new_sites_reaching_saturated_access": 8,
+      "parented_colonization_episode_share": 0.1,
+      "persistence_eligible_new_sites": 7,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 7,
+      "person_movement_rate": 0.0,
+      "seed": 2026090503,
+      "social_edge_instances_suppressed": 5734,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.04
+    },
+    {
+      "colonization_causes": {
+        "cross_local_social_recruitment": 1,
+        "local_recruitment": 8
+      },
+      "colonization_episodes": 9,
+      "condition": "no_colonization_transport_channels",
+      "cross_local_parent_edge_mass": 1.0,
+      "deepening_horizon_days": 30.0,
+      "distinct_new_foothold_sites": 9,
+      "events_processed": 2901,
+      "finite_horizon_site_colonization_yield": 1.125,
+      "first_colonization_activation_ids": {
+        "D01-L01": "ACT-00000028",
+        "D01-L02": "ACT-00000046",
+        "D05-L01": "ACT-00000029",
+        "D08-L01": "ACT-00000026",
+        "D10-L01": "ACT-00000030",
+        "D11-L03": "ACT-00000038",
+        "D14-L01": "ACT-00000037",
+        "D14-L03": "ACT-00000027",
+        "D17-L01": "ACT-00000039"
+      },
+      "gross_formation_relocation_activations": 0,
+      "horizon_days": 60.0,
+      "initial_cross_local_social_edges": 94,
+      "initial_foothold_episodes": 8,
+      "initial_foothold_sites": 8,
+      "intervention": {
+        "cross_local_social": true,
+        "force_reallocation": true,
+        "person_mobility": true
+      },
+      "new_site_persistence_probability": 1.0,
+      "new_site_to_access_probability": 0.7777777777777778,
+      "new_site_to_fielded_force_probability": 0.7777777777777778,
+      "new_sites_reaching_fielded_force": 7,
+      "new_sites_reaching_saturated_access": 7,
+      "parented_colonization_episode_share": 0.1111111111111111,
+      "persistence_eligible_new_sites": 8,
+      "persistence_followup_days": 14.0,
+      "persistent_new_sites": 8,
+      "person_movement_rate": 0.0,
+      "seed": 2026090503,
+      "social_edge_instances_suppressed": 5734,
+      "social_suppression_ticks": 61,
+      "strategic_reallocation_rate": 0.0
+    }
+  ],
+  "schema_version": "1.0.0",
+  "status": "synthetic_spatial_metapopulation_colonization_identification"
+}

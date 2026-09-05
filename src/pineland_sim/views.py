@@ -64,6 +64,21 @@ class ActorBeliefView:
                 return ControlVector(**legacy.control_estimate.to_dict())
         return ControlVector(*([.5] * 7))
 
+    def locality_violence(self, locality_id: str, actor_id: str | None = None,
+                          target_actor_id: str = "government") -> float:
+        """Return an actor-local violence estimate, never realized violence.
+
+        The estimate is carried alongside the actor's control belief and is
+        updated by reported physical-control observations.  Missing beliefs
+        intentionally fall back to an uninformative prior.
+        """
+        observer = actor_id or self.actor_id
+        if observer is not None:
+            belief = self._world.control_beliefs.get((observer, target_actor_id, locality_id))
+            if belief is not None:
+                return float(belief.violence_estimate)
+        return 0.2
+
     def microzone_control(self, actor_id: str, microzone_id: str) -> float:
         belief = self._world.zone_beliefs.get((actor_id, microzone_id))
         return float(belief.physical_control_estimate if belief is not None else .5)

@@ -1,0 +1,65 @@
+{
+  "gates": {
+    "combined_persistence_and_propagation_recovered": true,
+    "degree_confounding_adjusted_near_zero": true,
+    "factorial_path_ablation_recovers_joint_requirement": true,
+    "frailty_adjusted_near_zero": true,
+    "frailty_adjustment_reduces_spurious_signal": true,
+    "homogeneous_null_near_zero": true,
+    "known_neighbor_dose_response_recovered": true,
+    "known_persistence_increases_episode_duration": true,
+    "known_propagation_detected": true,
+    "serial_common_shock_adjusted_near_zero": true,
+    "topology_placebo_breaks_known_propagation_alignment": true
+  },
+  "historical_outcomes_used": false,
+  "metrics": {
+    "combined_persistence_propagation_mean_completed_duration": 2.3958333333333335,
+    "combined_persistence_propagation_risk_difference": 0.16182192504705376,
+    "common_shock_null_crude_risk_difference": 0.08309876434613123,
+    "common_shock_null_time_stratified_risk_difference": -0.00524133769254507,
+    "degree_null_crude_risk_difference": 0.056730559984447676,
+    "degree_null_stratified_risk_difference": 0.0067023865411130375,
+    "factorial_interventional_contrasts": {
+      "interaction": 0.012395833333333332,
+      "joint_minus_neither": 0.012395833333333332,
+      "path_effect_source_off": 0.0,
+      "path_effect_source_on": 0.012395833333333332,
+      "source_effect_path_off": 0.0,
+      "source_effect_path_on": 0.012395833333333332
+    },
+    "frailty_null_crude_risk_difference": 0.049951770389794856,
+    "frailty_null_stratified_risk_difference": -0.015332822856903072,
+    "high_persistence_mean_completed_duration": 3.3887468030690537,
+    "homogeneous_null_crude_risk_difference": -0.003036966061673488,
+    "known_propagation_crude_risk_difference": 0.17612454898161412,
+    "known_propagation_dose_response": {
+      "0": {
+        "activation_rate": 0.02488047614401405,
+        "n": 10249
+      },
+      "1": {
+        "activation_rate": 0.1942257217847769,
+        "n": 762
+      },
+      "2": {
+        "activation_rate": 0.35294117647058826,
+        "n": 34
+      }
+    },
+    "known_propagation_topology_placebo": {
+      "causal_claim_licensed": false,
+      "effective_permutations": 99,
+      "interpretation": "Topology placebos test adjacency alignment but cannot eliminate unmeasured spatial frailty or common causes.",
+      "observed_risk_difference": 0.17612454898161412,
+      "placebo_mean": 0.007698735172058158,
+      "placebo_repetitions": 99,
+      "two_sided_randomization_p": 0.01
+    },
+    "low_persistence_mean_completed_duration": 1.1093023255813954
+  },
+  "passed": true,
+  "schema_version": "1.0.0",
+  "seed": 20260905,
+  "status": "synthetic_identification_recovery_not_empirical_fit"
+}

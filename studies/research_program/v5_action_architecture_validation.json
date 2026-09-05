@@ -1,0 +1,137 @@
+{
+  "bounded_forensic_equivalent": true,
+  "coin_inference_authorized": false,
+  "endurance_model_stable": true,
+  "full_suite": "508 passed in 176.80s",
+  "historical_outcomes_used_to_define_equations": false,
+  "historical_validation_status": "not_run_on_v5",
+  "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+  "promotion_findings": [
+    "organized violence support no longer requires an opposing fielded formation for every channel",
+    "belief-based action choice is distinct from execution feasibility",
+    "government/military/police/foreign and insurgent armed actors share the action architecture",
+    "nonbattle violent actions consume only local material stocks",
+    "formation/pool relabeling preserves fighter-equivalent capacity while battle support may change",
+    "relocation moves local capacity without reproduction",
+    "asset violence and nonviolent coercion cannot contaminate state-based human-violence scoring",
+    "same zero-violence history can conceal different hidden capacity and imply different response to a common shock"
+  ],
+  "release_certificate": {
+    "certificate_payload_sha256": "7f8646a33b29890c22327d48940f0dd529e312d4fd450a2d59c28e9bf6b2c667",
+    "path": "outputs/final_release/RELEASE_CERTIFICATE_LIVE.json",
+    "sha256": "8cbd8ba6eede57fb9e5f82b7038b421ce7536d6c33599645e17e804191ff961b"
+  },
+  "reproducibility_suite": "8 passed",
+  "retention_behaviorally_equivalent": true,
+  "schema_version": "pineland.v5_action_architecture_validation.v1",
+  "status": "synthetic_promotion_passed_core_certified",
+  "synthetic_ab": {
+    "agent_count": 300,
+    "horizon_days": 30,
+    "legacy_contact_only": {
+      "contacts": 1,
+      "state_based_events": 1,
+      "stock_ledger_residual": 0.0,
+      "supply_conservation_residual": 0.0
+    },
+    "locality_count": 24,
+    "seed": 20260905,
+    "v5": {
+      "action_latent_events": 11,
+      "asset_violence_latent": 2,
+      "contacts": 0,
+      "nonviolent_coercion_latent": 6,
+      "state_based_events": 3,
+      "stock_ledger_residual": 0.0,
+      "supply_conservation_residual": 1.862645149230957e-09
+    }
+  },
+  "synthetic_ab_final_core": {
+    "agent_count": 300,
+    "horizon_days": 30,
+    "legacy_contact_only": {
+      "action_funnel": {},
+      "contacts": 1,
+      "latent_event_types": {
+        "beliefs": 31,
+        "checkpoint": 2,
+        "command": 31,
+        "contact": 61,
+        "economy": 2,
+        "force_movement": 121,
+        "foreign_affairs": 2,
+        "governance": 2,
+        "information": 121,
+        "logistics": 31,
+        "mobility": 31,
+        "organization_ecology": 5,
+        "patrol": 847,
+        "peace_process": 2,
+        "physical_refresh": 121,
+        "political_order": 2,
+        "recruitment": 5,
+        "social_influence": 31
+      },
+      "runtime_seconds": 1.238,
+      "state_based_events": 1,
+      "stock_ledger_residual": 0.0,
+      "supply_conservation_residual": 0.0
+    },
+    "locality_count": 24,
+    "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+    "seed": 20260905,
+    "v5": {
+      "action_funnel": {
+        "channel:armed_confrontation": 3,
+        "channel:asset_violence": 4,
+        "channel:coercion": 6,
+        "channel:nonfielded_human_target": 4,
+        "channel:wait": 481,
+        "latent_events": 11,
+        "outcome:actor_selected_wait": 20,
+        "outcome:believed_battle_target_absent": 1,
+        "outcome:believed_human_target_absent": 2,
+        "outcome:execution_failed": 3,
+        "outcome:no_action_opportunity": 451,
+        "outcome:no_local_fighter_capacity": 10,
+        "outcome:realized": 11,
+        "scheduled": 498,
+        "state_based_violence_events": 3
+      },
+      "contacts": 0,
+      "latent_event_types": {
+        "asset_violence": 2,
+        "beliefs": 31,
+        "checkpoint": 2,
+        "command": 31,
+        "economy": 2,
+        "force_movement": 121,
+        "foreign_affairs": 2,
+        "governance": 2,
+        "information": 121,
+        "logistics": 31,
+        "mobility": 31,
+        "nonviolent_coercion": 6,
+        "organization_ecology": 5,
+        "patrol": 847,
+        "peace_process": 2,
+        "physical_refresh": 121,
+        "political_order": 2,
+        "recruitment": 5,
+        "social_influence": 31,
+        "state_based_violence": 3
+      },
+      "runtime_seconds": 1.39,
+      "state_based_events": 3,
+      "stock_ledger_residual": 0.0,
+      "supply_conservation_residual": 1.862645149230957e-09
+    }
+  },
+  "tests": {
+    "action_model": "16 passed",
+    "adjacent_contact_combat_timebase_resources_information_truth_reproducibility": "56 passed",
+    "event_support_and_experimental_support": "5 passed",
+    "organization_peace_simulation_validation": "67 passed"
+  },
+  "tracked_diff_sha256": "aeb8b7639eabc8b9d4d92395e352cf956e6e3f314c3c49e2187863e6fd953fd7"
+}

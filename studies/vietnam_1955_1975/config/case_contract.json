@@ -1,0 +1,89 @@
+{
+  "calibration": {
+    "holdout_refit": false,
+    "licensed": false,
+    "training_only": true
+  },
+  "case_id": "vietnam_1955_1975",
+  "case_input_uncertainty": [
+    "geography",
+    "population",
+    "actor attribution",
+    "archival coverage",
+    "measurement-model disagreement"
+  ],
+  "construct_map": [
+    {
+      "construct": "violence",
+      "measurement_model": "archival operations/event counts with source-era coverage and under-recording uncertainty",
+      "source": "NARA Viet Cong Initiated Incidents and SITRA records, https://www.archives.gov/research/military/vietnam-war/electronic-data-files",
+      "unit": "province-week"
+    },
+    {
+      "construct": "control_or_presence",
+      "measurement_model": "hamlet security-rating observation model with explicit ordinal uncertainty; ratings are not treated as direct latent control",
+      "source": "NARA Hamlet Evaluation System (HES), National Archives Identifier 4616225, https://www.archives.gov/research/military/vietnam-war/electronic-data-files",
+      "unit": "hamlet-month"
+    },
+    {
+      "construct": "institutional_capacity",
+      "measurement_model": "local-force and police activity/readiness indicators with archival missingness",
+      "source": "NARA National Police Evaluation System and Territorial Forces records, https://www.archives.gov/research/military/vietnam-war/electronic-data-files",
+      "unit": "district-month"
+    }
+  ],
+  "disabled_mechanisms": [
+    "unmeasured_northern_sanctuary",
+    "strategic_airpower",
+    "peace_negotiation_dynamics"
+  ],
+  "holdouts": {
+    "geographic": {
+      "unit": "corps_region",
+      "selection": "outcome_blind_sha256_region_code_mod_5_eq_0",
+      "fit_fraction": 0.8,
+      "validation_fraction": 0.2
+    },
+    "joint": {
+      "temporal_window": "1971-01-01/1975-04-30",
+      "geographic_selection": "same outcome-blind Corps-region hash split",
+      "refit": false
+    },
+    "outcome_blind_selection": true,
+    "temporal": {
+      "training": "1955-01-01/1967-12-31",
+      "validation": "1968-01-01/1970-12-31",
+      "holdout": "1971-01-01/1975-04-30",
+      "refit": false
+    }
+  },
+  "inputs": [
+    {
+      "construct": "geography",
+      "future_outcome_used": false,
+      "source": "NARA HES gazetteer and archival administrative records, https://www.archives.gov/research/military/vietnam-war/electronic-data-files"
+    },
+    {
+      "construct": "population",
+      "future_outcome_used": false,
+      "source": "NARA HES gazetteer population fields, https://www.archives.gov/research/military/vietnam-war/electronic-data-files"
+    },
+    {
+      "construct": "actor_existence",
+      "future_outcome_used": false,
+      "source": "NARA Viet Cong Biographical File and operations records, https://www.archives.gov/research/military/vietnam-war/electronic-data-files"
+    }
+  ],
+  "observables": [
+    "violence",
+    "control_or_presence",
+    "institutional_capacity"
+  ],
+  "period": {
+    "end": "1975-04-30",
+    "start": "1955-01-01"
+  },
+  "role": "pacification_control_and_measurement_uncertainty",
+  "schema_version": "1.0.0",
+  "status": "data_construction"
+}

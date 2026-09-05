@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from math import ceil
+import heapq
+
 from .config import SimulationConfig
 from .entities import (
     ActorBelief,
@@ -15,6 +18,7 @@ from .entities import (
 )
 from .world import WorldState, seeded_rng
 from math import cos, pi, sin, hypot
+from typing import Any
 from .networks import generate_social_network
 from .physical import generate_physical_world
 from .logistics import generate_logistics_world
@@ -69,11 +73,13 @@ def _language_vector(pattern: str, rng) -> dict[str, float]:
     return values
 
 
-def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
+def generate_pineland(config: SimulationConfig | None = None,
+                      empirical_geography: dict[str, Any] | None = None) -> WorldState:
     config = config or SimulationConfig()
     config.validate()
     rng = seeded_rng(config, "world-generation")
     geography_rng = seeded_rng(config, "geography-generation")
+    force_rng = seeded_rng(config, "force-generation")
     world = WorldState(config=config)
 
     for row in DISTRICT_REGISTRY:
@@ -183,6 +189,10 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
             for locality_id in district.locality_ids[1:]:
                 connect(hub, locality_id)
 
+    if empirical_geography is not None:
+        total_population = _replace_with_empirical_geography(world, empirical_geography)
+        locality_ids = sorted(world.localities)
+
     government = Organization("government", "Federal Republic", OrganizationKind.GOVERNMENT, 2_500_000, .72, .7, .55, .55, .8, .7, .7)
     military = Organization("fdf", "Federal Defense Force", OrganizationKind.MILITARY, 600_000, .75, .78, .58, .42, .72, .75, .76)
     police = Organization("police", "Federal and District Police", OrganizationKind.POLICE, 350_000, .62, .62, .55, .7, .78, .45, .58)
@@ -195,14 +205,15 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
         insurgent = Organization("insurgent", "Pineland Renewal Front", OrganizationKind.INSURGENT, 80_000, .68, .65, .25, .72, .8, .65, .52, external_support=10_000)
         world.organizations[insurgent.organization_id] = insurgent
 
-    # Weighted synthetic population, explicit households, and sparse activity implied by adjacency.
-    represented_weight = total_population / config.agent_count
-    locality_weights = [world.localities[x].population for x in locality_ids]
+    # Weighted synthetic population with explicit households.  Empirical
+    # geography is stratified so every represented locality has civilians and
+    # each locality population is conserved exactly rather than only in
+    # multinomial expectation.
     person_index = 0
     household_index = 0
-    while person_index < config.agent_count:
-        size = min(config.agent_count - person_index, max(1, round(rng.lognormvariate(1.15, .35))))
-        locality_id = rng.choices(locality_ids, weights=locality_weights, k=1)[0]
+
+    def add_household(locality_id: str, size: int, person_weight: float) -> None:
+        nonlocal person_index, household_index
         district = world.districts[world.localities[locality_id].district_id]
         household_id = f"H{household_index:07d}"
         member_ids: list[str] = []
@@ -212,30 +223,129 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
             languages = _language_vector(district.language_pattern, rng)
             preferences = {f"party-{j}": rng.random() for j in range(1, 4)}
             person = Person(
-                person_id, household_id, locality_id, locality_id, represented_weight,
+                person_id, household_id, locality_id, locality_id, person_weight,
                 max(1, min(90, round(rng.normalvariate(34, 18)))), languages,
                 {"local": rng.random(), "district": rng.random(), "federal": rng.random()}, preferences,
                 grievance=max(0, min(1, rng.betavariate(2, 9))), fear=rng.betavariate(2, 8),
                 efficacy=rng.betavariate(4, 4), expected_control={"government": .7, "insurgent": .1},
                 trust={"government": rng.uniform(.3, .8), "insurgent": rng.uniform(.05, .35)},
-                resources=rng.lognormvariate(0, .55),
+                # Draw a per-capita endowment, then materialize the liquid
+                # stock owned by the represented cohort. The old token-level
+                # draw made national civilian resources proportional to
+                # agent_count rather than represented population.
+                resources=person_weight * rng.lognormvariate(0, .55),
             )
             world.persons[person_id] = person
             person_index += 1
-        world.households[household_id] = Household(household_id, member_ids, locality_id, locality_id,
-                                                    sum(world.persons[p].resources for p in member_ids),
-                                                    sum(world.persons[p].age < 16 for p in member_ids))
+        world.households[household_id] = Household(
+            household_id, member_ids, locality_id, locality_id,
+            sum(world.persons[p].resources for p in member_ids),
+            sum(world.persons[p].age < 16 for p in member_ids),
+        )
         household_index += 1
 
-    hubs = sorted(locality_ids, key=lambda key: world.localities[key].population, reverse=True)
-    per_formation = max(100, total_population * .0025 / min(17, len(hubs)))
-    for index, locality_id in enumerate(hubs[:17]):
+    if empirical_geography is not None:
+        if config.agent_count < len(locality_ids):
+            raise ValueError(
+                "empirical geography requires agent_count >= locality_count so every locality "
+                "has at least one representative civilian"
+            )
+        remaining_agents = config.agent_count - len(locality_ids)
+        raw_extra = {
+            locality_id: remaining_agents * world.localities[locality_id].population / total_population
+            for locality_id in locality_ids
+        }
+        extra = {locality_id: int(raw_extra[locality_id]) for locality_id in locality_ids}
+        leftover = remaining_agents - sum(extra.values())
+        for locality_id in sorted(
+                locality_ids, key=lambda key: (-(raw_extra[key] - extra[key]), key))[:leftover]:
+            extra[locality_id] += 1
+        for locality_id in locality_ids:
+            count = 1 + extra[locality_id]
+            person_weight = world.localities[locality_id].population / count
+            remaining = count
+            while remaining:
+                size = min(remaining, max(1, round(rng.lognormvariate(1.15, .35))))
+                add_household(locality_id, size, person_weight)
+                remaining -= size
+    else:
+        represented_weight = total_population / config.agent_count
+        locality_weights = [world.localities[x].population for x in locality_ids]
+        while person_index < config.agent_count:
+            size = min(config.agent_count - person_index, max(1, round(rng.lognormvariate(1.15, .35))))
+            locality_id = rng.choices(locality_ids, weights=locality_weights, k=1)[0]
+            add_household(locality_id, size, represented_weight)
+
+    if empirical_geography is not None and empirical_geography.get("schema_version") in {"2.0.0", "3.0.0"}:
+        hubs = sorted(
+            (key for key in locality_ids
+             if world.localities[key].administrative_role == "district_headquarters"),
+            key=lambda key: (world.districts[world.localities[key].district_id].population, key),
+            reverse=True,
+        )
+    else:
+        hubs = sorted(locality_ids, key=lambda key: world.localities[key].population, reverse=True)
+    government_strength = total_population * .0025
+    if config.force_structure.mode == "legacy":
+        government_count = min(17, len(hubs))
+    else:
+        government_count = min(len(hubs), config.force_structure.maximum_initial_formations_per_side,
+                               max(1, ceil(government_strength /
+                                           config.force_structure.government_target_personnel)))
+    per_formation = max(100, government_strength / government_count)
+    for index, locality_id in enumerate(hubs[:government_count]):
         formation = ArmedFormation(f"FDF-{index + 1:02d}", "fdf", locality_id, per_formation, .72, .75, .82, .9, .55, .75, .72, .35)
         world.formations[formation.formation_id] = formation
     if config.include_insurgency:
-        target = min(locality_ids, key=lambda key: world.localities[key].administrative_capacity)
+        configured_targets = (empirical_geography or {}).get("initial_insurgent_locality_ids", [])
         strength = total_population * config.initial_insurgent_share
-        world.formations["PRF-01"] = ArmedFormation("PRF-01", "insurgent", target, strength, .45, .7, .75, .65, .5, .7, .55, .75)
+        if config.force_structure.mode == "legacy":
+            insurgent_count = 1
+        else:
+            insurgent_count = min(config.force_structure.maximum_initial_formations_per_side,
+                                  max(1, ceil(strength /
+                                              config.force_structure.insurgent_target_personnel)))
+        # The empirical origin is retained, while additional physical tokens
+        # disperse outward from that origin using only the exogenous geography
+        # graph.  This prevents equal-capacity case inputs from silently
+        # degenerating into identifier/CSV order.  Without a supplied origin,
+        # low-capacity placement remains available but ties are seeded-random.
+        origins = list(configured_targets)
+        if configured_targets:
+            distances = {key: float("inf") for key in locality_ids}
+            queue: list[tuple[float, str]] = []
+            for key in configured_targets:
+                if key not in world.localities:
+                    raise ValueError(f"unknown initial insurgent locality: {key}")
+                distances[key] = 0.0
+                heapq.heappush(queue, (0.0, key))
+            while queue:
+                distance, current = heapq.heappop(queue)
+                if distance != distances[current]:
+                    continue
+                for neighbor, edge_cost in world.adjacency.get(current, {}).items():
+                    candidate = distance + float(edge_cost)
+                    if candidate < distances[neighbor]:
+                        distances[neighbor] = candidate
+                        heapq.heappush(queue, (candidate, neighbor))
+            origins.extend(key for key in sorted(
+                locality_ids, key=lambda key: (distances[key], key)
+            ) if key not in origins)
+        else:
+            # Force placement must not depend on how many civilian
+            # representatives happened to consume the population-generation
+            # stream.  Keep its tie-breaks on a resolution-independent stream.
+            tie_break = {key: force_rng.random() for key in locality_ids}
+            origins.extend(sorted(
+                locality_ids,
+                key=lambda key: (world.localities[key].administrative_capacity, tie_break[key]),
+            ))
+        for index in range(insurgent_count):
+            target = origins[index % len(origins)]
+            formation_id = f"PRF-{index + 1:02d}"
+            world.formations[formation_id] = ArmedFormation(
+                formation_id, "insurgent", target, strength / insurgent_count,
+                .45, .7, .75, .65, .5, .7, .55, .75)
 
     generate_logistics_world(world)
     generate_physical_world(world)
@@ -276,3 +386,120 @@ def generate_pineland(config: SimulationConfig | None = None) -> WorldState:
     world.initialize_stock_ledger()
     world.assert_invariants()
     return world
+
+
+def _replace_with_empirical_geography(world: WorldState,
+                                      specification: dict[str, Any]) -> int:
+    """Replace synthetic geography with a provenance-built case environment.
+
+    The adapter changes case inputs only: locality identity, population,
+    coordinates, adjacency, and explicitly supplied physical covariates. It
+    does not change any model equation or introduce case-specific bonuses.
+    """
+    schema = specification.get("schema_version")
+    if schema not in {"1.0.0", "2.0.0", "3.0.0"}:
+        raise ValueError("unsupported empirical geography schema")
+    localities = specification.get("localities", [])
+    containers = (specification.get("districts", []) if schema in {"2.0.0", "3.0.0"}
+                  else specification.get("containers", []))
+    if not localities or not containers:
+        raise ValueError("empirical geography needs district containers and localities")
+    if world.config.locality_count != len(localities):
+        raise ValueError("config.locality_count must match empirical localities")
+
+    world.districts.clear(); world.localities.clear(); world.adjacency.clear()
+    world.geographic_containers.clear()
+    world.district_hierarchy.clear()
+    if schema == "2.0.0":
+        for row in specification.get("regions", []):
+            world.geographic_containers[row["region_id"]] = dict(row)
+        for row in specification.get("zones", []):
+            world.geographic_containers[row["zone_id"]] = dict(row)
+    elif schema == "3.0.0":
+        for row in specification.get("geographic_containers", []):
+            container_id = row.get("container_id")
+            if not container_id:
+                raise ValueError("schema-v3 geographic container missing container_id")
+            if container_id in world.geographic_containers:
+                raise ValueError(f"duplicate geographic container: {container_id}")
+            world.geographic_containers[container_id] = dict(row)
+        for container_id, row in world.geographic_containers.items():
+            parent_id = row.get("parent_id")
+            if parent_id and parent_id not in world.geographic_containers:
+                raise ValueError(
+                    f"geographic container references missing parent: {container_id}->{parent_id}"
+                )
+    for row in containers:
+        district = District(
+            row.get("district_id", row.get("container_id")), row["name"], int(row["population"]),
+            row.get("terrain", "empirical mixed terrain"),
+            float(row.get("urbanization", .35)), row.get("language_pattern", "FS"),
+            row.get("role", "empirical geographic container"),
+            float(row.get("connectivity", .5)),
+        )
+        world.districts[district.district_id] = district
+        if schema == "2.0.0":
+            world.district_hierarchy[district.district_id] = {
+                "region_id": str(row.get("region_id", "")),
+                "zone_id": str(row.get("zone_id", "")),
+            }
+        elif schema == "3.0.0":
+            hierarchy = {str(key): str(value) for key, value in
+                         dict(row.get("container_ids", {})).items() if value}
+            if any(value not in world.geographic_containers for value in hierarchy.values()):
+                raise ValueError(f"district hierarchy references missing container: {district.district_id}")
+            world.district_hierarchy[district.district_id] = hierarchy
+    for row in localities:
+        container_id = row.get("district_id", row.get("container_id"))
+        if container_id not in world.districts:
+            raise ValueError(f"unknown empirical district: {container_id}")
+        capacity = float(row.get("administrative_capacity", .5))
+        locality = Locality(
+            locality_id=row["locality_id"], district_id=container_id, name=row["name"],
+            kind=row.get("kind", "historical-district"), population=int(row["population"]),
+            economic_output=float(row.get("economic_output", row["population"])),
+            infrastructure=float(row.get("infrastructure", .5)),
+            administrative_capacity=capacity,
+            terrain_friction=float(row.get("terrain_friction", 1.0)),
+            observability=float(row.get("observability", .5)),
+            administrative_role=row.get("administrative_role", "administrative_center"),
+            control={"government": ControlVector(.98, .72, capacity, capacity * .85,
+                                                   capacity * .65, .52, .7)},
+            governance={"security": .55, "justice": capacity * .75,
+                        "administration": capacity, "services": capacity * .8,
+                        "representation": .5, "leakage": .15},
+            x_km=float(row["x_km"]), y_km=float(row["y_km"]),
+        )
+        if world.config.include_insurgency:
+            locality.control["insurgent"] = ControlVector(0, .01, 0, .01, .01, .04, .08)
+        world.localities[locality.locality_id] = locality
+        world.districts[container_id].locality_ids.append(locality.locality_id)
+        world.adjacency[locality.locality_id] = {}
+    for district in world.districts.values():
+        represented_population = sum(world.localities[locality_id].population
+                                     for locality_id in district.locality_ids)
+        if represented_population != district.population:
+            raise ValueError(
+                f"empirical locality populations do not sum to district population: "
+                f"{district.district_id} localities={represented_population} district={district.population}"
+            )
+
+    def add_edge(first_id: str, second_id: str) -> None:
+        if first_id not in world.localities or second_id not in world.localities:
+            raise ValueError(f"empirical edge references unknown locality: {first_id}, {second_id}")
+        first, second = world.localities[first_id], world.localities[second_id]
+        distance = max(.5, hypot(first.x_km - second.x_km, first.y_km - second.y_km))
+        terrain = (first.terrain_friction + second.terrain_friction) / 2
+        cost = terrain * (.65 + distance / 55.0)
+        world.adjacency[first_id][second_id] = cost
+        world.adjacency[second_id][first_id] = cost
+
+    seen = set()
+    for first_id, neighbors in specification.get("adjacency", {}).items():
+        for second_id in neighbors:
+            edge = tuple(sorted((first_id, second_id)))
+            if first_id != second_id and edge not in seen:
+                add_edge(*edge); seen.add(edge)
+    if not seen or any(not neighbors for neighbors in world.adjacency.values()):
+        raise ValueError("empirical adjacency is empty or contains isolated localities")
+    return sum(locality.population for locality in world.localities.values())

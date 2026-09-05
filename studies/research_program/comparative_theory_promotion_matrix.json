@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.0.0",
+  "program_id": "comparative-insurgency-v1",
+  "status": "promotion_blocked_by_case_readiness_and_core_provenance",
+  "purpose": "A case-by-claim ledger that prevents synthetic mechanism results or legacy case runs from being promoted to a stable general theory.",
+  "promotion_unit": "claim x case",
+  "eligible_case_statuses": [
+    "completed_current_core_case",
+    "current_core_holdout_case"
+  ],
+  "ineligible_evidence_rules": [
+    "A stale or mixed-core artifact is archival evidence only.",
+    "A synthetic run cannot satisfy a historical case cell.",
+    "A case scaffold without hashed processed observations and frozen holdouts is not a case result.",
+    "A single case cannot establish a general claim; surviving claims require at least two eligible cases and simpler competitors.",
+    "No claim can be promoted while the active core lacks a superseding reproducibility certificate."
+  ],
+  "cases": [
+    {
+      "case_id": "nepal_2001_2006",
+      "ladder_role": "final_development_and_falsification",
+      "ladder_status": "completed_falsification",
+      "eligibility": "ineligible_legacy_only",
+      "reason": "Historical artifacts are bound to earlier or mixed source snapshots; current-core impact has not been assessed.",
+      "required_next_evidence": [
+        "stable superseding core certificate",
+        "current-core impact assessment against the preserved zero-recorded-contact result",
+        "frozen train/holdout comparison for local reproduction and reduced competitors"
+      ]
+    },
+    {
+      "case_id": "afghanistan_2004_2021",
+      "ladder_role": "first_transfer",
+      "ladder_status": "legacy_failed_first_transfer_revalidation_required",
+      "eligibility": "ineligible_legacy_only",
+      "reason": "The failed v2 transfer is preserved under the frozen scalar measurement formulation, but the target ensemble has not been rerun against a certified current core.",
+      "required_next_evidence": [
+        "stable superseding core certificate",
+        "current-core target-ensemble revalidation",
+        "independent control/presence comparison with declared uncertainty"
+      ]
+    },
+    {
+      "case_id": "colombia",
+      "source_case_id": "colombia_1984_2016",
+      "ladder_role": "institutional_and_organizational_transfer",
+      "ladder_status": "data_construction",
+      "eligibility": "not_ready",
+      "reason": "Source manifest and processed panel manifest are not complete.",
+      "required_next_evidence": [
+        "hashed source manifest",
+        "processed panel manifest",
+        "measurement audit and frozen holdouts"
+      ]
+    },
+    {
+      "case_id": "iraq",
+      "source_case_id": "iraq_2003_2011",
+      "ladder_role": "urban_fragmentation_and_transition",
+      "ladder_status": "data_construction",
+      "eligibility": "not_ready",
+      "reason": "Processed panel manifest is not complete.",
+      "required_next_evidence": [
+        "processed panel manifest",
+        "measurement audit and frozen holdouts",
+        "disabled-mechanism and case-input uncertainty declaration"
+      ]
+    },
+    {
+      "case_id": "vietnam",
+      "source_case_id": "vietnam_1955_1975",
+      "ladder_role": "pacification_control_and_measurement_uncertainty",
+      "ladder_status": "data_construction",
+      "eligibility": "not_ready",
+      "reason": "Source manifest and processed panel manifest are not complete.",
+      "required_next_evidence": [
+        "hashed source manifest",
+        "processed panel manifest",
+        "measurement audit and frozen holdouts"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "Conditional on a stable case-specific observation process, local reproduction may predict persistence better than national manpower or violence totals alone.",
+      "minimum_promotion_evidence": [
+        "two eligible cases",
+        "frozen holdout comparison against manpower-only and violence-only competitors",
+        "identified local-reproduction observation operator"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "current_result": "candidate_only"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "Exposure/contact, initiation or recruitment, and local sustainment are conjunctive prerequisites for reproduction.",
+      "minimum_promotion_evidence": [
+        "superseding-certified-core multi-seed challenge replication",
+        "historical activation genealogy or an equivalent identified measurement",
+        "at least two eligible cases showing the predicted negative constraint"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "current_result": "strong_synthetic_constraint_not_historical"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "Adjacency can shape renewal and concentration, but adjacency alone is not evidence of reproduction.",
+      "minimum_promotion_evidence": [
+        "parent-attributed geographic propagation",
+        "topology and temporal-placebo validation",
+        "historical nonzero adjacent activation in at least two eligible cases"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "current_result": "descriptive_violence_proxy_support_with_placebo_not_reproduction",
+      "diagnostic": "studies/research_program/event_only_spatial_signature_diagnostic.json"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "Persistent presence matters through memory and control, not static occupancy alone.",
+      "minimum_promotion_evidence": [
+        "superseding-certified-core eight-seed presence challenge",
+        "control and expectation outcomes beyond memory stock",
+        "independent presence/operator validation in at least two eligible cases"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "current_result": "pathway_recovered_outcome_effect_unresolved"
+    },
+    {
+      "claim_id": "C5",
+      "claim": "Counterinsurgency succeeds when it interrupts local reproduction with persistent credible security, information, governance, and changed expectations.",
+      "minimum_promotion_evidence": [
+        "preregistered intervention runs",
+        "joint control, harm, capacity, regeneration, dependence, and recurrence outcomes",
+        "holdout and reduced-model comparisons in at least two eligible cases"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "current_result": "policy_candidate_not_efficacy_claim"
+    },
+    {
+      "claim_id": "C6",
+      "claim": "Insurgent movement is a portfolio of frontier expansion, foothold consolidation, stronghold retention, and uncertainty-driven exploration constrained by route risk and sanctuary access.",
+      "minimum_promotion_evidence": [
+        "historical movement reconstruction",
+        "frozen holdout comparison against simpler movement rules",
+        "evidence that movement changes local reproduction rather than only trajectories"
+      ],
+      "case_cells": {
+        "nepal_2001_2006": "legacy_archival_not_eligible",
+        "afghanistan_2004_2021": "legacy_failed_transfer_not_eligible",
+        "colombia": "not_ready",
+        "iraq": "not_ready",
+        "vietnam": "not_ready"
+      },
+      "current_result": "synthetic_structural_validation_only"
+    }
+  ],
+  "promotion_decision": {
+    "stable_general_theory_licensed": false,
+    "reason": "Zero eligible historical case cells are currently available: the completed cases are legacy-only and the three future cases remain in data construction.",
+    "next_low_cost_action": "Complete source and processed-panel manifests for the next case before any cross-case fitting or intervention claim.",
+    "core_gate": "Do not rerun or promote any case until a stable live source is classified and receives a superseding reproducibility certificate."
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0.0",
+  "status": "preregistered_design_not_efficacy_claim",
+  "license": {
+    "minimum_transfer_cases": 2,
+    "required_competitor_tests": [
+      "held_out_control_or_presence",
+      "joint_violence_and_control",
+      "mechanism_specific_transfer"
+    ],
+    "required_uncertainty": [
+      "stochastic_simulation",
+      "parameter",
+      "case_input",
+      "measurement",
+      "structural"
+    ],
+    "calibration_on_holdout": false,
+    "optimize_violence_alone": false
+  },
+  "outcome_vector": [
+    "violence",
+    "control",
+    "civilian_harm",
+    "institutional_capacity",
+    "insurgent_regeneration",
+    "foreign_dependence",
+    "recurrence"
+  ],
+  "estimand": "predeclared_average_treatment_effect_on_the_case_specific_outcome_vector",
+  "interventions": [
+    {
+      "id": "persistent_vs_episodic_presence",
+      "family": "security_presence",
+      "contrast": "persistent_local_presence vs episodic_sweeps_with_equalized_mean_force",
+      "mechanisms_changed": ["presence_persistence", "information_acquisition", "expectations"],
+      "mechanisms_held_fixed": ["geography", "population", "insurgent_recruitment_preferences"],
+      "primary_outcomes": ["control", "insurgent_regeneration", "recurrence"],
+      "harm_outcomes": ["civilian_harm", "foreign_dependence"],
+      "falsifier": "episodic_presence has equal_or_better_control with no worse recurrence after uncertainty propagation"
+    },
+    {
+      "id": "information_quality",
+      "family": "information",
+      "contrast": "high_quality_local_information vs delayed_or_noisy_information_at_equal_force",
+      "mechanisms_changed": ["information_acquisition", "belief_updating", "targeting_quality"],
+      "mechanisms_held_fixed": ["force_stock", "political_access", "logistics"],
+      "primary_outcomes": ["control", "violence", "civilian_harm"],
+      "harm_outcomes": ["institutional_capacity", "foreign_dependence"],
+      "falsifier": "information quality does not change control transitions or insurgent reproduction beyond competitor uncertainty"
+    },
+    {
+      "id": "indigenous_capacity_vs_foreign_substitution",
+      "family": "security_governance",
+      "contrast": "indigenous_capacity_building vs foreign_force_substitution_with_equalized_short_term_reach",
+      "mechanisms_changed": ["institutional_capacity", "local_legitimacy", "foreign_dependence"],
+      "mechanisms_held_fixed": ["initial_conflict_state", "sanctuary", "terrain"],
+      "primary_outcomes": ["institutional_capacity", "foreign_dependence", "recurrence"],
+      "harm_outcomes": ["control", "civilian_harm", "insurgent_regeneration"],
+      "falsifier": "capacity building produces no post-support persistence advantage or incurs a dominated harm tradeoff"
+    },
+    {
+      "id": "political_access",
+      "family": "political_inclusion",
+      "contrast": "credible_local_political_access vs coercive_exclusion_at_equal_security_reach",
+      "mechanisms_changed": ["local_access", "civilian_expectations", "mobilization"],
+      "mechanisms_held_fixed": ["force_rotation", "supply", "foreign_support"],
+      "primary_outcomes": ["insurgent_regeneration", "recurrence", "control"],
+      "harm_outcomes": ["violence", "civilian_harm", "institutional_capacity"],
+      "falsifier": "political access fails to reduce reproduction or recurrence in at least one predeclared transfer case"
+    },
+    {
+      "id": "local_security_persistence",
+      "family": "local_security",
+      "contrast": "persistent_local_security vs short_rotation_security_at_equal_total_personnel",
+      "mechanisms_changed": ["presence_persistence", "information_acquisition", "expectations"],
+      "mechanisms_held_fixed": ["national_force_stock", "foreign_dependence_prior", "sanctuary"],
+      "primary_outcomes": ["control", "recurrence", "institutional_capacity"],
+      "harm_outcomes": ["civilian_harm", "insurgent_regeneration"],
+      "falsifier": "persistence does not alter control duration or post-withdrawal recurrence"
+    },
+    {
+      "id": "force_rotation",
+      "family": "force_management",
+      "contrast": "low_rotation_local_continuity vs high_rotation_with_equalized_force_and_supply",
+      "mechanisms_changed": ["local_information_memory", "presence_persistence"],
+      "mechanisms_held_fixed": ["political_access", "sanctuary", "insurgent_ecology"],
+      "primary_outcomes": ["control", "violence", "civilian_harm"],
+      "harm_outcomes": ["institutional_capacity", "foreign_dependence"],
+      "falsifier": "rotation changes no measured control or information outcomes"
+    },
+    {
+      "id": "logistics_reach",
+      "family": "logistics",
+      "contrast": "reliable_local_resupply vs intermittent_resupply_at_equal_mean_stock",
+      "mechanisms_changed": ["supply_reliability", "presence_persistence", "mobility"],
+      "mechanisms_held_fixed": ["information_quality", "political_access", "terrain"],
+      "primary_outcomes": ["control", "insurgent_regeneration", "recurrence"],
+      "harm_outcomes": ["violence", "civilian_harm", "foreign_dependence"],
+      "falsifier": "logistics reliability has no effect on durable control after stock conservation checks"
+    },
+    {
+      "id": "sanctuary",
+      "family": "external_support",
+      "contrast": "restricted_cross_border_sanctuary vs accessible_sanctuary_with_equalized_internal_force",
+      "mechanisms_changed": ["safe_haven_access", "recruitment_survival", "regeneration"],
+      "mechanisms_held_fixed": ["domestic_force", "political_access", "terrain"],
+      "primary_outcomes": ["insurgent_regeneration", "recurrence", "control"],
+      "harm_outcomes": ["violence", "civilian_harm"],
+      "falsifier": "sanctuary restriction does not reduce post-loss regeneration or recurrence"
+    },
+    {
+      "id": "withdrawal",
+      "family": "transition",
+      "contrast": "sequenced_withdrawal_with_capacity_transfer vs abrupt_withdrawal",
+      "mechanisms_changed": ["institutional_capacity", "foreign_dependence", "expectations"],
+      "mechanisms_held_fixed": ["pre_withdrawal_conflict_state", "case_inputs", "measurement_model"],
+      "primary_outcomes": ["recurrence", "control", "institutional_capacity"],
+      "harm_outcomes": ["violence", "civilian_harm", "insurgent_regeneration"],
+      "falsifier": "sequencing does not improve post-withdrawal persistence or is dominated on the outcome vector"
+    }
+  ],
+  "analysis_rules": [
+    "Predeclare treatment contrast, horizon, randomization or matched-seed protocol, and minimum effect before execution.",
+    "Report the full outcome vector and Pareto tradeoffs; do not rank policies by violence alone.",
+    "Use common random numbers only as a variance-reduction device, never to select favorable seeds.",
+    "Do not tune interventions or choose horizons after inspecting holdout outcomes.",
+    "Repeat every surviving intervention across at least two transfer cases before a general COIN claim."
+  ]
+}

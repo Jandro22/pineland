@@ -1,0 +1,16 @@
+{
+  "artifact": {
+    "path": "studies/research_program/afghanistan_current_core_year_preflight.json",
+    "sha256": "f49e8b907d9c614ceb732a8206b1f342b51ba5fb312f424a83bc2c50584a028e"
+  },
+  "builder": {
+    "path": "studies/research_program/scripts/run_afghanistan_current_core_smoke_preflight.py",
+    "sha256": "2b6c12f4cf9950d7fb151679680dc1cf95ba4665fd6f9f132bc5e30fe12c814d"
+  },
+  "core_change_licensed": false,
+  "historical_outcomes_used": true,
+  "historical_parameter_fitting": false,
+  "model_sha256": "e0d2d0c5e4c58d9d837afdcdf6658ad9e8c08d7970baabdb6121c297c58335ae",
+  "schema_version": "1.0.0",
+  "status": "current_core_smoke_impact_diagnostic_manifest"
+}

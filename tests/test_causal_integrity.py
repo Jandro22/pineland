@@ -44,6 +44,61 @@ class CausalIntegrityTests(unittest.TestCase):
         self.assertAlmostEqual(world.localities[locality_id].control["insurgent"].physical,
                                insurgent_control)
 
+    def test_matched_current_formation_occupation_is_side_symmetric_and_departure_is_immediate(self):
+        world = small_world(903)
+        government = world.formations["FDF-01"]
+        insurgent = world.formations["PRF-01"]
+        locality_id = government.locality_id
+        microzone_id = government.current_microzone_id
+
+        # Remove role-specific infrastructure so the matched comparison isolates
+        # the actor-symmetric current-formation presence/response path.
+        world.security_posts.clear()
+        world.security_post_ids_by_locality.clear()
+        world.patrols.clear()
+        for formation in world.formations.values():
+            formation.moving = formation.formation_id not in {
+                government.formation_id, insurgent.formation_id
+            }
+        for formation in (government, insurgent):
+            formation.locality_id = locality_id
+            formation.current_microzone_id = microzone_id
+            formation.moving = False
+            formation.outside_pineland = False
+            formation.operational_status = "effective"
+            formation.personnel = 500.0
+            formation.quality = .6
+            formation.cohesion = .7
+            formation.readiness = .8
+            formation.availability = .75
+            formation.command = .9
+            formation.information = .5
+            formation.fatigue = .1
+            formation.supply_capacity = 1_000.0
+            formation.supply_stock = 800.0
+            formation.sustainment = .8
+        for zone in world.microzones.values():
+            if zone.locality_id == locality_id:
+                zone.presence_memory.pop("government", None)
+                zone.presence_memory.pop("insurgent", None)
+                zone.presence_updated_at.pop("government", None)
+                zone.presence_updated_at.pop("insurgent", None)
+
+        government_control = recompute_microzone_control(
+            world, locality_id, "government", 0.0, apply_contestation=False
+        )
+        insurgent_control = recompute_microzone_control(
+            world, locality_id, "insurgent", 0.0, apply_contestation=False
+        )
+        self.assertAlmostEqual(government_control, insurgent_control, places=12)
+        self.assertGreater(insurgent_control, 0.0)
+
+        insurgent.moving = True
+        departed_control = recompute_microzone_control(
+            world, locality_id, "insurgent", .25, apply_contestation=False
+        )
+        self.assertEqual(departed_control, 0.0)
+
     def test_belief_update_does_not_read_realized_control(self):
         world = small_world()
         counterfactual = world.clone()

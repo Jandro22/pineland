@@ -1,0 +1,108 @@
+{
+  "candidate_theory": {
+    "name": "continuous operational action",
+    "preferred_minimal_parameterization": {
+      "baseline_action_rate": "reuse existing contact_rate rather than add a case-fit action-rate constant",
+      "clandestine_source_capacity": "continuous 0..1 function of local fighter-equivalent capacity relative to minimum_formation_personnel",
+      "continuous_source_capacity": {
+        "above_example": {
+          "capacity": 0.5003331112591606,
+          "m": 75.1
+        },
+        "below_example": {
+          "capacity": 0.4996664442961975,
+          "m": 74.9
+        },
+        "formula": "C(m) = m / (m + minimum_formation_personnel)",
+        "reason": "Uses the existing fielding threshold only as a scale, is zero at zero manpower, smooth across the clandestine-to-fielded transition, and has diminishing returns without a new fitted coefficient."
+      },
+      "fielded_source_capacity": "continuous function of deployable personnel using the same threshold scale",
+      "operation_rate": "reuse contact_rate as the per-source daily scale; do not introduce a historical attack-rate fit parameter",
+      "reach": "existing travel-time/topology/logistics semantics",
+      "supply_command_information": "reuse existing modeled factors rather than new empirical weights",
+      "target_selection": "presence-belief signal multiplied by existing travel-time reach attenuation; planning uses beliefs, execution checks truth",
+      "target_signal": "actor-local presence belief / known target opportunity at planning time"
+    },
+    "principles": [
+      "Strategic reallocation and tactical/operational action are separate decisions.",
+      "Action planning reads actor beliefs, known own capacity, known logistics, and public geography; it does not read hidden realized opponent control or location.",
+      "Execution may fail when the believed target is not actually present; hidden truth enters realization, not planning.",
+      "Clandestine local fighter-equivalent capacity below the fielded-formation threshold can generate bounded action opportunity rather than being behaviorally inert.",
+      "Operational capacity is continuous across the transition from clandestine pool to fielded formation and cannot be double counted.",
+      "Fielded forces may plan bounded-reach operations against believed reachable targets rather than requiring accidental strategic co-location before willingness is evaluated.",
+      "Existing contact/combat, information, logistics, command, supply, recording, and casualty semantics should be reused wherever possible; do not create a parallel bespoke combat theory.",
+      "No new coefficient may be selected from Nepal, Afghanistan, Colombia, Iraq, or Vietnam fit."
+    ],
+    "scope": "insurgent and state-aligned armed actors with institutionally different source states but symmetric measurement semantics"
+  },
+  "coin_relevance": "This layer is intended to connect recruitment/foothold reproduction to violent operational capability so future COIN interventions can target recruitment, local cells, intelligence, logistics, sanctuary, and fielded forces as distinct causal pathways. COIN experiments remain unauthorized until transfer/predictive gates are met.",
+  "core_edit_authorized_before_v4_transfer_completion": false,
+  "data_free_counterexample": {
+    "contact_opportunities_above": 1,
+    "contact_opportunities_below": 0,
+    "fighter_equivalent_increment": 0.2,
+    "fighter_equivalent_pool_below": 74.9,
+    "fighter_equivalent_total_above": 75.1,
+    "formations_created": 1,
+    "interpretation": "A 0.2-person-equivalent perturbation creates a discontinuous armed-action channel while government presence, locality, organization, and nearly all insurgent manpower are unchanged.",
+    "minimum_formation_personnel": 75.0
+  },
+  "historical_outcomes_used_to_choose_parameters": false,
+  "historical_parameter_fitting_allowed": false,
+  "problem": "The frozen v4 core has strategic reallocation and engagement initiation after opposing fielded formations already co-occupy a locality, but no operational-action layer that plans attacks into reachable targets. Persistent clandestine armed-member/manpower footholds are invisible to armed-action opportunity until the hard fielded-formation materialization threshold is crossed.",
+  "rejection_rules": [
+    "Reject if threshold continuity cannot be achieved without inventing duplicate manpower or resources.",
+    "Reject if the candidate requires hidden-truth reads for planning.",
+    "Reject if synthetic spatial persistence/propagation only appears after tuning to historical outcomes.",
+    "Reject if the candidate improves Nepal/Afghanistan fit but fails the data-free promotion gates.",
+    "Reject if the added layer merely raises event counts without improving synthetic causal identification of operational reach and persistence."
+  ],
+  "schema_version": "pineland.operational_action_preregistration.v1",
+  "status": "preregistered_before_afghanistan_v4_full_result",
+  "synthetic_promotion_gates": [
+    {
+      "gate": "threshold_continuity",
+      "requirement": "Holding all other state fixed, operational opportunity/hazard must not jump materially when fighter-equivalent capacity crosses minimum_formation_personnel."
+    },
+    {
+      "gate": "zero_source",
+      "requirement": "Zero local/reachable armed capacity implies zero actor-initiated clandestine action."
+    },
+    {
+      "gate": "no_double_counting",
+      "requirement": "When manpower materializes into a formation, the same fighter-equivalent capacity cannot simultaneously contribute as clandestine and fielded capacity."
+    },
+    {
+      "gate": "belief_firewall",
+      "requirement": "Mutating hidden opponent truth while holding actor beliefs fixed cannot change operation planning choices."
+    },
+    {
+      "gate": "execution_truth_gate",
+      "requirement": "False target beliefs may waste an operation but cannot generate phantom opponent casualties or recorded engagements."
+    },
+    {
+      "gate": "timestep_invariance",
+      "requirement": "Equivalent integrated exposure at different action-scan intervals yields the same continuous-time action hazard within numerical tolerance."
+    },
+    {
+      "gate": "representative_resolution_invariance",
+      "requirement": "Holding represented local armed capacity fixed while changing representative-agent resolution cannot switch the action channel on/off or materially change its integrated hazard."
+    },
+    {
+      "gate": "reach_monotonicity",
+      "requirement": "With beliefs/capability fixed, operation probability decreases with travel/logistics cost and increases with believed target presence."
+    },
+    {
+      "gate": "null_world",
+      "requirement": "No armed opposition or no target opportunity produces no combat events."
+    },
+    {
+      "gate": "planted_hotspot_recovery",
+      "requirement": "In synthetic worlds with planted durable local operational bases, generated action exhibits recoverable local persistence and adjacent propagation; shuffled topology/placebo worlds must not recover the same spatial signal."
+    },
+    {
+      "gate": "mechanism_intervention_specificity",
+      "requirement": "Synthetic interventions on local cell capacity, intelligence, logistics, or sanctuary alter the corresponding operational-action pathway without mechanically improving unrelated outcomes."
+    }
+  ]
+}

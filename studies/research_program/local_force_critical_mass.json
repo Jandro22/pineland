@@ -1,0 +1,355 @@
+{
+  "causal_conclusions": {
+    "endogenous_proto_gate_already_clears_formation_manpower_minimum": true,
+    "formation_movement_is_relocation_not_reproduction": true,
+    "formed_subthreshold_unit_creates_access_hysteresis": true,
+    "hard_local_force_birth_threshold_supported": true,
+    "interpretation": "Empty-pool force birth requires 937.500 represented local recruits, but member access saturates at 1000.000; force birth therefore precedes access saturation under live defaults. At endogenous onset, 1000 proto members convert to 80.0 fighters, already above the 75.0-person formation minimum, so those are not independent hard gates. Concentration and pool/recruitment co-location are causal bottlenecks, while movement only relocates formed units.",
+    "member_access_saturation_is_required_before_force_birth": false,
+    "pool_recruitment_colocation_changes_birth_at_fixed_total_manpower": true,
+    "spatial_dispersion_can_block_force_birth_at_fixed_total_manpower": true,
+    "two_stage_sequential_critical_mass_hypothesis": "rejected_as_strict_sequence"
+  },
+  "concentration_dispersion": [
+    {
+      "access": {
+        "D01-L01": {
+          "combined_access": 1.0,
+          "formation_access": 1.0,
+          "formation_source_personnel": 160.0,
+          "member_access": 1.0,
+          "represented_members": 2000.0000000000002
+        }
+      },
+      "fielded_force_viable_localities": 1,
+      "formations_created": 1,
+      "genealogy_edges": [
+        {
+          "child_activation_id": "ACT-00000026",
+          "child_channel": "fielded_force_viable",
+          "child_locality_id": "D01-L01",
+          "parent_activation_id": "ACT-00000001",
+          "parent_channel": "member_foothold_present",
+          "parent_locality_id": "D01-L01",
+          "pathway": "local_member_to_force_generation",
+          "weight": 1.0
+        }
+      ],
+      "locality_count": 1,
+      "member_access_saturated_localities": 1,
+      "remaining_pool_total": 0.0,
+      "represented_recruitment_per_locality": 2000.0,
+      "total_fighter_equivalent_applied": 160.0,
+      "total_represented_recruitment": 2000.0
+    },
+    {
+      "access": {
+        "D01-L01": {
+          "combined_access": 1.0,
+          "formation_access": 1.0,
+          "formation_source_personnel": 80.0,
+          "member_access": 1.0,
+          "represented_members": 1000.0000000000001
+        },
+        "D01-L02": {
+          "combined_access": 1.0,
+          "formation_access": 1.0,
+          "formation_source_personnel": 80.0,
+          "member_access": 1.0,
+          "represented_members": 1000.0000000000001
+        }
+      },
+      "fielded_force_viable_localities": 2,
+      "formations_created": 2,
+      "genealogy_edges": [
+        {
+          "child_activation_id": "ACT-00000028",
+          "child_channel": "fielded_force_viable",
+          "child_locality_id": "D01-L01",
+          "parent_activation_id": "ACT-00000001",
+          "parent_channel": "member_foothold_present",
+          "parent_locality_id": "D01-L01",
+          "pathway": "local_member_to_force_generation",
+          "weight": 1.0
+        },
+        {
+          "child_activation_id": "ACT-00000029",
+          "child_channel": "fielded_force_viable",
+          "child_locality_id": "D01-L02",
+          "parent_activation_id": "ACT-00000002",
+          "parent_channel": "member_foothold_present",
+          "parent_locality_id": "D01-L02",
+          "pathway": "local_member_to_force_generation",
+          "weight": 1.0
+        }
+      ],
+      "locality_count": 2,
+      "member_access_saturated_localities": 2,
+      "remaining_pool_total": 0.0,
+      "represented_recruitment_per_locality": 1000.0,
+      "total_fighter_equivalent_applied": 160.0,
+      "total_represented_recruitment": 2000.0
+    },
+    {
+      "access": {
+        "D01-L01": {
+          "combined_access": 0.6666666666666666,
+          "formation_access": 0.0,
+          "formation_source_personnel": 0,
+          "member_access": 0.6666666666666666,
+          "represented_members": 666.6666666666666
+        },
+        "D01-L02": {
+          "combined_access": 0.6666666666666666,
+          "formation_access": 0.0,
+          "formation_source_personnel": 0,
+          "member_access": 0.6666666666666666,
+          "represented_members": 666.6666666666666
+        },
+        "D01-L03": {
+          "combined_access": 0.6666666666666666,
+          "formation_access": 0.0,
+          "formation_source_personnel": 0,
+          "member_access": 0.6666666666666666,
+          "represented_members": 666.6666666666666
+        }
+      },
+      "fielded_force_viable_localities": 0,
+      "formations_created": 0,
+      "genealogy_edges": [],
+      "locality_count": 3,
+      "member_access_saturated_localities": 0,
+      "remaining_pool_total": 160.0,
+      "represented_recruitment_per_locality": 666.6666666666666,
+      "total_fighter_equivalent_applied": 160.0,
+      "total_represented_recruitment": 2000.0
+    },
+    {
+      "access": {
+        "D01-L01": {
+          "combined_access": 0.5000000000000001,
+          "formation_access": 0.0,
+          "formation_source_personnel": 0,
+          "member_access": 0.5000000000000001,
+          "represented_members": 500.00000000000006
+        },
+        "D01-L02": {
+          "combined_access": 0.5000000000000001,
+          "formation_access": 0.0,
+          "formation_source_personnel": 0,
+          "member_access": 0.5000000000000001,
+          "represented_members": 500.00000000000006
+        },
+        "D01-L03": {
+          "combined_access": 0.5000000000000001,
+          "formation_access": 0.0,
+          "formation_source_personnel": 0,
+          "member_access": 0.5000000000000001,
+          "represented_members": 500.00000000000006
+        },
+        "D01-L04": {
+          "combined_access": 0.5000000000000001,
+          "formation_access": 0.0,
+          "formation_source_personnel": 0,
+          "member_access": 0.5000000000000001,
+          "represented_members": 500.00000000000006
+        }
+      },
+      "fielded_force_viable_localities": 0,
+      "formations_created": 0,
+      "genealogy_edges": [],
+      "locality_count": 4,
+      "member_access_saturated_localities": 0,
+      "remaining_pool_total": 160.0,
+      "represented_recruitment_per_locality": 500.0,
+      "total_fighter_equivalent_applied": 160.0,
+      "total_represented_recruitment": 2000.0
+    }
+  ],
+  "empirical_cases_inspected": false,
+  "historical_outcomes_used": false,
+  "hysteresis": {
+    "access_hysteresis": 0.23333333333333317,
+    "formed_then_attrited": {
+      "access": {
+        "combined_access": 0.7333333333333333,
+        "formation_access": 0.7333333333333333,
+        "formation_source_personnel": 55.0,
+        "member_access": 0.5000000000000001,
+        "represented_members": 500.00000000000006
+      },
+      "fielded_force_viable": false,
+      "formation_count": 1,
+      "formation_personnel": 55.0,
+      "operational_source_count": 1
+    },
+    "matched_current_fighter_manpower": 55.0,
+    "matched_current_represented_members": 500.0,
+    "never_formed_pool": {
+      "access": {
+        "combined_access": 0.5000000000000001,
+        "formation_access": 0.0,
+        "formation_source_personnel": 0,
+        "member_access": 0.5000000000000001,
+        "represented_members": 500.00000000000006
+      },
+      "fielded_force_viable": false,
+      "formation_count": 0,
+      "pool_personnel": 55.0
+    }
+  },
+  "mechanism_trace": {
+    "configuration": {
+      "file": "src/pineland_sim/config.py",
+      "symbols": [
+        "minimum_proto_represented_population",
+        "minimum_formation_personnel",
+        "fighter_conversion_fraction"
+      ]
+    },
+    "movement": {
+      "file": "src/pineland_sim/logistics.py",
+      "semantics": "downstream relocation of an existing formation, not local force birth",
+      "symbols": [
+        "choose_reallocation_orders",
+        "create_movement_order",
+        "advance_movement_orders"
+      ]
+    },
+    "recruitment_pool_birth": {
+      "exit_hazard": "1-exp(-membership_exit_rate*logistic(fear + 0.7 - cohesion - grievance)*interval_days); represented exits convert back through fighter_conversion_fraction and withdraw locally first",
+      "file": "src/pineland_sim/organization_ecology.py",
+      "recruit_hazard": "1-exp(-recruitment_rate*recruitment_intensity*interval_days); when access is required, intensity is multiplied by the maximum of social exposure, local formation access, and local member access",
+      "semantics": "recruits/exits convert to fighter-equivalents; positive deltas reinforce local effective formations or accumulate in locality pools until the minimum; exits drain pools then formations",
+      "symbols": [
+        "recruit_and_retain",
+        "_apply_local_fighter_change",
+        "_create_local_recruitment_formation"
+      ]
+    }
+  },
+  "movement_control": {
+    "after_arrival": {
+      "formation_locality": "D01-L02",
+      "target_viable": true
+    },
+    "arrival": {
+      "arrived": 1,
+      "blocked_supply": 0,
+      "blocked_unavailable": 0,
+      "departed": 0,
+      "movement_supply_consumed": 0.0
+    },
+    "births_before_move": 1,
+    "departure": {
+      "arrived": 0,
+      "blocked_supply": 0,
+      "blocked_unavailable": 0,
+      "departed": 1,
+      "movement_supply_consumed": 52.220094009192884
+    },
+    "formation_count_after_move": 10,
+    "formation_count_before_move": 10,
+    "formation_id": "PRF-10",
+    "in_transit": {
+      "moving_formation_is_local_recruitment_source": false,
+      "origin_viable": false,
+      "target_viable": false
+    },
+    "origin": "D01-L01",
+    "relocation_genealogy_edges": [
+      {
+        "child_activation_id": "ACT-00000030",
+        "child_channel": "fielded_force_viable",
+        "child_locality_id": "D01-L02",
+        "parent_activation_id": "ACT-00000029",
+        "parent_channel": "fielded_force_viable",
+        "parent_locality_id": "D01-L01",
+        "pathway": "formation_relocation",
+        "weight": 1.0
+      }
+    ],
+    "target": "D01-L02"
+  },
+  "pool_alignment": {
+    "aligned": {
+      "formations_created": 1,
+      "genealogy_edges": [
+        {
+          "child_activation_id": "ACT-00000027",
+          "child_channel": "fielded_force_viable",
+          "child_locality_id": "D01-L01",
+          "parent_activation_id": "ACT-00000001",
+          "parent_channel": "member_foothold_present",
+          "parent_locality_id": "D01-L01",
+          "pathway": "local_member_to_force_generation",
+          "weight": 1.0
+        }
+      ],
+      "new_fighter_equivalent": 40.0,
+      "new_represented_recruitment": 500.0,
+      "preexisting_pool_total": 40.0,
+      "total_force_manpower_budget": 80.0
+    },
+    "dispersed": {
+      "formations_created": 0,
+      "genealogy_edges": [],
+      "new_fighter_equivalent": 40.0,
+      "new_represented_recruitment": 500.0,
+      "preexisting_pool_total": 40.0,
+      "total_force_manpower_budget": 80.0
+    }
+  },
+  "rejection_criteria": {
+    "dispersion_bottleneck": "reject if equal-total recruitment/manpower is invariant when per-locality shares cross the derived birth threshold",
+    "hard_force_threshold": "reject if empty-pool birth occurs below, or fails at, minimum_formation_personnel/fighter_conversion_fraction",
+    "hysteresis": "reject if a formed sub-threshold effective unit gives no more recruitment access than equal unformed pooled manpower",
+    "independent_proto_and_formation_gates": "reject whenever minimum_proto_represented_population times fighter_conversion_fraction already meets or exceeds minimum_formation_personnel",
+    "movement_reproduction": "reject relocation-only semantics if movement increases focal formation count or the target viable-force activation is not genealogically attributed to formation_relocation",
+    "ordered_two_stage_transition": "reject whenever force birth occurs before member_access reaches 1",
+    "pool_alignment": "reject if aligned versus separated pools give identical births under matched total recruitment and pooled manpower"
+  },
+  "schema_version": "1.0.0",
+  "seed": 20260905,
+  "status": "synthetic_general_theory_identification",
+  "threshold_sweep": {
+    "fighter_conversion_fraction": 0.08,
+    "minimum_formation_personnel": 75.0,
+    "minimum_proto_represented_population": 1000.0,
+    "proto_gate_already_clears_formation_manpower_minimum": true,
+    "proto_implied_fighter_personnel": 80.0,
+    "represented_members_for_force_birth_from_empty_pool": 937.5,
+    "rows": [
+      {
+        "fielded_force_viable": false,
+        "formations_created": 0,
+        "member_access": 0.9374990625,
+        "represented_members": 937.4990625
+      },
+      {
+        "fielded_force_viable": true,
+        "formations_created": 1,
+        "member_access": 0.9374999999999999,
+        "represented_members": 937.5
+      },
+      {
+        "fielded_force_viable": true,
+        "formations_created": 1,
+        "member_access": 0.96875,
+        "represented_members": 968.75
+      },
+      {
+        "fielded_force_viable": true,
+        "formations_created": 1,
+        "member_access": 1.0,
+        "represented_members": 1000.0
+      },
+      {
+        "fielded_force_viable": true,
+        "formations_created": 1,
+        "member_access": 1.0,
+        "represented_members": 1000.0009375
+      }
+    ]
+  }
+}

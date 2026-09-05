@@ -1,0 +1,89 @@
+{
+  "calibration": {
+    "holdout_refit": false,
+    "licensed": false,
+    "training_only": true
+  },
+  "case_id": "iraq_2003_2011",
+  "case_input_uncertainty": [
+    "geography",
+    "population",
+    "actor attribution",
+    "urban reporting coverage",
+    "control-observation sparsity"
+  ],
+  "construct_map": [
+    {
+      "construct": "violence",
+      "measurement_model": "recorded-event count with location and reporting uncertainty; latent violence is not equated with recorded violence",
+      "source": "UCDP Georeferenced Event Dataset, https://ucdp.uu.se/downloads/",
+      "unit": "district-week"
+    },
+    {
+      "construct": "control_or_presence",
+      "measurement_model": "ordinal district/neighborhood control and governance observations; Rusafa is an anchor validation slice, not a whole-country control proxy",
+      "source": "SIGIR, Interagency Rebuilding Efforts in Iraq: Rusafa Political District case study, https://www.govinfo.gov/content/pkg/GOVPUB-S-PURL-gpo36625/pdf/GOVPUB-S-PURL-gpo36625.pdf",
+      "unit": "urban-district-month"
+    },
+    {
+      "construct": "civilian_harm",
+      "measurement_model": "civilian-targeted event counts with source-specific under-recording uncertainty",
+      "source": "UCDP One-sided Violence Dataset, https://ucdp.uu.se/downloads/",
+      "unit": "district-month"
+    }
+  ],
+  "disabled_mechanisms": [
+    "unmeasured_sectarian_identity",
+    "rural_sanctuary",
+    "strategic_airpower"
+  ],
+  "holdouts": {
+    "geographic": {
+      "unit": "district",
+      "selection": "outcome_blind_sha256_district_code_mod_5_eq_0",
+      "fit_fraction": 0.8,
+      "validation_fraction": 0.2
+    },
+    "joint": {
+      "temporal_window": "2009-01-01/2011-12-31",
+      "geographic_selection": "same outcome-blind district hash split",
+      "refit": false
+    },
+    "outcome_blind_selection": true,
+    "temporal": {
+      "training": "2003-03-20/2006-12-31",
+      "validation": "2007-01-01/2008-12-31",
+      "holdout": "2009-01-01/2011-12-31",
+      "refit": false
+    }
+  },
+  "inputs": [
+    {
+      "construct": "geography",
+      "future_outcome_used": false,
+      "source": "GADM administrative boundaries, https://gadm.org/download_country.html"
+    },
+    {
+      "construct": "population",
+      "future_outcome_used": false,
+      "source": "World Bank population indicators, https://data.worldbank.org/indicator/SP.POP.TOTL"
+    },
+    {
+      "construct": "actor_existence",
+      "future_outcome_used": false,
+      "source": "UCDP Actor Dataset, https://ucdp.uu.se/downloads/"
+    }
+  ],
+  "observables": [
+    "violence",
+    "control_or_presence",
+    "civilian_harm"
+  ],
+  "period": {
+    "end": "2011-12-31",
+    "start": "2003-03-20"
+  },
+  "role": "urban_fragmentation_and_transition",
+  "schema_version": "1.0.0",
+  "status": "data_construction"
+}

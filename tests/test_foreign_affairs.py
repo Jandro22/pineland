@@ -3,11 +3,13 @@ import unittest
 
 from pineland_sim import Simulation, SimulationConfig, generate_pineland
 from pineland_sim.entities import ArmedFormation, OrganizationKind
+from pineland_sim.events import ScheduledEvent
 from pineland_sim.foreign_affairs import (
     SUPPORT_COMPONENTS, _foreign_belief_update, begin_intervention,
     deliver_support, dependence_metrics, process_cross_border_mobility,
     process_diaspora, process_foreign_affairs, run_intervention_comparison,
 )
+from pineland_sim.processes import ProcessEngine
 
 
 class ZeroRng:
@@ -91,6 +93,23 @@ class ForeignAffairsTests(unittest.TestCase):
         self.assertTrue(any(p.formation_id == formation.formation_id for p in world.patrols.values()))
         self.assertGreater(formation.supply_stock, 0)
         world.assert_invariants()
+
+    def test_runtime_foreign_patrol_gets_uncertain_zone_prior_without_truth_read(self):
+        world = make_world(seed=405)
+        state = next(iter(world.foreign_states.values()))
+        intervention = begin_intervention(world, state, 0, "substitution", .1, .8)
+        formation = world.formations[next(iter(intervention.force_formation_ids))]
+        patrol = next(p for p in world.patrols.values()
+                      if p.formation_id == formation.formation_id)
+        key = (formation.organization_id, patrol.current_microzone_id)
+        self.assertNotIn(key, world.zone_beliefs)
+        ProcessEngine(world, random.Random(405)).on_patrol(
+            "E-FOR-PATROL",
+            ScheduledEvent(0.0, 30, 0, "patrol", {"patrol_id": patrol.patrol_id}),
+        )
+        belief = world.zone_beliefs[key]
+        self.assertEqual(belief.physical_control_estimate, .5)
+        self.assertEqual(belief.confidence, .35)
 
     def test_foreign_beliefs_are_imperfect_and_interpreters_raise_confidence(self):
         low = make_world()

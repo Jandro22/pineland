@@ -1,0 +1,2642 @@
+{
+  "cause_counts": {
+    "armed_member_migration": 3,
+    "cross_local_social_recruitment": 1,
+    "formation_relocation": 15,
+    "formation_seeded_local_recruitment": 6,
+    "initial_condition": 27,
+    "local_member_to_force_generation": 18,
+    "local_recruitment": 8,
+    "member_foothold_maturation": 14
+  },
+  "dynamics_modified": false,
+  "episode_counts": {
+    "fielded_force_viable": 42,
+    "member_access_saturated": 23,
+    "member_foothold_present": 27
+  },
+  "episodes": [
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000001",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D02-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000002",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D03-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000003",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D04-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000004",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D05-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000005",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D07-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000006",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D10-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000007",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D13-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000008",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D13-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000009",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D16-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000010",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D02-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000011",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D03-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000012",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D04-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000013",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D05-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000014",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D07-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000015",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D10-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000016",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D13-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000017",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D13-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000018",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D16-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 6.25,
+      "activation_id": "ACT-00000019",
+      "cause": "initial_condition",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D02-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 62.25,
+      "activation_id": "ACT-00000020",
+      "cause": "initial_condition",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D03-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 34.25,
+      "activation_id": "ACT-00000021",
+      "cause": "initial_condition",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D04-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000022",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D05-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000023",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D07-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 13.25,
+      "activation_id": "ACT-00000024",
+      "cause": "initial_condition",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D10-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000025",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D13-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000026",
+      "cause": "initial_condition",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D13-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 0.0,
+      "activation_end_day": 48.25,
+      "activation_id": "ACT-00000027",
+      "cause": "initial_condition",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": null,
+      "event_type": "initial_condition",
+      "locality_id": "D16-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 6.5,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000028",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000000328",
+      "event_type": "force_movement",
+      "locality_id": "D09-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000024",
+      "parent_activation_ids": {
+        "D10-L01": "ACT-00000024"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D10-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D10-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 7.0,
+      "activation_end_day": 26.25,
+      "activation_id": "ACT-00000029",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000000352",
+      "event_type": "recruitment",
+      "locality_id": "D02-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000001",
+      "parent_activation_ids": {
+        "D02-L01": "ACT-00000001"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D02-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D02-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 12.5,
+      "activation_end_day": 36.25,
+      "activation_id": "ACT-00000030",
+      "cause": "formation_relocation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000000621",
+      "event_type": "force_movement",
+      "locality_id": "D01-L06",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000023",
+      "parent_activation_ids": {
+        "D07-L01": "ACT-00000023"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D07-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D07-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 14.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000031",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000000697",
+      "event_type": "recruitment",
+      "locality_id": "D10-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000006",
+      "parent_activation_ids": {
+        "D10-L01": "ACT-00000006"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D10-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D10-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 14.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000032",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000000703",
+      "event_type": "force_movement",
+      "locality_id": "D14-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000031",
+      "parent_activation_ids": {
+        "D10-L01": "ACT-00000031"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D10-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D10-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 21.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000033",
+      "cause": "formation_seeded_local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000001055",
+      "event_type": "recruitment",
+      "locality_id": "D01-L06",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000030",
+      "parent_activation_ids": {
+        "D01-L06": "ACT-00000030"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D01-L06",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D01-L06": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 21.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000034",
+      "cause": "local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000001055",
+      "event_type": "recruitment",
+      "locality_id": "D06-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 21.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000035",
+      "cause": "local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000001055",
+      "event_type": "recruitment",
+      "locality_id": "D11-L04",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 21.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000036",
+      "cause": "local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000001055",
+      "event_type": "recruitment",
+      "locality_id": "D15-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 26.5,
+      "activation_end_day": 89.25,
+      "activation_id": "ACT-00000037",
+      "cause": "formation_relocation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000001331",
+      "event_type": "force_movement",
+      "locality_id": "D11-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000027",
+      "parent_activation_ids": {
+        "D16-L01": "ACT-00000027"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D16-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D16-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 27.25,
+      "activation_end_day": 71.25,
+      "activation_id": "ACT-00000038",
+      "cause": "formation_relocation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000001370",
+      "event_type": "force_movement",
+      "locality_id": "D08-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000029",
+      "parent_activation_ids": {
+        "D02-L01": "ACT-00000029"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D02-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D02-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 28.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000039",
+      "cause": "local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000001406",
+      "event_type": "recruitment",
+      "locality_id": "D01-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 28.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000040",
+      "cause": "formation_seeded_local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000001406",
+      "event_type": "recruitment",
+      "locality_id": "D11-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000037",
+      "parent_activation_ids": {
+        "D11-L01": "ACT-00000037"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D11-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D11-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 28.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000041",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000001406",
+      "event_type": "recruitment",
+      "locality_id": "D01-L06",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000033",
+      "parent_activation_ids": {
+        "D01-L06": "ACT-00000033"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L06",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D01-L06": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 28.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000042",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000001406",
+      "event_type": "recruitment",
+      "locality_id": "D11-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000040",
+      "parent_activation_ids": {
+        "D11-L01": "ACT-00000040"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D11-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 28.0,
+      "activation_end_day": 45.25,
+      "activation_id": "ACT-00000043",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000001406",
+      "event_type": "recruitment",
+      "locality_id": "D02-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000001",
+      "parent_activation_ids": {
+        "D02-L01": "ACT-00000001"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D02-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D02-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 35.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000044",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000001768",
+      "event_type": "recruitment",
+      "locality_id": "D06-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000034",
+      "parent_activation_ids": {
+        "D06-L01": "ACT-00000034"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D06-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D06-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 35.0,
+      "activation_end_day": 42.25,
+      "activation_id": "ACT-00000045",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000001768",
+      "event_type": "recruitment",
+      "locality_id": "D04-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000003",
+      "parent_activation_ids": {
+        "D04-L01": "ACT-00000003"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D04-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D04-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 35.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000046",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000001768",
+      "event_type": "recruitment",
+      "locality_id": "D06-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000034",
+      "parent_activation_ids": {
+        "D06-L01": "ACT-00000034"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D06-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D06-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 36.5,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000047",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000001846",
+      "event_type": "force_movement",
+      "locality_id": "D01-L06",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000023",
+      "parent_activation_ids": {
+        "D07-L01": "ACT-00000023"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D07-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D07-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 42.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000048",
+      "cause": "local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000002123",
+      "event_type": "recruitment",
+      "locality_id": "D09-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 42.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000049",
+      "cause": "local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000002123",
+      "event_type": "recruitment",
+      "locality_id": "D17-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 42.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000050",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000002123",
+      "event_type": "recruitment",
+      "locality_id": "D01-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000039",
+      "parent_activation_ids": {
+        "D01-L01": "ACT-00000039"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D01-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 42.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000051",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000002123",
+      "event_type": "recruitment",
+      "locality_id": "D11-L04",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000035",
+      "parent_activation_ids": {
+        "D11-L04": "ACT-00000035"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L04",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D11-L04": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 42.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000052",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000002123",
+      "event_type": "recruitment",
+      "locality_id": "D15-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000036",
+      "parent_activation_ids": {
+        "D15-L01": "ACT-00000036"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D15-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D15-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 42.0,
+      "activation_end_day": 60.25,
+      "activation_id": "ACT-00000053",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000002123",
+      "event_type": "recruitment",
+      "locality_id": "D01-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000039",
+      "parent_activation_ids": {
+        "D01-L01": "ACT-00000039"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D01-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 42.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000054",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000002123",
+      "event_type": "recruitment",
+      "locality_id": "D11-L04",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000035",
+      "parent_activation_ids": {
+        "D11-L04": "ACT-00000035"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L04",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D11-L04": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 42.0,
+      "activation_end_day": 89.25,
+      "activation_id": "ACT-00000055",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000002123",
+      "event_type": "recruitment",
+      "locality_id": "D15-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000036",
+      "parent_activation_ids": {
+        "D15-L01": "ACT-00000036"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D15-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D15-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 44.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000056",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000002231",
+      "event_type": "force_movement",
+      "locality_id": "D04-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000020",
+      "parent_activation_ids": {
+        "D03-L01": "ACT-00000020"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D03-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D03-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 46.5,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000057",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000002350",
+      "event_type": "force_movement",
+      "locality_id": "D17-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000043",
+      "parent_activation_ids": {
+        "D02-L01": "ACT-00000043"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D02-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D02-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 49.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000058",
+      "cause": "local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000002472",
+      "event_type": "recruitment",
+      "locality_id": "D15-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 49.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000059",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000002472",
+      "event_type": "recruitment",
+      "locality_id": "D09-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000048",
+      "parent_activation_ids": {
+        "D09-L01": "ACT-00000048"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D09-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 49.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000060",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000002472",
+      "event_type": "recruitment",
+      "locality_id": "D17-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000049",
+      "parent_activation_ids": {
+        "D17-L01": "ACT-00000049"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D17-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D17-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 49.0,
+      "activation_end_day": 62.25,
+      "activation_id": "ACT-00000061",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000002472",
+      "event_type": "recruitment",
+      "locality_id": "D02-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000001",
+      "parent_activation_ids": {
+        "D02-L01": "ACT-00000001"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D02-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D02-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 49.0,
+      "activation_end_day": 73.25,
+      "activation_id": "ACT-00000062",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000002472",
+      "event_type": "recruitment",
+      "locality_id": "D09-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000048",
+      "parent_activation_ids": {
+        "D09-L01": "ACT-00000048"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D09-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 56.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000063",
+      "cause": "formation_seeded_local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000002813",
+      "event_type": "recruitment",
+      "locality_id": "D08-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000038",
+      "parent_activation_ids": {
+        "D08-L03": "ACT-00000038"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D08-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D08-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 56.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000064",
+      "cause": "formation_seeded_local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000002813",
+      "event_type": "recruitment",
+      "locality_id": "D14-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000032",
+      "parent_activation_ids": {
+        "D14-L02": "ACT-00000032"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D14-L02",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D14-L02": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 60.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000065",
+      "cause": "armed_member_migration",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000003022",
+      "event_type": "mobility",
+      "locality_id": "D15-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000005",
+      "parent_activation_ids": {
+        "D07-L01": "ACT-00000005"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D07-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D07-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 60.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000066",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000003022",
+      "event_type": "mobility",
+      "locality_id": "D15-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000065",
+      "parent_activation_ids": {
+        "D15-L03": "ACT-00000065"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D15-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D15-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 60.25,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000067",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003033",
+      "event_type": "force_movement",
+      "locality_id": "D01-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000020",
+      "parent_activation_ids": {
+        "D03-L01": "ACT-00000020"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D03-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D03-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 63.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000068",
+      "cause": "formation_seeded_local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000003163",
+      "event_type": "recruitment",
+      "locality_id": "D01-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000067",
+      "parent_activation_ids": {
+        "D01-L02": "ACT-00000067"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D01-L02",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D01-L02": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 63.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000069",
+      "cause": "local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000003163",
+      "event_type": "recruitment",
+      "locality_id": "D08-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": null,
+      "parent_activation_ids": {},
+      "parent_channel": null,
+      "parent_locality_id": null,
+      "parent_weight": 1.0,
+      "parent_weights": {},
+      "viable": true
+    },
+    {
+      "activation_day": 63.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000070",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003163",
+      "event_type": "recruitment",
+      "locality_id": "D02-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000001",
+      "parent_activation_ids": {
+        "D02-L01": "ACT-00000001"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D02-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D02-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 63.0,
+      "activation_end_day": 77.25,
+      "activation_id": "ACT-00000071",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003163",
+      "event_type": "recruitment",
+      "locality_id": "D15-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000065",
+      "parent_activation_ids": {
+        "D15-L03": "ACT-00000065"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D15-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D15-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 64.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000072",
+      "cause": "armed_member_migration",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000003214",
+      "event_type": "mobility",
+      "locality_id": "D09-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000048",
+      "parent_activation_ids": {
+        "D09-L01": "ACT-00000048"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D09-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 70.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000073",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000003487",
+      "event_type": "recruitment",
+      "locality_id": "D01-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000068",
+      "parent_activation_ids": {
+        "D01-L02": "ACT-00000068"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L02",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D01-L02": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 70.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000074",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000003487",
+      "event_type": "recruitment",
+      "locality_id": "D08-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000069",
+      "parent_activation_ids": {
+        "D08-L01": "ACT-00000069"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D08-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D08-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 70.0,
+      "activation_end_day": 81.25,
+      "activation_id": "ACT-00000075",
+      "cause": "local_member_to_force_generation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003487",
+      "event_type": "recruitment",
+      "locality_id": "D01-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000039",
+      "parent_activation_ids": {
+        "D01-L01": "ACT-00000039"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D01-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 70.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000076",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003487",
+      "event_type": "recruitment",
+      "locality_id": "D03-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000002",
+      "parent_activation_ids": {
+        "D03-L01": "ACT-00000002"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D03-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D03-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 70.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000077",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003487",
+      "event_type": "recruitment",
+      "locality_id": "D08-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000069",
+      "parent_activation_ids": {
+        "D08-L01": "ACT-00000069"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D08-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D08-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 70.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000078",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003487",
+      "event_type": "recruitment",
+      "locality_id": "D16-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000009",
+      "parent_activation_ids": {
+        "D16-L01": "ACT-00000009"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D16-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D16-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 71.5,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000079",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003561",
+      "event_type": "force_movement",
+      "locality_id": "D01-L04",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000038",
+      "parent_activation_ids": {
+        "D08-L03": "ACT-00000038"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D08-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D08-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 71.75,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000080",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003571",
+      "event_type": "force_movement",
+      "locality_id": "D11-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000028",
+      "parent_activation_ids": {
+        "D09-L02": "ACT-00000028"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D09-L02",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D09-L02": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 76.75,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000081",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003809",
+      "event_type": "force_movement",
+      "locality_id": "D14-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000071",
+      "parent_activation_ids": {
+        "D15-L03": "ACT-00000071"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D15-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D15-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 77.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000082",
+      "cause": "formation_seeded_local_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000003821",
+      "event_type": "recruitment",
+      "locality_id": "D14-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000081",
+      "parent_activation_ids": {
+        "D14-L03": "ACT-00000081"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D14-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D14-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 77.75,
+      "activation_end_day": 84.0,
+      "activation_id": "ACT-00000083",
+      "cause": "formation_relocation",
+      "censored": false,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003857",
+      "event_type": "force_movement",
+      "locality_id": "D09-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000071",
+      "parent_activation_ids": {
+        "D15-L03": "ACT-00000071"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D15-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D15-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 78.5,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000084",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000003894",
+      "event_type": "force_movement",
+      "locality_id": "D01-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000031",
+      "parent_activation_ids": {
+        "D10-L01": "ACT-00000031"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D10-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D10-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 83.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000085",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000004118",
+      "event_type": "mobility",
+      "locality_id": "D08-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000063",
+      "parent_activation_ids": {
+        "D08-L03": "ACT-00000063"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D08-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D08-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 84.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000086",
+      "cause": "cross_local_social_recruitment",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000004164",
+      "event_type": "recruitment",
+      "locality_id": "D01-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000006",
+      "parent_activation_ids": {
+        "D10-L01": "ACT-00000006"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D10-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D10-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 84.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000087",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000004164",
+      "event_type": "recruitment",
+      "locality_id": "D01-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000039",
+      "parent_activation_ids": {
+        "D01-L01": "ACT-00000039"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D01-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 84.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000088",
+      "cause": "local_member_to_force_generation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000004164",
+      "event_type": "recruitment",
+      "locality_id": "D09-L01",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000048",
+      "parent_activation_ids": {
+        "D09-L01": "ACT-00000048"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D09-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 85.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000089",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000004218",
+      "event_type": "mobility",
+      "locality_id": "D09-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000072",
+      "parent_activation_ids": {
+        "D09-L02": "ACT-00000072"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L02",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D09-L02": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 87.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000090",
+      "cause": "armed_member_migration",
+      "censored": true,
+      "channel": "member_foothold_present",
+      "event_id": "E0000004318",
+      "event_type": "mobility",
+      "locality_id": "D11-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000040",
+      "parent_activation_ids": {
+        "D11-L01": "ACT-00000040"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D11-L01": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 87.0,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000091",
+      "cause": "member_foothold_maturation",
+      "censored": true,
+      "channel": "member_access_saturated",
+      "event_id": "E0000004318",
+      "event_type": "mobility",
+      "locality_id": "D11-L03",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000090",
+      "parent_activation_ids": {
+        "D11-L03": "ACT-00000090"
+      },
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L03",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D11-L03": 1.0
+      },
+      "viable": true
+    },
+    {
+      "activation_day": 89.75,
+      "activation_end_day": 90.0,
+      "activation_id": "ACT-00000092",
+      "cause": "formation_relocation",
+      "censored": true,
+      "channel": "fielded_force_viable",
+      "event_id": "E0000004451",
+      "event_type": "force_movement",
+      "locality_id": "D15-L02",
+      "observation_end_day": 90.0,
+      "parent_activation_id": "ACT-00000023",
+      "parent_activation_ids": {
+        "D07-L01": "ACT-00000023"
+      },
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D07-L01",
+      "parent_weight": 1.0,
+      "parent_weights": {
+        "D07-L01": 1.0
+      },
+      "viable": true
+    }
+  ],
+  "historical_outcomes_used": false,
+  "horizon_days": 90.0,
+  "parent_edge_weight_sums": {
+    "ACT-00000028": 1.0,
+    "ACT-00000029": 1.0,
+    "ACT-00000030": 1.0,
+    "ACT-00000031": 1.0,
+    "ACT-00000032": 1.0,
+    "ACT-00000033": 1.0,
+    "ACT-00000037": 1.0,
+    "ACT-00000038": 1.0,
+    "ACT-00000040": 1.0,
+    "ACT-00000041": 1.0,
+    "ACT-00000042": 1.0,
+    "ACT-00000043": 1.0,
+    "ACT-00000044": 1.0,
+    "ACT-00000045": 1.0,
+    "ACT-00000046": 1.0,
+    "ACT-00000047": 1.0,
+    "ACT-00000050": 1.0,
+    "ACT-00000051": 1.0,
+    "ACT-00000052": 1.0,
+    "ACT-00000053": 1.0,
+    "ACT-00000054": 1.0,
+    "ACT-00000055": 1.0,
+    "ACT-00000056": 1.0,
+    "ACT-00000057": 1.0,
+    "ACT-00000059": 1.0,
+    "ACT-00000060": 1.0,
+    "ACT-00000061": 1.0,
+    "ACT-00000062": 1.0,
+    "ACT-00000063": 1.0,
+    "ACT-00000064": 1.0,
+    "ACT-00000065": 1.0,
+    "ACT-00000066": 1.0,
+    "ACT-00000067": 1.0,
+    "ACT-00000068": 1.0,
+    "ACT-00000070": 1.0,
+    "ACT-00000071": 1.0,
+    "ACT-00000072": 1.0,
+    "ACT-00000073": 1.0,
+    "ACT-00000074": 1.0,
+    "ACT-00000075": 1.0,
+    "ACT-00000076": 1.0,
+    "ACT-00000077": 1.0,
+    "ACT-00000078": 1.0,
+    "ACT-00000079": 1.0,
+    "ACT-00000080": 1.0,
+    "ACT-00000081": 1.0,
+    "ACT-00000082": 1.0,
+    "ACT-00000083": 1.0,
+    "ACT-00000084": 1.0,
+    "ACT-00000085": 1.0,
+    "ACT-00000086": 1.0,
+    "ACT-00000087": 1.0,
+    "ACT-00000088": 1.0,
+    "ACT-00000089": 1.0,
+    "ACT-00000090": 1.0,
+    "ACT-00000091": 1.0,
+    "ACT-00000092": 1.0
+  },
+  "parent_edges": [
+    {
+      "child_activation_id": "ACT-00000028",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D09-L02",
+      "parent_activation_id": "ACT-00000024",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D10-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000029",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D02-L01",
+      "parent_activation_id": "ACT-00000001",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D02-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000030",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D01-L06",
+      "parent_activation_id": "ACT-00000023",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D07-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000031",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D10-L01",
+      "parent_activation_id": "ACT-00000006",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D10-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000032",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D14-L02",
+      "parent_activation_id": "ACT-00000031",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D10-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000033",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D01-L06",
+      "parent_activation_id": "ACT-00000030",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D01-L06",
+      "pathway": "formation_seeded_local_recruitment",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000037",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D11-L01",
+      "parent_activation_id": "ACT-00000027",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D16-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000038",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D08-L03",
+      "parent_activation_id": "ACT-00000029",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D02-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000040",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D11-L01",
+      "parent_activation_id": "ACT-00000037",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D11-L01",
+      "pathway": "formation_seeded_local_recruitment",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000041",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D01-L06",
+      "parent_activation_id": "ACT-00000033",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L06",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000042",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D11-L01",
+      "parent_activation_id": "ACT-00000040",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L01",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000043",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D02-L01",
+      "parent_activation_id": "ACT-00000001",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D02-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000044",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D06-L01",
+      "parent_activation_id": "ACT-00000034",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D06-L01",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000045",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D04-L01",
+      "parent_activation_id": "ACT-00000003",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D04-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000046",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D06-L01",
+      "parent_activation_id": "ACT-00000034",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D06-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000047",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D01-L06",
+      "parent_activation_id": "ACT-00000023",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D07-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000050",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D01-L01",
+      "parent_activation_id": "ACT-00000039",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L01",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000051",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D11-L04",
+      "parent_activation_id": "ACT-00000035",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L04",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000052",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D15-L01",
+      "parent_activation_id": "ACT-00000036",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D15-L01",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000053",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D01-L01",
+      "parent_activation_id": "ACT-00000039",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000054",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D11-L04",
+      "parent_activation_id": "ACT-00000035",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L04",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000055",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D15-L01",
+      "parent_activation_id": "ACT-00000036",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D15-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000056",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D04-L01",
+      "parent_activation_id": "ACT-00000020",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D03-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000057",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D17-L01",
+      "parent_activation_id": "ACT-00000043",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D02-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000059",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D09-L01",
+      "parent_activation_id": "ACT-00000048",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L01",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000060",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D17-L01",
+      "parent_activation_id": "ACT-00000049",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D17-L01",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000061",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D02-L01",
+      "parent_activation_id": "ACT-00000001",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D02-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000062",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D09-L01",
+      "parent_activation_id": "ACT-00000048",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000063",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D08-L03",
+      "parent_activation_id": "ACT-00000038",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D08-L03",
+      "pathway": "formation_seeded_local_recruitment",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000064",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D14-L02",
+      "parent_activation_id": "ACT-00000032",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D14-L02",
+      "pathway": "formation_seeded_local_recruitment",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000065",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D15-L03",
+      "parent_activation_id": "ACT-00000005",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D07-L01",
+      "pathway": "armed_member_migration",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000066",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D15-L03",
+      "parent_activation_id": "ACT-00000065",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D15-L03",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000067",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D01-L02",
+      "parent_activation_id": "ACT-00000020",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D03-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000068",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D01-L02",
+      "parent_activation_id": "ACT-00000067",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D01-L02",
+      "pathway": "formation_seeded_local_recruitment",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000070",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D02-L01",
+      "parent_activation_id": "ACT-00000001",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D02-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000071",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D15-L03",
+      "parent_activation_id": "ACT-00000065",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D15-L03",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000072",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D09-L02",
+      "parent_activation_id": "ACT-00000048",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L01",
+      "pathway": "armed_member_migration",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000073",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D01-L02",
+      "parent_activation_id": "ACT-00000068",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L02",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000074",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D08-L01",
+      "parent_activation_id": "ACT-00000069",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D08-L01",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000075",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D01-L01",
+      "parent_activation_id": "ACT-00000039",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000076",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D03-L01",
+      "parent_activation_id": "ACT-00000002",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D03-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000077",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D08-L01",
+      "parent_activation_id": "ACT-00000069",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D08-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000078",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D16-L01",
+      "parent_activation_id": "ACT-00000009",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D16-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000079",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D01-L04",
+      "parent_activation_id": "ACT-00000038",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D08-L03",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000080",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D11-L03",
+      "parent_activation_id": "ACT-00000028",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D09-L02",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000081",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D14-L03",
+      "parent_activation_id": "ACT-00000071",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D15-L03",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000082",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D14-L03",
+      "parent_activation_id": "ACT-00000081",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D14-L03",
+      "pathway": "formation_seeded_local_recruitment",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000083",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D09-L01",
+      "parent_activation_id": "ACT-00000071",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D15-L03",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000084",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D01-L03",
+      "parent_activation_id": "ACT-00000031",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D10-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000085",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D08-L03",
+      "parent_activation_id": "ACT-00000063",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D08-L03",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000086",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D01-L03",
+      "parent_activation_id": "ACT-00000006",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D10-L01",
+      "pathway": "cross_local_social_recruitment",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000087",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D01-L01",
+      "parent_activation_id": "ACT-00000039",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D01-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000088",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D09-L01",
+      "parent_activation_id": "ACT-00000048",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L01",
+      "pathway": "local_member_to_force_generation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000089",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D09-L02",
+      "parent_activation_id": "ACT-00000072",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D09-L02",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000090",
+      "child_channel": "member_foothold_present",
+      "child_locality_id": "D11-L03",
+      "parent_activation_id": "ACT-00000040",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L01",
+      "pathway": "armed_member_migration",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000091",
+      "child_channel": "member_access_saturated",
+      "child_locality_id": "D11-L03",
+      "parent_activation_id": "ACT-00000090",
+      "parent_channel": "member_foothold_present",
+      "parent_locality_id": "D11-L03",
+      "pathway": "member_foothold_maturation",
+      "weight": 1.0
+    },
+    {
+      "child_activation_id": "ACT-00000092",
+      "child_channel": "fielded_force_viable",
+      "child_locality_id": "D15-L02",
+      "parent_activation_id": "ACT-00000023",
+      "parent_channel": "fielded_force_viable",
+      "parent_locality_id": "D07-L01",
+      "pathway": "formation_relocation",
+      "weight": 1.0
+    }
+  ],
+  "parentage_coverage": {
+    "nonroot_episodes": 65,
+    "parented_nonroot_episodes": 57,
+    "root_initial_condition_episodes": 27
+  },
+  "schema_version": "1.2.0",
+  "seed": 20260905,
+  "status": "observation_only_synthetic_activation_genealogy",
+  "thresholds": {
+    "fielded_force_viable_personnel": 75.0,
+    "member_access_saturated_represented_population": 1000.0,
+    "member_foothold_present_represented_population": "> 1e-12"
+  }
+}

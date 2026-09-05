@@ -1,0 +1,67 @@
+{
+  "cases": [
+    {
+      "assigned_rows": 4741,
+      "assigned_units": 73,
+      "assignment_coverage": 0.9995783259540375,
+      "assignment_rule": "district_id is nonempty",
+      "case_id": "nepal_2001_2006",
+      "date_range": {
+        "end": "2006-11-18",
+        "start": "2001-11-26"
+      },
+      "interpretation": "Coverage describes observed location assignment only; unassigned rows remain missing and are not imputed as zero or latent activity.",
+      "provenance": [
+        {
+          "path": "studies/nepal_2001_2006/data/processed/ucdp_nepal_events.csv",
+          "sha256": "4e71af81fcfdb519f10945a5a702d2c6231ac4fa80344b393bd9ad28ab8a9fc3"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_week_panel.csv",
+          "sha256": "bc9596cc8d0cc639f3d78ca06a5e3a077c03923d4121b9181b568a3da4208200"
+        }
+      ],
+      "raw_event_rows": 4743,
+      "unassigned_rows": 2
+    },
+    {
+      "assigned_rows": 16115,
+      "assigned_units": 366,
+      "assignment_coverage": 0.41537787400762965,
+      "assignment_rule": "district_high_confidence == 1 and district_id is nonempty",
+      "case_id": "afghanistan_2004_2021",
+      "date_range": {
+        "end": "2021-08-15",
+        "start": "2004-01-02"
+      },
+      "interpretation": "Coverage describes observed location assignment only; unassigned rows remain missing and are not imputed as zero or latent activity.",
+      "provenance": [
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/ucdp_afghanistan_events.csv",
+          "sha256": "63c8ca63bdb7b037f6463018d5991e37cb57a26be778a15643cb3d998cd2689c"
+        },
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_month_panel.csv",
+          "sha256": "79dd03383b953557bb44aae8acda1b0038900b676a6135739128038e4be0d8b9"
+        }
+      ],
+      "raw_event_rows": 38796,
+      "unassigned_rows": 22681
+    }
+  ],
+  "core_change_licensed": false,
+  "historical_outcomes_used": true,
+  "historical_parameter_fitting": false,
+  "negative_constraints": [
+    "assignment coverage does not identify actor reproduction",
+    "unassigned events are missing, not zeros or latent activity",
+    "coverage differences prevent direct cross-case rate comparison without a measurement model"
+  ],
+  "program_id": "comparative-insurgency-v1",
+  "promotion_decision": {
+    "reason": "Location assignment remains an observation-process limitation requiring sensitivity or a frozen case-specific observation model.",
+    "stable_general_theory_licensed": false
+  },
+  "schema_version": "1.0.0",
+  "status": "descriptive_assignment_coverage_not_imputation"
+}

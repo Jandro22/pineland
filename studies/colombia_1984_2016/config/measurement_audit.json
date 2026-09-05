@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "colombia_1984_2016",
+  "status": "frozen",
+  "outcomes": {
+    "violence": {"source": "UCDP GED", "recorded_not_latent": true, "unit": "municipality-month"},
+    "civilian_harm": {"source": "CNMH OMC aggregate", "recorded_not_latent": true, "unit": "municipality-year"},
+    "control_or_presence": {"source": "CNMH structure-presence records", "status": "pending_acquisition", "not_substituted_by_violence": true}
+  },
+  "rules": [
+    "UCDP and CNMH event counts remain separate observation streams.",
+    "Missing municipality-month observations are not imputed as zero violence.",
+    "Presence records are lower-bound presence evidence and cannot be relabeled territorial control.",
+    "No holdout outcome is used to alter the observation operator."
+  ]
+}

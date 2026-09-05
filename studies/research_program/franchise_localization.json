@@ -1,0 +1,76 @@
+{
+  "competing_recruitment_order_invariance": {
+    "invariant": true,
+    "normal_contested_candidates": 1,
+    "normal_insertion_winner": "franchise-a",
+    "reverse_contested_candidates": 1,
+    "reverse_insertion_winner": "franchise-a"
+  },
+  "franchise_signal_specificity": {
+    "generic_insurgent_exposure": 0.25,
+    "rival_franchise_exposure": 0.0,
+    "source_franchise_exposure": 0.25
+  },
+  "gates": {
+    "competing_recruitment_is_insertion_order_invariant": true,
+    "localization_curve_is_monotone": true,
+    "rooted_franchise_advantage_when_local_identity_salient": true,
+    "rootedness_effect_vanishes_without_local_identity_salience": true,
+    "social_signal_is_franchise_specific": true
+  },
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "interpretation": "The live model now represents constituency-franchise congruence as an endogenous locality-specific property of actual membership origins, not as an ethnicity rule. Outside organizations can localize by recruiting indigenous members, and multiple insurgent organizations retain distinct social signals and compete for unaffiliated recruits.",
+  "localization_curve": [
+    {
+      "home_district_share": 0.0,
+      "home_locality_share": 0.0,
+      "indigenous_member_share": 0.0,
+      "recruitment_intensity": 0.5374298453437496
+    },
+    {
+      "home_district_share": 0.3333333333333333,
+      "home_locality_share": 0.3333333333333333,
+      "indigenous_member_share": 0.3333333333333333,
+      "recruitment_intensity": 0.6570104626734988
+    },
+    {
+      "home_district_share": 0.6666666666666666,
+      "home_locality_share": 0.6666666666666666,
+      "indigenous_member_share": 0.6666666666666666,
+      "recruitment_intensity": 0.759510916949111
+    },
+    {
+      "home_district_share": 1.0,
+      "home_locality_share": 1.0,
+      "indigenous_member_share": 1.0,
+      "recruitment_intensity": 0.8388910504234147
+    }
+  ],
+  "passed": true,
+  "rootedness_contrast": {
+    "high_local_identity": {
+      "difference": 0.3014612050796651,
+      "local_franchise_intensity": 0.8388910504234147,
+      "outsider_franchise_intensity": 0.5374298453437496
+    },
+    "local_rootedness": {
+      "home_district_share": 1.0,
+      "home_locality_share": 1.0,
+      "represented_local_membership": 73333.33333333334
+    },
+    "outsider_rootedness": {
+      "home_district_share": 0.0,
+      "home_locality_share": 0.0,
+      "represented_local_membership": 73333.33333333334
+    },
+    "zero_local_identity": {
+      "difference": 0.0,
+      "local_franchise_intensity": 0.7109495026250039,
+      "outsider_franchise_intensity": 0.7109495026250039
+    }
+  },
+  "schema_version": "1.0.0",
+  "seed": 20260905,
+  "status": "synthetic_franchise_localization_identification"
+}

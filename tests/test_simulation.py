@@ -30,6 +30,30 @@ class SimulationTests(unittest.TestCase):
         self.assertEqual(first.summary(), second.summary())
         self.assertEqual(first.checkpoints, second.checkpoints)
 
+    def test_non_aligned_horizon_reports_requested_calendar_time(self):
+        config = small_config(
+            horizon_days=2.3,
+            include_insurgency=False,
+            agent_count=100,
+            locality_count=17,
+        )
+        result = Simulation(generate_pineland(config)).run()
+        self.assertAlmostEqual(result.stopped_at, 2.3, places=12)
+        self.assertAlmostEqual(result.world.time, 2.3, places=12)
+        self.assertAlmostEqual(result.world.checkpoints[-1]["time"], 2.3, places=12)
+
+    def test_run_rejects_backward_horizon(self):
+        simulation = Simulation(generate_pineland(small_config(horizon_days=3)))
+        simulation.run(until=2.0)
+        with self.assertRaisesRegex(ValueError, "cannot run backward"):
+            simulation.run(until=1.0)
+        self.assertEqual(simulation.world.time, 2.0)
+
+    def test_max_events_stop_is_not_relabelled_as_completed_horizon(self):
+        simulation = Simulation(generate_pineland(small_config(horizon_days=8)))
+        result = simulation.run(until=8.0, max_events=1)
+        self.assertLess(result.stopped_at, 8.0)
+
     def test_no_insurgency_null_model(self):
         world = Simulation(generate_pineland(small_config(include_insurgency=False))).run().world
         self.assertNotIn("insurgent", world.organizations)
@@ -56,6 +80,26 @@ class SimulationTests(unittest.TestCase):
         fork.organizations["government"].resources += 1
         self.assertNotEqual(base.organizations["government"].resources,
                             fork.organizations["government"].resources)
+
+    def test_world_invariants_reject_armed_member_with_rival_franchise_affinity(self):
+        world = generate_pineland(small_config())
+        insurgent = world.organizations["insurgent"]
+        member_id = next(iter(insurgent.member_ids))
+        member = world.persons[member_id]
+        world.assert_invariants()
+        member.insurgent_affinity["insurgent"] = 0.5
+        # Add a second live insurgent identity only to make the corruption
+        # explicit; active armed membership itself remains assigned to PRF.
+        rival = __import__("copy").deepcopy(insurgent)
+        rival.organization_id = "rival-franchise"
+        rival.name = "Rival Franchise"
+        rival.member_ids = set()
+        world.organizations[rival.organization_id] = rival
+        member.insurgent_affinity[rival.organization_id] = 0.5
+        with self.assertRaisesRegex(
+            AssertionError, "competing franchise affinity"
+        ):
+            world.assert_invariants()
 
     def test_matched_seed_counterfactual(self):
         config = small_config(horizon_days=3)

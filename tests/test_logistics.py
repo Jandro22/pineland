@@ -14,6 +14,7 @@ from pineland_sim.logistics import (
     update_logistics,
 )
 from pineland_sim.physical import recompute_microzone_control
+from pineland_sim.reproducibility import decision_state_sha256
 
 
 class AlwaysSuccessRng:
@@ -45,6 +46,37 @@ class LogisticsTests(unittest.TestCase):
         self.assertGreater(far_order.travel_time_hours, near_order.travel_time_hours)
         self.assertGreater(far_order.supply_cost, near_order.supply_cost)
 
+    def test_route_cache_is_scientifically_inert(self):
+        formation = self.world.formations["FDF-01"]
+        destination = next(
+            locality_id for locality_id in self.world.localities
+            if locality_id != formation.locality_id
+        )
+        before = decision_state_sha256(self.world)
+        first = shortest_locality_path(
+            self.world, formation.locality_id, destination, formation.mobility
+        )
+        self.assertEqual(len(self.world.locality_path_cache), 1)
+        second = shortest_locality_path(
+            self.world, formation.locality_id, destination, formation.mobility
+        )
+        self.assertEqual(first, second)
+        self.assertIsNot(first[0], second[0])
+        self.assertEqual(decision_state_sha256(self.world), before)
+
+    def test_in_transit_stock_cache_matches_shipment_records(self):
+        # The cache is an accounting accelerator only; it must agree with the
+        # forensic shipment dictionary after a normal short trajectory.
+        world = Simulation(generate_pineland(SimulationConfig(
+            agent_count=100, locality_count=17, horizon_days=5, seed=304
+        ))).run().world
+        scanned = sum(
+            shipment.quantity_deliverable
+            for shipment in world.supply_shipments.values()
+            if shipment.status == "in_transit"
+        )
+        self.assertAlmostEqual(world.in_transit_supply_total, scanned, places=9)
+
     def test_command_delay_precedes_movement_and_movement_removes_availability(self):
         formation = self.world.formations["FDF-01"]
         destination = next(iter(self.world.adjacency[formation.locality_id]))
@@ -72,8 +104,19 @@ class LogisticsTests(unittest.TestCase):
                 self.world, formation.locality_id, locality_id, formation.mobility
             )[2],
         )
-        for locality_id in self.world.localities:
-            self.world.beliefs[(formation.organization_id, locality_id)].control_estimate.physical = 1.0
+        for locality_id, locality in self.world.localities.items():
+            # Hold population and opponent belief fixed so this test isolates
+            # the actor's own-control belief rather than the explicit stay,
+            # importance, or threatened-control channels.
+            locality.population = 10_000
+            belief = self.world.beliefs[(formation.organization_id, locality_id)]
+            belief.control_estimate.physical = 1.0
+            belief.confidence = 1.0
+            opponent = self.world.control_beliefs[
+                (formation.organization_id, "insurgent", locality_id)
+            ]
+            opponent.control_estimate.physical = 0.0
+            opponent.confidence = 1.0
         self.world.beliefs[(formation.organization_id, nearest)].control_estimate.physical = 0.0
         original_rate = self.world.config.logistics.reallocation_rate
         self.world.config.logistics.reallocation_rate = 1.0
@@ -163,6 +206,19 @@ class LogisticsTests(unittest.TestCase):
         self.assertTrue(world.resource_flows)
         locality_id = max(world.control_cost_consumed, key=world.control_cost_consumed.get)
         self.assertGreater(control_cost(world, locality_id)["supply_units_per_day"], 0)
+
+    def test_manpower_shrink_never_discards_existing_supply(self):
+        formation = self.world.formations["FDF-01"]
+        before_stock = formation.supply_stock
+        before_stocks = self.world.tracked_stock_totals()
+        formation.personnel *= .1
+        self.world.record_stock_transactions(
+            "T-MANPOWER-SHRINK", "test", before_stocks, self.world.tracked_stock_totals()
+        )
+        update_logistics(self.world, 1, 0.0)
+        self.assertEqual(formation.supply_stock, before_stock)
+        self.assertGreaterEqual(formation.supply_capacity, formation.supply_stock)
+        self.world.assert_invariants()
 
     def test_logistics_trajectory_is_reproducible(self):
         first = Simulation(self.world.clone()).run(until=5).world

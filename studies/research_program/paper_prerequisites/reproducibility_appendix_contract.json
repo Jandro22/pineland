@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "status": "appendix_contract_not_final_release",
+  "purpose": "Define the minimum provenance package for every numerical statement in the eventual paper.",
+  "per_result_requirements": [
+    "result_id",
+    "paper_figure_or_table_id",
+    "claim_id_or_descriptive_only",
+    "model_sha256",
+    "tracked_diff_sha256_or_clean_commit",
+    "builder_or_analysis_script_sha256",
+    "configuration_sha256",
+    "case_data_sha256",
+    "split_sha256",
+    "observation_operator_sha256",
+    "seed_or_seed_set",
+    "RNG_namespace",
+    "output_artifact_sha256",
+    "software_environment",
+    "regeneration_command"
+  ],
+  "run_rules": [
+    "Historical result artifacts must be produced by or explicitly bound to the source hash they claim.",
+    "A later source checkout cannot retroactively certify an older run.",
+    "Synthetic results must be labeled synthetic and cannot fill a historical case cell.",
+    "Exploratory diagnostics must be labeled exploratory and cannot be silently relabeled preregistered.",
+    "Failed and null runs remain addressable artifacts.",
+    "Measurement operators and split definitions are versioned independently of model source.",
+    "Any manual data transformation used in a paper result must have a source manifest and transformation record."
+  ],
+  "final_release_bundle": [
+    "paper_claim_evidence_matrix.json",
+    "paper_result_manifest.json",
+    "model_release_certificate.json",
+    "environment_lock_or_equivalent",
+    "case_source_manifests",
+    "case_processed_data_manifests",
+    "frozen_split_manifests",
+    "observation_operator_manifests",
+    "analysis_scripts",
+    "figure_and_table_build_scripts",
+    "negative_result_ledger",
+    "README_with_regeneration_commands"
+  ],
+  "current_status": "schema_can_be_finalized_now_final_hashes_blocked"
+}

@@ -1,6 +1,12 @@
 # Pineland COIN-SIM
 
-Version 0.12 adds an empirical-data boundary, provenance-preserving case
+Version 0.13 adds a belief-based, budget-constrained organized-action layer
+that separates persistent organizational capacity from action choice, execution,
+latent events, and historical recording. Armed formation contact remains one
+event channel rather than defining the full support of organized violence.
+See `docs/action-model.md`.
+
+Version 0.12 added an empirical-data boundary, provenance-preserving case
 packages, measurement-error-aware targets, fragmentation forensics, synthetic
 parameter recovery, and question-specific parameter registries. See
 `docs/empirical-benchmarking.md`.
@@ -27,13 +33,26 @@ foreign formations, interpreters, imperfect foreign beliefs, host dependence,
 capacity transfer/crowding-out, foreign domestic politics, rivalry, and routed
 withdrawal. See [the foreign-affairs model](docs/foreign-affairs.md).
 
-Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.12.0 development line implements the runtime spine, social and physical structure, logistics, spatial combat, endogenous organization ecology, political order, foreign affairs, peace processes, and explicit detection/information fusion described by the technical design specification. It remains a research prototype; numeric priors are not calibrated findings.
+Pineland COIN-SIM is a research-oriented, partially observed agent-based simulation of insurgency, counterinsurgency, governance, mobility, information, and multidimensional territorial control. The current v0.13.0 development line implements the runtime spine, social and physical structure, logistics, persistent organization ecology, belief-based organized action, spatial combat, political order, foreign affairs, peace processes, and explicit detection/information fusion. It remains a research prototype; numeric priors are not calibrated findings.
 
-The current engine is intentionally dependency-light and transparent. Every important control change is written to a causal ledger, actors act on noisy estimates rather than world truth, population agents carry weights, and all randomness is split into deterministic named streams. Version 0.12 also records cross-stock transactions and sparse state deltas, executes an explicitly unrecorded burn-in when configured, uses spatially generated locality links, and exposes adversarial validation batteries for firewall, scheduler, conservation, recording, resolution, sensitivity, recovery, and foreign-withdrawal diagnostics.
+The current engine is intentionally dependency-light and transparent. Every important control change is written to a causal ledger, actors act on noisy estimates rather than world truth, and population agents carry represented-population weights. Latent process transitions and synthetic historical recording use separate deterministic per-event-type RNG namespaces, so recording/output settings do not advance the scientific transition streams. Version 0.12 also records cross-stock transactions and sparse state deltas, executes an explicitly unrecorded burn-in when configured, uses spatially generated locality links, and exposes adversarial validation batteries for firewall, scheduler, conservation, recording, resolution, sensitivity, recovery, and foreign-withdrawal diagnostics.
+
+The implementation-synchronized ODD description and state/observation taxonomy
+are in [`docs/odd-model.md`](docs/odd-model.md). In particular, structural
+assumptions, engineering priors, case inputs, calibrated parameters, latent
+states, actor beliefs, and recorded observables are treated as different
+scientific objects rather than interchangeable "parameters."
+
+Research-readiness commands now provide a decision-level truth-firewall battery,
+forensic/ensemble/calibration output benchmarking, a representative-agent and
+household audit, degree-preserving topology ablations, an eight-cell language
+factorial, globally reconciled stock accounting, multi-resolution and powered
+sensitivity/recovery diagnostics, and a data-free first-paper contract. See
+[the research-readiness contract](docs/research-readiness.md).
 
 ## Implemented foundation
 
-- Fixed 17-district Pineland registry and configurable generation of 60–90 heterogeneous localities.
+- Default 17-district synthetic Pineland registry with configurable localities, plus empirical geography schemas 1.0.0–3.0.0 for case-supplied districts/containers, localities, hierarchy, population, coordinates, adjacency, and physical covariates.
 - Weighted people, explicit households, individual multilingual proficiency, identities, preferences, grievance, fear, efficacy, trust, home, and residence.
 - Explicit social communities and sparse multiplex household, community, and cross-community bridge edges.
 - Language-aware communication weights, network exposure, civilian public-behavior choice, and community-to-locality aggregation.
@@ -49,7 +68,8 @@ The current engine is intentionally dependency-light and transparent. Every impo
 - Government, military, police, parties, an optional insurgent organization, and armed formations.
 - Seven-dimensional control vectors for formal, physical, administrative, legal, fiscal, social, and expected control.
 - Connected locality graph with terrain-friction travel costs.
-- Asynchronous priority event scheduler with terrain-sensitive formation movement/patrol, information collection/fusion, civilian mobility, recruitment, governance, economy, detection/contact/combat, and checkpoint processes.
+- Asynchronous priority event scheduler with terrain-sensitive formation movement/patrol, information collection/fusion, civilian mobility, recruitment, governance, economy, belief-based organized action, combat, and checkpoint processes.
+- Budget-constrained choice among waiting, armed confrontation, nonfielded human-target violence, asset violence, and nonviolent coercion; execution checks hidden target truth only after planning.
 - Actor-specific evidence-based beliefs and a separate biased synthetic historical record.
 - Conserved represented population, bounded state checks, stock checks, deterministic checkpoints, and causal provenance.
 - Matched-seed scenario forks, ensemble summaries, locality causal decomposition, control velocity, and district aggregation.
@@ -95,10 +115,58 @@ pineland-sim scale-check --config scenarios/baseline.json `
 
 The baseline configuration uses the specification target of 75,000 weighted agents. Start with smaller populations during development and benchmark 25,000, 75,000, and 150,000 agents before calibration runs.
 
+Run the publication-readiness smoke battery (add `--full` for the powered
+resolution/sensitivity/recovery runs):
+
+```powershell
+pineland-sim readiness-report --agents 250 --days 2 `
+  --output outputs/publication-readiness.json
+```
+
+The replicated language-factorial runs use up to eight CPU cores by default
+(`--workers N` overrides this). Each worker owns a complete seeded simulation;
+parallel scheduling therefore cannot change event ordering or random streams.
+
+### Nepal historical benchmark
+
+The first empirical benchmark is pinned under
+`studies/nepal_2001_2006/`. It uses UCDP GED 26.1 as the district-week event
+target, a separately documented INSEC cumulative spatial cross-check, a frozen
+temporal/geographic split, eight fixed-seed 750-agent trajectories, four
+process-isolated workers, leakage-controlled statistical competitors, and
+matched mechanism ablations. Rebuild the derived products with:
+
+```powershell
+$env:PYTHONPATH = "src"
+python studies/nepal_2001_2006/scripts/validate_contact_microworld.py
+python studies/nepal_2001_2006/scripts/validate_logistics_independent.py
+python studies/nepal_2001_2006/scripts/audit_supply_double_counting.py
+python studies/nepal_2001_2006/scripts/validate_logistics_contact_branches.py
+python studies/nepal_2001_2006/scripts/recover_contact_rate.py
+python studies/nepal_2001_2006/scripts/analyze_supply_contact_chain.py
+python studies/nepal_2001_2006/scripts/compute_contact_forensic.py
+python studies/nepal_2001_2006/scripts/run_resolution_forensic.py
+python studies/nepal_2001_2006/scripts/compute_model_benchmark.py
+python studies/nepal_2001_2006/scripts/plot_benchmark.py
+python studies/nepal_2001_2006/scripts/write_final_report.py
+```
+
+The current post-repair opportunity assessment is
+`studies/nepal_2001_2006/results/opportunity_structure/armed_interaction_opportunity_report.md`,
+with machine-readable metrics in
+`results/opportunity_structure/post_repair_metrics.json`. The earlier
+near-zero/zero-recorded-contact result is retained as a pre-repair
+falsification artifact, not as the current model description. The repaired
+opportunity structure produces a nondegenerate latent and recorded engagement
+stream, but still underproduces the frozen district-week historical incidence.
+The opportunity ceiling is therefore treated as structurally resolved while
+historical fit and `contact_rate` calibration remain explicitly unlicensed.
+
 ## Output contract
 
 Each run produces:
 
+- `run_metadata.json`: schema, seed/stream namespace, output mode, resolution, and horizon.
 - `summary.json`: headline counts and effective-control summaries.
 - `checkpoints.json`: locality-by-actor control state at analysis intervals.
 - `synthetic_records.jsonl`: imperfect researcher-visible event records.
@@ -111,13 +179,53 @@ Each run produces:
 - `observations.jsonl`: first-class source observations with timestamps, estimated values, provenance, quality, and decay rates.
 - `information_relays.jsonl`: command-network transmission attempts, route, latency, reliability, and delivery status.
 - `recording_diagnostics.json`: generated-versus-recorded recall, event-type strata, geocoding-error rate, and distance distribution.
+- `contact_funnel.jsonl`: scheduler-to-engagement gate traces with standardized rejection reasons and conditional counts.
+- `action_funnel.json`: compact multichannel opportunity, choice, failure, latent-event, and state-based-event counts.
 - `organization_eligibility.jsonl`: represented-size eligibility, split-hazard components, and realized conditional draws.
+- `organization_onset.jsonl`: expected versus experienced repression and onset hazards.
 - `causal_integrity_diagnostics.json`: cross-stock residuals, side-symmetric physical reach, belief-confidence health, recruitment-clock, patronage, and pathology warnings.
 - `stock_transactions.jsonl`: event-boundary material/manpower deltas with stock class and boundary provenance.
 - `state_deltas.jsonl`: sparse control, formation, belief, and organization changes keyed to event IDs.
 - `stock_ledger_diagnostics.json`: initial/current aggregate stocks and conservation residuals.
+- `global_accounting.json`: per-stock and population reconciliation with explicit flow-kind equations.
 
 The effective-control scalar is for dashboards only. Analysis should retain the complete seven-dimensional vectors and their trajectories.
+
+### Comparative research program
+
+The moonshot roadmap is now encoded as an auditable program under
+`studies/research_program/`: a frozen-core rule, case ladder, transport rules,
+provisional competitive-local-reproduction theory, and a preregistered COIN
+intervention contract. Run its structural audit with:
+
+```powershell
+$env:PYTHONPATH = "src"
+python studies/research_program/scripts/audit_program.py
+python studies/research_program/scripts/validate_coin_contract.py
+```
+
+The audit intentionally keeps calibration and general COIN efficacy unlicensed
+until transfer evidence and simple-competitor tests earn them. The Colombia,
+Iraq, and Vietnam packages are preregistration scaffolds, not completed case
+claims.
+
+### Current empirical status
+
+Nepal and the first Afghanistan transfer are preserved negative results, not
+validated substantive predictions. The completed 5,036-day Afghanistan
+trajectories reached the October 2017 target but reproduced almost none of the
+historically active province-weeks and produced zero or negative district
+control correlations under the frozen v1 scalar measurement formulation.
+Their supply-ledger failures have been reclassified as floating-point noise by
+an absolute-plus-relative tolerance; no empirical score changed.
+
+The prospective SIGAR operator is declared in
+`studies/afghanistan_2004_2021/config/control_observation_model.json`. Future
+runs retain all seven control dimensions for both actors. It is prohibited to
+apply that operator retroactively to legacy scalar snapshots. Question-level
+identifiability and spatial-reproduction diagnostics are under
+`studies/research_program/`; global calibration and COIN inference remain
+unlicensed.
 
 ## Tests
 
@@ -133,7 +241,7 @@ The suite covers bounded equations, scheduler ordering, population and supply co
 
 ## Scope still ahead
 
-The implemented conflict lifecycle is complete through combat, organizational ecology, political order, foreign affairs, and bargaining/DDR/recurrence. Remaining work is research validation rather than missing runtime plumbing: multi-seed resolution ladders, parameter recovery, global sensitivity, measurement-model calibration, mechanism ablations, long-horizon pathology monitoring, richer geography, and optional columnar/interactive analyst outputs.
+The implemented conflict lifecycle is complete through combat, organizational ecology, political order, foreign affairs, and bargaining/DDR/recurrence. Research-readiness batteries now cover multi-seed resolution ladders, synthetic recorded-layer recovery, global sensitivity, measurement-model calibration, mechanism/topology/language ablations, global accounting, and long-horizon pathology monitoring. Empirical case data, construct calibration, holdout evaluation, and optional columnar/interactive analyst outputs remain external research work.
 
 Numeric values in code are transparent initial priors. They are not calibrated findings or policy recommendations.
 

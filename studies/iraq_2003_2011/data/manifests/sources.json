@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0.0",
+  "status": "acquired_and_hashed",
+  "case_id": "iraq_2003_2011",
+  "sources": [
+    {
+      "construct": "violence",
+      "provider": "Uppsala Conflict Data Program",
+      "dataset": "Georeferenced Event Dataset",
+      "url": "https://ucdp.uu.se/downloads/",
+      "coverage": "2003-2011",
+      "acquisition_status": "acquired",
+      "local_path": "data/raw/ged261-csv.zip",
+      "sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
+      "bytes": 39122522,
+      "future_outcome_used": false
+    },
+    {
+      "construct": "urban_control_and_governance_context",
+      "provider": "Special Inspector General for Iraq Reconstruction",
+      "dataset": "Rusafa Political District case study and related reports",
+      "url": "https://www.govinfo.gov/content/pkg/GOVPUB-S-PURL-gpo36625/pdf/GOVPUB-S-PURL-gpo36625.pdf",
+      "coverage": "case-dependent",
+      "acquisition_status": "acquired",
+      "local_path": "data/raw/sigir_rusafa.pdf",
+      "sha256": "e86d821df6c3342df89f898f73c963d9cfbad86dc32ea3be469af6878c7deff6",
+      "bytes": 1665426,
+      "future_outcome_used": false
+    },
+    {
+      "construct": "geography",
+      "provider": "GADM",
+      "dataset": "administrative boundaries",
+      "url": "https://gadm.org/download_country.html",
+      "coverage": "2003-2011 administrative geography",
+      "acquisition_status": "acquired",
+      "local_path": "data/raw/gadm41_IRQ_2.json.zip",
+      "sha256": "bfbcf24f0b1efd44767103a5238ca63490981f288531770b171fb7790ba87e79",
+      "bytes": 57637,
+      "future_outcome_used": false
+    },
+    {
+      "construct": "population",
+      "provider": "World Bank",
+      "dataset": "SP.POP.TOTL country-year indicator",
+      "url": "https://api.worldbank.org/v2/country/IRQ/indicator/SP.POP.TOTL?date=2003:2011&format=json&per_page=100",
+      "coverage": "2003-2011",
+      "acquisition_status": "acquired",
+      "local_path": "data/raw/worldbank_irq_population_2003_2011.json",
+      "sha256": "00940227d8dcf5035690718c37e2c3d7dc0d25a68e2efeb4cefd5ad4aa4aa020",
+      "bytes": 1828,
+      "future_outcome_used": false
+    }
+  ],
+  "rule": "All listed input and anchor-control files are acquired and hashed; no case run is licensed until processed panels, crosswalks, and measurement joins are frozen."
+}

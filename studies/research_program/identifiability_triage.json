@@ -1,0 +1,298 @@
+{
+  "errors": [],
+  "global_calibration_prohibited": true,
+  "hard_maximum_active_parameters_per_question": 15,
+  "license": "No historical calibration until the question's synthetic estimand-recovery gate passes. Fixed structural assumptions may appear only as declared interventions, not inferred parameters.",
+  "parameters_in_any_question": 31,
+  "parameters_outside_all_current_questions": 185,
+  "parameters_shared_across_questions": {
+    "contact_rate": [
+      "spatial_persistence",
+      "violence_observation"
+    ],
+    "organization_ecology.fighter_conversion_fraction": [
+      "adjacent_propagation",
+      "manpower_control_coupling"
+    ],
+    "organization_ecology.minimum_formation_personnel": [
+      "adjacent_propagation",
+      "manpower_control_coupling"
+    ],
+    "physical.presence_memory_days": [
+      "spatial_persistence",
+      "control_observation"
+    ],
+    "recruitment_rate": [
+      "spatial_persistence",
+      "manpower_control_coupling"
+    ]
+  },
+  "questions": [
+    {
+      "active_parameter_count": 5,
+      "active_parameters": [
+        "physical.presence_memory_days",
+        "recruitment_rate",
+        "organization_ecology.recruitment_requires_access",
+        "organization_ecology.collapse_base_hazard",
+        "contact_rate"
+      ],
+      "estimands": [
+        "same_area_renewal_rate",
+        "control_persistence"
+      ],
+      "identifiability_status": "unassessed_pending_recovery",
+      "inferential_parameter_count": 4,
+      "inferential_parameters": [
+        "physical.presence_memory_days",
+        "recruitment_rate",
+        "organization_ecology.collapse_base_hazard",
+        "contact_rate"
+      ],
+      "mechanisms": [
+        "presence memory",
+        "recruitment access",
+        "organization survival",
+        "contact recurrence"
+      ],
+      "parameter_assumption_types": {
+        "contact_rate": "experimental treatment",
+        "organization_ecology.collapse_base_hazard": "experimental treatment",
+        "organization_ecology.recruitment_requires_access": "fixed structural assumption",
+        "physical.presence_memory_days": "structural/scaling coefficient",
+        "recruitment_rate": "experimental treatment"
+      },
+      "pre_historical_gate": "synthetic_recovery_required",
+      "question_id": "spatial_persistence",
+      "required_recovery": "Recover episode continuity separately from post-extinction reactivation; distinguish persistence-memory from contact-rate interventions; pass aggregation and right-censoring checks in synthetic matched worlds.",
+      "structural_interventions": [
+        "organization_ecology.recruitment_requires_access"
+      ]
+    },
+    {
+      "active_parameter_count": 6,
+      "active_parameters": [
+        "movement_rate",
+        "social_network.bridge_fraction",
+        "social_network.recruitment_exposure_weight",
+        "organization_ecology.birth_base_hazard",
+        "organization_ecology.minimum_formation_personnel",
+        "organization_ecology.fighter_conversion_fraction"
+      ],
+      "estimands": [
+        "neighbor_activation_rate",
+        "R_I"
+      ],
+      "identifiability_status": "unassessed_pending_recovery",
+      "inferential_parameter_count": 6,
+      "inferential_parameters": [
+        "movement_rate",
+        "social_network.bridge_fraction",
+        "social_network.recruitment_exposure_weight",
+        "organization_ecology.birth_base_hazard",
+        "organization_ecology.minimum_formation_personnel",
+        "organization_ecology.fighter_conversion_fraction"
+      ],
+      "mechanisms": [
+        "movement",
+        "social bridges",
+        "local formation generation"
+      ],
+      "parameter_assumption_types": {
+        "movement_rate": "engineering prior",
+        "organization_ecology.birth_base_hazard": "experimental treatment",
+        "organization_ecology.fighter_conversion_fraction": "experimental treatment",
+        "organization_ecology.minimum_formation_personnel": "experimental treatment",
+        "social_network.bridge_fraction": "engineering prior",
+        "social_network.recruitment_exposure_weight": "engineering prior"
+      },
+      "pre_historical_gate": "synthetic_recovery_required",
+      "question_id": "adjacent_propagation",
+      "required_recovery": "Recover known parent-attributed propagation under multi-parent uncertainty and competing background activation; reject spatial-frailty, degree-confounded, common-shock, lead-exposure, and shuffled-topology nulls; recover neighbor dose response and gross-versus-net R_I with dependence-aware uncertainty.",
+      "structural_interventions": []
+    },
+    {
+      "active_parameter_count": 7,
+      "active_parameters": [
+        "contact_rate",
+        "information.contact_true_positive_rate",
+        "information.contact_false_positive_rate",
+        "recording.base_logit",
+        "recording.access_weight",
+        "recording.remoteness_penalty",
+        "recording.geocoding_error_rate"
+      ],
+      "estimands": [
+        "latent_contact_rate",
+        "recording_recall",
+        "geocoding_error"
+      ],
+      "identifiability_status": "unassessed_pending_recovery",
+      "inferential_parameter_count": 7,
+      "inferential_parameters": [
+        "contact_rate",
+        "information.contact_true_positive_rate",
+        "information.contact_false_positive_rate",
+        "recording.base_logit",
+        "recording.access_weight",
+        "recording.remoteness_penalty",
+        "recording.geocoding_error_rate"
+      ],
+      "mechanisms": [
+        "contact",
+        "detection",
+        "reporting",
+        "geocoding"
+      ],
+      "parameter_assumption_types": {
+        "contact_rate": "experimental treatment",
+        "information.contact_false_positive_rate": "empirical estimand",
+        "information.contact_true_positive_rate": "empirical estimand",
+        "recording.access_weight": "empirical estimand",
+        "recording.base_logit": "empirical estimand",
+        "recording.geocoding_error_rate": "empirical estimand",
+        "recording.remoteness_penalty": "empirical estimand"
+      },
+      "pre_historical_gate": "synthetic_recovery_required",
+      "question_id": "violence_observation",
+      "required_recovery": "Recover latent incidence separately from reporting and location error in synthetic recorded histories.",
+      "structural_interventions": []
+    },
+    {
+      "active_parameter_count": 5,
+      "active_parameters": [
+        "physical.presence_memory_days",
+        "physical.response_decay_hours",
+        "political_order.capacity_learning_rate",
+        "political_order.capacity_decay_rate",
+        "combat.base_attrition_rate"
+      ],
+      "estimands": [
+        "SIGAR_category_probability",
+        "district_control_rank"
+      ],
+      "identifiability_status": "unassessed_pending_recovery",
+      "inferential_parameter_count": 5,
+      "inferential_parameters": [
+        "physical.presence_memory_days",
+        "physical.response_decay_hours",
+        "political_order.capacity_learning_rate",
+        "political_order.capacity_decay_rate",
+        "combat.base_attrition_rate"
+      ],
+      "mechanisms": [
+        "latent physical control",
+        "administrative control",
+        "ordinal observation"
+      ],
+      "parameter_assumption_types": {
+        "combat.base_attrition_rate": "engineering prior",
+        "physical.presence_memory_days": "structural/scaling coefficient",
+        "physical.response_decay_hours": "structural/scaling coefficient",
+        "political_order.capacity_decay_rate": "engineering prior",
+        "political_order.capacity_learning_rate": "engineering prior"
+      },
+      "pre_historical_gate": "synthetic_recovery_required",
+      "question_id": "control_observation",
+      "required_recovery": "Recover synthetic ordinal categories from retained seven-dimensional states; operator weights and cutpoints remain fixed.",
+      "structural_interventions": []
+    },
+    {
+      "active_parameter_count": 7,
+      "active_parameters": [
+        "organization_ecology.fighter_conversion_fraction",
+        "organization_ecology.minimum_formation_personnel",
+        "logistics.organization_sustainment_coverage",
+        "logistics.presence_consumption_per_person_day",
+        "physical.formation_presence_gain",
+        "physical.fixed_post_presence_gain",
+        "recruitment_rate"
+      ],
+      "estimands": [
+        "fielded_share_of_mobilized",
+        "control_per_fielded_person",
+        "viable_locality_count"
+      ],
+      "identifiability_status": "unassessed_pending_recovery",
+      "inferential_parameter_count": 7,
+      "inferential_parameters": [
+        "organization_ecology.fighter_conversion_fraction",
+        "organization_ecology.minimum_formation_personnel",
+        "logistics.organization_sustainment_coverage",
+        "logistics.presence_consumption_per_person_day",
+        "physical.formation_presence_gain",
+        "physical.fixed_post_presence_gain",
+        "recruitment_rate"
+      ],
+      "mechanisms": [
+        "fighter conversion",
+        "formation threshold",
+        "supply reach",
+        "control feedback"
+      ],
+      "parameter_assumption_types": {
+        "logistics.organization_sustainment_coverage": "engineering prior",
+        "logistics.presence_consumption_per_person_day": "engineering prior",
+        "organization_ecology.fighter_conversion_fraction": "experimental treatment",
+        "organization_ecology.minimum_formation_personnel": "experimental treatment",
+        "physical.fixed_post_presence_gain": "structural/scaling coefficient",
+        "physical.formation_presence_gain": "structural/scaling coefficient",
+        "recruitment_rate": "experimental treatment"
+      },
+      "pre_historical_gate": "synthetic_recovery_required",
+      "question_id": "manpower_control_coupling",
+      "required_recovery": "Distinguish excessive mobilization from failed fielding, reach, and control conversion in synthetic stock-balanced scenarios.",
+      "structural_interventions": []
+    },
+    {
+      "active_parameter_count": 6,
+      "active_parameters": [
+        "foreign_affairs.support_budget_fraction",
+        "foreign_affairs.host_transfer_efficiency",
+        "foreign_affairs.host_crowding_out",
+        "logistics.shipment_loss_per_travel_hour",
+        "logistics.route_interdiction_rate",
+        "foreign_affairs.diaspora_remittance_rate"
+      ],
+      "estimands": [
+        "border_area_persistence",
+        "post_support_control",
+        "R_I"
+      ],
+      "identifiability_status": "unassessed_pending_recovery",
+      "inferential_parameter_count": 6,
+      "inferential_parameters": [
+        "foreign_affairs.support_budget_fraction",
+        "foreign_affairs.host_transfer_efficiency",
+        "foreign_affairs.host_crowding_out",
+        "logistics.shipment_loss_per_travel_hour",
+        "logistics.route_interdiction_rate",
+        "foreign_affairs.diaspora_remittance_rate"
+      ],
+      "mechanisms": [
+        "external support",
+        "route loss",
+        "host transfer",
+        "diaspora resources"
+      ],
+      "parameter_assumption_types": {
+        "foreign_affairs.diaspora_remittance_rate": "literature prior",
+        "foreign_affairs.host_crowding_out": "literature prior",
+        "foreign_affairs.host_transfer_efficiency": "literature prior",
+        "foreign_affairs.support_budget_fraction": "literature prior",
+        "logistics.route_interdiction_rate": "engineering prior",
+        "logistics.shipment_loss_per_travel_hour": "engineering prior"
+      },
+      "pre_historical_gate": "synthetic_recovery_required",
+      "question_id": "sanctuary_dependence",
+      "required_recovery": "Recover the marginal effect of matched sanctuary removal with material conservation and no outcome fitting.",
+      "structural_interventions": []
+    }
+  ],
+  "registry_identifiability_counts": {
+    "unassessed": 216
+  },
+  "registry_parameter_count": 216,
+  "schema_version": "1.1.0",
+  "valid": true
+}

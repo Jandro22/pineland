@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "status": "data_free_general_defect_evidence_not_release_certificate",
+  "program_id": "comparative-insurgency-v1",
+  "change_group": "interval semantics and timebase propagation",
+  "base_commit": "76a02bbf2f1f329a512dbffb2760199b28dc4c8a",
+  "historical_outcomes_used": false,
+  "parameter_fitting": false,
+  "core_change_licensed": false,
+  "failure_reproduction": {
+    "legacy_contract": "A Bernoulli probability declared for a reference interval was reused unchanged when the scheduler interval changed.",
+    "counterexample": {
+      "reference_probability": 0.2,
+      "reference_days": 30.0,
+      "refined_interval_days": 15.0,
+      "legacy_half_interval_probability": 0.2,
+      "legacy_two_half_interval_probability": 0.36,
+      "reference_interval_probability": 0.2,
+      "composition_error": 0.16
+    },
+    "failure_type": "scheduler-refinement non-invariance",
+    "causal_explanation": "Fixed per-event probabilities and additive flows changed meaning when recurring process intervals changed; the same calendar-time hazard was not preserved."
+  },
+  "repair_contract": {
+    "probability_conversion": "1 - (1 - p) ** (elapsed_days / reference_days)",
+    "additive_flow_conversion": "elapsed_days / reference_days",
+    "composition_invariant": "partitioning a reference interval into subintervals composes back to the reference probability",
+    "evidence": [
+      "tests/test_timebase.py::test_reference_probability_composes_across_partitions",
+      "tests/test_timebase.py::test_daily_mobility_probability_composes_when_scheduler_is_refined",
+      "src/pineland_sim/timebase.py"
+    ]
+  },
+  "classification": "general_defect",
+  "remaining_release_evidence": [
+    "settled live model and tracked-diff hashes",
+    "completed-case impact assessment for Nepal and Afghanistan",
+    "targeted regression coverage for every interval-scaled process"
+  ],
+  "interpretation": "The timebase repair has a data-free semantic justification, but that does not certify the broader live core or license transfer claims."
+}

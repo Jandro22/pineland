@@ -1,0 +1,144 @@
+{
+  "artifacts": [
+    {
+      "builder": "studies/research_program/scripts/build_harmonized_historical_signatures.py",
+      "builder_sha256": "cc92e9ff03994334b06e66df83df77b531f80b25ebe2297ac78b43a4161daec7",
+      "core_change_licensed": false,
+      "historical_outcomes_used": true,
+      "path": "studies/research_program/harmonized_historical_event_signatures.json",
+      "sha256": "88adab41a5cda0a2cf16efbe65da900c5c1c2b2de68f9e36b85f8465f1cf415f",
+      "source_refs": [
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_adjacency.json",
+          "sha256": "be253bc51e60853b85b2ca468c4d11791994230e527882ff9d59bf7c01832a26"
+        },
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_month_panel.csv",
+          "sha256": "79dd03383b953557bb44aae8acda1b0038900b676a6135739128038e4be0d8b9"
+        },
+        {
+          "path": "studies/colombia_1984_2016/data/processed/ucdp_colombia_1984_2016_geography_month_panel.csv",
+          "sha256": "944e057a973029611782d50a3b9ce47d55454ddf38a86c3ff945bd12b4406898"
+        },
+        {
+          "path": "studies/colombia_1984_2016/data/raw/gadm41_COL_2.json.zip",
+          "sha256": "557aa8699b9b6f3928bc3cfa87371ccc618677304322386ca7d7b9e954a55dc0"
+        },
+        {
+          "path": "studies/iraq_2003_2011/data/processed/ucdp_iraq_2003_2011_geography_month_panel.csv",
+          "sha256": "6f751ce79e9286c020a683e3e3ec1fa55a094637cb7af4339953aeccad038de1"
+        },
+        {
+          "path": "studies/iraq_2003_2011/data/raw/gadm41_IRQ_2.json.zip",
+          "sha256": "bfbcf24f0b1efd44767103a5238ca63490981f288531770b171fb7790ba87e79"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_adjacency.json",
+          "sha256": "67c2b479e9fe5e3be5414af3aa85325bbfdf3dcab07c1609b3e5f41f088cf3f4"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_week_panel.csv",
+          "sha256": "bc9596cc8d0cc639f3d78ca06a5e3a077c03923d4121b9181b568a3da4208200"
+        }
+      ]
+    },
+    {
+      "builder": "studies/research_program/scripts/build_historical_signature_competitor_benchmark.py",
+      "builder_sha256": "a34a286b01a10cc67df2340a2abb5d890f83251e76792d80fb4b90a429da24b9",
+      "core_change_licensed": false,
+      "historical_outcomes_used": true,
+      "path": "studies/research_program/historical_signature_competitor_benchmark.json",
+      "sha256": "12bf11c9a408d1348d5d77e4eea7b50ff45cc19ca09dff47a8efdaa8012292b4",
+      "source_refs": [
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_adjacency.json",
+          "sha256": "be253bc51e60853b85b2ca468c4d11791994230e527882ff9d59bf7c01832a26"
+        },
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_month_panel.csv",
+          "sha256": "79dd03383b953557bb44aae8acda1b0038900b676a6135739128038e4be0d8b9"
+        },
+        {
+          "path": "studies/colombia_1984_2016/data/processed/ucdp_colombia_1984_2016_geography_month_panel.csv",
+          "sha256": "944e057a973029611782d50a3b9ce47d55454ddf38a86c3ff945bd12b4406898"
+        },
+        {
+          "path": "studies/colombia_1984_2016/data/raw/gadm41_COL_2.json.zip",
+          "sha256": "557aa8699b9b6f3928bc3cfa87371ccc618677304322386ca7d7b9e954a55dc0"
+        },
+        {
+          "path": "studies/iraq_2003_2011/data/processed/ucdp_iraq_2003_2011_geography_month_panel.csv",
+          "sha256": "6f751ce79e9286c020a683e3e3ec1fa55a094637cb7af4339953aeccad038de1"
+        },
+        {
+          "path": "studies/iraq_2003_2011/data/raw/gadm41_IRQ_2.json.zip",
+          "sha256": "bfbcf24f0b1efd44767103a5238ca63490981f288531770b171fb7790ba87e79"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_adjacency.json",
+          "sha256": "67c2b479e9fe5e3be5414af3aa85325bbfdf3dcab07c1609b3e5f41f088cf3f4"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_week_panel.csv",
+          "sha256": "bc9596cc8d0cc639f3d78ca06a5e3a077c03923d4121b9181b568a3da4208200"
+        }
+      ]
+    },
+    {
+      "builder": "studies/research_program/scripts/build_actor_continuity_diagnostic.py",
+      "builder_sha256": "1986801897065ff483b8bb6dc271925abbacd9b88f5b906e21066d932ca0606c",
+      "core_change_licensed": false,
+      "historical_outcomes_used": true,
+      "path": "studies/research_program/actor_continuity_diagnostic.json",
+      "sha256": "555e89e09204b961d414ec722633f3dfa3ad6409bd28d94d33ce60b28bb5b87a",
+      "source_refs": [
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_adjacency.json",
+          "sha256": "be253bc51e60853b85b2ca468c4d11791994230e527882ff9d59bf7c01832a26"
+        },
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/ucdp_afghanistan_events.csv",
+          "sha256": "63c8ca63bdb7b037f6463018d5991e37cb57a26be778a15643cb3d998cd2689c"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_adjacency.json",
+          "sha256": "67c2b479e9fe5e3be5414af3aa85325bbfdf3dcab07c1609b3e5f41f088cf3f4"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/ucdp_nepal_events.csv",
+          "sha256": "4e71af81fcfdb519f10945a5a702d2c6231ac4fa80344b393bd9ad28ab8a9fc3"
+        }
+      ]
+    },
+    {
+      "builder": "studies/research_program/scripts/build_assignment_sensitivity.py",
+      "builder_sha256": "c2cf1ecd9b8cf7c386721a39c3f16c4a1c8f1ec6665587419b94fef27845ae02",
+      "core_change_licensed": false,
+      "historical_outcomes_used": true,
+      "path": "studies/research_program/historical_assignment_sensitivity.json",
+      "sha256": "bdfe8f16984cde908e23f318f3899320498e129f08321f33a56046feee821776",
+      "source_refs": [
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_month_panel.csv",
+          "sha256": "79dd03383b953557bb44aae8acda1b0038900b676a6135739128038e4be0d8b9"
+        },
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/ucdp_afghanistan_events.csv",
+          "sha256": "63c8ca63bdb7b037f6463018d5991e37cb57a26be778a15643cb3d998cd2689c"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_week_panel.csv",
+          "sha256": "bc9596cc8d0cc639f3d78ca06a5e3a077c03923d4121b9181b568a3da4208200"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/ucdp_nepal_events.csv",
+          "sha256": "4e71af81fcfdb519f10945a5a702d2c6231ac4fa80344b393bd9ad28ab8a9fc3"
+        }
+      ]
+    }
+  ],
+  "guard": "Manifest binds descriptive historical evidence to its builders and source hashes; it does not certify the simulator core or theory.",
+  "program_id": "comparative-insurgency-v1",
+  "schema_version": "1.0.0",
+  "status": "content_addressed_historical_signature_artifacts"
+}

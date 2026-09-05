@@ -1,0 +1,35 @@
+{
+  "study_id": "nepal_2001_2006",
+  "schema_version": "1.0.0",
+  "status": "frozen_before_fit",
+  "case": "Nepal Maoist insurgency",
+  "period": {
+    "start": "2001-11-26",
+    "end": "2006-11-21"
+  },
+  "unit_of_analysis": "historical_district_week",
+  "primary_event_construct": "two_sided_state_based",
+  "one_sided_violence_role": "observational_diagnostic_only",
+  "primary_event_strata": [
+    "government_maoist_state_based",
+    "state_one_sided",
+    "maoist_one_sided"
+  ],
+  "substantive_calibration_parameters": [
+    "contact_rate",
+    "combat.base_attrition_rate"
+  ],
+  "calibration_objectives": [
+    "training_event_incidence",
+    "training_severity_distribution"
+  ],
+  "overidentifying_targets": [
+    "temporal_clustering",
+    "spatial_concentration",
+    "spatial_diffusion",
+    "local_persistence",
+    "observed_control_presence"
+  ],
+  "comparison_boundary": "synthetic_recorded_vs_historical_recorded",
+  "holdout_refitting_permitted": false
+}

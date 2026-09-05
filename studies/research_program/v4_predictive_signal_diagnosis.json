@@ -1,0 +1,43 @@
+{
+  "schema_version": "pineland.predictive_signal_diagnosis.v1",
+  "case": "nepal_2001_2006",
+  "core": "pineland-core-transfer-v4",
+  "ensemble_members": 8,
+  "historical_parameter_fitting": false,
+  "purpose": "Locate where predictive information is lost between latent state, operational opportunity, stochastic realization, and recording. This is diagnostic evidence, not a new fitted predictor.",
+  "final_predictive_competition": {
+    "verdict": "simple_models_not_beaten_on_all_holdouts",
+    "holdout_wins": 0,
+    "holdouts": 3
+  },
+  "operational_signal": {
+    "training": {"opportunity_auc": 0.5203, "expected_hazard_auc": 0.5205, "latent_contact_auc": 0.5035, "recorded_contact_auc": 0.5026},
+    "geographic_validation": {"opportunity_auc": 0.4922, "expected_hazard_auc": 0.4910, "latent_contact_auc": 0.5054, "recorded_contact_auc": 0.5035},
+    "temporal_validation": {"opportunity_auc": 0.4773, "expected_hazard_auc": 0.4773, "latent_contact_auc": 0.4976, "recorded_contact_auc": 0.4992},
+    "strict_joint_holdout": {"opportunity_auc": 0.4806, "expected_hazard_auc": 0.4809, "latent_contact_auc": 0.4980, "recorded_contact_auc": 0.4997},
+    "interpretation": "The contact opportunity/hazard surface is approximately nondiscriminating and sometimes slightly inverted before stochastic realization or recording. Recording is therefore not the primary predictive bottleneck."
+  },
+  "predeclared_latent_state_composite": {
+    "definition": "Equal-weight mean of insurgent-minus-government formal, physical, administrative, legal, fiscal, social, and expected control, averaged across localities in the district and across the eight frozen seeds using the latest prior checkpoint.",
+    "training": {"roc_auc": 0.5993, "average_precision": 0.2448},
+    "geographic_validation": {"roc_auc": 0.4775, "average_precision": 0.1547},
+    "temporal_validation": {"roc_auc": 0.6444, "average_precision": 0.0920},
+    "strict_joint_holdout": {"roc_auc": 0.5749, "average_precision": 0.0718},
+    "interpretation": "Latent territorial state contains meaningful temporal/joint discrimination that is largely absent from contact opportunity, but it does not generalize to the geographic holdout."
+  },
+  "data_free_structural_findings": {
+    "microzone_gate_primary_bottleneck": false,
+    "reason": "In inspected v4 Nepal runs, same-locality opposing formation candidate counts and microzone-eligible pair counts were effectively identical.",
+    "hard_formation_threshold_discontinuity": {
+      "fighter_equivalents_below": 74.9,
+      "contact_opportunities_below": 0,
+      "fighter_equivalents_above": 75.1,
+      "contact_opportunities_above": 1,
+      "other_state_held_fixed": true
+    },
+    "operational_planning_process_present": false,
+    "current_action_semantics": "Strategic reallocation chooses basing; engagement willingness is evaluated only after opposing fielded formations already co-occupy a locality."
+  },
+  "theory_implication": "The leading v5 hypothesis is a unified operational-action layer that separates strategic basing from deliberate operations, permits continuous sub-formation clandestine capacity without double counting, uses actor beliefs for planning and truth only for execution, and must improve synthetic persistence/geographic transfer rather than merely raise event counts.",
+  "coin_science_authorized": false
+}

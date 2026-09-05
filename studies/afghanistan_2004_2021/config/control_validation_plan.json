@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.1.0",
+  "study_id": "afghanistan_2004_2021",
+  "status": "preregistered_target_gate",
+  "core_freeze": "pineland-core-transfer-v2",
+  "authoritative_certificate": "outputs/final_release/RELEASE_CERTIFICATE_SUPERSEDING.json",
+  "purpose": "Validate the independent SIGAR district-control snapshot without treating a short staged horizon as a control failure.",
+  "start_date": "2004-01-01",
+  "target_date": "2017-10-15",
+  "target_day": 5036,
+  "control_source": "data/processed/sigar_oct2017_control_401.csv",
+  "strengths": [5000, 7500, 10000],
+  "seed": 20040101,
+  "parameter_fit": false,
+  "holdout_refit": false,
+  "promotion_requirements": [
+    "all structural gates pass",
+    "all three strength trajectories reach target_day",
+    "control snapshot is scored with the frozen measurement rule",
+    "held-out competitor comparison is retained unchanged",
+    "latent and recorded violence are reported separately",
+    "no parameter or observation-model changes are made after inspecting target results"
+  ],
+  "success_gate": {
+    "status": "blocked_on_training_only_control_competitors",
+    "reason": "No harmonized pre-target longitudinal control panel exists yet. A numeric success threshold must be derived and preregistered from training-only information before any future target-period run can be classified as passed or failed under the new observation operator.",
+    "requirements": {}
+  },
+  "current_staged_status": {
+    "horizon_days": 366,
+    "assessment": "unassessed_not_reached_horizon",
+    "reason": "The one-year staged run ends before the 2017-10-15 control snapshot and cannot license a control claim."
+  },
+  "runtime_planning": {
+    "staged_wall_seconds": 278.65322560002096,
+    "linear_estimate_seconds": 3834.0,
+    "linear_estimate_minutes": 63.9,
+    "note": "Estimate only; do not interpret as measured target-run runtime.",
+    "execution_output": "runs/transfer_test_v1/control_target_ensemble_v2"
+  },
+  "execution_rule": "Run once from the frozen transfer tree; retain every completed strength atomically; never tune on this target gate."
+}

@@ -1,0 +1,13 @@
+{
+  "frozen_before_accuracy": true,
+  "observable": "district-period ordinal territorial presence",
+  "projection": {
+    "government_score": "mean(administrative, legal, fiscal, physical, social)",
+    "maoist_score": "mean(administrative, legal, fiscal, physical, social)",
+    "STATE_DOMINANT": "government_score - maoist_score > 0.20",
+    "MAOIST_DOMINANT": "maoist_score - government_score > 0.20",
+    "CONTESTED": "absolute score difference <= 0.20",
+    "UNKNOWN": "no admissible empirical observation"
+  },
+  "note": "Formal recognition and expected-control dimensions are excluded because the documentary observable concerns exercised local presence, not legal recognition or expectations."
+}

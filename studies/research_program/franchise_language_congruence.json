@@ -1,0 +1,228 @@
+{
+  "all_rejection_tests_pass": true,
+  "cells": [
+    {
+      "access_strength": 1.0,
+      "candidate_recruited": true,
+      "channel": "formation",
+      "constant_draw": 0.4,
+      "effective_recruitment_intensity": 0.4133824210826699,
+      "formation_access": 1.0,
+      "formation_language_factor": 1.0,
+      "global_language_profile": {
+        "AR": 0.0,
+        "FS": 1.0,
+        "TA": 0.0,
+        "VE": 0.0
+      },
+      "ideological_compatibility": 1.0,
+      "language_condition": "compatible",
+      "language_congruence_global": 1.0,
+      "language_congruence_local_member": 1.0,
+      "local_identity_salience": {
+        "district": 0.0,
+        "local": 0.0
+      },
+      "local_member_language_profile": null,
+      "member_access": 0.0,
+      "member_language_factor": 1.0,
+      "one_day_recruitment_probability": 0.562537741051167,
+      "outside_origin": true,
+      "recruitment_intensity_before_access": 0.4133824210826699,
+      "root_congruence": 0.0,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 0.0
+      }
+    },
+    {
+      "access_strength": 0.35,
+      "candidate_recruited": false,
+      "channel": "formation",
+      "constant_draw": 0.4,
+      "effective_recruitment_intensity": 0.14468384737893447,
+      "formation_access": 1.0,
+      "formation_language_factor": 0.35,
+      "global_language_profile": {
+        "AR": 1.0,
+        "FS": 0.0,
+        "TA": 0.0,
+        "VE": 0.0
+      },
+      "ideological_compatibility": 1.0,
+      "language_condition": "alien",
+      "language_congruence_global": 0.0,
+      "language_congruence_local_member": 1.0,
+      "local_identity_salience": {
+        "district": 0.0,
+        "local": 0.0
+      },
+      "local_member_language_profile": null,
+      "member_access": 0.0,
+      "member_language_factor": 1.0,
+      "one_day_recruitment_probability": 0.25126315183202885,
+      "outside_origin": true,
+      "recruitment_intensity_before_access": 0.4133824210826699,
+      "root_congruence": 0.0,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 0.0
+      }
+    },
+    {
+      "access_strength": 1.0,
+      "candidate_recruited": true,
+      "channel": "member",
+      "constant_draw": 0.4,
+      "effective_recruitment_intensity": 0.4133824210826699,
+      "formation_access": 0.0,
+      "formation_language_factor": 1.0,
+      "global_language_profile": {
+        "AR": 0.0,
+        "FS": 1.0,
+        "TA": 0.0,
+        "VE": 0.0
+      },
+      "ideological_compatibility": 1.0,
+      "language_condition": "compatible",
+      "language_congruence_global": 1.0,
+      "language_congruence_local_member": 1.0,
+      "local_identity_salience": {
+        "district": 0.0,
+        "local": 0.0
+      },
+      "local_member_language_profile": {
+        "AR": 0.0,
+        "FS": 1.0,
+        "TA": 0.0,
+        "VE": 0.0
+      },
+      "member_access": 1.0,
+      "member_language_factor": 1.0,
+      "one_day_recruitment_probability": 0.562537741051167,
+      "outside_origin": true,
+      "recruitment_intensity_before_access": 0.4133824210826699,
+      "root_congruence": 0.0,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 27500.0
+      }
+    },
+    {
+      "access_strength": 0.35,
+      "candidate_recruited": false,
+      "channel": "member",
+      "constant_draw": 0.4,
+      "effective_recruitment_intensity": 0.14468384737893447,
+      "formation_access": 0.0,
+      "formation_language_factor": 0.35,
+      "global_language_profile": {
+        "AR": 1.0,
+        "FS": 0.0,
+        "TA": 0.0,
+        "VE": 0.0
+      },
+      "ideological_compatibility": 1.0,
+      "language_condition": "alien",
+      "language_congruence_global": 0.0,
+      "language_congruence_local_member": 0.0,
+      "local_identity_salience": {
+        "district": 0.0,
+        "local": 0.0
+      },
+      "local_member_language_profile": {
+        "AR": 1.0,
+        "FS": 0.0,
+        "TA": 0.0,
+        "VE": 0.0
+      },
+      "member_access": 1.0,
+      "member_language_factor": 0.35,
+      "one_day_recruitment_probability": 0.25126315183202885,
+      "outside_origin": true,
+      "recruitment_intensity_before_access": 0.4133824210826699,
+      "root_congruence": 0.0,
+      "rootedness": {
+        "home_district_share": 0.0,
+        "home_locality_share": 0.0,
+        "represented_local_membership": 27500.0
+      }
+    }
+  ],
+  "empirical_outcomes_used": false,
+  "equations": {
+    "access": "A_io = max(E_io, F_io*g(L_io^org), M_io*g(L_io^local-members))",
+    "communication_factor": "g(L_io) = 0.35 + 0.65 L_io",
+    "interval_probability": "p_io = 1 - exp(-recruitment_rate*I_io*A_io*dt)",
+    "language_congruence": "L_io = max_r min(l_ir, lbar_or)",
+    "recruitment_intensity": "I_io = logistic(1.5*grievance + E_io + ideological_compatibility + social_capital - fear - 2.6 - peaceful_channel_penalty + local_rootedness_weight*root_congruence)"
+  },
+  "identification_logic": {
+    "formation_channel": "Hold outside origin, ideology, grievance, fear, local identity, formation strength, and RNG draw fixed; change only armed-member language.",
+    "localization_probe": "Add an outside-origin local-language member; language congruence may rise while origin rootedness remains exactly zero.",
+    "member_channel": "Hold outside origin and represented local armed membership fixed; change only the local member working language.",
+    "rootedness_placebo": "Set local and district identity salience to zero and replace outsider rootedness with a fully local counterfactual; recruitment utility must not move.",
+    "social_edge_control": "Hold graph-generation seed and source behavior fixed while changing only source/target language compatibility; the pre-existing social-edge path must already attenuate alien-franchise exposure."
+  },
+  "language_localization_probe": {
+    "after_language_congruence": 0.5,
+    "after_local_language_profile": {
+      "AR": 0.5,
+      "FS": 0.5,
+      "TA": 0.0,
+      "VE": 0.0
+    },
+    "after_rootedness": {
+      "home_district_share": 0.0,
+      "home_locality_share": 0.0,
+      "represented_local_membership": 55000.0
+    },
+    "all_members_remain_outside_origin": true,
+    "before_language_congruence": 0.0,
+    "before_local_language_profile": {
+      "AR": 1.0,
+      "FS": 0.0,
+      "TA": 0.0,
+      "VE": 0.0
+    },
+    "before_rootedness": {
+      "home_district_share": 0.0,
+      "home_locality_share": 0.0,
+      "represented_local_membership": 27500.0
+    }
+  },
+  "rejection_tests": {
+    "exact_reused_communication_prior": true,
+    "formation_access_language_separation": true,
+    "formation_recruitment_draw_separation": true,
+    "language_localization_without_origin_localization": true,
+    "member_access_language_separation": true,
+    "member_recruitment_draw_separation": true,
+    "outside_origin_held_fixed": true,
+    "social_edge_language_mechanism_remains_active": true,
+    "zero_identity_rootedness_null_preserved": true
+  },
+  "social_edge_probe": {
+    "alien": {
+      "franchise_social_exposure": 0.07034581612834559,
+      "language_condition": "alien",
+      "source_edge_weight": 0.33249999999999996
+    },
+    "compatible": {
+      "franchise_social_exposure": 0.17776449592671414,
+      "language_condition": "compatible",
+      "source_edge_weight": 0.95
+    }
+  },
+  "study": "synthetic franchise language congruence identification",
+  "zero_identity_rootedness_probe": {
+    "absolute_difference": 0.0,
+    "counterfactual_local_rootedness_intensity": 0.4133824210826699,
+    "local_root_congruence": 0.0,
+    "outside_root_congruence": 0.0,
+    "outside_rootedness_intensity": 0.4133824210826699
+  }
+}

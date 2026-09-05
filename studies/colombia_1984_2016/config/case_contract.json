@@ -1,0 +1,89 @@
+{
+  "calibration": {
+    "holdout_refit": false,
+    "licensed": false,
+    "training_only": true
+  },
+  "case_id": "colombia_1984_2016",
+  "case_input_uncertainty": [
+    "geography",
+    "population",
+    "actor attribution",
+    "event under-recording",
+    "presence-to-control ambiguity"
+  ],
+  "construct_map": [
+    {
+      "construct": "violence",
+      "measurement_model": "recorded-event count with explicit source coverage and under-recording uncertainty; never treated as latent violence",
+      "source": "UCDP Georeferenced Event Dataset, https://ucdp.uu.se/downloads/",
+      "unit": "municipality-month"
+    },
+    {
+      "construct": "control_or_presence",
+      "measurement_model": "lower-bound armed-actor presence from georeferenced structure records; presence is not substituted for territorial control",
+      "source": "CNMH Portal de Datos / Observatorio de Memoria y Conflicto, https://centrodememoriahistorica.gov.co/micrositios/portal-de-datos/",
+      "unit": "municipality-year"
+    },
+    {
+      "construct": "civilian_harm",
+      "measurement_model": "victim/event counts with modality-specific missingness and source uncertainty",
+      "source": "CNMH Observatorio de Memoria y Conflicto, https://micrositios.centrodememoriahistorica.gov.co/observatorio/portal-de-datos/base-de-datos/",
+      "unit": "municipality-month"
+    }
+  ],
+  "disabled_mechanisms": [
+    "foreign_force_substitution",
+    "withdrawal_trigger",
+    "unmeasured_sanctuary"
+  ],
+  "holdouts": {
+    "geographic": {
+      "unit": "municipality",
+      "selection": "outcome_blind_sha256_municipality_code_mod_5_eq_0",
+      "fit_fraction": 0.8,
+      "validation_fraction": 0.2
+    },
+    "joint": {
+      "temporal_window": "2013-01-01/2016-12-31",
+      "geographic_selection": "same outcome-blind municipality hash split",
+      "refit": false
+    },
+    "outcome_blind_selection": true,
+    "temporal": {
+      "training": "1984-01-01/2007-12-31",
+      "validation": "2008-01-01/2012-12-31",
+      "holdout": "2013-01-01/2016-12-31",
+      "refit": false
+    }
+  },
+  "inputs": [
+    {
+      "construct": "geography",
+      "future_outcome_used": false,
+      "source": "GADM administrative boundaries, https://gadm.org/download_country.html"
+    },
+    {
+      "construct": "population",
+      "future_outcome_used": false,
+      "source": "DANE population projections, https://www.dane.gov.co/index.php/estadisticas-por-tema/demografia-y-poblacion/proyecciones-de-poblacion"
+    },
+    {
+      "construct": "actor_existence",
+      "future_outcome_used": false,
+      "source": "CNMH Portal de Datos, https://centrodememoriahistorica.gov.co/micrositios/portal-de-datos/"
+    }
+  ],
+  "observables": [
+    "violence",
+    "control_or_presence",
+    "civilian_harm"
+  ],
+  "period": {
+    "end": "2016-12-31",
+    "start": "1984-01-01"
+  },
+  "role": "institutional_and_organizational_transfer",
+  "schema_version": "1.0.0",
+  "status": "data_construction"
+}

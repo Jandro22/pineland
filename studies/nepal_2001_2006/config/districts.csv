@@ -1,0 +1,76 @@
+district_id,district_name,development_region,is_eastern_holdout,aliases
+NP-D01,Taplejung,Eastern,true,Taplejung district
+NP-D02,Panchthar,Eastern,true,Panchathar district|Panchthar district
+NP-D03,Ilam,Eastern,true,Ilam district
+NP-D04,Jhapa,Eastern,true,Jhapa district
+NP-D05,Morang,Eastern,true,Morang district
+NP-D06,Sunsari,Eastern,true,Sunsari district
+NP-D07,Dhankuta,Eastern,true,Dhankuta district
+NP-D08,Terhathum,Eastern,true,Terhathum district
+NP-D09,Sankhuwasabha,Eastern,true,Sankhuwasabha district
+NP-D10,Bhojpur,Eastern,true,Bhojpur district
+NP-D11,Solukhumbu,Eastern,true,Solukhumbu district
+NP-D12,Okhaldhunga,Eastern,true,Okhaldhunga district
+NP-D13,Khotang,Eastern,true,Khotang district
+NP-D14,Udayapur,Eastern,true,Udaypur district|Udayapur district
+NP-D15,Saptari,Eastern,true,Saptari district
+NP-D16,Siraha,Eastern,true,Siraha district
+NP-D17,Dhanusha,Central,false,Dhanusha district
+NP-D18,Mahottari,Central,false,Mahottari district
+NP-D19,Sarlahi,Central,false,Sarlahi district
+NP-D20,Sindhuli,Central,false,Sindhuli district
+NP-D21,Ramechhap,Central,false,Ramechhap district
+NP-D22,Dolakha,Central,false,Dolakha district
+NP-D23,Sindhupalchok,Central,false,Sindhupalchowk district|Sindhupalchok district
+NP-D24,Kavrepalanchok,Central,false,Kavrepalanchok district|Kavre district
+NP-D25,Bhaktapur,Central,false,Bhaktapur district
+NP-D26,Lalitpur,Central,false,Lalitpur district
+NP-D27,Kathmandu,Central,false,Kathmandu district
+NP-D28,Nuwakot,Central,false,Nuwakot district
+NP-D29,Rasuwa,Central,false,Rasuwa district
+NP-D30,Dhading,Central,false,Dhading district
+NP-D31,Makwanpur,Central,false,Makawanpur district|Makwanpur district
+NP-D32,Rautahat,Central,false,Rautahat district
+NP-D33,Bara,Central,false,Bara district
+NP-D34,Parsa,Central,false,Parsa district
+NP-D35,Chitwan,Central,false,Chitwan district
+NP-D36,Gorkha,Western,false,Gorkha district
+NP-D37,Lamjung,Western,false,Lamjung district
+NP-D38,Tanahun,Western,false,Tanahu district|Tanahun district
+NP-D39,Syangja,Western,false,Syangja district
+NP-D40,Kaski,Western,false,Kaski district
+NP-D41,Manang,Western,false,Manang district
+NP-D42,Mustang,Western,false,Mustang district
+NP-D43,Myagdi,Western,false,Myagdi district
+NP-D44,Parbat,Western,false,Parvat district|Parbat district
+NP-D45,Baglung,Western,false,Baglung district
+NP-D46,Gulmi,Western,false,Gulmi district
+NP-D47,Palpa,Western,false,Palpa district
+NP-D48,Nawalparasi,Western,false,Nawalparasi district
+NP-D49,Rupandehi,Western,false,Rupandehi district
+NP-D50,Arghakhanchi,Western,false,Arghakhanchi district
+NP-D51,Kapilvastu,Western,false,Kapilvastu district
+NP-D52,Rukum,Mid-Western,false,Rukum district
+NP-D53,Rolpa,Mid-Western,false,Rolpa district
+NP-D54,Pyuthan,Mid-Western,false,Pyuthan district
+NP-D55,Salyan,Mid-Western,false,Salyan district
+NP-D56,Dang,Mid-Western,false,Dang district
+NP-D57,Banke,Mid-Western,false,Banke district
+NP-D58,Bardiya,Mid-Western,false,Bardiya district
+NP-D59,Surkhet,Mid-Western,false,Surkhet district
+NP-D60,Dailekh,Mid-Western,false,Dailekh district
+NP-D61,Jajarkot,Mid-Western,false,Jajarkot district
+NP-D62,Dolpa,Mid-Western,false,Dolpa district
+NP-D63,Humla,Mid-Western,false,Humla district
+NP-D64,Jumla,Mid-Western,false,Jumla district
+NP-D65,Kalikot,Mid-Western,false,Kalikot district
+NP-D66,Mugu,Mid-Western,false,Mugu district
+NP-D67,Bajura,Far-Western,false,Bajura district
+NP-D68,Bajhang,Far-Western,false,Bajhang district
+NP-D69,Achham,Far-Western,false,Achham district
+NP-D70,Doti,Far-Western,false,Doti district
+NP-D71,Kailali,Far-Western,false,Kailali district
+NP-D72,Kanchanpur,Far-Western,false,Kanchanpur district
+NP-D73,Dadeldhura,Far-Western,false,Dadeldhura district
+NP-D74,Baitadi,Far-Western,false,Baitadi district
+NP-D75,Darchula,Far-Western,false,Darchula district

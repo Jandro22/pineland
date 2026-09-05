@@ -5,6 +5,7 @@ from pineland_sim import Simulation, SimulationConfig, generate_pineland
 from pineland_sim.analytics import district_control_distribution
 from pineland_sim.config import SocialNetworkConfig
 from pineland_sim.networks import (
+    bridge_target_community_weights,
     language_compatibility,
     locality_social_aggregation,
     network_diagnostics,
@@ -53,11 +54,45 @@ class SocialNetworkTests(unittest.TestCase):
         self.assertEqual(first.social_edges, second.social_edges)
         diagnostics = network_diagnostics(first)
         self.assertGreater(diagnostics["bridge_edges"], 0)
+        self.assertGreater(diagnostics["cross_local_bridge_edges"], 0)
+        self.assertGreater(diagnostics["represented_cross_local_bridge_relationship_mass"], 0)
         self.assertGreater(diagnostics["mean_degree"], 2)
         self.assertGreater(diagnostics["mean_language_compatibility"], 0)
         first_edge = next(iter(first.social_edges.values()))
         self.assertAlmostEqual(first_edge.represented_relationships,
                                next(iter(first.persons.values())).weight)
+
+    def test_bridge_target_opportunity_uses_represented_mass_not_community_count(self):
+        world = generate_pineland(self.config())
+        community = next(
+            item for item in world.social_communities.values()
+            if world.adjacency[item.locality_id]
+        )
+        weights = bridge_target_community_weights(world, community)
+        self.assertTrue(weights)
+        cross_mass = sum(
+            weight for community_id, weight in weights.items()
+            if world.social_communities[community_id].locality_id != community.locality_id
+        )
+        self.assertGreater(cross_mass, 0.0)
+
+    def test_interlocality_bridge_share_does_not_collapse_at_finer_resolution(self):
+        shares = []
+        for agents in (1_000, 5_000):
+            world = generate_pineland(SimulationConfig(
+                agent_count=agents, locality_count=72, horizon_days=1,
+                seed=20260905,
+            ))
+            bridge_edges = [edge for edge in world.social_edges.values()
+                            if "bridge" in edge.layers]
+            cross = [
+                edge for edge in bridge_edges
+                if world.persons[edge.person_a_id].residence_locality_id !=
+                world.persons[edge.person_b_id].residence_locality_id
+            ]
+            shares.append(len(cross) / max(1, len(bridge_edges)))
+        self.assertGreater(min(shares), 0.10)
+        self.assertLess(abs(shares[0] - shares[1]), 0.10)
 
     def test_debug_snapshot_exposes_edge_semantics_and_context(self):
         world = generate_pineland(self.config())

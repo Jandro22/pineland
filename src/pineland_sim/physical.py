@@ -39,7 +39,19 @@ def _add_physical_edge(world: WorldState, first_id: str, second_id: str,
 
 
 def zones_in_locality(world: WorldState, locality_id: str) -> list[Microzone]:
+    zone_ids = world.microzone_ids_by_locality.get(locality_id)
+    if zone_ids is not None:
+        return [world.microzones[zone_id] for zone_id in zone_ids]
+    # Compatibility fallback for manually assembled worlds.
     return [zone for zone in world.microzones.values() if zone.locality_id == locality_id]
+
+
+def posts_in_locality(world: WorldState, locality_id: str) -> list[SecurityPost]:
+    post_ids = world.security_post_ids_by_locality.get(locality_id)
+    if post_ids is not None:
+        return [world.security_posts[post_id] for post_id in post_ids]
+    return [post for post in world.security_posts.values()
+            if post.locality_id == locality_id]
 
 
 def _actor_matches_organization(world: WorldState, organization_id: str,
@@ -62,9 +74,11 @@ def generate_physical_world(world: WorldState) -> None:
     config = world.config.physical
     rng = seeded_rng(world.config, "physical-world-generation")
     world.microzones.clear()
+    world.microzone_ids_by_locality.clear()
     world.physical_edges.clear()
     world.physical_neighbors.clear()
     world.security_posts.clear()
+    world.security_post_ids_by_locality.clear()
     world.patrols.clear()
     world.zone_beliefs.clear()
 
@@ -91,6 +105,7 @@ def generate_physical_world(world: WorldState) -> None:
                 physical_control={"government": 0.0},
             )
             world.physical_neighbors[zone_id] = {}
+        world.microzone_ids_by_locality[locality_id] = list(zone_ids)
         # A connected backbone plus shortcut roads; no zone-type control bonuses.
         for index in range(len(zone_ids) - 1):
             _add_physical_edge(world, zone_ids[index], zone_ids[index + 1],
@@ -106,12 +121,18 @@ def generate_physical_world(world: WorldState) -> None:
 
         central_zone = min(zone_ids, key=lambda zone_id: sum(
             world.physical_edges[key].travel_time_hours for key in world.physical_neighbors[zone_id].values()))
-        police_personnel = max(15.0, min(300.0, locality.population * .0015))
-        post_id = f"POST-{locality_id}-POLICE"
-        world.security_posts[post_id] = SecurityPost(
-            post_id, "police", locality_id, central_zone, police_personnel,
-            fixed_presence=clamp(police_personnel / 250), available_fraction=.65,
-        )
+        if locality.administrative_role in {"administrative_center", "district_headquarters"}:
+            population_basis = (
+                world.districts[locality.district_id].population
+                if locality.administrative_role == "district_headquarters"
+                else locality.population
+            )
+            police_personnel = max(15.0, min(300.0, population_basis * .0015))
+            post_id = f"POST-{locality_id}-POLICE"
+            world.security_posts[post_id] = SecurityPost(
+                post_id, "police", locality_id, central_zone, police_personnel,
+                fixed_presence=clamp(police_personnel / 250), available_fraction=.65,
+            )
 
     for formation in world.formations.values():
         locality_zones = zones_in_locality(world, formation.locality_id)
@@ -130,6 +151,9 @@ def generate_physical_world(world: WorldState) -> None:
             patrol_id, formation.formation_id, formation.organization_id, formation.locality_id,
             post_zone.microzone_id, [post_zone.microzone_id], 0.0, response_fraction=.3,
         )
+
+    for post_id, post in world.security_posts.items():
+        world.security_post_ids_by_locality.setdefault(post.locality_id, []).append(post_id)
 
     # Initial true control is generated from topology, posts, and response fields.
     for locality_id in world.localities:
@@ -169,21 +193,117 @@ def record_presence(world: WorldState, microzone_id: str, actor: str,
     return zone.presence_memory[actor]
 
 
+def ensure_zone_belief(world: WorldState, actor_id: str, microzone_id: str,
+                       time: float) -> ActorZoneBelief:
+    """Return a routing belief for actors created after physical initialization.
+
+    Dynamic organizations (notably foreign expeditionary commands) can acquire
+    patrols after ``generate_physical_world`` has populated the initial belief
+    table.  Missing entries must not crash routing, and initializing them from
+    hidden true control would violate the truth firewall.  Use the same neutral
+    uncertain prior scale as initial zone beliefs until observations update it.
+    """
+    if microzone_id not in world.microzones:
+        raise KeyError(f"unknown microzone {microzone_id!r}")
+    key = (actor_id, microzone_id)
+    belief = world.zone_beliefs.get(key)
+    if belief is None:
+        belief = ActorZoneBelief(actor_id, microzone_id, .5, .35, float(time))
+        world.zone_beliefs[key] = belief
+    return belief
+
+
+def record_presence_exposure(world: WorldState, microzone_id: str, actor: str,
+                             target_presence: float, duration_days: float,
+                             time: float) -> float:
+    """Integrate a constant patrol footprint over an interval ending at time.
+
+    Presence memory obeys exponential decay toward the supplied patrol
+    footprint.  The closed-form contribution makes one long dwell and any
+    partition of that same dwell produce the same memory at a common
+    calendar time.
+    """
+    if duration_days < 0:
+        raise ValueError("presence exposure duration cannot be negative")
+    zone = world.microzones[microzone_id]
+    tau_days = world.config.physical.presence_memory_days
+    current = decay_presence(zone, actor, time, tau_days)
+    contribution = (
+        max(0.0, float(target_presence)) *
+        (1.0 - exp(-max(0.0, float(duration_days)) / tau_days))
+    )
+    zone.presence_memory[actor] = current + contribution
+    return contribution
+
+
+def advance_patrol_presence_memory(world: WorldState, time: float,
+                                   patrol_id: str | None = None) -> float:
+    """Integrate every currently deployed patrol through the given time.
+
+    Patrol memory is generated only by the explicitly deployed patrol element,
+    not by the full parent formation and not by stationary formation occupancy.
+    A per-patrol accounting timestamp prevents callback frequency from creating
+    or deleting presence memory.
+    """
+    total_contribution = 0.0
+    patrols = (
+        [world.patrols[patrol_id]]
+        if patrol_id is not None and patrol_id in world.patrols
+        else ([] if patrol_id is not None else
+              sorted(world.patrols.values(), key=lambda item: item.patrol_id))
+    )
+    for patrol in patrols:
+        formation = world.formations.get(patrol.formation_id)
+        if (formation is None or formation.personnel <= 0 or formation.moving or
+                formation.outside_pineland or formation.operational_status != "effective" or
+                formation.locality_id != patrol.locality_id or
+                patrol.current_microzone_id not in world.microzones):
+            continue
+        if patrol.available_at > time:
+            continue
+        start = (patrol.available_at if patrol.presence_accounted_at is None
+                 else max(patrol.available_at, patrol.presence_accounted_at))
+        duration = max(0.0, float(time) - float(start))
+        if duration <= 0:
+            patrol.presence_accounted_at = max(float(start), float(time))
+            continue
+        organization = world.organizations.get(formation.organization_id)
+        if organization is None:
+            patrol.presence_accounted_at = float(time)
+            continue
+        actor = ("insurgent" if organization.kind is OrganizationKind.INSURGENT
+                 else "government")
+        locality = world.localities[patrol.locality_id]
+        deployed_strength = (
+            formation.effective_strength() * clamp(patrol.response_fraction)
+        )
+        normalized_strength = (
+            deployed_strength / max(250.0, locality.population * .002)
+        )
+        target = world.config.physical.patrol_memory_gain * normalized_strength
+        total_contribution += record_presence_exposure(
+            world, patrol.current_microzone_id, actor, target, duration, time
+        )
+        patrol.presence_accounted_at = float(time)
+    return total_contribution
+
+
 def response_times(world: WorldState, locality_id: str, actor: str, time: float) -> dict[str, float]:
     zone_ids = [zone.microzone_id for zone in zones_in_locality(world, locality_id)]
     distances = {zone_id: inf for zone_id in zone_ids}
     queue: list[tuple[float, str]] = []
-    for post in world.security_posts.values():
+    for post in posts_in_locality(world, locality_id):
         organization = world.organizations[post.organization_id]
         available_fraction = post.available_fraction
         if post.formation_id:
             formation = world.formations[post.formation_id]
-            if formation.moving or formation.locality_id != post.locality_id:
+            if (formation.moving or formation.outside_pineland or
+                    formation.operational_status != "effective" or
+                    formation.locality_id != post.locality_id):
                 available_fraction = 0.0
             else:
                 available_fraction *= formation.availability * formation.effective_readiness()
-        if (post.locality_id == locality_id and
-                _actor_matches_organization(world, post.organization_id, actor) and
+        if (_actor_matches_organization(world, post.organization_id, actor) and
                 available_fraction > 0):
             mobilization_delay = (1 - available_fraction) * world.config.physical.response_decay_hours
             if mobilization_delay < distances[post.microzone_id]:
@@ -191,7 +311,11 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
                 heapq.heappush(queue, (mobilization_delay, post.microzone_id))
     for patrol in world.patrols.values():
         formation = world.formations[patrol.formation_id]
-        effective_fraction = patrol.response_fraction * formation.availability * formation.effective_readiness()
+        effective_fraction = (
+            patrol.response_fraction * formation.availability * formation.effective_readiness()
+            if formation.operational_status == "effective" and not formation.outside_pineland
+            else 0.0
+        )
         if (patrol.locality_id == locality_id and
                 _actor_matches_organization(world, patrol.organization_id, actor) and
                 patrol.available_at <= time and not formation.moving and effective_fraction > 0):
@@ -206,7 +330,8 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
     for formation in world.formations.values():
         if (formation.locality_id != locality_id or
                 not _actor_matches_organization(world, formation.organization_id, actor) or
-                formation.moving or formation.personnel <= 0 or
+                formation.moving or formation.outside_pineland or
+                formation.operational_status != "effective" or formation.personnel <= 0 or
                 formation.current_microzone_id not in distances):
             continue
         effective_fraction = .30 * formation.availability * formation.effective_readiness()
@@ -232,6 +357,10 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
                                 actor: str, time: float,
                                 apply_contestation: bool = True) -> float:
     config = world.config.physical
+    # Direct callers receive the same completed patrol-memory accounting as a
+    # scheduled physical refresh. Repeated calls at the same time are idempotent
+    # because each patrol tracks its own accounting boundary.
+    advance_patrol_presence_memory(world, time)
     # Public test/policy hooks may relocate a formation by locality only.  Keep
     # the explicit microzone state coherent at the next physical refresh.
     local_zones = zones_in_locality(world, locality_id)
@@ -244,14 +373,14 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
                 formation.current_microzone_id = default_zone
     times = response_times(world, locality_id, actor, time)
     posts_by_zone: dict[str, float] = {}
-    for post in world.security_posts.values():
-        if post.locality_id != locality_id:
-            continue
+    for post in posts_in_locality(world, locality_id):
         if _actor_matches_organization(world, post.organization_id, actor):
             effective_presence = post.fixed_presence
             if post.formation_id:
                 formation = world.formations[post.formation_id]
-                if formation.moving or formation.locality_id != post.locality_id:
+                if (formation.moving or formation.outside_pineland or
+                        formation.operational_status != "effective" or
+                        formation.locality_id != post.locality_id):
                     effective_presence = 0.0
                 else:
                     effective_presence *= formation.availability * formation.effective_readiness()
@@ -261,13 +390,14 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
     for formation in world.formations.values():
         if (not _actor_matches_organization(world, formation.organization_id, actor) or
                 formation.locality_id != locality_id or
-                formation.moving or formation.personnel <= 0 or
+                formation.moving or formation.outside_pineland or
+                formation.operational_status != "effective" or formation.personnel <= 0 or
                 formation.current_microzone_id not in world.microzones):
             continue
         strength = formation.effective_strength()
         formations_by_zone[formation.current_microzone_id] = (
             formations_by_zone.get(formation.current_microzone_id, 0.0) +
-            config.patrol_presence_gain * strength / max(250.0, locality.population * .002))
+            config.formation_presence_gain * strength / max(250.0, locality.population * .002))
     aggregate = 0.0
     for zone in zones_in_locality(world, locality_id):
         memory = decay_presence(zone, actor, time, config.presence_memory_days)
@@ -299,16 +429,24 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
 
 def recompute_contested_controls(world: WorldState, locality_id: str, time: float,
                                  competition_strength: float = .35) -> dict[str, float]:
-    """Recompute both sides from raw reach, then apply symmetric contestation.
+    """Recompute side-level and franchise-level physical reach.
 
     Raw reach is generated independently from posts, presence and response;
     contestation is a separate relational step so the order in which actors
-    are iterated cannot bias the result.
+    are iterated cannot bias the result.  Concrete insurgent organizations are
+    contested by government reach but not by one another here: inter-franchise
+    hostility is a separate theory layer and must not be smuggled into physical
+    aggregation merely because two organizations coexist.
     """
     actors = ["government"]
-    if any(organization.kind.value == "insurgent" and organization.status == "active"
-           for organization in world.organizations.values()):
+    active_insurgents = sorted(
+        organization.organization_id
+        for organization in world.organizations.values()
+        if organization.kind.value == "insurgent" and organization.status == "active"
+    )
+    if active_insurgents:
         actors.append("insurgent")
+        actors.extend(active_insurgents)
     raw_aggregate: dict[str, float] = {}
     raw_zones: dict[str, dict[str, float]] = {}
     for actor in actors:
@@ -321,6 +459,10 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
     adjusted: dict[str, float] = {}
     zones = zones_in_locality(world, locality_id)
     for actor in actors:
+        # Government is contested by the aggregate insurgent side.  Aggregate
+        # and concrete insurgent actors are each contested by government.  A
+        # future rivalry/strife layer may add faction-on-faction contestation,
+        # but until then coexistence is not synonymous with hostility.
         opponent = "insurgent" if actor == "government" else "government"
         aggregate = 0.0
         for zone in zones:

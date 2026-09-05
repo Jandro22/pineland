@@ -92,6 +92,14 @@ class CombatTests(unittest.TestCase):
         self.assertGreater(government.personnel, 0)
         self.assertIn(government.formation_id, engagement.ineffective)
 
+    def test_explicitly_ineffective_formation_cannot_resolve_combat(self):
+        world, government, insurgent = world_for()
+        insurgent.operational_status = "ineffective"
+        with self.assertRaisesRegex(ValueError, "combat-ineligible formation"):
+            resolve_engagement(world, "E-zombie", government, insurgent,
+                               (government.organization_id, insurgent.organization_id),
+                               0, random.Random(2))
+
     def test_civilian_harm_reaches_politics_via_observation(self):
         world, government, insurgent = world_for()
         control_before = world.localities[government.locality_id].control["government"].to_dict()

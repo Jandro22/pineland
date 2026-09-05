@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "vietnam_1955_1975",
+  "status": "catalog_metadata_acquired_direct_files_pending",
+  "catalog_source": "https://www.archives.gov/research/military/vietnam-war/electronic-data-files",
+  "catalog_metadata_artifact": {
+    "path": "data/raw/nara_catalog_records.json",
+    "sha256": "e1caeda1de6ed33b34135748e65d9768ada014a5606808671329ce7170a440c0",
+    "retrieved_via": "https://catalog.archives.gov/proxy/records/search?naId={naId}"
+  },
+  "targets": [
+    {
+      "construct": "control_or_presence",
+      "title": "Hamlet Evaluation System (HES) Files",
+      "national_archives_identifier": "4616225",
+      "coverage": "1967-1974",
+      "catalog_url": "https://catalog.archives.gov/id/4616225",
+      "reason": "village/hamlet security-condition and socioeconomic ratings"
+    },
+    {
+      "construct": "control_or_presence",
+      "title": "Hamlet Evaluation System (HES), RG 472",
+      "national_archives_identifier": "18556191",
+      "coverage": "1969-1973",
+      "catalog_url": "https://catalog.archives.gov/id/18556191",
+      "reason": "second NARA HES version requiring version reconciliation"
+    },
+    {
+      "construct": "violence_and_operations",
+      "title": "Records About Ground Combat Operations by the Army (SITRA)",
+      "national_archives_identifier": "604416",
+      "coverage": "1966-1973",
+      "catalog_url": "https://catalog.archives.gov/id/604416",
+      "reason": "dated ground-combat operations and locations"
+    },
+    {
+      "construct": "control_or_presence",
+      "title": "National Police Evaluation System (NAPE)",
+      "national_archives_identifier": "620476",
+      "coverage": "1969-1971",
+      "catalog_url": "https://catalog.archives.gov/id/620476",
+      "reason": "monthly police presence by administrative unit"
+    },
+    {
+      "construct": "control_or_presence",
+      "title": "Monthly Reports of Vietnamese Regional and Popular Forces",
+      "national_archives_identifier": "598773",
+      "coverage": "1970-1972",
+      "catalog_url": "https://catalog.archives.gov/id/598773",
+      "reason": "territorial-force deployment and effectiveness cross-check"
+    }
+  ],
+  "rule": "These are direct-source targets identified from the NARA reference report. Secondary cleaned RDS artifacts cannot satisfy this direct-provenance gate without reconciliation."
+}

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "program_id": "comparative-insurgency-v1",
+  "invariant": "The same frozen core mechanisms are tested in every case; case inputs and observation models may vary, transition equations may not vary silently.",
+  "cases": [
+    {
+      "order": 1,
+      "case_id": "nepal_2001_2006",
+      "role": "final_development_and_falsification",
+      "status": "completed_falsification",
+      "stress_test": ["basic insurgency dynamics", "diffusion", "persistence"],
+      "primary_unit": "district_week",
+      "frozen_split": "studies/nepal_2001_2006/config/split_manifest.json",
+      "result": "studies/nepal_2001_2006/results/nepal_benchmark_report.md",
+      "decision": "Do not tune contact_rate or severity; preserve zero-recorded-contact result."
+    },
+    {
+      "order": 2,
+      "case_id": "afghanistan_2004_2021",
+      "role": "first_transfer",
+      "status": "legacy_failed_first_transfer_revalidation_required",
+      "stress_test": ["foreign intervention", "sanctuary", "force change", "territorial competition", "withdrawal"],
+      "primary_unit": "province_week",
+      "frozen_split": "studies/afghanistan_2004_2021/config/study_design.json",
+      "independent_control_target": "studies/afghanistan_2004_2021/data/processed/sigar_oct2017_control_401.csv",
+      "result": "studies/afghanistan_2004_2021/results/transfer_test_v1/control_target_ensemble_v2/transfer_decision.json",
+      "decision": "The v2 run failed under the frozen v1 scalar measurement formulation and remains preserved as legacy evidence; current v3 transfer claims are not licensed until the target ensemble is rerun against the live certificate."
+    },
+    {
+      "order": 3,
+      "case_id": "colombia",
+      "role": "institutional_and_organizational_transfer",
+      "status": "data_construction",
+      "required_before_run": ["construct map", "source manifest", "frozen holdouts", "case-input uncertainty", "disabled-mechanism declaration"]
+    },
+    {
+      "order": 4,
+      "case_id": "iraq",
+      "role": "urban_fragmentation_and_transition",
+      "status": "data_construction",
+      "required_before_run": ["construct map", "source manifest", "frozen holdouts", "case-input uncertainty", "disabled-mechanism declaration"]
+    },
+    {
+      "order": 5,
+      "case_id": "vietnam",
+      "role": "pacification_control_and_measurement_uncertainty",
+      "status": "data_construction",
+      "required_before_run": ["construct map", "source manifest", "frozen holdouts", "case-input uncertainty", "disabled-mechanism declaration"]
+    }
+  ],
+  "promotion_gates": [
+    "structural_and_stock_accounting",
+    "nondegenerate_latent_dynamics",
+    "measurement_model_identified",
+    "frozen_train_and_holdout_scores",
+    "training_only_simple_competitors",
+    "independent_control_or_presence_validation",
+    "resolution_and_recording_sensitivity",
+    "uncertainty_decomposition"
+  ]
+}

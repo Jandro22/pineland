@@ -21,7 +21,18 @@ class ValidationTests(unittest.TestCase):
         self.assertIn("combat.base_attrition_rate", names)
         recruitment = next(x for x in registry if x.code_name == "recruitment_rate")
         self.assertEqual(recruitment.calibration_status, "uncalibrated")
+        membership_exit = next(x for x in registry if x.code_name == "membership_exit_rate")
+        self.assertEqual(membership_exit.units, "rate/day")
+        self.assertEqual(membership_exit.calibration_status, "uncalibrated")
         self.assertIn("parameters", registry_document(tiny_config()))
+
+    def test_legacy_config_maps_common_recruitment_exit_rate(self):
+        values = tiny_config().to_dict()
+        values["recruitment_rate"] = 0.0023
+        values.pop("membership_exit_rate")
+        loaded = SimulationConfig.from_dict(values)
+        self.assertEqual(loaded.recruitment_rate, 0.0023)
+        self.assertEqual(loaded.membership_exit_rate, 0.0023)
 
     def test_target_contract_requires_declared_metrics_and_scores_errors(self):
         contract = empirical_target_contract({"government_control": .5}, "control", "source", "case-A", "training")

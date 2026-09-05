@@ -40,6 +40,7 @@ class ParameterSpec:
 # registry as fixed structural/numerical assumptions rather than being sampled.
 SAMPLE_BOUNDS: dict[str, tuple[float, float, str, str]] = {
     "recruitment_rate": (0.0001, 0.004, r"r_{recruit}", "rate/day"),
+    "membership_exit_rate": (0.0001, 0.004, r"r_{exit}", "rate/day"),
     "contact_rate": (0.01, 0.20, r"r_{contact}", "rate/day"),
     "social_network.behavior_update_rate": (.02, .30, r"p_{behavior}", "probability/day"),
     "social_network.bridge_fraction": (.005, .12, r"b_{bridge}", "share"),
@@ -48,6 +49,8 @@ SAMPLE_BOUNDS: dict[str, tuple[float, float, str, str]] = {
     "organization_ecology.split_base_hazard": (.0002, .03, r"\lambda_{split}", "probability/cycle"),
     "organization_ecology.collapse_base_hazard": (.0002, .03, r"\lambda_{collapse}", "probability/cycle"),
     "organization_ecology.succession_base_hazard": (.0002, .03, r"\lambda_{succession}", "probability/cycle"),
+    "organization_ecology.exit_sympathy_retention": (0.0, 1.0, r"\rho_{exit,sympathy}", "probability/full exit"),
+    "organization_ecology.local_rootedness_weight": (0.0, 2.0, r"\beta_{rooted}", "logit utility coefficient"),
     "political_order.peaceful_channel_strength": (.05, .95, r"\pi_{peace}", "share"),
     "foreign_affairs.migration_rate": (.0001, .02, r"m_{out}", "probability/cycle"),
     "foreign_affairs.intervention_base_hazard": (0.0, .12, r"\lambda_{foreign}", "probability/cycle"),
@@ -62,6 +65,7 @@ SAMPLE_BOUNDS: dict[str, tuple[float, float, str, str]] = {
 # like empirical quantities in exported registries.
 PARAMETER_PROVENANCE: dict[str, tuple[str, str | None, str]] = {
     "recruitment_rate": ("experimental treatment", "synthetic recovery required", "uncalibrated"),
+    "membership_exit_rate": ("experimental treatment", "synthetic recovery required", "uncalibrated"),
     "contact_rate": ("experimental treatment", "synthetic recovery required", "uncalibrated"),
     "information": ("empirical estimand", "source-specific observation calibration required", "uncalibrated"),
     "recording": ("empirical estimand", "recording calibration required", "uncalibrated"),
@@ -139,15 +143,36 @@ def set_parameter(config: SimulationConfig, path: str, value: float) -> None:
 
 
 def _event_metrics(world) -> dict[str, float]:
-    events = [e for e in world.event_log if e.event_type == "contact" and
-              e.true_state_delta.get("contact", 0) > 0]
-    count = len(events)
+    events = [
+        e for e in world.event_log
+        if (
+            (e.event_type == "contact" and e.true_state_delta.get("contact", 0) > 0)
+            or
+            (
+                e.event_type == "organized_action"
+                and e.true_state_delta.get("state_based_violence_event", 0) > 0
+            )
+        )
+    ]
+    count = (
+        len(events)
+        if world.event_log
+        else len(getattr(world, "state_based_event_times", ()))
+    )
     per_location: dict[str, int] = {}
     per_day: dict[int, int] = {}
-    for event in events:
-        if event.locality_id:
-            per_location[event.locality_id] = per_location.get(event.locality_id, 0) + 1
-        per_day[int(event.time)] = per_day.get(int(event.time), 0) + 1
+    if events:
+        for event in events:
+            if event.locality_id:
+                per_location[event.locality_id] = per_location.get(event.locality_id, 0) + 1
+            per_day[int(event.time)] = per_day.get(int(event.time), 0) + 1
+    else:
+        for time, locality_id in zip(
+            getattr(world, "state_based_event_times", ()),
+            getattr(world, "state_based_event_localities", ()),
+        ):
+            per_location[locality_id] = per_location.get(locality_id, 0) + 1
+            per_day[int(time)] = per_day.get(int(time), 0) + 1
     concentration = sum((x / count) ** 2 for x in per_location.values()) if count else 0.0
     daily = list(per_day.values())
     burstiness = pstdev(daily) / max(1e-9, mean(daily)) if len(daily) > 1 else 0.0
@@ -168,7 +193,9 @@ def _event_metrics(world) -> dict[str, float]:
         "control_persistence": mean(persistence_values) if persistence_values else 1.0,
         "active_insurgent_organizations": sum(o.status == "active" for o in organizations),
         "organization_fragmentation": max(0, len([o for o in organizations if o.status == "active"]) - 1),
-        "external_migration_share": sum(p.external_state_id is not None for p in world.persons.values()) / max(1, len(world.persons)),
+        "external_migration_share": sum(p.weight for p in world.persons.values()
+                                         if p.external_state_id is not None) /
+        max(1e-9, world.weighted_population()),
         "agreement_rate": len(world.peace_agreements),
         "implementation": peace["mean_implementation"],
         "recurrence": peace["recurrences"],
@@ -181,6 +208,7 @@ TARGET_FAMILIES: dict[str, tuple[str, ...]] = {
     "organizations": ("active_insurgent_organizations", "organization_fragmentation"),
     "population": ("external_migration_share",),
     "peace": ("agreement_rate", "implementation", "recurrence"),
+    "recording": ("recorded_event_frequency", "recording_rate", "geocoding_error_rate"),
 }
 
 
@@ -209,7 +237,12 @@ def score_targets(metrics: dict[str, float], contract: dict[str, Any]) -> dict[s
 
 
 def run_model(config: SimulationConfig) -> dict[str, float]:
-    world = Simulation(generate_pineland(config)).run().world
+    # Validation repeatedly evaluates many parameter draws.  Calibration mode
+    # retains target counters and checkpoints while omitting forensic event and
+    # state-delta payloads; process semantics and RNG streams are unchanged.
+    trial = SimulationConfig.from_dict(config.to_dict())
+    trial.output_mode = "calibration"
+    world = Simulation(generate_pineland(trial)).run().world
     return _event_metrics(world)
 
 

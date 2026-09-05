@@ -1,0 +1,173 @@
+{
+  "schema_version": "pineland.simple_competitor_battery.v1",
+  "scientific_rule": "If Pineland and a simpler challenger are statistically indistinguishable on the declared holdouts, the simpler model wins.",
+  "fit_firewall": {
+    "fit_split": "training",
+    "holdout_refit": false,
+    "holdout_target_updates": false,
+    "geographic_holdout_used_for_group_effects": false,
+    "unresolved_parentage_imputed": false
+  },
+  "required_scoring_dimensions": [
+    "temporal_validation",
+    "geographic_validation",
+    "strict_joint_holdout",
+    "transfer_case_when_available"
+  ],
+  "binary_incidence_or_site_state": {
+    "mandatory": [
+      "global_rate",
+      "unit_empirical_bayes",
+      "time_since_last_event_logit",
+      "rolling_conflict_history_logit",
+      "local_persistence_only",
+      "dynamic_occupancy",
+      "local_neighbor_diffusion",
+      "temporal_hawkes",
+      "spatiotemporal_hawkes"
+    ],
+    "mandatory_when_inputs_exist": [
+      "static_covariate_logit",
+      "persistence_force_logit"
+    ],
+    "scientific_questions": {
+      "global_rate": "Does any local structure beat overall prevalence?",
+      "unit_empirical_bayes": "Does Pineland beat stable place propensity?",
+      "local_persistence_only": "Is apparent spread just survival of already active sites?",
+      "dynamic_occupancy": "Does mechanistic reproduction beat constant colonization/extinction?",
+      "local_neighbor_diffusion": "Does it beat generic adjacent contagion?",
+      "temporal_hawkes": "Does it beat generic temporal self-excitation?",
+      "spatiotemporal_hawkes": "Does it beat generic spatiotemporal self-excitation?",
+      "static_covariate_logit": "Does it beat static geography/manpower/capacity?",
+      "persistence_force_logit": "Does it beat previous state plus local force balance?"
+    }
+  },
+  "event_counts": {
+    "mandatory": [
+      "pooled_poisson",
+      "unit_shrunk_poisson",
+      "count_ar1_poisson",
+      "rolling_conflict_history_poisson",
+      "branching_immigration"
+    ],
+    "mandatory_when_inputs_exist": [
+      "spatial_lag_poisson",
+      "count_spatial_ar_poisson",
+      "branching_spatial_immigration",
+      "static_covariate_poisson"
+    ]
+  },
+  "continuous_or_control_state": {
+    "mandatory": [
+      "global_training_mean",
+      "unit_shrunk_mean",
+      "last_observation_carried_forward",
+      "control_ar1"
+    ],
+    "mandatory_when_inputs_exist": [
+      "force_ratio_only",
+      "persistence_plus_force_ratio",
+      "static_covariate_ridge"
+    ]
+  },
+  "reproduction_decomposition": {
+    "local_endogenous_ignition": {
+      "target": "local_spontaneous_ignition",
+      "risk_set": "inactive locality-periods",
+      "mandatory": [
+        "global_rate",
+        "unit_empirical_bayes",
+        "temporal_hawkes",
+        "static_covariate_logit"
+      ]
+    },
+    "parent_attributed_cross_local_colonization": {
+      "target": "parent_attributed_colonization",
+      "risk_set": "inactive locality-periods",
+      "mandatory": [
+        "dynamic_occupancy",
+        "local_neighbor_diffusion",
+        "spatiotemporal_hawkes",
+        "branching_spatial_immigration"
+      ],
+      "exclusions": [
+        "formation_relocation",
+        "unresolved_parentage"
+      ]
+    },
+    "foothold_deepening": {
+      "targets": [
+        "deepened_to_saturated_access",
+        "deepened_to_fielded_force"
+      ],
+      "mandatory": [
+        "constant_probability",
+        "locality_empirical_bayes",
+        "parentage_class_empirical_bayes"
+      ],
+      "censoring": "exclude episodes without complete declared follow-up"
+    },
+    "post_establishment_survival": {
+      "target": "survived_horizon",
+      "mandatory": [
+        "constant_probability",
+        "locality_empirical_bayes",
+        "parentage_class_empirical_bayes"
+      ],
+      "censoring": "exclude episodes without complete declared follow-up"
+    },
+    "aggregate_reproduction": {
+      "targets": [
+        "new_foothold_sites",
+        "local_spontaneous_ignitions",
+        "parent_attributed_colonizations"
+      ],
+      "mandatory": [
+        "pooled_poisson",
+        "count_ar1_poisson",
+        "branching_immigration",
+        "branching_spatial_immigration"
+      ]
+    }
+  },
+  "covariate_profiles_to_test_when_available": {
+    "static_geography": [
+      "population",
+      "population_density",
+      "terrain",
+      "urbanity",
+      "road_accessibility",
+      "border_distance",
+      "capital_or_admin_distance"
+    ],
+    "force_balance": [
+      "local_insurgent_manpower",
+      "local_government_manpower",
+      "local_force_ratio",
+      "effective_force_ratio",
+      "supply_adjusted_force_ratio",
+      "response_time"
+    ],
+    "national_scale": [
+      "national_insurgent_manpower",
+      "national_government_manpower",
+      "national_force_ratio",
+      "national_recent_violence"
+    ]
+  },
+  "second_tier_future_challengers": [
+    "duration_dependent_markov",
+    "negative_binomial_autoregression",
+    "hurdle_or_zero_inflated_count",
+    "distance_kernel_diffusion",
+    "gravity_diffusion",
+    "ordered_markov_control",
+    "latent_scalar_ordinal_control",
+    "two_type_branching_process",
+    "SIS_locality_model",
+    "multinomial_franchise_choice",
+    "organization_survival_cox_or_logit",
+    "GAM",
+    "hidden_markov_model"
+  ]
+}

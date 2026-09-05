@@ -1,0 +1,480 @@
+{
+  "empirical_parameter_fitting": false,
+  "historical_outcomes_used": false,
+  "model_sha256_end": "1b47e8ce100a080b7d474af838a4b6d801ce09de5b2277d3e57032c609accced",
+  "model_sha256_start": "1b47e8ce100a080b7d474af838a4b6d801ce09de5b2277d3e57032c609accced",
+  "negative_results_must_be_preserved": true,
+  "predeclared_design": {
+    "agent_count": 800,
+    "horizon_days": 90.0,
+    "locality_count": 34,
+    "parent_overlap_days": 7.0,
+    "reproduction_horizon_days": 30.0,
+    "seeds": [
+      2026090501,
+      2026090502,
+      2026090503,
+      2026090504,
+      2026090505,
+      2026090506,
+      2026090507,
+      2026090508
+    ]
+  },
+  "runs": [
+    {
+      "cause_counts": {
+        "armed_member_migration": 4,
+        "formation_relocation": 15,
+        "formation_seeded_local_recruitment": 3,
+        "initial_condition": 27,
+        "local_member_to_force_generation": 26,
+        "local_recruitment": 12,
+        "member_foothold_maturation": 17
+      },
+      "episode_counts": {
+        "fielded_force_viable": 50,
+        "member_access_saturated": 26,
+        "member_foothold_present": 28
+      },
+      "parentage_coverage": {
+        "fraction": 0.8441558441558441,
+        "nonroot_episodes": 77,
+        "parented_nonroot_episodes": 65,
+        "root_initial_condition_episodes": 27
+      },
+      "scalar_R_I": {
+        "gross": 0.4050632911392405,
+        "net": 0.31645569620253167,
+        "root_weight": 27.0,
+        "same_time_cross_type_weight": 8.0,
+        "unattributed_weight": 12.0
+      },
+      "seed": 2026090501,
+      "typed_R_I": {
+        "conservative_upper_spectral_radius": 1.1171035043178255,
+        "criticality_identification": "partially_identified_across_criticality_threshold",
+        "lower_spectral_radius": 0.2663020232685937,
+        "matrix": {
+          "fielded_force_viable": {
+            "fielded_force_viable": 0.06060606060606061,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.06060606060606061
+          },
+          "member_access_saturated": {
+            "fielded_force_viable": 0.0,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.0
+          },
+          "member_foothold_present": {
+            "fielded_force_viable": 0.6086956521739131,
+            "member_access_saturated": 0.5652173913043478,
+            "member_foothold_present": 0.08695652173913043
+          }
+        },
+        "unresolved_nonroot_viable_activation_count": 12,
+        "unresolved_temporally_parentable_activation_count": 12
+      }
+    },
+    {
+      "cause_counts": {
+        "armed_member_migration": 4,
+        "cross_local_social_recruitment": 4,
+        "formation_relocation": 22,
+        "formation_seeded_local_recruitment": 5,
+        "initial_condition": 25,
+        "local_member_to_force_generation": 19,
+        "local_recruitment": 8,
+        "member_foothold_maturation": 16
+      },
+      "episode_counts": {
+        "fielded_force_viable": 50,
+        "member_access_saturated": 24,
+        "member_foothold_present": 29
+      },
+      "parentage_coverage": {
+        "fraction": 0.8974358974358975,
+        "nonroot_episodes": 78,
+        "parented_nonroot_episodes": 70,
+        "root_initial_condition_episodes": 25
+      },
+      "scalar_R_I": {
+        "gross": 0.48321030381355,
+        "net": 0.3423652333910148,
+        "root_weight": 25.0,
+        "same_time_cross_type_weight": 5.0,
+        "unattributed_weight": 8.0
+      },
+      "seed": 2026090502,
+      "typed_R_I": {
+        "conservative_upper_spectral_radius": 0.9121042093505685,
+        "criticality_identification": "identified_subcritical",
+        "lower_spectral_radius": 0.26610880959546784,
+        "matrix": {
+          "fielded_force_viable": {
+            "fielded_force_viable": 0.04510108864696733,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.06896551724137931
+          },
+          "member_access_saturated": {
+            "fielded_force_viable": 0.0,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.0
+          },
+          "member_foothold_present": {
+            "fielded_force_viable": 0.43478260869565216,
+            "member_access_saturated": 0.5652173913043478,
+            "member_foothold_present": 0.13043478260869562
+          }
+        },
+        "unresolved_nonroot_viable_activation_count": 8,
+        "unresolved_temporally_parentable_activation_count": 8
+      }
+    },
+    {
+      "cause_counts": {
+        "armed_member_migration": 1,
+        "formation_relocation": 21,
+        "formation_seeded_local_recruitment": 7,
+        "initial_condition": 25,
+        "local_member_to_force_generation": 15,
+        "local_recruitment": 9,
+        "member_foothold_maturation": 17
+      },
+      "episode_counts": {
+        "fielded_force_viable": 45,
+        "member_access_saturated": 25,
+        "member_foothold_present": 25
+      },
+      "parentage_coverage": {
+        "fraction": 0.8714285714285714,
+        "nonroot_episodes": 70,
+        "parented_nonroot_episodes": 61,
+        "root_initial_condition_episodes": 25
+      },
+      "scalar_R_I": {
+        "gross": 0.5189873417721519,
+        "net": 0.3924050632911392,
+        "root_weight": 25.0,
+        "same_time_cross_type_weight": 4.0,
+        "unattributed_weight": 9.0
+      },
+      "seed": 2026090503,
+      "typed_R_I": {
+        "conservative_upper_spectral_radius": 0.9216696962358055,
+        "criticality_identification": "identified_subcritical",
+        "lower_spectral_radius": 0.33653515058775774,
+        "matrix": {
+          "fielded_force_viable": {
+            "fielded_force_viable": 0.12121212121212122,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.15151515151515152
+          },
+          "member_access_saturated": {
+            "fielded_force_viable": 0.0,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.0
+          },
+          "member_foothold_present": {
+            "fielded_force_viable": 0.4782608695652174,
+            "member_access_saturated": 0.6521739130434783,
+            "member_foothold_present": 0.0
+          }
+        },
+        "unresolved_nonroot_viable_activation_count": 9,
+        "unresolved_temporally_parentable_activation_count": 9
+      }
+    },
+    {
+      "cause_counts": {
+        "armed_member_migration": 5,
+        "cross_local_social_recruitment": 1,
+        "formation_relocation": 17,
+        "formation_seeded_local_recruitment": 5,
+        "initial_condition": 27,
+        "local_member_to_force_generation": 16,
+        "local_recruitment": 9,
+        "member_foothold_maturation": 16,
+        "recruitment": 1
+      },
+      "episode_counts": {
+        "fielded_force_viable": 43,
+        "member_access_saturated": 25,
+        "member_foothold_present": 29
+      },
+      "parentage_coverage": {
+        "fraction": 0.8571428571428571,
+        "nonroot_episodes": 70,
+        "parented_nonroot_episodes": 60,
+        "root_initial_condition_episodes": 27
+      },
+      "scalar_R_I": {
+        "gross": 0.4864864864864865,
+        "net": 0.4189189189189189,
+        "root_weight": 27.0,
+        "same_time_cross_type_weight": 2.0,
+        "unattributed_weight": 10.0
+      },
+      "seed": 2026090504,
+      "typed_R_I": {
+        "conservative_upper_spectral_radius": 0.9305003352072461,
+        "criticality_identification": "identified_subcritical",
+        "lower_spectral_radius": 0.3361393254959655,
+        "matrix": {
+          "fielded_force_viable": {
+            "fielded_force_viable": 0.1724137931034483,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.13793103448275862
+          },
+          "member_access_saturated": {
+            "fielded_force_viable": 0.0,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.0
+          },
+          "member_foothold_present": {
+            "fielded_force_viable": 0.3076923076923077,
+            "member_access_saturated": 0.5384615384615384,
+            "member_foothold_present": 0.07692307692307693
+          }
+        },
+        "unresolved_nonroot_viable_activation_count": 10,
+        "unresolved_temporally_parentable_activation_count": 10
+      }
+    },
+    {
+      "cause_counts": {
+        "armed_member_migration": 3,
+        "formation_relocation": 19,
+        "formation_seeded_local_recruitment": 7,
+        "initial_condition": 27,
+        "local_member_to_force_generation": 16,
+        "local_recruitment": 6,
+        "member_foothold_maturation": 14
+      },
+      "episode_counts": {
+        "fielded_force_viable": 44,
+        "member_access_saturated": 23,
+        "member_foothold_present": 25
+      },
+      "parentage_coverage": {
+        "fraction": 0.9076923076923077,
+        "nonroot_episodes": 65,
+        "parented_nonroot_episodes": 59,
+        "root_initial_condition_episodes": 27
+      },
+      "scalar_R_I": {
+        "gross": 0.4444444444444444,
+        "net": 0.3333333333333333,
+        "root_weight": 27.0,
+        "same_time_cross_type_weight": 4.0,
+        "unattributed_weight": 6.0
+      },
+      "seed": 2026090505,
+      "typed_R_I": {
+        "conservative_upper_spectral_radius": 0.7472658356068155,
+        "criticality_identification": "identified_subcritical",
+        "lower_spectral_radius": 0.3005807482638363,
+        "matrix": {
+          "fielded_force_viable": {
+            "fielded_force_viable": 0.03333333333333333,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.16666666666666666
+          },
+          "member_access_saturated": {
+            "fielded_force_viable": 0.0,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.0
+          },
+          "member_foothold_present": {
+            "fielded_force_viable": 0.4090909090909091,
+            "member_access_saturated": 0.5454545454545454,
+            "member_foothold_present": 0.045454545454545456
+          }
+        },
+        "unresolved_nonroot_viable_activation_count": 6,
+        "unresolved_temporally_parentable_activation_count": 6
+      }
+    },
+    {
+      "cause_counts": {
+        "armed_member_migration": 2,
+        "formation_relocation": 24,
+        "formation_seeded_local_recruitment": 10,
+        "initial_condition": 25,
+        "local_member_to_force_generation": 20,
+        "local_recruitment": 10,
+        "member_foothold_maturation": 19
+      },
+      "episode_counts": {
+        "fielded_force_viable": 53,
+        "member_access_saturated": 27,
+        "member_foothold_present": 30
+      },
+      "parentage_coverage": {
+        "fraction": 0.8823529411764706,
+        "nonroot_episodes": 85,
+        "parented_nonroot_episodes": 75,
+        "root_initial_condition_episodes": 25
+      },
+      "scalar_R_I": {
+        "gross": 0.4625,
+        "net": 0.3125,
+        "root_weight": 25.0,
+        "same_time_cross_type_weight": 7.0,
+        "unattributed_weight": 10.0
+      },
+      "seed": 2026090506,
+      "typed_R_I": {
+        "conservative_upper_spectral_radius": 0.9604388944166127,
+        "criticality_identification": "identified_subcritical",
+        "lower_spectral_radius": 0.2928586621782243,
+        "matrix": {
+          "fielded_force_viable": {
+            "fielded_force_viable": 0.05555555555555555,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.19444444444444445
+          },
+          "member_access_saturated": {
+            "fielded_force_viable": 0.0,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.0
+          },
+          "member_foothold_present": {
+            "fielded_force_viable": 0.30434782608695654,
+            "member_access_saturated": 0.6521739130434783,
+            "member_foothold_present": 0.043478260869565216
+          }
+        },
+        "unresolved_nonroot_viable_activation_count": 10,
+        "unresolved_temporally_parentable_activation_count": 10
+      }
+    },
+    {
+      "cause_counts": {
+        "armed_member_migration": 2,
+        "formation_relocation": 15,
+        "formation_seeded_local_recruitment": 7,
+        "initial_condition": 27,
+        "local_member_to_force_generation": 15,
+        "local_recruitment": 8,
+        "member_foothold_maturation": 15
+      },
+      "episode_counts": {
+        "fielded_force_viable": 39,
+        "member_access_saturated": 24,
+        "member_foothold_present": 26
+      },
+      "parentage_coverage": {
+        "fraction": 0.8709677419354839,
+        "nonroot_episodes": 62,
+        "parented_nonroot_episodes": 54,
+        "root_initial_condition_episodes": 27
+      },
+      "scalar_R_I": {
+        "gross": 0.45,
+        "net": 0.36666666666666664,
+        "root_weight": 27.0,
+        "same_time_cross_type_weight": 4.0,
+        "unattributed_weight": 8.0
+      },
+      "seed": 2026090507,
+      "typed_R_I": {
+        "conservative_upper_spectral_radius": 0.9521375909716461,
+        "criticality_identification": "identified_subcritical",
+        "lower_spectral_radius": 0.3062852966082855,
+        "matrix": {
+          "fielded_force_viable": {
+            "fielded_force_viable": 0.09090909090909091,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.13636363636363635
+          },
+          "member_access_saturated": {
+            "fielded_force_viable": 0.0,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.0
+          },
+          "member_foothold_present": {
+            "fielded_force_viable": 0.3333333333333333,
+            "member_access_saturated": 0.5714285714285714,
+            "member_foothold_present": 0.09523809523809523
+          }
+        },
+        "unresolved_nonroot_viable_activation_count": 8,
+        "unresolved_temporally_parentable_activation_count": 8
+      }
+    },
+    {
+      "cause_counts": {
+        "armed_member_migration": 2,
+        "cross_local_social_recruitment": 1,
+        "formation_relocation": 22,
+        "formation_seeded_local_recruitment": 7,
+        "initial_condition": 25,
+        "local_member_to_force_generation": 16,
+        "local_recruitment": 11,
+        "member_foothold_maturation": 13,
+        "recruitment": 1
+      },
+      "episode_counts": {
+        "fielded_force_viable": 48,
+        "member_access_saturated": 21,
+        "member_foothold_present": 29
+      },
+      "parentage_coverage": {
+        "fraction": 0.8356164383561644,
+        "nonroot_episodes": 73,
+        "parented_nonroot_episodes": 61,
+        "root_initial_condition_episodes": 25
+      },
+      "scalar_R_I": {
+        "gross": 0.5079365079365079,
+        "net": 0.42857142857142855,
+        "root_weight": 25.0,
+        "same_time_cross_type_weight": 0.0,
+        "unattributed_weight": 12.0
+      },
+      "seed": 2026090508,
+      "typed_R_I": {
+        "conservative_upper_spectral_radius": 0.9425634512037147,
+        "criticality_identification": "identified_subcritical",
+        "lower_spectral_radius": 0.3380121936926863,
+        "matrix": {
+          "fielded_force_viable": {
+            "fielded_force_viable": 0.11538461538461539,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.19230769230769232
+          },
+          "member_access_saturated": {
+            "fielded_force_viable": 0.0,
+            "member_access_saturated": 0.0,
+            "member_foothold_present": 0.0
+          },
+          "member_foothold_present": {
+            "fielded_force_viable": 0.391304347826087,
+            "member_access_saturated": 0.43478260869565216,
+            "member_foothold_present": 0.0
+          }
+        },
+        "unresolved_nonroot_viable_activation_count": 12,
+        "unresolved_temporally_parentable_activation_count": 9
+      }
+    }
+  ],
+  "schema_version": "pineland.locality_reproduction.synthetic_ensemble.v1",
+  "scientific_status": "synthetic_robustness_diagnostic_not_general_theory_claim",
+  "script_sha256": "c69e228fa11cf3fb2fbffefe0d0b5b7f9cde9e20286457cda3e33ea3bf9cc84f",
+  "summary": {
+    "all_runs_conservative_upper_below_one": false,
+    "conservative_upper_spectral_radius_max": 1.1171035043178255,
+    "conservative_upper_spectral_radius_mean": 0.9354729396637793,
+    "conservative_upper_spectral_radius_median": 0.9365318932054804,
+    "identified_subcritical_count": 7,
+    "identified_supercritical_count": 0,
+    "lower_spectral_radius_max": 0.3380121936926863,
+    "lower_spectral_radius_mean": 0.30535277621135215,
+    "lower_spectral_radius_median": 0.3034330224360609,
+    "parentage_coverage_mean": 0.8708490749154496,
+    "partially_identified_count": 1,
+    "run_count": 8
+  }
+}

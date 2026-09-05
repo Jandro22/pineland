@@ -1,0 +1,3 @@
+# vietnam_1955_1975 comparative case
+
+Status: data construction. GADM, World Bank, NARA construct rules, measurement audit, and outcome-blind holdout rules are frozen. Three secondary cleaned NARA/MACV-derived RDS artifacts are locally acquired and hashed for transparent construction work, but they do not substitute for direct NARA acquisition or provenance reconciliation. NARA catalog metadata for all five direct targets is now acquired and hashed in `data/raw/nara_catalog_records.json`; the underlying direct files and complete processed panels remain blocked pending acquisition and reconciliation.

@@ -1,0 +1,64 @@
+{
+  "coin_rule": "COIN intervention science remains unauthorized until at least two independent transfer cases support the mechanisms and intervention-relevant conclusions are stable across observationally plausible models.",
+  "evidence": [
+    "studies/research_program/event_support_architecture.json",
+    "studies/research_program/experimental_action_support.py",
+    "tests/test_event_support_architecture.py",
+    "tests/test_experimental_action_support.py"
+  ],
+  "historical_outcomes_used_to_define_equations": false,
+  "historical_rule": "Nepal v4 remains a preserved predictive failure. v5 must face identical frozen rows and competitors once; historical outcomes may not iteratively tune the architecture.",
+  "minimal_v5_structure": {
+    "battle_rule": "Opposing reachable fielded armed elements remain a valid support condition for armed confrontation only, not for every organized-violence channel.",
+    "choice_rule": "Feasibility and action choice must be separate. No new unconstrained aggression coefficient is permitted before synthetic identification.",
+    "initial_action_families": [
+      "armed_confrontation",
+      "actor_initiated_violence_against_nonfielded_human_target",
+      "violence_against_asset",
+      "nonviolent_coercion_or_extraction"
+    ],
+    "observation_rule": "Recording remains downstream of latent events and may not create support absent from the latent process.",
+    "persistent_state": "Reuse existing membership, unfielded fighter-equivalent pools, fielded personnel, resources, social/political organization, information and institutions. Do not introduce a new scalar capacity stock.",
+    "sequence": "state -> observation -> actor belief -> budget-constrained action choice -> execution -> latent event -> recorded observation"
+  },
+  "motivation": "The certified v4 core restricts the empirical conflict-event support to realized contact events, while contact scheduling requires opposing effective field formations to share a microzone. Data-free counterexamples show durable organizational capacity and exposed government assets can therefore coexist with zero support for the conflict-event channel.",
+  "promotion_result": {
+    "certificate_payload_sha256": "7f8646a33b29890c22327d48940f0dd529e312d4fd450a2d59c28e9bf6b2c667",
+    "freeze_id": "pineland-core-transfer-v5",
+    "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+    "tracked_diff_sha256": "aeb8b7639eabc8b9d4d92395e352cf956e6e3f314c3c49e2187863e6fd953fd7",
+    "version": "0.13.0"
+  },
+  "promotion_rule": "Promote to a v5 core only after the support, choice, execution, budget, belief-boundary, and invariance tests pass without historical tuning. Then freeze v5 before any historical scoring.",
+  "proven_findings": [
+    "The validation conflict_events family counts realized contact events only.",
+    "A locality with insurgent fighter-equivalent capacity and a government institution has zero contact support when no opposing effective formation is co-located.",
+    "Adding an opposing effective formation to the same microzone restores contact support.",
+    "Zero violence is compatible with both insurgent dominance and mutual organizational absence.",
+    "Transferring fighter equivalents between a local formation and the local manpower pool preserves accounted capacity while battle support can change discontinuously.",
+    "Relocation transfers fighter-equivalent capacity between localities without reproducing it.",
+    "Current directional contact initiation uses detection, availability, command, and supply feasibility; it has no distinct strategic attack-versus-wait action-selection state."
+  ],
+  "required_invariants_before_core_promotion": [
+    "representative-resolution invariance within declared approximation error",
+    "formation-to-pool and pool-to-formation bookkeeping conservation",
+    "relocation conservation with no reproduction credit",
+    "split/merge conservation without capacity creation",
+    "calendar-time hazard invariance",
+    "shared personnel/material budgets across simultaneous action channels",
+    "belief-boundary metamorphism: hidden truth changes execution but not fixed-belief planning"
+  ],
+  "required_synthetic_worlds": [
+    "capacity_without_relevant_target",
+    "opportunity_without_willingness",
+    "nonfielded_target_without_opposing_formation",
+    "dominance_versus_mutual_absence",
+    "false_target_belief",
+    "formation_threshold_bookkeeping",
+    "representative_split_invariance",
+    "complete_organization_relocation",
+    "same_observed_violence_different_hidden_state_then_common_shock"
+  ],
+  "schema_version": "pineland.v5_event_architecture_preregistration.v1",
+  "status": "implemented_synthetic_validated_and_frozen_v5_historical_validation_pending"
+}

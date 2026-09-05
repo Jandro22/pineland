@@ -1,0 +1,20 @@
+{
+  "artifact": {
+    "path": "studies/research_program/contact_challenge_eight_seed_replication.json",
+    "sha256": "7a79d607d4544169344f31e789ee05305e4f7467bccf61ea45d7a6910c0b19a7"
+  },
+  "builder": {
+    "path": "studies/research_program/scripts/run_contact_challenge_replication.py",
+    "sha256": "489369e65bd7c28ae3206e2362cededa1e33546da9b9b107a3c16baba9d3a273"
+  },
+  "contract": {
+    "path": "studies/research_program/spatial_factorial_contact_challenge_contract.json",
+    "sha256": "92d1f66b240471b1a1a2e4542828957947372807fd7678399b4ef0d6c08af92c"
+  },
+  "core_change_licensed": false,
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "model_sha256": "1b47e8ce100a080b7d474af838a4b6d801ce09de5b2277d3e57032c609accced",
+  "schema_version": "1.0.0",
+  "status": "synthetic_replication_provenance_manifest"
+}

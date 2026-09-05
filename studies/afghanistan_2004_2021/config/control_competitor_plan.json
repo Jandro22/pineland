@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.1.0",
+  "status": "implemented_blocked_on_pre_target_longitudinal_control_data",
+  "required_input_columns": ["district_id", "province_id", "period", "split", "control_index"],
+  "models": ["global_training_mean", "province_empirical_bayes", "district_empirical_bayes", "last_training_control"],
+  "training_rule": "Only rows explicitly labeled training may estimate model quantities.",
+  "temporal_order_rule": "Every training period must be strictly earlier than every holdout period; accepted period encodings are YYYY, YYYY-MM, YYYY-MM-DD, and YYYYQ1..YYYYQ4.",
+  "holdout_rule": "No holdout outcome may update a mean, group effect, or lagged state.",
+  "current_blocker": "The repository contains the October 2017 target snapshot but no earlier harmonized longitudinal SIGAR/RS control panel. The target-period observed mean is not a valid competitor.",
+  "runner": "scripts/run_control_competitors.py"
+}

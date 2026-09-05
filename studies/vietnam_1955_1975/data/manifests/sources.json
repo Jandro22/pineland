@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "status": "partially_acquired",
+  "case_id": "vietnam_1955_1975",
+  "sources": [
+    {
+      "construct": "violence_and_operations",
+      "provider": "U.S. National Archives and Records Administration",
+      "dataset": "Electronic Records Relating to the Vietnam War",
+      "url": "https://www.archives.gov/research/military/vietnam-war/electronic-data-files",
+      "coverage": "1955-1975",
+      "acquisition_status": "catalog_metadata_acquired_data_pending",
+      "metadata_artifact": "data/raw/nara_catalog_records.json",
+      "metadata_sha256": "e1caeda1de6ed33b34135748e65d9768ada014a5606808671329ce7170a440c0",
+      "future_outcome_used": false
+    },
+    {
+      "construct": "violence_and_operations_secondary_cleaning",
+      "provider": "gl-smith/VietnamWarData (secondary cleaned release derived from NARA/MACV records)",
+      "dataset": "vietwar_ground_combat.rds",
+      "url": "https://github.com/gl-smith/VietnamWarData/releases/download/v1.0.0/vietwar_ground_combat.rds",
+      "coverage": "Vietnam War ground-combat records; release provenance is secondary and does not replace direct NARA acquisition",
+      "acquisition_status": "acquired_secondary_cleaned",
+      "local_path": "data/raw/vietwar_ground_combat.rds",
+      "sha256": "02372b4a134b1f39ec9c6575db7d257d6f353a77fe5855c1fb699c28511dd038",
+      "bytes": 14418204,
+      "source_provenance": "secondary_cleaning_of_nara_macv_records",
+      "future_outcome_used": false
+    },
+    {
+      "construct": "control_and_operations_secondary_cleaning",
+      "provider": "gl-smith/VietnamWarData (secondary cleaned release derived from NARA/MACV records)",
+      "dataset": "vietwar_hes70.rds",
+      "url": "https://github.com/gl-smith/VietnamWarData/releases/download/v1.0.0/vietwar_hes70.rds",
+      "coverage": "HES-70/71 records; release provenance is secondary and does not replace direct NARA acquisition",
+      "acquisition_status": "acquired_secondary_cleaned",
+      "local_path": "data/raw/vietwar_hes70.rds",
+      "sha256": "9992189ff2802352a17b9b263eab7db9afa780705adc0eecf6a828c7a1a6ac83",
+      "bytes": 9792408,
+      "source_provenance": "secondary_cleaning_of_nara_macv_records",
+      "future_outcome_used": false
+    },
+    {
+      "construct": "civilian_harm_secondary_cleaning",
+      "provider": "gl-smith/VietnamWarData (secondary cleaned release derived from NARA/MACV records)",
+      "dataset": "vietwar_hes_hamla.rds",
+      "url": "https://github.com/gl-smith/VietnamWarData/releases/download/v1.0.0/vietwar_hes_hamla.rds",
+      "coverage": "HES hamlet records; release provenance is secondary and does not replace direct NARA acquisition",
+      "acquisition_status": "acquired_secondary_cleaned",
+      "local_path": "data/raw/vietwar_hes_hamla.rds",
+      "sha256": "14c367586d6c124466f34993ebaa738a943ae7b1da1e6a25e5c17ae3f9909dbf",
+      "bytes": 4259104,
+      "source_provenance": "secondary_cleaning_of_nara_macv_records",
+      "future_outcome_used": false
+    },
+    {
+      "construct": "violence_crosscheck",
+      "provider": "Uppsala Conflict Data Program",
+      "dataset": "Georeferenced Event Dataset",
+      "url": "https://ucdp.uu.se/downloads/",
+      "coverage": "1955-1975 where coded",
+      "acquisition_status": "pending",
+      "future_outcome_used": false
+    },
+    {
+      "construct": "geography",
+      "provider": "GADM",
+      "dataset": "administrative boundaries",
+      "url": "https://gadm.org/download_country.html",
+      "coverage": "1955-1975 administrative geography",
+      "acquisition_status": "acquired",
+      "local_path": "data/raw/gadm41_VNM_2.json.zip",
+      "sha256": "6f0871c6a1a3580c4405869668cc14228698e290b51d489d326da9b066ca2cd6",
+      "bytes": 560161,
+      "future_outcome_used": false
+    },
+    {
+      "construct": "population",
+      "provider": "World Bank",
+      "dataset": "SP.POP.TOTL country-year indicator",
+      "url": "https://api.worldbank.org/v2/country/VNM/indicator/SP.POP.TOTL?date=1955:1975&format=json&per_page=100",
+      "coverage": "1955-1975",
+      "acquisition_status": "acquired",
+      "local_path": "data/raw/worldbank_vnm_population_1955_1975.json",
+      "sha256": "f25e0039e5c86fb843454ea592ffe45131b63567f8523f5bec8c30ee2b4b1b13",
+      "bytes": 3244,
+      "future_outcome_used": false
+    }
+  ],
+  "rule": "Geography and population are acquired and hashed. Secondary cleaned NARA-derived artifacts are retained for data construction only; direct NARA operations/control files, provenance reconciliation, and complete processed panels remain required before any run."
+}

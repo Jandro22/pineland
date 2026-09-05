@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "status": "design_null_reproduced_on_current_snapshot",
+  "experiment_id": "synthetic_spatial_reproduction_factorial_v1",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "artifact_model_sha256": "ce8d2b043c4b4c1da8dad1f2036ba2503556d7f8f643831f3444abf7413d0331",
+  "current_live_model_sha256_at_assessment": "c2afb84e010320d40faf18f8491165c6f79e6c177bc21edd34f96af248c36aed",
+  "current_core_warning": "The pilot artifacts are valid only for their content-addressed ce8d2b snapshot; the live source changed afterward and remains uncertified.",
+  "contract": {
+    "path": "studies/research_program/spatial_factorial_experiment_contract.json",
+    "sha256": "992b342096f65cc658bdf9566b989fda8e9a456496fdaf90d87a79cf374fc25c"
+  },
+  "pilot_artifacts": [
+    {
+      "path": "studies/research_program/spatial_factorial_pilot.json",
+      "sha256": "130169453c0752241db5e5df595e6726ad71b03debec1b7365a2ef63aeaaf819",
+      "horizon_days": 14,
+      "seed_count": 1
+    },
+    {
+      "path": "studies/research_program/spatial_factorial_pilot_42d.json",
+      "sha256": "f1d3e5392d1725f823bcc784432a87da4a1a740f209190651199c052361d61c3",
+      "horizon_days": 42,
+      "seed_count": 1
+    }
+  ],
+  "current_snapshot_pilot": {
+    "path": "studies/research_program/spatial_factorial_pilot_c2afb.json",
+    "sha256": "a7b50c8cb4b802584027b76c2ad2eb88370774b7338a632dbec4e00f4f277d37",
+    "manifest": "studies/research_program/spatial_factorial_pilot_c2afb_manifest.json",
+    "manifest_sha256": "9e5952ea1ef895a7c10475f29f3ef547abe4b66fe0dcad217bb7b8bbbee4dbe3",
+    "model_sha256": "c2afb84e010320d40faf18f8491165c6f79e6c177bc21edd34f96af248c36aed",
+    "seed_count": 1,
+    "horizon_days": 14
+  },
+  "findings": [
+    "All four matched cells completed with stable source hashes and near-zero supply residuals.",
+    "Every cell had zero latent contact events and zero adjacent activations in the original ce8d2b snapshot runs.",
+    "The same zero-contact/zero-adjacent-activation pattern recurred on the current c2afb8 snapshot pilot.",
+    "Symmetric stationary-formation memory changed the memory stock but not the short-horizon renewal diagnostic.",
+    "Geographic-neighbor restriction changed 7-day and 28-day renewal and final Moran's I in the 42-day extension.",
+    "The observed neighbor-restriction contrast is not interpretable as causal geographic reproduction because the activation pathway was never exercised."
+  ],
+  "interpretation": "The preregistered factorial is operationally reproducible, and its design limitation survives a current-snapshot check: memory is exercised but contact and adjacent activation are not. This is a design failure, not evidence for or against competitive local reproduction.",
+  "next_preregistered_design_requirements": [
+    "Add a fixed synthetic challenge initial condition with at least one government-insurgent co-location and a declared contact-opportunity rate.",
+    "Require nonzero latent contacts and at least one post-initial activation before interpreting memory or adjacency effects.",
+    "Keep the challenge separate from historical fitting and from any core-change decision.",
+    "Run the existing truth-recovery battery and the matched-seed factorial after the challenge contract is frozen.",
+    "Retain the current null result as a bounded design diagnostic; do not pool it with future challenge runs."
+  ],
+  "acceptance_gate_passed": false
+}

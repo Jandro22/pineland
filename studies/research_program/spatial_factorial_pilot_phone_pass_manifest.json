@@ -1,0 +1,16 @@
+{
+  "artifact": "studies/research_program/spatial_factorial_pilot_phone_pass.json",
+  "artifact_sha256": "9e8f9c4d1d0b7c413695ca28a3da4a146f6633db1596539078b6c63876710118",
+  "contract": "studies/research_program/spatial_factorial_experiment_contract.json",
+  "contract_sha256": "992b342096f65cc658bdf9566b989fda8e9a456496fdaf90d87a79cf374fc25c",
+  "core_change_licensed": false,
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "model_hashes": [
+    "ce8d2b043c4b4c1da8dad1f2036ba2503556d7f8f643831f3444abf7413d0331"
+  ],
+  "schema_version": "1.0.0",
+  "script": "studies/research_program/scripts/run_spatial_factorial_pilot.py",
+  "script_sha256": "0f123378135f2cdc3378a7cfc9922dd85c5b51ec190e686c9945d795c0f5d3ba",
+  "status": "synthetic_pilot_provenance_manifest"
+}

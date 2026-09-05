@@ -1,0 +1,82 @@
+{
+  "all_cases_ready": false,
+  "cases": [
+    {
+      "case_id": "colombia_1984_2016",
+      "readiness": {
+        "blocked_reasons": [
+          "source_manifest_ready",
+          "processed_panel_manifest"
+        ],
+        "checks": {
+          "acquired_source_hashes_valid": true,
+          "calibration_forbidden": true,
+          "construct_measurements_declared": true,
+          "disabled_mechanisms_declared": true,
+          "holdout_manifest_artifact": true,
+          "holdouts_frozen": true,
+          "input_sources_declared": true,
+          "measurement_audit": true,
+          "outcome_blind_selection": true,
+          "preregistered_status": true,
+          "processed_panel_manifest": false,
+          "source_manifest_ready": false
+        },
+        "passed": false
+      },
+      "status": "data_construction"
+    },
+    {
+      "case_id": "iraq_2003_2011",
+      "readiness": {
+        "blocked_reasons": [
+          "processed_panel_manifest"
+        ],
+        "checks": {
+          "acquired_source_hashes_valid": true,
+          "calibration_forbidden": true,
+          "construct_measurements_declared": true,
+          "disabled_mechanisms_declared": true,
+          "holdout_manifest_artifact": true,
+          "holdouts_frozen": true,
+          "input_sources_declared": true,
+          "measurement_audit": true,
+          "outcome_blind_selection": true,
+          "preregistered_status": true,
+          "processed_panel_manifest": false,
+          "source_manifest_ready": true
+        },
+        "passed": false
+      },
+      "status": "data_construction"
+    },
+    {
+      "case_id": "vietnam_1955_1975",
+      "readiness": {
+        "blocked_reasons": [
+          "source_manifest_ready",
+          "processed_panel_manifest"
+        ],
+        "checks": {
+          "acquired_source_hashes_valid": true,
+          "calibration_forbidden": true,
+          "construct_measurements_declared": true,
+          "disabled_mechanisms_declared": true,
+          "holdout_manifest_artifact": true,
+          "holdouts_frozen": true,
+          "input_sources_declared": true,
+          "measurement_audit": true,
+          "outcome_blind_selection": true,
+          "preregistered_status": true,
+          "processed_panel_manifest": false,
+          "source_manifest_ready": false
+        },
+        "passed": false
+      },
+      "status": "data_construction"
+    }
+  ],
+  "generated_from": "validate_case_readiness.py",
+  "program_id": "comparative-insurgency-v1",
+  "schema_version": "1.0.0"
+}

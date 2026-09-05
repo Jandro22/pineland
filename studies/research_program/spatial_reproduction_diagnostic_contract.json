@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.2.0",
+  "status": "diagnostic_not_calibration",
+  "scientific_question": "Why does insurgent activity persist and reproduce along some connected geographic corridors rather than others?",
+  "primary_estimands": [
+    "same_locality_or_province_one_period_renewal",
+    "continuous_episode_duration_and_post_extinction_reactivation",
+    "adjacent_inactive_area_one_period_activation",
+    "adjacent_activation_risk_difference_vs_inactive_unexposed_areas",
+    "active_neighbor_dose_response",
+    "future_neighbor_activity_lead_placebo",
+    "degree_and_stratum_preserving_topology_placebo",
+    "historical_active_cell_sensitivity",
+    "model_active_cell_precision",
+    "R_I_parent_attributed_viable_locality_reproduction",
+    "R_I_gross_vs_net_parent_overlap",
+    "R_I_pathway_specific_competing_reproduction",
+    "multitype_R_I_next_generation_matrix"
+  ],
+  "mechanism_tests": [
+    {"mechanism": "locality_persistence", "intervention": "remove lagged local conflict/presence memory", "required_signal": "lower same-area renewal without a mechanically forced count change"},
+    {"mechanism": "adjacent_locality_propagation", "intervention": "remove adjacency-mediated movement/social access", "required_signal": "lower neighbor activation and R_I"},
+    {"mechanism": "formation_movement", "intervention": "hold strategic movement policy fixed or ablate conflict-responsive movement", "required_signal": "changed corridor activation with conserved force stocks"},
+    {"mechanism": "recruitment_locality", "intervention": "compare local manpower pooling with locality-shuffled pooling", "required_signal": "changed viable-locality reproduction without changing national recruited total"},
+    {"mechanism": "sanctuary_access", "intervention": "matched removal of external sanctuary access", "required_signal": "changed persistence near eligible borders with supply conservation intact"},
+    {"mechanism": "control_feedback", "intervention": "remove local control-to-access/expectations feedback", "required_signal": "changed renewal and propagation beyond immediate engagement counts"}
+  ],
+  "synthetic_identification_worlds": [
+    "homogeneous_zero_propagation_null",
+    "spatial_frailty_zero_propagation_null",
+    "degree_confounded_zero_propagation_null",
+    "serial_common_shock_zero_propagation_null",
+    "pure_persistence_without_propagation",
+    "pure_propagation_without_persistence",
+    "combined_persistence_and_propagation",
+    "repeated_activation_episode_world",
+    "competing_background_movement_social_and_birth_risks",
+    "administrative_and_informative_censoring_worlds",
+    "ambiguous_multi_parent_attribution_world",
+    "relocation_without_net_reproduction_world",
+    "known_neighbor_dose_response_world"
+  ],
+  "required_placebos": [
+    "future_neighbor_activity_lead_exposure",
+    "degree_and_pre_treatment_stratum_preserving_area_history_permutation",
+    "matched_non_neighbor_controls",
+    "disabled_transmission_edges_with_topology_retained"
+  ],
+  "recovery_gates": {
+    "zero_propagation_recovery": "homogeneous null near zero and spatial-frailty, degree-confounded, and serial-common-shock nulls collapse after their known synthetic confounders are controlled",
+    "known_propagation_recovery": "known propagation produces a positive adjacency effect, monotone neighbor-dose response, and stronger observed-topology signal than degree/stratum-preserving placebos",
+    "hazard_or_R_I_relative_bias": "<=0.10 where the true value is nonzero",
+    "uncertainty": "IID parent-episode bootstrap is never inferential; R_I inference requires a declared independent cluster field and at least two clusters",
+    "administrative_censoring": "no material bias after the declared censoring adjustment",
+    "informative_censoring": "must be corrected using known synthetic inclusion probabilities or fail closed",
+    "multi_parent_mass": "sum of parent attribution weights per child must be <=1 and known synthetic expected R_I must recover",
+    "episode_censoring": "duration summaries exclude left-censored initial and right-censored terminal episodes; repeated episodes retain distinct activation IDs",
+    "mechanism_ablation": "removing an absent path has no material effect and removing the sole active path eliminates its propagation signal"
+  },
+  "rules": [
+    "Run first on synthetic worlds with known corridors and parentage.",
+    "Use matched seeds and preserve national force, population, and material accounting.",
+    "Treat same-area renewal and exposed-minus-unexposed neighbor activation as descriptive associations, never as proof of persistence or contagion.",
+    "Separate continuous episodes from extinction followed by reactivation.",
+    "Represent uncertain parentage with a child-to-parent edge table; never duplicate a child activation to encode several candidate parents.",
+    "Report gross R_I separately from net R_I that requires a prospectively fixed parent-child overlap interval.",
+    "Report movement, social, organizational-birth, and other parentage pathways separately before aggregating R_I.",
+    "Use cluster bootstrap or another dependence-aware interval across independent simulation runs; IID parent-episode bootstrap is descriptive only.",
+    "A causal spatial-propagation claim is blocked until the full zero-null, frailty, placebo, censoring, repeated-episode, competing-risk, and known-effect recovery battery passes.",
+    "Do not choose mechanisms or thresholds from Nepal or Afghanistan holdout improvement.",
+    "A general core change requires data-free or cross-case evidence and a superseding freeze."
+  ]
+}

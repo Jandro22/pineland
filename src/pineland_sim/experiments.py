@@ -38,6 +38,7 @@ def governance_surge(multiplier: float = 1.5, start_day: float = 30, end_day: fl
         month = int(time // 30)
         key = (id(world), month)
         if start_day <= time <= end_day and key not in applied_at:
+            before_stocks = world.tracked_stock_totals()
             world.organizations["government"].resources *= multiplier
             # A surge is an implementation package, not a cash transfer alone:
             # limited technical assistance raises reach and reduces leakage.
@@ -46,6 +47,13 @@ def governance_surge(multiplier: float = 1.5, start_day: float = 30, end_day: fl
             for locality in world.localities.values():
                 locality.administrative_capacity = min(1.0, locality.administrative_capacity + capacity_gain)
                 locality.governance["leakage"] = max(0.0, locality.governance["leakage"] - leakage_reduction)
+            # Policy hooks are explicit exogenous treatments.  Record their
+            # stock effect before the next event boundary so global accounting
+            # cannot mistake the intervention for unexplained drift.
+            world.record_stock_transactions(
+                f"POLICY-{month:06d}", "policy_treatment",
+                before_stocks, world.tracked_stock_totals(),
+            )
             applied_at.add(key)
 
     return policy

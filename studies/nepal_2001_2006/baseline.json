@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "captured_at_utc": "2026-09-04T00:20:00Z",
+  "repository_commit": "76a02bbf2f1f329a512dbffb2760199b28dc4c8a",
+  "branch": "master",
+  "worktree_porcelain": [
+    " M README.md",
+    " M src/pineland_sim/__init__.py",
+    " M src/pineland_sim/cli.py",
+    " M src/pineland_sim/config.py",
+    " M src/pineland_sim/empirical.py",
+    " M src/pineland_sim/entities.py",
+    " M src/pineland_sim/experiments.py",
+    " M src/pineland_sim/foreign_affairs.py",
+    " M src/pineland_sim/information.py",
+    " M src/pineland_sim/integrity.py",
+    " M src/pineland_sim/networks.py",
+    " M src/pineland_sim/organization_ecology.py",
+    " M src/pineland_sim/peace_process.py",
+    " M src/pineland_sim/processes.py",
+    " M src/pineland_sim/research_audit.py",
+    " M src/pineland_sim/simulation.py",
+    " M src/pineland_sim/validation.py",
+    " M src/pineland_sim/views.py",
+    " M src/pineland_sim/world.py",
+    "?? docs/research-readiness.md",
+    "?? tests/test_research_readiness.py"
+  ],
+  "worktree_diff_sha256": "6ebdcbbc62638f60fc8364f45756e60d24e0accfe4eb1d3bfd53cc0bcc7a2f20",
+  "capture_note": "study files and the study raw-data gitignore rule are excluded",
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19044-SP0",
+  "packages_sha256": "aec712f1b9d22a6353a517c1281f32badb08a01ef94fbe2778661f6361f297df",
+  "key_packages": {
+    "numpy": "2.3.5",
+    "pandas": "2.3.3",
+    "scipy": "1.16.3",
+    "statsmodels": "0.14.6",
+    "pytest": "9.0.3",
+    "geopandas": "1.1.2"
+  },
+  "default_config_sha256": "d304ae82a00ee1bb5db8d6a2a6ddba2a94b205114104a5247993ce297e3cafc6",
+  "parameter_registry_sha256": "e9e544bc577a0bc47452a6aae044ac42dc5fa7de5fb0c1f2b6b95acf5f1c64bf",
+  "pre_study_checks": {
+    "compileall": "passed",
+    "pytest": "144 passed in 97.23s"
+  }
+}

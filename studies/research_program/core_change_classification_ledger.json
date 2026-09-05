@@ -1,0 +1,323 @@
+{
+  "active_freeze": {
+    "freeze_id": "pineland-core-transfer-v4",
+    "model_sha256": "5c6e1599671745cb4425cd1cde1afd9101094ee70ec50576e55799bceadcfbb9",
+    "tracked_diff_sha256": "527ba71f9e858961dd775f7af9b2287b3cce7a74470f560b8e9dc8382e549524"
+  },
+  "change_groups": [
+    {
+      "classification": "structural_change",
+      "classification_basis": "The configuration adds process intervals, contact rules, force-structure mappings, presence-memory controls, recruitment subcohorts, and reallocation weights. These defaults alter the parameterized model surface and may change transitions; they are not execution-only bookkeeping.",
+      "evidence": [
+        "tests/test_causal_integrity.py",
+        "tests/test_contact_pipeline.py",
+        "tests/test_resource_semantics.py",
+        "tests/test_spatial_process_repair.py",
+        "studies/nepal_2001_2006/results/post_structural_repair/structural_repair_manifest.json",
+        "studies/research_program/afghanistan_initialization_preflight.json",
+        "studies/research_program/afghanistan_current_core_smoke_preflight.json",
+        "studies/research_program/afghanistan_current_core_year_preflight.json",
+        "studies/research_program/contact_challenge_current_core_pilot.json",
+        "studies/research_program/afghanistan_contact_hazard_sensitivity.json",
+        "studies/research_program/nepal_current_core_smoke_preflight.json"
+      ],
+      "missing": [
+        "data-free causal isolation for each default change",
+        "full-horizon multi-strength historical Nepal and Afghanistan transfer impact assessment",
+        "one frozen-core historical revalidation after v4 certification"
+      ],
+      "paths": [
+        "src/pineland_sim/config.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "configuration and process-parameter semantics"
+    },
+    {
+      "classification": "structural_change",
+      "classification_basis": "The changes separate instantaneous formation presence from patrol-written decaying memory and add control-feedback/persistence pathways. These are latent-state and transition changes, not numerical or provenance-only repairs.",
+      "evidence": [
+        "tests/test_spatial_process_repair.py",
+        "studies/research_program/spatial_mechanism_channels.json",
+        "studies/nepal_2001_2006/results/post_structural_repair/structural_repair_manifest.json",
+        "studies/research_program/afghanistan_initialization_preflight.json",
+        "studies/research_program/afghanistan_current_core_smoke_preflight.json",
+        "studies/research_program/afghanistan_current_core_year_preflight.json",
+        "studies/research_program/contact_challenge_current_core_pilot.json",
+        "studies/research_program/afghanistan_contact_hazard_sensitivity.json",
+        "studies/research_program/nepal_current_core_smoke_preflight.json"
+      ],
+      "missing": [
+        "data-free mechanism isolation under matched contact",
+        "full-horizon multi-strength historical Nepal and Afghanistan transfer impact assessment",
+        "one frozen-core historical revalidation after v4 certification"
+      ],
+      "paths": [
+        "src/pineland_sim/physical.py",
+        "src/pineland_sim/processes.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "presence memory and physical control"
+    },
+    {
+      "classification": "structural_change",
+      "classification_basis": "The changes add locality-aware reallocation, recruitment-access and sustainment rules, social-network topology controls, and organization-ecology turnover semantics. They directly alter movement, recruitment, and persistence transitions.",
+      "evidence": [
+        "tests/test_spatial_process_repair.py",
+        "tests/test_spatial_social_reproduction.py",
+        "tests/test_spatial_reproduction_identification.py",
+        "studies/nepal_2001_2006/results/post_structural_repair/structural_repair_manifest.json",
+        "studies/research_program/afghanistan_initialization_preflight.json",
+        "studies/research_program/afghanistan_current_core_smoke_preflight.json",
+        "studies/research_program/afghanistan_current_core_year_preflight.json",
+        "studies/research_program/contact_challenge_current_core_pilot.json",
+        "studies/research_program/afghanistan_contact_hazard_sensitivity.json",
+        "studies/research_program/nepal_current_core_smoke_preflight.json"
+      ],
+      "missing": [
+        "pre-repair counterexample for each structural channel",
+        "full-horizon historical cross-case impact assessment",
+        "one frozen-core historical revalidation after v4 certification"
+      ],
+      "paths": [
+        "src/pineland_sim/logistics.py",
+        "src/pineland_sim/organization_ecology.py",
+        "src/pineland_sim/networks.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "local reproduction, movement, recruitment, and sustainment"
+    },
+    {
+      "classification": "structural_change",
+      "classification_basis": "The changes revise contact opportunity, supply/contact gating, accidental-contact fractions, and represented-person force semantics. These alter encounter and loss transitions and therefore have direct substantive model effects.",
+      "evidence": [
+        "tests/test_combat.py",
+        "tests/test_weighted_representative_semantics.py",
+        "studies/nepal_2001_2006/results/post_structural_repair/structural_repair_manifest.json",
+        "studies/research_program/afghanistan_initialization_preflight.json",
+        "studies/research_program/afghanistan_current_core_smoke_preflight.json",
+        "studies/research_program/afghanistan_current_core_year_preflight.json",
+        "studies/research_program/contact_challenge_current_core_pilot.json",
+        "studies/research_program/afghanistan_contact_hazard_sensitivity.json",
+        "studies/research_program/nepal_current_core_smoke_preflight.json"
+      ],
+      "missing": [
+        "data-free contact and weighting counterexamples",
+        "full-horizon historical completed-case impact assessment",
+        "one frozen-core historical revalidation after v4 certification"
+      ],
+      "paths": [
+        "src/pineland_sim/combat.py",
+        "src/pineland_sim/entities.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "contact and weighted representative semantics"
+    },
+    {
+      "classification": "general_defect",
+      "classification_basis": "Fixed per-event probabilities and additive flows were not invariant to scheduler refinement; the repair restores calendar-time composition without using historical outcomes.",
+      "evidence": [
+        "tests/test_timebase.py",
+        "studies/research_program/timebase_repair_evidence.json",
+        "studies/research_program/current_core_snapshot.json"
+      ],
+      "missing": [
+        "completed-case impact assessment beyond initialization",
+        "targeted regression coverage for every interval-scaled process",
+        "one frozen-core historical revalidation after v4 certification"
+      ],
+      "paths": [
+        "src/pineland_sim/timebase.py",
+        "src/pineland_sim/foreign_affairs.py",
+        "src/pineland_sim/political_order.py",
+        "src/pineland_sim/peace_process.py",
+        "src/pineland_sim/simulation.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "interval semantics and timebase propagation"
+    },
+    {
+      "classification": "structural_change",
+      "classification_basis": "The changes revise world construction, represented-population accounting, stock ledgers, output retention, and latent state transitions. They can change initial conditions or downstream state and therefore are substantive model changes.",
+      "evidence": [
+        "tests/test_case_readiness.py",
+        "tests/test_resource_semantics.py",
+        "tests/test_weighted_representative_semantics.py",
+        "tests/test_truth_firewall.py"
+      ],
+      "missing": [
+        "data-free accounting counterexamples",
+        "full historical Nepal and Afghanistan impact assessment",
+        "one frozen-core historical revalidation after v4 certification"
+      ],
+      "paths": [
+        "src/pineland_sim/generator.py",
+        "src/pineland_sim/world.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "world construction and latent-state accounting"
+    },
+    {
+      "classification": "structural_change",
+      "classification_basis": "The changes revise relay, observation, reporting, retention, and belief-update behavior. These alter actor information states and recorded outcomes, so they are substantive observation/decision-process changes.",
+      "evidence": [
+        "tests/test_information.py",
+        "tests/test_contact_pipeline.py",
+        "tests/test_truth_firewall.py",
+        "studies/afghanistan_2004_2021/results/control_observation_synthetic_recovery.json"
+      ],
+      "missing": [
+        "synthetic observation-operator sensitivity for each new channel",
+        "full historical impact assessment",
+        "one frozen-core historical revalidation after v4 certification"
+      ],
+      "paths": [
+        "src/pineland_sim/information.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "belief, relay, and observation dynamics"
+    },
+    {
+      "classification": "infrastructure",
+      "classification_basis": "These modules expose APIs, command-line orchestration, experiment wrappers, and views; they do not define latent transition equations or stochastic decision rules.",
+      "evidence": [
+        "tests/test_research_program.py",
+        "tests/test_reproducibility.py"
+      ],
+      "missing": [],
+      "paths": [
+        "src/pineland_sim/__init__.py",
+        "src/pineland_sim/cli.py",
+        "src/pineland_sim/experiments.py",
+        "src/pineland_sim/views.py"
+      ],
+      "substantive_model_effect": false,
+      "topic": "public API and experiment orchestration"
+    },
+    {
+      "classification": "infrastructure",
+      "classification_basis": "These modules implement empirical adapters, integrity checks, audit/reporting, and parameter registry logic. They constrain or describe runs but do not execute latent transition equations.",
+      "evidence": [
+        "tests/test_empirical_geography.py",
+        "tests/test_causal_integrity.py",
+        "tests/test_reproducibility.py",
+        "tests/test_research_readiness.py"
+      ],
+      "missing": [],
+      "paths": [
+        "src/pineland_sim/empirical.py",
+        "src/pineland_sim/integrity.py",
+        "src/pineland_sim/research_audit.py",
+        "src/pineland_sim/validation.py"
+      ],
+      "substantive_model_effect": false,
+      "topic": "measurement, integrity, and parameter-audit infrastructure"
+    },
+    {
+      "classification": "infrastructure",
+      "classification_basis": "The module contains recorded-panel estimators and split locks only; it is not imported by simulator transition modules and does not read latent world state.",
+      "evidence": [
+        "tests/test_historical.py",
+        "studies/research_program/historical_reproduction_signature_benchmark.json"
+      ],
+      "missing": [],
+      "paths": [
+        "src/pineland_sim/historical.py"
+      ],
+      "substantive_model_effect": false,
+      "topic": "historical observation and split safeguards"
+    },
+    {
+      "classification": "structural_change",
+      "classification_basis": "The newest franchise work makes affiliation, constituency rootedness, language access, social signaling, control credit, and inter-franchise contact organization-specific. These changes alter recruitment access, belief/control pathways, and organization-state accounting, so they are substantive structural changes rather than provenance-only repairs. The strife study remains diagnostic and explicitly identifies persistent dyadic relationship memory as missing instead of adding an unvalidated combat mechanism.",
+      "evidence": [
+        "tests/test_franchise_ecology.py",
+        "tests/test_franchise_localization_study.py",
+        "tests/test_franchise_language_congruence.py",
+        "tests/test_social_exposure_provenance.py",
+        "tests/test_franchise_strife_escalation.py",
+        "studies/research_program/franchise_localization.json",
+        "studies/research_program/franchise_language_congruence.json",
+        "studies/research_program/franchise_strife_escalation.json"
+      ],
+      "missing": [
+        "matched-world consequence tests beyond recruitment, signaling, and control credit",
+        "institutionally symmetric embeddedness tests for state, militia, foreign, and intermediary actors",
+        "historical cross-case impact assessment",
+        "one frozen-core historical revalidation after v4 certification"
+      ],
+      "paths": [
+        "src/pineland_sim/config.py",
+        "src/pineland_sim/entities.py",
+        "src/pineland_sim/organization_ecology.py",
+        "src/pineland_sim/processes.py",
+        "src/pineland_sim/physical.py",
+        "src/pineland_sim/world.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "franchise localization, constituency congruence, and franchise-specific control attribution"
+    },
+    {
+      "classification": "infrastructure",
+      "classification_basis": "The module computes canonical hashes, manifests, and output-state digests; it does not define a transition equation or stochastic decision rule.",
+      "evidence": [
+        "tests/test_reproducibility.py",
+        "src/pineland_sim/world.py::write_results"
+      ],
+      "missing": [],
+      "paths": [
+        "src/pineland_sim/reproducibility.py"
+      ],
+      "substantive_model_effect": false,
+      "topic": "execution provenance infrastructure"
+    },
+    {
+      "classification": "structural_change",
+      "classification_basis": "Preregistered data-free synthetic counterexamples proved the v4 state-based violence support was formation-encounter limited and conflated feasibility with action choice. v5 reuses existing capacity/accounts and separates belief-based choice, execution, event marking, and recording without fitting historical outcomes.",
+      "evidence": [
+        "studies/research_program/v5_event_architecture_preregistration.json",
+        "studies/research_program/v5_action_architecture_validation.json",
+        "tests/test_action_model.py",
+        "tests/test_event_support_architecture.py",
+        "tests/test_experimental_action_support.py"
+      ],
+      "missing": [
+        "one frozen-core historical revalidation on untouched holdouts before transfer claims",
+        "at least two independent transfer cases before COIN intervention inference"
+      ],
+      "paths": [
+        "src/pineland_sim/action_model.py",
+        "src/pineland_sim/processes.py",
+        "src/pineland_sim/simulation.py",
+        "src/pineland_sim/config.py",
+        "src/pineland_sim/world.py"
+      ],
+      "substantive_model_effect": true,
+      "topic": "multichannel organized action architecture"
+    }
+  ],
+  "interpretation": "All live core source groups are classified and the settled v4 source is software/reproducibility-certified. This licenses the once-only historical revalidation ladder, not calibration, general-theory promotion, or COIN inference.",
+  "observed_live_snapshot": {
+    "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+    "snapshot_warning": "v5/v0.13.0 is software/reproducibility certified. Historical Nepal v4 remains a failed transfer result; no historical result is promoted to v5 without rerun.",
+    "stability_check": {
+      "interval_seconds": 1,
+      "model_hash_equal": true,
+      "samples": 3,
+      "tracked_diff_hash_equal": true
+    },
+    "superseding_freeze_licensed": true,
+    "tracked_diff_sha256": "aeb8b7639eabc8b9d4d92395e352cf956e6e3f314c3c49e2187863e6fd953fd7"
+  },
+  "purpose": "Classify live-core changes before issuing any superseding freeze certificate.",
+  "required_for_supersession": [
+    "settled live model and tracked-diff hashes captured after editing stops",
+    "each substantive core edit classified as general defect, structural change, or unresolved drift",
+    "a failing data-free test or controlled microworld recorded before or with each repair",
+    "causal explanation for each repair and its expected mechanism impact",
+    "impact assessment against every completed Nepal and Afghanistan artifact",
+    "new reproducibility certificate and content-addressed evidence manifests",
+    "targeted regression and synthetic recovery checks pass on the settled tree"
+  ],
+  "schema_version": "1.0.0",
+  "status": "classified_certified_for_historical_revalidation"
+}

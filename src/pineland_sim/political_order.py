@@ -7,11 +7,19 @@ import random
 from .entities import (CausalContribution, Election, LocalElite, PartyBranch,
                        PolicyImplementation, PoliticalInstitution, PoliticalTransfer,
                        clamp)
+from .timebase import reference_scale
 
 
 INSTITUTION_TYPES = ("executive", "legislature", "civil_administration",
                      "judiciary", "military", "police")
 SERVICE_DIMENSIONS = ("security", "justice", "administration", "services", "representation")
+
+
+def local_elite_access_capacity(world, locality_id: str) -> float:
+    """Locality-level elite brokerage capability, independent of sampled anchors."""
+    locality = world.localities[locality_id]
+    default = 1.0 if locality.population > 0 else 0.0
+    return clamp(locality.governance.get("elite_access_capacity", default))
 
 
 def _transfer(world, time, kind, source, destination, locality, amount, purpose):
@@ -43,6 +51,13 @@ def initialize_political_order(world) -> None:
             rng.uniform(.45, .8), rng.uniform(.5, .9), district.connectivity,
             rng.uniform(.45, .8), 0.0, world.ruling_party_id)
     for locality in world.localities.values():
+        # Elite brokerage is a represented local capability.  An explicit
+        # LocalElite object below is only a sampled anchor for attribution and
+        # transfer records; the channel must not disappear because a weighted
+        # population draw happened to place no representative in this locality.
+        locality.governance["elite_access_capacity"] = (
+            1.0 if locality.population > 0 else 0.0
+        )
         iid = f"INST-{locality.locality_id}"
         world.political_institutions[iid] = PoliticalInstitution(
             iid, f"{locality.name} Municipal Administration", "municipal_government",
@@ -68,19 +83,30 @@ def initialize_political_order(world) -> None:
     for locality in world.localities.values():
         candidates = sorted((p for p in world.persons.values() if p.residence_locality_id == locality.locality_id),
                             key=lambda p: (-len(world.social_neighbors.get(p.person_id, ())), p.person_id))
-        for index, person in enumerate(candidates[:min(3, len(candidates))]):
+        # One sampled resident may anchor the aggregate brokerage capability.
+        # Do not instantiate up to three pseudo-elites merely because a finer
+        # representative resolution happened to provide more candidate nodes.
+        for person in candidates[:1]:
             aligned = max(person.party_legitimacy, key=person.party_legitimacy.get) if person.party_legitimacy else None
-            elite = LocalElite(f"EL-{locality.locality_id}-{index+1}", person.person_id,
-                               locality.locality_id, ("business", "community", "civic")[index % 3],
+            elite = LocalElite(f"EL-{locality.locality_id}-1", person.person_id,
+                               locality.locality_id, "composite_brokerage",
                                clamp(len(world.social_neighbors.get(person.person_id, ())) / 20),
-                               person.resources, rng.uniform(.35, .8), rng.uniform(.3, .85), aligned)
+                               # Broker resources are an account for explicit
+                               # political transfers, not a second copy of the
+                               # linked person's civilian wealth.
+                               0.0, rng.uniform(.35, .8), rng.uniform(.3, .85), aligned)
             world.local_elites[elite.elite_id] = elite
             if aligned:
                 world.party_branches[f"BR-{aligned}-{locality.locality_id}"].broker_ids.add(elite.elite_id)
 
 
-def _service_output(institution, public_spending, locality):
-    scale = public_spending / max(1.0, locality.population * .05)
+def _service_output(institution, public_spending, locality, cycle_scale: float = 1.0):
+    if cycle_scale <= 0:
+        scale = 0.0
+    else:
+        scale = (public_spending / cycle_scale) / max(
+            1.0, locality.population * .05
+        )
     production = clamp(institution.capacity * institution.reach * institution.compliance * scale)
     return {
         "security": production * (.8 + .2 * locality.infrastructure),
@@ -91,18 +117,33 @@ def _service_output(institution, public_spending, locality):
     }
 
 
-def process_political_order(world, time: float, event_id: str, rng: random.Random) -> dict:
+def process_political_order(world, time: float, event_id: str, rng: random.Random,
+                            interval_days: float | None = None) -> dict:
     cfg = world.config.political_order
     if not cfg.enabled:
         return {"budget": 0.0, "implementations": 0, "election": False}
-    decay_factor = exp(-cfg.patronage_decay_rate * cfg.interval_days / 365.0)
+    interval_days = cfg.interval_days if interval_days is None else float(interval_days)
+    if interval_days < 0:
+        raise ValueError("political-order interval_days cannot be negative")
+    cycle_scale = reference_scale(interval_days, 30.0)
+    if interval_days == 0:
+        election = False
+        if not world.elections:
+            run_election(world, time, rng)
+            election = True
+        return {
+            "budget": 0.0, "public_spending": 0.0, "patronage": 0.0,
+            "private_diversion": 0.0, "patronage_decay": 0.0,
+            "implementations": 0, "election": election,
+        }
+    decay_factor = exp(-cfg.patronage_decay_rate * interval_days / 365.0)
     patronage_decay = 0.0
     for branch in world.party_branches.values():
         before = branch.patronage_stock
         branch.patronage_stock *= decay_factor
         patronage_decay += before - branch.patronage_stock
     government = world.organizations["government"]
-    budget = min(government.resources, cfg.federal_policy_budget)
+    budget = min(government.resources, cfg.federal_policy_budget * cycle_scale)
     government.resources -= budget
     public_total = budget * cfg.public_budget_share
     patronage_total = budget * cfg.patronage_share
@@ -131,11 +172,26 @@ def process_political_order(world, time: float, event_id: str, rng: random.Rando
                       locality.locality_id, private_local, "implementation_leakage")
         ruling_branch = world.party_branches.get(
             f"BR-{world.ruling_party_id}-{locality.locality_id}") if world.ruling_party_id else None
+        # Patronage reach is the local allocation reaching the ruling
+        # coalition, including the share routed through explicit elite
+        # brokers.  Using only the branch's residual stock made voter response
+        # depend on how many sampled broker tokens happened to be instantiated.
+        elite_access = local_elite_access_capacity(world, locality.locality_id)
+        routed_patronage = patronage * (
+            (1 - cfg.elite_broker_share) + cfg.elite_broker_share * elite_access
+        )
+        patronage_reach = (
+            routed_patronage / cycle_scale /
+            max(1, locality.population * .01)
+        )
         if ruling_branch:
             ruling_branch.patronage_stock += patronage
             _transfer(world, time, "patronage", "government", ruling_branch.branch_id,
                       locality.locality_id, patronage, "coalition_maintenance")
-            brokers = [world.local_elites[eid] for eid in ruling_branch.broker_ids]
+            # broker_ids is a set.  Stable ordering is required so process
+            # isolation/PYTHONHASHSEED cannot reassign otherwise identical
+            # transfer IDs to different brokers.
+            brokers = [world.local_elites[eid] for eid in sorted(ruling_branch.broker_ids)]
             broker_pool = patronage * cfg.elite_broker_share
             for elite in brokers:
                 amount = broker_pool / max(1, len(brokers))
@@ -143,21 +199,31 @@ def process_political_order(world, time: float, event_id: str, rng: random.Rando
                 ruling_branch.patronage_stock -= amount
                 _transfer(world, time, "brokerage", ruling_branch.branch_id, elite.elite_id,
                           locality.locality_id, amount, "local_brokerage")
-        output = _service_output(institution, effective_public, locality)
+        output = _service_output(
+            institution, effective_public, locality, cycle_scale=cycle_scale
+        )
         institution.resources -= effective_public
         world.cumulative_public_spending += effective_public
         _transfer(world, time, "service_spending", institution.institution_id, "public_services",
                   locality.locality_id, effective_public, "governance_production")
         quality = sum(output.values()) / len(output)
         integrity_loss = cfg.patronage_capacity_damage * patronage / max(1, public + patronage)
-        institution.capacity = clamp(institution.capacity + cfg.capacity_learning_rate * quality -
-                                     cfg.capacity_decay_rate * (1 - quality) - integrity_loss)
-        institution.integrity = clamp(institution.integrity - integrity_loss)
+        institution.capacity = clamp(
+            institution.capacity + cycle_scale * (
+                cfg.capacity_learning_rate * quality -
+                cfg.capacity_decay_rate * (1 - quality) -
+                integrity_loss
+            )
+        )
+        institution.integrity = clamp(
+            institution.integrity - cycle_scale * integrity_loss
+        )
         before = locality.control["government"].to_dict()
         locality.control["government"].update({
-            "administrative": .004 * output["administration"],
-            "legal": .004 * output["justice"], "social": .003 * output["services"],
-            "expected": .003 * output["representation"],
+            "administrative": .004 * output["administration"] * cycle_scale,
+            "legal": .004 * output["justice"] * cycle_scale,
+            "social": .003 * output["services"] * cycle_scale,
+            "expected": .003 * output["representation"] * cycle_scale,
         })
         for dimension, old in before.items():
             delta = getattr(locality.control["government"], dimension) - old
@@ -170,18 +236,29 @@ def process_political_order(world, time: float, event_id: str, rng: random.Rando
                 continue
             fairness = institution.integrity
             experience = quality * (.5 + .5 * fairness)
-            person.government_legitimacy = clamp(person.government_legitimacy + .04 * (experience - .35))
-            person.state_legitimacy = clamp(person.state_legitimacy + .01 * (output["justice"] - .25))
-            person.political_access = clamp(person.political_access + .03 * (output["representation"] - .2))
+            person.government_legitimacy = clamp(
+                person.government_legitimacy +
+                .04 * (experience - .35) * cycle_scale
+            )
+            person.state_legitimacy = clamp(
+                person.state_legitimacy +
+                .01 * (output["justice"] - .25) * cycle_scale
+            )
+            person.political_access = clamp(
+                person.political_access +
+                .03 * (output["representation"] - .2) * cycle_scale
+            )
             if ruling_branch:
-                patronage_reach = ruling_branch.patronage_stock / max(1, locality.population * .01)
                 person.party_legitimacy[world.ruling_party_id] = clamp(
-                    person.party_legitimacy.get(world.ruling_party_id, .4) + .025 * patronage_reach -
-                    .015 * (1 - fairness))
+                    person.party_legitimacy.get(world.ruling_party_id, .4) +
+                    cycle_scale * (
+                        .025 * patronage_reach - .015 * (1 - fairness)
+                    ))
                 for party_id in person.party_legitimacy:
                     if party_id != world.ruling_party_id:
                         person.party_legitimacy[party_id] = clamp(
-                            person.party_legitimacy[party_id] - .008 * patronage_reach)
+                            person.party_legitimacy[party_id] -
+                            .008 * patronage_reach * cycle_scale)
         world.policy_implementations.append(PolicyImplementation(
             f"PI{len(world.policy_implementations)+1:08d}", time, institution.institution_id,
             locality.locality_id, public + patronage + private_local, effective_public,
@@ -205,17 +282,23 @@ def run_election(world, time: float, rng: random.Random) -> Election:
     for person in world.persons.values():
         base_turnout = clamp(person.political_access * (.45 + .55 * person.state_legitimacy))
         turnout = clamp(base_turnout ** (1 / max(.1, world.config.political_order.election_turnout_sensitivity)))
-        if rng.random() > turnout or not parties:
+        # A weighted representative stands for a population cohort.  Treating
+        # the whole cohort as one Bernoulli voter makes election variance scale
+        # with the number of simulated nodes.  Split represented mass across
+        # turnout and party choice by the cohort probabilities instead.
+        if not parties:
             abstention += person.weight
             continue
+        abstention += person.weight * (1 - turnout)
         utilities = []
         for party in parties:
             branch = world.party_branches[f"BR-{party.organization_id}-{person.residence_locality_id}"]
             utilities.append(max(.001, person.party_legitimacy.get(party.organization_id, .3) *
                                  person.private_preference.get(party.organization_id, .3) *
-                                 (1 + branch.electoral_support + branch.patronage_stock / 100_000)))
-        winner = rng.choices(parties, weights=utilities, k=1)[0]
-        votes[winner.organization_id] += person.weight
+                                 (1 + branch.electoral_support)))
+        utility_total = sum(utilities)
+        for party, utility in zip(parties, utilities):
+            votes[party.organization_id] += person.weight * turnout * utility / utility_total
     prior = world.ruling_party_id
     winner_id = max(votes, key=votes.get) if votes else prior
     election = Election(f"ELN{len(world.elections)+1:05d}", time, votes, abstention, winner_id, prior)
@@ -231,12 +314,16 @@ def run_election(world, time: float, rng: random.Random) -> Election:
 
 def political_diagnostics(world) -> dict:
     people = list(world.persons.values())
+    represented = sum(person.weight for person in people)
+    def weighted_mean(attribute: str) -> float:
+        return (sum(person.weight * getattr(person, attribute) for person in people) /
+                max(1e-12, represented))
     return {
         "ruling_party_id": world.ruling_party_id,
-        "elections": len(world.elections),
-        "mean_state_legitimacy": sum(p.state_legitimacy for p in people) / max(1, len(people)),
-        "mean_government_legitimacy": sum(p.government_legitimacy for p in people) / max(1, len(people)),
-        "mean_political_access": sum(p.political_access for p in people) / max(1, len(people)),
+        "elections": sum(election.time >= 0 for election in world.elections),
+        "mean_state_legitimacy": weighted_mean("state_legitimacy"),
+        "mean_government_legitimacy": weighted_mean("government_legitimacy"),
+        "mean_political_access": weighted_mean("political_access"),
         "institutional_capacity": {i.institution_id: i.capacity for i in world.political_institutions.values()},
         "party_influence": {b.branch_id: b.institutional_influence for b in world.party_branches.values()},
         "public_spending": world.cumulative_public_spending,

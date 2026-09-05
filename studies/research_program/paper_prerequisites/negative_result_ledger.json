@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "status": "continuous_negative_result_ledger",
+  "rule": "A negative, null, failed-transfer, or non-identification result remains part of the evidence record even if a later source version supersedes the run. Supersession changes current applicability, not historical existence.",
+  "entries": [
+    {
+      "id": "NR1",
+      "question": "Could the development-case formulation reproduce the declared Nepal recorded event process?",
+      "result": "No; the completed Nepal development exercise is retained as a falsification rather than retuned into a success.",
+      "evidence": [
+        "../../nepal_2001_2006/results/nepal_benchmark_report.md",
+        "../case_ladder.json"
+      ],
+      "status": "preserved_legacy_falsification",
+      "what_it_rules_out": "Treating that frozen formulation as a successful recorded-event generator for the declared Nepal target.",
+      "what_it_does_not_rule_out": "Every possible mechanism architecture, observation operator, or later independently justified general-defect repair."
+    },
+    {
+      "id": "NR2",
+      "question": "Did the archived Afghanistan first-transfer target ensemble succeed under its frozen formulation?",
+      "result": "No; the failed transfer is preserved, while current-core applicability requires revalidation rather than reinterpretation.",
+      "evidence": [
+        "../../afghanistan_2004_2021/results/transfer_test_v1/control_target_ensemble_v2/transfer_decision.json",
+        "../case_ladder.json"
+      ],
+      "status": "preserved_legacy_failed_transfer_revalidation_required",
+      "what_it_rules_out": "Calling the archived target ensemble a successful transfer.",
+      "what_it_does_not_rule_out": "The behavior of a later independently justified and newly certified core."
+    },
+    {
+      "id": "NR3",
+      "question": "Does observed violence adjacency by itself identify temporally directed insurgent reproduction?",
+      "result": "No robust general temporal-direction margin has been established; adjacency remains a descriptive spatial pattern rather than parent-attributed reproduction.",
+      "evidence": [
+        "../event_only_spatial_signature_diagnostic.json",
+        "../harmonized_historical_event_signatures.json",
+        "../actor_continuity_diagnostic.json"
+      ],
+      "status": "current_negative_constraint",
+      "what_it_rules_out": "Using adjacency or clustered violence alone as evidence of directed reproduction.",
+      "what_it_does_not_rule_out": "A parent-attributed reproduction mechanism identified with better actor and episode data."
+    },
+    {
+      "id": "NR4",
+      "question": "Is the exploratory local-renewal predictive association invariant across historical event strata?",
+      "result": "No; negative stratum-level results are preserved and prevent promotion of pooled violence prediction into a stable general mechanism claim.",
+      "evidence": [
+        "../historical_signature_competitor_benchmark.json",
+        "../program_audit.json"
+      ],
+      "status": "current_exploratory_negative_constraint",
+      "what_it_rules_out": "Treating pooled violence prediction as event-definition-invariant evidence.",
+      "what_it_does_not_rule_out": "A more narrowly scoped mechanism tied to a prospectively fixed event and observation definition."
+    },
+    {
+      "id": "NR5",
+      "question": "Does static or remembered presence by itself establish local reproduction?",
+      "result": "No; controlled pathway work preserves the requirement for an exercised exposure/contact and response pathway rather than treating occupancy or memory as sufficient.",
+      "evidence": [
+        "../spatial_factorial_pilot_assessment.json",
+        "../contact_challenge_eight_seed_replication.json",
+        "../theory_extraction_protocol.json"
+      ],
+      "status": "synthetic_negative_constraint",
+      "what_it_rules_out": "Presence-only sufficiency claims.",
+      "what_it_does_not_rule_out": "Presence or memory as one component of a conjunctive mechanism."
+    }
+  ]
+}
+

@@ -9,6 +9,7 @@ from .entities import (ArmedFormation, BorderSegment, DiasporaLink, ExternalSupp
                        InterpreterBroker, Organization, OrganizationKind, Patrol,
                        SecurityPost, SupplySource, clamp, logistic)
 from .logistics import _add_command_edge, create_movement_order
+from .timebase import reference_probability, reference_scale
 
 
 SUPPORT_COMPONENTS = ("financial", "political", "material", "training",
@@ -57,7 +58,10 @@ def initialize_foreign_system(world) -> None:
         world.border_segments[border.border_id] = border
         world.foreign_beliefs[(state.state_id, locality_id)] = ForeignBelief(
             state.state_id, locality_id, .5, .2, .12, 0.0)
-    # Interpreters are real socially connected Pineland residents near borders.
+    # When sampled, a socially connected resident anchors the interpreter
+    # channel for attribution.  The substantive interpretation capability is
+    # border/locality-level and is computed below from represented language
+    # and social overlap, so absence of a sampled resident does not erase it.
     for border in world.border_segments.values():
         candidates = [p for p in world.persons.values() if p.residence_locality_id == border.locality_id]
         candidates.sort(key=lambda p: (-len(world.social_neighbors.get(p.person_id, ())), p.person_id))
@@ -74,27 +78,90 @@ def initialize_foreign_system(world) -> None:
         world.interpreter_brokers[broker.interpreter_id] = broker
 
 
+def interpreter_channel_capacity(world, border: BorderSegment) -> float:
+    """Resolution-invariant represented interpretation/brokerage capacity."""
+    locality = world.localities[border.locality_id]
+    if locality.population <= 0:
+        return 0.0
+    social_access = (
+        .45 + .35 * clamp(border.social_permeability) +
+        .20 * clamp(border.kinship_overlap)
+    )
+    return clamp(border.language_overlap * social_access)
+
+
+def _interpreter_channel_quality(world, border: BorderSegment) -> float:
+    """Effective channel quality with optional sampled broker anchoring.
+
+    The demographic baseline exists whenever the represented border population
+    has language/social overlap.  A sampled broker can improve that quality,
+    but its absence cannot switch the channel off solely because of population
+    resolution.
+    """
+    capacity = interpreter_channel_capacity(world, border)
+    if capacity <= 0:
+        return 0.0
+    demographic_quality = clamp(
+        .35 + .35 * border.social_permeability + .30 * border.kinship_overlap
+    )
+    brokers = [
+        broker for broker in world.interpreter_brokers.values()
+        if broker.foreign_state_id == border.foreign_state_id
+        and broker.locality_id == border.locality_id
+    ]
+    broker_quality = max(
+        (
+            broker.foreign_language * broker.local_language *
+            broker.foreign_trust * broker.local_trust *
+            broker.cultural_knowledge
+            for broker in brokers
+        ),
+        default=0.0,
+    )
+    return clamp(capacity * max(demographic_quality, broker_quality))
+
+
 def _best_border(world, state_id):
     return max((b for b in world.border_segments.values() if b.foreign_state_id == state_id),
                key=lambda b: b.social_permeability * b.language_overlap /
                max(.2, b.terrain_friction))
 
 
-def process_cross_border_mobility(world, time: float, rng: random.Random) -> tuple[int, int]:
+def _return_probability(world, person, state: ForeignState,
+                        interval_days: float | None = None) -> float:
+    """Actor-facing return hazard based on the migrant's home-security belief."""
     cfg = world.config.foreign_affairs
-    departures = returns = 0
+    interval_days = cfg.interval_days if interval_days is None else float(interval_days)
+    perceived_home_security = world.belief_view().expected_destination_control(
+        person.person_id, person.home_locality_id, "government"
+    )
+    safety_gain = (1 - perceived_home_security) - (1 - state.opportunity) * .2
+    reference_hazard = clamp(
+        cfg.return_rate * logistic(-2 * safety_gain + person.state_legitimacy)
+    )
+    return reference_probability(reference_hazard, interval_days, 30.0)
+
+
+def process_cross_border_mobility(world, time: float, rng: random.Random,
+                                  interval_days: float | None = None) -> tuple[float, float]:
+    """Move representative cohorts and return represented departure/return mass."""
+    cfg = world.config.foreign_affairs
+    interval_days = cfg.interval_days if interval_days is None else float(interval_days)
+    if interval_days <= 0:
+        raise ValueError("foreign-affairs interval_days must be positive")
+    departures = returns = 0.0
     for person in world.persons.values():
         if person.external_state_id is not None:
             state = world.foreign_states[person.external_state_id]
-            home = world.localities[person.home_locality_id]
-            safety_gain = home.violence - (1 - state.opportunity) * .2
-            if rng.random() < cfg.return_rate * logistic(-2 * safety_gain + person.state_legitimacy):
+            if rng.random() < _return_probability(
+                world, person, state, interval_days=interval_days
+            ):
                 person.external_state_id = None
                 person.migration_status = "returned"
                 person.origin_tie_strength = clamp(person.origin_tie_strength + .15)
-                returns += 1
+                returns += person.weight
             else:
-                person.origin_tie_strength *= exp(-.02 * cfg.interval_days / 30)
+                person.origin_tie_strength *= exp(-.02 * interval_days / 30)
                 link = world.diaspora_links.get(f"DL-{person.person_id}")
                 if link:
                     link.social_strength = person.origin_tie_strength
@@ -109,7 +176,10 @@ def process_cross_border_mobility(world, time: float, rng: random.Random) -> tup
         pressure = locality.violence + person.fear + .4 * (1 - person.government_legitimacy)
         attraction = (state.opportunity + border.kinship_overlap + border.language_overlap -
                       border.terrain_friction * (1 - border.legal_permeability))
-        hazard = cfg.migration_rate * logistic(pressure + attraction - 1.6)
+        reference_hazard = clamp(
+            cfg.migration_rate * logistic(pressure + attraction - 1.6)
+        )
+        hazard = reference_probability(reference_hazard, interval_days, 30.0)
         if rng.random() < hazard:
             person.external_state_id = state.state_id
             person.migration_status = ("refuge" if locality.violence > .25 else
@@ -119,12 +189,33 @@ def process_cross_border_mobility(world, time: float, rng: random.Random) -> tup
                                 person.home_locality_id, 1.0, person.resources * .2,
                                 clamp(.35 + .5 * border.language_overlap), time)
             world.diaspora_links[link.link_id] = link
-            departures += 1
+            departures += person.weight
     return departures, returns
 
 
-def process_diaspora(world, time: float, event_id: str, rng: random.Random) -> tuple[float, int]:
+def _support_recipient(world, state: ForeignState,
+                       active_insurgents: list[Organization]) -> str:
+    """Choose support from foreign-state alignment and its own transfer record."""
+    if state.government_alignment >= state.ideological_alignment or not active_insurgents:
+        return "government"
+    prior_support: dict[str, float] = {o.organization_id: 0.0 for o in active_insurgents}
+    for support in world.external_support:
+        if (support.foreign_state_id == state.state_id and
+                support.recipient_id in prior_support):
+            prior_support[support.recipient_id] += support.total()
+    return min(
+        active_insurgents,
+        key=lambda o: (-prior_support[o.organization_id], o.organization_id),
+    ).organization_id
+
+
+def process_diaspora(world, time: float, event_id: str, rng: random.Random,
+                     interval_days: float | None = None) -> tuple[float, int]:
     cfg = world.config.foreign_affairs
+    interval_days = cfg.interval_days if interval_days is None else float(interval_days)
+    if interval_days <= 0:
+        raise ValueError("foreign-affairs interval_days must be positive")
+    cycle_scale = reference_scale(interval_days, 30.0)
     remittances = 0.0
     messages = 0
     for link in world.diaspora_links.values():
@@ -132,15 +223,23 @@ def process_diaspora(world, time: float, event_id: str, rng: random.Random) -> t
         if person.external_state_id is None:
             continue
         state = world.foreign_states[link.foreign_state_id]
-        amount = min(state.resources, link.financial_capacity * cfg.diaspora_remittance_rate *
-                     link.social_strength)
+        amount = min(
+            state.resources,
+            link.financial_capacity * cfg.diaspora_remittance_rate *
+            link.social_strength * cycle_scale,
+        )
         state.resources -= amount
-        person.resources += amount
+        world.adjust_person_resources(person.person_id, amount)
         remittances += amount
         world.cumulative_external_remittances += amount
         _record_transfer(world, time, "diaspora_remittance", state.state_id,
                          person.person_id, amount, _best_border(world, state.state_id).border_id, event_id)
-        if rng.random() < cfg.diaspora_information_rate * link.information_reliability:
+        message_probability = reference_probability(
+            clamp(cfg.diaspora_information_rate * link.information_reliability),
+            interval_days,
+            30.0,
+        )
+        if rng.random() < message_probability:
             person.social_exposure["government"] = clamp(
                 person.social_exposure.get("government", 0) + .05 * link.social_strength)
             messages += 1
@@ -149,10 +248,8 @@ def process_diaspora(world, time: float, event_id: str, rng: random.Random) -> t
 
 def _foreign_belief_update(world, state: ForeignState, time: float, rng: random.Random) -> None:
     cfg = world.config.foreign_affairs
-    interpreters = [b for b in world.interpreter_brokers.values() if b.foreign_state_id == state.state_id]
-    interpreter_quality = max((b.foreign_language * b.local_language * b.foreign_trust *
-                               b.local_trust * b.cultural_knowledge for b in interpreters), default=0)
     for border in (b for b in world.border_segments.values() if b.foreign_state_id == state.state_id):
+        interpreter_quality = _interpreter_channel_quality(world, border)
         # Foreign actors consume the host's imperfect belief, never true control.
         host_estimate = world.belief_view("government").locality_control(
             border.locality_id, "government", "government").physical
@@ -218,6 +315,7 @@ def deliver_support(world, state: ForeignState, recipient_id: str, time: float,
 
 def begin_intervention(world, state: ForeignState, time: float, mode: str,
                        transfer_efficiency: float, crowding_out: float) -> ForeignIntervention:
+    before_stocks = world.tracked_stock_totals()
     iid = f"FI{len(world.foreign_interventions)+1:05d}"
     intervention = ForeignIntervention(iid, state.state_id, "government", time, mode,
                                        0.0, transfer_efficiency, crowding_out)
@@ -252,7 +350,15 @@ def begin_intervention(world, state: ForeignState, time: float, mode: str,
         postid = f"POST-{fid}"
         world.security_posts[postid] = SecurityPost(postid, oid, border.locality_id,
                                                     zone.microzone_id, personnel*.15, .2, .7, fid)
+        world.security_post_ids_by_locality.setdefault(border.locality_id, []).append(postid)
         intervention.force_formation_ids.add(fid)
+    # Intervention creation is an explicit external inflow even when invoked
+    # directly by an experiment rather than through the scheduler.
+    if world.active_event_id is None:
+        world.record_stock_transactions(
+            f"FOREIGN-{iid}", "foreign_affairs", before_stocks,
+            world.tracked_stock_totals(),
+        )
     return intervention
 
 
@@ -271,12 +377,27 @@ def dependence_metrics(world) -> dict[str, float]:
             "withdrawal_shock": dependence * withdrawal_speed * (1 - clamp(absorption))}
 
 
-def process_foreign_affairs(world, time: float, event_id: str, rng: random.Random) -> dict:
+def process_foreign_affairs(world, time: float, event_id: str, rng: random.Random,
+                            interval_days: float | None = None) -> dict:
     cfg = world.config.foreign_affairs
     if not cfg.enabled:
         return {"support": 0, "departures": 0, "returns": 0}
-    departures, returns = process_cross_border_mobility(world, time, rng)
-    remittances, messages = process_diaspora(world, time, event_id, rng)
+    interval_days = cfg.interval_days if interval_days is None else float(interval_days)
+    if interval_days < 0:
+        raise ValueError("foreign-affairs interval_days cannot be negative")
+    if interval_days == 0:
+        return {
+            "support": 0, "departures": 0.0, "returns": 0.0,
+            "remittances": 0.0, "messages": 0, "interventions": 0,
+            "withdrawals": 0,
+        }
+    cycle_scale = reference_scale(interval_days, 30.0)
+    departures, returns = process_cross_border_mobility(
+        world, time, rng, interval_days=interval_days
+    )
+    remittances, messages = process_diaspora(
+        world, time, event_id, rng, interval_days=interval_days
+    )
     active_insurgents = [o for o in world.organizations.values()
                          if o.kind is OrganizationKind.INSURGENT and o.status == "active"]
     support_count = interventions = withdrawals = 0
@@ -292,13 +413,23 @@ def process_foreign_affairs(world, time: float, event_id: str, rng: random.Rando
                                            cfg.willingness_cost_weight * cost_pressure -
                                            cfg.willingness_casualty_weight * state.cumulative_casualties / 100 -
                                            state.domestic_opposition - 1.0))
-        recipient = "government" if state.government_alignment >= state.ideological_alignment or not active_insurgents \
-            else max(active_insurgents, key=lambda o: o.phenotype["resource_dependence"]).organization_id
-        if cfg.support_budget_fraction > 0 and rng.random() < state.willingness * .3:
+        recipient = _support_recipient(world, state, active_insurgents)
+        support_probability = reference_probability(
+            clamp(state.willingness * .3), interval_days, 30.0
+        )
+        if cfg.support_budget_fraction > 0 and rng.random() < support_probability:
             support = deliver_support(world, state, recipient, time, event_id, rng)
             support_count += int(support.delivered)
+        intervention_probability = reference_probability(
+            clamp(
+                cfg.intervention_base_hazard * state.willingness *
+                (1 + cfg.rival_reaction * rival_presence)
+            ),
+            interval_days,
+            30.0,
+        )
         if (state.state_id not in active_foreign and
-                rng.random() < cfg.intervention_base_hazard * state.willingness * (1 + cfg.rival_reaction * rival_presence)):
+                rng.random() < intervention_probability):
             begin_intervention(world, state, time, "capacity_building" if state.humanitarian_preference > .5 else "substitution",
                                cfg.host_transfer_efficiency, cfg.host_crowding_out)
             interventions += 1
@@ -311,13 +442,15 @@ def process_foreign_affairs(world, time: float, event_id: str, rng: random.Rando
             local = [i for i in world.political_institutions.values() if i.level in {"district", "municipal"}]
             for institution in local:
                 transfer_gain = (.002 * intervention.transfer_efficiency * contribution /
-                                 max(1, len(local)))
+                                 max(1, len(local)) * cycle_scale)
                 crowding_loss = (.002 * intervention.crowding_out * contribution /
-                                  max(1, len(local)))
+                                  max(1, len(local)) * cycle_scale)
                 institution.capacity = clamp(institution.capacity + transfer_gain - crowding_loss)
                 intervention.cumulative_retained_host_capacity += transfer_gain
                 intervention.cumulative_crowding_out += crowding_loss
-            intervention.cumulative_transferred_capacity += contribution * intervention.transfer_efficiency
+            intervention.cumulative_transferred_capacity += (
+                contribution * intervention.transfer_efficiency * cycle_scale
+            )
             formations = [world.formations[fid] for fid in intervention.force_formation_ids
                           if fid in world.formations]
             for formation in formations:
@@ -330,8 +463,10 @@ def process_foreign_affairs(world, time: float, event_id: str, rng: random.Rando
                     benefit = contribution / max(1.0, locality.population * .001)
                     harm = formation.cumulative_losses / max(1.0, formation.personnel)
                     person.government_legitimacy = clamp(
-                        person.government_legitimacy + .006 * benefit * person.trust.get("government", .5) -
-                        .004 * foreignness - .008 * harm)
+                        person.government_legitimacy + cycle_scale * (
+                            .006 * benefit * person.trust.get("government", .5) -
+                            .004 * foreignness - .008 * harm
+                        ))
             state = world.foreign_states[intervention.foreign_state_id]
             state.cumulative_casualties = sum(world.formations[fid].cumulative_losses
                                               for fid in intervention.force_formation_ids if fid in world.formations)
@@ -374,7 +509,9 @@ def foreign_diagnostics(world) -> dict:
     withdrawn = sum(i.withdrawn_capacity for i in interventions)
     return {**metrics, "foreign_states": len(world.foreign_states),
             "border_segments": len(world.border_segments), "active_interventions": active,
-            "external_support_events": len(world.external_support),
+            "external_support_events": sum(
+                support.time >= 0 for support in world.external_support
+            ),
             "external_transfers": len(world.external_transfers),
             "diaspora_links": len(world.diaspora_links),
             "externalization_reproduction": rival_induced / max(1, len(world.foreign_interventions)),

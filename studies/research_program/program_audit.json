@@ -1,0 +1,309 @@
+{
+  "calibration_licensed": false,
+  "certificate_valid": true,
+  "coin_inference_licensed": false,
+  "current_stage": "v5_frozen_historical_revalidation_pending",
+  "evidence_details": {
+    "settled_tree_certificate": {
+      "checks": {
+        "expected_path": true
+      },
+      "valid": true
+    }
+  },
+  "frozen_model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+  "live_core_matches_certificate": true,
+  "live_model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+  "passed": true,
+  "program_complete": false,
+  "schema_version": "1.1.0",
+  "sections": {
+    "actor_continuity_diagnostic": {
+      "core_change_forbidden": true,
+      "diagnostic_not_causal": true,
+      "fitting_forbidden": true,
+      "identity_guard_declared": true,
+      "placebo_declared": true,
+      "stable_theory_not_licensed": true,
+      "two_cases_present": true
+    },
+    "case_ladder": {
+      "afghanistan_is_first_transfer": true,
+      "future_cases_not_claimed_complete": true,
+      "nepal_falsification_preserved": true,
+      "promotion_gates_complete": true,
+      "strict_order": true,
+      "unique_case_ids": true
+    },
+    "certificate": {
+      "all_certification_conditions": true,
+      "model_hash_pinned": true,
+      "payload_hash_pinned": true,
+      "payload_hash_valid": true,
+      "status_certified": true,
+      "tracked_diff_pinned": true
+    },
+    "challenge_contract": {
+      "acceptance_gate_declared": true,
+      "focal_pair_declared": true,
+      "four_cells_declared": true,
+      "preregistered_not_run": true,
+      "synthetic_only": true
+    },
+    "coin_design": {
+      "all_interventions_have_falsifiers": true,
+      "design_not_efficacy_claim": true,
+      "full_outcome_vector": true,
+      "holdout_calibration_forbidden": true,
+      "nine_intervention_families": true,
+      "violence_only_optimization_forbidden": true
+    },
+    "comparative_theory_promotion_matrix": {
+      "all_claims_have_case_cells": true,
+      "all_ladder_cases_mapped": true,
+      "ineligible_rules_declared": true,
+      "promotion_blocked": true,
+      "stable_theory_not_licensed": true
+    },
+    "contact_challenge_eight_seed_replication": {
+      "artifact_hash_matches": true,
+      "builder_hash_matches": true,
+      "contract_hash_matches": true,
+      "core_uncertified_guard": true,
+      "integrity_passed": true,
+      "latent_contact_gate": true,
+      "manifest_guardrails": true,
+      "manifest_status": true,
+      "presence_memory_contrast_gate": true,
+      "replication_complete": true,
+      "scientific_acceptance_gate_passed": true,
+      "synthetic_only": true
+    },
+    "control_observation_synthetic_recovery": {
+      "accuracy_gate": true,
+      "operator_prospective": true,
+      "recovery_not_historical_fit": true,
+      "recovery_passed": true,
+      "synthetic_only": true
+    },
+    "core_change_classification_ledger": {
+      "all_change_groups_classified": true,
+      "all_change_groups_pending_or_classified": true,
+      "all_changed_source_modules_accounted_for": true,
+      "observed_snapshot_matches_live": true,
+      "snapshot_freeze_license_consistent": true,
+      "stability_check_declared": true,
+      "substantive_effect_flags_present": true
+    },
+    "current_core_case_preflights": {
+      "afghanistan_artifact_hash_matches": true,
+      "afghanistan_binding_or_explicit_revalidation_pending": true,
+      "afghanistan_builder_hash_matches": true,
+      "afghanistan_initialization_gate_pass": true,
+      "afghanistan_manifest_status": true,
+      "afghanistan_no_historical_fit": true,
+      "afghanistan_run_stable": true,
+      "nepal_construct_checks_pass": true,
+      "nepal_no_parameter_fit": true,
+      "nepal_no_study_period_outcomes_for_repairs": true,
+      "nepal_structural_snapshot_preserved": true,
+      "preflight_not_transfer_claim": true
+    },
+    "current_core_contact_challenge_pilot": {
+      "acceptance_gate_remains_false": true,
+      "all_cells_have_contact": true,
+      "artifact_hash_matches": true,
+      "contract_hash_matches": true,
+      "four_cells_complete": true,
+      "integrity_passed": true,
+      "manifest_status": true,
+      "memory_contrast_positive": true,
+      "pilot_status": true,
+      "script_hash_matches": true,
+      "snapshot_binding_recorded": true,
+      "synthetic_only": true
+    },
+    "current_core_contact_hazard_sensitivity": {
+      "artifact_hash_matches": true,
+      "baseline_zero_and_high_factor_nonzero": true,
+      "builder_hash_matches": true,
+      "contract_hash_matches": true,
+      "core_change_not_licensed": true,
+      "diagnostic_status": true,
+      "four_preregistered_runs": true,
+      "historical_scoring_not_fit": true,
+      "integrity_passed": true,
+      "latent_contact_response_monotone": true,
+      "manifest_status": true,
+      "mean_hazard_monotone": true,
+      "snapshot_binding_recorded": true
+    },
+    "current_core_nepal_smoke": {
+      "artifact_hash_matches": true,
+      "binding_or_explicit_revalidation_pending": true,
+      "builder_hash_matches": true,
+      "case_hash_matches": true,
+      "diagnostic_status": true,
+      "integrity_passed": true,
+      "invariants_passed": true,
+      "manifest_status": true,
+      "no_historical_fit": true,
+      "not_transfer_claim": true,
+      "population_conserved": true,
+      "run_stable": true
+    },
+    "current_core_smoke_impact_diagnostic": {
+      "artifact_hash_matches": true,
+      "binding_or_explicit_revalidation_pending": true,
+      "builder_hash_matches": true,
+      "core_change_not_licensed": true,
+      "diagnostic_status": true,
+      "historical_scoring_not_fit": true,
+      "integrity_passed": true,
+      "manifest_status": true,
+      "not_transfer_claim": true,
+      "run_stable": true,
+      "zero_contact_limitation_preserved": true
+    },
+    "current_core_year_impact_diagnostic": {
+      "artifact_hash_matches": true,
+      "builder_hash_matches": true,
+      "core_change_not_licensed": true,
+      "diagnostic_status": true,
+      "gate_is_structural_not_transfer": true,
+      "historical_scoring_not_fit": true,
+      "integrity_passed": true,
+      "manifest_status": true,
+      "nonzero_contact_constraint_recorded": true,
+      "not_transfer_claim": true,
+      "one_year_horizon": true,
+      "run_stable": true,
+      "snapshot_binding_recorded": true
+    },
+    "event_only_spatial_signature_diagnostic": {
+      "colombia_and_iraq_present": true,
+      "core_change_forbidden": true,
+      "diagnostic_not_causal": true,
+      "fitting_forbidden": true,
+      "historical_outcomes_declared": true,
+      "placebo_and_shuffle_declared": true,
+      "stable_theory_not_licensed": true
+    },
+    "freeze": {
+      "calibration_not_licensed": true,
+      "case_fit_cannot_justify_core_change": true,
+      "commit_matches": true,
+      "model_hash_matches": true,
+      "tracked_diff_matches": true
+    },
+    "freeze_evidence": {
+      "settled_tree_certificate": true
+    },
+    "harmonized_historical_event_signatures": {
+      "core_change_forbidden": true,
+      "diagnostic_not_causal": true,
+      "fitting_forbidden": true,
+      "four_cases_present": true,
+      "monthly_harmonization_declared": true,
+      "negative_constraints_declared": true,
+      "stable_theory_not_licensed": true,
+      "stratum_sensitivity_declared": true
+    },
+    "historical_assignment_sensitivity": {
+      "core_change_forbidden": true,
+      "coverage_is_explicit": true,
+      "diagnostic_not_imputation": true,
+      "fitting_forbidden": true,
+      "historical_outcomes_declared": true,
+      "stable_theory_not_licensed": true,
+      "two_cases_present": true
+    },
+    "historical_reproduction_signature_benchmark": {
+      "all_ladder_cases_present": true,
+      "core_change_forbidden": true,
+      "diagnostic_not_causal": true,
+      "fitting_forbidden": true,
+      "historical_outcomes_declared": true,
+      "nulls_required": true,
+      "stable_theory_not_licensed": true
+    },
+    "historical_signature_artifact_manifest": {
+      "artifact_hashes_match": true,
+      "builder_hashes_match": true,
+      "content_addressed_status": true,
+      "core_change_not_licensed": true,
+      "four_artifacts_declared": true,
+      "source_ref_hashes_match": true
+    },
+    "historical_signature_competitor_benchmark": {
+      "benchmark_not_causal": true,
+      "combined_model_best_in_each_case": true,
+      "core_change_forbidden": true,
+      "four_cases_present": true,
+      "four_models_declared": true,
+      "local_lift_positive_in_each_case": true,
+      "rolling_combined_lift_positive_in_each_case": true,
+      "rolling_local_lift_positive_in_each_case": true,
+      "rolling_origin_declared": true,
+      "simulator_fit_forbidden": true,
+      "stable_theory_not_licensed": true,
+      "stratum_negative_results_preserved": true,
+      "stratum_sensitivity_declared": true,
+      "training_only": true
+    },
+    "moonshot_checklist": {
+      "completion_rule_declared": true,
+      "eight_stages_declared": true,
+      "remaining_work_is_explicit": true,
+      "unique_stage_numbers": true
+    },
+    "outcome_contract": {
+      "control_proxy_forbidden": true,
+      "measurement_operators_declared": true,
+      "missingness_rule": true,
+      "seven_outcomes_declared": true,
+      "violence_proxy_forbidden": true
+    },
+    "theory": {
+      "legacy_scalar_is_secondary": true,
+      "multidimensional_coin_outcomes": true,
+      "reproduction_is_decomposed": true,
+      "ri_is_not_claimed": true,
+      "simple_competitors_required": true,
+      "theory_is_candidate": true
+    },
+    "theory_protocol": {
+      "binding_conditions_declared": true,
+      "candidate_protocol_not_result": true,
+      "cycle_is_explicit": true,
+      "negative_constraints_declared": true,
+      "negative_results_required": true,
+      "survival_criteria_are_cross_case": true,
+      "unresolved_claim_rule": true
+    },
+    "theory_status_matrix": {
+      "candidate_not_general": true,
+      "claims_have_status": true,
+      "current_blockers_declared": true,
+      "promotion_rule_declared": true
+    },
+    "timebase_repair_evidence": {
+      "composition_contract_declared": true,
+      "data_free_only": true,
+      "failure_reproduction_declared": true,
+      "general_defect_classified": true,
+      "release_not_licensed": true
+    },
+    "v5_action_architecture": {
+      "bounded_forensic_equivalent": true,
+      "coin_inference_blocked": true,
+      "current_model_bound": true,
+      "endurance_model_stable": true,
+      "historical_outcomes_not_used_to_define_equations": true,
+      "historical_validation_pending": true,
+      "release_certificate_bound": true,
+      "retention_behaviorally_equivalent": true,
+      "synthetic_promotion_certified": true
+    }
+  }
+}

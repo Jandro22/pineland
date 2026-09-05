@@ -1,0 +1,242 @@
+{
+  "authoritative_certificate": "outputs/final_release/RELEASE_CERTIFICATE_LIVE.json",
+  "calibration_licensed": false,
+  "certificate_payload_sha256": "7f8646a33b29890c22327d48940f0dd529e312d4fd450a2d59c28e9bf6b2c667",
+  "certification_evidence_keys": [
+    "settled_tree_certificate"
+  ],
+  "certified_dirty_tree_content_sha256": "367a040781583e4c02bdafdb32091997e48ebbb92d9d5a1cb7b4026387433b84",
+  "change_rule": {
+    "case_fit_is_sufficient": false,
+    "historical_revalidation_required": true,
+    "required_classification": "general_defect_or_preregistered_structural_change",
+    "required_evidence": [
+      "data-free, synthetic, or cross-case theoretical justification independent of target-case fit",
+      "failing test, controlled counterexample, or preregistered synthetic contrast before or with repair",
+      "causal explanation of the mechanism change",
+      "all changed core modules classified in the core-change ledger",
+      "fresh software/reproducibility certificate on the settled live source",
+      "completed historical cases rerun once after the new freeze before transfer claims"
+    ]
+  },
+  "commit": "76a02bbf2f1f329a512dbffb2760199b28dc4c8a",
+  "core_boundary": [
+    "src/pineland_sim/**/*.py",
+    "pyproject.toml"
+  ],
+  "evidence_records": {
+    "settled_tree_certificate": {
+      "artifact": {
+        "path": "outputs/final_release/RELEASE_CERTIFICATE_LIVE.json",
+        "sha256": "8cbd8ba6eede57fb9e5f82b7038b421ce7536d6c33599645e17e804191ff961b"
+      },
+      "status": "verified_pinned_file"
+    }
+  },
+  "freeze_basis": {
+    "afghanistan_case_ready": "studies/afghanistan_2004_2021/config/study_design.json",
+    "afghanistan_initialization_gate": "studies/afghanistan_2004_2021/runs/transfer_test_v1/init/manifest.json",
+    "afghanistan_smoke_gate": "studies/afghanistan_2004_2021/runs/transfer_test_v1/smoke/manifest.json",
+    "nepal_final_rescore": "studies/nepal_2001_2006/results/nepal_benchmark_report.md",
+    "nepal_result": "falsified_as_recorded_event_generator",
+    "nepal_v4_predictive_competition": "studies/research_program/predictive_competition/nepal_v4/decision.json",
+    "settled_tree_certificate": "outputs/final_release/RELEASE_CERTIFICATE_LIVE.json",
+    "software_tests": "508 passed, 0 failed; 8 reproducibility tests passed",
+    "supersession_reason": "A preregistered data-free structural repair separates persistent capacity, belief-based action choice, execution, event marks, and recording; field encounter remains one event channel rather than the universal violence support condition.",
+    "v5_action_architecture_validation": "studies/research_program/v5_action_architecture_validation.json",
+    "v5_event_architecture_preregistration": "studies/research_program/v5_event_architecture_preregistration.json"
+  },
+  "freeze_id": "pineland-core-transfer-v5",
+  "historical_revalidation": {
+    "afghanistan": {
+      "prior_core": "pineland-core-transfer-v4",
+      "prior_result": "initialization_smoke_one_year_passed_full_horizon_not_completed",
+      "status": "v5_staged_initialization_smoke_one_year_full_horizon_required"
+    },
+    "historical_results_promoted_to_v5_without_rerun": false,
+    "nepal": {
+      "prior_core": "pineland-core-transfer-v4",
+      "prior_result": "failed_predictive_competition_against_simple_models",
+      "status": "preserved_v4_falsification_v5_rerun_required_once"
+    },
+    "required": true
+  },
+  "legacy_historical_evidence_records": {
+    "afghanistan_case_ready": {
+      "artifact": {
+        "path": "studies/afghanistan_2004_2021/config/study_design.json",
+        "sha256": "71a3e54d3de4c7869af0acd392c1ceb8d7f4e36ef203a41268bc9545127fa2ea"
+      },
+      "artifact_model_sha256": null,
+      "expected": {
+        "case_data_hashes": {
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/config/case_environment.json": {
+            "sha256": "4d833f618f9b0dce2a289df9e2d6b29415f41c1cd5039aee7bd263322bcbbab2",
+            "substantive_sha256": "ce92ca9ac7fded5cd08b5189eeca81c1891b76d492312cc7c1c503dd0d047fd8"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/config/historical_case_inputs.json": {
+            "sha256": "873c257cd8c47088932ecfae7d939e6f9aacb623e7d0621da3a0f776229e79e8",
+            "substantive_sha256": "8b367fe8ef1fde79caa67117dcfbbf1d2fdaefb9b92e5fbec32fed296e0619c1"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/data/processed/province_week_panel.csv": {
+            "sha256": "615b8ccd5db30eb45e74b9400029084edd1a931ed0a27bfaa8d7b708d767256c",
+            "substantive_sha256": "615b8ccd5db30eb45e74b9400029084edd1a931ed0a27bfaa8d7b708d767256c"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/data/processed/sigar_oct2017_control_401.csv": {
+            "sha256": "9e93dc7e0e7b05da73773e5103e25333570225e249b4f1d71cb05b40e47cb6e9",
+            "substantive_sha256": "9e93dc7e0e7b05da73773e5103e25333570225e249b4f1d71cb05b40e47cb6e9"
+          }
+        },
+        "config_sha256": "628a1cbed7480876a5db020ad47705ee0ba470dfd662b95f09d3bea74c3dc0db",
+        "model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+        "split_sha256": "71a3e54d3de4c7869af0acd392c1ceb8d7f4e36ef203a41268bc9545127fa2ea"
+      },
+      "expected_stage": "init",
+      "run_manifest": {
+        "path": "studies/afghanistan_2004_2021/runs/transfer_test_v1/init/verified_manifest.json",
+        "sha256": "69c0663a2823d68311e09f1f7e021ae6814f102116eedb9bdeb8dc0a0e796db5"
+      },
+      "status": "verified_run_evidence"
+    },
+    "afghanistan_initialization_gate": {
+      "artifact": {
+        "path": "studies/afghanistan_2004_2021/runs/transfer_test_v1/init/seed_20040101_taliban_7500.json",
+        "sha256": "3a44f59e8cc3d2a63c9329849547093d73ff1ad74b4dbb74909cbc91fa21f2b7"
+      },
+      "artifact_model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+      "expected": {
+        "case_data_hashes": {
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/config/case_environment.json": {
+            "sha256": "4d833f618f9b0dce2a289df9e2d6b29415f41c1cd5039aee7bd263322bcbbab2",
+            "substantive_sha256": "ce92ca9ac7fded5cd08b5189eeca81c1891b76d492312cc7c1c503dd0d047fd8"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/config/historical_case_inputs.json": {
+            "sha256": "873c257cd8c47088932ecfae7d939e6f9aacb623e7d0621da3a0f776229e79e8",
+            "substantive_sha256": "8b367fe8ef1fde79caa67117dcfbbf1d2fdaefb9b92e5fbec32fed296e0619c1"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/data/processed/province_week_panel.csv": {
+            "sha256": "615b8ccd5db30eb45e74b9400029084edd1a931ed0a27bfaa8d7b708d767256c",
+            "substantive_sha256": "615b8ccd5db30eb45e74b9400029084edd1a931ed0a27bfaa8d7b708d767256c"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/data/processed/sigar_oct2017_control_401.csv": {
+            "sha256": "9e93dc7e0e7b05da73773e5103e25333570225e249b4f1d71cb05b40e47cb6e9",
+            "substantive_sha256": "9e93dc7e0e7b05da73773e5103e25333570225e249b4f1d71cb05b40e47cb6e9"
+          }
+        },
+        "config_sha256": "628a1cbed7480876a5db020ad47705ee0ba470dfd662b95f09d3bea74c3dc0db",
+        "model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+        "split_sha256": "71a3e54d3de4c7869af0acd392c1ceb8d7f4e36ef203a41268bc9545127fa2ea"
+      },
+      "expected_stage": "init",
+      "run_manifest": {
+        "path": "studies/afghanistan_2004_2021/runs/transfer_test_v1/init/verified_manifest.json",
+        "sha256": "69c0663a2823d68311e09f1f7e021ae6814f102116eedb9bdeb8dc0a0e796db5"
+      },
+      "status": "verified_run_evidence"
+    },
+    "afghanistan_smoke_gate": {
+      "artifact": {
+        "path": "studies/afghanistan_2004_2021/runs/transfer_test_v1/smoke/seed_20040101_taliban_7500.json",
+        "sha256": "b3ca9954080b7238dff64c795dd71c8ac061fcd1043c18c31f3b3e4ae2a00a57"
+      },
+      "artifact_model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+      "expected": {
+        "case_data_hashes": {
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/config/case_environment.json": {
+            "sha256": "4d833f618f9b0dce2a289df9e2d6b29415f41c1cd5039aee7bd263322bcbbab2",
+            "substantive_sha256": "ce92ca9ac7fded5cd08b5189eeca81c1891b76d492312cc7c1c503dd0d047fd8"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/config/historical_case_inputs.json": {
+            "sha256": "873c257cd8c47088932ecfae7d939e6f9aacb623e7d0621da3a0f776229e79e8",
+            "substantive_sha256": "8b367fe8ef1fde79caa67117dcfbbf1d2fdaefb9b92e5fbec32fed296e0619c1"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/data/processed/province_week_panel.csv": {
+            "sha256": "615b8ccd5db30eb45e74b9400029084edd1a931ed0a27bfaa8d7b708d767256c",
+            "substantive_sha256": "615b8ccd5db30eb45e74b9400029084edd1a931ed0a27bfaa8d7b708d767256c"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/afghanistan_2004_2021/data/processed/sigar_oct2017_control_401.csv": {
+            "sha256": "9e93dc7e0e7b05da73773e5103e25333570225e249b4f1d71cb05b40e47cb6e9",
+            "substantive_sha256": "9e93dc7e0e7b05da73773e5103e25333570225e249b4f1d71cb05b40e47cb6e9"
+          }
+        },
+        "config_sha256": "a1d786eb5ea11ebd7f6e2341cb770981e47938f9cf002ec0f0ae9f80f18f8ec8",
+        "model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+        "split_sha256": "71a3e54d3de4c7869af0acd392c1ceb8d7f4e36ef203a41268bc9545127fa2ea"
+      },
+      "expected_stage": "smoke",
+      "run_manifest": {
+        "path": "studies/afghanistan_2004_2021/runs/transfer_test_v1/smoke/verified_manifest.json",
+        "sha256": "269041a90df6a939cdd45cdd95a8472e9dce510280559aba705eb227fc9510d5"
+      },
+      "status": "verified_run_evidence"
+    },
+    "nepal_final_rescore": {
+      "artifact": {
+        "path": "studies/nepal_2001_2006/runs/post_structural_repair/final_empirical_rescore/seed_20011126_agents_750.json",
+        "sha256": "46b785a077ea2edf4102d20b8a10a3ac19812c52be399605d67ba9ec3ee7c70f"
+      },
+      "artifact_model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+      "expected": {
+        "case_data_hashes": {
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/nepal_2001_2006/config/case_environment_repaired.json": {
+            "sha256": "1455da9aa1f063db1660553342a41558afbaae062968cd88988f8c4fa549d589",
+            "substantive_sha256": "ce3bdf9e84e9b1160810688e88354f2dbccec0602e29ed90d8b1508ab2d0f712"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/nepal_2001_2006/data/processed/district_week_panel.csv": {
+            "sha256": "bc9596cc8d0cc639f3d78ca06a5e3a077c03923d4121b9181b568a3da4208200",
+            "substantive_sha256": "bc9596cc8d0cc639f3d78ca06a5e3a077c03923d4121b9181b568a3da4208200"
+          },
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/nepal_2001_2006/data/processed/ucdp_nepal_events.csv": {
+            "sha256": "4e71af81fcfdb519f10945a5a702d2c6231ac4fa80344b393bd9ad28ab8a9fc3",
+            "substantive_sha256": "4e71af81fcfdb519f10945a5a702d2c6231ac4fa80344b393bd9ad28ab8a9fc3"
+          }
+        },
+        "config_sha256": "bdd6de65b4b8588f034a3ca2cc2c54432b2751d4063346f6cb78a8156d923397",
+        "model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+        "split_sha256": "5a0e79f75e8831e31a00514769be59f77b9107d4d580f3bc9878f9597f407392"
+      },
+      "expected_stage": "nepal_final_rescore",
+      "run_manifest": {
+        "path": "studies/nepal_2001_2006/runs/post_structural_repair/final_empirical_rescore/verified_manifest.json",
+        "sha256": "784d4259b7a5f6047c897bc7e31a24a3ecb3077270b4d3d521ae2e3094680051"
+      },
+      "status": "verified_run_evidence"
+    },
+    "settled_tree_certificate": {
+      "artifact": {
+        "path": "outputs/final_release/RELEASE_CERTIFICATE_LIVE.json",
+        "sha256": "a68a76cf1e5f72473ddc4bb30b6c34e85d554b3f037f8cb56d0fb1187140d5b8"
+      },
+      "artifact_model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+      "expected": {
+        "case_data_hashes": {
+          "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/outputs/final_release/RELEASE_CERTIFICATE_LIVE.json": {
+            "sha256": "a68a76cf1e5f72473ddc4bb30b6c34e85d554b3f037f8cb56d0fb1187140d5b8",
+            "substantive_sha256": "6db271d3af323e6ffafed2b644071295fbd42fe9fb332a4ef2446c8bc5a7f2da"
+          }
+        },
+        "config_sha256": "2ee98f596bc5c83a06ecba6c2746d330c2c9b66cbc6d7346ab17c79cf4a1fc6e",
+        "model_sha256": "71d00c339b1109c9244f217f233d57b46f903afd8a341a77406730983a47a938",
+        "split_sha256": "fe6b3eaf2627671e0ec45fbded59914e5fe997e221ba8f10b0e6f37dfb69359b"
+      },
+      "expected_stage": "settled_tree_certificate",
+      "run_manifest": {
+        "path": "outputs/final_release/verified_manifest.json",
+        "sha256": "610e9d8ca425e3b6a8cd78011c5f20068baeec536d1c3de3718bd5b537a5c420"
+      },
+      "status": "verified_run_evidence"
+    }
+  },
+  "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+  "note": "v5/v0.13.0 certifies the preregistered multichannel organized-action architecture after data-free synthetic and reproducibility gates. Nepal v4 remains a preserved predictive failure; no v5 historical transfer or COIN claim is promoted without rerun.",
+  "outside_core": [
+    "studies/**",
+    "scenarios/**",
+    "docs/**",
+    "outputs/**"
+  ],
+  "schema_version": "1.1.0",
+  "status": "frozen_for_historical_revalidation",
+  "tracked_diff_sha256": "aeb8b7639eabc8b9d4d92395e352cf956e6e3f314c3c49e2187863e6fd953fd7",
+  "version": "0.13.0"
+}

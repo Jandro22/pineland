@@ -1,0 +1,108 @@
+{
+  "candidate_structural_explanations": [
+    "insurgent reallocation mixes frontier opportunity, local footholds, limited stronghold consolidation, and exploration",
+    "government patrols write decaying presence memory while ordinary insurgent formation occupancy does not"
+  ],
+  "core_change_licensed": false,
+  "empirical_parameter_fitting": false,
+  "historical_outcomes_used": false,
+  "movement_policy": {
+    "government": {
+      "controlled_target_locality_id": "D01-L01",
+      "favorable_choice": null,
+      "favorable_choice_available": false,
+      "favorable_target_own_control": 0.0,
+      "formation_id": "FDF-01",
+      "live_policy_direction": "lower_own_control_increases_reallocation_utility",
+      "origin_locality_id": "D15-L01",
+      "target_rejected_when_disfavored": true,
+      "target_selected_when_favored": false,
+      "unfavorable_choice": "D07-L01",
+      "unfavorable_choice_available": true,
+      "unfavorable_target_own_control": 1.0
+    },
+    "government_gap_filling_confirmed": false,
+    "insurgent": {
+      "controlled_target_locality_id": "D12-L01",
+      "foothold_scenario": {
+        "foothold": 1.0,
+        "frontier": 0.3375,
+        "government_control": 0.5,
+        "importance": 0.7777777777777778,
+        "opponent_control": 0.5,
+        "opponent_control_raw": 0.5,
+        "own_control": 0.5,
+        "own_control_raw": 0.5,
+        "route_risk": 0.0,
+        "route_risk_penalty": 0.0,
+        "sanctuary": 0.0,
+        "strategic": 0.49375,
+        "stronghold": 0.5,
+        "travel_hours": 10.753369011996128,
+        "uncertainty": 0.0,
+        "utility": 1.053787818529005
+      },
+      "formation_id": "PRF-01",
+      "frontier_scenario": {
+        "foothold": 0.0,
+        "frontier": 1.0,
+        "government_control": 0.0,
+        "importance": 0.7777777777777778,
+        "opponent_control": 0.0,
+        "opponent_control_raw": 0.0,
+        "own_control": 0.0,
+        "own_control_raw": 0.0,
+        "route_risk": 0.0,
+        "route_risk_penalty": 0.0,
+        "sanctuary": 0.0,
+        "strategic": 0.5,
+        "stronghold": 0.0,
+        "travel_hours": 10.753369011996128,
+        "uncertainty": 0.0,
+        "utility": 1.066287818529005
+      },
+      "live_policy_direction": "mixed_frontier_foothold_stronghold_exploration",
+      "stronghold_scenario": {
+        "foothold": 0.0,
+        "frontier": 0.0,
+        "government_control": 0.0,
+        "importance": 0.7777777777777778,
+        "opponent_control": 0.0,
+        "opponent_control_raw": 0.0,
+        "own_control": 1.0,
+        "own_control_raw": 1.0,
+        "route_risk": 0.0,
+        "route_risk_penalty": 0.0,
+        "sanctuary": 0.0,
+        "strategic": 0.15,
+        "stronghold": 1.0,
+        "travel_hours": 10.753369011996128,
+        "uncertainty": 0.0,
+        "utility": 0.36628781852900505
+      },
+      "weights": {
+        "exploration": 0.1,
+        "foothold": 0.25,
+        "frontier": 0.5,
+        "stronghold": 0.15
+      }
+    },
+    "insurgent_mixed_policy_confirmed": true
+  },
+  "presence_memory": {
+    "government_memory_after_patrol": 0.008499847991234911,
+    "government_patrol_id": "PATROL-FDF-01",
+    "insurgent_current_microzone_id": "D13-L01-Z05",
+    "insurgent_direct_physical_control_after_refresh": 0.1842579794652301,
+    "insurgent_formation_id": "PRF-01",
+    "insurgent_memory_after_stationary_physical_refresh": 0.0,
+    "insurgent_patrol_ids": [],
+    "insurgent_patrol_object_count": 0,
+    "interpretation": "The diagnostic observed government patrol-written decaying memory without an equivalent stationary insurgent formation-memory update.",
+    "patrol_memory_channel_asymmetry_confirmed": true
+  },
+  "schema_version": "1.0.0",
+  "scientific_use": "Use these channels in matched synthetic persistence/propagation experiments before any core change. They do not authorize tuning Nepal or Afghanistan.",
+  "seed": 20260904,
+  "status": "synthetic_mechanism_diagnostic_not_model_repair"
+}

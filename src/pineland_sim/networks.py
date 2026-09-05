@@ -3,7 +3,8 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from dataclasses import asdict
 import json
-from math import ceil
+from math import log
+import random
 from statistics import mean, median
 
 from .entities import LANGUAGES, SocialCommunity, SocialEdge, clamp
@@ -22,15 +23,22 @@ def _edge_key(person_a_id: str, person_b_id: str) -> tuple[str, str]:
 
 
 def _add_edge(world: WorldState, person_a_id: str, person_b_id: str, layer: str,
-              base_strength: float, trust: float) -> None:
+              base_strength: float, trust: float,
+              represented_capacity: float | None = None) -> None:
     if person_a_id == person_b_id:
         return
     key = _edge_key(person_a_id, person_b_id)
     first = world.persons[key[0]]
     second = world.persons[key[1]]
     compatibility = language_compatibility(first.languages, second.languages)
-    weight = clamp(base_strength * (.35 + .65 * compatibility))
-    represented_relationships = 2 * first.weight * second.weight / max(1e-12, first.weight + second.weight)
+    language_factor = (.35 + .65 * compatibility
+                       if world.config.social_network.language_topology_enabled else 1.0)
+    weight = clamp(base_strength * language_factor)
+    represented_relationships = (
+        max(0.0, represented_capacity)
+        if represented_capacity is not None else
+        2 * first.weight * second.weight / max(1e-12, first.weight + second.weight)
+    )
     existing = world.social_edges.get(key)
     if existing:
         existing.layers = tuple(sorted(set(existing.layers) | {layer}))
@@ -46,34 +54,105 @@ def _add_edge(world: WorldState, person_a_id: str, person_b_id: str, layer: str,
     world.social_neighbors[key[1]].append(key[0])
 
 
-def _balanced_household_groups(world: WorldState, household_ids: list[str], minimum: int,
-                               target: int, maximum: int, rng) -> list[list[str]]:
+def community_bridge_capacity(world: WorldState, community: SocialCommunity) -> float:
+    """Represented population mass carrying cross-community brokerage capability.
+
+    bridge_member_ids are sampled anchors for graph topology, not literal
+    counts of bridge persons. Capacity is therefore a fractional share of the
+    represented community population and is invariant to representative-agent
+    resolution.
+    """
+    represented_population = sum(
+        world.persons[person_id].weight for person_id in community.member_ids
+        if person_id in world.persons
+    )
+    return represented_population * clamp(world.config.social_network.bridge_fraction)
+
+
+def community_represented_population(world: WorldState, community: SocialCommunity) -> float:
+    """Represented population carried by a social community."""
+    return sum(
+        world.persons[person_id].weight for person_id in community.member_ids
+        if person_id in world.persons
+    )
+
+
+def bridge_target_community_weights(
+    world: WorldState,
+    community: SocialCommunity,
+    communities_by_locality: dict[str, list[str]] | None = None,
+) -> dict[str, float]:
+    """Resolution-invariant opportunity mass for cross-community bridge targets.
+
+    The previous implementation selected only same-locality communities whenever
+    more than one happened to be sampled, falling back to adjacent localities
+    only when no local alternative existed.  As representative resolution grew,
+    nearly every locality acquired multiple sampled communities and geographic
+    bridge probability collapsed toward zero.  Target opportunity is now based
+    on represented population rather than the raw number of sampled communities.
+
+    Same-locality opportunity has unit geographic attenuation.  Adjacent
+    opportunity is attenuated by ``1 / (1 + adjacency_cost)`` using the existing
+    exogenous locality graph.  Splitting a represented population into more
+    sampled communities therefore preserves approximately the same target mass.
+    """
+    if communities_by_locality is None:
+        communities_by_locality = defaultdict(list)
+        for candidate in world.social_communities.values():
+            communities_by_locality[candidate.locality_id].append(candidate.community_id)
+
+    targets: dict[str, float] = {}
+    source_locality = community.locality_id
+    locality_ids = [source_locality, *sorted(world.adjacency.get(source_locality, {}))]
+    for locality_id in locality_ids:
+        attenuation = (
+            1.0 if locality_id == source_locality else
+            1.0 / (1.0 + max(0.0, world.adjacency[source_locality][locality_id]))
+        )
+        for candidate_id in communities_by_locality.get(locality_id, ()):
+            if candidate_id == community.community_id:
+                continue
+            candidate = world.social_communities[candidate_id]
+            mass = community_represented_population(world, candidate) * attenuation
+            if mass > 0:
+                targets[candidate_id] = mass
+    return targets
+
+
+def _balanced_household_groups(world: WorldState, household_ids: list[str], minimum: float,
+                               target: float, maximum: float, rng) -> list[list[str]]:
+    """Pack indivisible household archetypes by represented population mass."""
     rng.shuffle(household_ids)
     groups: list[list[str]] = []
     current: list[str] = []
-    current_size = 0
+    current_size = 0.0
+
+    def household_population(household_id: str) -> float:
+        return sum(world.persons[person_id].weight
+                   for person_id in world.households[household_id].member_ids)
+
     for household_id in household_ids:
-        household_size = len(world.households[household_id].member_ids)
+        household_size = household_population(household_id)
         if current and current_size + household_size > maximum:
             groups.append(current)
             current = []
-            current_size = 0
+            current_size = 0.0
         current.append(household_id)
         current_size += household_size
         if current_size >= target:
             groups.append(current)
             current = []
-            current_size = 0
+            current_size = 0.0
     if current:
-        current_count = sum(len(world.households[h].member_ids) for h in current)
-        previous_count = sum(len(world.households[h].member_ids) for h in groups[-1]) if groups else 0
-        if groups and current_count < target // 2 and previous_count + current_count <= maximum:
+        current_count = sum(household_population(h) for h in current)
+        previous_count = sum(household_population(h) for h in groups[-1]) if groups else 0.0
+        if groups and current_count < target / 2 and previous_count + current_count <= maximum:
             groups[-1].extend(current)
         else:
             if groups and current_count < minimum:
                 while groups[-1] and current_count < minimum:
                     candidate = groups[-1][-1]
-                    candidate_size = len(world.households[candidate].member_ids)
+                    candidate_size = household_population(candidate)
                     if previous_count - candidate_size < minimum or current_count + candidate_size > maximum:
                         break
                     groups[-1].pop()
@@ -87,8 +166,13 @@ def _balanced_household_groups(world: WorldState, household_ids: list[str], mini
 def _language_profile(world: WorldState, member_ids: list[str]) -> dict[str, float]:
     if not member_ids:
         return {language: 0.0 for language in LANGUAGES}
-    return {language: mean(world.persons[person_id].languages[language] for person_id in member_ids)
-            for language in LANGUAGES}
+    total_weight = sum(world.persons[person_id].weight for person_id in member_ids)
+    return {
+        language: sum(world.persons[person_id].weight *
+                      world.persons[person_id].languages[language]
+                      for person_id in member_ids) / max(1e-9, total_weight)
+        for language in LANGUAGES
+    }
 
 
 def generate_social_network(world: WorldState) -> None:
@@ -107,8 +191,9 @@ def generate_social_network(world: WorldState) -> None:
     for locality_id in sorted(world.localities):
         groups = _balanced_household_groups(
             world, sorted(households_by_locality[locality_id]),
-            config.minimum_community_size, config.target_community_size,
-            config.maximum_community_size, rng,
+            config.minimum_community_size * config.community_size_unit_population,
+            config.target_community_size * config.community_size_unit_population,
+            config.maximum_community_size * config.community_size_unit_population, rng,
         )
         for household_ids in groups:
             member_ids = [person_id for household_id in household_ids
@@ -153,30 +238,117 @@ def generate_social_network(world: WorldState) -> None:
     for community in world.social_communities.values():
         communities_by_locality[community.locality_id].append(community.community_id)
 
-    # Multilingual agents preferentially become cross-community information bridges.
+    # Multilingual representatives anchor cross-community information bridges.
+    # The role itself is represented social capacity, not a count of literal
+    # sampled people. Allocate exactly the configured represented bridge mass
+    # across existing representative cohorts, allowing the final anchor to
+    # carry only a fractional role capacity.
     for community in world.social_communities.values():
         member_ranking = sorted(
             community.member_ids,
             key=lambda person_id: sorted(world.persons[person_id].languages.values(), reverse=True)[1],
             reverse=True,
         )
-        bridge_count = min(4, max(1, ceil(len(member_ranking) * config.bridge_fraction)))
-        candidates = [cid for cid in communities_by_locality[community.locality_id] if cid != community.community_id]
-        if not candidates:
-            for neighbor_locality in world.adjacency[community.locality_id]:
-                candidates.extend(communities_by_locality[neighbor_locality])
-        if not candidates:
+        remaining_bridge_capacity = community_bridge_capacity(world, community)
+        target_weights = bridge_target_community_weights(
+            world, community, communities_by_locality
+        )
+        if not target_weights or remaining_bridge_capacity <= 0:
             continue
-        for source_id in member_ranking[:bridge_count]:
-            target_community = world.social_communities[rng.choice(candidates)]
-            sample = rng.sample(target_community.member_ids, min(12, len(target_community.member_ids)))
-            target_id = max(sample, key=lambda candidate: language_compatibility(
+        candidates = sorted(target_weights)
+        candidate_weights = [target_weights[candidate_id] for candidate_id in candidates]
+        for source_id in member_ranking:
+            if remaining_bridge_capacity <= 1e-12:
+                break
+            source_capacity = min(
+                world.persons[source_id].weight, remaining_bridge_capacity
+            )
+            target_community = world.social_communities[
+                rng.choices(candidates, weights=candidate_weights, k=1)[0]
+            ]
+            target_id = max(target_community.member_ids, key=lambda candidate: language_compatibility(
                 world.persons[source_id].languages, world.persons[candidate].languages))
-            _add_edge(world, source_id, target_id, "bridge", config.bridge_tie_strength, .5)
+            _add_edge(
+                world, source_id, target_id, "bridge", config.bridge_tie_strength, .5,
+                represented_capacity=source_capacity,
+            )
             community.bridge_member_ids.append(source_id)
+            remaining_bridge_capacity -= source_capacity
 
     for neighbors in world.social_neighbors.values():
         neighbors.sort()
+
+
+def degree_preserving_rewire(world: WorldState, seed: int,
+                             swaps: int | None = None,
+                             preserve_attributes: bool = True) -> dict[str, int | float]:
+    """Randomize endpoints with double-edge swaps while preserving degrees.
+
+    The operation mutates only the social graph.  Person attributes, community
+    membership, all process RNG streams, and edge-count/degree sequences remain
+    unchanged.  When ``preserve_attributes`` is true, the multiset of tie
+    strengths/trust/layers is retained and reassigned to the new endpoints;
+    otherwise a generic random-mixing edge attribute is used.
+    """
+    rng = random.Random(seed)
+    original = list(world.social_edges.values())
+    if len(original) < 2:
+        return {"attempts": 0, "accepted_swaps": 0, "edges": len(original)}
+    target = swaps if swaps is not None else max(1_000, 10 * len(original))
+    endpoints = [
+        [edge.person_a_id, edge.person_b_id, edge]
+        for edge in original
+    ]
+    edge_keys = {_edge_key(row[0], row[1]) for row in endpoints}
+    accepted = attempts = 0
+    max_attempts = max(target * 4, 100)
+    while attempts < max_attempts and accepted < target:
+        attempts += 1
+        first_index, second_index = rng.sample(range(len(endpoints)), 2)
+        first = endpoints[first_index]
+        second = endpoints[second_index]
+        a, b, c, d = first[0], first[1], second[0], second[1]
+        if rng.random() < .5:
+            candidates = ((a, d), (c, b))
+        else:
+            candidates = ((a, c), (b, d))
+        if any(x == y for x, y in candidates):
+            continue
+        keys = [_edge_key(*pair) for pair in candidates]
+        if keys[0] == keys[1] or any(key in edge_keys and key not in {
+                _edge_key(a, b), _edge_key(c, d)} for key in keys):
+            continue
+        edge_keys.remove(_edge_key(a, b)); edge_keys.remove(_edge_key(c, d))
+        edge_keys.update(keys)
+        first[0], first[1] = keys[0]
+        second[0], second[1] = keys[1]
+        accepted += 1
+
+    world.social_edges.clear()
+    world.social_neighbors = {person_id: [] for person_id in world.persons}
+    for index, (a, b, old_edge) in enumerate(endpoints):
+        key = _edge_key(a, b)
+        if preserve_attributes:
+            edge = SocialEdge(key[0], key[1], old_edge.layers, old_edge.weight,
+                              old_edge.language_compatibility, old_edge.trust,
+                              2 * world.persons[key[0]].weight * world.persons[key[1]].weight /
+                              max(1e-12, world.persons[key[0]].weight + world.persons[key[1]].weight))
+        else:
+            compatibility = language_compatibility(world.persons[key[0]].languages,
+                                                    world.persons[key[1]].languages)
+            edge = SocialEdge(key[0], key[1], ("random_mix",),
+                              clamp(.5 * (.35 + .65 * compatibility)),
+                              compatibility, .5,
+                              2 * world.persons[key[0]].weight * world.persons[key[1]].weight /
+                              max(1e-12, world.persons[key[0]].weight + world.persons[key[1]].weight))
+        world.social_edges[key] = edge
+        world.social_neighbors[key[0]].append(key[1])
+        world.social_neighbors[key[1]].append(key[0])
+    for neighbors in world.social_neighbors.values():
+        neighbors.sort()
+    return {"attempts": attempts, "accepted_swaps": accepted,
+            "edges": len(world.social_edges),
+            "degree_sequence_hash": sum(len(neighbors) ** 2 for neighbors in world.social_neighbors.values())}
 
 
 def edge_between(world: WorldState, first_id: str, second_id: str) -> SocialEdge:
@@ -222,6 +394,8 @@ def network_diagnostics(world: WorldState, clustering_sample: int = 1_000) -> di
     if not degrees:
         return {"nodes": 0, "edges": 0, "communities": 0, "components": 0,
                 "mean_degree": 0.0, "median_degree": 0.0, "mean_language_compatibility": 0.0,
+                "represented_mean_degree": 0.0,
+                "represented_mean_language_compatibility": 0.0,
                 "bridge_edges": 0, "sampled_clustering": 0.0}
     unseen = set(world.persons)
     components = 0
@@ -243,6 +417,26 @@ def network_diagnostics(world: WorldState, clustering_sample: int = 1_000) -> di
         closed = sum(1 for index, first in enumerate(neighbors)
                      for second in neighbors[index + 1:] if second in world.social_neighbors[first])
         coefficients.append(closed / possible)
+    represented_population = sum(person.weight for person in world.persons.values())
+    represented_degree = sum(
+        world.persons[person_id].weight * len(world.social_neighbors[person_id])
+        for person_id in world.persons
+    ) / max(1e-12, represented_population)
+    relationship_mass = sum(edge.represented_relationships for edge in world.social_edges.values())
+    represented_language = (
+        sum(edge.language_compatibility * edge.represented_relationships
+            for edge in world.social_edges.values()) / max(1e-12, relationship_mass)
+    )
+    bridge_edges = [edge for edge in world.social_edges.values() if "bridge" in edge.layers]
+    cross_local_bridge_edges = [
+        edge for edge in bridge_edges
+        if world.persons[edge.person_a_id].residence_locality_id !=
+        world.persons[edge.person_b_id].residence_locality_id
+    ]
+    bridge_relationship_mass = sum(edge.represented_relationships for edge in bridge_edges)
+    cross_local_bridge_relationship_mass = sum(
+        edge.represented_relationships for edge in cross_local_bridge_edges
+    )
     return {
         "nodes": len(world.persons),
         "edges": len(world.social_edges),
@@ -251,8 +445,25 @@ def network_diagnostics(world: WorldState, clustering_sample: int = 1_000) -> di
         "mean_degree": mean(degrees),
         "median_degree": median(degrees),
         "mean_language_compatibility": mean(edge.language_compatibility for edge in world.social_edges.values()),
-        "bridge_edges": sum("bridge" in edge.layers for edge in world.social_edges.values()),
+        "represented_mean_degree": represented_degree,
+        "represented_mean_language_compatibility": represented_language,
+        "bridge_edges": len(bridge_edges),
+        "cross_local_bridge_edges": len(cross_local_bridge_edges),
+        "cross_local_bridge_edge_share": (
+            len(cross_local_bridge_edges) / len(bridge_edges) if bridge_edges else 0.0
+        ),
+        "represented_bridge_relationship_mass": bridge_relationship_mass,
+        "represented_cross_local_bridge_relationship_mass": cross_local_bridge_relationship_mass,
+        "represented_cross_local_bridge_share": (
+            cross_local_bridge_relationship_mass / bridge_relationship_mass
+            if bridge_relationship_mass > 0 else 0.0
+        ),
         "sampled_clustering": mean(coefficients) if coefficients else 0.0,
+        # A transparent small-world path-length proxy keeps the resolution
+        # battery tractable at 250k nodes.  Exact sampled BFS path lengths can
+        # be requested from network snapshots for a focused graph study.
+        "path_length_proxy": log(max(2, len(world.persons))) /
+        log(max(2.0, mean(degrees))) if mean(degrees) > 1 else float(len(world.persons)),
     }
 
 

@@ -1,0 +1,112 @@
+{
+  "components": {
+    "foothold_deepening_force_formation": {
+      "denominator": 18,
+      "estimate": 0.05555555555555555,
+      "numerator": 1.0,
+      "unit": "fielded-force transitions per complete-followup foothold parent"
+    },
+    "local_endogenous_ignition": {
+      "denominator": 11,
+      "estimate": 0.0,
+      "numerator": 0.0,
+      "unit": "locally ignited viable footholds per observed locality"
+    },
+    "parent_attributed_cross_local_colonization": {
+      "denominator": 29,
+      "estimate": 0.0,
+      "numerator": 0.0,
+      "unit": "non-relocation cross-local children per complete-followup parent"
+    },
+    "post_establishment_survival": {
+      "denominator": 20,
+      "estimate": 0.9,
+      "numerator": 18,
+      "unit": "share of observable establishments surviving the fixed window",
+      "window_days": 7.0
+    }
+  },
+  "estimand": "insurgent_reproduction_component_decomposition",
+  "legacy_scalar_R_I": {
+    "reason": "distinct risk sets and mechanisms must not be pooled into one primary estimand",
+    "status": "deprecated_compatibility_only"
+  },
+  "legacy_scalar_compatibility_output": {
+    "attributed_viable_child_weight": 1.0,
+    "attributed_viable_child_weight_by_pathway": {
+      "local_member_to_force_generation": 1.0
+    },
+    "bootstrap_95_interval": [
+      null,
+      null
+    ],
+    "bootstrap_cluster_count": 0,
+    "bootstrap_cluster_field": null,
+    "bootstrap_inferential_license": false,
+    "bootstrap_method": "none",
+    "bootstrap_repetitions": 0,
+    "bootstrap_seed": 20260904,
+    "censoring_adjustment": "complete_case",
+    "complete_followup_fraction": 0.9354838709677419,
+    "eligible_parent_activations": 29,
+    "eligible_parent_localities": 10,
+    "estimand": "R_I",
+    "estimate": 0.034482758620689655,
+    "estimate_by_pathway": {
+      "local_member_to_force_generation": 0.034482758620689655
+    },
+    "gross_attributed_viable_child_weight": 2.0,
+    "gross_attributed_viable_child_weight_by_pathway": {
+      "formation_relocation": 1.0,
+      "local_member_to_force_generation": 1.0
+    },
+    "gross_estimate": 0.06896551724137931,
+    "gross_estimate_by_pathway": {
+      "formation_relocation": 0.034482758620689655,
+      "local_member_to_force_generation": 0.034482758620689655
+    },
+    "horizon_days": 7.0,
+    "ineligible_parent_child_weight": 0.0,
+    "interpretation": "Mean parent-attributed future viable activation episodes per viable parent activation with complete follow-up. When minimum_parent_overlap_days is positive, a candidate child counts as net reproduction only if the parent episode remains viable through that overlap window; otherwise it is classified as relocation/parent extinction rather than offspring. gross_estimate retains the unfiltered activation count. Unique-locality data reduce to the original locality estimand. Repeated activations require explicit activation IDs so parentage is never silently overwritten. A separate parent-edge table can distribute one child's attribution mass across multiple candidate parents without duplicating the child. Parent-edge pathways are reported separately so movement, social seeding, and other competing routes do not collapse into one opaque scalar. Complete-case censoring is explicit; optional IPW uses declared follow-up inclusion probabilities. The IID parent bootstrap is descriptive only; inferential uncertainty should cluster by independent simulation run or another defensible independent unit. Identification depends on the supplied parentage and viability protocols.",
+    "minimum_parent_overlap_days": 3.0,
+    "outside_reproduction_window_child_weight": 2.0,
+    "parentage_representation": "multi_parent_edge_table",
+    "relocation_or_parent_extinction_child_weight": 1.0,
+    "right_censored_parent_activations": 2,
+    "root_viable_activation_weight": 27.0,
+    "same_time_cross_type_transition_weight_excluded_from_scalar_R_I": 0.0,
+    "schema_version": "1.5.0",
+    "status": "estimate_not_general_theory_claim",
+    "unattributed_viable_child_weight": 0.0,
+    "unknown_parent_child_weight": 0.0
+  },
+  "nonroot_viable_activation_mass": 4.0,
+  "parentage_mass_by_class": {
+    "formation_recruitment_seeded": 0.0,
+    "formation_relocation": 2.0,
+    "local_spontaneous_ignition": 0.0,
+    "migrating_member_seeded": 0.0,
+    "organizational_split_offspring": 0.0,
+    "sanctuary_external_seeded": 0.0,
+    "social_network_seeded": 0.0,
+    "unresolved": 2.0
+  },
+  "parentage_ontology": [
+    "local_spontaneous_ignition",
+    "social_network_seeded",
+    "migrating_member_seeded",
+    "formation_recruitment_seeded",
+    "formation_relocation",
+    "organizational_split_offspring",
+    "sanctuary_external_seeded",
+    "unresolved"
+  ],
+  "schema_version": "2.0.0",
+  "secondary_derived_quantity": {
+    "derivation": "colonization_yield * deepening_probability * survival_probability",
+    "estimate": 0.0,
+    "name": "durable_cross_local_reproduction_yield",
+    "status": "secondary_diagnostic_not_omnibus_R_I"
+  },
+  "status": "component_estimands_not_general_theory_claim"
+}

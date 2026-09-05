@@ -13,10 +13,13 @@ units, subsystem, current prior, sampling range when applicable, assumption
 type, empirical source and source-case placeholders, confidence, calibration
 status, sensitivity rank, and identifiability status.
 
-The default registry is intentionally candid: values are either `prior`,
-`fixed structural assumption`, or `numerical schedule` until a cited empirical
-source and case population are supplied. A value must not be relabeled
-`calibrated` merely because it generated a desirable trajectory.
+The default registry is intentionally candid. Live assumption/status labels
+distinguish experimental treatments, empirical estimands, literature priors,
+structural/scaling coefficients, engineering priors, numerical safeguards, and
+fixed structural assumptions. A value must not be relabeled `calibrated`
+merely because it generated a desirable trajectory; calibration requires a
+declared empirical source/population, training target, fitting procedure, and
+unchanged validation/holdout use.
 
 ## Target contracts
 

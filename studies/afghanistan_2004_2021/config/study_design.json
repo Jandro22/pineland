@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "afghanistan_2004_2021",
+  "formulation_status": "pre_fit_case_construction",
+  "parameter_fit": false,
+  "start_date": "2004-01-01",
+  "end_date": "2021-08-15",
+  "temporal_boundary": "2015-01-01",
+  "primary_violence_unit": "province_week",
+  "secondary_violence_unit": "district_week_or_month_when_high_confidence",
+  "control_validation_unit": "dated_district_period_observation",
+  "geographic_holdout": {
+    "method": "sha256_region_code",
+    "namespace": "afghanistan-geographic-holdout-v1:",
+    "select_n": 2,
+    "selected_region_codes": ["WR", "CR"],
+    "outcome_data_used": false
+  },
+  "geography": {
+    "authoritative_analysis_grid": "OCHA COD-AB Afghanistan / AGCHO / NSIA",
+    "regions": 8,
+    "provinces": 34,
+    "districts": 401,
+    "initial_locality_rule": "one named COD administrative-center locality per harmonized district",
+    "district_boundaries_interpreted_as": "harmonized analysis geography, not time-varying legal boundaries"
+  },
+  "population": {
+    "initialization_year": 2004,
+    "source": "WorldPop 1km UN-adjusted population count surface",
+    "crosscheck": "CSO/OCHA 2016-2017 district estimates",
+    "future_outcomes_used": false
+  },
+  "violence_source": "UCDP GED 26.1",
+  "control_source_policy": "independent of UCDP violence; no violence-as-control proxy",
+  "calibration_licensed": false
+}

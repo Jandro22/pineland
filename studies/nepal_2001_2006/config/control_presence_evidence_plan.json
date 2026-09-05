@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "nepal_2001_2006",
+  "status": "plan_only_no_structured_presence_panel_ingested",
+  "purpose": "Pre-register the evidence needed to validate Pineland's latent local-control and armed-presence states without silently converting narrative claims into numeric labels.",
+  "measurement_rule": "A control/presence value is admissible only when source, date or interval, geography, actor, observable definition, extraction rule, and uncertainty are recorded. Missing evidence remains null.",
+  "sources": [
+    {
+      "source_id": "ohchr_nepal_conflict_report_2012",
+      "title": "Nepal Conflict Report 2012",
+      "url": "https://www.ohchr.org/Documents/Countries/NP/OHCHR_Nepal_Conflict_Report2012.pdf",
+      "publisher": "Office of the United Nations High Commissioner for Human Rights",
+      "coverage": "1996-2006",
+      "candidate_observables": ["security-force presence", "reported incidents", "local administrative or armed-group activity"],
+      "geographic_precision": "case-dependent narrative and incident locations",
+      "extraction_status": "not_ingested",
+      "blocking_reason": "Requires source-level manual coding and uncertainty adjudication before any numeric panel is created."
+    },
+    {
+      "source_id": "insec_nepal_complete_report",
+      "title": "INSEC human-rights incident report (complete report)",
+      "url": "https://www.insec.org.np/victim/reports/total.pdf",
+      "publisher": "Informal Sector Service Centre",
+      "coverage": "1996-2006",
+      "candidate_observables": ["recorded conflict events", "district-level incident concentration"],
+      "geographic_precision": "district aggregate",
+      "extraction_status": "ingested_for_event_crosscheck_only",
+      "blocking_reason": "Does not independently identify a dated, actor-specific territorial-control state."
+    }
+  ],
+  "coding_template": {
+    "fields": [
+      "source_id", "record_id", "date_start", "date_end", "district_id", "microzone_id",
+      "actor_id", "observable", "value_or_category", "confidence", "extraction_notes",
+      "coder", "second_coder", "adjudication_status"
+    ],
+    "allowed_observables": [
+      "government_armed_presence", "insurgent_armed_presence", "administrative_presence",
+      "checkpoint_or_patrol", "shadow_governance", "territorial_control_claim"
+    ],
+    "uncertainty_policy": "Narrative, conflicting, or geographically ambiguous claims are retained with uncertainty labels and are not used as calibration targets until independently adjudicated."
+  },
+  "planned_validation": {
+    "geographic_unit": "district-week where source resolution permits; otherwise interval-censored district evidence",
+    "comparison": "Compare recorded historical evidence to synthetic recorded history and compare latent control only where an independently coded observable exists.",
+    "holdouts": "Preserve the frozen temporal, geographic, and strict joint holdouts from split_manifest.json.",
+    "calibration": "No control/presence parameters are calibrated in the current benchmark."
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.1.0",
+  "status": "prospective_unfitted_observation_operator",
+  "effective_from": "next_afghanistan_transfer_run_after_failed_v1",
+  "target_system": "SIGAR_USFOR-A_five_category_district_assessment",
+  "categories_low_to_high_government_control": [
+    "Insurgent Control",
+    "Insurgent Influence",
+    "Contested",
+    "GIRoA Influence",
+    "GIRoA Control"
+  ],
+  "category_indices": [0.0, 0.25, 0.5, 0.75, 1.0],
+  "weights": {
+    "formal": 0.15,
+    "physical": 0.30,
+    "administrative": 0.25,
+    "legal": 0.10,
+    "fiscal": 0.05,
+    "social": 0.10,
+    "expected": 0.05
+  },
+  "cutpoints": [0.125, 0.375, 0.625, 0.875],
+  "error_scale": 0.08,
+  "latent_score_definition": "weighted mean over dimensions of 0.5 + 0.5 * (government_control - insurgent_control)",
+  "fitting": "none",
+  "rationale": "SIGAR categories measure government-versus-insurgent control/influence, but absolute reach must remain visible: negligible government reach cannot become GIRoA Control merely because modeled insurgent reach is zero. The signed-advantage score is actor-symmetric around Contested and preserves absolute differences. Physical and administrative reach receive the largest prospective weights. The operator is not retroactively applied to v1 scalar snapshots and must be frozen before a new target run.",
+  "prohibitions": [
+    "Do not fit weights, cutpoints, or error scale to the October 2017 target snapshot.",
+    "Do not identify this operator with ControlVector.effective().",
+    "Do not rescore legacy snapshots that did not retain all seven dimensions for both actors."
+  ]
+}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import StrEnum
-from math import exp, log
+from math import exp, isfinite, log
 from typing import Any
 
 
@@ -50,12 +50,54 @@ class ControlVector:
             setattr(self, key, clamp(getattr(self, key) + delta))
 
     def effective(self, weights: dict[str, float] | None = None, epsilon: float = 1e-6) -> float:
-        weights = weights or {key: 1.0 / len(CONTROL_DIMENSIONS) for key in CONTROL_DIMENSIONS}
+        """Return the bounded weighted geometric mean of control dimensions.
+
+        ``epsilon`` remains in the signature for API compatibility.  It is
+        no longer added to state values because that made an all-zero vector
+        positive and an all-one vector exceed the [0, 1] control domain.
+        """
+        if weights is None:
+            weights = {
+                key: 1.0 / len(CONTROL_DIMENSIONS) for key in CONTROL_DIMENSIONS
+            }
+        if set(weights) != set(CONTROL_DIMENSIONS):
+            missing = sorted(set(CONTROL_DIMENSIONS) - set(weights))
+            extra = sorted(set(weights) - set(CONTROL_DIMENSIONS))
+            raise ValueError(
+                f"control weights must cover every dimension; missing={missing}, extra={extra}"
+            )
+        if any(not isinstance(weight, (int, float)) or not isfinite(weight) or weight < 0
+               for weight in weights.values()):
+            raise ValueError("control weights must be finite nonnegative numbers")
         total = sum(weights.values())
-        return exp(sum((weights[k] / total) * log(getattr(self, k) + epsilon) for k in CONTROL_DIMENSIONS))
+        if total <= 0:
+            raise ValueError("control weights must have positive total mass")
+        weighted_logs = 0.0
+        for key in CONTROL_DIMENSIONS:
+            weight = weights[key]
+            if weight == 0:
+                continue
+            value = clamp(getattr(self, key))
+            if value <= 0:
+                return 0.0
+            weighted_logs += (weight / total) * log(value)
+        return clamp(exp(weighted_logs))
 
     def to_dict(self) -> dict[str, float]:
-        return asdict(self)
+        # This vector is serialized on every observation and event boundary.
+        # ``dataclasses.asdict`` recursively walks dataclass metadata and was
+        # a measurable hot-path cost in ensemble/calibration runs.  The
+        # fields are fixed by ``CONTROL_DIMENSIONS``, so a direct projection
+        # is equivalent and avoids the recursive machinery.
+        return {
+            "formal": self.formal,
+            "physical": self.physical,
+            "administrative": self.administrative,
+            "legal": self.legal,
+            "fiscal": self.fiscal,
+            "social": self.social,
+            "expected": self.expected,
+        }
 
 
 @dataclass(slots=True)
@@ -78,11 +120,18 @@ class Locality:
     name: str
     kind: str
     population: int
+    # Population-scale productive base, in abstract resource-equivalent
+    # output units. This is not a liquid account and is therefore not added
+    # to person/organization resource stocks in the conservation ledger.
     economic_output: float
     infrastructure: float
     administrative_capacity: float
     terrain_friction: float
     observability: float
+    # Administrative role is separate from settlement size.  Empirical case
+    # geographies can add many real settlement anchors without implicitly
+    # creating a police headquarters at every node.
+    administrative_role: str = "administrative_center"
     control: dict[str, ControlVector] = field(default_factory=dict)
     governance: dict[str, float] = field(default_factory=dict)
     violence: float = 0.0
@@ -101,6 +150,8 @@ class Household:
     member_ids: list[str]
     home_locality_id: str
     residence_locality_id: str
+    # Derived aggregate of member Person.resources. It is a convenient
+    # household/kin-cell view, not an additional independently owned stock.
     resources: float
     dependents: int
 
@@ -122,11 +173,26 @@ class Person:
     efficacy: float = 0.5
     expected_control: dict[str, float] = field(default_factory=dict)
     trust: dict[str, float] = field(default_factory=dict)
+    # Liquid civilian economic stock represented by this cohort, in the same
+    # abstract resource units used by organization/foreign financial accounts.
+    # For weighted representatives this is already multiplied by weight;
+    # consumers must never multiply it by weight a second time.
     resources: float = 1.0
     organization_id: str | None = None
+    # Fraction of this representative person's population mobilized into the
+    # armed organization's membership base.  It is not fielded fighter
+    # strength: ``fighter_conversion_fraction`` converts changes in this base
+    # into formation personnel.  Keeping the fraction explicit prevents one
+    # sampled representative from switching its entire represented population
+    # in a single recruitment draw.
+    armed_fraction: float = 0.0
     displaced: bool = False
     community_id: str | None = None
     social_exposure: dict[str, float] = field(default_factory=dict)
+    # Social/political alignment with specific insurgent organizations.  This
+    # is distinct from armed membership: an ex-member or civilian sympathizer
+    # can retain affinity to one franchise without belonging to it militarily.
+    insurgent_affinity: dict[str, float] = field(default_factory=dict)
     state_legitimacy: float = 0.65
     government_legitimacy: float = 0.55
     party_legitimacy: dict[str, float] = field(default_factory=dict)
@@ -208,6 +274,11 @@ class Patrol:
     route_history: list[str]
     available_at: float
     response_fraction: float
+    # Last calendar time through which this patrol's dwell contribution has
+    # been integrated into microzone presence memory.  Kept separate from
+    # available_at so response availability and memory accounting cannot
+    # silently change one another.
+    presence_accounted_at: float | None = None
 
 
 @dataclass(slots=True)
@@ -376,6 +447,7 @@ class FormationMovementOrder:
     command_latency_hours: float
     status: str = "pending"
     arrives_at: float | None = None
+    purpose: str = "reallocation"
 
 
 @dataclass(slots=True)
@@ -501,6 +573,8 @@ class LocalElite:
     locality_id: str
     elite_type: str
     network_centrality: float
+    # Explicit broker-controlled political resource account. Personal
+    # civilian wealth remains in the linked Person.resources account.
     resources: float
     legitimacy: float
     institutional_ties: float
@@ -547,6 +621,7 @@ class Election:
 class ForeignState:
     state_id: str
     name: str
+    # Population-scale external financial/material resource account.
     resources: float
     stability_preference: float
     government_alignment: float
@@ -613,6 +688,8 @@ class DiasporaLink:
     foreign_state_id: str
     origin_locality_id: str
     social_strength: float
+    # Represented-cohort remittance capacity in resource units, not a
+    # per-agent or per-capita scalar.
     financial_capacity: float
     information_reliability: float
     created_at: float
@@ -749,18 +826,34 @@ class ArmedFormation:
     def supply_fraction(self) -> float:
         return clamp(self.supply_stock / self.supply_capacity) if self.supply_capacity > 0 else clamp(self.sustainment)
 
+    def fatigue_adjusted_readiness(self) -> float:
+        """Stored readiness after fatigue, before logistics/command multipliers.
+
+        This is useful for mechanisms such as local sensing where supply stock
+        and headquarters connectivity must not be silently re-applied through
+        the composite effective-readiness term.
+        """
+        fatigue_effect = 1.0 - 0.65 * clamp(self.fatigue)
+        return clamp(self.readiness * fatigue_effect)
+
     def effective_readiness(self) -> float:
         supply_effect = 0.2 + 0.8 * self.supply_fraction()
-        fatigue_effect = 1.0 - 0.65 * clamp(self.fatigue)
-        return clamp(self.readiness * supply_effect * fatigue_effect * clamp(self.command))
+        return clamp(self.fatigue_adjusted_readiness() * supply_effect * clamp(self.command))
 
-    def available_personnel(self) -> float:
+    def deployable_personnel(self) -> float:
+        """Personnel physically available before readiness/capability effects."""
         if self.moving or self.outside_pineland or self.operational_status == "ineffective":
             return 0.0
-        return self.personnel * clamp(self.availability) * self.effective_readiness()
+        return max(0.0, self.personnel) * clamp(self.availability)
+
+    def available_personnel(self) -> float:
+        return self.deployable_personnel() * self.effective_readiness()
 
     def effective_strength(self) -> float:
-        return max(1e-9, self.available_personnel() * self.quality * self.cohesion * (0.5 + self.information))
+        available = self.available_personnel()
+        if available <= 0:
+            return 0.0
+        return available * self.quality * self.cohesion * (0.5 + self.information)
 
 
 @dataclass(slots=True)
@@ -784,6 +877,9 @@ class Engagement:
     ineffective: tuple[str, ...]
     reinforcement_order_ids: tuple[str, ...]
     perceived_momentum_signal: float
+    initiator_organization_id: str | None = None
+    contact_cause: str = "unspecified"
+    withdrawal_order_ids: tuple[str, ...] = ()
 
 
 @dataclass(slots=True)
@@ -796,6 +892,10 @@ class ActorBelief:
     last_reliable_observation_at: float = -1.0e9
     evidence_count: int = 0
     contradiction_index: float = 0.0
+    # Actor-local estimate of recent violence/repression.  This is deliberately
+    # separate from realized locality violence so political decisions can use
+    # experienced/reported conditions rather than hidden truth.
+    violence_estimate: float = 0.2
 
 
 @dataclass(slots=True)
@@ -858,6 +958,7 @@ class StockTransaction:
     after: float
     delta: float
     boundary: str = "internal"
+    flow_kind: str = "internal_transfer"
 
 
 @dataclass(slots=True)

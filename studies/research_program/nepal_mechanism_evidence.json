@@ -1,0 +1,618 @@
+{
+  "ablation_rows": [
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": 0.0,
+          "design_mean": 47.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.014952453622529616,
+          "design_mean": 0.7969910600255428
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": -2.0,
+          "design_mean": 51.5
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 1.5,
+          "design_mean": 33.5
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -0.012243698224072307,
+          "design_mean": 0.031329080704479526
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": 0.0,
+          "design_mean": 0.006163522012578616
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": 0.0,
+          "design_mean": 0.0057861635220125785
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": -0.3063790285328505,
+          "design_mean": 1.0394129979035638
+        }
+      },
+      "design_id": "degree_preserving_rewire",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": 0.0,
+          "design_mean": 47.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.0,
+          "design_mean": 0.7820386064030131
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": 0.0,
+          "design_mean": 53.5
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 0.0,
+          "design_mean": 32.0
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": 0.0,
+          "design_mean": 0.04357277892855183
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": 0.0,
+          "design_mean": 0.006163522012578616
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": 0.0,
+          "design_mean": 0.0057861635220125785
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": 0.0,
+          "design_mean": 1.3457920264364143
+        }
+      },
+      "design_id": "endogenous_survival",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": -24.0,
+          "design_mean": 23.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.12759102322661642,
+          "design_mean": 0.9096296296296296
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": -27.5,
+          "design_mean": 26.0
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": -6.0,
+          "design_mean": 26.0
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -0.042536043049345704,
+          "design_mean": 0.0010367358792061285
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": -0.0033962264150943396,
+          "design_mean": 0.002767295597484277
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": -0.0026415094339622643,
+          "design_mean": 0.003144654088050314
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": -0.14681558051213206,
+          "design_mean": 1.1989764459242822
+        }
+      },
+      "design_id": "formation_2000",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": 35.5,
+          "design_mean": 83.0
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": -0.03282173443586123,
+          "design_mean": 0.7492168719671519
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": 41.0,
+          "design_mean": 94.5
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 23.0,
+          "design_mean": 55.0
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -0.04143617903021721,
+          "design_mean": 0.0021365998983346236
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": 0.0018867924528301883,
+          "design_mean": 0.008050314465408805
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": 0.007044025157232706,
+          "design_mean": 0.012830188679245284
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": 0.13613871370176733,
+          "design_mean": 1.4819307401381816
+        }
+      },
+      "design_id": "formation_500",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": 0.0,
+          "design_mean": 47.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.0,
+          "design_mean": 0.7820386064030131
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": 0.0,
+          "design_mean": 53.5
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 0.0,
+          "design_mean": 32.0
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": 0.0,
+          "design_mean": 0.04357277892855183
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": 0.0,
+          "design_mean": 0.006163522012578616
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": 0.0,
+          "design_mean": 0.0057861635220125785
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": 0.0,
+          "design_mean": 1.3457920264364143
+        }
+      },
+      "design_id": "full_retention",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": -1.0,
+          "design_mean": 46.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.00015331278890595712,
+          "design_mean": 0.7821919191919191
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": -2.0,
+          "design_mean": 51.5
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 2.5,
+          "design_mean": 34.5
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -0.041311748378916276,
+          "design_mean": 0.0022610305496355565
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": -0.0001257861635220129,
+          "design_mean": 0.0060377358490566035
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": -0.00012578616352201203,
+          "design_mean": 0.0056603773584905665
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": -0.35802044267426447,
+          "design_mean": 0.9877715837621498
+        }
+      },
+      "design_id": "no_adaptive_movement",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": 29.5,
+          "design_mean": 77.0
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.12910765354143916,
+          "design_mean": 0.9111462599444523
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": 31.5,
+          "design_mean": 85.0
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 9.5,
+          "design_mean": 41.5
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": 0.2830194345341548,
+          "design_mean": 0.3265922134627066
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": -0.004150943396226415,
+          "design_mean": 0.002012578616352201
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": 0.011572327044025155,
+          "design_mean": 0.017358490566037735
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": -0.3233828687915874,
+          "design_mean": 1.0224091576448269
+        }
+      },
+      "design_id": "no_adaptive_response",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": 24.5,
+          "design_mean": 72.0
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": -0.03579747165124014,
+          "design_mean": 0.746241134751773
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": 27.5,
+          "design_mean": 81.0
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 9.0,
+          "design_mean": 41.0
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -0.03713664457831569,
+          "design_mean": 0.006436134350236142
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": 0.0013836477987421384,
+          "design_mean": 0.007547169811320755
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": 0.004779874213836477,
+          "design_mean": 0.010566037735849056
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": -0.3744068043427595,
+          "design_mean": 0.9713852220936547
+        }
+      },
+      "design_id": "no_logistics",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": 2.0,
+          "design_mean": 49.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.03756923673424173,
+          "design_mean": 0.8196078431372549
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": 2.0,
+          "design_mean": 55.5
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 3.5,
+          "design_mean": 35.5
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": 0.020388153953659345,
+          "design_mean": 0.06396093288221118
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": -0.0007547169811320757,
+          "design_mean": 0.005408805031446541
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": 0.0012578616352201255,
+          "design_mean": 0.007044025157232704
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": -0.018452033835600457,
+          "design_mean": 1.3273399926008138
+        }
+      },
+      "design_id": "perfect_information",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": -6.0,
+          "design_mean": 41.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.01669762548104481,
+          "design_mean": 0.798736231884058
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": -5.5,
+          "design_mean": 48.0
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 2.0,
+          "design_mean": 34.0
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -0.034096522920384974,
+          "design_mean": 0.009476256008166858
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": -0.00037735849056603696,
+          "design_mean": 0.005786163522012579
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": -0.0011320754716981135,
+          "design_mean": 0.004654088050314465
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": -0.36623501249055723,
+          "design_mean": 0.979557013945857
+        }
+      },
+      "design_id": "reduced_mixing",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": -27.0,
+          "design_mean": 20.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.07262228825788153,
+          "design_mean": 0.8546608946608947
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": -32.0,
+          "design_mean": 21.5
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 0.0,
+          "design_mean": 32.0
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -8.05283862339301e-05,
+          "design_mean": 0.0434922505423179
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": -0.002515723270440252,
+          "design_mean": 0.0036477987421383645
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": -0.004276729559748428,
+          "design_mean": 0.0015094339622641509
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": 0.18794153559903437,
+          "design_mean": 1.5337335620354486
+        }
+      },
+      "design_id": "reserve_080",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": -18.5,
+          "design_mean": 29.0
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.05752954474408534,
+          "design_mean": 0.8395681511470985
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": -21.5,
+          "design_mean": 32.0
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": -1.0,
+          "design_mean": 31.0
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -0.015531633294215978,
+          "design_mean": 0.028041145634335855
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": -0.0017610062893081762,
+          "design_mean": 0.00440251572327044
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": -0.0028930817610062893,
+          "design_mean": 0.0028930817610062893
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": 0.04841009715994993,
+          "design_mean": 1.3942021235963642
+        }
+      },
+      "design_id": "reserve_100",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    },
+    {
+      "deltas": {
+        "active_cells": {
+          "baseline_mean": 47.5,
+          "delta": 2.0,
+          "design_mean": 49.5
+        },
+        "district_gini": {
+          "baseline_mean": 0.7820386064030131,
+          "delta": 0.006718007353600619,
+          "design_mean": 0.7887566137566138
+        },
+        "events": {
+          "baseline_mean": 53.5,
+          "delta": 3.5,
+          "design_mean": 57.0
+        },
+        "final_active_formations": {
+          "baseline_mean": 32.0,
+          "delta": 2.5,
+          "design_mean": 34.5
+        },
+        "morans_i": {
+          "baseline_mean": 0.04357277892855183,
+          "delta": -0.09051135689416508,
+          "design_mean": -0.046938577965613244
+        },
+        "new_district_activation_rate": {
+          "baseline_mean": 0.006163522012578616,
+          "delta": 0.00037735849056603696,
+          "design_mean": 0.006540880503144653
+        },
+        "return_activation_rate": {
+          "baseline_mean": 0.0057861635220125785,
+          "delta": 0.00012578616352201203,
+          "design_mean": 0.005911949685534591
+        },
+        "weekly_fano": {
+          "baseline_mean": 1.3457920264364143,
+          "delta": -0.11570816899406644,
+          "design_mean": 1.2300838574423478
+        }
+      },
+      "design_id": "reserve_150",
+      "interpretation_status": "descriptive_ablation_not_causal_claim"
+    }
+  ],
+  "baseline_metrics": {
+    "active_cells": 47.5,
+    "district_gini": 0.7820386064030131,
+    "events": 53.5,
+    "final_active_formations": 32.0,
+    "morans_i": 0.04357277892855183,
+    "new_district_activation_rate": 0.006163522012578616,
+    "return_activation_rate": 0.0057861635220125785,
+    "weekly_fano": 1.3457920264364143
+  },
+  "case_id": "nepal_2001_2006",
+  "promotion_rule": "Do not label a mechanism general unless its predeclared direction and holdout value replicate across at least two transfer cases and survive simple competitors.",
+  "schema_version": "1.0.0",
+  "source_file": "C:/Users/Jandro/Documents/ChatGPT/Modelling Insurgencies through Agent-Based Simulations/studies/nepal_2001_2006/results/residual_diagnosis/compact_mechanism_diagnostics.json",
+  "source_sha256": "bd7bbcaf06fd1fb80ae732ae649245ca1442e9aac35ae87d9f78e05c76de7376",
+  "status": "case_evidence_pending_cross_case_replication"
+}

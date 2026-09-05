@@ -1,0 +1,491 @@
+{
+  "cases": [
+    {
+      "case_id": "nepal_2001_2006",
+      "coverage": {
+        "event_units": 73,
+        "events_with_unit": 4741,
+        "raw_event_rows": 4743,
+        "topology_units": 75,
+        "unit_coverage": 0.9995783259540375,
+        "unmatched_event_units": []
+      },
+      "identity_guard": "dyad_name/stratum is a reporting identity proxy, not a verified insurgent organization genealogy.",
+      "metrics": [
+        {
+          "adjacent_activation": {
+            "actor_consistent_numerator": 491,
+            "actor_consistent_rate": 0.30215384615384616,
+            "actor_consistent_share_of_generic": 0.8539130434782609,
+            "denominator": 1625,
+            "generic_numerator": 575,
+            "generic_rate": 0.35384615384615387
+          },
+          "horizon_months": 1,
+          "renewal": {
+            "actor_consistent_numerator": 1129,
+            "actor_consistent_rate": 0.5401913875598087,
+            "denominator": 2090,
+            "generic_numerator": 1391,
+            "generic_rate": 0.6655502392344498
+          },
+          "reverse_time_placebo": {
+            "actor_consistent_numerator": 491,
+            "actor_consistent_rate": 0.306683322923173,
+            "denominator": 1601,
+            "generic_numerator": 579,
+            "generic_rate": 0.36164896939412866
+          }
+        },
+        {
+          "adjacent_activation": {
+            "actor_consistent_numerator": 485,
+            "actor_consistent_rate": 0.30274656679151063,
+            "actor_consistent_share_of_generic": 0.8192567567567568,
+            "denominator": 1602,
+            "generic_numerator": 592,
+            "generic_rate": 0.36953807740324596
+          },
+          "horizon_months": 2,
+          "renewal": {
+            "actor_consistent_numerator": 1015,
+            "actor_consistent_rate": 0.4870441458733205,
+            "denominator": 2084,
+            "generic_numerator": 1298,
+            "generic_rate": 0.6228406909788867
+          },
+          "reverse_time_placebo": {
+            "actor_consistent_numerator": 511,
+            "actor_consistent_rate": 0.3252705283259071,
+            "denominator": 1571,
+            "generic_numerator": 613,
+            "generic_rate": 0.3901973265436028
+          }
+        },
+        {
+          "adjacent_activation": {
+            "actor_consistent_numerator": 469,
+            "actor_consistent_rate": 0.3002560819462228,
+            "actor_consistent_share_of_generic": 0.8086206896551724,
+            "denominator": 1562,
+            "generic_numerator": 580,
+            "generic_rate": 0.3713188220230474
+          },
+          "horizon_months": 4,
+          "renewal": {
+            "actor_consistent_numerator": 922,
+            "actor_consistent_rate": 0.444980694980695,
+            "denominator": 2072,
+            "generic_numerator": 1167,
+            "generic_rate": 0.5632239382239382
+          },
+          "reverse_time_placebo": {
+            "actor_consistent_numerator": 517,
+            "actor_consistent_rate": 0.339238845144357,
+            "denominator": 1524,
+            "generic_numerator": 644,
+            "generic_rate": 0.4225721784776903
+          }
+        },
+        {
+          "adjacent_activation": {
+            "actor_consistent_numerator": 426,
+            "actor_consistent_rate": 0.29098360655737704,
+            "actor_consistent_share_of_generic": 0.799249530956848,
+            "denominator": 1464,
+            "generic_numerator": 533,
+            "generic_rate": 0.3640710382513661
+          },
+          "horizon_months": 8,
+          "renewal": {
+            "actor_consistent_numerator": 758,
+            "actor_consistent_rate": 0.37303149606299213,
+            "denominator": 2032,
+            "generic_numerator": 990,
+            "generic_rate": 0.48720472440944884
+          },
+          "reverse_time_placebo": {
+            "actor_consistent_numerator": 543,
+            "actor_consistent_rate": 0.37813370473537605,
+            "denominator": 1436,
+            "generic_numerator": 704,
+            "generic_rate": 0.49025069637883006
+          }
+        }
+      ],
+      "period": {
+        "end": "2006-11",
+        "months": 61,
+        "start": "2001-11"
+      },
+      "provenance": [
+        {
+          "path": "studies/nepal_2001_2006/data/processed/ucdp_nepal_events.csv",
+          "sha256": "4e71af81fcfdb519f10945a5a702d2c6231ac4fa80344b393bd9ad28ab8a9fc3"
+        },
+        {
+          "path": "studies/nepal_2001_2006/data/processed/district_adjacency.json",
+          "sha256": "67c2b479e9fe5e3be5414af3aa85325bbfdf3dcab07c1609b3e5f41f088cf3f4"
+        }
+      ],
+      "status": "recorded_dyad_identity_proxy_not_causal",
+      "topology_label_shuffle_null": {
+        "metrics": [
+          {
+            "adjacent_activation": {
+              "actor_consistent_numerator": 491,
+              "actor_consistent_rate": 0.2898465171192444,
+              "actor_consistent_share_of_generic": 0.8210702341137124,
+              "denominator": 1694,
+              "generic_numerator": 598,
+              "generic_rate": 0.3530106257378985
+            },
+            "horizon_months": 1,
+            "renewal": {
+              "actor_consistent_numerator": 1129,
+              "actor_consistent_rate": 0.5401913875598087,
+              "denominator": 2090,
+              "generic_numerator": 1391,
+              "generic_rate": 0.6655502392344498
+            },
+            "reverse_time_placebo": {
+              "actor_consistent_numerator": 509,
+              "actor_consistent_rate": 0.3058894230769231,
+              "denominator": 1664,
+              "generic_numerator": 592,
+              "generic_rate": 0.3557692307692308
+            }
+          },
+          {
+            "adjacent_activation": {
+              "actor_consistent_numerator": 524,
+              "actor_consistent_rate": 0.3139604553624925,
+              "actor_consistent_share_of_generic": 0.8506493506493507,
+              "denominator": 1669,
+              "generic_numerator": 616,
+              "generic_rate": 0.3690832834032355
+            },
+            "horizon_months": 2,
+            "renewal": {
+              "actor_consistent_numerator": 1015,
+              "actor_consistent_rate": 0.4870441458733205,
+              "denominator": 2084,
+              "generic_numerator": 1298,
+              "generic_rate": 0.6228406909788867
+            },
+            "reverse_time_placebo": {
+              "actor_consistent_numerator": 513,
+              "actor_consistent_rate": 0.313953488372093,
+              "denominator": 1634,
+              "generic_numerator": 617,
+              "generic_rate": 0.37760097919216645
+            }
+          },
+          {
+            "adjacent_activation": {
+              "actor_consistent_numerator": 463,
+              "actor_consistent_rate": 0.2842234499693063,
+              "actor_consistent_share_of_generic": 0.7794612794612794,
+              "denominator": 1629,
+              "generic_numerator": 594,
+              "generic_rate": 0.36464088397790057
+            },
+            "horizon_months": 4,
+            "renewal": {
+              "actor_consistent_numerator": 922,
+              "actor_consistent_rate": 0.444980694980695,
+              "denominator": 2072,
+              "generic_numerator": 1167,
+              "generic_rate": 0.5632239382239382
+            },
+            "reverse_time_placebo": {
+              "actor_consistent_numerator": 510,
+              "actor_consistent_rate": 0.32136105860113423,
+              "denominator": 1587,
+              "generic_numerator": 651,
+              "generic_rate": 0.4102079395085066
+            }
+          },
+          {
+            "adjacent_activation": {
+              "actor_consistent_numerator": 416,
+              "actor_consistent_rate": 0.2736842105263158,
+              "actor_consistent_share_of_generic": 0.7804878048780488,
+              "denominator": 1520,
+              "generic_numerator": 533,
+              "generic_rate": 0.3506578947368421
+            },
+            "horizon_months": 8,
+            "renewal": {
+              "actor_consistent_numerator": 758,
+              "actor_consistent_rate": 0.37303149606299213,
+              "denominator": 2032,
+              "generic_numerator": 990,
+              "generic_rate": 0.48720472440944884
+            },
+            "reverse_time_placebo": {
+              "actor_consistent_numerator": 561,
+              "actor_consistent_rate": 0.375,
+              "denominator": 1496,
+              "generic_numerator": 721,
+              "generic_rate": 0.481951871657754
+            }
+          }
+        ],
+        "seed": 20260905
+      }
+    },
+    {
+      "case_id": "afghanistan_2004_2021",
+      "coverage": {
+        "event_units": 366,
+        "events_with_unit": 16115,
+        "raw_event_rows": 38796,
+        "topology_units": 401,
+        "unit_coverage": 0.41537787400762965,
+        "unmatched_event_units": []
+      },
+      "identity_guard": "dyad_name/stratum is a reporting identity proxy, not a verified insurgent organization genealogy.",
+      "metrics": [
+        {
+          "adjacent_activation": {
+            "actor_consistent_numerator": 3358,
+            "actor_consistent_rate": 0.1229181155972034,
+            "actor_consistent_share_of_generic": 0.9182389937106918,
+            "denominator": 27319,
+            "generic_numerator": 3657,
+            "generic_rate": 0.13386287931476262
+          },
+          "horizon_months": 1,
+          "renewal": {
+            "actor_consistent_numerator": 3571,
+            "actor_consistent_rate": 0.3759343088746184,
+            "denominator": 9499,
+            "generic_numerator": 3871,
+            "generic_rate": 0.4075165806927045
+          },
+          "reverse_time_placebo": {
+            "actor_consistent_numerator": 3351,
+            "actor_consistent_rate": 0.12201871609074026,
+            "denominator": 27463,
+            "generic_numerator": 3641,
+            "generic_rate": 0.13257837818155335
+          }
+        },
+        {
+          "adjacent_activation": {
+            "actor_consistent_numerator": 3337,
+            "actor_consistent_rate": 0.12301850623018507,
+            "actor_consistent_share_of_generic": 0.9137458926615553,
+            "denominator": 27126,
+            "generic_numerator": 3652,
+            "generic_rate": 0.13463098134630982
+          },
+          "horizon_months": 2,
+          "renewal": {
+            "actor_consistent_numerator": 3403,
+            "actor_consistent_rate": 0.36090783752253686,
+            "denominator": 9429,
+            "generic_numerator": 3704,
+            "generic_rate": 0.3928306289108071
+          },
+          "reverse_time_placebo": {
+            "actor_consistent_numerator": 3342,
+            "actor_consistent_rate": 0.12177081435598469,
+            "denominator": 27445,
+            "generic_numerator": 3674,
+            "generic_rate": 0.13386773547094188
+          }
+        },
+        {
+          "adjacent_activation": {
+            "actor_consistent_numerator": 3303,
+            "actor_consistent_rate": 0.12360139205927478,
+            "actor_consistent_share_of_generic": 0.9126830616192319,
+            "denominator": 26723,
+            "generic_numerator": 3619,
+            "generic_rate": 0.13542641170527261
+          },
+          "horizon_months": 4,
+          "renewal": {
+            "actor_consistent_numerator": 3233,
+            "actor_consistent_rate": 0.35015704538069964,
+            "denominator": 9233,
+            "generic_numerator": 3536,
+            "generic_rate": 0.38297411458897435
+          },
+          "reverse_time_placebo": {
+            "actor_consistent_numerator": 3236,
+            "actor_consistent_rate": 0.1181021897810219,
+            "denominator": 27400,
+            "generic_numerator": 3522,
+            "generic_rate": 0.12854014598540145
+          }
+        },
+        {
+          "adjacent_activation": {
+            "actor_consistent_numerator": 3276,
+            "actor_consistent_rate": 0.1258402796450659,
+            "actor_consistent_share_of_generic": 0.9017341040462428,
+            "denominator": 26033,
+            "generic_numerator": 3633,
+            "generic_rate": 0.139553643452541
+          },
+          "horizon_months": 8,
+          "renewal": {
+            "actor_consistent_numerator": 3140,
+            "actor_consistent_rate": 0.3515450067174205,
+            "denominator": 8932,
+            "generic_numerator": 3449,
+            "generic_rate": 0.3861397223466189
+          },
+          "reverse_time_placebo": {
+            "actor_consistent_numerator": 3135,
+            "actor_consistent_rate": 0.11504164984771201,
+            "denominator": 27251,
+            "generic_numerator": 3462,
+            "generic_rate": 0.1270412094968992
+          }
+        }
+      ],
+      "period": {
+        "end": "2021-08",
+        "months": 212,
+        "start": "2004-01"
+      },
+      "provenance": [
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/ucdp_afghanistan_events.csv",
+          "sha256": "63c8ca63bdb7b037f6463018d5991e37cb57a26be778a15643cb3d998cd2689c"
+        },
+        {
+          "path": "studies/afghanistan_2004_2021/data/processed/district_adjacency.json",
+          "sha256": "be253bc51e60853b85b2ca468c4d11791994230e527882ff9d59bf7c01832a26"
+        }
+      ],
+      "status": "recorded_dyad_identity_proxy_not_causal",
+      "topology_label_shuffle_null": {
+        "metrics": [
+          {
+            "adjacent_activation": {
+              "actor_consistent_numerator": 2658,
+              "actor_consistent_rate": 0.08045524714713806,
+              "actor_consistent_share_of_generic": 0.8824701195219123,
+              "denominator": 33037,
+              "generic_numerator": 3012,
+              "generic_rate": 0.09117050579653116
+            },
+            "horizon_months": 1,
+            "renewal": {
+              "actor_consistent_numerator": 3571,
+              "actor_consistent_rate": 0.3759343088746184,
+              "denominator": 9499,
+              "generic_numerator": 3871,
+              "generic_rate": 0.4075165806927045
+            },
+            "reverse_time_placebo": {
+              "actor_consistent_numerator": 2664,
+              "actor_consistent_rate": 0.08025546785563656,
+              "denominator": 33194,
+              "generic_numerator": 3032,
+              "generic_rate": 0.09134180876061938
+            }
+          },
+          {
+            "adjacent_activation": {
+              "actor_consistent_numerator": 2725,
+              "actor_consistent_rate": 0.08299576645448177,
+              "actor_consistent_share_of_generic": 0.8830200907323396,
+              "denominator": 32833,
+              "generic_numerator": 3086,
+              "generic_rate": 0.0939908019370755
+            },
+            "horizon_months": 2,
+            "renewal": {
+              "actor_consistent_numerator": 3403,
+              "actor_consistent_rate": 0.36090783752253686,
+              "denominator": 9429,
+              "generic_numerator": 3704,
+              "generic_rate": 0.3928306289108071
+            },
+            "reverse_time_placebo": {
+              "actor_consistent_numerator": 2682,
+              "actor_consistent_rate": 0.08083669901742119,
+              "denominator": 33178,
+              "generic_numerator": 3049,
+              "generic_rate": 0.09189824582554705
+            }
+          },
+          {
+            "adjacent_activation": {
+              "actor_consistent_numerator": 2719,
+              "actor_consistent_rate": 0.08394566224143254,
+              "actor_consistent_share_of_generic": 0.8770967741935484,
+              "denominator": 32390,
+              "generic_numerator": 3100,
+              "generic_rate": 0.09570855202222908
+            },
+            "horizon_months": 4,
+            "renewal": {
+              "actor_consistent_numerator": 3233,
+              "actor_consistent_rate": 0.35015704538069964,
+              "denominator": 9233,
+              "generic_numerator": 3536,
+              "generic_rate": 0.38297411458897435
+            },
+            "reverse_time_placebo": {
+              "actor_consistent_numerator": 2628,
+              "actor_consistent_rate": 0.0793406394348338,
+              "denominator": 33123,
+              "generic_numerator": 2998,
+              "generic_rate": 0.09051112520001207
+            }
+          },
+          {
+            "adjacent_activation": {
+              "actor_consistent_numerator": 2713,
+              "actor_consistent_rate": 0.08602593778736088,
+              "actor_consistent_share_of_generic": 0.8782777597928132,
+              "denominator": 31537,
+              "generic_numerator": 3089,
+              "generic_rate": 0.09794844151314329
+            },
+            "horizon_months": 8,
+            "renewal": {
+              "actor_consistent_numerator": 3140,
+              "actor_consistent_rate": 0.3515450067174205,
+              "denominator": 8932,
+              "generic_numerator": 3449,
+              "generic_rate": 0.3861397223466189
+            },
+            "reverse_time_placebo": {
+              "actor_consistent_numerator": 2554,
+              "actor_consistent_rate": 0.0775113808801214,
+              "denominator": 32950,
+              "generic_numerator": 2905,
+              "generic_rate": 0.0881638846737481
+            }
+          }
+        ],
+        "seed": 20260905
+      }
+    }
+  ],
+  "core_change_licensed": false,
+  "historical_outcomes_used": true,
+  "historical_parameter_fitting": false,
+  "identity_unit": "recorded dyad_name, falling back to stratum",
+  "negative_constraints": [
+    "same recorded dyad is not proof of the same insurgent organization",
+    "generic violence renewal must not be relabeled actor-level reproduction",
+    "adjacent actor-consistency must beat reverse-time and topology-shuffle nulls before propagation is considered"
+  ],
+  "program_id": "comparative-insurgency-v1",
+  "promotion_decision": {
+    "reason": "Only two cases expose comparable raw dyad fields, and those fields are reporting proxies without verified actor genealogy or current-core transfer validation.",
+    "stable_general_theory_licensed": false
+  },
+  "schema_version": "1.0.0",
+  "status": "recorded_dyad_continuity_diagnostic_not_causal",
+  "topology_null_definition": "uniform random permutation of both graph endpoints, preserving node labels, symmetry, degree sequence, and no self-loops"
+}

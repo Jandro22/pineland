@@ -200,6 +200,41 @@ def build_construct_correspondence(metric: str, *, theoretical_construct: str,
     return ConstructCorrespondence(*values)
 
 
+def first_paper_experiment_spec() -> dict[str, Any]:
+    """Return an executable, data-free specification for the first paper.
+
+    This is deliberately a contract rather than fabricated calibration data.
+    A case package must populate the empirical observables and correspondence
+    records before the specification can be used for substantive inference.
+    """
+    return {
+        "title_concept": "Control Under Uncertainty: Information, Logistics, and Local Territorial Competition",
+        "question": "When do information-limited, logistics-constrained spatial forces generate persistent local control?",
+        "unit_of_analysis": "locality-week",
+        "target_metrics": ["government_control", "insurgent_control", "control_persistence",
+                           "event_frequency", "event_spatial_concentration", "event_temporal_burstiness"],
+        "required_empirical_observables": [
+            "geocoded administrative/security presence by locality-week",
+            "geocoded conflict contacts or engagements with timestamps",
+            "source type, coverage, and reporting-delay metadata",
+            "formation/logistics or force-presence proxies",
+        ],
+        "mechanisms": ["microzone physical control", "formation movement and logistics",
+                       "actor-local information and beliefs", "civilian/social response"],
+        "parameter_subset": ["combat.base_attrition_rate", "contact_rate", "recruitment_rate",
+                             "social_network.behavior_update_rate"],
+        "training_holdout": {"split": "temporal_and_geographic", "no_retuning": True},
+        "competitors": ["random null", "negative-binomial or spatial hazard", "self-exciting event model",
+                        "reduced Pineland", "question-specific Pineland"],
+        "ablations": ["no logistics", "no information", "degree-preserving rewiring",
+                      "no social behavior update"],
+        "falsification": ["full model fails held-out targets", "resolution changes reverse the conclusion",
+                          "logistics ablation does not selectively change logistics-sensitive outcomes",
+                          "recording-calibrated model cannot reproduce observed source patterns"],
+        "data_status": "not supplied; no empirical claim is licensed until a case package fills this contract",
+    }
+
+
 def save_case_package(package: CasePackage, path: str | Path) -> None:
     payload = asdict(package)
     Path(path).write_text(json.dumps(payload, indent=2), encoding="utf-8")

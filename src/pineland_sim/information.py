@@ -12,6 +12,7 @@ only by the environment while sampling an observation, and analyst-only error
 is calculated in :func:`information_diagnostics`.
 """
 
+from collections import deque
 from dataclasses import asdict
 from math import exp, log
 import random
@@ -21,6 +22,7 @@ from .entities import (
     ActorBelief,
     ActorZoneBelief,
     ArmedFormation,
+    CONTROL_DIMENSIONS,
     ControlVector,
     InformationRelay,
     Observation,
@@ -30,6 +32,7 @@ from .entities import (
     logistic,
 )
 from .logistics import command_path
+from .timebase import reference_probability
 from .world import WorldState, seeded_rng
 
 
@@ -42,9 +45,12 @@ OBSERVATION_SOURCE_TYPES = (
 def initialize_information_world(world: WorldState) -> None:
     """Create actor priors and clear run-specific observation state."""
     world.observations.clear()
+    world.next_observation_sequence = 1
     world.observation_index.clear()
     world.observation_source_index.clear()
     world.information_relays.clear()
+    world.next_information_relay_sequence = 1
+    world.active_information_relays.clear()
     world.presence_beliefs.clear()
     world.node_presence_beliefs.clear()
     world.control_beliefs.clear()
@@ -145,8 +151,6 @@ def source_trust(world: WorldState, observer_actor_id: str, source_type: str,
     if organization is not None:
         trust *= .7 + .3 * clamp(organization.accountability)
     if source_type == "civilian" or source_type == "social_network":
-        communities = [community for community in world.social_communities.values()
-                       if community.locality_id == locality_id]
         if source_id in world.social_communities:
             community = world.social_communities[source_id]
             cooperation = (community.government_cooperation if not _is_insurgent_actor(world, observer_actor_id)
@@ -184,8 +188,15 @@ def _decay_rate(world: WorldState, observation_type: str,
 
 
 def _primary_zone(world: WorldState, locality_id: str) -> str | None:
+    cached = world.primary_microzone_by_locality.get(locality_id)
+    if cached is not None:
+        return cached
     zones = [zone for zone in world.microzones.values() if zone.locality_id == locality_id]
-    return max(zones, key=lambda zone: zone.population_share).microzone_id if zones else None
+    if not zones:
+        return None
+    cached = max(zones, key=lambda zone: zone.population_share).microzone_id
+    world.primary_microzone_by_locality[locality_id] = cached
+    return cached
 
 
 def _actual_target_presence(world: WorldState, target_actor_id: str,
@@ -227,15 +238,27 @@ def detection_probability(world: WorldState, observer_id: str,
     zone_observability = locality.observability
     if microzone_id and microzone_id in world.microzones:
         zone_observability = world.microzones[microzone_id].observability
-    readiness = (observer_formation.effective_readiness() if observer_formation else
+    readiness = (observer_formation.fatigue_adjusted_readiness() if observer_formation else
                  clamp(world.organizations.get(observer_actor_id).institutional_quality
                        if observer_actor_id in world.organizations else .5))
     target = world.formations.get(target_formation_id) if target_formation_id else None
     target_embeddedness = target.embeddedness if target else .5
     language = language_comprehension(world, observer_actor_id, locality_id,
                                       source_type, observer_id)
-    pressure = clamp((observer_formation.effective_strength() / max(1, observer_formation.personnel * 2)
-                      if observer_formation else .5))
+    if observer_formation:
+        # Search pressure is a deployment/quality quantity. Readiness has its
+        # own term above; using effective strength here used to apply readiness,
+        # supply, and command a second time inside the same detection model.
+        deployment_fraction = (
+            observer_formation.deployable_personnel() /
+            max(1.0, observer_formation.personnel)
+        )
+        pressure = clamp(
+            deployment_fraction * observer_formation.quality *
+            observer_formation.cohesion * (0.5 + observer_formation.information) / 2.0
+        )
+    else:
+        pressure = .5
     exposure = clamp(.35 + .45 * zone_observability - .25 * target_embeddedness)
     terrain_penalty = clamp(locality.terrain_friction / 2.5)
     base = config.contact_true_positive_rate if source_type == "contact" else config.true_positive_rate
@@ -287,7 +310,8 @@ def _new_observation(world: WorldState, *, observer_actor_id: str, observer_node
                      source_type: str, observation_type: str,
                      estimated_value: dict[str, Any], quality: float,
                      confidence: float, provenance: dict[str, Any]) -> Observation:
-    observation_id = f"OBS{len(world.observations) + 1:010d}"
+    observation_id = f"OBS{world.next_observation_sequence:010d}"
+    world.next_observation_sequence += 1
     observation = Observation(
         observation_id=observation_id,
         target_id=target_id,
@@ -312,9 +336,14 @@ def _new_observation(world: WorldState, *, observer_actor_id: str, observer_node
     index_key = (observation.target_actor_id or "*", observation.locality_id,
                  observation.observation_type)
     world.observation_index.setdefault(index_key, []).append(observation.timestamp)
-    world.observation_source_index.setdefault(index_key, []).append(
-        (observation.timestamp, observation.source_id)
-    )
+    source_history = world.observation_source_index.setdefault(index_key, deque())
+    source_history.append((observation.timestamp, observation.source_id))
+    # Corroboration has a finite three-day memory.  Evicting stale entries at
+    # ingestion keeps both memory and fusion cost bounded over multi-year
+    # ensemble/calibration runs.
+    cutoff = observation.timestamp - 3.0
+    while source_history and source_history[0][0] < cutoff:
+        source_history.popleft()
     return observation
 
 
@@ -373,7 +402,7 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
         values = {"physical": physical_value}
     prior_confidence = belief.confidence
     for dimension, observed in values.items():
-        if dimension not in belief.control_estimate.to_dict():
+        if dimension not in CONTROL_DIMENSIONS:
             continue
         old = getattr(belief.control_estimate, dimension)
         new, confidence, contradiction = _fuse_scalar(
@@ -414,7 +443,13 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
             (target_actor_id == "government" and not _is_insurgent_actor(world, recipient_id)):
         legacy = world.beliefs.get((recipient_id, observation.locality_id))
         if legacy is not None:
-            legacy.control_estimate = ControlVector(**belief.control_estimate.to_dict())
+            legacy.control_estimate.formal = belief.control_estimate.formal
+            legacy.control_estimate.physical = belief.control_estimate.physical
+            legacy.control_estimate.administrative = belief.control_estimate.administrative
+            legacy.control_estimate.legal = belief.control_estimate.legal
+            legacy.control_estimate.fiscal = belief.control_estimate.fiscal
+            legacy.control_estimate.social = belief.control_estimate.social
+            legacy.control_estimate.expected = belief.control_estimate.expected
             legacy.confidence = belief.confidence
             legacy.updated_at = belief.updated_at
             legacy.last_reliable_observation_at = belief.last_reliable_observation_at
@@ -481,6 +516,16 @@ def _fuse_presence(world: WorldState, observation: Observation, recipient_id: st
         belief.evidence_count += 1
         if weight >= .12:
             belief.last_reliable_observation_at = time
+    # Violence/repression is a separate actor-local belief.  It is updated
+    # from the same reported observation operator but is never read from the
+    # realized locality state by decision code.
+    if "violence" in observation.estimated_value:
+        prior = max(.02, belief.confidence)
+        observed_violence = clamp(float(observation.estimated_value["violence"]))
+        belief.violence_estimate = clamp(
+            (prior * belief.violence_estimate + weight * observed_violence) /
+            (prior + weight)
+        )
 
 
 def fuse_observation(world: WorldState, observation: Observation, recipient_id: str,
@@ -506,10 +551,19 @@ def fuse_observation(world: WorldState, observation: Observation, recipient_id: 
     # observations from one rumor/collection node.
     index_key = (observation.target_actor_id or "*", observation.locality_id,
                  observation.observation_type)
-    corroborating_sources = {
-        source_id for timestamp, source_id in world.observation_source_index.get(index_key, ())
-        if abs(timestamp - observation.timestamp) <= 3.0 and source_id != observation.source_id
-    }
+    # Observation histories are append-only and generated in simulation-time
+    # order.  The old implementation scanned the complete history for every
+    # observation, turning a long run into an O(N²) operation.  Corroboration
+    # only has a three-day memory, so scan the recent tail and stop as soon as
+    # the lower window bound is crossed.  This preserves the estimator while
+    # making long-horizon runs effectively linear in the number of reports.
+    corroborating_sources: set[str] = set()
+    lower_bound = observation.timestamp - 3.0
+    for timestamp, source_id in reversed(world.observation_source_index.get(index_key, ())):
+        if timestamp < lower_bound:
+            break
+        if source_id != observation.source_id and abs(timestamp - observation.timestamp) <= 3.0:
+            corroborating_sources.add(source_id)
     # Distinct source IDs remain visible, but correlated collection channels
     # contribute less than independent corroboration.  This prevents a burst
     # of reports copied from one administrative or social pipeline from being
@@ -522,7 +576,12 @@ def fuse_observation(world: WorldState, observation: Observation, recipient_id: 
                    (1 + world.config.information.corroboration_bonus * min(3, corroboration)))
     if observation.observation_type in {"presence", "detection"}:
         _fuse_presence(world, observation, recipient_id, time, weight, node=node)
-    _fuse_control(world, observation, recipient_id, time, weight)
+    # Detection/presence reports do not carry a control vector.  Avoid the
+    # control-belief path entirely for those high-volume reports; this is a
+    # pure dispatch optimization and leaves all reported values untouched.
+    if ("control" in observation.estimated_value or
+            "physical_control" in observation.estimated_value):
+        _fuse_control(world, observation, recipient_id, time, weight)
     return weight
 
 
@@ -548,13 +607,15 @@ def _queue_relay(world: WorldState, observation: Observation, time: float) -> In
     latency += world.config.information.source_latency_hours.get(
         observation.source_type, 0.0
     )
-    relay_id = f"IR{len(world.information_relays) + 1:010d}"
+    relay_id = f"IR{world.next_information_relay_sequence:010d}"
+    world.next_information_relay_sequence += 1
     relay = InformationRelay(
         relay_id, observation.observation_id, observer, source, destination,
         route, time, time + max(0.0, latency) / 24, clamp(reliability),
         max(0.0, latency),
     )
     world.information_relays[relay_id] = relay
+    world.active_information_relays.add(relay_id)
     return relay
 
 
@@ -685,7 +746,11 @@ def observe_control(world: WorldState, observer_actor_id: str, observer_node_id:
         source_id=source_id, source_type=source_type,
         observation_type="physical_control",
         estimated_value={"control": estimated_control,
-                         "physical_control": estimated_control["physical"]},
+                         "physical_control": estimated_control["physical"],
+                         # Violence is a reported environmental signal, not a
+                         # direct truth read by downstream political actors.
+                         "violence": clamp(world.localities[locality_id].violence +
+                                            rng.uniform(-noise, noise))},
         quality=quality, confidence=clamp(.45 + .45 * trust),
         provenance={"source_type": source_type, "source_trust": trust,
                     "language_comprehension": language,
@@ -756,13 +821,28 @@ def _report_probability(world: WorldState, observer_actor_id: str, locality_id: 
     if source_type == "administrative":
         probability *= .35 + .95 * clamp(locality.administrative_capacity)
     elif source_type == "political_elite":
-        probability *= .45 + .65 * clamp(locality.governance.get("representation", .5))
+        elite_access = clamp(
+            locality.governance.get(
+                "elite_access_capacity", 1.0 if locality.population > 0 else 0.0
+            )
+        )
+        probability *= (
+            (.45 + .65 * clamp(locality.governance.get("representation", .5))) *
+            elite_access
+        )
     if source_id in world.social_communities:
         community = world.social_communities[source_id]
         cooperation = (community.government_cooperation if not _is_insurgent_actor(world, observer_actor_id)
                        else community.insurgent_sympathy)
         probability *= .35 + 1.1 * clamp(cooperation)
-    return clamp(probability)
+    # Source-availability priors were introduced on the original six-hour
+    # information collection cycle.  Preserve that reference-period meaning
+    # when the numerical information scheduler is refined or coarsened.
+    return reference_probability(
+        clamp(probability),
+        world.config.intervals.information,
+        0.25,
+    )
 
 
 def _observe_from_source(world: WorldState, observer_actor_id: str, observer_node_id: str | None,
@@ -833,10 +913,33 @@ def generate_background_observations(world: WorldState, time: float,
         communities = [community for community in world.social_communities.values()
                        if community.locality_id == locality_id]
         if not communities:
+            # Administrative, elite-brokerage, and interpretation channels are
+            # locality capabilities, not literal sampled civilians.  Preserve
+            # them in populated coarse-resolution localities even when no
+            # representative resident/community happened to be instantiated.
+            if "government" in world.organizations:
+                observations.extend(_observe_from_source(
+                    world, "government", None, f"ADMIN:{locality_id}",
+                    "administrative", locality_id, time, rng,
+                ))
+                if clamp(world.localities[locality_id].governance.get(
+                        "elite_access_capacity",
+                        1.0 if world.localities[locality_id].population > 0 else 0.0)):
+                    observations.extend(_observe_from_source(
+                        world, "government", None, f"ELITE-CAP:{locality_id}",
+                        "political_elite", locality_id, time, rng,
+                    ))
+                district = world.districts[world.localities[locality_id].district_id]
+                if "/" in district.language_pattern and world.localities[locality_id].population > 0:
+                    observations.extend(_observe_from_source(
+                        world, "government", None, f"INTERPRETER-CAP:{locality_id}",
+                        "interpreter", locality_id, time, rng,
+                    ))
             continue
         community = rng.choices(
             communities,
-            weights=[max(1, len(item.member_ids)) for item in communities], k=1
+            weights=[max(1.0, sum(world.persons[pid].weight for pid in item.member_ids))
+                     for item in communities], k=1
         )[0]
         # Civilian and social channels are deliberately independent: cooperation
         # improves source access, but neither channel creates physical presence.
@@ -920,16 +1023,22 @@ def process_information(world: WorldState, time: float,
     generated = generate_background_observations(world, time, rng)
     delivered = dropped = 0
     delivered_ids: list[str] = []
-    for relay in sorted(world.information_relays.values(), key=lambda item: item.relay_id):
-        if relay.status != "in_transit" or relay.arrives_at > time:
+    for relay_id in sorted(world.active_information_relays):
+        relay = world.information_relays.get(relay_id)
+        if relay is None or relay.status != "in_transit":
+            world.active_information_relays.discard(relay_id)
+            continue
+        if relay.arrives_at > time:
             continue
         observation = world.observations.get(relay.observation_id)
         if observation is None:
             relay.status = "dropped"
+            world.active_information_relays.discard(relay_id)
             dropped += 1
             continue
         if rng.random() <= relay.reliability:
             relay.status = "delivered"
+            world.active_information_relays.discard(relay_id)
             relay.delivered_at = time
             observation.received_at = time
             fuse_observation(world, observation, relay.organization_id, time)
@@ -944,14 +1053,69 @@ def process_information(world: WorldState, time: float,
             delivered_ids.append(observation.observation_id)
         else:
             relay.status = "dropped"
+            world.active_information_relays.discard(relay_id)
             dropped += 1
+    _prune_information_history(world, time)
     return {"generated": len(generated),
             "observation_ids": tuple(item.observation_id for item in generated),
             "relays_delivered": delivered,
             "delivered_observation_ids": tuple(delivered_ids),
             "relays_dropped": dropped,
-            "active_relays": sum(relay.status == "in_transit"
-                                  for relay in world.information_relays.values())}
+            "active_relays": len(world.active_information_relays)}
+
+
+def _prune_information_history(world: WorldState, time: float) -> None:
+    """Bound optional evidence storage without changing beliefs or RNG draws.
+
+    Reports remain available until their configured retention horizon and all
+    in-transit relays are retained.  The default horizon is zero (no pruning),
+    preserving forensic behavior.  This is used by long ensemble runs where
+    the estimand is recorded target streams and checkpoint state, not an
+    unbounded raw evidence archive.
+    """
+    retention = world.config.information.observation_retention_days
+    if retention <= 0 or time <= retention:
+        return
+    # Information updates can run several times per simulated day.  Pruning
+    # every update repeatedly scanned the complete 90-day archive and made
+    # long trajectories superlinear in wall time.  Integer-day pruning keeps
+    # the same bounded archive at daily checkpoints/final integer horizons,
+    # while retention remains an output-only concern.
+    if abs(time - round(time)) > 1e-9:
+        return
+    cutoff = time - retention
+    pending_observations = {
+        world.information_relays[relay_id].observation_id
+        for relay_id in world.active_information_relays
+        if relay_id in world.information_relays
+    }
+    # Observations and relays are inserted in scheduler-time order.  Stop at
+    # the first retained timestamp instead of scanning the entire live window.
+    stale = []
+    for observation_id, observation in world.observations.items():
+        if observation.timestamp >= cutoff:
+            break
+        if observation_id not in pending_observations:
+            stale.append(observation_id)
+    for observation_id in stale:
+        world.observations.pop(observation_id, None)
+    for key, timestamps in list(world.observation_index.items()):
+        world.observation_index[key] = [stamp for stamp in timestamps if stamp >= cutoff]
+        if not world.observation_index[key]:
+            world.observation_index.pop(key, None)
+    for key, history in list(world.observation_source_index.items()):
+        while history and history[0][0] < cutoff:
+            history.popleft()
+        if not history:
+            world.observation_source_index.pop(key, None)
+    stale_relays = []
+    for relay_id, relay in world.information_relays.items():
+        if relay.sent_at >= cutoff:
+            break
+        if relay.status in {"delivered", "dropped"}:
+            stale_relays.append(relay_id)
+    for relay_id in stale_relays:
+        world.information_relays.pop(relay_id, None)
 
 
 def information_age(world: WorldState, observer_id: str, locality_id: str,

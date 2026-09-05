@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.0.0",
+  "status": "section_architecture_not_draft",
+  "paper_form": "substantive_general_theory_plus_methods",
+  "sections": [
+    {
+      "id": "S1",
+      "section": "Problem and contribution",
+      "safe_now": [
+        "define the scientific problem of explaining persistent local insurgent organization under partial observation",
+        "state why violence totals and national aggregates are insufficient constructs",
+        "state the intended three-layer contribution as a research objective"
+      ],
+      "blocked_until": [
+        "final wording of the substantive contribution",
+        "claim that a stable general theory was found"
+      ]
+    },
+    {
+      "id": "S2",
+      "section": "Existing theory and inferential gap",
+      "safe_now": [
+        "compile literatures by mechanism and inferential problem",
+        "separate substantive insurgency theory from simulation methodology and measurement literature",
+        "record unresolved disagreements and boundary conditions"
+      ],
+      "blocked_until": [
+        "final statement of which literature the surviving theory supersedes or integrates"
+      ]
+    },
+    {
+      "id": "S3",
+      "section": "General theoretical framework",
+      "safe_now": [
+        "define state variables, stocks, flows, actors, beliefs, observations, and event pathways",
+        "define candidate causal graph slots without fixing which candidate survives",
+        "define scope conditions and falsifier format"
+      ],
+      "blocked_until": [
+        "final proposition set",
+        "final mechanism ordering",
+        "claim that competitive local reproduction is the settled theory"
+      ]
+    },
+    {
+      "id": "S4",
+      "section": "Model and general method",
+      "safe_now": [
+        "ODD-compatible model description",
+        "truth-belief-record firewall",
+        "weighted representative semantics",
+        "stock-flow accounting",
+        "asynchronous scheduling and timebase",
+        "observation layer",
+        "reproducibility architecture",
+        "distinguish structural assumptions, engineering priors, case inputs, calibrated parameters, latent states, beliefs, and recorded observables"
+      ],
+      "blocked_until": [
+        "final source-hash-specific equation appendix",
+        "performance figures tied to the eventual final release"
+      ]
+    },
+    {
+      "id": "S5",
+      "section": "Identification and falsification program",
+      "safe_now": [
+        "estimand definitions",
+        "synthetic recovery design",
+        "topology and temporal placebos",
+        "competing-risk and censoring rules",
+        "measurement-operator recovery",
+        "resolution and timebase checks",
+        "simple-competitor protocol",
+        "negative-result preservation"
+      ],
+      "blocked_until": [
+        "final numerical recovery table unless regenerated against the release used for publication"
+      ]
+    },
+    {
+      "id": "S6",
+      "section": "Comparative research design",
+      "safe_now": [
+        "case ladder logic",
+        "case-input versus model-equation separation",
+        "frozen train/holdout logic",
+        "case-specific observation operators",
+        "missingness and assignment rules",
+        "criteria for an eligible transfer case"
+      ],
+      "blocked_until": [
+        "final claim about how many cases support the theory"
+      ]
+    },
+    {
+      "id": "S7",
+      "section": "Historical results",
+      "safe_now": [
+        "result-table schemas",
+        "required uncertainty fields",
+        "required competitor columns",
+        "negative-result slots"
+      ],
+      "blocked_until": [
+        "final effect sizes",
+        "final predictive scores",
+        "current-core historical conclusions"
+      ]
+    },
+    {
+      "id": "S8",
+      "section": "Cross-case theory adjudication",
+      "safe_now": [
+        "promotion matrix format",
+        "rules for support, contradiction, non-identification, and missing evidence",
+        "scope-condition recording format"
+      ],
+      "blocked_until": [
+        "general theory promotion",
+        "final cross-case mechanism ranking"
+      ]
+    },
+    {
+      "id": "S9",
+      "section": "Substantive and policy implications",
+      "safe_now": [
+        "define the multidimensional outcome vector",
+        "define intervention falsifiers",
+        "state why violence-only optimization is insufficient"
+      ],
+      "blocked_until": [
+        "claims of COIN efficacy",
+        "prescriptive intervention ranking"
+      ]
+    },
+    {
+      "id": "S10",
+      "section": "Limitations and boundary conditions",
+      "safe_now": [
+        "record representation limits",
+        "record observation and assignment uncertainty",
+        "record non-identification",
+        "record failed transfers and null mechanisms",
+        "record scope conditions as they emerge"
+      ],
+      "blocked_until": [
+        "final limitation weighting after the empirical program is complete"
+      ]
+    },
+    {
+      "id": "S11",
+      "section": "Reproducibility appendix",
+      "safe_now": [
+        "artifact manifest schema",
+        "source-hash binding",
+        "RNG and seed disclosure",
+        "case-data hash disclosure",
+        "run manifest requirements",
+        "software environment capture",
+        "regeneration commands"
+      ],
+      "blocked_until": [
+        "final publication release hashes and final run manifests"
+      ]
+    }
+  ]
+}
+

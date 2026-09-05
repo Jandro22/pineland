@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0.0",
+  "policy": "shared_core_case_specific_inputs_explicit_measurement_models",
+  "classes": {
+    "shared_core": {
+      "may_vary_by_case": false,
+      "examples": [
+        "transition equations",
+        "contact opportunity semantics",
+        "control aggregation",
+        "belief updating",
+        "organization ecology equations",
+        "stock conservation rules"
+      ],
+      "change_requirement": "general defect with cross-case or data-free evidence and a superseding freeze"
+    },
+    "case_inputs": {
+      "may_vary_by_case": true,
+      "examples": [
+        "geography and adjacency",
+        "population",
+        "observed actor existence intervals",
+        "initial force stocks",
+        "foreign intervention phases",
+        "sanctuary access",
+        "language and identity distributions",
+        "dated institutional changes"
+      ],
+      "requirement": "source provenance and uncertainty; no tactical outcome forcing"
+    },
+    "measurement_model": {
+      "may_vary_by_case": true,
+      "examples": [
+        "event reporting probability",
+        "geocoding error",
+        "fatality interval mapping",
+        "control-category observation operator"
+      ],
+      "requirement": "identified from source audits, overlaps, or external validation rather than simulator fit"
+    },
+    "estimated_nuisance": {
+      "may_vary_by_case": "hierarchical_only",
+      "examples": [
+        "source-specific dispersion",
+        "case-input uncertainty scales"
+      ],
+      "requirement": "training data only with partial pooling and declared transport prior"
+    }
+  },
+  "forbidden": [
+    "holdout refitting",
+    "changing a split after viewing fit",
+    "adding a mechanism because one case fits better",
+    "using violence as a territorial-control proxy",
+    "silently relabeling all anti-government violence as the focal insurgent",
+    "conditioning tactical decisions on future outcomes"
+  ],
+  "uncertainty_decomposition": [
+    "stochastic simulation",
+    "parameter uncertainty",
+    "case-input uncertainty",
+    "measurement uncertainty",
+    "structural model uncertainty",
+    "administrative-boundary crosswalk uncertainty"
+  ]
+}
