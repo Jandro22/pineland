@@ -97,6 +97,22 @@ def test_conditioned_force_stocks_match_sourced_case(generated_world, taliban_st
     assert abs(diagnostic["supply_conservation_residual"]) < 1e-8
 
 
+def test_conditioning_removes_synthetic_insurgent_social_state(generated_world):
+    world = generated_world.clone()
+    inputs = load_historical_inputs()
+    condition_world(world, inputs, 7500)
+    anchors = set(inputs["initialization"]["taliban"]["anchor_weights"])
+    # Ecology initialization may recreate affiliation at a sourced formation,
+    # but no synthetic affinity may survive outside that footprint.
+    assert all(person.residence_locality_id in anchors
+               for person in world.persons.values()
+               if "insurgent" in person.insurgent_affinity)
+    assert all("insurgent" not in person.social_exposure for person in world.persons.values())
+    assert all(person.residence_locality_id in anchors
+               for person in world.persons.values()
+               if person.public_behavior in {"armed_participation", "insurgent_sympathy"})
+
+
 def test_observed_coalition_schedule_replaces_stock_without_breaking_ledgers(generated_world):
     world = generated_world.clone()
     inputs = load_historical_inputs()

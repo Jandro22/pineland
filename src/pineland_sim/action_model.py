@@ -193,7 +193,19 @@ def action_attempt_probability(world, organization_id: str, locality_id: str,
     if interval_days <= 0:
         return 0.0
     rate = max(0.0, float(world.config.contact_rate))
-    intensity = rate * capacity_saturation(world, organization_id, locality_id)
+    # ``contact_rate`` is an opportunity rate for one minimally viable action
+    # unit. Saturation discounts tiny/unformed stocks; committed equivalents
+    # then preserve the number of independently usable units. Using saturation
+    # alone collapsed 500 and 2,625 fighters to almost the same opportunity
+    # rate and severed organizational scale from realized action.
+    minimum_unit = max(
+        1e-9,
+        float(world.config.organization_ecology.minimum_formation_personnel),
+    )
+    active_units = committed_fighter_equivalents(
+        world, organization_id, locality_id
+    ) / minimum_unit
+    intensity = rate * active_units
     return clamp(1.0 - exp(-intensity * interval_days))
 
 

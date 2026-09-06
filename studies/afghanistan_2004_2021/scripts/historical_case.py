@@ -25,6 +25,7 @@ from pineland_sim.entities import (
 )
 from pineland_sim.information import initialize_information_world
 from pineland_sim.logistics import generate_logistics_world
+from pineland_sim.networks import refresh_community_aggregates
 from pineland_sim.organization_ecology import initialize_organization_ecology
 from pineland_sim.physical import generate_physical_world, recompute_contested_controls
 
@@ -110,14 +111,21 @@ def _clear_synthetic_foreign_system(world) -> None:
 
 
 def _reset_insurgent_membership(world) -> None:
+    """Remove generator-created insurgent state before historical conditioning."""
     insurgent = world.organizations["insurgent"]
     for person in world.persons.values():
         if person.organization_id == "insurgent":
             person.organization_id = None
             person.armed_fraction = 0.0
-            if person.public_behavior == "armed_participation":
-                person.public_behavior = "insurgent_sympathy"
+        # Synthetic affinity/sympathy belongs to the generated Pineland case,
+        # not the sourced Afghanistan initial condition. Leaving it in place
+        # seeds recruitment outside the declared pre-period footprint.
+        person.insurgent_affinity.pop("insurgent", None)
+        person.social_exposure.pop("insurgent", None)
+        if person.public_behavior in {"armed_participation", "insurgent_sympathy"}:
+            person.public_behavior = "neutral"
     insurgent.member_ids.clear()
+    refresh_community_aggregates(world)
     world.organization_manpower_pools.clear()
     world.proto_organizations.clear()
     world.organization_transitions.clear()

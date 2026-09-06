@@ -71,6 +71,21 @@ def test_action_attempt_probability_composes_in_calendar_time():
     assert math.isclose(p2, 1.0 - (1.0 - p1) ** 2, rel_tol=0, abs_tol=1e-12)
 
 
+def test_action_attempt_probability_preserves_multiple_capacity_units():
+    world = _world(seed=405)
+    organization, formation = _insurgent(world)
+    locality_id = formation.locality_id
+    formation.personnel = 75.0
+    one_unit = action_attempt_probability(
+        world, organization.organization_id, locality_id, 1.0
+    )
+    formation.personnel = 750.0
+    ten_units = action_attempt_probability(
+        world, organization.organization_id, locality_id, 1.0
+    )
+    assert ten_units > one_unit * 3
+
+
 def test_hidden_target_truth_cannot_change_fixed_belief_planning():
     base = _world(seed=42)
     organization, formation = _insurgent(base)
