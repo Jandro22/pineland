@@ -468,6 +468,110 @@ class OrganizationEcologyConfig:
 
 
 @dataclass(slots=True)
+class RelationshipConfig:
+    """General organization-to-organization relationship dynamics.
+
+    Organization kind describes what an actor *is*; this layer describes how
+    two actors currently relate.  The memory stock is intentionally generic so
+    insurgent splinters, militias, state organs, and foreign formations can
+    coexist without hard-wiring a binary government/insurgent ontology.
+    """
+
+    memory_half_life_days: float = 90.0
+    rivalry_threshold: float = 0.22
+    hostility_threshold: float = 0.58
+    escalation_base_hazard: float = 0.015
+    deescalation_reference_rate: float = 0.01
+    split_rivalry_memory: float = 0.30
+
+    def validate(self) -> None:
+        if self.memory_half_life_days <= 0:
+            raise ValueError("relationship memory half-life must be positive")
+        for name in (
+            "rivalry_threshold", "hostility_threshold", "escalation_base_hazard",
+            "deescalation_reference_rate", "split_rivalry_memory",
+        ):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+        if self.hostility_threshold < self.rivalry_threshold:
+            raise ValueError("hostility threshold must be at least rivalry threshold")
+
+
+@dataclass(slots=True)
+class NonstateGovernanceConfig:
+    """Persistent local institutional capacity for non-state organizations."""
+
+    enabled: bool = True
+    gain_per_30_days: float = 0.022
+    decay_per_30_days: float = 0.035
+    resource_spending_share_per_30_days: float = 0.002
+    minimum_local_capacity: float = 0.02
+
+    def validate(self) -> None:
+        for name in (
+            "gain_per_30_days", "decay_per_30_days",
+            "resource_spending_share_per_30_days", "minimum_local_capacity",
+        ):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+
+
+@dataclass(slots=True)
+class AccessRestrictionConfig:
+    """Actor-owned persistent restrictions on locality-to-locality corridors."""
+
+    enabled: bool = True
+    build_rate: float = 0.18
+    decay_per_day: float = 0.025
+    hostile_movement_penalty: float = 1.5
+    civilian_utility_penalty: float = 1.1
+    economic_penalty: float = 0.004
+
+    def validate(self) -> None:
+        for name in ("build_rate", "decay_per_day"):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+        for name in (
+            "hostile_movement_penalty", "civilian_utility_penalty",
+            "economic_penalty",
+        ):
+            if getattr(self, name) < 0:
+                raise ValueError(f"{name} cannot be negative")
+
+
+@dataclass(slots=True)
+class CivilianDynamicsConfig:
+    """Civilian movement, displacement, and direct-harm semantics."""
+
+    voluntary_move_given_opportunity: float = 0.08
+    displacement_violence_threshold: float = 0.35
+    forced_displacement_reference_rate: float = 0.015
+    return_reference_rate: float = 0.01
+    resettlement_reference_rate: float = 0.002
+    minimum_resettlement_days: float = 90.0
+    fatality_fraction_of_direct_harm: float = 0.20
+    injury_fraction_of_direct_harm: float = 0.80
+
+    def validate(self) -> None:
+        for name in (
+            "voluntary_move_given_opportunity", "displacement_violence_threshold",
+            "forced_displacement_reference_rate", "return_reference_rate",
+            "resettlement_reference_rate", "fatality_fraction_of_direct_harm",
+            "injury_fraction_of_direct_harm",
+        ):
+            if not 0 <= getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in [0, 1]")
+        if self.minimum_resettlement_days < 0:
+            raise ValueError("minimum_resettlement_days cannot be negative")
+        total = (
+            self.fatality_fraction_of_direct_harm +
+            self.injury_fraction_of_direct_harm
+        )
+        if abs(total - 1.0) > 1e-9:
+            raise ValueError("direct-harm fatality and injury fractions must sum to one")
+
+
+@dataclass(slots=True)
 class PoliticalOrderConfig:
     enabled: bool = True
     interval_days: float = 30.0
@@ -528,6 +632,13 @@ class RecordingConfig:
                            "access_weight": 1.6, "remoteness_penalty": .45,
                            "severity_noise": .15, "geocoding_error_rate": .05,
                            "geocoding_scale_km": .8},
+        # Organized actions use an explicit channel instead of silently
+        # inheriting the generic process-event operator.  Defaults intentionally
+        # match the former fallback so this is a semantic repair, not a fit.
+        "organized_action": {"base_logit": -1.5, "severity_weight": 1.8,
+                             "access_weight": 1.2, "remoteness_penalty": .9,
+                             "severity_noise": .12, "geocoding_error_rate": .12,
+                             "geocoding_scale_km": 2.0},
     })
 
     def validate(self) -> None:
@@ -659,6 +770,10 @@ class SimulationConfig:
     information: InformationConfig = field(default_factory=InformationConfig)
     combat: CombatConfig = field(default_factory=CombatConfig)
     organization_ecology: OrganizationEcologyConfig = field(default_factory=OrganizationEcologyConfig)
+    relationships: RelationshipConfig = field(default_factory=RelationshipConfig)
+    nonstate_governance: NonstateGovernanceConfig = field(default_factory=NonstateGovernanceConfig)
+    access_restriction: AccessRestrictionConfig = field(default_factory=AccessRestrictionConfig)
+    civilian_dynamics: CivilianDynamicsConfig = field(default_factory=CivilianDynamicsConfig)
     political_order: PoliticalOrderConfig = field(default_factory=PoliticalOrderConfig)
     foreign_affairs: ForeignAffairsConfig = field(default_factory=ForeignAffairsConfig)
     peace_process: PeaceProcessConfig = field(default_factory=PeaceProcessConfig)
@@ -696,6 +811,10 @@ class SimulationConfig:
         self.information.validate()
         self.combat.validate()
         self.organization_ecology.validate()
+        self.relationships.validate()
+        self.nonstate_governance.validate()
+        self.access_restriction.validate()
+        self.civilian_dynamics.validate()
         self.political_order.validate()
         self.foreign_affairs.validate()
         self.peace_process.validate()
@@ -747,6 +866,14 @@ class SimulationConfig:
             values["combat"] = CombatConfig(**combat_values)
         if isinstance(values.get("organization_ecology"), dict):
             values["organization_ecology"] = OrganizationEcologyConfig(**values["organization_ecology"])
+        if isinstance(values.get("relationships"), dict):
+            values["relationships"] = RelationshipConfig(**values["relationships"])
+        if isinstance(values.get("nonstate_governance"), dict):
+            values["nonstate_governance"] = NonstateGovernanceConfig(**values["nonstate_governance"])
+        if isinstance(values.get("access_restriction"), dict):
+            values["access_restriction"] = AccessRestrictionConfig(**values["access_restriction"])
+        if isinstance(values.get("civilian_dynamics"), dict):
+            values["civilian_dynamics"] = CivilianDynamicsConfig(**values["civilian_dynamics"])
         if isinstance(values.get("political_order"), dict):
             values["political_order"] = PoliticalOrderConfig(**values["political_order"])
         if isinstance(values.get("foreign_affairs"), dict):

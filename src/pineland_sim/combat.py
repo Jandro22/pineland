@@ -13,6 +13,8 @@ from .entities import (ArmedFormation, CausalContribution, Engagement, Observati
                        OrganizationKind, clamp, logistic)
 from .information import get_presence_belief, ingest_observation
 from .logistics import choose_withdrawal_order, consume_formation_supply, create_movement_order
+from .civilian import apply_direct_civilian_harm
+from .relations import record_relation_harm
 
 
 def formation_microzone(world, formation: ArmedFormation) -> str:
@@ -77,8 +79,11 @@ def _event_observation(world, observer: ArmedFormation, target: ArmedFormation,
     return observation
 
 
-def _update_perceived_momentum(world, locality_id: str, signal: float,
-                               civilian_harm: float, rng: random.Random) -> int:
+def _update_perceived_momentum(
+    world, locality_id: str, signal: float, civilian_harm: float,
+    rng: random.Random, first_organization_id: str | None = None,
+    second_organization_id: str | None = None,
+) -> int:
     config = world.config.combat
     changed = 0
     locality = world.localities[locality_id]
@@ -90,19 +95,52 @@ def _update_perceived_momentum(world, locality_id: str, signal: float,
         if rng.random() > reach:
             continue
         interpretation = clamp(signal + rng.normalvariate(0, world.config.reporting_error))
-        # Harm has a political effect only here, after noisy observation and
-        # attribution. Discipline reduces attribution to the observer's side.
-        government = world.organizations.get("government")
-        attribution = harm_scale * (1 - (government.discipline if government else .5))
-        old = person.expected_control.get("government", .5)
-        person.expected_control["government"] = clamp(
-            old + config.momentum_learning_rate * (interpretation - .5) - .04 * attribution
+        first = world.organizations.get(first_organization_id or "")
+        second = world.organizations.get(second_organization_id or "")
+        state_vs_insurgent = bool(
+            first is not None and second is not None and (
+                (
+                    first.kind is OrganizationKind.INSURGENT
+                    and second.kind is not OrganizationKind.INSURGENT
+                )
+                or (
+                    second.kind is OrganizationKind.INSURGENT
+                    and first.kind is not OrganizationKind.INSURGENT
+                )
+            )
         )
-        if any(org.kind is OrganizationKind.INSURGENT and org.status == "active"
-               for org in world.organizations.values()):
-            old_i = person.expected_control.get("insurgent", .1)
-            person.expected_control["insurgent"] = clamp(
-                old_i + config.momentum_learning_rate * (.5 - interpretation) + .02 * attribution
+        if state_vs_insurgent:
+            # Harm has a political effect only after noisy observation and
+            # attribution. Discipline reduces attribution to the state side.
+            government = world.organizations.get("government")
+            attribution = harm_scale * (
+                1 - (government.discipline if government else .5)
+            )
+            old = person.expected_control.get("government", .5)
+            person.expected_control["government"] = clamp(
+                old + config.momentum_learning_rate * (interpretation - .5)
+                - .04 * attribution
+            )
+            if any(
+                org.kind is OrganizationKind.INSURGENT and org.status == "active"
+                for org in world.organizations.values()
+            ):
+                old_i = person.expected_control.get("insurgent", .1)
+                person.expected_control["insurgent"] = clamp(
+                    old_i
+                    + config.momentum_learning_rate * (.5 - interpretation)
+                    + .02 * attribution
+                )
+        elif first is not None and second is not None:
+            # Factional engagements update faction-specific expected control;
+            # they are not projected onto the binary government/insurgent axis.
+            old_first = person.expected_control.get(first.organization_id, .5)
+            old_second = person.expected_control.get(second.organization_id, .5)
+            person.expected_control[first.organization_id] = clamp(
+                old_first + config.momentum_learning_rate * (interpretation - .5)
+            )
+            person.expected_control[second.organization_id] = clamp(
+                old_second + config.momentum_learning_rate * (.5 - interpretation)
             )
         changed += 1
     return changed
@@ -273,7 +311,21 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
     locality.violence = clamp(locality.violence * .85 + .25 * intensity)
     civilian_harm = (locality.population * zone.population_share * cfg.civilian_exposure_rate *
                      intensity * exposure * rng.expovariate(1.0))
-    world.cumulative_civilian_harm += civilian_harm
+    harm = apply_direct_civilian_harm(
+        world,
+        event_id,
+        locality.locality_id,
+        civilian_harm,
+        cause="armed_engagement",
+        responsible_organization_id=initiator_organization_id,
+    )
+    record_relation_harm(
+        world,
+        a.organization_id,
+        b.organization_id,
+        min(1.0, frac_a + frac_b),
+        time,
+    )
     signal = logistic((frac_b - frac_a) * 18 + .35 * advantage)
     withdrawal_ids = []
     for formation_id in disengaged:
@@ -307,7 +359,15 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
         government_signals.append(value)
     reported_signal = sum(government_signals) / max(1, len(government_signals))
     reported_harm = sum(float(o.estimated_value["civilian_harm"]) for o in observations) / max(1, len(observations))
-    _update_perceived_momentum(world, locality.locality_id, reported_signal, reported_harm, rng)
+    _update_perceived_momentum(
+        world,
+        locality.locality_id,
+        reported_signal,
+        reported_harm,
+        rng,
+        a.organization_id,
+        b.organization_id,
+    )
     engagement = Engagement(
         engagement_id, event_id, time, locality.locality_id, zone_id,
         a.formation_id, b.formation_id, detected_by,

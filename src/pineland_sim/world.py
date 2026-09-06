@@ -43,10 +43,12 @@ from .entities import (
     PeaceTransition,
     Locality,
     Organization,
+    OrganizationRelation,
     OrganizationKind,
     Microzone,
     Patrol,
     PhysicalEdge,
+    AccessRestriction,
     Person,
     SocialCommunity,
     SocialEdge,
@@ -59,6 +61,7 @@ from .entities import (
     SyntheticRecord,
     StockTransaction,
     StateDelta,
+    CivilianHarmEvent,
 )
 
 
@@ -124,6 +127,7 @@ class WorldState:
     resource_flows: list[ResourceFlow] = field(default_factory=list)
     control_cost_consumed: dict[str, float] = field(default_factory=dict)
     organizations: dict[str, Organization] = field(default_factory=dict)
+    organization_relations: dict[tuple[str, str], OrganizationRelation] = field(default_factory=dict)
     formations: dict[str, ArmedFormation] = field(default_factory=dict)
     # Recruited fighter-equivalent manpower is first created where the
     # represented population lives.  If no local effective formation exists,
@@ -168,6 +172,7 @@ class WorldState:
     cumulative_external_remittances: float = 0.0
     beliefs: dict[tuple[str, str], ActorBelief] = field(default_factory=dict)
     adjacency: dict[str, dict[str, float]] = field(default_factory=dict)
+    access_restrictions: dict[tuple[str, str, str], AccessRestriction] = field(default_factory=dict)
     # Geography and infrastructure are fixed case inputs during a trajectory.
     # Cache derived routes by exact mobility so repeated logistics passes do
     # not rerun identical graph searches. These are execution artifacts, not
@@ -211,6 +216,10 @@ class WorldState:
     cumulative_supply_lost: float = 0.0
     cumulative_resource_to_supply: float = 0.0
     cumulative_civilian_harm: float = 0.0
+    cumulative_civilian_injuries: float = 0.0
+    cumulative_civilian_resource_loss: float = 0.0
+    cumulative_civilian_displacement: float = 0.0
+    civilian_harm_events: list[CivilianHarmEvent] = field(default_factory=list)
     # Derived execution cache for the quantity still in transit.  Shipment
     # objects remain available for forensic output, but repeatedly summing
     # their full historical dictionary made long-horizon accounting costly.
@@ -547,6 +556,25 @@ class WorldState:
                 for value in vector.to_dict().values():
                     if not 0.0 <= value <= 1.0:
                         raise AssertionError("control component outside [0, 1]")
+        for (first_id, second_id), relation in self.organization_relations.items():
+            if first_id >= second_id:
+                raise AssertionError("organization relation keys must be canonical")
+            if relation.organization_a_id != first_id or relation.organization_b_id != second_id:
+                raise AssertionError("organization relation key/entity mismatch")
+            for value in (
+                relation.rivalry_memory,
+                relation.hostility_memory,
+                relation.cooperation_memory,
+            ):
+                if not 0.0 <= value <= 1.0:
+                    raise AssertionError("organization relation memory outside [0, 1]")
+        for (owner_id, first_id, second_id), restriction in self.access_restrictions.items():
+            if owner_id != restriction.organization_id or first_id >= second_id:
+                raise AssertionError("access restriction key/entity mismatch")
+            if second_id not in self.adjacency.get(first_id, {}):
+                raise AssertionError("access restriction references a non-adjacent corridor")
+            if not 0.0 <= restriction.level <= 1.0:
+                raise AssertionError("access restriction level outside [0, 1]")
         for formation in self.formations.values():
             if (formation.personnel < 0 or formation.sustainment < 0 or formation.supply_stock < 0 or
                     formation.supply_stock > formation.supply_capacity + tolerance):
@@ -840,6 +868,12 @@ class WorldState:
             },
             "action_funnel": dict(self.action_funnel_counts),
             "civilian_harm": self.cumulative_civilian_harm,
+            "civilian_deaths": self.cumulative_deaths,
+            "civilian_injuries": self.cumulative_civilian_injuries,
+            "civilian_resource_loss": self.cumulative_civilian_resource_loss,
+            "civilian_displacement_flow": self.cumulative_civilian_displacement,
+            "organization_relations": len(self.organization_relations),
+            "access_restrictions": len(self.access_restrictions),
             "events": len(self.event_log),
             "synthetic_records": sum(record.recorded for record in self.synthetic_records),
             "synthetic_recording_rate": (
@@ -935,6 +969,9 @@ class WorldState:
         from .foreign_affairs import foreign_diagnostics
         from .peace_process import peace_diagnostics
         from .recording import recording_diagnostics
+        from .relations import relationship_diagnostics
+        from .access import access_diagnostics
+        from .civilian import civilian_harm_diagnostics
         from .integrity import causal_integrity_diagnostics
         from .empirical import recorded_vs_true_metrics, recorded_synthetic_observations
         from .reproducibility import (
@@ -1037,6 +1074,15 @@ class WorldState:
         (output / "recorded_empirical_observations.jsonl").write_text(
             "".join(json.dumps(asdict(item)) + "\n" for item in recorded_synthetic_observations(self)),
             encoding="utf-8",
+        )
+        (output / "relationship_diagnostics.json").write_text(
+            json.dumps(relationship_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "access_diagnostics.json").write_text(
+            json.dumps(access_diagnostics(self), indent=2), encoding="utf-8"
+        )
+        (output / "civilian_harm_diagnostics.json").write_text(
+            json.dumps(civilian_harm_diagnostics(self), indent=2), encoding="utf-8"
         )
         (output / "recorded_vs_true_metrics.json").write_text(
             json.dumps(recorded_vs_true_metrics(self), indent=2), encoding="utf-8"

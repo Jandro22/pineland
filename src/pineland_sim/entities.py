@@ -33,6 +33,15 @@ class OrganizationKind(StrEnum):
     FOREIGN = "foreign"
 
 
+class RelationStatus(StrEnum):
+    ALLIED = "allied"
+    COOPERATIVE = "cooperative"
+    NEUTRAL = "neutral"
+    RIVAL = "rival"
+    HOSTILE = "hostile"
+    CEASEFIRE = "ceasefire"
+
+
 @dataclass(slots=True)
 class ControlVector:
     formal: float = 0.0
@@ -190,6 +199,9 @@ class Person:
     # in a single recruitment draw.
     armed_fraction: float = 0.0
     displaced: bool = False
+    displaced_since: float | None = None
+    displacement_origin_locality_id: str | None = None
+    displacement_count: int = 0
     community_id: str | None = None
     social_exposure: dict[str, float] = field(default_factory=dict)
     # Social/political alignment with specific insurgent organizations.  This
@@ -253,6 +265,17 @@ class PhysicalEdge:
     road_quality: float
     travel_time_hours: float
     disruption: float = 0.0
+
+
+@dataclass(slots=True)
+class AccessRestriction:
+    organization_id: str
+    locality_a_id: str
+    locality_b_id: str
+    level: float
+    updated_at: float
+    created_at: float
+    cumulative_effort: float = 0.0
 
 
 @dataclass(slots=True)
@@ -497,6 +520,33 @@ class Organization:
     succession_count: int = 0
     external_sanctuary: float = 0.0
     sponsor_dependence: dict[str, float] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class OrganizationRelation:
+    organization_a_id: str
+    organization_b_id: str
+    status: RelationStatus = RelationStatus.NEUTRAL
+    rivalry_memory: float = 0.0
+    hostility_memory: float = 0.0
+    cooperation_memory: float = 0.0
+    updated_at: float = 0.0
+    last_interaction_at: float | None = None
+
+
+@dataclass(slots=True)
+class CivilianHarmEvent:
+    harm_id: str
+    time: float
+    event_id: str
+    locality_id: str
+    cause: str
+    responsible_organization_id: str | None
+    direct_harm: float
+    deaths: float
+    injuries: float
+    resource_loss: float = 0.0
+    displaced_population: float = 0.0
 
 
 @dataclass(slots=True)

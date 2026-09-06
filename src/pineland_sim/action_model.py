@@ -12,6 +12,7 @@ from math import exp
 import random
 
 from .entities import OrganizationKind, clamp
+from .relations import organizations_hostile
 
 
 ACTION_ORGANIZATION_KINDS = {
@@ -27,6 +28,7 @@ ACTION_CHANNELS = (
     "nonfielded_human_target",
     "asset_violence",
     "coercion",
+    "access_restriction",
 )
 VIOLENT_CHANNELS = {
     "armed_confrontation",
@@ -48,6 +50,7 @@ class LocalActionSupport:
     nonfielded_human_target: bool
     government_asset_target: bool
     civilian_coercion: bool
+    access_restriction: bool
 
     @property
     def total_fighter_equivalents(self) -> float:
@@ -258,6 +261,19 @@ def _target_matches_side(world, target_actor_id: str, target_side: str) -> bool:
     }
 
 
+def _hostile_target_ids(world, organization_id: str) -> list[str]:
+    return sorted(
+        other.organization_id
+        for other in world.organizations.values()
+        if (
+            other.organization_id != organization_id
+            and other.status == "active"
+            and other.kind in ACTION_ORGANIZATION_KINDS | {OrganizationKind.GOVERNMENT}
+            and organizations_hostile(world, organization_id, other.organization_id)
+        )
+    )
+
+
 def _opponent_presence_belief(
     world, organization_id: str, locality_id: str, target_side: str
 ) -> float:
@@ -301,6 +317,16 @@ def action_choice_weights(world, organization_id: str, locality_id: str) -> dict
     perceived_presence = _opponent_presence_belief(
         world, organization_id, locality_id, target_side
     )
+    hostile_targets = _hostile_target_ids(world, organization_id)
+    hostile_beliefs = [
+        world.belief_view(organization_id).locality_control(locality_id, target_id)
+        for target_id in hostile_targets
+    ]
+    if hostile_beliefs:
+        perceived_presence = max(
+            perceived_presence,
+            max(clamp(item.physical) for item in hostile_beliefs),
+        )
     risk = clamp(organization.phenotype.get("risk_tolerance", 0.5))
     embedded = clamp(organization.phenotype.get("local_embeddedness", 0.5))
     governance = clamp(organization.phenotype.get("governance_investment", 0.5))
@@ -315,10 +341,21 @@ def action_choice_weights(world, organization_id: str, locality_id: str) -> dict
             else 1.0
         )
         human_target_belief = clamp((belief.formal + belief.physical) / 2.0)
+        if hostile_beliefs:
+            human_target_belief = max(
+                human_target_belief,
+                max(clamp((item.formal + item.physical) / 2.0)
+                    for item in hostile_beliefs),
+            )
         asset_target_belief = clamp(
             (belief.administrative + belief.legal + belief.fiscal) / 3.0
         )
-        asset_weight = risk * asset_target_belief * ceasefire_scale
+        asset_weight = (
+            risk * asset_target_belief * ceasefire_scale
+            if "government" in world.organizations
+            and organizations_hostile(world, organization_id, "government")
+            else 0.0
+        )
         coercion_weight = governance * embedded
     else:
         active_insurgents = [
@@ -338,6 +375,13 @@ def action_choice_weights(world, organization_id: str, locality_id: str) -> dict
         asset_weight = 0.0
         coercion_weight = 0.0
 
+    access_weight = (
+        (0.35 + 0.65 * governance) * fielded_share * (0.5 + 0.5 * risk)
+        if world.config.access_restriction.enabled
+        and world.adjacency.get(locality_id)
+        else 0.0
+    )
+
     return {
         "wait": 1.0,
         "armed_confrontation": (
@@ -348,6 +392,7 @@ def action_choice_weights(world, organization_id: str, locality_id: str) -> dict
         ),
         "asset_violence": asset_weight,
         "coercion": coercion_weight,
+        "access_restriction": access_weight,
     }
 
 
@@ -362,7 +407,6 @@ def choose_action(world, organization_id: str, locality_id: str,
 
 
 def available_battle_pairs(world, organization_id: str, locality_id: str):
-    organization = world.organizations[organization_id]
     own = [
         formation for formation in world.formations.values()
         if formation.organization_id == organization_id
@@ -372,12 +416,6 @@ def available_battle_pairs(world, organization_id: str, locality_id: str):
         and not formation.outside_pineland
         and formation.operational_status == "effective"
     ]
-    if organization.kind is OrganizationKind.INSURGENT:
-        opponent_kinds = {
-            OrganizationKind.MILITARY, OrganizationKind.POLICE, OrganizationKind.FOREIGN
-        }
-    else:
-        opponent_kinds = {OrganizationKind.INSURGENT}
     opponents = [
         formation for formation in world.formations.values()
         if formation.locality_id == locality_id
@@ -385,8 +423,10 @@ def available_battle_pairs(world, organization_id: str, locality_id: str):
         and not formation.moving
         and not formation.outside_pineland
         and formation.operational_status == "effective"
-        and world.organizations[formation.organization_id].kind in opponent_kinds
         and world.organizations[formation.organization_id].status == "active"
+        and organizations_hostile(
+            world, organization_id, formation.organization_id
+        )
     ]
     return [
         (actor_formation, opponent)
@@ -398,29 +438,27 @@ def available_battle_pairs(world, organization_id: str, locality_id: str):
 
 def nonfielded_human_targets(world, organization_id: str, locality_id: str):
     """Explicit nonfielded opponent manpower available at execution time."""
-    organization = world.organizations[organization_id]
     targets = []
-    if organization.kind is not OrganizationKind.INSURGENT:
-        for (target_org_id, target_locality_id), quantity in sorted(
-            world.organization_manpower_pools.items()
+    for (target_org_id, target_locality_id), quantity in sorted(
+        world.organization_manpower_pools.items()
+    ):
+        target_org = world.organizations.get(target_org_id)
+        if (
+            target_org_id != organization_id
+            and target_locality_id == locality_id
+            and quantity > 0
+            and target_org is not None
+            and target_org.status == "active"
+            and organizations_hostile(world, organization_id, target_org_id)
         ):
-            target_org = world.organizations.get(target_org_id)
-            if (
-                target_locality_id == locality_id
-                and quantity > 0
-                and target_org is not None
-                and target_org.kind is OrganizationKind.INSURGENT
-                and target_org.status == "active"
-            ):
-                targets.append(NonfieldedHumanTarget(
-                    target_id=f"POOL:{target_org_id}:{locality_id}",
-                    target_type="unfielded_insurgent_manpower",
-                    organization_id=target_org_id,
-                    personnel=float(quantity),
-                    available_fraction=1.0,
-                    backing_pool_key=(target_org_id, locality_id),
-                ))
-        return targets
+            targets.append(NonfieldedHumanTarget(
+                target_id=f"POOL:{target_org_id}:{locality_id}",
+                target_type="unfielded_manpower",
+                organization_id=target_org_id,
+                personnel=float(quantity),
+                available_fraction=1.0,
+                backing_pool_key=(target_org_id, locality_id),
+            ))
     for post in world.security_posts.values():
         if (
             post.locality_id != locality_id
@@ -428,8 +466,14 @@ def nonfielded_human_targets(world, organization_id: str, locality_id: str):
             or post.personnel <= 0
         ):
             continue
-        organization = world.organizations.get(post.organization_id)
-        if organization is not None and organization.kind is OrganizationKind.INSURGENT:
+        target_organization = world.organizations.get(post.organization_id)
+        if (
+            target_organization is None
+            or target_organization.status != "active"
+            or not organizations_hostile(
+                world, organization_id, post.organization_id
+            )
+        ):
             continue
         targets.append(NonfieldedHumanTarget(
             target_id=post.post_id,
@@ -443,7 +487,10 @@ def nonfielded_human_targets(world, organization_id: str, locality_id: str):
 
 
 def asset_targets(world, organization_id: str, locality_id: str):
-    if world.organizations[organization_id].kind is not OrganizationKind.INSURGENT:
+    if (
+        "government" not in world.organizations
+        or not organizations_hostile(world, organization_id, "government")
+    ):
         return []
     return [
         institution for institution in world.political_institutions.values()
@@ -479,6 +526,11 @@ def local_action_support(world, organization_id: str, locality_id: str) -> Local
             organization.kind is OrganizationKind.INSURGENT
             and total > 0
             and world.localities[locality_id].population > 0
+        ),
+        access_restriction=(
+            total > 0
+            and world.config.access_restriction.enabled
+            and bool(world.adjacency.get(locality_id))
         ),
     )
 
