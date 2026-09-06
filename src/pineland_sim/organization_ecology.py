@@ -480,14 +480,28 @@ def _apply_local_fighter_change(world, organization: Organization, locality_id: 
     created = 0
     if delta > 0:
         # Fighter-equivalent recruits are conserved in a local manpower pool.
-        # Moving them into a fielded unit requires both a viable unit size and
-        # resources for its startup supply stock.
+        # Equipment is a distinct physical stock.  Convert organization
+        # resources into a local reserve first, then transfer both manpower and
+        # its associated materiel into a formation.  This prevents an
+        # unequipped manpower remainder from becoming armed action capacity.
         supply_per_fighter = (
             world.config.logistics.formation_supply_days
             * world.config.logistics.initial_supply_fraction
         )
         pool = world.organization_manpower_pools.get(key, 0.0) + delta
         world.organization_manpower_pools[key] = pool
+        reserve = world.organization_manpower_supply_reserves.get(key, 0.0)
+        desired_reserve = pool * supply_per_fighter
+        converted = min(
+            max(0.0, desired_reserve - reserve),
+            max(0.0, organization.resources),
+        )
+        if converted > 0:
+            organization.resources -= converted
+            world.cumulative_resource_to_supply += converted
+            reserve += converted
+        if reserve > 1e-12:
+            world.organization_manpower_supply_reserves[key] = reserve
         local = [f for f in world.formations.values()
                  if f.organization_id == organization.organization_id and
                  f.locality_id == locality_id and
@@ -495,36 +509,38 @@ def _apply_local_fighter_change(world, organization: Organization, locality_id: 
         if local:
             for formation in sorted(local, key=lambda f: (f.personnel, f.formation_id)):
                 room = max(0.0, target_size - formation.personnel)
-                affordable = organization.resources / max(1e-12, supply_per_fighter)
-                amount = min(room, pool, affordable)
+                equipped = reserve / max(1e-12, supply_per_fighter)
+                amount = min(room, pool, equipped)
                 if amount > 0:
-                    converted = amount * supply_per_fighter
-                    organization.resources -= converted
-                    world.cumulative_resource_to_supply += converted
+                    transferred_supply = amount * supply_per_fighter
                     formation.personnel += amount
-                    formation.supply_stock += converted
+                    formation.supply_stock += transferred_supply
                     pool -= amount
+                    reserve -= transferred_supply
                     _resize_formation_supply_capacity(world, formation)
                 if pool <= 1e-12:
                     break
         while pool >= minimum:
-            affordable = organization.resources / max(1e-12, supply_per_fighter)
-            size = min(pool, target_size, affordable)
+            equipped = reserve / max(1e-12, supply_per_fighter)
+            size = min(pool, target_size, equipped)
             if size < minimum:
                 break
-            converted = size * supply_per_fighter
-            organization.resources -= converted
-            world.cumulative_resource_to_supply += converted
+            transferred_supply = size * supply_per_fighter
             _create_local_recruitment_formation(
                 world, organization, locality_id, size,
-                startup_stock=converted,
+                startup_stock=transferred_supply,
             )
             pool -= size
+            reserve -= transferred_supply
             created += 1
         if pool > 1e-12:
             world.organization_manpower_pools[key] = pool
         else:
             world.organization_manpower_pools.pop(key, None)
+        if reserve > 1e-12:
+            world.organization_manpower_supply_reserves[key] = reserve
+        else:
+            world.organization_manpower_supply_reserves.pop(key, None)
         return requested_delta, created
 
     remaining = -delta
@@ -695,21 +711,8 @@ def _transfer_sources(world, parent_ids: set[str], children: list[Organization])
 
 
 def _transfer_manpower_pools(world, parent_ids: set[str], children: list[Organization]) -> float:
-    """Transfer local unfielded fighter pools across organizational transitions."""
-    moved = 0.0
-    for (parent_id, locality_id), quantity in list(world.organization_manpower_pools.items()):
-        if parent_id not in parent_ids or quantity <= 0:
-            continue
-        del world.organization_manpower_pools[(parent_id, locality_id)]
-        if not children:
-            continue
-        if len(children) == 1:
-            key = (children[0].organization_id, locality_id)
-            world.organization_manpower_pools[key] = (
-                world.organization_manpower_pools.get(key, 0.0) + quantity
-            )
-            moved += quantity
-            continue
+    """Transfer local unfielded manpower and its material reserves together."""
+    def child_weights(locality_id: str) -> tuple[list[float], float]:
         local_weights = [
             sum(world.persons[pid].weight * world.persons[pid].armed_fraction
                 for pid in child.member_ids
@@ -722,16 +725,35 @@ def _transfer_manpower_pools(world, parent_ids: set[str], children: list[Organiz
         if denominator <= 0:
             local_weights = [1.0 for _ in children]
             denominator = float(len(children))
-        allocated = 0.0
-        for index, (child, weight) in enumerate(zip(children, local_weights)):
-            share = (quantity - allocated if index == len(children) - 1
-                     else quantity * weight / denominator)
-            key = (child.organization_id, locality_id)
-            world.organization_manpower_pools[key] = (
-                world.organization_manpower_pools.get(key, 0.0) + share
-            )
-            allocated += share
-        moved += quantity
+        return local_weights, denominator
+
+    moved = 0.0
+    for stock, count_as_manpower in (
+        (world.organization_manpower_pools, True),
+        (world.organization_manpower_supply_reserves, False),
+    ):
+        for (parent_id, locality_id), quantity in list(stock.items()):
+            if parent_id not in parent_ids or quantity <= 0:
+                continue
+            del stock[(parent_id, locality_id)]
+            if not children:
+                continue
+            if len(children) == 1:
+                key = (children[0].organization_id, locality_id)
+                stock[key] = stock.get(key, 0.0) + quantity
+                if count_as_manpower:
+                    moved += quantity
+                continue
+            local_weights, denominator = child_weights(locality_id)
+            allocated = 0.0
+            for index, (child, weight) in enumerate(zip(children, local_weights)):
+                share = (quantity - allocated if index == len(children) - 1
+                         else quantity * weight / denominator)
+                key = (child.organization_id, locality_id)
+                stock[key] = stock.get(key, 0.0) + share
+                allocated += share
+            if count_as_manpower:
+                moved += quantity
     return moved
 
 
@@ -1450,7 +1472,13 @@ def collapse_organization(world, organization_id: str, time: float, reason: str)
         if key[0] == organization_id:
             pooled_demobilized += quantity
             del world.organization_manpower_pools[key]
+    pooled_arms = 0.0
+    for key, quantity in list(world.organization_manpower_supply_reserves.items()):
+        if key[0] == organization_id:
+            pooled_arms += quantity
+            del world.organization_manpower_supply_reserves[key]
     world.demobilized_personnel += pooled_demobilized
+    world.demobilized_arms += pooled_arms
     formations = []
     for formation in world.formations.values():
         if formation.organization_id == organization_id:
@@ -1460,7 +1488,8 @@ def collapse_organization(world, organization_id: str, time: float, reason: str)
     return _transition(world, time, "collapse", (organization_id,), (), {}, {},
                        {organization_id: formations}, {"reason": reason,
                                                        "nonzero_manpower": sum(world.formations[f].personnel for f in formations),
-                                                       "pooled_demobilized": pooled_demobilized})
+                                                       "pooled_demobilized": pooled_demobilized,
+                                                       "pooled_demobilized_arms": pooled_arms})
 
 
 def organization_survival_social_base(world, organization: Organization) -> float:

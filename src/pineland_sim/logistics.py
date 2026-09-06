@@ -1075,9 +1075,9 @@ def control_cost(world: WorldState, locality_id: str) -> dict[str, float]:
 def logistics_diagnostics(world: WorldState) -> dict[str, Any]:
     current = (sum(source.stock for source in world.supply_sources.values()) +
                sum(formation.supply_stock for formation in world.formations.values()) +
+               sum(world.organization_manpower_supply_reserves.values()) +
                world.demobilized_arms +
-               sum(shipment.quantity_deliverable for shipment in world.supply_shipments.values()
-                   if shipment.status == "in_transit"))
+               world.in_transit_supply_total)
     return {
         "supply_conservation": {
             "initial": world.initial_supply_stock,
