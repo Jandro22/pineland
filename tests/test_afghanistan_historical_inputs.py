@@ -94,6 +94,9 @@ def test_conditioned_force_stocks_match_sourced_case(generated_world, taliban_st
     assert diagnostic["ana_personnel"] == pytest.approx(6500)
     assert diagnostic["anp_personnel"] == pytest.approx(6000)
     assert diagnostic["taliban_personnel"] == pytest.approx(taliban_strength)
+    assert diagnostic["taliban_fielded_personnel"] == pytest.approx(taliban_strength)
+    assert diagnostic["taliban_clandestine_personnel"] == pytest.approx(0.0)
+    assert diagnostic["taliban_source_strength_residual"] == pytest.approx(0.0)
     assert diagnostic["coalition_personnel"] == pytest.approx(24400)
     assert diagnostic["ana_formations"] == 12
     assert diagnostic["taliban_formations"] == len(
@@ -155,7 +158,9 @@ def test_preperiod_spatial_prior_conserves_strength_without_turning_everywhere_o
     world = generated_world.clone()
     condition_world(world, inputs, 7500, taliban_prior=prior)
     diagnostic = initialization_diagnostics(world, inputs, 7500)
+    assert diagnostic["taliban_personnel"] == pytest.approx(7500)
     assert diagnostic["taliban_total_fighter_equivalents"] == pytest.approx(7500)
+    assert diagnostic["taliban_source_strength_residual"] == pytest.approx(0.0)
     assert diagnostic["taliban_clandestine_personnel"] > 0
     assert diagnostic["taliban_formations"] < len(case["preperiod_taliban_state_conflict_counts_2003"])
     assert set(diagnostic["taliban_clandestine_localities"]) <= {
@@ -163,6 +168,20 @@ def test_preperiod_spatial_prior_conserves_strength_without_turning_everywhere_o
         for district_id in case["preperiod_taliban_state_conflict_counts_2003"]
     }
     world.assert_invariants()
+
+
+def test_spatial_prior_accepts_archived_locality_key_fallback_without_double_suffix():
+    inputs = load_historical_inputs()
+    fallback_inputs = dict(inputs)
+    fallback_inputs.pop("preperiod_taliban_state_conflict_counts_2003", None)
+    prior = sample_taliban_spatial_prior(
+        fallback_inputs,
+        random.Random(2026090616),
+        total_strength=7500,
+    )
+    assert prior["evidence_counts"]
+    assert all(locality_id.endswith("-HQ") for locality_id in prior["evidence_counts"])
+    assert all("-HQ-HQ" not in locality_id for locality_id in prior["evidence_counts"])
 
 
 def test_observed_coalition_schedule_replaces_stock_without_breaking_ledgers(generated_world):

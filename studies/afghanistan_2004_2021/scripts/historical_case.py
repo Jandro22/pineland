@@ -134,11 +134,19 @@ def sample_taliban_spatial_prior(
         "preperiod_taliban_state_conflict_counts_2003",
         inputs["initialization"]["taliban"]["anchor_weights"],
     )
-    evidence = {
-        f"{district_id}-HQ": float(count)
-        for district_id, count in source_counts.items()
-        if float(count) > 0
-    }
+    evidence: dict[str, float] = {}
+    for source_id, count in source_counts.items():
+        count = float(count)
+        if count <= 0:
+            continue
+        # Case evidence is district keyed (AF0101), while the generated
+        # locality surface is locality keyed (AF0101-HQ).  The archived input
+        # anchor table already uses locality IDs, so accept both forms and
+        # never manufacture an accidental -HQ-HQ identifier.
+        locality_id = str(source_id)
+        if not locality_id.endswith("-HQ"):
+            locality_id = f"{locality_id}-HQ"
+        evidence[locality_id] = evidence.get(locality_id, 0.0) + count
     if not evidence:
         raise ValueError("pre-period Taliban locality evidence is empty")
 
@@ -533,27 +541,22 @@ def initialization_diagnostics(world, inputs: dict[str, Any],
         post.personnel for post in world.security_posts.values()
         if post.organization_id == "police" and post.formation_id is None
     )
+    clandestine = sum(
+        quantity
+        for (organization_id, _), quantity
+        in world.organization_manpower_pools.items()
+        if organization_id == "insurgent"
+    )
+    total_fighter_equivalents = by_org["insurgent"] + clandestine
     return {
         "weighted_population": world.weighted_population(),
         "ana_personnel": by_org["fdf"],
         "anp_personnel": police,
-        "taliban_personnel": by_org["insurgent"],
+        "taliban_personnel": total_fighter_equivalents,
         "taliban_fielded_personnel": by_org["insurgent"],
-        "taliban_clandestine_personnel": sum(
-            quantity
-            for (organization_id, _), quantity
-            in world.organization_manpower_pools.items()
-            if organization_id == "insurgent"
-        ),
-        "taliban_total_fighter_equivalents": (
-            by_org["insurgent"]
-            + sum(
-                quantity
-                for (organization_id, _), quantity
-                in world.organization_manpower_pools.items()
-                if organization_id == "insurgent"
-            )
-        ),
+        "taliban_clandestine_personnel": clandestine,
+        "taliban_total_fighter_equivalents": total_fighter_equivalents,
+        "taliban_source_strength_residual": total_fighter_equivalents - float(taliban_strength),
         "coalition_personnel": by_org["coalition"],
         "ana_formations": sum(
             formation.organization_id == "fdf" for formation in world.formations.values()

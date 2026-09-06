@@ -4,7 +4,7 @@ This runner is intentionally separate from the consumed frozen-core 2005
 artifact.  It reads only complete 2004 province-week observations, updates a
 posterior ensemble of live simulation particles, freezes that ensemble at the
 training boundary, and then propagates it through the 2005 forecast window.
-No 2005 outcome row is opened by the runner.
+No 2005 outcome row is used by the runner.
 """
 from __future__ import annotations
 
@@ -97,9 +97,17 @@ def load_training_observations(
     """Build observations without materializing any non-training row."""
     by_week: dict[int, dict[str, int]] = {}
     provinces: set[str] = set()
+    year_prefix = f"{training_year}-"
     with panel_path.open(encoding="utf-8", newline="") as handle:
         for row in csv.DictReader(handle):
-            if not row["week_start"].startswith(f"{training_year}-"):
+            week_start = row["week_start"]
+            if week_start < year_prefix:
+                continue
+            # The panel is grouped by province rather than globally ordered,
+            # so rows after the training year must be skipped instead of
+            # stopping the stream (which would drop later provinces).  They
+            # never enter ``by_week`` and cannot update the filter.
+            if not week_start.startswith(year_prefix):
                 continue
             week_index = int(row["week_index"])
             start_day = 7.0 * week_index
@@ -256,6 +264,7 @@ def run_training_filter(
                 observation_id=f"province-week-{observation.week_index}",
             )
         )
+    filter_.freeze()
     return filter_
 
 
@@ -284,10 +293,22 @@ def forecast_weighted_field(
     end_day: float = FORECAST_END_DAY,
 ) -> dict[str, object]:
     """Freeze the posterior and return weighted mechanistic event incidence."""
+    filter_.freeze()
     for particle in filter_.particles:
         particle.state.advance_to(end_day)
     weights = particle_weights(filter_.particles)
-    cell_probability: dict[tuple[str, int], float] = {}
+    provinces = sorted({
+        _province_for_locality(particle.state.world, locality_id)
+        for particle in filter_.particles
+        for locality_id in particle.state.world.localities
+    })
+    first_week = int(start_day // 7)
+    last_week = int(math.ceil(end_day / 7.0))
+    cell_probability: dict[tuple[str, int], float] = {
+        (province, week): 0.0
+        for week in range(first_week, last_week)
+        for province in provinces
+    }
     member_cells: list[list[dict[str, int | str]]] = []
     for particle, weight in zip(filter_.particles, weights):
         cells = _forecast_cells(particle.state, start_day=start_day, end_day=end_day)
@@ -354,12 +375,17 @@ def run(
         "forecast_start_day": FORECAST_START_DAY,
         "forecast_end_day": FORECAST_END_DAY,
         "assimilation_split": "training",
-        "holdout_outcomes_read": False,
+        "holdout_outcomes_used": False,
         "observation_model": asdict(BernoulliEventObservationModel()),
         "filter_updates": [asdict(item) for item in filter_.history],
         "posterior_probability_field": forecast["probability_field"],
         "posterior_weights": forecast["posterior_weights"],
         "member_active_cells": forecast["member_active_cells"],
+        "posterior_frozen": filter_.frozen,
+        "probability_field_definition": (
+            "posterior mean of mechanistically realized latent event incidence "
+            "for every province-week surface cell"
+        ),
         "posterior_particle_summaries": [
             particle.state.world.summary() for particle in filter_.particles
         ],

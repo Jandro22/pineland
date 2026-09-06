@@ -142,3 +142,48 @@ def test_training_only_filter_rejects_holdout_before_advancing_particles():
         )
     assert len(advanced) == count_before
     assert filter_.last_time == 7.0
+
+
+def test_synthetic_planted_hotspot_is_recovered_and_improves_forecast_weight():
+    """A partial observation must localize a latent hotspot before forecasting."""
+    locations = ("A", "B", "C", "D")
+    particles = [Particle({"hotspot": location}) for location in locations]
+    transitions = []
+
+    def transition(state, time):
+        transitions.append((state["hotspot"], time))
+
+    def likelihood(state, observed):
+        return math.log(.90 if state["hotspot"] == observed else .10 / 3.0)
+
+    filter_ = SequentialParticleFilter(
+        particles,
+        transition=transition,
+        log_likelihood=likelihood,
+        rng=random.Random(2026090615),
+        # Keep the posterior weights for the forecast comparison; this test
+        # isolates state discrimination from resampling variance.
+        ess_fraction=.1,
+    )
+    filter_.assimilate(
+        AssimilationObservation(
+            7.0, "C", split="training", observation_id="planted-hotspot"
+        )
+    )
+    posterior = particle_weights(filter_.particles)
+    filtered_forecast_weight = sum(
+        weight
+        for particle, weight in zip(filter_.particles, posterior)
+        if particle.state["hotspot"] == "C"
+    )
+    unfiltered_forecast_weight = 1.0 / len(locations)
+
+    assert filtered_forecast_weight > unfiltered_forecast_weight
+    assert filtered_forecast_weight == pytest.approx(.90)
+    assert transitions == [(location, 7.0) for location in locations]
+
+    filter_.freeze()
+    with pytest.raises(RuntimeError, match="frozen"):
+        filter_.assimilate(
+            AssimilationObservation(14.0, "A", split="training")
+        )
