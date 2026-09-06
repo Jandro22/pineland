@@ -154,6 +154,9 @@ def build_gate(
             "simulation_horizon_days": day_offset(end_exclusive),
             "score_only_forecast_window": True,
             "score_only_full_week_cells": True,
+            "training_end_week_index_exclusive": (
+                day_offset(start) // 7
+            ),
             "first_scored_week_index": (
                 day_offset(start) + 6
             ) // 7,
