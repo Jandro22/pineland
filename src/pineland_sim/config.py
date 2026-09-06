@@ -133,6 +133,9 @@ class LogisticsConfig:
     readiness_recovery_remote: float = 0.006
     availability_recovery_rate: float = 0.03
     reallocation_rate: float = 0.04
+    # Ordinary repositioning proceeds one adjacency step per decision. Long
+    # routes remain available to explicit withdrawal and historical schedules.
+    reallocation_destination_scope: str = "adjacent"
     # Insurgent reallocation is deliberately a mixture of frontier expansion,
     # pre-existing clandestine footholds, stronghold consolidation, and
     # uncertainty-driven exploration.  These are structural theory weights,
@@ -182,6 +185,8 @@ class LogisticsConfig:
             raise ValueError("route interdiction rate cannot be negative")
         if self.source_capacity_model not in {"organization_manpower", "population_catchment"}:
             raise ValueError("unsupported source capacity model")
+        if self.reallocation_destination_scope not in {"adjacent", "national"}:
+            raise ValueError("unsupported reallocation destination scope")
         if self.organization_sustainment_coverage <= 0:
             raise ValueError("organization sustainment coverage must be positive")
 

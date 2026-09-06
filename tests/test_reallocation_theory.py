@@ -109,6 +109,18 @@ def test_homogeneous_world_has_explicit_stay_option():
     assert orders == []
 
 
+def test_ordinary_reallocation_is_spatially_stepwise():
+    world = synthetic_world(2026090500)
+    for formation in world.formations.values():
+        formation.supply_stock = formation.supply_capacity
+    origins = {item.formation_id: item.locality_id for item in world.formations.values()}
+    orders = choose_reallocation_orders(
+        world, 0.0, MaxChoiceRng(), interval_days=1.0
+    )
+    for order in orders:
+        assert order.destination_locality_id in world.adjacency[origins[order.formation_id]]
+
+
 def test_government_can_reinforce_threatened_control_not_only_fill_gaps():
     world = synthetic_world(202609052)
     formation = focal(world, insurgent=False)

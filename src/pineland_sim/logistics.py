@@ -642,7 +642,14 @@ def choose_reallocation_orders(
                 _local_armed_footholds(world, formation.organization_id),
             )
         moving_personnel = formation.personnel * formation.availability
-        for locality_id in sorted(world.localities):
+        if world.config.logistics.reallocation_destination_scope == "adjacent":
+            destination_ids = sorted({
+                formation.locality_id,
+                *world.adjacency.get(formation.locality_id, {}),
+            })
+        else:
+            destination_ids = sorted(world.localities)
+        for locality_id in destination_ids:
             route, distance_km, travel_hours = route_metrics[locality_id]
             movement_cost = (
                 moving_personnel * distance_km *

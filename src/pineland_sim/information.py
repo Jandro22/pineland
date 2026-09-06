@@ -111,6 +111,26 @@ def _formation_matches_target_actor(world: WorldState, formation: ArmedFormation
     return formation.organization_id == target_actor_id
 
 
+def _information_formation_index(world: WorldState) -> dict[tuple[str, str], list[ArmedFormation]]:
+    """Index observable stationary formations once per information update."""
+    index: dict[tuple[str, str], list[ArmedFormation]] = {}
+    for formation in world.formations.values():
+        if formation.personnel <= 0 or formation.moving:
+            continue
+        keys = [(formation.organization_id, formation.locality_id)]
+        organization = world.organizations.get(formation.organization_id)
+        if organization is not None:
+            side = (
+                "insurgent" if organization.kind is OrganizationKind.INSURGENT
+                else "government"
+            )
+            if side != formation.organization_id:
+                keys.append((side, formation.locality_id))
+        for key in keys:
+            index.setdefault(key, []).append(formation)
+    return index
+
+
 def _observer_formation(world: WorldState, observer_id: str | None) -> ArmedFormation | None:
     if observer_id is None:
         return None
@@ -212,11 +232,15 @@ def _primary_zone(world: WorldState, locality_id: str) -> str | None:
 
 def _actual_target_presence(world: WorldState, target_actor_id: str,
                             locality_id: str, target_formation_id: str | None = None,
-                            microzone_id: str | None = None) -> tuple[bool, float, str | None]:
-    formations = [formation for formation in world.formations.values()
-                  if _formation_matches_target_actor(world, formation, target_actor_id) and
-                  formation.personnel > 0 and not formation.moving and
-                  formation.locality_id == locality_id]
+                            microzone_id: str | None = None,
+                            formation_index: dict[tuple[str, str], list[ArmedFormation]] | None = None,
+                            ) -> tuple[bool, float, str | None]:
+    formations = list(formation_index.get((target_actor_id, locality_id), ())) if formation_index is not None else [
+        formation for formation in world.formations.values()
+        if _formation_matches_target_actor(world, formation, target_actor_id)
+        and formation.personnel > 0 and not formation.moving
+        and formation.locality_id == locality_id
+    ]
     if target_formation_id is not None:
         formations = [formation for formation in formations
                       if formation.formation_id == target_formation_id]
@@ -665,7 +689,9 @@ def observe_target(world: WorldState, observer_actor_id: str, observer_node_id: 
                    target_formation_id: str | None = None,
                    microzone_id: str | None = None,
                    record_negative: bool = True,
-                   force_detection: bool | None = None) -> Observation | None:
+                   force_detection: bool | None = None,
+                   formation_index: dict[tuple[str, str], list[ArmedFormation]] | None = None,
+                   ) -> Observation | None:
     """Generate and ingest a positive/negative detection claim.
 
     Negative claims are retained as low-confidence evidence, allowing
@@ -674,7 +700,8 @@ def observe_target(world: WorldState, observer_actor_id: str, observer_node_id: 
     therefore never instantiate phantom world entities.
     """
     present, personnel, actual_id = _actual_target_presence(
-        world, target_actor_id, locality_id, target_formation_id, microzone_id
+        world, target_actor_id, locality_id, target_formation_id, microzone_id,
+        formation_index,
     )
     if present:
         probability = detection_probability(
@@ -868,7 +895,9 @@ def _report_probability(world: WorldState, observer_actor_id: str, locality_id: 
 
 def _observe_from_source(world: WorldState, observer_actor_id: str, observer_node_id: str | None,
                          source_id: str, source_type: str, locality_id: str,
-                         time: float, rng: random.Random) -> list[Observation]:
+                         time: float, rng: random.Random,
+                         formation_index: dict[tuple[str, str], list[ArmedFormation]] | None = None,
+                         ) -> list[Observation]:
     target_actor = _target_actor_for_observer(world, observer_actor_id)
     local_node = observer_node_id or source_id
     if rng.random() >= _report_probability(
@@ -884,10 +913,12 @@ def _observe_from_source(world: WorldState, observer_actor_id: str, observer_nod
             world, observer_actor_id, local_node, source_id, source_type,
             locality_id, target_control, time, rng, _primary_zone(world, locality_id),
         )]
-    targets = [formation for formation in world.formations.values()
-               if _formation_matches_target_actor(world, formation, target_actor) and
-               formation.personnel > 0 and
-               formation.locality_id == locality_id and not formation.moving]
+    targets = list(formation_index.get((target_actor, locality_id), ())) if formation_index is not None else [
+        formation for formation in world.formations.values()
+        if _formation_matches_target_actor(world, formation, target_actor)
+        and formation.personnel > 0
+        and formation.locality_id == locality_id and not formation.moving
+    ]
     microzone = _primary_zone(world, locality_id)
     observations: list[Observation] = []
     if targets:
@@ -898,11 +929,13 @@ def _observe_from_source(world: WorldState, observer_actor_id: str, observer_nod
         observations.append(observe_target(
             world, observer_actor_id, local_node, source_id, source_type,
             locality_id, target_actor, time, rng, target_id, microzone, True,
+            formation_index=formation_index,
         ))
     else:
         observations.append(observe_target(
             world, observer_actor_id, local_node, source_id, source_type,
             locality_id, target_actor, time, rng, None, microzone, True,
+            formation_index=formation_index,
         ))
     observations.append(observe_control(
         world, observer_actor_id, local_node, source_id, source_type,
@@ -917,6 +950,7 @@ def generate_background_observations(world: WorldState, time: float,
     """Generate fixed-post, civilian, social, administrative, elite, and member reports."""
     rng = rng or seeded_rng(world.config, f"information:{time:.6f}")
     observations: list[Observation] = []
+    formation_index = _information_formation_index(world)
     for post in sorted(world.security_posts.values(), key=lambda item: item.post_id):
         if post.available_fraction <= 0:
             continue
@@ -927,6 +961,7 @@ def generate_background_observations(world: WorldState, time: float,
         observations.extend(_observe_from_source(
             world, observer, post.formation_id or post.post_id, post.post_id,
             "fixed_post", post.locality_id, time, rng,
+            formation_index,
         ))
 
     for locality_id in sorted(world.localities):
@@ -941,6 +976,7 @@ def generate_background_observations(world: WorldState, time: float,
                 observations.extend(_observe_from_source(
                     world, "government", None, f"ADMIN:{locality_id}",
                     "administrative", locality_id, time, rng,
+                    formation_index,
                 ))
                 if clamp(world.localities[locality_id].governance.get(
                         "elite_access_capacity",
@@ -948,12 +984,14 @@ def generate_background_observations(world: WorldState, time: float,
                     observations.extend(_observe_from_source(
                         world, "government", None, f"ELITE-CAP:{locality_id}",
                         "political_elite", locality_id, time, rng,
+                        formation_index,
                     ))
                 district = world.districts[world.localities[locality_id].district_id]
                 if "/" in district.language_pattern and world.localities[locality_id].population > 0:
                     observations.extend(_observe_from_source(
                         world, "government", None, f"INTERPRETER-CAP:{locality_id}",
                         "interpreter", locality_id, time, rng,
+                        formation_index,
                     ))
             continue
         community = rng.choices(
@@ -968,6 +1006,7 @@ def generate_background_observations(world: WorldState, time: float,
                 observations.extend(_observe_from_source(
                     world, "government", None, community.community_id, source_type,
                     locality_id, time, rng,
+                    formation_index,
                 ))
         if "government" in world.organizations:
             for source_type, source_id in (
@@ -977,12 +1016,14 @@ def generate_background_observations(world: WorldState, time: float,
                 observations.extend(_observe_from_source(
                     world, "government", None, source_id, source_type,
                     locality_id, time, rng,
+                    formation_index,
                 ))
         for insurgent_id in sorted(organization.organization_id for organization in world.organizations.values()
                                    if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"):
             observations.extend(_observe_from_source(
                 world, insurgent_id, None, community.community_id, "civilian",
                 locality_id, time, rng,
+                formation_index,
             ))
         # A bridge/interpreter channel is only sampled where language diversity
         # makes it meaningful; it degrades less than an untranslated report.
@@ -991,6 +1032,7 @@ def generate_background_observations(world: WorldState, time: float,
             observations.extend(_observe_from_source(
                 world, "government", None, community.community_id, "interpreter",
                 locality_id, time, rng,
+                formation_index,
             ))
 
     for formation in sorted(world.formations.values(), key=lambda item: item.formation_id):
@@ -1000,6 +1042,7 @@ def generate_background_observations(world: WorldState, time: float,
             world, formation.organization_id, formation.formation_id,
             formation.formation_id, "organization_member", formation.locality_id,
             time, rng,
+            formation_index,
         ))
     return observations
 
