@@ -86,7 +86,10 @@ def test_2007_full_week_scoring_excludes_boundary_cells():
     start = preparer.day_offset(date(2007, 1, 1))
     end = preparer.day_offset(date(2008, 1, 1))
     first = (start + 6) // 7
+    training_end = start // 7
     end_exclusive = end // 7
+    assert training_end == 156
     assert first == 157
     assert end_exclusive == 208
     assert end_exclusive - first == 51
+    assert first - training_end == 1

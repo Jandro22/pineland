@@ -38,6 +38,18 @@ def test_2006_calendar_boundary_is_fixed_without_outcome_access():
     assert preparer.day_offset(date(2007, 1, 1)) == 1096
 
 
+def test_boundary_week_is_neither_training_nor_forecast():
+    preparer = _load("prepare_afghanistan_sealed_year_gate.py")
+    from datetime import date
+
+    start = preparer.day_offset(date(2007, 1, 1))
+    training_end = start // 7
+    first_scored = (start + 6) // 7
+    assert training_end == 156
+    assert first_scored == 157
+    assert training_end < first_scored
+
+
 def test_gate_preparer_requires_year_specific_nonexposure_certificate(tmp_path):
     preparer = _load("prepare_afghanistan_sealed_year_gate.py")
     bad = tmp_path / "bad.json"

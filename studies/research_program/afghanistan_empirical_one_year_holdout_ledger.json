@@ -19,10 +19,22 @@
         "studies/research_program/civilian_harm_ucdp_event_crosscheck_v1.csv"
       ],
       "allowed_future_role": "descriptive or training/history only; cannot support a new anti-overfit confirmation claim"
+    },
+    {
+      "year": 2007,
+      "status": "eligible_unrevealed",
+      "source_family": "Afghan_War_Diary_SIGACT",
+      "score_artifact": null,
+      "result": null,
+      "exposure_evidence": [
+        "studies/research_program/afghanistan_awd_2007_independent_holdout_contract_v1.json",
+        "studies/research_program/afghanistan_awd_2007_exposure_certificate.json"
+      ],
+      "allowed_future_role": "one prospective confirmatory use against the preregistered independent source family; after reveal this year/source pair is permanently consumed"
     }
   ],
   "next_required_validation_surface": {
-    "status": "not_yet_acquired",
+    "status": "sealed_source_mapping_pending_forecast_and_acquisition",
     "rule": "Use a genuinely new validation surface whose target labels were not available to mechanism development. Acceptable routes are a newly acquired independent Afghanistan event-measurement source with a frozen construct mapping, or a new external conflict/case. Before any target labels are inspected, create a year/source-specific exposure certificate and seal the model/protocol.",
     "same_ucdp_later_year_is_sufficient": false
   }

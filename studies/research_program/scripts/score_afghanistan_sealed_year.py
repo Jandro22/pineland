@@ -334,13 +334,16 @@ def main() -> None:
     score_start_week = int(
         gate["forecast_window"]["first_scored_week_index"]
     )
+    training_end_week = int(
+        gate["forecast_window"]["training_end_week_index_exclusive"]
+    )
     score_end_week = int(
         gate["forecast_window"]["end_scored_week_index_exclusive"]
     )
     training = [
         row
         for row in all_rows
-        if 0 <= int(row[week_index_column]) < score_start_week
+        if 0 <= int(row[week_index_column]) < training_end_week
     ]
     forecast = [
         row
@@ -520,6 +523,7 @@ def main() -> None:
             score_start_week,
             score_end_week,
         ],
+        "training_end_week_index_exclusive": training_end_week,
         "rows": len(forecast),
         "checks": checks,
         "scores": scores,
