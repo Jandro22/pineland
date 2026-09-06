@@ -1180,6 +1180,7 @@ def null_and_extreme_checks(config: SimulationConfig) -> dict[str, Any]:
                  "patrol_report_rate", "interpreter_report_rate"):
         setattr(no_reporting.information, name, 0.0)
     no_reporting.contact_rate = 0.0
+    no_reporting.organized_action_rate = 0.0
     world = Simulation(generate_pineland(no_reporting)).run().world
     checks["zero_reporting_no_source_observations"] = len(world.observations) == 0
     no_supply = SimulationConfig.from_dict(config.to_dict())

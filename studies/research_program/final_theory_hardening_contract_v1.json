@@ -1,0 +1,69 @@
+{
+  "schema_version": "pineland.final_theory_hardening_contract.v1",
+  "status": "preregistered_before_new_holdout_reveal",
+  "historical_outcomes_used_to_choose_repairs": false,
+  "sealed_war_diary_rows_acquired": false,
+  "purpose": "Resolve general-theory defects that can make a mechanistic insurgency model spatially diffuse or numerically confound distinct hazards before consuming another pristine empirical validation surface.",
+  "repairs": [
+    {
+      "id": "localized_operational_knowledge",
+      "problem": "Action execution currently uses one organization-wide local_knowledge scalar even though membership, formations, control, and information are locality-specific. This permits competence acquired in one locality to improve execution everywhere.",
+      "repair": "Derive local operational knowledge from existing local armed membership/rootedness, equipped local cell capacity, fielded formation embeddedness, own local institutional/control state, and actor-held local target beliefs. Retain the organization-wide scalar only as general tradecraft. Do not add a fitted coefficient.",
+      "rejection_tests": [
+        "equal national tradecraft with a planted local cell produces higher operational knowledge only in the planted locality",
+        "moving a field formation away does not erase local knowledge when local members/equipped cells remain",
+        "removing local members, cells, formations, institutions, and actor evidence collapses local operational knowledge",
+        "mutating hidden opponent truth while holding actor beliefs fixed cannot change local operational knowledge",
+        "local information evidence improves knowledge only in its observed locality"
+      ]
+    },
+    {
+      "id": "separate_operation_and_contact_hazards",
+      "problem": "Deliberate organized-action opportunities and chance/directional formation contacts share SimulationConfig.contact_rate despite representing different causal processes.",
+      "repair": "Introduce organized_action_rate as an independent general-theory hazard. Preserve the pre-repair baseline numerically by initializing it to the former common rate rather than selecting a value from historical fit.",
+      "rejection_tests": [
+        "changing contact_rate with organized_action_rate fixed cannot change action_attempt_probability",
+        "changing organized_action_rate with contact_rate fixed changes action_attempt_probability monotonically",
+        "zero organized_action_rate implies zero deliberate organized-action opportunities while contact remains available",
+        "calendar-time composition of action opportunity remains invariant to scan partition"
+      ]
+    },
+    {
+      "id": "persistent_local_base_predictive_signature",
+      "problem": "A model can beat a global event-rate baseline yet lose to province/region empirical Bayes if persistent local organizational state does not create persistent local violence risk.",
+      "repair": "Do not add event self-excitation. Require persistent hotspots to emerge from durable local organization, information, logistics, membership, and governance stocks.",
+      "rejection_tests": [
+        "a planted durable local base has higher repeated-action propensity than an otherwise matched locality",
+        "removing the base collapses that excess risk",
+        "moving only the field formation while retaining the clandestine base preserves nonzero residual risk",
+        "shuffling the base across localities destroys locality-specific alignment while conserving national capacity",
+        "event occurrence itself is not permitted to write a generic future-event hazard"
+      ]
+    },
+    {
+      "id": "measurement_localization",
+      "problem": "Information-source quality currently partly inherits organization-wide local_knowledge, allowing source competence to teleport across localities.",
+      "repair": "Use the same derived local organizational embeddedness for source-quality contributions while preserving source-type, language, observability, terrain, and formation-information terms.",
+      "rejection_tests": [
+        "equal source type and national organization state produce higher source quality where local embeddedness exists",
+        "source quality cannot increase in an untreated locality merely because another locality becomes embedded"
+      ]
+    }
+  ],
+  "forbidden_changes": [
+    "no parameter or mechanism may be chosen from Afghan War Diary labels",
+    "no Afghan War Diary row-level data may be acquired during theory hardening",
+    "no parameter may be chosen to reverse the failed 2005 score",
+    "no event-history Hawkes/self-excitation term may be added merely because historical violence clusters",
+    "no province, region, ethnic, or named-place coefficient may be hard-coded"
+  ],
+  "promotion_gate": [
+    "all new synthetic rejection tests pass",
+    "existing truth-firewall and accounting tests pass",
+    "existing spatial identification recovery remains green",
+    "full repository suite passes",
+    "short synthetic planted-hotspot ensemble demonstrates local persistence without event self-excitation",
+    "representative-resolution and calendar-time invariance remain acceptable",
+    "only after these pass may a new empirical source/year be resealed"
+  ]
+}

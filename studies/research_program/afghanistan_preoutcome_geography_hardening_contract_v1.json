@@ -1,0 +1,32 @@
+{
+  "schema_version": "pineland.afghanistan.preoutcome_geography_hardening.v1",
+  "historical_outcomes_used": false,
+  "war_diary_rows_acquired": false,
+  "purpose": "Replace neutral spatial fields in the Afghanistan empirical adapter with deterministic pre-benchmark geography and 2004 settlement structure already present in the source package.",
+  "inputs": [
+    "district_adjacency.json",
+    "population_2004.csv"
+  ],
+  "transforms": {
+    "rank_rule": "average-rank percentile across the frozen 401 districts; no fitted coefficient",
+    "settlement_intensity": "equal mean of percentile(population_density_per_sqkm) and percentile(population_weighted_cell_density)",
+    "urbanization": "equal mean of settlement_intensity and percentile(settlement_concentration_hhi)",
+    "infrastructure": "equal mean of settlement_intensity and frozen graph-connectivity percentile",
+    "observability": "equal mean of settlement_intensity, settlement-concentration percentile, and graph-connectivity percentile",
+    "terrain_friction": "remain 1.0 because no independent terrain/elevation source is yet part of the frozen case package",
+    "administrative_capacity": "remain 0.5 because settlement density is not administrative state capacity"
+  },
+  "forbidden": [
+    "no UCDP 2004-2021 outcome enters a transform",
+    "no Afghan War Diary row enters a transform",
+    "no province/region fixed effect",
+    "no coefficient selected from predictive score",
+    "no outcome-derived road or observability proxy"
+  ],
+  "acceptance": [
+    "all derived fields lie in [0,1]",
+    "each derived field has nonzero cross-district variation",
+    "permuting district outcome labels cannot change any derived field",
+    "case construction remains deterministic and source-hash bound"
+  ]
+}

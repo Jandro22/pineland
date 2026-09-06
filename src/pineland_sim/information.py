@@ -39,6 +39,7 @@ from .relations import (
     organizations_allied,
     organizations_hostile,
 )
+from .organizational_state import local_organizational_embeddedness
 
 
 OBSERVATION_SOURCE_TYPES = (
@@ -229,10 +230,13 @@ def language_comprehension(world: WorldState, observer_actor_id: str,
     organization = world.organizations.get(observer_actor_id)
     if organization is None:
         return 0.25
+    local_embeddedness = local_organizational_embeddedness(
+        world, observer_actor_id, locality_id
+    )
     district = world.districts[world.localities[locality_id].district_id]
     primary = district.language_pattern.split("/")[0]
     if source_type in {"civilian", "social_network", "political_elite", "interpreter"}:
-        base = 0.28 + 0.48 * organization.local_knowledge
+        base = 0.28 + 0.48 * local_embeddedness
         if primary != "FS":
             base -= 0.18
         if "/" in district.language_pattern:
@@ -248,9 +252,9 @@ def language_comprehension(world: WorldState, observer_actor_id: str,
         return clamp(base, .08, 1.0)
     formation = _observer_formation(world, source_id)
     if formation is not None:
-        return clamp(.35 + .55 * formation.information + .1 * organization.local_knowledge,
+        return clamp(.35 + .55 * formation.information + .1 * local_embeddedness,
                      .1, 1.0)
-    return clamp(.45 + .45 * organization.local_knowledge, .1, 1.0)
+    return clamp(.45 + .45 * local_embeddedness, .1, 1.0)
 
 
 def source_trust(world: WorldState, observer_actor_id: str, source_type: str,

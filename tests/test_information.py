@@ -15,11 +15,59 @@ from pineland_sim.information import (
     process_information,
     _prune_information_history,
     _actual_target_presence,
+    language_comprehension,
 )
 from pineland_sim.world import seeded_rng
 
 
 class InformationTests(unittest.TestCase):
+    def test_information_comprehension_uses_local_not_global_embeddedness(self):
+        world = generate_pineland(SimulationConfig(
+            agent_count=120, locality_count=17, horizon_days=1, seed=1412))
+        insurgent = world.organizations["insurgent"]
+        insurgent.local_knowledge = 1.0
+        focal, control = sorted(world.localities)[:2]
+        insurgent.member_ids.clear()
+        for formation in world.formations.values():
+            if formation.organization_id == insurgent.organization_id:
+                formation.personnel = 0.0
+        from pineland_sim.entities import ControlVector
+        for locality_id in world.localities:
+            world.localities[locality_id].control[
+                insurgent.organization_id
+            ] = ControlVector()
+        for key in [
+            key for key in world.organization_manpower_pools
+            if key[0] == insurgent.organization_id
+        ]:
+            world.organization_manpower_pools.pop(key, None)
+            world.organization_manpower_supply_reserves.pop(key, None)
+        control_before = language_comprehension(
+            world, insurgent.organization_id, control, "administrative"
+        )
+        focal_before = language_comprehension(
+            world, insurgent.organization_id, focal, "administrative"
+        )
+        quantity = world.config.organization_ecology.minimum_formation_personnel
+        supply_per_fighter = (
+            world.config.logistics.formation_supply_days
+            * world.config.logistics.initial_supply_fraction
+        )
+        world.organization_manpower_pools[
+            (insurgent.organization_id, focal)
+        ] = quantity
+        world.organization_manpower_supply_reserves[
+            (insurgent.organization_id, focal)
+        ] = quantity * supply_per_fighter
+        focal_after = language_comprehension(
+            world, insurgent.organization_id, focal, "administrative"
+        )
+        control_after = language_comprehension(
+            world, insurgent.organization_id, control, "administrative"
+        )
+        self.assertGreater(focal_after, focal_before)
+        self.assertEqual(control_after, control_before)
+
     def test_aggregate_government_target_includes_state_force_formations(self):
         world = generate_pineland(SimulationConfig(
             agent_count=100, locality_count=17, horizon_days=1, seed=1411))

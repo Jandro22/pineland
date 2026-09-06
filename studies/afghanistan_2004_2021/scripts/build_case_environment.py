@@ -79,6 +79,54 @@ def topology_connectivity(neighbors: dict[str, list[str]]) -> dict[str, float]:
     return connectivity
 
 
+def percentile_rank(values: dict[str, float]) -> dict[str, float]:
+    """Average-rank percentile with no outcome or fitted coefficient."""
+    ordered = sorted(values.values())
+    result = {}
+    for key, value in values.items():
+        lower = sum(candidate < value for candidate in ordered)
+        equal = sum(candidate == value for candidate in ordered)
+        average_rank = lower + (equal - 1) / 2.0
+        result[key] = average_rank / max(1, len(ordered) - 1)
+    return result
+
+
+def settlement_spatial_covariates(
+    population_covariates: dict[str, dict[str, float]],
+    graph_connectivity: dict[str, float],
+) -> dict[str, dict[str, float]]:
+    density_rank = percentile_rank({
+        district_id: values["population_density_per_sqkm"]
+        for district_id, values in population_covariates.items()
+    })
+    weighted_density_rank = percentile_rank({
+        district_id: values["population_weighted_cell_density"]
+        for district_id, values in population_covariates.items()
+    })
+    concentration_rank = percentile_rank({
+        district_id: values["settlement_concentration_hhi"]
+        for district_id, values in population_covariates.items()
+    })
+    result = {}
+    for district_id in population_covariates:
+        settlement_intensity = (
+            density_rank[district_id] + weighted_density_rank[district_id]
+        ) / 2.0
+        concentration = concentration_rank[district_id]
+        connectivity = graph_connectivity[district_id]
+        result[district_id] = {
+            "settlement_intensity": settlement_intensity,
+            "urbanization": (settlement_intensity + concentration) / 2.0,
+            "infrastructure": (
+                settlement_intensity + connectivity
+            ) / 2.0,
+            "observability": (
+                settlement_intensity + concentration + connectivity
+            ) / 3.0,
+        }
+    return result
+
+
 def preperiod_taliban_anchors(count: int = 8) -> tuple[list[str], dict[str, int]]:
     """Return top 2003 Taliban-conflict COD districts without using study outcomes."""
     with zipfile.ZipFile(COD) as archive:
@@ -141,6 +189,9 @@ def main() -> None:
         }
         for row in population_rows
     }
+    spatial_covariates = settlement_spatial_covariates(
+        population_covariates, graph_connectivity
+    )
     centers = {row["district_id"]: row for row in center_rows}
     if set(population) != {row["district_id"] for row in district_rows} or set(centers) != set(population):
         raise RuntimeError("district population/center registry mismatch")
@@ -170,7 +221,7 @@ def main() -> None:
             "population": district_population,
             "container_ids": {"region": row["region_id"], "province": row["province_id"]},
             "terrain": "empirical mixed terrain",
-            "urbanization": 0.35,
+            "urbanization": spatial_covariates[district_id]["urbanization"],
             "language_pattern": "FS",
             "connectivity": graph_connectivity[district_id],
             "empirical_covariates": population_covariates[district_id],
@@ -189,10 +240,14 @@ def main() -> None:
             "y_km": float(center["y_km"]),
             "administrative_role": "district_headquarters",
             "terrain_friction": 1.0,
-            "infrastructure": 0.5,
+            "infrastructure": spatial_covariates[district_id]["infrastructure"],
             "administrative_capacity": 0.5,
-            "observability": 0.5,
+            "observability": spatial_covariates[district_id]["observability"],
             "capital_level": capital_level,
+            "empirical_covariates": {
+                **population_covariates[district_id],
+                **spatial_covariates[district_id],
+            },
         })
 
     locality_adjacency = {
@@ -251,7 +306,11 @@ def main() -> None:
                 ],
                 "historical_outcomes_used": False,
                 "fitted_coefficients": False,
-                "model_equations_currently_changed_by_covariates": False,
+                "model_equations_currently_changed_by_covariates": True,
+                "mapping": (
+                    "equal-weight average-rank transforms into district "
+                    "urbanization and locality infrastructure/observability"
+                ),
             },
         },
         "source_hashes": {

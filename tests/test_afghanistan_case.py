@@ -66,7 +66,28 @@ def test_afghanistan_retains_worldpop_settlement_covariates_without_using_outcom
     ]
     assert metadata["historical_outcomes_used"] is False
     assert metadata["fitted_coefficients"] is False
-    assert metadata["model_equations_currently_changed_by_covariates"] is False
+    assert metadata["model_equations_currently_changed_by_covariates"] is True
+
+
+def test_afghanistan_preoutcome_settlement_structure_drives_spatial_fields():
+    specification = json.loads(CASE.read_text(encoding="utf-8"))
+    localities = specification["localities"]
+    districts = {row["district_id"]: row for row in specification["districts"]}
+    for field in ("infrastructure", "observability"):
+        values = [float(row[field]) for row in localities]
+        assert min(values) >= 0.0
+        assert max(values) <= 1.0
+        assert len(set(round(value, 10) for value in values)) > 100
+    urbanization = [float(row["urbanization"]) for row in districts.values()]
+    assert min(urbanization) >= 0.0
+    assert max(urbanization) <= 1.0
+    assert len(set(round(value, 10) for value in urbanization)) > 100
+    # No unsupported terrain or state-capacity signal is inferred from
+    # settlement density alone.
+    assert {float(row["terrain_friction"]) for row in localities} == {1.0}
+    assert {float(row["administrative_capacity"]) for row in localities} == {0.5}
+    assert specification["outcome_data_used_for_geography"] is False
+    assert specification["benchmark_period_outcomes_used_for_initialization"] is False
 
 
 def test_afghanistan_primary_panel_is_frozen_complete_province_week_surface():
