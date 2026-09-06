@@ -1,0 +1,22 @@
+{
+  "artifact_hashes": {
+    "adjudication_contract": "180d61a069402e772c8f04e90677c3a89ff8de1233f8335b5a7395869277c2bf",
+    "blind_key": "5f0dcab022773aac0a0caf651e630ba872be32fed258c1c0b2ba2d504c2162f8",
+    "coverage_v2": "97655a80de70d32308feec0e7274189a2c04a9ecaef7ea7f6096dae01ce5d2e5",
+    "first_coder": "bfaa9565e26a14383876a28d80ab14c075c82408c530ee2403c43a0003904340",
+    "instructions": "d944397fc447b678b28234381ed539ffb9790103469c495e6d171cd0c743c8be",
+    "manifest": "720eff0e2ad676948f95405053937c10dda41f75819fc94816e676e9b037d611",
+    "packet": "6654f9bf71a902b05cc2369b5ee4dec1b6d2b5232242ca93d330a3f5ffcba786",
+    "ucdp_contract": "0350537b5495f0ba76b9fbcbefc5640b6a126a3487f5a55d9ad4f5054c295fae",
+    "ucdp_overlap_audit": "4d6a45cc6b9b2b719742b48f37d8b5b7ea8521164c864ab5b4ccf8790c3f9c27"
+  },
+  "blind_key_is_forbidden_second_coder_input": true,
+  "defer_reason": "Afghanistan frozen historical full-horizon workers active with approximately 0.32 GB free physical RAM; avoid browser/web-agent memory pressure until historical computation releases resources.",
+  "historical_core_change_authorized": false,
+  "locked_at_local": "2026-09-05T22:58:00-04:00",
+  "packet_must_not_be_rebuilt_after_second_coder_starts": true,
+  "resume_rule": "Before launching the second coder, recheck historical status. If Afghanistan has completed, finalize the historical confrontation first. If still active but adequate RAM becomes available, use exactly the locked packet and contract without regeneration.",
+  "schema_version": "pineland.civilian_harm_second_coder_lock.v1",
+  "second_coder_started": false,
+  "status": "locked_before_second_coder_execution"
+}

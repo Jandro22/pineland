@@ -1,0 +1,34 @@
+{
+  "completed_path": "studies/research_program/nepal_second_coder_completed_v1.csv",
+  "completed_sha256": "090c899f4e4793c38c63fb810de3155fa2e50fef218abf42d00dcc9c1df57d6b",
+  "first_coder_or_blind_key_read_by_merge": false,
+  "packet_sha256": "8b17b7f3c26aa794152582204f2fc9799699847b2958d9919e311306a21022ac",
+  "parts": [
+    {
+      "path": "studies/research_program/nepal_second_coder_part_1_v1.csv",
+      "rows": 4,
+      "sha256": "3a80caf7cc803ec5c814aea40ff1dc1c34f2a18c80b9a30ebaf808ff25eede6f"
+    },
+    {
+      "path": "studies/research_program/nepal_second_coder_part_2_v1.csv",
+      "rows": 4,
+      "sha256": "7168ee9fcb0ca09f4e869f15042674c4b3f31842b1eff5584e240bc1f849b581"
+    },
+    {
+      "path": "studies/research_program/nepal_second_coder_part_3_v1.csv",
+      "rows": 3,
+      "sha256": "00de21f6b68ff73ee38f32244d8f2a2f95289d632b8317f72836f33d37511ddd"
+    },
+    {
+      "path": "studies/research_program/nepal_second_coder_part_4_v1.csv",
+      "rows": 3,
+      "sha256": "1f3442dfc851052b411fbd59ea292a6fb791fbfb36905941402eb14ebfee41ee"
+    }
+  ],
+  "row_count": 14,
+  "schema_version": "pineland.nepal_second_coder_merge_manifest.v1",
+  "shard_lock": "studies/research_program/nepal_second_coder_shard_lock_v1.json",
+  "shard_lock_sha256": "473e784d00dea11d889e4f84e2df8487bc7c1da7af7ec80bfa15c4243e9eeb76",
+  "status": "blind_second_coder_file_locked_before_unblinding",
+  "unique_blind_ids": 14
+}

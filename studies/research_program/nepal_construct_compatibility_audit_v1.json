@@ -1,0 +1,476 @@
+{
+  "adjudicated_evidence_rows": 14,
+  "construct_validity_gate_passed": false,
+  "construct_validity_status": "not_identified_from_frozen_nepal_v5_outputs",
+  "inputs": {
+    "adjudicated_evidence_sha256": "4806d9e269507c386d42b4f6a45c486d603dafd0746773cdf41a9bc871fbefb6",
+    "adjudication_sha256": "2b3cfc66c7efab6e9ef78599aed088deb4414075cdb9ce4d0676b1f8f198c57c",
+    "geography_sha256": "0d23883ca642189f740211abc1264dd28b77a1ab6f0ba71f2153af035e44dba8",
+    "mapping_contract_sha256": "ca4f7210dadb8df57b9a70c814e7312f216845889d46851ee28dd4a5195b1164",
+    "retention_audit_sha256": "3b333e11c504b9891e170f246039ed602fcb865bb11cb091a0f118809649751f"
+  },
+  "interpretation": "The newly adjudicated evidence materially improves historical construct measurement, but none of the 14 rows can be scored against the frozen v5 output without violating the predeclared construct/spatial mapping or inventing a post-hoc observation threshold. This is an output-retention/measurement-identification limitation, not evidence that the latent state is correct or incorrect.",
+  "model_values_inspected": false,
+  "next_design_requirement": "Future validation runs must prospectively retain dated locality-level seven-dimensional control, fixed-security/post/patrol state, formation birth/death and movement state, and a source-specific observation operator before historical values are inspected. Nepal v5 remains frozen and is not rerun to repair this limitation.",
+  "repository_state": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/construct_validity_readiness_audit_v1.json",
+      "studies/research_program/construct_validity_readiness_audit_v1_manifest.json",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/local_action_diagnostic_identification_contract_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1_manifest.json",
+      "studies/research_program/nepal_construct_observation_mapping_contract_v1.json",
+      "studies/research_program/nepal_control_presence_acquisition_audit_v1.json",
+      "studies/research_program/nepal_control_presence_acquisition_contract_v1.json",
+      "studies/research_program/nepal_control_presence_adjudication_contract_v1.json",
+      "studies/research_program/nepal_control_presence_adjudication_v1.json",
+      "studies/research_program/nepal_second_coder_agreement_v1.json",
+      "studies/research_program/nepal_second_coder_blind_key_v1.json",
+      "studies/research_program/nepal_second_coder_completed_v1.csv",
+      "studies/research_program/nepal_second_coder_instructions_v1.md",
+      "studies/research_program/nepal_second_coder_merge_manifest_v1.json",
+      "studies/research_program/nepal_second_coder_packet_v1.csv",
+      "studies/research_program/nepal_second_coder_part_1_v1.csv",
+      "studies/research_program/nepal_second_coder_part_2_v1.csv",
+      "studies/research_program/nepal_second_coder_part_3_v1.csv",
+      "studies/research_program/nepal_second_coder_part_4_v1.csv",
+      "studies/research_program/nepal_second_coder_partial_attempt_v1.csv",
+      "studies/research_program/nepal_second_coder_shard_lock_v1.json",
+      "studies/research_program/nepal_v5_construct_retention_audit_v1.json",
+      "studies/research_program/scripts/adjudicate_nepal_control_presence_v1.py",
+      "studies/research_program/scripts/audit_construct_validity_readiness_v1.py",
+      "studies/research_program/scripts/audit_nepal_construct_compatibility_v1.py",
+      "studies/research_program/scripts/audit_nepal_control_presence_acquisition_v1.py",
+      "studies/research_program/scripts/audit_nepal_v5_construct_retention_v1.py",
+      "studies/research_program/scripts/build_nepal_second_coder_packet_v1.py",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/merge_nepal_second_coder_parts_v1.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/score_nepal_second_coder_agreement_v1.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_local_action_diagnostic_identification.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1_manifest.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "rows": [
+    {
+      "actor_id": "insurgent",
+      "blind_id": "11b8d4a5e627",
+      "blocking_reasons": [
+        "historical governance claim is subdistrict/locality scoped while frozen v5 control is district-level",
+        "community cooperation/sympathy is explicitly prohibited as a substitute for governance/control"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2006-09-04",
+      "date_start": "2006-09-04",
+      "district_id": "NP-D04",
+      "district_name": "Jhapa",
+      "exact_empirical_locality_matches": [
+        {
+          "administrative_role": "district_headquarters",
+          "historical_name": "Bhadrapur",
+          "locality_id": "NP-D04-HQ",
+          "model_name": "Bhadrapur"
+        }
+      ],
+      "historical_locality_hints": [
+        "Damak",
+        "Bhadrapur",
+        "Mechinagar"
+      ],
+      "observable": "maoist_shadow_governance",
+      "potential_direct_model_state": "insurgent_administrative_legal_fiscal_social_control",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Damak, Bhadrapur, and Mechinagar municipalities"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "2c7a45d69253",
+      "blocking_reasons": [
+        "frozen mapping forbids district-control substitution for blockade/access evidence",
+        "dated locality-level access/physical-authority state was not retained"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2004-09-07",
+      "date_start": "2004-09-01",
+      "district_id": "NP-D03",
+      "district_name": "Ilam",
+      "exact_empirical_locality_matches": [
+        {
+          "administrative_role": "district_headquarters",
+          "historical_name": "Ilam",
+          "locality_id": "NP-D03-HQ",
+          "model_name": "Ilam"
+        }
+      ],
+      "historical_locality_hints": [
+        "Ilam"
+      ],
+      "observable": "territorial_access_constraint",
+      "potential_direct_model_state": "dated_access_or_local_physical_authority",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Ilam district headquarters and explicitly reported trade centres"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "39d96300ced7",
+      "blocking_reasons": [
+        "historical armed-presence locality has no unambiguous exact match in the retained empirical locality grid",
+        "frozen v5 output does not establish creation time for formations absent from initial_formations, so dated presence reconstruction is incomplete"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2006-10-11",
+      "date_start": "2006-10-11",
+      "district_id": "NP-D06",
+      "district_name": "Sunsari",
+      "exact_empirical_locality_matches": [],
+      "historical_locality_hints": [
+        "Khanar"
+      ],
+      "observable": "maoist_armed_presence",
+      "potential_direct_model_state": "dated_fielded_presence",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Sharada Higher Secondary School compound, Khanar VDC, Sunsari district"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "4f8bf2492d43",
+      "blocking_reasons": [
+        "frozen mapping forbids district-control substitution for blockade/access evidence",
+        "dated locality-level access/physical-authority state was not retained"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2005-12-31",
+      "date_start": "2005-10-01",
+      "district_id": "NP-D13",
+      "district_name": "Khotang",
+      "exact_empirical_locality_matches": [],
+      "historical_locality_hints": [],
+      "observable": "territorial_access_constraint",
+      "potential_direct_model_state": "dated_access_or_local_physical_authority",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "reported Khotang cases; specific localities not stated"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "60a7cee12357",
+      "blocking_reasons": [
+        "frozen mapping forbids district-control substitution for blockade/access evidence",
+        "dated locality-level access/physical-authority state was not retained"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2005-09-09",
+      "date_start": "2005-09-09",
+      "district_id": "NP-D02",
+      "district_name": "Panchthar",
+      "exact_empirical_locality_matches": [
+        {
+          "administrative_role": "district_headquarters",
+          "historical_name": "Phidim",
+          "locality_id": "NP-D02-HQ",
+          "model_name": "Phidim"
+        }
+      ],
+      "historical_locality_hints": [
+        "Phidim"
+      ],
+      "observable": "territorial_access_constraint",
+      "potential_direct_model_state": "dated_access_or_local_physical_authority",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Panchthar district headquarters (Phidim) and its road access"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "6d5a31f877f2",
+      "blocking_reasons": [
+        "historical governance claim is subdistrict/locality scoped while frozen v5 control is district-level",
+        "community cooperation/sympathy is explicitly prohibited as a substitute for governance/control"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2004-05-16",
+      "date_start": "2004-05-16",
+      "district_id": "NP-D11",
+      "district_name": "Solukhumbu",
+      "exact_empirical_locality_matches": [],
+      "historical_locality_hints": [
+        "Jubing",
+        "Beni",
+        "Garma",
+        "Kaku",
+        "Wasa",
+        "Kagel",
+        "Tingla",
+        "Kerung",
+        "Tapting",
+        "Patale",
+        "Junbesi",
+        "Sunkhani"
+      ],
+      "observable": "maoist_shadow_governance",
+      "potential_direct_model_state": "insurgent_administrative_legal_fiscal_social_control",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "listed lower-Solukhumbu VDCs"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "6e04e40be38e",
+      "blocking_reasons": [
+        "frozen mapping forbids district-control substitution for blockade/access evidence",
+        "dated locality-level access/physical-authority state was not retained"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2005-09-09",
+      "date_start": "2005-09-09",
+      "district_id": "NP-D03",
+      "district_name": "Ilam",
+      "exact_empirical_locality_matches": [],
+      "historical_locality_hints": [
+        "Rakke",
+        "Ranke",
+        "Phidim"
+      ],
+      "observable": "territorial_access_constraint",
+      "potential_direct_model_state": "dated_access_or_local_physical_authority",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Rakke/Ranke Bajar on the Ilam-Phidim border-road corridor"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "7ad902d44286",
+      "blocking_reasons": [
+        "frozen mapping forbids district-control substitution for blockade/access evidence",
+        "dated locality-level access/physical-authority state was not retained"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2004-09-08",
+      "date_start": "2004-08-25",
+      "district_id": "NP-D02",
+      "district_name": "Panchthar",
+      "exact_empirical_locality_matches": [
+        {
+          "administrative_role": "district_headquarters",
+          "historical_name": "Phidim",
+          "locality_id": "NP-D02-HQ",
+          "model_name": "Phidim"
+        }
+      ],
+      "historical_locality_hints": [
+        "Phidim"
+      ],
+      "observable": "territorial_access_constraint",
+      "potential_direct_model_state": "dated_access_or_local_physical_authority",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Phidim/Phidim Bazaar, Panchthar district headquarters"
+    },
+    {
+      "actor_id": "government",
+      "blind_id": "7c95742e2e81",
+      "blocking_reasons": [
+        "source distinguishes rural villages from district headquarters, while frozen v5 retains only district-level administrative control",
+        "locality-level administrative control was not retained, so the spatial contrast cannot be tested without aggregation bias"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2005-10-07",
+      "date_start": "2005-10-07",
+      "district_id": "NP-D09",
+      "district_name": "Sankhuwasabha",
+      "exact_empirical_locality_matches": [
+        {
+          "administrative_role": "district_headquarters",
+          "historical_name": "Khandbari",
+          "locality_id": "NP-D09-HQ",
+          "model_name": "Khandbari"
+        }
+      ],
+      "historical_locality_hints": [
+        "Khandbari"
+      ],
+      "observable": "government_administrative_presence",
+      "potential_direct_model_state": "government_administrative_control",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Sankhuwasabha rural villages versus Khandbari district headquarters"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "a4f3a0b74b48",
+      "blocking_reasons": [
+        "historical governance claim is subdistrict/locality scoped while frozen v5 control is district-level",
+        "community cooperation/sympathy is explicitly prohibited as a substitute for governance/control"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2005-09-09",
+      "date_start": "2005-09-03",
+      "district_id": "NP-D14",
+      "district_name": "Udayapur",
+      "exact_empirical_locality_matches": [],
+      "historical_locality_hints": [
+        "Risku",
+        "Tribeni"
+      ],
+      "observable": "maoist_shadow_governance",
+      "potential_direct_model_state": "insurgent_administrative_legal_fiscal_social_control",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Risku and Tribeni areas of Udayapur district"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "acd798e13d7b",
+      "blocking_reasons": [
+        "no prospectively frozen observation operator maps this specific regulatory/taxation claim to a numeric seven-dimensional district-control threshold",
+        "community cooperation/sympathy is explicitly prohibited as a substitute for governance/control"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2005-09-09",
+      "date_start": "2005-09-09",
+      "district_id": "NP-D08",
+      "district_name": "Terhathum",
+      "exact_empirical_locality_matches": [
+        {
+          "administrative_role": "district_headquarters",
+          "historical_name": "Myanglung",
+          "locality_id": "NP-D08-HQ",
+          "model_name": "Myanglung"
+        }
+      ],
+      "historical_locality_hints": [
+        "Myanglung"
+      ],
+      "observable": "maoist_shadow_governance",
+      "potential_direct_model_state": "insurgent_administrative_legal_fiscal_social_control",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Tehrathum district NGO/community-organization activity; exact subdistrict locations unspecified"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "ba5b17f0971e",
+      "blocking_reasons": [
+        "frozen mapping forbids district-control substitution for blockade/access evidence",
+        "dated locality-level access/physical-authority state was not retained"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2005-09-09",
+      "date_start": "2005-09-09",
+      "district_id": "NP-D01",
+      "district_name": "Taplejung",
+      "exact_empirical_locality_matches": [],
+      "historical_locality_hints": [],
+      "observable": "territorial_access_constraint",
+      "potential_direct_model_state": "dated_access_or_local_physical_authority",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Taplejung district headquarters"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "eec925a82a6c",
+      "blocking_reasons": [
+        "frozen mapping forbids district-control substitution for blockade/access evidence",
+        "dated locality-level access/physical-authority state was not retained"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2005-10-07",
+      "date_start": "2005-10-07",
+      "district_id": "NP-D09",
+      "district_name": "Sankhuwasabha",
+      "exact_empirical_locality_matches": [
+        {
+          "administrative_role": "district_headquarters",
+          "historical_name": "Khandbari",
+          "locality_id": "NP-D09-HQ",
+          "model_name": "Khandbari"
+        }
+      ],
+      "historical_locality_hints": [
+        "Khandbari"
+      ],
+      "observable": "territorial_access_constraint",
+      "potential_direct_model_state": "dated_access_or_local_physical_authority",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "Sankhuwasabha village-to-Khandbari and village-to-market movement"
+    },
+    {
+      "actor_id": "insurgent",
+      "blind_id": "fa4fb4b19cd6",
+      "blocking_reasons": [
+        "historical governance claim is subdistrict/locality scoped while frozen v5 control is district-level",
+        "community cooperation/sympathy is explicitly prohibited as a substitute for governance/control"
+      ],
+      "classification": "unscored_retention_or_operator_mismatch",
+      "date_end": "2006-08-09",
+      "date_start": "2006-08-09",
+      "district_id": "NP-D05",
+      "district_name": "Morang",
+      "exact_empirical_locality_matches": [],
+      "historical_locality_hints": [
+        "Mahadeva",
+        "Jhurkiya",
+        "Rangeli",
+        "Babiyabirta"
+      ],
+      "observable": "maoist_shadow_governance",
+      "potential_direct_model_state": "insurgent_administrative_legal_fiscal_social_control",
+      "scoreable_under_frozen_contract": false,
+      "spatial_scope": "named rural Morang border-area VDCs, especially Mahadeva and Jhurkiya"
+    }
+  ],
+  "rows_scoreable_under_frozen_construct_mapping": 0,
+  "rows_with_at_least_one_exact_empirical_locality_match": 7,
+  "rules_preserved": [
+    "no locality claim upgraded to district control",
+    "no violence proxy used",
+    "no community-attitude proxy substituted for control/presence",
+    "no post-hoc numeric threshold created after model values",
+    "no Nepal rerun or predictive rescore licensed"
+  ],
+  "schema_version": "pineland.nepal_construct_compatibility_audit.v1",
+  "scoreable_blind_ids": [],
+  "status": "compatibility_audit_without_model_value_inspection"
+}

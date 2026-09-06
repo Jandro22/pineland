@@ -1,0 +1,159 @@
+{
+  "adjudication_contract_sha256": "180d61a069402e772c8f04e90677c3a89ff8de1233f8335b5a7395869277c2bf",
+  "exposure_log_sha256": "8818506718317472e5818b3d35d7c7edbad1bf232ed797818f745e55be2a5ec1",
+  "first_coder_sha256": "bfaa9565e26a14383876a28d80ab14c075c82408c530ee2403c43a0003904340",
+  "schema_version": "pineland.civilian_harm_second_coder_blind_key.v1",
+  "status": "confidential_mapping_not_second_coder_input",
+  "tasks": [
+    {
+      "blind_task_id": "16eea11baa97",
+      "candidate_source_id": "AFH-001",
+      "first_coder_claim_ids": [],
+      "source_locator": "whole_source_review_against_frozen_coding_contract"
+    },
+    {
+      "blind_task_id": "cce5bfd08114",
+      "candidate_source_id": "AFH-002",
+      "first_coder_claim_ids": [
+        "AFH002-F01"
+      ],
+      "source_locator": "UNHCR_briefing_note_3_Oct_2006"
+    },
+    {
+      "blind_task_id": "2d4cec94cf4e",
+      "candidate_source_id": "AFH-003",
+      "first_coder_claim_ids": [
+        "AFH003-F01",
+        "AFH003-F02"
+      ],
+      "source_locator": "Challenges_of_IDP_Protection_p14"
+    },
+    {
+      "blind_task_id": "168843a07468",
+      "candidate_source_id": "AFH-004",
+      "first_coder_claim_ids": [],
+      "source_locator": "whole_source_review_against_frozen_coding_contract"
+    },
+    {
+      "blind_task_id": "a59e69a87637",
+      "candidate_source_id": "AFH-005",
+      "first_coder_claim_ids": [],
+      "source_locator": "whole_source_review_against_frozen_coding_contract"
+    },
+    {
+      "blind_task_id": "222c1ebfa06f",
+      "candidate_source_id": "AFH-006",
+      "first_coder_claim_ids": [
+        "AFH006-D01",
+        "AFH006-D02"
+      ],
+      "source_locator": "UNAMA_2008_annual_report_overview"
+    },
+    {
+      "blind_task_id": "0685822b7473",
+      "candidate_source_id": "AFH-007",
+      "first_coder_claim_ids": [
+        "AFH007-D01"
+      ],
+      "source_locator": "UNAMA_2009_annual_report_press_release"
+    },
+    {
+      "blind_task_id": "750a77eadf11",
+      "candidate_source_id": "AFH-008",
+      "first_coder_claim_ids": [
+        "AFH008-D01",
+        "AFH008-D02"
+      ],
+      "source_locator": "UNAMA_2019_annual_report_press_release"
+    },
+    {
+      "blind_task_id": "c3d268d06efa",
+      "candidate_source_id": "AFH-009",
+      "first_coder_claim_ids": [
+        "AFH009-D01",
+        "AFH009-D02"
+      ],
+      "source_locator": "UNAMA_2020_annual_report_press_release"
+    },
+    {
+      "blind_task_id": "3f4641dbaea6",
+      "candidate_source_id": "AFH-010",
+      "first_coder_claim_ids": [
+        "AFH010-D01",
+        "AFH010-D02"
+      ],
+      "source_locator": "UNAMA_2021_midyear_press_release"
+    },
+    {
+      "blind_task_id": "74038d021d57",
+      "candidate_source_id": "NPH-001",
+      "first_coder_claim_ids": [],
+      "source_locator": "whole_source_review_against_frozen_coding_contract"
+    },
+    {
+      "blind_task_id": "7a60e5356c64",
+      "candidate_source_id": "NPH-002",
+      "first_coder_claim_ids": [
+        "NPH002-D06"
+      ],
+      "source_locator": "report_p6_summary"
+    },
+    {
+      "blind_task_id": "01f9232eec26",
+      "candidate_source_id": "NPH-002",
+      "first_coder_claim_ids": [
+        "NPH002-D07",
+        "NPH002-D08"
+      ],
+      "source_locator": "report_p6_summary_and_p9_IED_findings"
+    },
+    {
+      "blind_task_id": "88921c5b9d40",
+      "candidate_source_id": "NPH-002",
+      "first_coder_claim_ids": [
+        "NPH002-D01",
+        "NPH002-D02"
+      ],
+      "source_locator": "report_p6_summary_and_p9_aerial_findings"
+    },
+    {
+      "blind_task_id": "1284b6df9c93",
+      "candidate_source_id": "NPH-002",
+      "first_coder_claim_ids": [
+        "NPH002-D03"
+      ],
+      "source_locator": "report_p6_summary_and_p9_case13"
+    },
+    {
+      "blind_task_id": "31d6aaac3d7d",
+      "candidate_source_id": "NPH-002",
+      "first_coder_claim_ids": [
+        "NPH002-D04",
+        "NPH002-D05"
+      ],
+      "source_locator": "report_p6_summary_case12"
+    },
+    {
+      "blind_task_id": "cd944dfb19c3",
+      "candidate_source_id": "NPH-002",
+      "first_coder_claim_ids": [
+        "NPH002-R01"
+      ],
+      "source_locator": "report_p9_aerial_findings"
+    },
+    {
+      "blind_task_id": "42ae94cd56b7",
+      "candidate_source_id": "NPH-003",
+      "first_coder_claim_ids": [],
+      "source_locator": "whole_source_review_against_frozen_coding_contract"
+    },
+    {
+      "blind_task_id": "43ce6a01c0e4",
+      "candidate_source_id": "NPH-004",
+      "first_coder_claim_ids": [
+        "NPH004-S01"
+      ],
+      "source_locator": "UNHCR_Global_Report_2006_Nepal_summary"
+    }
+  ]
+}

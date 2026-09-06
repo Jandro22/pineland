@@ -147,6 +147,7 @@ class Simulation:
         self.world.contact_funnel_records.clear()
         self.world.contact_funnel_counts.clear()
         self.world.action_funnel_counts.clear()
+        self.world.action_funnel_by_actor_locality.clear()
         self.world.recruitment_total = 0.0
         self.world.behavior_change_total = 0
         self.world.behavior_change_represented_population = 0.0

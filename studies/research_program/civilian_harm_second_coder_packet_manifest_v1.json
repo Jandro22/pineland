@@ -1,0 +1,15 @@
+{
+  "adjudication_contract_sha256": "180d61a069402e772c8f04e90677c3a89ff8de1233f8335b5a7395869277c2bf",
+  "blind_key_sha256": "5f0dcab022773aac0a0caf651e630ba872be32fed258c1c0b2ba2d504c2162f8",
+  "candidate_source_count": 14,
+  "case_counts": {
+    "afghanistan_2004_2021": 10,
+    "nepal_2001_2006": 9
+  },
+  "instructions_sha256": "d944397fc447b678b28234381ed539ffb9790103469c495e6d171cd0c743c8be",
+  "packet_sha256": "6654f9bf71a902b05cc2369b5ee4dec1b6d2b5232242ca93d330a3f5ffcba786",
+  "schema_version": "pineland.civilian_harm_second_coder_packet_manifest.v1",
+  "status": "packet_frozen_before_second_coding",
+  "structured_ucdp_excluded_from_human_packet": true,
+  "task_count": 19
+}

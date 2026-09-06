@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "synthetic_prospective_measurement_retention_v2",
+  "status": "prospective_routing_repair_after_v1_harness_failure",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "parent_failed_experiment": "studies/research_program/prospective_measurement_retention_recovery_failed_incremental_v1.json",
+  "localized_failure_hypothesis": "v1 changed dynamics because it repeatedly invoked Simulation.run(until=day), and contact_scan exposure is horizon-aware; passive observation itself is dynamics-invariant.",
+  "pre_v2_falsifier_result": {
+    "test": "one-shot baseline versus one-shot event-boundary observer, seed 2026090521",
+    "final_fingerprints_equal": true,
+    "interpretation": "supports the localized harness hypothesis before v2 execution"
+  },
+  "synthetic_design": {
+    "seeds": [2026090521, 2026090522],
+    "agent_count": 150,
+    "locality_count": 17,
+    "horizon_days": 7,
+    "measurement_days": [0, 1, 2, 3, 4, 5, 6, 7],
+    "measurement_event_priority": 1000,
+    "execution": "single uninterrupted Simulation.run call per baseline/instrumented run"
+  },
+  "measurement_semantics": {
+    "daily_snapshot": "read-only no-op event scheduled at the declared calendar day after ordinary same-time processes by priority; no RNG draw or world mutation",
+    "formation_lifecycle": "before/after formation state difference at every substantive ProcessEngine event boundary",
+    "record_layer": "all synthetic records existing at measurement time, preserving latent identity and recorded flag",
+    "actor_information": "control and presence beliefs keyed by observer/target/locality, never substituted for truth"
+  },
+  "required_daily_layers": [
+    "locality-level seven-dimensional truth control",
+    "formations",
+    "fixed security posts",
+    "patrols",
+    "organization-locality manpower pools",
+    "control beliefs",
+    "presence beliefs",
+    "node presence beliefs",
+    "local action-support decomposition",
+    "synthetic record layer"
+  ],
+  "acceptance_gate": [
+    "all eight scheduled measurement days captured exactly once",
+    "all required layers structurally present",
+    "formation lifecycle detector recovers birth/state-change/removal in a synthetic unit recovery",
+    "event-boundary lifecycle records carry event time/type/id",
+    "instrumented and baseline final retained-state fingerprints are identical for every seed",
+    "model hash stable",
+    "historical tracked-diff stable"
+  ],
+  "prohibitions": [
+    "do not overwrite or reinterpret v1 failure",
+    "do not rerun Nepal historical confrontation",
+    "do not modify Afghanistan active historical processes",
+    "do not alter core transition equations or model parameters"
+  ],
+  "interpretation": "A pass validates prospective measurement instrumentation only. It does not repair Nepal construct validity or establish historical fit."
+}

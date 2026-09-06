@@ -1,0 +1,42 @@
+{
+  "all_components_historically_comparable_now": false,
+  "artifact_hashes": {
+    "acquisition_contract": "27a1bc867a3a6a0da027741657ffad1f612a786397b3714bc5f5a4b7deca8f1a",
+    "coding_contract": "f14e77b58d5cf98bc783e0b3277d4ce6019f1e9ed0855ea90fe3998924c91c0c",
+    "first_coder_template": "dfd207550dc1d3999b9f0264b0013fb0b92242d886ee05482318f423fa9b42eb",
+    "model_compatibility_contract": "b0368b4a53426479c278964de1acd0a1a0f1df6d1ac53834dc7119cead7f4361",
+    "source_exposure_log": "eeba10e89e2b6f84951e6bf22775756f46d9ad2d958be18d28d530cce2120902"
+  },
+  "candidate_cases": [
+    "afghanistan_2004_2021",
+    "nepal_2001_2006"
+  ],
+  "candidate_first_coder_statuses": [
+    "candidate_discovered_not_value_coded"
+  ],
+  "candidate_source_count": 8,
+  "candidate_source_family_count": 7,
+  "candidate_source_ids_unique": true,
+  "coding_schema_frozen_before_value_coding": true,
+  "component_historical_numeric_comparison_authorized": {
+    "cross_border_displacement": false,
+    "direct_harm": false,
+    "internal_displacement": false,
+    "resource_loss": false
+  },
+  "gates": {
+    "coding_semantics_frozen": true,
+    "confirmatory_historical_harm_validation_authorized": false,
+    "core_change_authorized": false,
+    "first_coder_schema_complete": true,
+    "historical_predictive_rescore_authorized": false,
+    "model_semantic_compatibility_ready": false,
+    "parameter_fitting_authorized": false,
+    "source_discovery_protocol_frozen": true
+  },
+  "historical_values_already_coded": false,
+  "missing_first_coder_template_fields": [],
+  "next_licensed_step": "Source-bound first coding may now read and extract the candidate historical harm values. Those values remain measurement evidence only and cannot be compared numerically with Pineland until prospective semantic/retention identification passes after the historical freeze.",
+  "schema_version": "pineland.civilian_harm_measurement_readiness.v1",
+  "status": "pre_value_coding_measurement_audit"
+}

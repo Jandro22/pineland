@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "missing_construct_mechanism_discrimination_v1",
+  "status": "prospective_before_any_core_implementation",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "parent_representation_audit": "studies/research_program/construct_representation_audit_v1.json",
+  "purpose": "Pre-register synthetic experiments capable of discriminating minimal rival mechanisms for the two identified construct gaps before any candidate is implemented in the Pineland core.",
+  "governance_candidates": {
+    "G0_instant_presence": {
+      "description": "Insurgent governance is an instantaneous function of current local organizational presence/capacity; no persistent governance stock.",
+      "signature": ["immediate dose response", "zero persistence after withdrawal", "no governance without current presence"]
+    },
+    "G1_capacity_stock": {
+      "description": "Local governance capacity is a persistent stock built by deliberate governance investment scaled by local organizational capacity/embeddedness and decaying when unsupported.",
+      "signature": ["dose response", "lagged accumulation", "positive post-withdrawal persistence", "decay", "growth possible without coercive events when governance investment is positive"]
+    },
+    "G2_event_reinforcement": {
+      "description": "Governance capacity is reinforced primarily by successful taxation/regulation/coercion events and otherwise decays.",
+      "signature": ["event-count dose response", "persistence after successful events", "no accumulation during silent investment without qualifying events"]
+    }
+  },
+  "access_candidates": {
+    "A0_instant_presence": {
+      "description": "Civilian access restriction is an instantaneous consequence of current actor physical presence/capability, with no separate access state.",
+      "signature": ["restriction during presence", "immediate disappearance after withdrawal", "weak route specificity absent spatial presence differences"]
+    },
+    "A1_edge_restriction_stock": {
+      "description": "Actor-route access restriction is an explicit edge/corridor stock built by blockade/interdiction effort and decaying when unsupported.",
+      "signature": ["route-specific dose response", "post-effort persistence", "decay", "adjacent-edge placebo remains low"]
+    },
+    "A2_discrete_blockade_event": {
+      "description": "Access restriction consists of explicit temporary blockade events with finite duration but no persistent stock beyond the event window.",
+      "signature": ["sharp onset at blockade event", "fixed-duration plateau", "sharp release at expiry", "no restriction from presence alone"]
+    }
+  },
+  "synthetic_protocols": {
+    "governance": [
+      "presence_pulse_then_withdrawal",
+      "silent_governance_investment_without_events",
+      "event_pulse_without_continuing_presence",
+      "low_vs_high_investment_dose",
+      "repeated_pulses_with_washout"
+    ],
+    "access": [
+      "presence_without_blockade",
+      "single_blockade_pulse_then_withdrawal",
+      "low_vs_high_blockade_effort",
+      "target_edge_vs_adjacent_edge_placebo",
+      "repeated_blockade_events_with_spacing"
+    ]
+  },
+  "identification_gate": [
+    "Each rival pair must differ on at least two predeclared protocol-level signatures.",
+    "At least one discrimination must rely on persistence/decay rather than only level differences.",
+    "At least one governance discrimination must separate deliberate investment from successful coercion/event counts.",
+    "At least one access discrimination must include an adjacent-edge topology placebo.",
+    "No historical case value, residual, event rate, or control score may enter the candidate equations or discrimination thresholds."
+  ],
+  "post_historical_gate_sequence": [
+    "Implement candidates only in an isolated experimental branch/worktree after the frozen historical confrontation is finalized.",
+    "Run the synthetic discrimination protocols before any historical rerun.",
+    "Reject candidates that fail their own synthetic signatures or cannot be separated from simpler rivals.",
+    "Only mechanisms surviving synthetic identification may become candidates for a new certified core; historical cases remain out-of-sample tests rather than tuning targets."
+  ],
+  "interpretation": "Passing this contract validates the experimental design's ability to discriminate rival mechanisms; it does not select or validate any candidate mechanism."
+}

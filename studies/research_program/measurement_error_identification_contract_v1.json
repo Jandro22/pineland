@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "status": "prospective_before_quantitative_historical_observation_operator",
+  "purpose": "Define what evidence is required before Pineland may estimate or freeze a quantitative latent-to-recorded historical observation operator for control, presence, access, or governance constructs.",
+  "scientific_firewall": [
+    "Historical predictive outcomes may not be used to choose measurement-error parameters.",
+    "Model latent values may not be inspected to choose source error rates, spatial aggregation rules, thresholds, or source-family weights.",
+    "Coder agreement measures coding reproducibility; it is not a source truth/accuracy estimate.",
+    "Multiple rows extracted from one article, publisher pipeline, or republication chain do not count as independent source replication.",
+    "A missing or inaccessible source document is not silently treated as verified evidence."
+  ],
+  "evidence_classes": {
+    "direct_measurement": "A source directly reports the target construct at an explicit or bounded place/time.",
+    "proxy": "A source reports a related quantity requiring an explicit construct mapping.",
+    "narrative": "Contextual or interpretive evidence not suitable for direct likelihood contribution.",
+    "model_output": "Pineland latent or recorded state; never an independent empirical source."
+  },
+  "source_independence": {
+    "unit": "originating information pipeline, not URL or article count",
+    "rules": [
+      "Syndication/republication does not create a new independent family.",
+      "A report quoting another named outlet inherits dependence on the originating outlet for the quoted claim.",
+      "Multiple observations from the same source document are clustered within that document.",
+      "Multiple documents from the same institution are not automatically independent when they share the same collection pipeline."
+    ]
+  },
+  "error_components": {
+    "source_detection": {
+      "estimand": "P(source emits an admissible observation | compatible latent construct exists)",
+      "identification_requirement": "replicated compatible cells with a defensible reference/overlap design; event absence in a source alone is not a false negative"
+    },
+    "source_false_positive": {
+      "estimand": "P(source emits the construct | compatible latent construct absent)",
+      "identification_requirement": "independent reference evidence or a separately validated latent-negative sample"
+    },
+    "actor_attribution": {
+      "estimand": "P(reported actor | true actor, source family)",
+      "identification_requirement": "independently corroborated actor truth; coder string agreement is insufficient"
+    },
+    "construct_classification": {
+      "estimand": "P(reported observable class | underlying historical claim)",
+      "identification_requirement": "blind independent coding plus adjudication can estimate coding reproducibility, but source-level construct accuracy requires external corroboration"
+    },
+    "temporal_error": {
+      "estimand": "distribution of reported interval/date error",
+      "identification_requirement": "events/conditions with independently known timing; publication date is not assumed to equal occurrence date"
+    },
+    "spatial_error": {
+      "estimand": "distribution of source place error and aggregation mismatch",
+      "identification_requirement": "independently geolocated claims and a prospectively declared mapping to model localities"
+    },
+    "source_dependence": {
+      "estimand": "within-pipeline dependence/correlation",
+      "identification_requirement": "source genealogy/provenance and repeated overlap across independent and dependent pipelines"
+    }
+  },
+  "quantitative_operator_gate": [
+    "Every empirical record used in estimation is bound to an immutable source-document identity or archived-content hash.",
+    "Source-family genealogy is explicit enough to prevent republication/syndication from counting as replication.",
+    "There are replicated construct-compatible place/time cells observed through at least two genuinely independent source families.",
+    "The replicated cells cover both positive and, where scientifically observable, negative/reference conditions needed for the error component being estimated.",
+    "Spatial and temporal observation operators are frozen before inspecting matched Pineland latent values.",
+    "Measurement parameters are estimated from source/reference evidence rather than historical predictive fit.",
+    "Unidentified error components remain explicit uncertainty terms or are left unestimated."
+  ],
+  "allowed_if_gate_fails": [
+    "qualitative or ordinal construct-validity assessment at directly supported source scope",
+    "reporting coder agreement and source coverage",
+    "reporting measurement components as unidentified"
+  ],
+  "forbidden_if_gate_fails": [
+    "estimating case reporting rates from Pineland fit",
+    "treating source non-reporting as a true negative",
+    "using article counts as independent replications",
+    "historical parameter tuning or core changes justified by the measurement sample"
+  ]
+}

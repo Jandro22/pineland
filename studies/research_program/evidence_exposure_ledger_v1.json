@@ -1,0 +1,195 @@
+{
+  "schema_version": "1.0.0",
+  "status": "frozen_project_evidence_exposure_snapshot_before_additional_outcome_source_acquisition",
+  "scope": "Existing Pineland project artifacts only. This ledger does not claim that relevant external evidence does not exist; it records whether such evidence has already been acquired/coded into the project.",
+  "anti_selection_rule": {
+    "residual_conditioned_source_selection_forbidden": true,
+    "forbidden_search_inputs": [
+      "Pineland residual sign or magnitude",
+      "districts selected because Pineland underpredicts or overpredicts them",
+      "mechanisms selected because a historical target would improve",
+      "source inclusion conditional on agreement with model state"
+    ],
+    "permitted_search_inputs": [
+      "case identity and preregistered study dates",
+      "outcome construct and required fields in outcome_measurement_contract.json",
+      "predeclared geographic sampling frame",
+      "source-family eligibility and independence criteria",
+      "calendar-time coverage gaps defined without model values"
+    ],
+    "rule": "Any newly inspected historical source must be appended to a later exposure-ledger version whether it supports, contradicts, or is unusable for Pineland."
+  },
+  "evidence_classes": {
+    "direct_measurement": "Historical source directly observes the contracted outcome or a declared component at an admissible geography/time.",
+    "observation_input": "Historical data are used as inputs/covariates or observation-process evidence but do not by themselves validate another latent construct.",
+    "proxy_only": "Historical signal exists but the measurement contract forbids using it as the target outcome.",
+    "synthetic_only": "Evidence comes from synthetic Pineland worlds or structural tests, not historical observation.",
+    "model_output": "Pineland output; never an empirical source.",
+    "missing_in_project": "No eligible historical measurement artifact for the contracted outcome is currently registered in the project."
+  },
+  "cases": {
+    "nepal_2001_2006": {
+      "violence": {
+        "exposure_status": "already_exposed_and_used",
+        "evidence_class": "direct_measurement",
+        "registered_artifacts": [
+          "studies/nepal_2001_2006/data/processed/ucdp_nepal_events.csv"
+        ],
+        "limitations": [
+          "Violence cannot substitute for control, civilian harm, capacity, regeneration, dependence, or recurrence.",
+          "Event recurrence/adjacency are descriptive violence signatures, not actor-level reproduction or recurrence."
+        ]
+      },
+      "control": {
+        "exposure_status": "already_exposed_coded_and_adjudicated",
+        "evidence_class": "direct_measurement",
+        "registered_artifacts": [
+          "studies/research_program/construct_evidence_registry_v1.json",
+          "studies/nepal_2001_2006/data/processed/nepal_eastern_control_presence_adjudicated_v1.csv",
+          "studies/research_program/nepal_construct_compatibility_audit_v1.json"
+        ],
+        "current_use_status": "independent historical construct evidence exists, but zero adjudicated rows are scoreable against frozen Nepal v5 because matching latent state was not retained at the required space/time resolution",
+        "limitations": [
+          "14 adjudicated rows across 11 Eastern districts are not a longitudinal control panel.",
+          "Frozen Nepal v5 construct validity remains not identified, not failed."
+        ]
+      },
+      "civilian_harm": {
+        "exposure_status": "not_instantiated_as_historical_outcome",
+        "evidence_class": "missing_in_project",
+        "registered_artifacts": [],
+        "known_project_note": "No displacement stream was ingested; model cumulative_civilian_harm values are model output, not empirical validation.",
+        "missing_required_fields": ["direct_harm", "displacement_or_resource_loss", "uncertainty_interval"]
+      },
+      "institutional_capacity": {
+        "exposure_status": "not_instantiated_as_historical_outcome",
+        "evidence_class": "missing_in_project",
+        "registered_artifacts": [],
+        "missing_required_fields": ["local_capacity", "continuity", "post_support_capacity"]
+      },
+      "insurgent_regeneration": {
+        "exposure_status": "historical_measurement_missing_synthetic_estimand_exists",
+        "evidence_class": "synthetic_only",
+        "registered_artifacts": [
+          "studies/research_program/locality_activation_genealogy.json",
+          "studies/research_program/locality_activation_genealogy_decomposed.json"
+        ],
+        "limitations": [
+          "No historical parent-attributed activation genealogy is registered.",
+          "Historical violence recurrence cannot replace actor-level activation parentage."
+        ]
+      },
+      "foreign_dependence": {
+        "exposure_status": "historical_outcome_measurement_missing",
+        "evidence_class": "missing_in_project",
+        "registered_artifacts": [],
+        "limitations": [
+          "Foreign-force/support inputs or model counterfactuals alone do not measure dependence.",
+          "Independent post-support local capacity/control evidence is not registered."
+        ]
+      },
+      "recurrence": {
+        "exposure_status": "event_proxy_exposed_confirmatory_operator_missing",
+        "evidence_class": "proxy_only",
+        "registered_artifacts": [
+          "studies/research_program/harmonized_historical_event_signatures.json",
+          "studies/research_program/event_only_spatial_signature_diagnostic.json"
+        ],
+        "limitations": [
+          "Same-district violence gaps do not establish settlement/extinction followed by actor-level reactivation.",
+          "No historical quiet-state plus organization/reactivation panel is registered."
+        ]
+      }
+    },
+    "afghanistan_2004_2021": {
+      "violence": {
+        "exposure_status": "already_exposed_and_used",
+        "evidence_class": "direct_measurement",
+        "registered_artifacts": [
+          "studies/afghanistan_2004_2021/data/processed/ucdp_afghanistan_events.csv",
+          "studies/afghanistan_2004_2021/data/processed/source_manifest.json"
+        ],
+        "limitations": [
+          "UCDP violence is not a proxy for the other six contracted outcomes."
+        ]
+      },
+      "control": {
+        "exposure_status": "independent_target_date_cross_section_exposed",
+        "evidence_class": "direct_measurement",
+        "registered_artifacts": [
+          "studies/afghanistan_2004_2021/config/control_observation_model.json",
+          "studies/afghanistan_2004_2021/config/control_validation_plan.json",
+          "studies/afghanistan_2004_2021/data/processed/sigar_oct2017_control_401.csv",
+          "studies/afghanistan_2004_2021/data/processed/sigar_407_to_401_crosswalk.csv"
+        ],
+        "current_use_status": "strong independent 2017-10-15 target-date cross-section; longitudinal control validation remains unavailable",
+        "limitations": [
+          "One harmonized district lacks a numeric control index.",
+          "No harmonized pre-target longitudinal control panel is registered.",
+          "No success threshold may be invented from the target snapshot after model inspection."
+        ]
+      },
+      "civilian_harm": {
+        "exposure_status": "not_instantiated_as_historical_outcome",
+        "evidence_class": "missing_in_project",
+        "registered_artifacts": [],
+        "missing_required_fields": ["direct_harm", "displacement_or_resource_loss", "uncertainty_interval"]
+      },
+      "institutional_capacity": {
+        "exposure_status": "inputs_exist_but_independent_outcome_panel_missing",
+        "evidence_class": "missing_in_project",
+        "registered_artifacts": [],
+        "limitations": [
+          "Security-force stocks and foreign-force schedules are case inputs, not independent local capacity outcomes.",
+          "No registered service-delivery/institutional-continuity panel supports post-support capacity validation."
+        ]
+      },
+      "insurgent_regeneration": {
+        "exposure_status": "historical_measurement_missing_synthetic_estimand_exists",
+        "evidence_class": "synthetic_only",
+        "registered_artifacts": [
+          "studies/research_program/locality_activation_genealogy.json",
+          "studies/research_program/locality_activation_genealogy_decomposed.json"
+        ],
+        "limitations": [
+          "No historical Taliban parent-attributed locality activation genealogy is registered."
+        ]
+      },
+      "foreign_dependence": {
+        "exposure_status": "support_inputs_exposed_outcome_operator_missing",
+        "evidence_class": "observation_input",
+        "registered_artifacts": [
+          "studies/afghanistan_2004_2021/data/processed/source_manifest.json"
+        ],
+        "limitations": [
+          "Observed foreign support/force schedules are exposures/inputs, not a dependence outcome.",
+          "Independent post-support capacity/control evidence for the nested support-removal estimand is not registered."
+        ]
+      },
+      "recurrence": {
+        "exposure_status": "event_proxy_exposed_confirmatory_operator_missing",
+        "evidence_class": "proxy_only",
+        "registered_artifacts": [
+          "studies/research_program/harmonized_historical_event_signatures.json",
+          "studies/research_program/event_only_spatial_signature_diagnostic.json"
+        ],
+        "limitations": [
+          "Event gaps alone cannot distinguish persistence, recording failure, or true post-settlement reactivation.",
+          "No registered quiet-state/settlement plus actor-level reactivation panel currently exists."
+        ]
+      }
+    }
+  },
+  "program_summary": {
+    "outcomes_with_historical_measurement_in_both_cases": ["violence", "control"],
+    "outcomes_without_confirmatory_historical_measurement_in_either_case": [
+      "civilian_harm",
+      "institutional_capacity",
+      "insurgent_regeneration",
+      "foreign_dependence",
+      "recurrence"
+    ],
+    "policy_or_coin_efficacy_inference_authorized": false,
+    "general_theory_promotion_authorized": false
+  }
+}

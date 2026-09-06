@@ -1,0 +1,471 @@
+{
+  "acquisition_contract_sha256": "a2ec645c324af9c74e0cdba8781a5cba7b02977d3b8c92e8ccfafe695333de18",
+  "by_outcome": {
+    "civilian_harm": {
+      "case_count": 2,
+      "cases_with_confirmatory_operator_ready": 0,
+      "cases_with_direct_historical_measurement": 0,
+      "historical_cross_case_validation_ready": false
+    },
+    "control": {
+      "case_count": 2,
+      "cases_with_confirmatory_operator_ready": 0,
+      "cases_with_direct_historical_measurement": 2,
+      "historical_cross_case_validation_ready": false
+    },
+    "foreign_dependence": {
+      "case_count": 2,
+      "cases_with_confirmatory_operator_ready": 0,
+      "cases_with_direct_historical_measurement": 0,
+      "historical_cross_case_validation_ready": false
+    },
+    "institutional_capacity": {
+      "case_count": 2,
+      "cases_with_confirmatory_operator_ready": 0,
+      "cases_with_direct_historical_measurement": 0,
+      "historical_cross_case_validation_ready": false
+    },
+    "insurgent_regeneration": {
+      "case_count": 2,
+      "cases_with_confirmatory_operator_ready": 0,
+      "cases_with_direct_historical_measurement": 0,
+      "historical_cross_case_validation_ready": false
+    },
+    "recurrence": {
+      "case_count": 2,
+      "cases_with_confirmatory_operator_ready": 0,
+      "cases_with_direct_historical_measurement": 0,
+      "historical_cross_case_validation_ready": false
+    },
+    "violence": {
+      "case_count": 2,
+      "cases_with_confirmatory_operator_ready": 2,
+      "cases_with_direct_historical_measurement": 2,
+      "historical_cross_case_validation_ready": true
+    }
+  },
+  "interpretation": "The project currently has strong historical violence observation and partial independent control evidence, but not the joint seven-outcome historical measurement basis required for intervention efficacy or general-theory promotion. Synthetic estimand recovery is tracked separately and cannot fill an empirical measurement cell.",
+  "ledger_sha256": "24b69a206121cce32223f7ee3d19d8b4b21a5236b3443c66b7e1b86a9e297f71",
+  "measurement_contract_sha256": "dfba18e8e770978861f992b7233ca62e2e252088d309923b317d8d95a1d9511f",
+  "priority_missing_outcomes": [
+    "civilian_harm",
+    "institutional_capacity",
+    "recurrence",
+    "insurgent_regeneration",
+    "foreign_dependence"
+  ],
+  "program_gates": {
+    "all_seven_outcomes_confirmatory_in_both_cases": false,
+    "coin_efficacy_inference_authorized": false,
+    "general_theory_promotion_authorized": false
+  },
+  "repository_state": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/construct_evidence_registry_v1.json",
+      "studies/research_program/construct_validity_readiness_audit_v1.json",
+      "studies/research_program/construct_validity_readiness_audit_v1_manifest.json",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/evidence_exposure_ledger_v1.json",
+      "studies/research_program/future_outcome_evidence_acquisition_contract_v1.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/local_action_diagnostic_identification_contract_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1_manifest.json",
+      "studies/research_program/measurement_error_identification_contract_v1.json",
+      "studies/research_program/measurement_operator_identifiability_audit_v1.json",
+      "studies/research_program/nepal_construct_compatibility_audit_v1.json",
+      "studies/research_program/nepal_construct_observation_mapping_contract_v1.json",
+      "studies/research_program/nepal_construct_source_archive_manifest_v1.json",
+      "studies/research_program/nepal_control_presence_acquisition_audit_v1.json",
+      "studies/research_program/nepal_control_presence_acquisition_contract_v1.json",
+      "studies/research_program/nepal_control_presence_adjudication_contract_v1.json",
+      "studies/research_program/nepal_control_presence_adjudication_v1.json",
+      "studies/research_program/nepal_independent_overlap_acquisition_contract_v1.json",
+      "studies/research_program/nepal_independent_overlap_second_coder_instructions_v1.md",
+      "studies/research_program/nepal_independent_overlap_second_coder_packet_v1.csv",
+      "studies/research_program/nepal_independent_overlap_source_archive_manifest_v1.json",
+      "studies/research_program/nepal_second_coder_agreement_v1.json",
+      "studies/research_program/nepal_second_coder_blind_key_v1.json",
+      "studies/research_program/nepal_second_coder_completed_v1.csv",
+      "studies/research_program/nepal_second_coder_instructions_v1.md",
+      "studies/research_program/nepal_second_coder_merge_manifest_v1.json",
+      "studies/research_program/nepal_second_coder_packet_v1.csv",
+      "studies/research_program/nepal_second_coder_part_1_v1.csv",
+      "studies/research_program/nepal_second_coder_part_2_v1.csv",
+      "studies/research_program/nepal_second_coder_part_3_v1.csv",
+      "studies/research_program/nepal_second_coder_part_4_v1.csv",
+      "studies/research_program/nepal_second_coder_partial_attempt_v1.csv",
+      "studies/research_program/nepal_second_coder_shard_lock_v1.json",
+      "studies/research_program/nepal_v5_construct_retention_audit_v1.json",
+      "studies/research_program/outcome_evidence_readiness_audit_v1.json",
+      "studies/research_program/prospective_measurement_retention_contract_v1.json",
+      "studies/research_program/prospective_measurement_retention_contract_v2.json",
+      "studies/research_program/prospective_measurement_retention_recovery_failed_incremental_v1.json",
+      "studies/research_program/prospective_measurement_retention_recovery_failed_incremental_v1_manifest.json",
+      "studies/research_program/prospective_measurement_retention_recovery_v1.json",
+      "studies/research_program/prospective_measurement_retention_recovery_v1_manifest.json",
+      "studies/research_program/prospective_measurement_retention_recovery_v2.json",
+      "studies/research_program/prospective_measurement_retention_recovery_v2_manifest.json",
+      "studies/research_program/scripts/adjudicate_nepal_control_presence_v1.py",
+      "studies/research_program/scripts/archive_nepal_construct_sources_v1.py",
+      "studies/research_program/scripts/audit_construct_validity_readiness_v1.py",
+      "studies/research_program/scripts/audit_measurement_operator_identifiability_v1.py",
+      "studies/research_program/scripts/audit_nepal_construct_compatibility_v1.py",
+      "studies/research_program/scripts/audit_nepal_control_presence_acquisition_v1.py",
+      "studies/research_program/scripts/audit_nepal_v5_construct_retention_v1.py",
+      "studies/research_program/scripts/audit_outcome_evidence_readiness_v1.py",
+      "studies/research_program/scripts/build_construct_evidence_registry_v1.py",
+      "studies/research_program/scripts/build_nepal_second_coder_packet_v1.py",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/merge_nepal_second_coder_parts_v1.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/score_nepal_second_coder_agreement_v1.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_local_action_diagnostic_identification.py",
+      "studies/research_program/scripts/validate_prospective_measurement_retention_v1.py",
+      "studies/research_program/scripts/validate_prospective_measurement_retention_v2.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1_manifest.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "rows": [
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [],
+      "case_id": "nepal_2001_2006",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "missing_in_project",
+      "exposure_status": "not_instantiated_as_historical_outcome",
+      "historical_direct_measurement_registered": false,
+      "limitations": [],
+      "outcome": "civilian_harm"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/research_program/construct_evidence_registry_v1.json",
+          "sha256": "d0e539c453219f6a13a980005676bc5b732485b1bd884673ff8e51f6f35a6245"
+        },
+        {
+          "exists": true,
+          "path": "studies/nepal_2001_2006/data/processed/nepal_eastern_control_presence_adjudicated_v1.csv",
+          "sha256": "4806d9e269507c386d42b4f6a45c486d603dafd0746773cdf41a9bc871fbefb6"
+        },
+        {
+          "exists": true,
+          "path": "studies/research_program/nepal_construct_compatibility_audit_v1.json",
+          "sha256": "f9d42844539e0cc7718be0ece67531b5465c34746a30e7711659afdb704e9568"
+        }
+      ],
+      "case_id": "nepal_2001_2006",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "direct_measurement",
+      "exposure_status": "already_exposed_coded_and_adjudicated",
+      "historical_direct_measurement_registered": true,
+      "limitations": [
+        "14 adjudicated rows across 11 Eastern districts are not a longitudinal control panel.",
+        "Frozen Nepal v5 construct validity remains not identified, not failed."
+      ],
+      "outcome": "control"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [],
+      "case_id": "nepal_2001_2006",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "missing_in_project",
+      "exposure_status": "historical_outcome_measurement_missing",
+      "historical_direct_measurement_registered": false,
+      "limitations": [
+        "Foreign-force/support inputs or model counterfactuals alone do not measure dependence.",
+        "Independent post-support local capacity/control evidence is not registered."
+      ],
+      "outcome": "foreign_dependence"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [],
+      "case_id": "nepal_2001_2006",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "missing_in_project",
+      "exposure_status": "not_instantiated_as_historical_outcome",
+      "historical_direct_measurement_registered": false,
+      "limitations": [],
+      "outcome": "institutional_capacity"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/research_program/locality_activation_genealogy.json",
+          "sha256": "307a142895df4edcf3f7b805638d7f4e20987886b9224b6f98881084aa0feb49"
+        },
+        {
+          "exists": true,
+          "path": "studies/research_program/locality_activation_genealogy_decomposed.json",
+          "sha256": "d1fe3210724649060c0ce0814eed2ebb5f033b120a404a416c5e69739901c5e8"
+        }
+      ],
+      "case_id": "nepal_2001_2006",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "synthetic_only",
+      "exposure_status": "historical_measurement_missing_synthetic_estimand_exists",
+      "historical_direct_measurement_registered": false,
+      "limitations": [
+        "No historical parent-attributed activation genealogy is registered.",
+        "Historical violence recurrence cannot replace actor-level activation parentage."
+      ],
+      "outcome": "insurgent_regeneration"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/research_program/harmonized_historical_event_signatures.json",
+          "sha256": "88adab41a5cda0a2cf16efbe65da900c5c1c2b2de68f9e36b85f8465f1cf415f"
+        },
+        {
+          "exists": true,
+          "path": "studies/research_program/event_only_spatial_signature_diagnostic.json",
+          "sha256": "714f8f5353c0e70b2e148cc6ad5f2b7c4301e06f05c6b5f18aa28b3a40fa1e84"
+        }
+      ],
+      "case_id": "nepal_2001_2006",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "proxy_only",
+      "exposure_status": "event_proxy_exposed_confirmatory_operator_missing",
+      "historical_direct_measurement_registered": false,
+      "limitations": [
+        "Same-district violence gaps do not establish settlement/extinction followed by actor-level reactivation.",
+        "No historical quiet-state plus organization/reactivation panel is registered."
+      ],
+      "outcome": "recurrence"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/nepal_2001_2006/data/processed/ucdp_nepal_events.csv",
+          "sha256": "4e71af81fcfdb519f10945a5a702d2c6231ac4fa80344b393bd9ad28ab8a9fc3"
+        }
+      ],
+      "case_id": "nepal_2001_2006",
+      "confirmatory_historical_operator_ready": true,
+      "evidence_class": "direct_measurement",
+      "exposure_status": "already_exposed_and_used",
+      "historical_direct_measurement_registered": true,
+      "limitations": [
+        "Violence cannot substitute for control, civilian harm, capacity, regeneration, dependence, or recurrence.",
+        "Event recurrence/adjacency are descriptive violence signatures, not actor-level reproduction or recurrence."
+      ],
+      "outcome": "violence"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [],
+      "case_id": "afghanistan_2004_2021",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "missing_in_project",
+      "exposure_status": "not_instantiated_as_historical_outcome",
+      "historical_direct_measurement_registered": false,
+      "limitations": [],
+      "outcome": "civilian_harm"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/afghanistan_2004_2021/config/control_observation_model.json",
+          "sha256": "6886e8ce781bd660b1921c4785ec008bf8dd02d4c719e85f9e1032a1612f59a5"
+        },
+        {
+          "exists": true,
+          "path": "studies/afghanistan_2004_2021/config/control_validation_plan.json",
+          "sha256": "9bbb35c4cf5ab55714d8f236d6ddb96c7a645c482cb8e943b36df6bee5eff1a9"
+        },
+        {
+          "exists": true,
+          "path": "studies/afghanistan_2004_2021/data/processed/sigar_oct2017_control_401.csv",
+          "sha256": "9e93dc7e0e7b05da73773e5103e25333570225e249b4f1d71cb05b40e47cb6e9"
+        },
+        {
+          "exists": true,
+          "path": "studies/afghanistan_2004_2021/data/processed/sigar_407_to_401_crosswalk.csv",
+          "sha256": "af93130b1072cfb2f6d0b07075b9dcf0c91f7c99db6930e584ad29178d4ae4ee"
+        }
+      ],
+      "case_id": "afghanistan_2004_2021",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "direct_measurement",
+      "exposure_status": "independent_target_date_cross_section_exposed",
+      "historical_direct_measurement_registered": true,
+      "limitations": [
+        "One harmonized district lacks a numeric control index.",
+        "No harmonized pre-target longitudinal control panel is registered.",
+        "No success threshold may be invented from the target snapshot after model inspection."
+      ],
+      "outcome": "control"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/afghanistan_2004_2021/data/processed/source_manifest.json",
+          "sha256": "108db7ed121f9ed7e4eccabb38bac5023045b6ea2ce7263185d8443ffc7a6775"
+        }
+      ],
+      "case_id": "afghanistan_2004_2021",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "observation_input",
+      "exposure_status": "support_inputs_exposed_outcome_operator_missing",
+      "historical_direct_measurement_registered": false,
+      "limitations": [
+        "Observed foreign support/force schedules are exposures/inputs, not a dependence outcome.",
+        "Independent post-support capacity/control evidence for the nested support-removal estimand is not registered."
+      ],
+      "outcome": "foreign_dependence"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [],
+      "case_id": "afghanistan_2004_2021",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "missing_in_project",
+      "exposure_status": "inputs_exist_but_independent_outcome_panel_missing",
+      "historical_direct_measurement_registered": false,
+      "limitations": [
+        "Security-force stocks and foreign-force schedules are case inputs, not independent local capacity outcomes.",
+        "No registered service-delivery/institutional-continuity panel supports post-support capacity validation."
+      ],
+      "outcome": "institutional_capacity"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/research_program/locality_activation_genealogy.json",
+          "sha256": "307a142895df4edcf3f7b805638d7f4e20987886b9224b6f98881084aa0feb49"
+        },
+        {
+          "exists": true,
+          "path": "studies/research_program/locality_activation_genealogy_decomposed.json",
+          "sha256": "d1fe3210724649060c0ce0814eed2ebb5f033b120a404a416c5e69739901c5e8"
+        }
+      ],
+      "case_id": "afghanistan_2004_2021",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "synthetic_only",
+      "exposure_status": "historical_measurement_missing_synthetic_estimand_exists",
+      "historical_direct_measurement_registered": false,
+      "limitations": [
+        "No historical Taliban parent-attributed locality activation genealogy is registered."
+      ],
+      "outcome": "insurgent_regeneration"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/research_program/harmonized_historical_event_signatures.json",
+          "sha256": "88adab41a5cda0a2cf16efbe65da900c5c1c2b2de68f9e36b85f8465f1cf415f"
+        },
+        {
+          "exists": true,
+          "path": "studies/research_program/event_only_spatial_signature_diagnostic.json",
+          "sha256": "714f8f5353c0e70b2e148cc6ad5f2b7c4301e06f05c6b5f18aa28b3a40fa1e84"
+        }
+      ],
+      "case_id": "afghanistan_2004_2021",
+      "confirmatory_historical_operator_ready": false,
+      "evidence_class": "proxy_only",
+      "exposure_status": "event_proxy_exposed_confirmatory_operator_missing",
+      "historical_direct_measurement_registered": false,
+      "limitations": [
+        "Event gaps alone cannot distinguish persistence, recording failure, or true post-settlement reactivation.",
+        "No registered quiet-state/settlement plus actor-level reactivation panel currently exists."
+      ],
+      "outcome": "recurrence"
+    },
+    {
+      "all_registered_artifacts_exist": true,
+      "artifact_checks": [
+        {
+          "exists": true,
+          "path": "studies/afghanistan_2004_2021/data/processed/ucdp_afghanistan_events.csv",
+          "sha256": "63c8ca63bdb7b037f6463018d5991e37cb57a26be778a15643cb3d998cd2689c"
+        },
+        {
+          "exists": true,
+          "path": "studies/afghanistan_2004_2021/data/processed/source_manifest.json",
+          "sha256": "108db7ed121f9ed7e4eccabb38bac5023045b6ea2ce7263185d8443ffc7a6775"
+        }
+      ],
+      "case_id": "afghanistan_2004_2021",
+      "confirmatory_historical_operator_ready": true,
+      "evidence_class": "direct_measurement",
+      "exposure_status": "already_exposed_and_used",
+      "historical_direct_measurement_registered": true,
+      "limitations": [
+        "UCDP violence is not a proxy for the other six contracted outcomes."
+      ],
+      "outcome": "violence"
+    }
+  ],
+  "schema_version": "pineland.outcome_evidence_readiness.v1",
+  "status": "readiness_audit_not_historical_scoring"
+}

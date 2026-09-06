@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "status": "first_coder_measurement_evidence_not_confirmatory",
+  "coding_contract": "studies/research_program/civilian_harm_coding_contract_v1.json",
+  "source_exposure_log": "studies/research_program/civilian_harm_source_exposure_log_v1.csv",
+  "coded_table": "studies/research_program/civilian_harm_first_coder_v1.csv",
+  "coded_on": "2026-09-05",
+  "historical_values_read_only_after_coding_contract_frozen": true,
+  "pineland_predictions_or_residuals_used_for_source_selection": false,
+  "pineland_values_compared_with_historical_harm": false,
+  "historical_predictive_rescore_performed": false,
+  "core_or_parameter_change_performed": false,
+  "source_dependency_findings": [
+    "UNAMA/OHCHR annual and midyear civilian-casualty reports are one originating monitoring system across years and cannot be counted as independent source families merely because they are separate documents.",
+    "The coded 2009 and 2011 national conflict-displacement figures in Challenges of IDP Protection are explicitly reported as UNHCR figures; they are therefore dependent on UNHCR rather than an independent displacement family for those numeric claims.",
+    "OHCHR Nepal Conflict Report 2012 states an aggregate conflict death toll but does not classify that aggregate as civilian deaths, so the aggregate was not coded into direct civilian harm.",
+    "AIHRC 2004-2005 reports property destruction and extrajudicial-killing complaint categories, but the aggregate table does not identify a clean conflict-specific civilian victim population, actor attribution, or harm pathway; those counts were not forced into the registered outcome.",
+    "A/60/343 provides important qualitative context about harm to civilians and vulnerable groups but no clean source-native quantitative record satisfying the frozen civilian-harm coding schema was identified in this pass."
+  ],
+  "immutability_note": "This first-coder pass is URL/source-locator bound but not yet immutable-content bound for every newly screened web source. Blank archive hashes must remain blank until an actual archived source byte stream is acquired and hashed; a URL is not a content hash.",
+  "confirmatory_use_authorized": false,
+  "second_coder_required": true
+}

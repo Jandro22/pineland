@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0.0",
+  "status": "prospective_before_blind_second_coding",
+  "purpose": "Independently recode the source-bound civilian-harm evidence after the first-coder source-independence coverage gap was filled, without exposing first-coder values or Pineland outputs.",
+  "input_locks": {
+    "coding_contract": {
+      "path": "studies/research_program/civilian_harm_coding_contract_v1.json",
+      "sha256": "f14e77b58d5cf98bc783e0b3277d4ce6019f1e9ed0855ea90fe3998924c91c0c"
+    },
+    "original_first_coder": {
+      "path": "studies/research_program/civilian_harm_first_coder_v1.csv",
+      "sha256": "bfaa9565e26a14383876a28d80ab14c075c82408c530ee2403c43a0003904340"
+    },
+    "independent_overlap_first_coder": {
+      "path": "studies/research_program/civilian_harm_independent_overlap_first_coder_v1.csv",
+      "sha256": "1a524eea87b5c544f89fdcf57d96ee1c8cc86324d9ce91eb741c36113df4fa90"
+    },
+    "independent_overlap_audit": {
+      "path": "studies/research_program/civilian_harm_independent_overlap_audit_v1.json",
+      "sha256": "48a8360c414ada25bfab0ac6c438c5f0745cb839dac8b72beea9ff42f7ce24db"
+    },
+    "original_exposure_log": {
+      "path": "studies/research_program/civilian_harm_source_exposure_log_v1.csv",
+      "sha256": "8818506718317472e5818b3d35d7c7edbad1bf232ed797818f745e55be2a5ec1"
+    },
+    "overlap_exposure_log": {
+      "path": "studies/research_program/civilian_harm_independent_overlap_exposure_log_v1.csv",
+      "sha256": "896d28c0ff7109c9430174aaf979a59d54d805269df5325eb961340f5fe3723e"
+    }
+  },
+  "blindness": {
+    "second_coder_may_see": [
+      "coding contract",
+      "blind packet containing case, source identity, URL/archive reference, and source locator",
+      "second-coder instructions"
+    ],
+    "second_coder_must_not_see": [
+      "civilian_harm_first_coder_v1.csv",
+      "civilian_harm_first_coder_provenance_v1.json",
+      "civilian_harm_first_coder_audit_v1.json",
+      "civilian_harm_independent_overlap_first_coder_v1.csv",
+      "civilian_harm_independent_overlap_provenance_v1.json",
+      "civilian_harm_independent_overlap_audit_v1.json",
+      "first-coder values, component choices, actor choices, admission decisions, or notes",
+      "Pineland predictions, residuals, model states, or historical diagnostic outputs"
+    ],
+    "packet_rule": "One blind item is one unique source locator. If the locator contains multiple admissible civilian-harm records, the second coder returns all of them."
+  },
+  "agreement_unit": "Source-locator record set, followed by matched record-level agreement within each locator.",
+  "prospective_matching": {
+    "within_locator_only": true,
+    "record_match_fields_in_order": [
+      "component",
+      "measure",
+      "date interval overlap",
+      "geographic scope overlap",
+      "victim class"
+    ],
+    "matching_rule": "Use maximum-cardinality one-to-one matching within each source locator. Exact component and measure are required for a record match; date/geography must overlap rather than be invented into equality.",
+    "actor_alias_normalization": {
+      "government": ["government", "state", "security forces", "RNA", "NA", "APF", "US/NATO", "pro-government forces"],
+      "insurgent": ["insurgent", "Maoist", "CPN (Maoist)", "AOG", "Taliban", "armed opposition"],
+      "multiple_or_crossfire": ["multiple_or_crossfire", "crossfire", "multiple parties"],
+      "unknown_or_unattributed": ["unknown_or_unattributed", "unknown", "unattributed", "total all parties"]
+    },
+    "actor_rule": "Normalization is frozen here before second coding. It is applied only for agreement scoring and never changes source-native coding."
+  },
+  "pre_adjudication_thresholds": {
+    "locator_admissibility_agreement_min": 0.85,
+    "record_set_recall_min": 0.80,
+    "record_set_precision_min": 0.80,
+    "component_exact_min": 0.90,
+    "measure_exact_min": 0.85,
+    "temporal_overlap_min": 0.90,
+    "geographic_overlap_min": 0.85,
+    "actor_normalized_exact_min": 0.75,
+    "numeric_semantics_agreement_min": 0.90
+  },
+  "numeric_semantics": {
+    "point": "Exact source-native numeric agreement required when both coders record a point value.",
+    "lower_bound": "Values agree if both preserve the same reported lower bound and neither invents an unsupported upper bound.",
+    "upper_bound": "Values agree if both preserve the same reported upper bound and neither invents an unsupported lower bound.",
+    "range": "Both reported lower and upper bounds must agree exactly.",
+    "qualitative_only": "Agreement requires both coders to leave unsupported numeric fields blank."
+  },
+  "gate_rule": "All pre-adjudication thresholds must pass. Primary metrics are preserved even if later adjudication resolves disagreements; no post-hoc threshold relaxation or alternate primary metric is permitted.",
+  "after_second_coding": [
+    "hash-lock completed second-coder output before reading first-coder values for comparison",
+    "score primary pre-adjudication agreement",
+    "retain all disagreements",
+    "adjudicate only after primary score is written",
+    "confirmatory historical harm use remains additionally blocked by model semantic/retention compatibility"
+  ],
+  "historical_predictive_rescore_authorized": false,
+  "parameter_fitting_authorized": false,
+  "core_change_authorized": false
+}

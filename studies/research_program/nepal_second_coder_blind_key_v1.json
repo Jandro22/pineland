@@ -1,0 +1,78 @@
+{
+  "do_not_provide_to_second_coder": true,
+  "mapping": {
+    "11b8d4a5e627": {
+      "district_id": "NP-D04",
+      "first_coder_record_id": "THT-2006-09-JHAPA",
+      "source_id": "himalayantimes_jhapa_tax_2006"
+    },
+    "2c7a45d69253": {
+      "district_id": "NP-D03",
+      "first_coder_record_id": "INSEC-2004-09-ILAM",
+      "source_id": "insec_yearbook_2005"
+    },
+    "39d96300ced7": {
+      "district_id": "NP-D06",
+      "first_coder_record_id": "NT-2006-10-SUNSARI",
+      "source_id": "nepalitimes_code_breach_2006"
+    },
+    "4f8bf2492d43": {
+      "district_id": "NP-D13",
+      "first_coder_record_id": "OHCHR-2005-Q4-KHOTANG",
+      "source_id": "ohchr_nepal_2006_commission"
+    },
+    "60a7cee12357": {
+      "district_id": "NP-D02",
+      "first_coder_record_id": "NT-2005-09-PANCHTHAR",
+      "source_id": "nepalitimes_reciprocal_2005"
+    },
+    "6d5a31f877f2": {
+      "district_id": "NP-D11",
+      "first_coder_record_id": "NT-2004-05-SOLUKHUMBU",
+      "source_id": "nepalitimes_trekker_tax_2004"
+    },
+    "6e04e40be38e": {
+      "district_id": "NP-D03",
+      "first_coder_record_id": "NT-2005-09-ILAM",
+      "source_id": "nepalitimes_reciprocal_2005"
+    },
+    "7ad902d44286": {
+      "district_id": "NP-D02",
+      "first_coder_record_id": "INSEC-2004-09-PANCHTHAR",
+      "source_id": "insec_yearbook_2005"
+    },
+    "7c95742e2e81": {
+      "district_id": "NP-D09",
+      "first_coder_record_id": "NT-2005-10-SANK-GOV",
+      "source_id": "nepalitimes_sankhuwasabha_2005"
+    },
+    "a4f3a0b74b48": {
+      "district_id": "NP-D14",
+      "first_coder_record_id": "NT-2005-09-UDAYAPUR",
+      "source_id": "nepalitimes_reciprocal_2005"
+    },
+    "acd798e13d7b": {
+      "district_id": "NP-D08",
+      "first_coder_record_id": "NT-2005-09-TERHATHUM",
+      "source_id": "nepalitimes_reciprocal_2005"
+    },
+    "ba5b17f0971e": {
+      "district_id": "NP-D01",
+      "first_coder_record_id": "NT-2005-09-TAPLEJUNG",
+      "source_id": "nepalitimes_reciprocal_2005"
+    },
+    "eec925a82a6c": {
+      "district_id": "NP-D09",
+      "first_coder_record_id": "NT-2005-10-SANK-TAX",
+      "source_id": "nepalitimes_sankhuwasabha_2005"
+    },
+    "fa4fb4b19cd6": {
+      "district_id": "NP-D05",
+      "first_coder_record_id": "NT-2006-08-MORANG",
+      "source_id": "nepalitimes_misconduct_2006"
+    }
+  },
+  "namespace": "nepal-control-presence-second-coder-v1:",
+  "purpose": "Link blind second-coder rows to first-coder records only after independent coding is complete.",
+  "schema_version": "1.0.0"
+}

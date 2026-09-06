@@ -1,0 +1,97 @@
+{
+  "artifact_hashes": {
+    "coded_table": "bfaa9565e26a14383876a28d80ab14c075c82408c530ee2403c43a0003904340",
+    "coding_contract": "f14e77b58d5cf98bc783e0b3277d4ce6019f1e9ed0855ea90fe3998924c91c0c",
+    "exposure_log": "ef41643ea2cb881f066b11b3a5b93ccfe7246c23fa8c18327679f7435afa13bb",
+    "provenance": "dc89351d1c53dac3d7ab56ae27bba24b0a90fa0019e69d2b202125940dfd67e4"
+  },
+  "candidate_source_count": 14,
+  "case_component_coverage": {
+    "afghanistan_2004_2021": {
+      "direct_harm": {
+        "coded_record_count": 9,
+        "independent_originating_families": [
+          "UNAMA_OHCHR"
+        ],
+        "independent_originating_family_count": 1,
+        "raw_coded_source_families": [
+          "UNAMA_OHCHR_civilian_casualty_monitoring"
+        ]
+      },
+      "displacement": {
+        "coded_record_count": 3,
+        "independent_originating_families": [
+          "UNHCR"
+        ],
+        "independent_originating_family_count": 1,
+        "raw_coded_source_families": [
+          "UNHCR_displacement_monitoring",
+          "UNHCR_via_IDMC_displacement_figures"
+        ]
+      },
+      "resource_loss": {
+        "coded_record_count": 0,
+        "independent_originating_families": [],
+        "independent_originating_family_count": 0,
+        "raw_coded_source_families": []
+      }
+    },
+    "nepal_2001_2006": {
+      "direct_harm": {
+        "coded_record_count": 8,
+        "independent_originating_families": [
+          "OHCHR"
+        ],
+        "independent_originating_family_count": 1,
+        "raw_coded_source_families": [
+          "OHCHR_conflict_IHL_monitoring"
+        ]
+      },
+      "displacement": {
+        "coded_record_count": 1,
+        "independent_originating_families": [
+          "UNHCR"
+        ],
+        "independent_originating_family_count": 1,
+        "raw_coded_source_families": [
+          "UNHCR_displacement_monitoring"
+        ]
+      },
+      "resource_loss": {
+        "coded_record_count": 1,
+        "independent_originating_families": [
+          "OHCHR"
+        ],
+        "independent_originating_family_count": 1,
+        "raw_coded_source_families": [
+          "OHCHR_conflict_IHL_monitoring"
+        ]
+      }
+    }
+  },
+  "coded_record_count": 22,
+  "coded_source_count": 9,
+  "confirmatory_use_authorized": false,
+  "core_change_authorized": false,
+  "errors": [],
+  "first_coder_coverage_gate": {
+    "afghanistan_direct_harm_two_independent_families_or_audited_series_plus_independent_overlap": false,
+    "afghanistan_longitudinal_displacement_present": true,
+    "nepal_direct_harm_two_independent_families": false,
+    "nepal_displacement_or_resource_loss_present": true
+  },
+  "first_coder_coverage_gate_passed": false,
+  "historical_rescore_authorized": false,
+  "interpretation": "The first-coder pass establishes usable historical harm records while preserving missingness, source dependence, and source-native units. It does not yet satisfy independent-source coverage, second-coder reliability, immutable-source binding, or semantic comparability to current Pineland harm output.",
+  "model_comparison_authorized": false,
+  "schema_version": "pineland.civilian_harm_first_coder_audit.v1",
+  "second_coder_required": true,
+  "source_dependency_guard": [
+    "UNAMA/OHCHR annual and midyear civilian-casualty reports are one originating monitoring system across years and cannot be counted as independent source families merely because they are separate documents.",
+    "The coded 2009 and 2011 national conflict-displacement figures in Challenges of IDP Protection are explicitly reported as UNHCR figures; they are therefore dependent on UNHCR rather than an independent displacement family for those numeric claims.",
+    "OHCHR Nepal Conflict Report 2012 states an aggregate conflict death toll but does not classify that aggregate as civilian deaths, so the aggregate was not coded into direct civilian harm.",
+    "AIHRC 2004-2005 reports property destruction and extrajudicial-killing complaint categories, but the aggregate table does not identify a clean conflict-specific civilian victim population, actor attribution, or harm pathway; those counts were not forced into the registered outcome.",
+    "A/60/343 provides important qualitative context about harm to civilians and vulnerable groups but no clean source-native quantitative record satisfying the frozen civilian-harm coding schema was identified in this pass."
+  ],
+  "status": "first_coder_audit_not_confirmatory"
+}

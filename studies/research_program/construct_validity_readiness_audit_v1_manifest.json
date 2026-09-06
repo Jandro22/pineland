@@ -1,0 +1,8 @@
+{
+  "artifact": "studies/research_program/construct_validity_readiness_audit_v1.json",
+  "artifact_sha256": "44cf218a2b1d8c5208a0399c87c7ceba1bfc220baa028919bbc5f5acd2718296",
+  "runner": "studies/research_program/scripts/audit_construct_validity_readiness_v1.py",
+  "runner_sha256": "3ce9c3525c291622230845fe2e0271e575d3c455f3b4a6cc8f84f207db71a2f1",
+  "schema_version": "pineland.construct_validity_readiness_audit_manifest.v1",
+  "tracked_diff_stable": true
+}

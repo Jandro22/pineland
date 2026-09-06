@@ -197,6 +197,21 @@ def violence_score(world, horizon: float) -> dict:
 
 
 def hazard_diagnostics(world) -> dict:
+    if world.config.combat.organized_action_architecture == "multichannel_v5":
+        # v5 schedules organized actions, not the legacy pair-contact funnel.
+        # An empty legacy archive cannot imply a 100% probability of no violence.
+        return {
+            "status": "not_applicable_legacy_contact_hazard",
+            "architecture": "multichannel_v5",
+            "draws": 0,
+            "expected_contacts": None,
+            "probability_zero_contacts": None,
+            "mean_hazard": None,
+            "minimum_hazard": None,
+            "median_hazard": None,
+            "maximum_hazard": None,
+            "action_funnel": dict(world.action_funnel_counts),
+        }
     hazards = [
         float(record["contact_hazard"])
         for record in world.contact_funnel_records

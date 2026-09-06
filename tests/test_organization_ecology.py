@@ -165,10 +165,12 @@ class OrganizationEcologyTests(unittest.TestCase):
         applied, created = _apply_local_fighter_change(
             world, organization, locality_id, 10.0
         )
-        self.assertEqual(applied, 10.0)
+        # Political recruitment below the unit threshold does not become an
+        # unequipped fighter pool merely because the local formation is moving.
+        self.assertEqual(applied, 0.0)
         self.assertEqual(created, 0)
         self.assertEqual(formation.personnel, before)
-        self.assertEqual(world.organization_manpower_pools[pool_key], 10.0)
+        self.assertEqual(world.organization_manpower_pools.get(pool_key, 0.0), 0.0)
 
     def test_observed_active_interval_preserves_identity_not_operations(self):
         world = make_world()
@@ -245,10 +247,27 @@ class OrganizationEcologyTests(unittest.TestCase):
         before_pool = world.organization_manpower_pools.get(
             (organization.organization_id, target.locality_id), 0.0
         )
+        before_resources = organization.resources
+        before_supply = sum(
+            f.supply_stock for f in world.formations.values()
+            if f.organization_id == organization.organization_id
+        )
         applied, created = _apply_local_fighter_change(
             world, organization, target.locality_id, 125.0
         )
         self.assertAlmostEqual(applied, 125.0)
+        converted = (
+            125.0 * world.config.logistics.formation_supply_days
+            * world.config.logistics.initial_supply_fraction
+        )
+        self.assertAlmostEqual(
+            before_resources - organization.resources, converted,
+        )
+        self.assertAlmostEqual(
+            sum(f.supply_stock for f in world.formations.values()
+                if f.organization_id == organization.organization_id) - before_supply,
+            converted,
+        )
         self.assertEqual(prf01.personnel, before_first)
         after_local = sum(f.personnel for f in world.formations.values()
                           if f.organization_id == organization.organization_id and

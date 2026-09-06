@@ -1,0 +1,406 @@
+{
+  "adjudicated_csv": "studies/nepal_2001_2006/data/processed/nepal_eastern_control_presence_adjudicated_v1.csv",
+  "adjudicated_csv_sha256": "4806d9e269507c386d42b4f6a45c486d603dafd0746773cdf41a9bc871fbefb6",
+  "adjudicated_row_count": 14,
+  "all_disagreements_adjudicated": true,
+  "confirmatory_construct_evidence_use_authorized": true,
+  "construct_validity_result": "not_yet_scored_against_model_state",
+  "core_change_authorized": false,
+  "coverage_after_adjudication": {
+    "distinct_source_families": 5,
+    "minimum_eastern_districts_pass": true,
+    "minimum_priority_period_districts_pass": true,
+    "minimum_source_families_pass": true,
+    "passed": true,
+    "unique_2005_2006_eastern_holdout_districts": 10,
+    "unique_eastern_holdout_districts": 11
+  },
+  "decisions": [
+    {
+      "blind_id": "11b8d4a5e627",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2006-09-04",
+        "date_start": "2006-09-04",
+        "observable": "maoist_shadow_governance",
+        "rationale": "Both coders agree on construct/date. Historical CPN (Maoist) is mapped to the model's canonical insurgent actor; scope remains the three named municipalities.",
+        "spatial_scope": "Damak, Bhadrapur, and Mechinagar municipalities",
+        "value_or_category": "municipal_tax_collection_and_contract_allocation"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "2c7a45d69253",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2004-09-07",
+        "date_start": "2004-09-01",
+        "observable": "territorial_access_constraint",
+        "rationale": "Both coders agree on construct. The narrower independently coded 1-7 September blockade interval is retained; 8 September fear/emptying is not carried into the blockade interval.",
+        "spatial_scope": "Ilam district headquarters and explicitly reported trade centres",
+        "value_or_category": "maoist_imposed_blockade_of_ilam_headquarters_and_trade_centres"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "39d96300ced7",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2006-10-11",
+        "date_start": "2006-10-11",
+        "observable": "maoist_armed_presence",
+        "rationale": "Both coders agree on armed presence. The source-report date is used rather than the publication-week envelope.",
+        "spatial_scope": "Sharada Higher Secondary School compound, Khanar VDC, Sunsari district",
+        "value_or_category": "school_used_as_maoist_barracks_with_25_cadres_reported_present"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "4f8bf2492d43",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "MEDIUM",
+        "date_end": "2005-12-31",
+        "date_start": "2005-10-01",
+        "observable": "territorial_access_constraint",
+        "rationale": "Both coders agree on construct and quarter. Confidence is conservatively reduced to MEDIUM because OHCHR reports district cases without exact localities or incident dates.",
+        "spatial_scope": "reported Khotang cases; specific localities not stated",
+        "value_or_category": "homes_padlocked_or_marked_and_land_seized_from_RNA_families"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "60a7cee12357",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2005-09-09",
+        "date_start": "2005-09-09",
+        "observable": "territorial_access_constraint",
+        "rationale": "Both coders agree on the blockade. The publication-date current-status observation is retained without back-carry to the ceasefire start.",
+        "spatial_scope": "Panchthar district headquarters (Phidim) and its road access",
+        "value_or_category": "maoist_road_blockade_active_at_panchthar_district_headquarters"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "6d5a31f877f2",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2004-05-16",
+        "date_start": "2004-05-16",
+        "observable": "maoist_shadow_governance",
+        "rationale": "Both coders agree on fiscal/regulatory shadow governance. The source dateline is retained as the observation date; no publication-week carry-forward.",
+        "spatial_scope": "listed lower-Solukhumbu VDCs",
+        "value_or_category": "peoples_government_taxation_and_NGO_project_approval_regime"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "6e04e40be38e",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "MEDIUM",
+        "date_end": "2005-09-09",
+        "date_start": "2005-09-09",
+        "observable": "territorial_access_constraint",
+        "rationale": "Both coders agree; the corridor location is retained without district-wide extrapolation and the observation is limited to the report date.",
+        "spatial_scope": "Rakke/Ranke Bajar on the Ilam-Phidim border-road corridor",
+        "value_or_category": "passengers_turned_back_by_maoist_blockade"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "7ad902d44286",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2004-09-08",
+        "date_start": "2004-08-25",
+        "observable": "territorial_access_constraint",
+        "rationale": "Both coders independently recover the explicitly dated Maoist/PLA/people's-government program and its district-headquarters scope.",
+        "spatial_scope": "Phidim/Phidim Bazaar, Panchthar district headquarters",
+        "value_or_category": "cordon_blockade_and_closure_sequence_at_phidim"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "7c95742e2e81",
+      "decision": {
+        "actor_id": "government",
+        "confidence": "HIGH",
+        "date_end": "2005-10-07",
+        "date_start": "2005-10-07",
+        "observable": "government_administrative_presence",
+        "rationale": "The source explicitly reports total government withdrawal from villages, VDC/development/health staff in Khandbari, and police not venturing into villages. This is retained as the distinct government-administrative observation; Maoist movement restriction is separately retained in eec925a82a6c.",
+        "spatial_scope": "Sankhuwasabha rural villages versus Khandbari district headquarters",
+        "value_or_category": "government_withdrawn_from_rural_villages_with_VDC_and_development_staff_concentrated_in_Khandbari"
+      },
+      "observable_exact_agreement_before_adjudication": false,
+      "semantic_actor_agreement_before_adjudication": false
+    },
+    {
+      "blind_id": "a4f3a0b74b48",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "MEDIUM",
+        "date_end": "2005-09-09",
+        "date_start": "2005-09-03",
+        "observable": "maoist_shadow_governance",
+        "rationale": "Both coders agree on local taxation/shadow governance. The source gives an occurrence window after the 3 September ceasefire through the report date; confidence is conservatively MEDIUM because it does not establish a broader administrative apparatus.",
+        "spatial_scope": "Risku and Tribeni areas of Udayapur district",
+        "value_or_category": "household_tax_rice_and_cash_demands_after_ceasefire"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "acd798e13d7b",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2005-09-09",
+        "date_start": "2005-09-09",
+        "observable": "maoist_shadow_governance",
+        "rationale": "Observable disagreement resolved using the prospectively frozen mapping: NGO/permit/rule enforcement may identify administrative/legal shadow-governance reach. The source says a yearlong ban remained in force, but the exact one-year start date is not back-calculated; current status is coded on the report date.",
+        "spatial_scope": "Tehrathum district NGO/community-organization activity; exact subdistrict locations unspecified",
+        "value_or_category": "maoist_ban_preventing_NGO_and_community_organization_operation"
+      },
+      "observable_exact_agreement_before_adjudication": false,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "ba5b17f0971e",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2005-09-09",
+        "date_start": "2005-09-09",
+        "observable": "territorial_access_constraint",
+        "rationale": "Both coders agree. The current-status blockade is retained on the report date without district-wide extrapolation.",
+        "spatial_scope": "Taplejung district headquarters",
+        "value_or_category": "maoist_road_blockade_active_at_taplejung_district_headquarters"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "eec925a82a6c",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2005-10-07",
+        "date_start": "2005-10-07",
+        "observable": "territorial_access_constraint",
+        "rationale": "The source supports both taxation and mobility authority. Under the frozen narrower-claim rule, the explicit movement restriction is retained as territorial access constraint rather than combining two constructs in one row.",
+        "spatial_scope": "Sankhuwasabha village-to-Khandbari and village-to-market movement",
+        "value_or_category": "maoist_restrictions_on_village_to_Khandbari_and_market_movement"
+      },
+      "observable_exact_agreement_before_adjudication": false,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "fa4fb4b19cd6",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "MEDIUM",
+        "date_end": "2006-08-09",
+        "date_start": "2006-08-09",
+        "observable": "maoist_shadow_governance",
+        "rationale": "Both coders identify de facto local regulation/shadow governance. The report date and narrower named-area scope are retained.",
+        "spatial_scope": "named rural Morang border-area VDCs, especially Mahadeva and Jhurkiya",
+        "value_or_category": "local_permission_payment_protection_and_police_interference_rules"
+      },
+      "observable_exact_agreement_before_adjudication": true,
+      "semantic_actor_agreement_before_adjudication": true
+    }
+  ],
+  "historical_predictive_rescoring_authorized": false,
+  "inputs": {
+    "acquisition_contract_sha256": "ded85dc01c1e9f79f7b946131a685f4b78f62502e49e74b42263724e02705047",
+    "adjudication_contract_sha256": "c18fcbcc607fc005a373784e2f75a5d6ac8d03c6ddc668cb504ab4c063b77e91",
+    "agreement_sha256": "8bb8d400429f2e0cff47a7ef9b9054315be15bfecc43125c0f8200ea96b29f97",
+    "first_coder_sha256": "1450901c99ea2bdb9ff86f0a337dc507406805fbf2ab21283a1fc8e6fc080062",
+    "locked_second_coder_sha256": "090c899f4e4793c38c63fb810de3155fa2e50fef218abf42d00dcc9c1df57d6b",
+    "mapping_contract_sha256": "ca4f7210dadb8df57b9a70c814e7312f216845889d46851ee28dd4a5195b1164",
+    "merge_manifest_sha256": "13413ecc4685cdade87d3f3fce5dae0b93145ccfa6dfa5ba38692635ad91e84f",
+    "shard_lock_sha256": "473e784d00dea11d889e4f84e2df8487bc7c1da7af7ec80bfa15c4243e9eeb76"
+  },
+  "observable_disagreements_adjudicated": [
+    {
+      "blind_id": "7c95742e2e81",
+      "decision": {
+        "actor_id": "government",
+        "confidence": "HIGH",
+        "date_end": "2005-10-07",
+        "date_start": "2005-10-07",
+        "observable": "government_administrative_presence",
+        "rationale": "The source explicitly reports total government withdrawal from villages, VDC/development/health staff in Khandbari, and police not venturing into villages. This is retained as the distinct government-administrative observation; Maoist movement restriction is separately retained in eec925a82a6c.",
+        "spatial_scope": "Sankhuwasabha rural villages versus Khandbari district headquarters",
+        "value_or_category": "government_withdrawn_from_rural_villages_with_VDC_and_development_staff_concentrated_in_Khandbari"
+      },
+      "observable_exact_agreement_before_adjudication": false,
+      "semantic_actor_agreement_before_adjudication": false
+    },
+    {
+      "blind_id": "acd798e13d7b",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2005-09-09",
+        "date_start": "2005-09-09",
+        "observable": "maoist_shadow_governance",
+        "rationale": "Observable disagreement resolved using the prospectively frozen mapping: NGO/permit/rule enforcement may identify administrative/legal shadow-governance reach. The source says a yearlong ban remained in force, but the exact one-year start date is not back-calculated; current status is coded on the report date.",
+        "spatial_scope": "Tehrathum district NGO/community-organization activity; exact subdistrict locations unspecified",
+        "value_or_category": "maoist_ban_preventing_NGO_and_community_organization_operation"
+      },
+      "observable_exact_agreement_before_adjudication": false,
+      "semantic_actor_agreement_before_adjudication": true
+    },
+    {
+      "blind_id": "eec925a82a6c",
+      "decision": {
+        "actor_id": "insurgent",
+        "confidence": "HIGH",
+        "date_end": "2005-10-07",
+        "date_start": "2005-10-07",
+        "observable": "territorial_access_constraint",
+        "rationale": "The source supports both taxation and mobility authority. Under the frozen narrower-claim rule, the explicit movement restriction is retained as territorial access constraint rather than combining two constructs in one row.",
+        "spatial_scope": "Sankhuwasabha village-to-Khandbari and village-to-market movement",
+        "value_or_category": "maoist_restrictions_on_village_to_Khandbari_and_market_movement"
+      },
+      "observable_exact_agreement_before_adjudication": false,
+      "semantic_actor_agreement_before_adjudication": true
+    }
+  ],
+  "parameter_fitting_authorized": false,
+  "posthoc_actor_ontology_sensitivity": {
+    "interpretation": "Secondary diagnostic only: CPN (Maoist)/Maoist/PLA labels are mapped to Pineland's canonical insurgent actor. The Sankhuwasabha government-withdrawal row remains a substantive actor/observable disagreement before adjudication.",
+    "semantic_actor_agreement": 0.9285714285714286,
+    "semantic_equivalent_rows": 13,
+    "total_rows": 14
+  },
+  "primary_preregistered_agreement_preserved": {
+    "metrics": {
+      "actor_agreement_among_jointly_admissible": 0.0,
+      "admissibility_agreement": 1.0,
+      "jointly_admissible_rows": 14,
+      "observable_agreement_among_jointly_admissible": 0.7857142857142857,
+      "rows_expected": 14,
+      "rows_received": 14,
+      "rows_validly_linked": 14,
+      "temporal_overlap_among_jointly_admissible": 1.0
+    },
+    "note": "The failed exact actor-string gate is retained unchanged and is not replaced by the post-hoc semantic sensitivity metric.",
+    "pre_adjudication_quality_gate_passed": false,
+    "quality_gates": {
+      "actor": false,
+      "admissibility": true,
+      "complete": true,
+      "observable": true,
+      "temporal": true
+    }
+  },
+  "repository_state": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/construct_validity_readiness_audit_v1.json",
+      "studies/research_program/construct_validity_readiness_audit_v1_manifest.json",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/local_action_diagnostic_identification_contract_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1_manifest.json",
+      "studies/research_program/nepal_construct_observation_mapping_contract_v1.json",
+      "studies/research_program/nepal_control_presence_acquisition_audit_v1.json",
+      "studies/research_program/nepal_control_presence_acquisition_contract_v1.json",
+      "studies/research_program/nepal_control_presence_adjudication_contract_v1.json",
+      "studies/research_program/nepal_second_coder_agreement_v1.json",
+      "studies/research_program/nepal_second_coder_blind_key_v1.json",
+      "studies/research_program/nepal_second_coder_completed_v1.csv",
+      "studies/research_program/nepal_second_coder_instructions_v1.md",
+      "studies/research_program/nepal_second_coder_merge_manifest_v1.json",
+      "studies/research_program/nepal_second_coder_packet_v1.csv",
+      "studies/research_program/nepal_second_coder_part_1_v1.csv",
+      "studies/research_program/nepal_second_coder_part_2_v1.csv",
+      "studies/research_program/nepal_second_coder_part_3_v1.csv",
+      "studies/research_program/nepal_second_coder_part_4_v1.csv",
+      "studies/research_program/nepal_second_coder_partial_attempt_v1.csv",
+      "studies/research_program/nepal_second_coder_shard_lock_v1.json",
+      "studies/research_program/nepal_v5_construct_retention_audit_v1.json",
+      "studies/research_program/scripts/adjudicate_nepal_control_presence_v1.py",
+      "studies/research_program/scripts/audit_construct_validity_readiness_v1.py",
+      "studies/research_program/scripts/audit_nepal_control_presence_acquisition_v1.py",
+      "studies/research_program/scripts/audit_nepal_v5_construct_retention_v1.py",
+      "studies/research_program/scripts/build_nepal_second_coder_packet_v1.py",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/merge_nepal_second_coder_parts_v1.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/score_nepal_second_coder_agreement_v1.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_local_action_diagnostic_identification.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1_manifest.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "schema_version": "pineland.nepal_control_presence_adjudication.v1",
+  "status": "adjudicated_construct_evidence_not_historical_rescore",
+  "unresolved_disagreements": []
+}

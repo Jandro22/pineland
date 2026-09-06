@@ -42,12 +42,14 @@ VOLATILE_PROVENANCE_KEYS = frozenset({
 OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "event_log", "event_counts", "contact_event_times",
     "contact_event_localities", "contact_funnel_records",
-    "contact_funnel_counts", "recruitment_total", "behavior_change_total",
+      "contact_funnel_counts", "recruitment_total", "behavior_change_total",
+      "action_funnel_counts", "action_funnel_by_actor_locality",
     "behavior_change_represented_population",
     "causal_ledger", "synthetic_records", "checkpoints", "state_deltas",
     "stock_transactions", "organization_eligibility_log",
     "organization_onset_log", "observation_index",
     "locality_path_cache", "locality_travel_time_cache", "in_transit_supply_total",
+    "active_shipment_ids", "active_movement_order_ids",
 })
 
 OUTPUT_ONLY_SUMMARY_FIELDS = frozenset({

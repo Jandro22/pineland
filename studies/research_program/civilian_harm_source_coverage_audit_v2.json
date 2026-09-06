@@ -1,0 +1,99 @@
+{
+  "a60_343_screening_update": {
+    "coded_as_confirmatory_harm": false,
+    "finding": "A/60/343 reports about 130000 IDPs remaining at end-2004, but the population includes heterogeneous displacement histories and does not identify the stock as a clean conflict/policy-attributable civilian-harm flow or stock under the frozen coding contract.",
+    "rule": "Preserve the quantitative source fact as screened context rather than weakening the attribution requirement."
+  },
+  "afghanistan_ucdp_unama_measurement_concordance": {
+    "interpretation": "Matched years can have similar temporal ordering while differing substantially in absolute level. This is source-measurement disagreement, not a calibration target and not grounds to privilege either source.",
+    "matched_full_year_count": 5,
+    "matched_rows": [
+      {
+        "ucdp_civilian_deaths": 674,
+        "ucdp_to_unama_ratio": 0.4425476034143139,
+        "unama_civilian_deaths": 1523,
+        "year": 2007
+      },
+      {
+        "ucdp_civilian_deaths": 763,
+        "ucdp_to_unama_ratio": 0.3602455146364495,
+        "unama_civilian_deaths": 2118,
+        "year": 2008
+      },
+      {
+        "ucdp_civilian_deaths": 1099,
+        "ucdp_to_unama_ratio": 0.4556384742951907,
+        "unama_civilian_deaths": 2412,
+        "year": 2009
+      },
+      {
+        "ucdp_civilian_deaths": 1759,
+        "ucdp_to_unama_ratio": 0.5168968557155451,
+        "unama_civilian_deaths": 3403,
+        "year": 2019
+      },
+      {
+        "ucdp_civilian_deaths": 1647,
+        "ucdp_to_unama_ratio": 0.542668863261944,
+        "unama_civilian_deaths": 3035,
+        "year": 2020
+      }
+    ],
+    "spearman_rank_correlation": 1.0,
+    "ucdp_to_unama_ratio_max": 0.542668863261944,
+    "ucdp_to_unama_ratio_median": 0.4556384742951907,
+    "ucdp_to_unama_ratio_min": 0.3602455146364495
+  },
+  "artifact_hashes": {
+    "first_coder": "bfaa9565e26a14383876a28d80ab14c075c82408c530ee2403c43a0003904340",
+    "model_compatibility_contract": "b0368b4a53426479c278964de1acd0a1a0f1df6d1ac53834dc7119cead7f4361",
+    "source_exposure_log": "8818506718317472e5818b3d35d7c7edbad1bf232ed797818f745e55be2a5ec1",
+    "ucdp_contract": "0350537b5495f0ba76b9fbcbefc5640b6a126a3487f5a55d9ad4f5054c295fae",
+    "ucdp_overlap_audit": "4d6a45cc6b9b2b719742b48f37d8b5b7ea8521164c864ab5b4ccf8790c3f9c27"
+  },
+  "confirmatory_historical_harm_validation_authorized": false,
+  "core_change_authorized": false,
+  "coverage_gate_components": {
+    "afghanistan_direct_harm_two_independent_families_or_audited_series_plus_crosscheck": true,
+    "afghanistan_longitudinal_displacement_family_present": true,
+    "nepal_direct_harm_two_independent_families": true,
+    "nepal_displacement_or_resource_loss_family_present": true
+  },
+  "direct_harm_independent_origins": {
+    "afghanistan_2004_2021": [
+      "UCDP_GED",
+      "UNAMA_OHCHR"
+    ],
+    "nepal_2001_2006": [
+      "OHCHR",
+      "UCDP_GED"
+    ]
+  },
+  "displacement_independent_origins": {
+    "afghanistan_2004_2021": [
+      "UNHCR"
+    ],
+    "nepal_2001_2006": [
+      "UNHCR"
+    ]
+  },
+  "historical_predictive_rescore_authorized": false,
+  "next_licensed_step": "Freeze blind second-coder/adjudication rules and packet for the source-interpreted first-coder records; treat UCDP structured extraction as a separately hash-audited measurement family.",
+  "parameter_fitting_authorized": false,
+  "pineland_model_comparison_authorized": false,
+  "preserved_prior_result": {
+    "path": "studies/research_program/civilian_harm_first_coder_audit_v1.json",
+    "rule": "V1 remains failed; V2 adds prospectively contracted evidence rather than rewriting V1.",
+    "sha256": "1fb1dbbe3123bdc77600362ad579114805db5a5ee0366c5ce53a4dc385aa0a66",
+    "v1_first_coder_coverage_gate_passed": false
+  },
+  "remaining_confirmatory_blockers": [
+    "blind second-coder reliability/adjudication has not been completed for source-interpreted records",
+    "manual web/PDF sources are not all immutable-byte-hash bound",
+    "current Pineland harm components remain semantically incompatible with historical numeric harm",
+    "UNAMA and UCDP civilian-death levels materially disagree and require explicit measurement-model treatment rather than averaging"
+  ],
+  "schema_version": "pineland.civilian_harm_source_coverage.v2",
+  "source_acquisition_coverage_gate_passed": true,
+  "status": "coverage_gate_after_independent_ucdp_crosscheck_not_confirmatory_validation"
+}

@@ -1,0 +1,10 @@
+{
+  "artifact": "studies/research_program/local_action_diagnostic_identification_recovery_v1.json",
+  "artifact_sha256": "5684885263d322a10ed380fcb2485649fae0655df2a76d956c17d1e26191e958",
+  "contract": "studies/research_program/local_action_diagnostic_identification_contract_v1.json",
+  "contract_sha256": "64afb0302c13b35ffbef5bcac4d9373ac5456d9ad300fe1e5cf1c8dc2ed6d88a",
+  "passed": true,
+  "runner": "studies/research_program/scripts/validate_local_action_diagnostic_identification.py",
+  "runner_sha256": "17336a7eafb21310efad14c204e209099b56378376993469dd6701c92a2094d1",
+  "schema_version": "pineland.local_action_diagnostic_identification_manifest.v1"
+}

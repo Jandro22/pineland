@@ -1,0 +1,59 @@
+{
+  "annual_output_sha256": "8fac75f012d64f158bddc6f8575ea2983a549e4597f61c5177a93c271d2f2cf8",
+  "archive_hashes": {
+    "afghanistan_2004_2021": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
+    "nepal_2001_2006": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667"
+  },
+  "boundary_or_year_crossing_event_count": 1,
+  "contract_sha256": "0350537b5495f0ba76b9fbcbefc5640b6a126a3487f5a55d9ad4f5054c295fae",
+  "core_change_authorized": false,
+  "event_counts": {
+    "afghanistan_2004_2021": 38796,
+    "nepal_2001_2006": 4743
+  },
+  "event_output_sha256": "5bd3e54295e7a8cb25f32e2ca928a89b1f8af4fcad68403a5f4549f2c67d9100",
+  "historical_predictive_rescore_authorized": false,
+  "interpretation": "UCDP GED deaths_civilians is an independent structured civilian-death measurement family. Agreement or disagreement with UNAMA/OHCHR is a measurement-concordance result only and does not score Pineland.",
+  "matched_full_year_afghanistan_unama_ucdp": [
+    {
+      "ucdp_civilian_deaths": 674,
+      "ucdp_to_unama_ratio": 0.4425476034143139,
+      "unama_civilian_deaths": 1523,
+      "year": 2007
+    },
+    {
+      "ucdp_civilian_deaths": 763,
+      "ucdp_to_unama_ratio": 0.3602455146364495,
+      "unama_civilian_deaths": 2118,
+      "year": 2008
+    },
+    {
+      "ucdp_civilian_deaths": 1099,
+      "ucdp_to_unama_ratio": 0.4556384742951907,
+      "unama_civilian_deaths": 2412,
+      "year": 2009
+    },
+    {
+      "ucdp_civilian_deaths": 1759,
+      "ucdp_to_unama_ratio": 0.5168968557155451,
+      "unama_civilian_deaths": 3403,
+      "year": 2019
+    },
+    {
+      "ucdp_civilian_deaths": 1647,
+      "ucdp_to_unama_ratio": 0.542668863261944,
+      "unama_civilian_deaths": 3035,
+      "year": 2020
+    }
+  ],
+  "matched_full_year_count": 5,
+  "no_posthoc_success_threshold": true,
+  "parameter_fitting_authorized": false,
+  "pineland_model_comparison_authorized": false,
+  "positive_civilian_death_event_counts": {
+    "afghanistan_2004_2021": 4750,
+    "nepal_2001_2006": 1451
+  },
+  "schema_version": "pineland.civilian_harm_ucdp_overlap_audit.v1",
+  "status": "independent_measurement_crosscheck_not_model_scoring"
+}

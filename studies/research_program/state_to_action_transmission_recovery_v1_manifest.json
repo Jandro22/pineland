@@ -1,0 +1,10 @@
+{
+  "artifact": "studies/research_program/state_to_action_transmission_recovery_v1.json",
+  "artifact_sha256": "dbc8af5973f00f23cfd8124715affd7c4cc8dede0e4bc9947ff3c1db4695cc47",
+  "contract": "studies/research_program/state_to_action_transmission_contract_v1.json",
+  "contract_sha256": "0eb775ddb2330f8bd09cd2b1dc34a990141c1f6efe694c08ec6624769e9ba088",
+  "passed": true,
+  "runner": "studies/research_program/scripts/validate_state_to_action_transmission.py",
+  "runner_sha256": "12e949b537b2daf73139a5a9718dc25504dcd02df501631bb8ce40b64d568ba4",
+  "schema_version": "pineland.state_to_action_transmission_recovery_manifest.v1"
+}

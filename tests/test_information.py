@@ -14,11 +14,26 @@ from pineland_sim.information import (
     observe_target,
     process_information,
     _prune_information_history,
+    _actual_target_presence,
 )
 from pineland_sim.world import seeded_rng
 
 
 class InformationTests(unittest.TestCase):
+    def test_aggregate_government_target_includes_state_force_formations(self):
+        world = generate_pineland(SimulationConfig(
+            agent_count=100, locality_count=17, horizon_days=1, seed=1411))
+        state_formation = next(
+            formation for formation in world.formations.values()
+            if world.organizations[formation.organization_id].kind.value != "insurgent"
+        )
+        present, personnel, target_id = _actual_target_presence(
+            world, "government", state_formation.locality_id
+        )
+        self.assertTrue(present)
+        self.assertGreaterEqual(personnel, state_formation.personnel)
+        self.assertIsNotNone(target_id)
+
     def test_pruning_never_reuses_observation_or_relay_identity(self):
         world = generate_pineland(SimulationConfig(
             agent_count=100, locality_count=17, horizon_days=5, seed=1410))

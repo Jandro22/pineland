@@ -1,0 +1,395 @@
+{
+  "schema_version": "1.0.0",
+  "status": "preregistered_estimand_contract_not_fit_or_efficacy_claim",
+  "purpose": "Freeze the explanatory target, causal estimands, aggregation rules, policy information set, denominators, horizons, and falsifiers before further historical fitting or intervention evaluation.",
+  "inherits_from": [
+    "studies/research_program/outcome_measurement_contract.json",
+    "studies/research_program/coin_interventions.json"
+  ],
+  "freeze_rules": {
+    "historical_fit_may_choose_horizons": false,
+    "holdout_outcomes_may_change_definitions": false,
+    "missing_outcomes_may_be_replaced_by_proxies": false,
+    "post_treatment_survival_may_change_baseline_denominators": false,
+    "changes_require_new_schema_version_and_prospective_justification": true
+  },
+  "theory_target": {
+    "target_population_of_settings": "Predeclared conflict settings with an organized state or state-backed security actor, at least one organized armed challenger or credible reactivation risk, spatially heterogeneous local political-security conditions, and enough measurement support to instantiate the registered observation operators. Historical inclusion is not conditional on Pineland fit.",
+    "mechanism_unit": {
+      "unit": "organization-locality-time",
+      "clock": "simulation day",
+      "actor_resolution": "organization or formation genealogy remains actor-resolved through aggregation"
+    },
+    "observation_unit": {
+      "unit": "case-native administrative-unit-time",
+      "rule": "Each case declares and freezes its native spatial and temporal observation unit before scoring. Simulation localities are mapped through a dated crosswalk, never by observed outcome intensity."
+    },
+    "spillover_unit": {
+      "unit": "actor-network-edge-time",
+      "rule": "Interference is represented by dated, directed actor-network exposure histories. Network neighbors are not treated as independent observations when exposure can spill over."
+    },
+    "expectation_population": {
+      "case_target": "All predeclared baseline target administrative units, represented civilians, and actor organizations relevant to the outcome in case c; outcome-specific risk sets are declared below.",
+      "sampling_rule": "Average over the preregistered stochastic simulation ensemble and declared parameter, case-input, measurement, and structural uncertainty distributions. Never average only over favorable seeds, surviving organizations, or units with observed post-treatment activity.",
+      "baseline_denominator_fixed": true,
+      "uncertainty_dimensions": [
+        "stochastic_simulation",
+        "parameter",
+        "case_input",
+        "measurement",
+        "structural"
+      ]
+    }
+  },
+  "time_contract": {
+    "evaluation_horizons_days": [
+      30,
+      90,
+      365
+    ],
+    "horizon_labels": {
+      "30": "short_run",
+      "90": "persistence",
+      "365": "durability"
+    },
+    "chosen_from_historical_fit": false,
+    "sensitivity_policy": {
+      "primary_windows_remain_fixed": true,
+      "persistence_window_days": [
+        60,
+        90,
+        120
+      ],
+      "qualifying_quiet_days": [
+        60,
+        90,
+        120
+      ],
+      "recurrence_followup_days": [
+        180,
+        365,
+        730
+      ],
+      "rule": "Sensitivity windows are evaluated as a predeclared robustness grid. They cannot replace the 90-day persistence/Q90 and 365-day recurrence primary estimands because one fits a historical case better."
+    },
+    "persistence": {
+      "estimand_id": "P90",
+      "window_days": 90,
+      "definition": "Probability that a viable organization-locality activation present at the index time remains viable in the same locality 90 days later, with organization genealogy respected and relocation reported separately.",
+      "right_censoring": "Episodes without 90 days of potential follow-up are censored and retained in survival/risk-set accounting rather than coded as failures or dropped."
+    },
+    "recurrence": {
+      "estimand_id": "R365_after_Q90",
+      "qualifying_quiet_days": 90,
+      "followup_days": 365,
+      "definition": "Cumulative incidence of renewed viable armed contestation within 365 days after a prospectively classified 90-day quiet, settlement, or withdrawal interval.",
+      "policy_effect_denominator": "The baseline target conflict population. Failure to enter qualifying quiet remains an explicit competing outcome rather than being removed from the denominator.",
+      "conditional_mechanism_diagnostic": "A separate descriptive recurrence hazard may be reported among units that enter a qualifying quiet state, but it is not the policy total-effect estimand because quiet entry can be treatment-induced.",
+      "short_term_violence_suppression_is_recurrence": false
+    }
+  },
+  "aggregation_contract": {
+    "spatial_crosswalk": "Use a frozen, dated locality-to-case-native administrative crosswalk based on geography and represented population membership. Boundary changes are explicit versions; event density or fitted outcomes may not determine weights.",
+    "actor_rule": "Keep actor-specific states separate until the registered outcome operator explicitly requires competition, composition, or summation. Splits and mergers follow genealogy rather than being silently relabeled as disappearance or birth.",
+    "time_rule": "Aggregate additive flows by summation over the registered exposure denominator; aggregate states by person-time or locality-time weighting as declared for each outcome. Never sum stocks across time.",
+    "population_weighting": "Civilian and governance quantities use represented-population weights where meaningful. Force stocks, organizational stocks, and network exposures use their native conserved/accounted units rather than representative-agent counts.",
+    "control_rule": "Aggregate each of the seven control dimensions separately. A scalar effective-control score or ordinal category is permitted only through a separately registered observation operator.",
+    "network_spillovers": {
+      "exposure": "For node i at time t, network exposure is the registered function of dated incoming and outgoing edge weights and neighbors' measured or latent states appropriate to the estimand.",
+      "causal_rule": "Policy contrasts with interference condition on or randomize exposure histories explicitly; no-SUTVA independence is not assumed across connected actors.",
+      "displacement_rule": "A locality becoming quiet while the same actor's viable capacity or activity rises elsewhere is classified as displacement unless stronger evidence supports another quiet state."
+    }
+  },
+  "quiet_state_registry": {
+    "organizational_loss": {
+      "definition": "The focal challenger has no viable local organizational stock or genealogical successor capable of local regeneration during the qualifying window.",
+      "observable_implication": "Independent presence/capacity evidence declines together with latent viable capacity; later activity requires new recruitment, external replenishment, or re-entry."
+    },
+    "accommodation": {
+      "definition": "The organization or successor remains viable but armed action is suppressed by a negotiated, political, or reciprocal accommodation state.",
+      "observable_implication": "Organizational continuity persists while agreement, political-access, ceasefire, or compliance evidence explains reduced armed activity."
+    },
+    "clandestine_survival": {
+      "definition": "Viable local organizational capacity persists without overt formation presence or recorded violence.",
+      "observable_implication": "Subsequent reactivation can descend from retained local stock, recruitment access, information, or social infrastructure without requiring a new external founder."
+    },
+    "displacement": {
+      "definition": "The focal locality becomes quiet because viable organizational activity or capacity moves to other localities or network positions.",
+      "observable_implication": "Actor-resolved capacity or activity falls locally and rises elsewhere on a compatible genealogy and time path."
+    },
+    "reporting_failure": {
+      "definition": "Latent violence or organizational activity persists but the case observation process fails to record it.",
+      "observable_implication": "The registered measurement model assigns material probability to non-observation and independent source/access evidence supports missingness."
+    },
+    "dominance": {
+      "definition": "One actor's durable political-security control suppresses opposing armed action while the dominated actor may or may not retain residual nonviolent organization.",
+      "observable_implication": "Independent multidimensional control evidence, not violence absence alone, indicates stable asymmetric control."
+    }
+  },
+  "outcome_vector_order": [
+    "violence",
+    "control",
+    "civilian_harm",
+    "institutional_capacity",
+    "insurgent_regeneration",
+    "foreign_dependence",
+    "recurrence"
+  ],
+  "outcomes": {
+    "violence": {
+      "symbol": "V",
+      "latent_definition": "Armed-event incidence and severity generated by the latent process.",
+      "observable_definition": "Recorded armed events and registered severity/fatality intervals after the case-specific event-reporting and geocoding operator.",
+      "denominator": "Civilian represented person-days for population-normalized incidence, with raw event counts and severity totals retained separately.",
+      "scale": "events per 100,000 represented civilian person-years, computed from person-days, plus severity distribution",
+      "horizon_operator": "Cumulative incidence and severity over (index, T], with the same operator applied to latent and recorded streams.",
+      "horizons_days": [
+        30,
+        90,
+        365
+      ],
+      "falsifier": "Reject the measurement claim if the registered recording model cannot recover known synthetic event incidence/severity or fails prospective independent-source calibration."
+    },
+    "control": {
+      "symbol": "C",
+      "latent_definition": "Actor-resolved seven-dimensional control state: formal, physical, administrative, legal, fiscal, social, and expected control.",
+      "observable_definition": "Case-native control evidence mapped through the prospectively frozen control observation operator; violence is not a control proxy.",
+      "denominator": "Represented civilian person-days within each case-native administrative unit for population-weighted summaries; dimensions remain separate by default.",
+      "scale": "seven actor-resolved dimension scores and, only when registered, an observed ordinal control category",
+      "horizon_operator": "Primary policy contrast is the actor-resolved population-weighted seven-dimensional state at T; person-time trajectory averages over (index, T] are reported separately rather than substituted for the endpoint.",
+      "horizons_days": [
+        30,
+        90,
+        365
+      ],
+      "falsifier": "Reject the control observation operator if it fails independent control/presence evidence or if its claimed ordering is not recovered prospectively outside the data used to define it."
+    },
+    "civilian_harm": {
+      "symbol": "H",
+      "latent_definition": "Direct civilian injury/death plus displacement and civilian resource loss attributable to conflict or policy.",
+      "observable_definition": "Case-specific civilian-harm records with source, attribution, access, and uncertainty fields; direct harm, displacement, and resource loss are reported as separate components before any composite.",
+      "denominator": "Represented civilian person-days at risk, with displacement additionally reported as persons or represented population share.",
+      "scale": "direct harm per 100,000 represented civilian person-years computed from person-days, plus displacement and resource-loss components in their native units",
+      "horizon_operator": "Cumulative attributable harm over (index, T], retaining direct harm, displacement, and resource loss as separate components.",
+      "horizons_days": [
+        30,
+        90,
+        365
+      ],
+      "falsifier": "Reject a harm comparison if attribution or missingness uncertainty is large enough that the sign of the registered component effect is not identified."
+    },
+    "institutional_capacity": {
+      "symbol": "I",
+      "latent_definition": "Durable indigenous governance and security capacity able to deliver functions without contemporaneous foreign substitution.",
+      "observable_definition": "Independent local institutional continuity, staffing/function, service-delivery, security-function, or implementation evidence declared by case.",
+      "denominator": "Represented population served or eligible case-native administrative units, fixed at baseline for policy comparisons.",
+      "scale": "component capacity scores and continuity/durability probabilities; no foreign-force-stock proxy",
+      "horizon_operator": "Primary policy contrast is indigenous capacity at T; continuity through (index, T] and post-support durability are separately reported diagnostics.",
+      "horizons_days": [
+        90,
+        365
+      ],
+      "falsifier": "Reject a durable-capacity claim if apparent capacity disappears under support removal or is explained solely by contemporaneous foreign inputs."
+    },
+    "insurgent_regeneration": {
+      "symbol": "G",
+      "latent_definition": "Endogenous production of viable descendant organization-locality activation episodes from eligible parent episodes.",
+      "observable_definition": "Parent-attributed viable activation episodes using the frozen genealogy protocol; initial conditions, pure relocation, unresolved parentage, and exogenous replenishment are separate pathways.",
+      "denominator": "Eligible parent activation episodes with censoring-aware 90-day offspring opportunity; unresolved/censored episodes remain accounted for.",
+      "scale": "viable endogenous child activation episodes per eligible parent episode within 90 days, with pathway-specific counts",
+      "horizon_operator": "Censoring-aware parent-attributed offspring production through T, with G90 the primary persistence-scale regeneration estimand and longer-horizon G365 reported separately.",
+      "horizons_days": [
+        90,
+        365
+      ],
+      "falsifier": "Reject a regeneration mechanism if known synthetic parentage cannot be recovered, shuffled topology performs similarly, or the effect is explained by relocation/background activation rather than parent-attributed offspring."
+    },
+    "foreign_dependence": {
+      "symbol": "D",
+      "latent_definition": "Marginal loss of durable indigenous outcomes caused by removal of external support, holding the registered removal intervention and accounting rules fixed.",
+      "observable_definition": "Support-removal or withdrawal contrasts linked to audited external inputs and independent post-support capacity/control evidence; personnel counts alone are not dependence.",
+      "denominator": "Baseline target administrative units and represented population exposed to the declared support regime; do not condition on post-removal survival.",
+      "scale": "signed post-support contrasts in registered capacity/control/regeneration/recurrence components, reported component-wise unless an explicit index is preregistered",
+      "horizon_operator": "At T, D is the registered within-regime nested contrast between the supported trajectory and its matched support-removal trajectory; the underlying outcome components remain visible.",
+      "horizons_days": [
+        90,
+        365
+      ],
+      "falsifier": "Reject a dependence claim if removal has no durable outcome effect after accounting conservation, or if the result is driven only by changing the denominator or foreign headcount proxy."
+    },
+    "recurrence": {
+      "symbol": "R",
+      "latent_definition": "Renewed viable armed contestation after a prospectively classified quiet, settlement, or withdrawal interval.",
+      "observable_definition": "Registered organization and event evidence of reactivation, interpreted jointly with the six-state quiet classification and the case recording model.",
+      "denominator": "For causal policy effects, the fixed baseline target conflict population; descriptive post-quiet hazards use the separately reported qualifying-quiet risk set.",
+      "scale": "365-day cumulative incidence after the Q90 rule, with ongoing conflict and no-quiet-entry as competing outcomes",
+      "horizon_operator": "Cumulative incidence of qualifying recurrence during the registered 365-day follow-up; ongoing conflict and failure to enter quiet remain competing outcomes in the baseline population.",
+      "horizons_days": [
+        365
+      ],
+      "falsifier": "Reject a recurrence claim based only on violence gaps, or when quiet-state/recording uncertainty makes reactivation indistinguishable from persistence or reporting failure."
+    }
+  },
+  "causal_policy_estimand": {
+    "estimand_id": "Delta_c(g,g0;T)",
+    "formula": "Delta_c(g,g0;T) = E[Y_T^g - Y_T^g0 | target population in case c]",
+    "vector_outcome_required": true,
+    "structured_vector_rule": "Y is a structured vector, not seven exchangeable scalars: flows are accumulated, states are evaluated at T, risk-set quantities use their registered survival/cumulative-incidence operators, and D is a nested support-removal contrast. Delta is computed component-wise.",
+    "direction_convention": "Every contrast names the focal actor and sign convention for each component. No common good/bad direction is inferred across V, C, H, I, G, D, and R.",
+    "policy_information_set": {
+      "allowed": "g_t may depend on measured or administratively available history through t, plus prospectively declared baseline case inputs.",
+      "measured_past_history_only": true,
+      "simulated_hidden_truth_access": false,
+      "omniscient_policy_allowed_for_efficacy_claims": false,
+      "diagnostic_exception": "An explicitly labeled omniscient synthetic diagnostic may use latent truth only to test an upper bound or software mechanism; it cannot support a policy efficacy claim."
+    },
+    "interference": "When one unit's treatment changes another unit's exposure through geography or actor networks, the exposure history is part of g. Report direct, spillover, and displacement effects when identified.",
+    "resource_accounting": {
+      "common_ledger_dimensions": [
+        "security_person_days",
+        "foreign_security_person_days",
+        "fiscal_resource_units",
+        "material_or_supply_units",
+        "transport_or_logistics_use",
+        "information_system_resources"
+      ],
+      "rule": "Every contrast declares which ledger dimensions are equalized, which are intentionally changed by treatment, and which are merely measured. Equalization is checked over the declared horizon, not inferred from similar final stocks."
+    },
+    "intervention_resource_constraints": {
+      "persistent_vs_episodic_presence": {
+        "equalized": [
+          "security_person_days",
+          "initial_security_stock",
+          "fiscal_resource_units"
+        ],
+        "treatment_changes": [
+          "temporal_and_spatial_persistence"
+        ],
+        "must_measure": [
+          "transport_or_logistics_use"
+        ]
+      },
+      "information_quality": {
+        "equalized": [
+          "security_person_days",
+          "force_stock",
+          "transport_or_logistics_use"
+        ],
+        "treatment_changes": [
+          "information_reliability_or_delay"
+        ],
+        "must_measure": [
+          "information_system_resources"
+        ]
+      },
+      "indigenous_capacity_vs_foreign_substitution": {
+        "equalized": [
+          "predeclared_short_term_security_reach"
+        ],
+        "treatment_changes": [
+          "indigenous_capacity_inputs",
+          "foreign_substitution_inputs"
+        ],
+        "must_measure": [
+          "security_person_days",
+          "foreign_security_person_days",
+          "fiscal_resource_units"
+        ],
+        "interpretation": "A bundled resource-allocation contrast, not a claim that indigenous and foreign inputs are physically identical."
+      },
+      "political_access": {
+        "equalized": [
+          "security_person_days",
+          "security_reach",
+          "fiscal_resource_units"
+        ],
+        "treatment_changes": [
+          "credible_political_access_rules"
+        ],
+        "must_measure": [
+          "institutional_implementation_costs"
+        ]
+      },
+      "local_security_persistence": {
+        "equalized": [
+          "security_person_days",
+          "initial_force_stock",
+          "material_or_supply_units"
+        ],
+        "treatment_changes": [
+          "local_continuity"
+        ],
+        "must_measure": [
+          "transport_or_logistics_use"
+        ]
+      },
+      "force_rotation": {
+        "equalized": [
+          "security_person_days",
+          "force_stock",
+          "material_or_supply_units"
+        ],
+        "treatment_changes": [
+          "rotation_rate"
+        ],
+        "must_measure": [
+          "rotation_transport_cost",
+          "local_information_loss"
+        ]
+      },
+      "logistics_reach": {
+        "equalized": [
+          "mean_local_stock",
+          "cumulative_material_delivered"
+        ],
+        "treatment_changes": [
+          "delivery_timing_and_reliability"
+        ],
+        "must_measure": [
+          "transport_or_logistics_use"
+        ]
+      },
+      "sanctuary": {
+        "equalized": [
+          "domestic_security_person_days",
+          "domestic_fiscal_resource_units"
+        ],
+        "treatment_changes": [
+          "cross_border_sanctuary_access"
+        ],
+        "must_measure": [
+          "external_support_and_movement"
+        ]
+      },
+      "withdrawal": {
+        "equalized": [
+          "pre_withdrawal_initial_state",
+          "declared_withdrawal_endpoint"
+        ],
+        "treatment_changes": [
+          "withdrawal_sequence",
+          "capacity_transfer_package"
+        ],
+        "must_measure": [
+          "cumulative_foreign_security_person_days",
+          "transfer_resources"
+        ],
+        "interpretation": "A bundled policy-package estimand unless a later factorial design independently varies sequencing and transfer resources."
+      }
+    },
+    "welfare": {
+      "scalar_welfare_defined": false,
+      "weights": null,
+      "lower_violence_implies_higher_welfare": false,
+      "rule": "Report the seven outcome components and Pareto tradeoffs. Any scalar welfare function requires explicit substantive weights, direction conventions, and sensitivity analysis registered before evaluating policies."
+    }
+  },
+  "global_falsifiers": [
+    "A policy implementation reads simulated hidden truth not available in its declared measured information set.",
+    "Outcome definitions, denominators, aggregation weights, quiet-state labels, or horizons are changed after inspecting holdout fit.",
+    "A missing control, capacity, harm, dependence, regeneration, or recurrence measure is silently replaced by violence.",
+    "A policy effect is reported only among post-treatment survivors, active localities, or qualifying quiet episodes when the registered baseline denominator is required.",
+    "Network spillovers or geographic displacement materially change untreated units but are ignored in the causal contrast.",
+    "Resource equalization claimed by an intervention fails the registered accounting ledger."
+  ]
+}

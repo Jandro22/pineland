@@ -1,0 +1,10 @@
+{
+  "artifact": "studies/research_program/prospective_measurement_retention_recovery_v2.json",
+  "artifact_sha256": "298efdd715ec0aae26025bc42f0de52cc16331c21837eba2650db0c227eeaa9c",
+  "contract": "studies/research_program/prospective_measurement_retention_contract_v2.json",
+  "contract_sha256": "806f0e262fd8bd05e93e4dc58eb939d4015e80ae55466ca825b8a0e6aa33bc3a",
+  "passed": true,
+  "runner": "studies/research_program/scripts/validate_prospective_measurement_retention_v2.py",
+  "runner_sha256": "d9e25fdbf94c22c5fd83227b607b3c3a7db38978494d0064642510c4a9e71099",
+  "schema_version": "pineland.prospective_measurement_retention_manifest.v2"
+}
