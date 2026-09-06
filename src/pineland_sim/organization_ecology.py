@@ -12,6 +12,11 @@ from .entities import (ArmedFormation, ControlVector, LANGUAGES, LeadershipAgent
                        clamp, logistic)
 from .logistics import _add_command_edge
 from .networks import community_bridge_capacity, language_compatibility
+from .relations import (
+    ensure_relation,
+    inherit_parent_relations,
+    update_relationship_ecology,
+)
 
 
 def armed_organizations(world, active_only: bool = True):
@@ -946,6 +951,9 @@ def mature_proto(world, proto: ProtoOrganization, time: float, rng: random.Rando
         "local_embeddedness": proto.capital["social"], "resource_dependence": .1,
     }
     world.organizations[oid] = organization
+    for other_id in world.organizations:
+        if other_id != oid:
+            ensure_relation(world, oid, other_id, time)
     for pid, fraction in founder_fractions.items():
         _set_armed_membership(world.persons[pid], organization, fraction)
     for locality in world.localities.values():
@@ -1402,6 +1410,9 @@ def split_organization(world, organization_id: str, time: float, rng: random.Ran
                 {c.organization_id: c.member_ids for c in children},
                 {c.organization_id: c.resources for c in children}, assignments,
                 {"cohesion": parent.cohesion, "military_losses": sum(f.cumulative_losses for f in formations)})
+    inherit_parent_relations(
+        world, (organization_id,), tuple(c.organization_id for c in children), time
+    )
     return tuple(children)
 
 
@@ -1451,6 +1462,9 @@ def merge_organizations(world, first_id: str, second_id: str, time: float, rng: 
     _transition(world, time, "merge", (first_id, second_id), (child.organization_id,),
                 {child.organization_id: child.member_ids}, {child.organization_id: total},
                 {child.organization_id: formations}, {"integration_cost": .08})
+    inherit_parent_relations(
+        world, (first_id, second_id), (child.organization_id,), time
+    )
     return child
 
 
@@ -1650,10 +1664,14 @@ def process_organization_ecology(world, time: float, rng: random.Random,
             if rng.random() < hazard:
                 merge_organizations(world, first_id, second_id, time, rng)
                 mergers = 1
+    relation_updates = update_relationship_ecology(
+        world, time, interval_days, rng
+    )
     synchronize_memberships(world)
     return {"proto_created": len(created), "births": births, "splits": splits,
             "mergers": mergers, "collapses": collapses,
-            "active_armed_organizations": len(armed_organizations(world))}
+            "active_armed_organizations": len(armed_organizations(world)),
+            "relationship_updates": relation_updates}
 
 
 def genealogy(world, organization_id: str) -> dict:

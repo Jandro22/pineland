@@ -10,6 +10,8 @@ from .entities import (ArmedFormation, BorderSegment, DiasporaLink, ExternalSupp
                        SecurityPost, SupplySource, clamp, logistic)
 from .logistics import _add_command_edge, create_movement_order
 from .timebase import reference_probability, reference_scale
+from .entities import RelationStatus
+from .relations import ensure_relation, set_relation
 
 
 SUPPORT_COMPONENTS = ("financial", "political", "material", "training",
@@ -325,6 +327,27 @@ def begin_intervention(world, state: ForeignState, time: float, mode: str,
         world.organizations[oid] = Organization(
             oid, f"{state.name} Expeditionary Command", OrganizationKind.FOREIGN,
             state.resources * .02, .72, .75, .5, .15, .65, .7, .7)
+        # A deployed expeditionary command is explicitly aligned with its
+        # intervention recipient; FOREIGN as a taxonomic kind is not itself a
+        # synonym for government-side allegiance.
+        for ally_id in ("government", "fdf", "police"):
+            if ally_id in world.organizations:
+                set_relation(
+                    world, oid, ally_id, RelationStatus.ALLIED, time,
+                    cooperation_memory=1.0,
+                )
+        for organization in world.organizations.values():
+            if (
+                organization.kind is OrganizationKind.INSURGENT
+                and organization.status == "active"
+            ):
+                set_relation(
+                    world, oid, organization.organization_id,
+                    RelationStatus.HOSTILE, time, hostility_memory=1.0,
+                )
+        for other_id in world.organizations:
+            if other_id != oid:
+                ensure_relation(world, oid, other_id, time)
     border = _best_border(world, state.state_id)
     fid = f"{oid.upper()}-01"
     if fid not in world.formations:
