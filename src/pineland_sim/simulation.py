@@ -57,6 +57,11 @@ class Simulation:
             ("mobility", intervals.mobility, 50),
             ("governance", intervals.governance, 70),
             ("economy", intervals.economy, 80),
+            # False reports are an observation-layer process with their own
+            # calendar clock. Reuse the information cadence rather than tying
+            # false positives to the number of latent events that happened to
+            # execute in the same period.
+            ("recording_noise", intervals.information, 85),
             ("checkpoint", intervals.checkpoint, 90),
         ]
         for event_type, interval, priority in recurring:
@@ -201,6 +206,10 @@ class Simulation:
         self.world.cumulative_supply_lost = 0.0
         self.world.cumulative_resource_to_supply = 0.0
         self.world.cumulative_civilian_harm = 0.0
+        self.world.cumulative_civilian_injuries = 0.0
+        self.world.cumulative_civilian_resource_loss = 0.0
+        self.world.cumulative_civilian_displacement = 0.0
+        self.world.civilian_harm_events.clear()
         self.world.cumulative_public_spending = 0.0
         self.world.cumulative_external_remittances = 0.0
         self.world.control_cost_consumed = {

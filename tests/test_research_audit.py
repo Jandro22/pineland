@@ -115,6 +115,26 @@ class ResearchAuditTests(unittest.TestCase):
         self.assertTrue(any(record.event_type == "false_event" for record in world.synthetic_records))
         self.assertFalse(any(event.event_type == "false_event" for event in world.event_log))
 
+    def test_false_event_process_is_independent_of_latent_scheduler_density(self):
+        rows = []
+        for contact_interval in (1.0, 0.05):
+            config = self.config(horizon_days=1, output_mode="calibration")
+            config.intervals.contact = contact_interval
+            config.recording.false_event_rate = 0.35
+            world = Simulation(generate_pineland(config)).run().world
+            rows.append([
+                (
+                    record.time,
+                    record.locality_id,
+                    record.reported_severity,
+                    record.geocoding_error,
+                    record.geocoding_error_distance_km,
+                )
+                for record in world.synthetic_records
+                if record.event_type == "false_event"
+            ])
+        self.assertEqual(rows[0], rows[1])
+
     def test_insufficient_proto_manpower_collapses_atomically(self):
         config = self.config(agent_count=120)
         world = generate_pineland(config)

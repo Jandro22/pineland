@@ -32,7 +32,11 @@ def apply_direct_civilian_harm(
     direct_harm = max(0.0, float(direct_harm))
     cfg = world.config.civilian_dynamics
     residents = _resident_people(world, locality_id)
-    represented = sum(person.weight for person in residents)
+    civilian_mass = {
+        person.person_id: person.weight * max(0.0, 1.0 - person.armed_fraction)
+        for person in residents
+    }
+    represented = sum(civilian_mass.values())
     deaths = min(
         represented,
         direct_harm * cfg.fatality_fraction_of_direct_harm,
@@ -43,8 +47,18 @@ def apply_direct_civilian_harm(
     )
     if deaths > 0 and represented > 0:
         for person in residents:
-            share = person.weight / represented
-            person.weight = max(0.0, person.weight - deaths * share)
+            old_weight = person.weight
+            old_armed_mass = old_weight * person.armed_fraction
+            share = civilian_mass[person.person_id] / represented
+            new_weight = max(0.0, old_weight - deaths * share)
+            person.weight = new_weight
+            # Direct civilian harm is allocated to the non-armed represented
+            # share. Preserve absolute armed membership when a mixed
+            # representative loses civilian weight.
+            person.armed_fraction = (
+                min(1.0, old_armed_mass / new_weight)
+                if new_weight > 1e-12 else 0.0
+            )
         locality = world.localities[locality_id]
         locality.population = max(0.0, float(locality.population) - deaths)
         district = world.districts[locality.district_id]

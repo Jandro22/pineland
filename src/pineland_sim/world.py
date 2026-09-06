@@ -763,8 +763,13 @@ class WorldState:
             raise AssertionError("global population accounting failed")
 
     def summary(self) -> dict[str, Any]:
+        from .physical import aggregate_insurgent_control
+
         government_control = [loc.control["government"].effective() for loc in self.localities.values()]
-        insurgent_control = [loc.control.get("insurgent").effective() if "insurgent" in loc.control else 0.0 for loc in self.localities.values()]
+        insurgent_control = [
+            aggregate_insurgent_control(self, loc.locality_id).effective()
+            for loc in self.localities.values()
+        ]
         finite_information_ages = [
             max(0.0, self.time - belief.last_reliable_observation_at)
             for belief in self.presence_beliefs.values()

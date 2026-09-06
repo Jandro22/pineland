@@ -7,13 +7,16 @@ from .entities import OrganizationKind
 
 
 def causal_integrity_diagnostics(world) -> dict:
+    from .physical import aggregate_insurgent_control
+
     active_insurgents = [org for org in world.organizations.values()
                          if org.kind is OrganizationKind.INSURGENT and org.status == "active"]
     physical_government = [locality.control["government"].physical
                            for locality in world.localities.values()]
-    physical_insurgent = [locality.control.get("insurgent").physical
-                          if "insurgent" in locality.control else 0.0
-                          for locality in world.localities.values()]
+    physical_insurgent = [
+        aggregate_insurgent_control(world, locality.locality_id).physical
+        for locality in world.localities.values()
+    ]
     belief_confidence = [belief.confidence for belief in world.control_beliefs.values()]
     contradictions = [belief.contradiction_index for belief in world.control_beliefs.values()]
     eligible = [row for row in world.organization_eligibility_log if row["eligible"]]

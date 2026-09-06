@@ -15,6 +15,66 @@ from .entities import (
     clamp,
 )
 from .world import WorldState, seeded_initialization_rng
+from .relations import organizations_allied
+
+
+_INSURGENT_SIDE_ACTOR = "__insurgent_side__"
+
+
+def active_insurgent_ids(world: WorldState) -> tuple[str, ...]:
+    return tuple(sorted(
+        organization.organization_id
+        for organization in world.organizations.values()
+        if (
+            organization.kind is OrganizationKind.INSURGENT
+            and organization.status == "active"
+        )
+    ))
+
+
+def aggregate_insurgent_control(
+    world: WorldState, locality_id: str
+) -> ControlVector:
+    """Return a derived insurgent-side control vector without mutating truth.
+
+    Concrete organization IDs always remain concrete. The side aggregate is a
+    measurement/analysis view composed across currently active insurgent
+    organizations. Physical reach uses the dedicated side-level physical
+    response calculation when available; other dimensions use the bounded
+    union of franchise-specific reach.
+    """
+    ids = active_insurgent_ids(world)
+    if not ids:
+        return ControlVector()
+    locality = world.localities[locality_id]
+    if ids == ("insurgent",):
+        # In the legacy/single-franchise world the concrete organization and
+        # the side are identical.  Respect the authoritative locality vector
+        # directly, including controlled synthetic interventions in tests.
+        return ControlVector(**locality.control["insurgent"].to_dict())
+    values: dict[str, float] = {}
+    for dimension in (
+        "formal", "physical", "administrative", "legal", "fiscal", "social", "expected"
+    ):
+        if dimension == "physical":
+            zones = zones_in_locality(world, locality_id)
+            side_values = [
+                zone.physical_control.get(_INSURGENT_SIDE_ACTOR)
+                for zone in zones
+            ]
+            if zones and all(value is not None for value in side_values):
+                values[dimension] = clamp(sum(
+                    zone.population_share * float(value)
+                    for zone, value in zip(zones, side_values)
+                ))
+                continue
+        complement = 1.0
+        for organization_id in ids:
+            vector = locality.control.get(organization_id)
+            value = getattr(vector, dimension) if vector is not None else 0.0
+            complement *= 1.0 - clamp(value)
+        values[dimension] = clamp(1.0 - complement)
+    return ControlVector(**values)
 
 
 def physical_edge_key(first_id: str, second_id: str) -> tuple[str, str]:
@@ -60,10 +120,21 @@ def _actor_matches_organization(world: WorldState, organization_id: str,
     organization = world.organizations.get(organization_id)
     if organization is None:
         return False
+    if actor_id == _INSURGENT_SIDE_ACTOR:
+        return organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
     if actor_id == "insurgent":
+        literal = world.organizations.get("insurgent")
+        if literal is not None and literal.status == "active":
+            return organization_id == "insurgent"
         return organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
     if actor_id == "government":
-        return organization.kind is not OrganizationKind.INSURGENT
+        if organization_id == "government":
+            return organization.status == "active"
+        return bool(
+            "government" in world.organizations
+            and organization.status == "active"
+            and organizations_allied(world, organization_id, "government")
+        )
     target = world.organizations.get(actor_id)
     if target is not None and target.kind is OrganizationKind.INSURGENT:
         return organization_id == actor_id and target.status == "active"
@@ -373,10 +444,21 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
                     formation.current_microzone_id not in world.microzones or
                     world.microzones[formation.current_microzone_id].locality_id != locality_id):
                 formation.current_microzone_id = default_zone
-    times = response_times(world, locality_id, actor, time)
+    effective_actor = (
+        _INSURGENT_SIDE_ACTOR
+        if (
+            actor == "insurgent"
+            and not (
+                "insurgent" in world.organizations
+                and world.organizations["insurgent"].status == "active"
+            )
+        )
+        else actor
+    )
+    times = response_times(world, locality_id, effective_actor, time)
     posts_by_zone: dict[str, float] = {}
     for post in posts_in_locality(world, locality_id):
-        if _actor_matches_organization(world, post.organization_id, actor):
+        if _actor_matches_organization(world, post.organization_id, effective_actor):
             effective_presence = post.fixed_presence
             if post.formation_id:
                 formation = world.formations[post.formation_id]
@@ -390,7 +472,7 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
     formations_by_zone: dict[str, float] = {}
     locality = world.localities[locality_id]
     for formation in world.formations.values():
-        if (not _actor_matches_organization(world, formation.organization_id, actor) or
+        if (not _actor_matches_organization(world, formation.organization_id, effective_actor) or
                 formation.locality_id != locality_id or
                 formation.moving or formation.outside_pineland or
                 formation.operational_status != "effective" or formation.personnel <= 0 or
@@ -402,29 +484,53 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
             config.formation_presence_gain * strength / max(250.0, locality.population * .002))
     aggregate = 0.0
     for zone in zones_in_locality(world, locality_id):
-        memory = decay_presence(zone, actor, time, config.presence_memory_days)
+        memory_actor = effective_actor
+        if effective_actor == _INSURGENT_SIDE_ACTOR:
+            memory = sum(
+                decay_presence(
+                    zone, organization_id, time, config.presence_memory_days
+                )
+                for organization_id in active_insurgent_ids(world)
+            )
+        else:
+            memory = decay_presence(zone, memory_actor, time, config.presence_memory_days)
         presence = 1 - exp(-(memory +
                              config.fixed_post_presence_gain * posts_by_zone.get(zone.microzone_id, 0.0) +
                              formations_by_zone.get(zone.microzone_id, 0.0)))
         response = 0.0 if times[zone.microzone_id] == inf else exp(-times[zone.microzone_id] / config.response_decay_hours)
-        zone.physical_control[actor] = clamp(.55 * presence + .45 * response)
-        aggregate += zone.population_share * zone.physical_control[actor]
+        zone.physical_control[effective_actor] = clamp(.55 * presence + .45 * response)
+        aggregate += zone.population_share * zone.physical_control[effective_actor]
     aggregate = clamp(aggregate)
     if apply_contestation and actor in {"government", "insurgent"}:
-        opponent = "insurgent" if actor == "government" else "government"
+        opponent = _INSURGENT_SIDE_ACTOR if actor == "government" else "government"
         if any(organization.kind.value == "insurgent" and organization.status == "active"
                for organization in world.organizations.values()):
             # Recompute the opponent's raw reach without recursively applying
             # contestation, then expose the contested value through this
             # backwards-compatible public helper.
-            recompute_microzone_control(world, locality_id, opponent, time,
-                                        apply_contestation=False)
+            if opponent == _INSURGENT_SIDE_ACTOR:
+                recompute_microzone_control(
+                    world, locality_id, _INSURGENT_SIDE_ACTOR, time,
+                    apply_contestation=False,
+                )
+                opponent_key = _INSURGENT_SIDE_ACTOR
+            else:
+                recompute_microzone_control(
+                    world, locality_id, opponent, time,
+                    apply_contestation=False,
+                )
+                opponent_key = opponent
             adjusted = 0.0
             for zone in zones_in_locality(world, locality_id):
-                value = zone.physical_control.get(actor, 0.0)
-                opponent_value = zone.physical_control.get(opponent, 0.0)
-                zone.physical_control[actor] = clamp(value * (.65 + .35 * (1 - opponent_value)))
-                adjusted += zone.population_share * zone.physical_control[actor]
+                value = zone.physical_control.get(effective_actor, 0.0)
+                opponent_value = zone.physical_control.get(opponent_key, 0.0)
+                zone.physical_control[effective_actor] = clamp(
+                    value * (.65 + .35 * (1 - opponent_value))
+                )
+                adjusted += (
+                    zone.population_share
+                    * zone.physical_control[effective_actor]
+                )
             aggregate = clamp(adjusted)
     return aggregate
 
@@ -441,14 +547,8 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
     aggregation merely because two organizations coexist.
     """
     actors = ["government"]
-    active_insurgents = sorted(
-        organization.organization_id
-        for organization in world.organizations.values()
-        if organization.kind.value == "insurgent" and organization.status == "active"
-    )
-    if active_insurgents:
-        actors.append("insurgent")
-        actors.extend(actor for actor in active_insurgents if actor != "insurgent")
+    active_insurgents = list(active_insurgent_ids(world))
+    actors.extend(active_insurgents)
     raw_aggregate: dict[str, float] = {}
     raw_zones: dict[str, dict[str, float]] = {}
     for actor in actors:
@@ -458,6 +558,17 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
             zone.microzone_id: zone.physical_control.get(actor, 0.0)
             for zone in zones_in_locality(world, locality_id)
         }
+    if active_insurgents:
+        recompute_microzone_control(
+            world, locality_id, _INSURGENT_SIDE_ACTOR, time,
+            apply_contestation=False,
+        )
+        raw_zones[_INSURGENT_SIDE_ACTOR] = {
+            zone.microzone_id: zone.physical_control.get(
+                _INSURGENT_SIDE_ACTOR, 0.0
+            )
+            for zone in zones_in_locality(world, locality_id)
+        }
     adjusted: dict[str, float] = {}
     zones = zones_in_locality(world, locality_id)
     for actor in actors:
@@ -465,7 +576,10 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
         # and concrete insurgent actors are each contested by government.  A
         # future rivalry/strife layer may add faction-on-faction contestation,
         # but until then coexistence is not synonymous with hostility.
-        opponent = "insurgent" if actor == "government" else "government"
+        opponent = (
+            _INSURGENT_SIDE_ACTOR
+            if actor == "government" else "government"
+        )
         aggregate = 0.0
         for zone in zones:
             value = raw_zones[actor][zone.microzone_id]
@@ -473,6 +587,19 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
             zone.physical_control[actor] = clamp(value * (1 - competition_strength * opponent_value))
             aggregate += zone.population_share * zone.physical_control[actor]
         adjusted[actor] = clamp(aggregate)
+    # Preserve the historical aggregate key only when no active concrete
+    # organization owns the literal identifier "insurgent".
+    if active_insurgents and "insurgent" not in active_insurgents:
+        aggregate = 0.0
+        for zone in zones:
+            value = raw_zones[_INSURGENT_SIDE_ACTOR][zone.microzone_id]
+            government_value = raw_zones["government"][zone.microzone_id]
+            contested = clamp(
+                value * (1 - competition_strength * government_value)
+            )
+            zone.physical_control["insurgent"] = contested
+            aggregate += zone.population_share * contested
+        adjusted["insurgent"] = clamp(aggregate)
     return adjusted
 
 

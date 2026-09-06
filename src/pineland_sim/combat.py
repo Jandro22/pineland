@@ -15,6 +15,7 @@ from .information import get_presence_belief, ingest_observation
 from .logistics import choose_withdrawal_order, consume_formation_supply, create_movement_order
 from .civilian import apply_direct_civilian_harm
 from .relations import record_relation_harm
+from .relations import organizations_hostile
 
 
 def formation_microzone(world, formation: ArmedFormation) -> str:
@@ -211,6 +212,10 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
                        rng: random.Random, *, initiator_organization_id: str | None = None,
                        contact_cause: str = "unspecified") -> tuple[Engagement, tuple[Observation, ...]]:
     cfg = world.config.combat
+    if not organizations_hostile(world, a.organization_id, b.organization_id):
+        raise ValueError(
+            "combat-ineligible organizations are not in a hostile relationship"
+        )
     for formation in (a, b):
         if (formation.operational_status != "effective" or formation.personnel <= 0 or
                 formation.moving or formation.outside_pineland):

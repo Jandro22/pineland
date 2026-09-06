@@ -668,6 +668,10 @@ class Election:
     abstention: float
     winner_party_id: str
     prior_ruling_party_id: str | None
+    # Event-boundary represented electorate.  This is forensic metadata, not
+    # a second population stock; it lets later audits reconcile an election
+    # even after subsequent deaths or migration change the live population.
+    represented_electorate: float | None = None
 
 
 @dataclass(slots=True)

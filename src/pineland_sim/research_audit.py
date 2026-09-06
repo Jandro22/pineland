@@ -248,7 +248,14 @@ def representative_agent_audit(config: SimulationConfig, horizon_days: float = 2
     # including after any within-country migration.
     election_errors = []
     for election in world.elections:
-        election_errors.append(abs(sum(election.votes.values()) + election.abstention - represented))
+        electorate = (
+            election.represented_electorate
+            if election.represented_electorate is not None
+            else sum(election.votes.values()) + election.abstention
+        )
+        election_errors.append(
+            abs(sum(election.votes.values()) + election.abstention - electorate)
+        )
 
     # Continuous formation losses are represented manpower, not node counts.
     casualty_total = sum(sum(engagement.personnel_losses.values())

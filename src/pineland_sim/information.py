@@ -34,6 +34,11 @@ from .entities import (
 from .logistics import command_path
 from .timebase import reference_probability
 from .world import WorldState, seeded_rng
+from .relations import (
+    STATE_SECURITY_KINDS,
+    organizations_allied,
+    organizations_hostile,
+)
 
 
 OBSERVATION_SOURCE_TYPES = (
@@ -83,14 +88,67 @@ def _logit(probability: float) -> float:
     return log(probability / (1 - probability))
 
 
-def _target_actor_for_observer(world: WorldState, observer_actor_id: str) -> str | None:
-    """Select the actor a source is primarily tasked to observe."""
+def _target_actors_for_observer(
+    world: WorldState, observer_actor_id: str
+) -> tuple[str, ...]:
+    """Return every strategically hostile target visible to an observer.
+
+    Aggregate side identifiers remain compatibility coalitions. Concrete
+    insurgent rivals are preserved so faction-specific beliefs can actually be
+    learned rather than existing only as empty prior slots.
+    """
     observer = world.organizations.get(observer_actor_id)
-    if observer is not None and observer.kind is OrganizationKind.INSURGENT:
-        return "government" if "government" in world.organizations else None
-    insurgents = [organization for organization in world.organizations.values()
-                  if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"]
-    return "insurgent" if insurgents else None
+    if observer is None:
+        return ()
+    hostile = sorted(
+        (
+            organization
+            for organization in world.organizations.values()
+            if (
+                organization.organization_id != observer_actor_id
+                and organization.status == "active"
+                and organizations_hostile(
+                    world, observer_actor_id, organization.organization_id
+                )
+            )
+        ),
+        key=lambda item: item.organization_id,
+    )
+    if observer.kind is OrganizationKind.INSURGENT:
+        targets: list[str] = []
+        if (
+            "government" in world.organizations
+            and any(item.kind in STATE_SECURITY_KINDS for item in hostile)
+        ):
+            targets.append("government")
+        targets.extend(
+            item.organization_id
+            for item in hostile
+            if item.kind is OrganizationKind.INSURGENT
+        )
+        targets.extend(
+            item.organization_id
+            for item in hostile
+            if item.kind not in STATE_SECURITY_KINDS
+            and item.kind is not OrganizationKind.INSURGENT
+        )
+        return tuple(dict.fromkeys(targets))
+    insurgents = [
+        item.organization_id
+        for item in hostile
+        if item.kind is OrganizationKind.INSURGENT
+    ]
+    if not insurgents:
+        return ()
+    if len(insurgents) == 1 and insurgents[0] == "insurgent":
+        return ("insurgent",)
+    return tuple(insurgents)
+
+
+def _target_actor_for_observer(world: WorldState, observer_actor_id: str) -> str | None:
+    """Backward-compatible primary-target helper for diagnostics."""
+    targets = _target_actors_for_observer(world, observer_actor_id)
+    return targets[0] if targets else None
 
 
 def _is_insurgent_actor(world: WorldState, actor_id: str | None) -> bool:
@@ -107,7 +165,18 @@ def _formation_matches_target_actor(world: WorldState, formation: ArmedFormation
     if target_actor_id == "insurgent":
         return bool(organization and organization.kind is OrganizationKind.INSURGENT)
     if target_actor_id == "government":
-        return bool(organization and organization.kind is not OrganizationKind.INSURGENT)
+        return bool(
+            organization
+            and (
+                formation.organization_id == "government"
+                or (
+                    "government" in world.organizations
+                    and organizations_allied(
+                        world, formation.organization_id, "government"
+                    )
+                )
+            )
+        )
     return formation.organization_id == target_actor_id
 
 
@@ -120,11 +189,21 @@ def _information_formation_index(world: WorldState) -> dict[tuple[str, str], lis
         keys = [(formation.organization_id, formation.locality_id)]
         organization = world.organizations.get(formation.organization_id)
         if organization is not None:
-            side = (
-                "insurgent" if organization.kind is OrganizationKind.INSURGENT
-                else "government"
-            )
-            if side != formation.organization_id:
+            if organization.kind is OrganizationKind.INSURGENT:
+                side = "insurgent"
+            elif (
+                formation.organization_id == "government"
+                or (
+                    "government" in world.organizations
+                    and organizations_allied(
+                        world, formation.organization_id, "government"
+                    )
+                )
+            ):
+                side = "government"
+            else:
+                side = None
+            if side is not None and side != formation.organization_id:
                 keys.append((side, formation.locality_id))
         for key in keys:
             index.setdefault(key, []).append(formation)
@@ -815,33 +894,35 @@ def observe_patrol(world: WorldState, patrol_id: str, time: float,
     if formation is None or formation.moving:
         return []
     observer = formation.organization_id
-    target_actor = _target_actor_for_observer(world, observer)
+    target_actors = _target_actors_for_observer(world, observer)
     observations: list[Observation] = []
     collect = rng.random() < world.config.information.patrol_report_rate
-    if target_actor and collect:
-        targets = [item for item in world.formations.values()
-                   if ((target_actor == "insurgent" and
-                        _is_insurgent_actor(world, item.organization_id)) or
-                       item.organization_id == target_actor) and item.personnel > 0 and
-                   item.locality_id == formation.locality_id and not item.moving]
-        if targets:
-            for target in targets:
+    if collect:
+        for target_actor in target_actors:
+            targets = [
+                item for item in world.formations.values()
+                if _formation_matches_target_actor(world, item, target_actor)
+                and item.personnel > 0
+                and item.locality_id == formation.locality_id
+                and not item.moving
+            ]
+            if targets:
+                for target in targets:
+                    observation = observe_target(
+                        world, observer, formation.formation_id, patrol_id, "patrol",
+                        formation.locality_id, target_actor, time, rng,
+                        target.formation_id, patrol.current_microzone_id, True,
+                    )
+                    if observation:
+                        observations.append(observation)
+            else:
                 observation = observe_target(
                     world, observer, formation.formation_id, patrol_id, "patrol",
                     formation.locality_id, target_actor, time, rng,
-                    target.formation_id, patrol.current_microzone_id, True,
+                    None, patrol.current_microzone_id, True,
                 )
                 if observation:
                     observations.append(observation)
-        else:
-            # A patrol can report a false alarm without creating a formation.
-            observation = observe_target(
-                world, observer, formation.formation_id, patrol_id, "patrol",
-                formation.locality_id, target_actor, time, rng,
-                None, patrol.current_microzone_id, True,
-            )
-            if observation:
-                observations.append(observation)
     if collect:
         observations.append(observe_control(
             world, observer, formation.formation_id, patrol_id, "patrol",
@@ -898,12 +979,12 @@ def _observe_from_source(world: WorldState, observer_actor_id: str, observer_nod
                          time: float, rng: random.Random,
                          formation_index: dict[tuple[str, str], list[ArmedFormation]] | None = None,
                          ) -> list[Observation]:
-    target_actor = _target_actor_for_observer(world, observer_actor_id)
+    target_actors = _target_actors_for_observer(world, observer_actor_id)
     local_node = observer_node_id or source_id
     if rng.random() >= _report_probability(
             world, observer_actor_id, locality_id, source_type, source_id):
         return []
-    if not target_actor:
+    if not target_actors:
         # A no-insurgency world still has administrative and physical
         # information; it simply cannot emit a claim about a nonexistent
         # opposing organization.
@@ -913,28 +994,28 @@ def _observe_from_source(world: WorldState, observer_actor_id: str, observer_nod
             world, observer_actor_id, local_node, source_id, source_type,
             locality_id, target_control, time, rng, _primary_zone(world, locality_id),
         )]
-    targets = list(formation_index.get((target_actor, locality_id), ())) if formation_index is not None else [
-        formation for formation in world.formations.values()
-        if _formation_matches_target_actor(world, formation, target_actor)
-        and formation.personnel > 0
-        and formation.locality_id == locality_id and not formation.moving
-    ]
     microzone = _primary_zone(world, locality_id)
     observations: list[Observation] = []
-    if targets:
-        # Civilian/social/admin reports generally attribute to an organization,
-        # while a member or interpreter can identify a formation.
-        target = targets[0]
-        target_id = target.formation_id if source_type in {"organization_member", "interpreter"} else None
+    for target_actor in target_actors:
+        targets = (
+            list(formation_index.get((target_actor, locality_id), ()))
+            if formation_index is not None
+            else [
+                formation for formation in world.formations.values()
+                if _formation_matches_target_actor(world, formation, target_actor)
+                and formation.personnel > 0
+                and formation.locality_id == locality_id
+                and not formation.moving
+            ]
+        )
+        target_id = (
+            targets[0].formation_id
+            if targets and source_type in {"organization_member", "interpreter"}
+            else None
+        )
         observations.append(observe_target(
             world, observer_actor_id, local_node, source_id, source_type,
             locality_id, target_actor, time, rng, target_id, microzone, True,
-            formation_index=formation_index,
-        ))
-    else:
-        observations.append(observe_target(
-            world, observer_actor_id, local_node, source_id, source_type,
-            locality_id, target_actor, time, rng, None, microzone, True,
             formation_index=formation_index,
         ))
     observations.append(observe_control(

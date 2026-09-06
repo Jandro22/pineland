@@ -24,6 +24,15 @@ class ValidationTests(unittest.TestCase):
         membership_exit = next(x for x in registry if x.code_name == "membership_exit_rate")
         self.assertEqual(membership_exit.units, "rate/day")
         self.assertEqual(membership_exit.calibration_status, "uncalibrated")
+        legacy_members = next(
+            x for x in registry
+            if x.code_name == "organization_ecology.minimum_proto_members"
+        )
+        self.assertEqual(
+            legacy_members.assumption_type,
+            "compatibility-only deprecated field",
+        )
+        self.assertEqual(legacy_members.calibration_status, "non-inferential")
         self.assertIn("parameters", registry_document(tiny_config()))
 
     def test_legacy_config_maps_common_recruitment_exit_rate(self):

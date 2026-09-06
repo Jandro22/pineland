@@ -43,7 +43,10 @@ class SocialNetworkConfig:
     community_tie_strength: float = 0.65
     bridge_tie_strength: float = 0.45
     behavior_exposure_weight: float = 0.35
-    recruitment_exposure_weight: float = 0.25
+    # Persuasion coefficient inside recruitment utility.  Access is a
+    # separate multiplicative gate below; the default 1.0 preserves the
+    # historical coefficient that was previously hard-coded in the utility.
+    recruitment_exposure_weight: float = 1.0
     # When disabled, edge generation preserves topology and tie counts but
     # removes the language-compatibility multiplier.  This supports a clean
     # topology/detection/fusion factorial without changing the latent people.
@@ -504,13 +507,12 @@ class NonstateGovernanceConfig:
     enabled: bool = True
     gain_per_30_days: float = 0.022
     decay_per_30_days: float = 0.035
-    resource_spending_share_per_30_days: float = 0.002
     minimum_local_capacity: float = 0.02
 
     def validate(self) -> None:
         for name in (
             "gain_per_30_days", "decay_per_30_days",
-            "resource_spending_share_per_30_days", "minimum_local_capacity",
+            "minimum_local_capacity",
         ):
             if not 0 <= getattr(self, name) <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
@@ -612,6 +614,9 @@ class RecordingConfig:
     severity_noise: float = 0.12
     geocoding_error_rate: float = 0.12
     geocoding_scale_km: float = 2.0
+    # Daily probability of an entirely spurious recorded event in one
+    # locality. This belongs to an independent recording-noise clock; it is
+    # not sampled once per latent process event.
     false_event_rate: float = 0.0
     # Source-specific observation operators.  Missing channels inherit the
     # top-level defaults, so old scenario files remain valid.
@@ -706,7 +711,9 @@ class PeaceProcessConfig:
     implementation_rate: float = 0.055
     demobilization_rate: float = 0.10
     recurrence_base_hazard: float = 0.0025
-    battlefield_expectation_weight: float = 0.75
+    # Multiplier on the historical future-power term in bargaining war value.
+    # 1.0 preserves the coefficient that was formerly hard-coded.
+    battlefield_expectation_weight: float = 1.0
     credibility_weight: float = 1.1
     fragmentation_penalty: float = 1.4
     spoiler_penalty: float = 1.0

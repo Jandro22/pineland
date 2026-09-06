@@ -145,7 +145,11 @@ def bargaining_values(world, insurgents=None, *, perspective: str = "belief") ->
     violence = sum(government_violence) / max(1, len(government_violence))
     foreign_pressure = sum(s.willingness * s.humanitarian_preference for s in world.foreign_states.values()) / max(1, len(world.foreign_states))
     result = {}
-    g_war = clamp(.35 + .45 * g_future + .2 * control - .3 * violence)
+    battlefield_weight = world.config.peace_process.battlefield_expectation_weight
+    g_war = clamp(
+        .35 + .45 * battlefield_weight * g_future
+        + .2 * control - .3 * violence
+    )
     g_peace = clamp(.56 + .14 * control + .08 * foreign_pressure)
     result[government.organization_id] = {"war": g_war, "peace": g_peace,
                                           "surplus": g_peace - g_war,
@@ -168,7 +172,10 @@ def bargaining_values(world, insurgents=None, *, perspective: str = "belief") ->
         concessions = .42 + .24 * org.capital["political"] + .15 * grievance
         actor_violence = sum(_perceived_violence(world, org.organization_id, locality_id, perspective)
                              for locality_id in world.localities) / max(1, len(world.localities))
-        war = clamp(.18 + .62 * future + .14 * org.external_sanctuary - .18 * actor_violence)
+        war = clamp(
+            .18 + .62 * battlefield_weight * future
+            + .14 * org.external_sanctuary - .18 * actor_violence
+        )
         risk = .20 * (1 - government.accountability) + .15 * (1 - org.cohesion)
         peace = clamp(concessions - risk + .08 * foreign_pressure)
         result[org.organization_id] = {"war": war, "peace": peace,

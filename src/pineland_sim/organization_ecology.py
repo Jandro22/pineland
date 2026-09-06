@@ -15,8 +15,10 @@ from .networks import community_bridge_capacity, language_compatibility
 from .relations import (
     ensure_relation,
     inherit_parent_relations,
+    relation_status,
     update_relationship_ecology,
 )
+from .entities import RelationStatus
 
 
 def armed_organizations(world, active_only: bool = True):
@@ -337,7 +339,9 @@ def _recruitment_intensity(world, person, organization: Organization,
         world, person, organization, person.residence_locality_id, rootedness
     )
     logit_value = (
-        1.5 * person.grievance + exposure + compatibility +
+        1.5 * person.grievance +
+        world.config.social_network.recruitment_exposure_weight * exposure +
+        compatibility +
         organization.capital["social"] - person.fear - 2.6 -
         world.config.political_order.peaceful_channel_strength * person.political_access +
         world.config.organization_ecology.local_rootedness_weight * local_congruence
@@ -567,6 +571,44 @@ def _apply_local_fighter_change(world, organization: Organization, locality_id: 
         remaining -= amount
         _resize_formation_supply_capacity(world, formation)
     return -removed, created
+
+
+def _transfer_defecting_membership(
+    world,
+    person,
+    source: Organization,
+    destination: Organization,
+) -> tuple[float, float]:
+    """Transfer one armed represented cohort between hostile/rival franchises.
+
+    Membership and fighter-equivalent manpower move together, but materiel
+    does not.  Source-side equipment remains in its pool/formation while the
+    destination must equip transferred manpower from its own resources under
+    the normal local-fighter accounting path.
+    """
+    represented_delta = person.weight * person.armed_fraction
+    fighter_delta = (
+        represented_delta
+        * world.config.organization_ecology.fighter_conversion_fraction
+    )
+    removed, _ = _apply_local_fighter_change(
+        world,
+        source,
+        person.residence_locality_id,
+        -fighter_delta,
+    )
+    transferable_fighters = max(0.0, -removed)
+    if transferable_fighters > 0:
+        _apply_local_fighter_change(
+            world,
+            destination,
+            person.residence_locality_id,
+            transferable_fighters,
+        )
+    source.member_ids.discard(person.person_id)
+    _set_armed_membership(person, destination, person.armed_fraction)
+    destination.member_ids.add(person.person_id)
+    return represented_delta, transferable_fighters
 
 
 def synchronize_memberships(world) -> int:
@@ -1003,8 +1045,8 @@ def recruit_and_retain(world, time: float, rng: random.Random,
     whichever organization happens to be iterated first.  Already-affiliated
     cohorts can only deepen membership in their current organization.
     """
-    recruits = exits = 0.0
-    fighter_recruits = fighter_exits = 0.0
+    recruits = exits = defections = 0.0
+    fighter_recruits = fighter_exits = fighter_defections = 0.0
     formations_created = 0
     contested_candidates = 0
     recruitment_rate = world.config.recruitment_rate
@@ -1172,11 +1214,112 @@ def recruit_and_retain(world, time: float, rng: random.Random,
                         max(10.0, represented_members)
                     )
 
+        # Defection is a competing destination for an incumbent cohort.  It
+        # reuses the existing membership-exit rate family rather than adding a
+        # case-fit "defection rate": a rival must be locally accessible and
+        # attractive, and the dyad must already be rival or hostile.
+        current_org = organization_by_id.get(person.organization_id or "")
+        defected_this_interval = False
+        if (
+            not recruited_this_interval
+            and current_org is not None
+            and person.armed_fraction > 0
+        ):
+            rival_candidates: list[tuple[Organization, float]] = []
+            for rival in organizations:
+                if rival.organization_id == current_org.organization_id:
+                    continue
+                status = relation_status(
+                    world, current_org.organization_id, rival.organization_id
+                )
+                if status not in {RelationStatus.RIVAL, RelationStatus.HOSTILE}:
+                    continue
+                oid = rival.organization_id
+                exposure = person.social_exposure.get(
+                    oid, person.social_exposure.get("insurgent", 0.0)
+                )
+                formation_access = clamp(
+                    local_formation_personnel[oid].get(
+                        person.residence_locality_id, 0.0
+                    )
+                    / max(1e-9, cfg.minimum_formation_personnel)
+                )
+                member_access = clamp(
+                    local_member_weight[oid].get(
+                        person.residence_locality_id, 0.0
+                    )
+                    / max(1e-9, cfg.minimum_proto_represented_population)
+                )
+                formation_language_factor = _recruitment_language_access_factor(
+                    person, language_profile_by_org[oid]
+                )
+                member_language_factor = _recruitment_language_access_factor(
+                    person,
+                    local_language_profile_by_org[oid].get(
+                        person.residence_locality_id
+                    ),
+                )
+                access_strength = max(
+                    clamp(exposure),
+                    formation_access * formation_language_factor,
+                    member_access * member_language_factor,
+                )
+                if cfg.recruitment_requires_access and access_strength <= 0:
+                    continue
+                intensity, _, _ = _recruitment_intensity(
+                    world,
+                    person,
+                    rival,
+                    exposure,
+                    rootedness_by_org[oid][person.residence_locality_id],
+                )
+                relation = ensure_relation(
+                    world,
+                    current_org.organization_id,
+                    rival.organization_id,
+                    time,
+                )
+                rivalry_signal = max(
+                    relation.rivalry_memory,
+                    relation.hostility_memory,
+                    world.config.relationships.rivalry_threshold,
+                )
+                effective = intensity * access_strength * rivalry_signal
+                if effective > 0:
+                    rival_candidates.append((rival, effective))
+            if rival_candidates:
+                total_defection_intensity = sum(
+                    intensity for _, intensity in rival_candidates
+                )
+                defection_probability = _interval_hazard_probability(
+                    membership_exit_rate,
+                    total_defection_intensity,
+                    interval_days,
+                )
+                if rng.random() < defection_probability:
+                    draw = rng.random() * total_defection_intensity
+                    cumulative = 0.0
+                    winner = rival_candidates[-1][0]
+                    for rival, intensity in rival_candidates:
+                        cumulative += intensity
+                        if draw <= cumulative:
+                            winner = rival
+                            break
+                    (
+                        represented_delta,
+                        transferable_fighters,
+                    ) = _transfer_defecting_membership(
+                        world, person, current_org, winner
+                    )
+                    defections += represented_delta
+                    fighter_defections += transferable_fighters
+                    defected_this_interval = True
+
         # Exit hazards act only on the incumbent organization.  A cohort that
-        # recruited this interval cannot exit in the same numerical tick.
+        # recruited or defected this interval cannot exit in the same tick.
         current_org = organization_by_id.get(person.organization_id or "")
         if (not recruited_this_interval and current_org is not None and
-                person.armed_fraction > 0):
+                not defected_this_interval and person.armed_fraction > 0):
             exit_probability = _interval_hazard_probability(
                 membership_exit_rate,
                 logistic(person.fear + .7 - current_org.cohesion - person.grievance),
@@ -1212,7 +1355,9 @@ def recruit_and_retain(world, time: float, rng: random.Random,
 
     repairs = synchronize_memberships(world)
     return {"recruits": recruits, "exits": exits,
+            "defections": defections,
             "fighter_recruits": fighter_recruits, "fighter_exits": fighter_exits,
+            "fighter_defections": fighter_defections,
             "formations_created": formations_created,
             "local_manpower_pools": sum(world.organization_manpower_pools.values()),
             "membership_repairs": repairs,

@@ -34,9 +34,14 @@ def recording_diagnostics(world) -> dict:
             }
         return by_key
     by_type = strata(lambda event, record: event.event_type if event is not None else record.event_type)
-    by_source = strata(lambda event, record: records.get(event.event_id).source_type
-                       if event is not None and event.event_id in records
-                       else record.source_type)
+    def source_key(event, record):
+        if record is not None:
+            return record.source_type
+        if event is not None and event.event_id in records:
+            return records[event.event_id].source_type
+        return "no_record_operator"
+
+    by_source = strata(source_key)
     geocoding_distances = [r.geocoding_error_distance_km for r in recorded]
     geocoding_flags = [r.geocoding_error for r in recorded]
     return {

@@ -1,0 +1,105 @@
+{
+  "schema_version": "pineland.afghanistan.awd_2007_independent_holdout_contract.v1",
+  "created_before_war_diary_event_rows_acquired_for_pineland": true,
+  "purpose": "Prospective independent-source one-year validation surface for Pineland. The source is a coalition military reporting archive, so the recorded-event prediction is primary and latent violence is diagnostic.",
+  "source": {
+    "family": "Afghan_War_Diary_SIGACT",
+    "archive_item": "WikileaksWarDiaryCsv",
+    "archive_metadata_url": "https://archive.org/metadata/WikileaksWarDiaryCsv",
+    "archive_download_base": "https://archive.org/download/WikileaksWarDiaryCsv/",
+    "documented_coverage": "2004-2009",
+    "documentation": [
+      "https://www.theguardian.com/world/datablog/2010/jul/25/wikileaks-afghanistan-data",
+      "https://archive.org/details/WikileaksWarDiaryCsv"
+    ]
+  },
+  "target_surface": {
+    "country": "Afghanistan",
+    "holdout_year": 2007,
+    "unit": "province-week",
+    "construct": "coalition-recorded hostile insurgent military incident",
+    "primary_prediction_layer": "recorded",
+    "panel_path": "studies/research_program/external_validation/afghan_war_diary_2004_2009/processed/awd_afghanistan_province_week.csv",
+    "target_column": "awd_reported_hostile_active",
+    "week_start_column": "week_start",
+    "week_index_column": "week_index",
+    "province_column": "province_id",
+    "region_column": "region_id",
+    "source_silence_semantics": "0 means no qualifying report in this source for the province-week; it is not asserted to be latent peace."
+  },
+  "frozen_fields": [
+    "ReportKey",
+    "DateOccurred",
+    "EventType",
+    "Category",
+    "TrackingNumber",
+    "Title",
+    "Summary",
+    "Region",
+    "AttackOn",
+    "ComplexAttack",
+    "ReportingUnit",
+    "UnitName",
+    "TypeOfUnit",
+    "FriendlyWounded",
+    "FriendlyKilled",
+    "HostNationWounded",
+    "HostNationKilled",
+    "CivilianWounded",
+    "CivilianKilled",
+    "EnemyWounded",
+    "EnemyKilled",
+    "EnemyDetained",
+    "MilitaryGridReferenceSystem",
+    "Latitude",
+    "Longitude",
+    "OriginatorGroup",
+    "UpdatedByGroup",
+    "CommandersCriticalInformationRequirements",
+    "Significant",
+    "Affiliation",
+    "DisplayColor",
+    "ClassificationLevel"
+  ],
+  "mapping_frozen_before_rows": {
+    "date_formats": [
+      "%Y-%m-%d %H:%M:%S",
+      "%Y-%m-%d",
+      "%d/%m/%Y %H:%M",
+      "%d/%m/%y %H:%M",
+      "%d/%m/%Y",
+      "%d/%m/%y"
+    ],
+    "combat_regex": "(?i)\\b(ied|improvised explosive|direct fire|indirect fire|small arms|rocket|mortar|ambush|attack|engagement|firefight|complex attack|rpg|grenade|artillery|air strike|airstrike|close air support|cas)\\b",
+    "taliban_regex": "(?i)\\b(taliban|taleban)\\b",
+    "enemy_affiliation_regex": "(?i)\\benemy\\b",
+    "enemy_display_regex": "(?i)\\bred\\b",
+    "violent_evidence_rule": "A row is violent if any Friendly/HostNation/Enemy killed-or-wounded field is positive OR combat_regex matches EventType, Category, Title, or Summary.",
+    "hostile_insurgent_evidence_rule": "A row is hostile-insurgent if enemy_affiliation_regex matches Affiliation OR enemy_display_regex matches DisplayColor OR any EnemyKilled/EnemyWounded/EnemyDetained field is positive OR taliban_regex matches Title or Summary.",
+    "positive_event_rule": "violent_evidence AND hostile_insurgent_evidence. This is a reported hostile-insurgent military-incident construct, not a claim that every row is uniquely Taliban-attributed.",
+    "positive_cell_rule": "At least one qualifying event in a province-week. Multiple qualifying reports collapse to one active incidence cell.",
+    "negative_cell_rule": "No qualifying report in the source for that province-week is coded 0 for predictive scoring only; source silence is not latent absence.",
+    "spatial_rule": "Latitude/Longitude point-in-polygon assignment to the existing frozen Afghanistan 34-province analysis geometry. Unmapped or boundary-ambiguous coordinates are rejected, never nearest-neighbor imputed.",
+    "calendar_rule": "Absolute week_index=floor((event_date-2004-01-01).days/7). The sealed scorer excludes partial week cells crossing the 2007 calendar boundaries."
+  },
+  "scientific_firewall": {
+    "pineland_predictions_may_not_change_mapping": true,
+    "ucdp_outcomes_may_not_change_mapping": true,
+    "event_counts_may_not_change_mapping": true,
+    "holdout_year_may_not_change_after_row_acquisition": true,
+    "raw_archive_must_be_hash_bound_before_extraction": true,
+    "mapping_code_must_be_committed_before_acquisition": true,
+    "no_recording_parameter_fit_to_war_diary": true
+  },
+  "allowed_claims": [
+    "prospective predictive score of frozen Pineland recorded-event probabilities against an independently acquired coalition-reporting source",
+    "latent-versus-recorded attenuation diagnostics",
+    "comparison with training-only empirical-rate competitors on the same source"
+  ],
+  "forbidden_claims": [
+    "War Diary source silence is true peace",
+    "War Diary reports are ground truth",
+    "a pass proves absence of all overfitting",
+    "War Diary outcomes may tune Pineland mechanisms, initialization, recording parameters, mapping, or scoring"
+  ]
+}

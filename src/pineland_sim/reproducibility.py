@@ -48,6 +48,7 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "causal_ledger", "synthetic_records", "checkpoints", "state_deltas",
     "stock_transactions", "organization_eligibility_log",
     "organization_onset_log", "observation_index",
+    "civilian_harm_events",
     "locality_path_cache", "locality_travel_time_cache", "in_transit_supply_total",
     "active_shipment_ids", "active_movement_order_ids",
 })

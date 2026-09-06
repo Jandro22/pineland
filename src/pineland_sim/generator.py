@@ -246,23 +246,39 @@ def generate_pineland(config: SimulationConfig | None = None,
         world.adjacency[first_id][second_id] = min(world.adjacency[first_id].get(second_id, 1e9), cost)
         world.adjacency[second_id][first_id] = world.adjacency[first_id][second_id]
 
-    # Spatial minimum-spanning backbone: each locality attaches to the nearest
-    # already-connected locality, guaranteeing connectivity without an
-    # identifier-order corridor.
-    connected = [min(locality_ids, key=lambda lid: (world.localities[lid].x_km ** 2 +
-                                                    world.localities[lid].y_km ** 2, lid))]
-    remaining_ids = [lid for lid in locality_ids if lid not in connected]
-    while remaining_ids:
-        candidate = min(
-            ((hypot(world.localities[left].x_km - world.localities[right].x_km,
-                    world.localities[left].y_km - world.localities[right].y_km), left, right)
-             for right in remaining_ids for left in connected),
-            key=lambda item: (item[0], item[1], item[2]),
-        )
-        _, left, right = candidate
-        connect(left, right)
-        connected.append(right)
-        remaining_ids.remove(right)
+    if config.geography.national_backbone == "spatial_mst":
+        # Spatial minimum-spanning backbone: each locality attaches to the
+        # nearest already-connected locality, guaranteeing connectivity without
+        # an identifier-order corridor.
+        connected = [min(
+            locality_ids,
+            key=lambda lid: (
+                world.localities[lid].x_km ** 2
+                + world.localities[lid].y_km ** 2,
+                lid,
+            ),
+        )]
+        remaining_ids = [lid for lid in locality_ids if lid not in connected]
+        while remaining_ids:
+            candidate = min(
+                (
+                    (
+                        hypot(
+                            world.localities[left].x_km - world.localities[right].x_km,
+                            world.localities[left].y_km - world.localities[right].y_km,
+                        ),
+                        left,
+                        right,
+                    )
+                    for right in remaining_ids
+                    for left in connected
+                ),
+                key=lambda item: (item[0], item[1], item[2]),
+            )
+            _, left, right = candidate
+            connect(left, right)
+            connected.append(right)
+            remaining_ids.remove(right)
 
     # Add local nearest-neighbour roads and optional district hub roads.
     k = config.geography.nearest_neighbors
@@ -274,6 +290,54 @@ def generate_pineland(config: SimulationConfig | None = None,
         )[:k]
         for other in nearest:
             connect(locality_id, other)
+    if config.geography.national_backbone == "knn":
+        # Pure local kNN graphs can fragment across geographically separated
+        # districts.  Bridge only disconnected components, choosing the
+        # shortest cross-component pair each time.  This preserves kNN as the
+        # topology-generating rule while guaranteeing a usable national graph.
+        def components() -> list[set[str]]:
+            unseen = set(locality_ids)
+            result: list[set[str]] = []
+            while unseen:
+                root = min(unseen)
+                stack = [root]
+                component = set()
+                while stack:
+                    current = stack.pop()
+                    if current in component:
+                        continue
+                    component.add(current)
+                    unseen.discard(current)
+                    stack.extend(
+                        neighbor
+                        for neighbor in world.adjacency[current]
+                        if neighbor not in component
+                    )
+                result.append(component)
+            return result
+
+        groups = components()
+        while len(groups) > 1:
+            first = groups[0]
+            candidate = min(
+                (
+                    (
+                        hypot(
+                            world.localities[left].x_km - world.localities[right].x_km,
+                            world.localities[left].y_km - world.localities[right].y_km,
+                        ),
+                        left,
+                        right,
+                    )
+                    for left in first
+                    for group in groups[1:]
+                    for right in group
+                ),
+                key=lambda item: (item[0], item[1], item[2]),
+            )
+            _, left, right = candidate
+            connect(left, right)
+            groups = components()
     if config.geography.district_hub_links:
         for district in world.districts.values():
             hub = district.locality_ids[0]

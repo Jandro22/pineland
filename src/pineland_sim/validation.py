@@ -108,7 +108,21 @@ def parameter_registry(config: SimulationConfig | None = None) -> list[Parameter
         provenance_key = name.split(".")[0]
         provenance_kind, provenance_source, provenance_status = PARAMETER_PROVENANCE.get(
             provenance_key, ("engineering prior", "not yet mapped to an empirical source", "unassessed"))
-        if bound:
+        if name == "organization_ecology.minimum_proto_members":
+            # Retained solely so old serialized configs remain loadable.
+            # Onset uses represented population and this field is deliberately
+            # absent from every generative transition equation.
+            lower = upper = None
+            symbol = name
+            units = "legacy serialization field"
+            kind = "compatibility-only deprecated field"
+            status = "non-inferential"
+            confidence = "high"
+            provenance_source = (
+                "pre-weighted-agent schema; superseded by "
+                "organization_ecology.minimum_proto_represented_population"
+            )
+        elif bound:
             lower, upper, symbol, units = bound
             kind, status, confidence = provenance_kind, provenance_status, "low"
         elif name.endswith("interval_days") or name.startswith("intervals."):

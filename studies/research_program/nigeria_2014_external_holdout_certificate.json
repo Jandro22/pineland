@@ -1,0 +1,26 @@
+{
+  "schema_version": "pineland.external_holdout_exposure_certificate.v1",
+  "case_id": "nigeria_boko_haram_2014",
+  "holdout_year": 2014,
+  "target": "Boko Haram-government state-based violence incidence by Nigerian state-week",
+  "target_labels_previously_inspected": false,
+  "created_before_target_label_access": true,
+  "source_family": "UCDP GED 26.1",
+  "source_archive_sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
+  "preperiod_allowed": {
+    "year": 2013,
+    "purpose": "initial insurgent geographic footprint only",
+    "may_set_event_rate_or_validation_threshold": false
+  },
+  "certification_basis": [
+    "Repository-wide pre-extraction search for Nigeria, Boko Haram, Boko-Haram, Maiduguri, and Borno returned no matches outside excluded raw archives/logs.",
+    "Only the GED archive filename/hash and CSV header were inspected before this certificate; no Nigeria event row was read.",
+    "Target year, unit, actor mapping, preperiod rule, competitor family, and acceptance logic are fixed before extracting any 2014 Nigeria target label."
+  ],
+  "forbidden_after_reveal": [
+    "change target year",
+    "change actor mapping because of observed 2014 rows",
+    "change model mechanisms or parameters because of Nigeria 2014 results",
+    "change proper-score thresholds or competitor definitions because of Nigeria 2014 results"
+  ]
+}

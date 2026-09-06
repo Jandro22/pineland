@@ -453,7 +453,11 @@ def nonfielded_human_targets(world, organization_id: str, locality_id: str):
         ):
             targets.append(NonfieldedHumanTarget(
                 target_id=f"POOL:{target_org_id}:{locality_id}",
-                target_type="unfielded_manpower",
+                target_type=(
+                    "unfielded_insurgent_manpower"
+                    if target_org.kind is OrganizationKind.INSURGENT
+                    else "unfielded_manpower"
+                ),
                 organization_id=target_org_id,
                 personnel=float(quantity),
                 available_fraction=1.0,
