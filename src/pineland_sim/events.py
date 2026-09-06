@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import heapq
-from itertools import count
+import copy
 from typing import Any
 
 
@@ -19,7 +19,11 @@ class ScheduledEvent:
 class EventScheduler:
     def __init__(self, allow_negative: bool = False) -> None:
         self._queue: list[ScheduledEvent] = []
-        self._sequence = count()
+        # Keep the next sequence value as an ordinary integer rather than an
+        # itertools.count object.  A scheduler is part of a simulation
+        # particle's latent state and must therefore be safely deep-copyable
+        # at a filtering/resampling boundary.
+        self._next_sequence = 0
         self.allow_negative = allow_negative
 
     def schedule(
@@ -32,7 +36,15 @@ class EventScheduler:
     ) -> ScheduledEvent:
         if time < 0 and not self.allow_negative:
             raise ValueError("event time cannot be negative")
-        event = ScheduledEvent(time, priority, next(self._sequence), event_type, payload or {}, causal_parent_ids)
+        event = ScheduledEvent(
+            time,
+            priority,
+            self._next_sequence,
+            event_type,
+            payload or {},
+            causal_parent_ids,
+        )
+        self._next_sequence += 1
         heapq.heappush(self._queue, event)
         return event
 
@@ -46,3 +58,20 @@ class EventScheduler:
 
     def __len__(self) -> int:
         return len(self._queue)
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> "EventScheduler":
+        """Copy both pending events and the future sequence lineage.
+
+        Recreating a scheduler from its queue alone would be subtly wrong:
+        events already popped from the queue still consume sequence numbers,
+        and those numbers are part of deterministic same-time ordering.  The
+        explicit counter preserves that execution state for a particle fork.
+        """
+        existing = memo.get(id(self))
+        if existing is not None:
+            return existing
+        clone = type(self)(allow_negative=self.allow_negative)
+        memo[id(self)] = clone
+        clone._queue = copy.deepcopy(self._queue, memo)
+        clone._next_sequence = self._next_sequence
+        return clone

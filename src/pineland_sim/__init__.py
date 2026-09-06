@@ -9,7 +9,13 @@ from .entities import (BorderSegment, DiasporaLink, Election, Engagement, Extern
                        PoliticalTransfer, PolicyImplementation, ProtoOrganization)
 from .entities import AgreementProvision, Negotiation, PeaceAgreement, PeaceTransition
 from .generator import generate_pineland
-from .simulation import Simulation, SimulationResult
+from .simulation import Simulation, SimulationParticle, SimulationResult
+from .state_estimation import (
+    AssimilationObservation,
+    FilterUpdateDiagnostics,
+    Particle,
+    SequentialParticleFilter,
+)
 from .validation import (ParameterSpec, empirical_target_contract, parameter_registry,
                          model_ladder_holdout)
 from .empirical import (CasePackage, ConstructCorrespondence, EmpiricalTarget, RawObservation, TransformationRecord,
@@ -33,7 +39,11 @@ __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "Exter
            "PoliticalInstitution", "PoliticalOrderConfig", "PoliticalTransfer",
            "PolicyImplementation", "ProtoOrganization", "LocalElite", "Election",
            "Simulation", "SimulationConfig",
-           "SimulationResult", "generate_pineland"]
+           "SimulationParticle", "SimulationResult", "generate_pineland"]
+__all__ += [
+    "AssimilationObservation", "FilterUpdateDiagnostics", "Particle",
+    "SequentialParticleFilter",
+]
 __all__ += ["AgreementProvision", "Negotiation", "PeaceAgreement", "PeaceProcessConfig",
             "PeaceTransition"]
 __all__ += ["ParameterSpec", "empirical_target_contract", "parameter_registry"]

@@ -4,7 +4,15 @@ import random
 
 import pytest
 
-from pineland_sim import SimulationConfig, generate_pineland
+from pineland_sim import (
+    AssimilationObservation,
+    Particle,
+    SequentialParticleFilter,
+    Simulation,
+    SimulationConfig,
+    SimulationParticle,
+    generate_pineland,
+)
 from pineland_sim.entities import OrganizationKind
 from pineland_sim.state_estimation import (
     Particle,
@@ -87,3 +95,50 @@ def test_identical_twin_partial_observation_recovers_hidden_pineland_state():
         json.dumps(particle.state.config.to_dict(), sort_keys=True) == config_before
         for particle in resampled
     )
+
+
+def test_live_simulation_particle_carries_scheduler_and_forks_future_rng_stream():
+    config = SimulationConfig(
+        seed=2026090610, agent_count=120, locality_count=17, horizon_days=2
+    )
+    simulation = Simulation(generate_pineland(config))
+    simulation.initialize()
+    particle = SimulationParticle(simulation)
+
+    first = particle.fork(0)
+    second = particle.fork(1)
+
+    assert len(first.simulation.scheduler) == len(simulation.scheduler)
+    assert first.time == simulation.world.time == second.time
+    assert first.simulation.stream_namespace != second.simulation.stream_namespace
+    assert first.simulation.processes.stream_namespace != second.simulation.processes.stream_namespace
+    assert first.simulation.rng.getstate() != second.simulation.rng.getstate()
+
+
+def test_training_only_filter_rejects_holdout_before_advancing_particles():
+    particles = [Particle({"location": location}) for location in ("A", "B", "C")]
+    advanced = []
+
+    def transition(state, time):
+        advanced.append((state["location"], time))
+
+    def likelihood(state, observed):
+        return math.log(.9 if state["location"] == observed else .05)
+
+    filter_ = SequentialParticleFilter(
+        particles,
+        transition=transition,
+        log_likelihood=likelihood,
+        rng=random.Random(20260906),
+        ess_fraction=1.0,
+    )
+    filter_.assimilate(
+        AssimilationObservation(7.0, "B", split="training", observation_id="w1")
+    )
+    count_before = len(advanced)
+    with pytest.raises(ValueError, match="refuses observations"):
+        filter_.assimilate(
+            AssimilationObservation(14.0, "A", split="holdout", observation_id="w2")
+        )
+    assert len(advanced) == count_before
+    assert filter_.last_time == 7.0

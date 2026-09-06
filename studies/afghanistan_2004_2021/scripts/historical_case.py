@@ -9,7 +9,9 @@ from __future__ import annotations
 from dataclasses import asdict
 from datetime import date
 import json
+from math import exp
 from pathlib import Path
+import random
 from typing import Any
 
 from pineland_sim.entities import (
@@ -26,7 +28,10 @@ from pineland_sim.entities import (
 from pineland_sim.information import initialize_information_world
 from pineland_sim.logistics import generate_logistics_world
 from pineland_sim.networks import refresh_community_aggregates
-from pineland_sim.organization_ecology import initialize_organization_ecology
+from pineland_sim.organization_ecology import (
+    _set_armed_membership,
+    initialize_organization_ecology,
+)
 from pineland_sim.physical import generate_physical_world, recompute_contested_controls
 
 
@@ -99,6 +104,91 @@ def _formation_from_template(template: ArmedFormation, formation_id: str,
     )
 
 
+def sample_taliban_spatial_prior(
+    inputs: dict[str, Any],
+    rng: random.Random,
+    *,
+    total_strength: float,
+    preperiod_counts: dict[str, float] | None = None,
+    fielded_share_alpha: float = 2.0,
+    fielded_share_beta: float = 2.0,
+    presence_scale: float = 4.0,
+) -> dict[str, Any]:
+    """Sample a pre-period spatial/organizational latent-state prior.
+
+    The 2003 district counts are used as evidence weights, not as a rule that
+    every observed district starts with a fielded formation.  A sampled
+    presence mask controls which localities can host a fielded formation;
+    remaining sourced strength is represented as geographically distributed
+    clandestine manpower.  The beta/gamma hyperparameters are explicit prior
+    choices and are never fitted to benchmark-period outcomes.
+    """
+    if total_strength < 0:
+        raise ValueError("total_strength must be nonnegative")
+    if fielded_share_alpha <= 0 or fielded_share_beta <= 0:
+        raise ValueError("fielded-share beta parameters must be positive")
+    if presence_scale <= 0:
+        raise ValueError("presence_scale must be positive")
+
+    source_counts = preperiod_counts or inputs.get(
+        "preperiod_taliban_state_conflict_counts_2003",
+        inputs["initialization"]["taliban"]["anchor_weights"],
+    )
+    evidence = {
+        f"{district_id}-HQ": float(count)
+        for district_id, count in source_counts.items()
+        if float(count) > 0
+    }
+    if not evidence:
+        raise ValueError("pre-period Taliban locality evidence is empty")
+
+    fielded_share = rng.betavariate(fielded_share_alpha, fielded_share_beta)
+    active = {
+        locality_id
+        for locality_id, count in evidence.items()
+        if rng.random() < 1.0 - exp(-count / presence_scale)
+    }
+    if not active:
+        active = {max(evidence, key=evidence.get)}
+
+    # Gamma draws provide a Dirichlet-like random allocation while preserving
+    # the observed evidence ordering in expectation.  The +0.5 term gives
+    # low-count districts a real, but modest, chance of carrying state.
+    fielded_raw = {
+        locality_id: rng.gammavariate(evidence[locality_id] + 0.5, 1.0)
+        if locality_id in active else 0.0
+        for locality_id in evidence
+    }
+    clandestine_raw = {
+        locality_id: rng.gammavariate(evidence[locality_id] + 0.5, 1.0)
+        for locality_id in evidence
+    }
+
+    def normalize(values: dict[str, float]) -> dict[str, float]:
+        total = sum(max(0.0, value) for value in values.values())
+        if total <= 0:
+            fallback = max(values, key=values.get)
+            return {fallback: 1.0}
+        return {
+            locality_id: max(0.0, value) / total
+            for locality_id, value in sorted(values.items())
+            if value > 0
+        }
+
+    return {
+        "mode": "preperiod_spatial_prior_v1",
+        "fielded_share": fielded_share,
+        "fielded_locality_weights": normalize(fielded_raw),
+        "clandestine_locality_weights": normalize(clandestine_raw),
+        "evidence_counts": evidence,
+        "hyperparameters": {
+            "fielded_share_alpha": fielded_share_alpha,
+            "fielded_share_beta": fielded_share_beta,
+            "presence_scale": presence_scale,
+        },
+    }
+
+
 def _clear_synthetic_foreign_system(world) -> None:
     world.foreign_states.clear()
     world.border_segments.clear()
@@ -136,7 +226,12 @@ def _reset_insurgent_membership(world) -> None:
     insurgent.leader_id = None
 
 
-def _install_forces(world, inputs: dict[str, Any], taliban_strength: float) -> None:
+def _install_forces(
+    world,
+    inputs: dict[str, Any],
+    taliban_strength: float,
+    taliban_prior: dict[str, Any] | None = None,
+) -> dict[str, float]:
     fdf_template = next(
         formation for formation in world.formations.values()
         if formation.organization_id == "fdf"
@@ -158,16 +253,52 @@ def _install_forces(world, inputs: dict[str, Any], taliban_strength: float) -> N
         )
 
     taliban = inputs["initialization"]["taliban"]
-    anchor_weights = {
-        str(locality_id): float(weight)
-        for locality_id, weight in taliban["anchor_weights"].items()
-    }
-    total_weight = sum(anchor_weights.values())
-    for index, (locality_id, weight) in enumerate(sorted(anchor_weights.items()), 1):
+    if taliban_prior is None:
+        fielded_weights = {
+            str(locality_id): float(weight)
+            for locality_id, weight in taliban["anchor_weights"].items()
+        }
+        fielded_share = 1.0
+        clandestine_weights: dict[str, float] = {}
+    else:
+        fielded_weights = {
+            str(locality_id): float(weight)
+            for locality_id, weight in taliban_prior["fielded_locality_weights"].items()
+        }
+        fielded_share = clamp(float(taliban_prior["fielded_share"]))
+        clandestine_weights = {
+            str(locality_id): float(weight)
+            for locality_id, weight in taliban_prior["clandestine_locality_weights"].items()
+        }
+    total_weight = sum(fielded_weights.values())
+    target_fielded = float(taliban_strength) * fielded_share
+    minimum_fielded = float(world.config.organization_ecology.minimum_formation_personnel)
+    actual_fielded = 0.0
+    clandestine_allocations: dict[str, float] = {}
+    for index, (locality_id, weight) in enumerate(sorted(fielded_weights.items()), 1):
+        personnel = target_fielded * weight / max(1e-12, total_weight)
+        if personnel < minimum_fielded:
+            clandestine_allocations[locality_id] = (
+                clandestine_allocations.get(locality_id, 0.0) + personnel
+            )
+            continue
         formation_id = f"TAL-{index:02d}"
-        personnel = float(taliban_strength) * weight / total_weight
         world.formations[formation_id] = _formation_from_template(
             insurgent_template, formation_id, "insurgent", locality_id, personnel
+        )
+        actual_fielded += personnel
+
+    residual = max(0.0, float(taliban_strength) - actual_fielded)
+    clandestine_total_weight = sum(clandestine_weights.values())
+    if clandestine_total_weight <= 0:
+        fallback = next(iter(fielded_weights), None)
+        if fallback is not None:
+            clandestine_weights = {fallback: 1.0}
+            clandestine_total_weight = 1.0
+    for locality_id, weight in sorted(clandestine_weights.items()):
+        clandestine_allocations[locality_id] = (
+            clandestine_allocations.get(locality_id, 0.0)
+            + residual * weight / max(1e-12, clandestine_total_weight)
         )
 
     coalition = inputs["international_forces"]
@@ -185,13 +316,31 @@ def _install_forces(world, inputs: dict[str, Any], taliban_strength: float) -> N
         )
         world.formations[formation_id] = formation
 
+    # Keep the sourced Taliban envelope exact while allowing the latent prior
+    # to split it between fielded formations and clandestine local manpower.
+    # Tiny roundoff is assigned to the largest clandestine locality.
+    allocated = actual_fielded + sum(clandestine_allocations.values())
+    if clandestine_allocations:
+        correction = float(taliban_strength) - allocated
+        target = max(clandestine_allocations, key=clandestine_allocations.get)
+        clandestine_allocations[target] += correction
+    elif abs(allocated - float(taliban_strength)) > 1e-8:
+        raise AssertionError("Taliban sourced strength was not conserved")
+    return {
+        locality_id: quantity
+        for locality_id, quantity in sorted(clandestine_allocations.items())
+        if quantity > 1e-9
+    }
+
 
 def _install_pakistan(world, inputs: dict[str, Any]) -> None:
-    """Install explicit Pakistan/border objects with inert preference fields.
+    """Install explicit Pakistan/border objects and sanctuary semantics.
 
     Foreign-affairs evolution is disabled for the transfer benchmark, so the
-    neutral preference fields below are bookkeeping placeholders and do not
-    create support, intervention, migration, or withdrawal decisions.
+    foreign state's preference fields remain bookkeeping placeholders.  The
+    organization-to-sponsor relation is not inert: the existing spatial
+    sanctuary operator requires it to turn the binary sourced sanctuary
+    availability into a local border gradient.
     """
     state = ForeignState(
         "pakistan", "Pakistan", 0.0,
@@ -214,6 +363,54 @@ def _install_pakistan(world, inputs: dict[str, Any]) -> None:
     world.organizations["insurgent"].external_sanctuary = float(
         inputs["pakistan"]["model_mapping"]["taliban_external_sanctuary"]
     )
+    world.organizations["insurgent"].sponsor_dependence["pakistan"] = clamp(
+        float(inputs["pakistan"]["model_mapping"]["taliban_external_sanctuary"])
+    )
+
+
+def _install_clandestine_state(world, allocations: dict[str, float]) -> None:
+    """Install latent local pools and represented member networks.
+
+    Pools are unfielded manpower, not an extra force injection.  They are
+    deliberately left unequipped; any future material conversion must pass
+    through the existing stock-flow rules.  Represented membership gives the
+    existing social/recruitment machinery a local organizational footprint
+    without inventing a new safehouse or event-memory variable.
+    """
+    if not allocations:
+        return
+    organization = world.organizations["insurgent"]
+    conversion = max(
+        1e-12,
+        float(world.config.organization_ecology.fighter_conversion_fraction),
+    )
+    for locality_id, quantity in sorted(allocations.items()):
+        if locality_id not in world.localities or quantity <= 1e-9:
+            continue
+        key = (organization.organization_id, locality_id)
+        world.organization_manpower_pools[key] = (
+            world.organization_manpower_pools.get(key, 0.0) + quantity
+        )
+        remaining_membership = quantity / conversion
+        candidates = sorted(
+            (
+                person for person in world.persons.values()
+                if person.residence_locality_id == locality_id
+                and person.organization_id is None
+            ),
+            key=lambda person: (-person.grievance, person.person_id),
+        )
+        for person in candidates:
+            if remaining_membership <= 1e-9:
+                break
+            fraction = min(
+                1.0,
+                remaining_membership / max(1e-12, person.weight),
+            )
+            _set_armed_membership(person, organization, fraction)
+            organization.member_ids.add(person.person_id)
+            remaining_membership -= person.weight * fraction
+    refresh_community_aggregates(world)
 
 
 def _set_police_post_stock(world, target: float) -> None:
@@ -258,8 +455,13 @@ def _reset_accounting_baselines(world) -> None:
     world.initialize_stock_ledger()
 
 
-def condition_world(world, inputs: dict[str, Any] | None = None,
-                    taliban_strength: float | None = None):
+def condition_world(
+    world,
+    inputs: dict[str, Any] | None = None,
+    taliban_strength: float | None = None,
+    *,
+    taliban_prior: dict[str, Any] | None = None,
+):
     """Replace generic generated stocks with sourced Afghanistan case inputs."""
     inputs = inputs or load_historical_inputs()
     allowed = {
@@ -287,7 +489,12 @@ def condition_world(world, inputs: dict[str, Any] | None = None,
 
     _clear_synthetic_foreign_system(world)
     _reset_insurgent_membership(world)
-    _install_forces(world, inputs, taliban_strength)
+    clandestine_allocations = _install_forces(
+        world,
+        inputs,
+        taliban_strength,
+        taliban_prior=taliban_prior,
+    )
 
     # Rebuild downstream state from the sourced force inventory rather than
     # trying to mutate generated logistics/posts in place.
@@ -295,6 +502,7 @@ def condition_world(world, inputs: dict[str, Any] | None = None,
     generate_physical_world(world)
     _scale_police_posts(world, inputs)
     initialize_organization_ecology(world)
+    _install_clandestine_state(world, clandestine_allocations)
     _install_pakistan(world, inputs)
 
     # Police post scaling changes the initial response field. Recompute true
@@ -330,6 +538,22 @@ def initialization_diagnostics(world, inputs: dict[str, Any],
         "ana_personnel": by_org["fdf"],
         "anp_personnel": police,
         "taliban_personnel": by_org["insurgent"],
+        "taliban_fielded_personnel": by_org["insurgent"],
+        "taliban_clandestine_personnel": sum(
+            quantity
+            for (organization_id, _), quantity
+            in world.organization_manpower_pools.items()
+            if organization_id == "insurgent"
+        ),
+        "taliban_total_fighter_equivalents": (
+            by_org["insurgent"]
+            + sum(
+                quantity
+                for (organization_id, _), quantity
+                in world.organization_manpower_pools.items()
+                if organization_id == "insurgent"
+            )
+        ),
         "coalition_personnel": by_org["coalition"],
         "ana_formations": sum(
             formation.organization_id == "fdf" for formation in world.formations.values()
@@ -343,6 +567,15 @@ def initialization_diagnostics(world, inputs: dict[str, Any],
         "foreign_states": sorted(world.foreign_states),
         "pakistan_border_segments": len(world.border_segments),
         "taliban_external_sanctuary": world.organizations["insurgent"].external_sanctuary,
+        "taliban_pakistan_sponsor_dependence": world.organizations[
+            "insurgent"
+        ].sponsor_dependence.get("pakistan", 0.0),
+        "taliban_clandestine_localities": sorted({
+            locality_id
+            for (organization_id, locality_id), quantity
+            in world.organization_manpower_pools.items()
+            if organization_id == "insurgent" and quantity > 0
+        }),
         "stock_ledger_residual": world.stock_ledger_residual(),
         "supply_conservation_residual": world.supply_conservation_residual(),
         "expected": {

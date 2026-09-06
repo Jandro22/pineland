@@ -111,18 +111,51 @@ def _continuous_capacity_update(
 class ProcessEngine:
     """State transitions. Every control mutation is mirrored in the causal ledger."""
 
-    def __init__(self, world: WorldState, rng: random.Random | None = None) -> None:
+    def __init__(
+        self,
+        world: WorldState,
+        rng: random.Random | None = None,
+        stream_namespace: str = "",
+    ) -> None:
         self.world = world
         self._injected_rng = rng
+        # A particle fork gets a fresh stochastic lineage without changing
+        # any transition parameter.  The empty namespace preserves the
+        # historical stream identities for ordinary simulations.
+        self.stream_namespace = str(stream_namespace)
         self._process_rngs: dict[str, random.Random] = {}
         # Synthetic recording is an observation/output operator and must not
         # advance the latent transition stream.  Keeping it in an independent
         # deterministic namespace makes logging/recording settings
         # scientifically non-substantive while preserving reproducibility.
         self._recording_rngs: dict[str, random.Random] = {}
-        self._recording_rng = seeded_rng(world.config, "recording:process-default")
-        self.rng = rng or seeded_rng(world.config, "process-default")
+        self._recording_rng = seeded_rng(
+            world.config, self._stream_name("recording:process-default")
+        )
+        self.rng = rng or seeded_rng(
+            world.config, self._stream_name("process-default")
+        )
         self.event_counter = 0
+
+    def _stream_name(self, stream: str) -> str:
+        if not self.stream_namespace:
+            return stream
+        return f"{self.stream_namespace}:{stream}"
+
+    def set_stream_namespace(self, stream_namespace: str) -> None:
+        """Start a child stochastic lineage at the current event boundary."""
+        self.stream_namespace = str(stream_namespace)
+        self._process_rngs.clear()
+        self._recording_rngs.clear()
+        self._recording_rng = seeded_rng(
+            self.world.config,
+            self._stream_name("recording:process-default"),
+        )
+        if self._injected_rng is None:
+            self.rng = seeded_rng(
+                self.world.config,
+                self._stream_name("process-default"),
+            )
 
     def execute(self, event: ScheduledEvent) -> str:
         self.event_counter += 1
@@ -143,10 +176,18 @@ class ProcessEngine:
             advance_patrol_presence_memory(self.world, self.world.time)
         if self._injected_rng is None:
             self.rng = self._process_rngs.setdefault(
-                event.event_type, seeded_rng(self.world.config, f"process:{event.event_type}")
+                event.event_type,
+                seeded_rng(
+                    self.world.config,
+                    self._stream_name(f"process:{event.event_type}"),
+                ),
             )
         self._recording_rng = self._recording_rngs.setdefault(
-            event.event_type, seeded_rng(self.world.config, f"recording:{event.event_type}")
+            event.event_type,
+            seeded_rng(
+                self.world.config,
+                self._stream_name(f"recording:{event.event_type}"),
+            ),
         )
         self.world.active_event_id = event_id
         before_stocks = self.world.tracked_stock_totals()
