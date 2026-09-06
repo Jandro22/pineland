@@ -13,7 +13,8 @@ observation labeled outside its declared split before advancing any particle.
 The Afghanistan development runner is
 `studies/research_program/scripts/run_afghanistan_filtered_prospective_2005.py`.
 It uses complete 2004 province-week cells, freezes the posterior at the
-training boundary, and emits a weighted 2005 latent event-probability field.
+training boundary, and emits a weighted 2005 latent event-probability field
+including zero-risk cells on the complete province-week surface.
 It is separate from the consumed frozen-core 2005 scorer.
 
 Afghanistan's pre-period spatial prior uses all available 2003 district

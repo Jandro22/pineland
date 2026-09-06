@@ -238,13 +238,30 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         self.clone_state = clone_state
         self.fork_state = fork_state
         self.last_time = float("-inf")
+        self.frozen = False
         self.history: list[FilterUpdateDiagnostics] = []
+
+    def freeze(self) -> None:
+        """Close the historical-assimilation phase at the forecast boundary.
+
+        A training-only split protects the filter from accidentally consuming
+        a row from the wrong data partition.  Freezing adds the second guard
+        required by a prospective workflow: once forward propagation starts,
+        no later call can silently turn the posterior into a holdout-tuned
+        state estimate.
+        """
+        self.frozen = True
 
     def assimilate(
         self,
         observation: AssimilationObservation[ObservationT],
     ) -> FilterUpdateDiagnostics:
         """Advance to and assimilate one predeclared observation boundary."""
+        if self.frozen:
+            raise RuntimeError(
+                "particle filter is frozen at the forecast boundary and cannot "
+                "assimilate additional observations"
+            )
         if observation.split != self.allowed_split:
             raise ValueError(
                 "particle filter refuses observations outside its declared "

@@ -79,7 +79,10 @@ def morans_i(values: dict[str, float], adjacency: dict[str, dict[str, float]]) -
             if first < second and second in values and weight > 0:
                 edges.append((first, second, float(weight)))
     total_weight = sum(2.0 * weight for _, _, weight in edges)
-    numerator = sum(
+    # ``edges`` stores each undirected adjacency once.  Moran's numerator is
+    # the ordered sum over i,j, so each stored edge contributes twice, just as
+    # the denominator's total weight does.
+    numerator = 2.0 * sum(
         weight * centered[first] * centered[second]
         for first, second, weight in edges
     )
