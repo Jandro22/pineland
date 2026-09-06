@@ -94,7 +94,9 @@ def test_conditioned_force_stocks_match_sourced_case(generated_world, taliban_st
     assert diagnostic["taliban_personnel"] == pytest.approx(taliban_strength)
     assert diagnostic["coalition_personnel"] == pytest.approx(24400)
     assert diagnostic["ana_formations"] == 12
-    assert diagnostic["taliban_formations"] == 8
+    assert diagnostic["taliban_formations"] == len(
+        inputs["initialization"]["taliban"]["anchor_weights"]
+    )
     assert diagnostic["coalition_formations"] == 4
     assert diagnostic["foreign_states"] == ["pakistan"]
     assert diagnostic["pakistan_border_segments"] == 45

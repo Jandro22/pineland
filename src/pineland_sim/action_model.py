@@ -480,17 +480,18 @@ def execution_probability(
     target_resistance: float,
     material_fraction: float = 1.0,
 ) -> float:
-    """Execution feasibility from existing capability state, not actor choice."""
+    """Execution feasibility from capacity, knowledge, target, and local supply.
+
+    ``material_fraction`` is the fraction of the action's physical requirement
+    present in the locality. Organization cash/material capital finances that
+    stock upstream; multiplying by it again made converted or delivered supply
+    unusable and charged the same constraint twice.
+    """
     organization = world.organizations[organization_id]
     capacity = capacity_saturation(world, organization_id, locality_id)
     knowledge = clamp(organization.local_knowledge)
-    material = (
-        clamp(organization.capital.get("material", 0.0))
-        if organization.kind is OrganizationKind.INSURGENT
-        else clamp(organization.institutional_quality)
-    )
     vulnerability = 1.0 - clamp(target_resistance)
-    factors = (capacity, knowledge, material, vulnerability, clamp(material_fraction))
+    factors = (capacity, knowledge, vulnerability, clamp(material_fraction))
     if any(value <= 0 for value in factors):
         return 0.0
     product = 1.0

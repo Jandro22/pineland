@@ -278,8 +278,22 @@ def generate_logistics_world(world: WorldState) -> None:
         organization_daily_requirement = (sum(f.personnel for f in formations) *
                                           config.presence_consumption_per_person_day *
                                           config.organization_sustainment_coverage)
-        catchment_weights = [world.districts[world.localities[x].district_id].population
-                             for x in source_localities]
+        if organization.kind in {OrganizationKind.MILITARY, OrganizationKind.POLICE}:
+            catchment_weights = [
+                world.districts[world.localities[x].district_id].population
+                for x in source_localities
+            ]
+        else:
+            # Nonterritorial sources are formation bases. Their production
+            # burden follows the home-force stock they support, rather than
+            # unrelated civilian population around the base.
+            catchment_weights = [
+                sum(
+                    formation.personnel for formation in formations
+                    if formation.home_locality_id == locality_id
+                )
+                for locality_id in source_localities
+            ]
         total_weight = sum(catchment_weights)
         for index, locality_id in enumerate(source_localities):
             locality = world.localities[locality_id]
@@ -312,6 +326,70 @@ def generate_logistics_world(world: WorldState) -> None:
         sum(source.stock for source in world.supply_sources.values()) +
         sum(formation.supply_stock for formation in world.formations.values())
     )
+
+
+def _reconcile_supply_production_with_manpower(world: WorldState) -> None:
+    """Keep organization supply production aligned with current force size.
+
+    Supply sources encode a coverage policy, not a frozen opening-day output.
+    Recruitment, attrition, splits, mergers, and historical stock updates all
+    change the force those sources must sustain. Leaving production fixed at
+    world generation made growing organizations mechanically starve even when
+    their declared sustainment system had adequate coverage.
+    """
+    cfg = world.config.logistics
+    if cfg.source_capacity_model != "organization_manpower":
+        return
+    sources_by_org: dict[str, list[SupplySource]] = {}
+    for source in world.supply_sources.values():
+        sources_by_org.setdefault(source.organization_id, []).append(source)
+    personnel_by_org: dict[str, float] = {}
+    for formation in world.formations.values():
+        personnel_by_org[formation.organization_id] = (
+            personnel_by_org.get(formation.organization_id, 0.0)
+            + max(0.0, formation.personnel)
+        )
+    for organization_id, sources in sources_by_org.items():
+        organization = world.organizations[organization_id]
+        operational = sorted(
+            (source for source in sources if source.operational),
+            key=lambda source: source.source_id,
+        )
+        if not operational:
+            continue
+        requirement = (
+            personnel_by_org.get(organization_id, 0.0)
+            * cfg.presence_consumption_per_person_day
+            * cfg.organization_sustainment_coverage
+        )
+        if organization.kind in {OrganizationKind.MILITARY, OrganizationKind.POLICE}:
+            weights = [
+                max(1.0, world.districts[
+                    world.localities[source.locality_id].district_id
+                ].population)
+                for source in operational
+            ]
+        else:
+            weights = [
+                sum(
+                    max(0.0, formation.personnel)
+                    for formation in world.formations.values()
+                    if formation.organization_id == organization_id
+                    and formation.home_locality_id == source.locality_id
+                )
+                for source in operational
+            ]
+            if sum(weights) <= 0:
+                weights = [1.0] * len(operational)
+        total_weight = sum(weights)
+        for source, weight in zip(operational, weights):
+            production = requirement * weight / total_weight
+            source.production_per_day = production
+            source.capacity = max(
+                source.capacity,
+                source.stock,
+                production / cfg.source_daily_production_fraction,
+            )
 
 
 def consume_formation_supply(world: WorldState, formation_id: str, amount: float,
@@ -838,6 +916,7 @@ def update_logistics(world: WorldState, time: float, delta_days: float) -> dict[
     config = world.config.logistics
     produced = delivered = consumed = lost = 0.0
     shipments_created = 0
+    _reconcile_supply_production_with_manpower(world)
     # Reconcile carrying capacity to current manpower without discarding
     # existing materiel.  This also catches personnel changes caused by combat
     # or peace processes outside organization-ecology recruitment.
