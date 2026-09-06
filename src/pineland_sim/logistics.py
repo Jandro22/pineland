@@ -16,6 +16,7 @@ from .entities import (
     clamp,
 )
 from .world import WorldState, seeded_initialization_rng, seeded_rng
+from .access import route_restriction_level
 
 
 def command_edge_key(first_id: str, second_id: str) -> tuple[str, str]:
@@ -417,9 +418,23 @@ def create_movement_order(world: WorldState, formation_id: str, destination_id: 
     route, distance_km, travel_hours = shortest_locality_path(
         world, formation.locality_id, destination_id, formation.mobility
     )
+    restriction = route_restriction_level(
+        world, route, formation.organization_id
+    )
+    restriction_multiplier = (
+        1.0
+        + world.config.access_restriction.hostile_movement_penalty
+        * restriction
+    )
+    travel_hours *= restriction_multiplier
     reliability, latency = command_metrics(world, formation.organization_id, formation_id)
     moving_personnel = formation.personnel * formation.availability
-    cost = moving_personnel * distance_km * world.config.logistics.movement_consumption_per_person_km
+    cost = (
+        moving_personnel
+        * distance_km
+        * world.config.logistics.movement_consumption_per_person_km
+        * restriction_multiplier
+    )
     status = "pending" if rng.random() <= reliability else "failed_command"
     order = FormationMovementOrder(
         f"MO{len(world.movement_orders) + 1:08d}", formation_id, formation.organization_id,

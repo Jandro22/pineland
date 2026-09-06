@@ -15,6 +15,7 @@ from .entities import (
     clamp,
 )
 from .world import WorldState, seeded_initialization_rng
+from .relations import organizations_allied
 
 
 def physical_edge_key(first_id: str, second_id: str) -> tuple[str, str]:
@@ -63,7 +64,13 @@ def _actor_matches_organization(world: WorldState, organization_id: str,
     if actor_id == "insurgent":
         return organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
     if actor_id == "government":
-        return organization.kind is not OrganizationKind.INSURGENT
+        if organization_id == "government":
+            return organization.status == "active"
+        return bool(
+            "government" in world.organizations
+            and organization.status == "active"
+            and organizations_allied(world, organization_id, "government")
+        )
     target = world.organizations.get(actor_id)
     if target is not None and target.kind is OrganizationKind.INSURGENT:
         return organization_id == actor_id and target.status == "active"

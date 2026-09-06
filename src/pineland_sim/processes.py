@@ -24,6 +24,7 @@ from .logistics import (
     advance_movement_orders,
     choose_reallocation_orders,
     consume_formation_supply,
+    shortest_locality_path,
     update_logistics,
 )
 from .information import (
@@ -48,11 +49,24 @@ from .action_model import (
     local_action_support,
     nonfielded_human_targets,
 )
-from .organization_ecology import process_organization_ecology, recruit_and_retain
+from .organization_ecology import (
+    locality_franchise_support_profile,
+    organization_local_rootedness,
+    process_organization_ecology,
+    recruit_and_retain,
+)
 from .political_order import process_political_order
 from .foreign_affairs import process_foreign_affairs
 from .peace_process import process_peace
 from .timebase import reference_probability, reference_scale
+from .access import (
+    build_access_restriction,
+    decay_access_restrictions,
+    edge_restriction_level,
+    locality_access_pressure,
+)
+from .civilian import record_displacement_harm
+from .relations import record_relation_harm
 
 
 class ProcessEngine:
@@ -300,6 +314,37 @@ class ProcessEngine:
                 CausalContribution(self.world.time, locality_id, dimension, new - old, mechanism, event_id)
             )
 
+    def _refresh_aggregate_insurgent_control(
+        self, event_id: str, locality_id: str, dimensions: tuple[str, ...]
+    ) -> None:
+        """Maintain the legacy aggregate insurgent view from live franchises."""
+        active_ids = sorted(
+            organization.organization_id
+            for organization in self.world.organizations.values()
+            if (
+                organization.kind is OrganizationKind.INSURGENT
+                and organization.status == "active"
+            )
+        )
+        if not active_ids or active_ids == ["insurgent"]:
+            return
+        locality = self.world.localities[locality_id]
+        locality.control.setdefault("insurgent", ControlVector())
+        for dimension in dimensions:
+            complement = 1.0
+            for organization_id in active_ids:
+                vector = locality.control.get(organization_id)
+                value = getattr(vector, dimension) if vector is not None else 0.0
+                complement *= 1.0 - clamp(value)
+            self._set_control_dimension(
+                event_id,
+                locality_id,
+                "insurgent",
+                dimension,
+                1.0 - complement,
+                "derived_franchise_aggregate",
+            )
+
     def _synthetic_record(self, event_id: str, event_type: str, locality_id: str | None,
                           severity: float, actor: str | None,
                           source_type: str = "process_event") -> SyntheticRecord:
@@ -424,11 +469,20 @@ class ProcessEngine:
         return advance_movement_orders(self.world, self.world.time)
 
     def on_logistics(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
-        return update_logistics(
+        elapsed_days = float(
+            event.payload.get("elapsed_days", event.payload["interval"])
+        )
+        expired = decay_access_restrictions(
+            self.world, self.world.time, elapsed_days
+        )
+        result = update_logistics(
             self.world,
             self.world.time,
-            float(event.payload.get("elapsed_days", event.payload["interval"])),
+            elapsed_days,
         )
+        result["access_restrictions_expired"] = expired
+        result["active_access_restrictions"] = len(self.world.access_restrictions)
+        return result
 
     def on_physical_refresh(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         changed = 0
@@ -499,7 +553,101 @@ class ProcessEngine:
                           fiscal=.003 * production * cycle_scale,
                           social=.003 * production * cycle_scale,
                           expected=.002 * production * cycle_scale)
-        return {"actor_ids": ("government",), "governance_production": total}
+        nonstate_updates = 0
+        active_insurgents = [
+            organization
+            for organization in self.world.organizations.values()
+            if (
+                organization.kind is OrganizationKind.INSURGENT
+                and organization.status == "active"
+            )
+        ]
+        if self.world.config.nonstate_governance.enabled and elapsed_days > 0:
+            cfg = self.world.config.nonstate_governance
+            decay_fraction = reference_probability(
+                cfg.decay_per_30_days, elapsed_days, 30.0
+            )
+            gain_fraction = reference_probability(
+                cfg.gain_per_30_days, elapsed_days, 30.0
+            )
+            for organization in active_insurgents:
+                for locality in self.world.localities.values():
+                    rootedness = organization_local_rootedness(
+                        self.world, organization, locality.locality_id
+                    )
+                    member_capacity = clamp(
+                        rootedness["represented_local_membership"]
+                        / max(
+                            1e-12,
+                            self.world.config.organization_ecology.minimum_proto_represented_population,
+                        )
+                    )
+                    force_capacity = clamp(
+                        committed_fighter_equivalents(
+                            self.world,
+                            organization.organization_id,
+                            locality.locality_id,
+                        )
+                        / max(
+                            1e-12,
+                            self.world.config.organization_ecology.minimum_formation_personnel,
+                        )
+                    )
+                    local_capacity = max(member_capacity, force_capacity)
+                    rooted_share = max(
+                        rootedness["home_locality_share"],
+                        rootedness["home_district_share"],
+                    )
+                    institutional_capacity = clamp(
+                        0.5 * organization.institutional_quality
+                        + 0.5 * organization.capital.get("organizational", 0.0)
+                    )
+                    investment = clamp(
+                        organization.phenotype.get("governance_investment", 0.0)
+                    )
+                    support = clamp(
+                        local_capacity
+                        * (0.5 + 0.5 * rooted_share)
+                        * institutional_capacity
+                        * investment
+                    )
+                    vector = locality.control.setdefault(
+                        organization.organization_id, ControlVector()
+                    )
+                    for dimension in (
+                        "administrative", "legal", "fiscal", "expected"
+                    ):
+                        old = getattr(vector, dimension)
+                        retained = old * (1.0 - decay_fraction)
+                        gain = (
+                            gain_fraction * support * (1.0 - retained)
+                            if local_capacity >= cfg.minimum_local_capacity
+                            else 0.0
+                        )
+                        target = clamp(retained + gain)
+                        nonstate_updates += int(abs(target - old) > 1e-15)
+                        self._set_control_dimension(
+                            event_id,
+                            locality.locality_id,
+                            organization.organization_id,
+                            dimension,
+                            target,
+                            "persistent_nonstate_governance",
+                        )
+            for locality_id in self.world.localities:
+                self._refresh_aggregate_insurgent_control(
+                    event_id,
+                    locality_id,
+                    ("administrative", "legal", "fiscal", "social", "expected"),
+                )
+        return {
+            "actor_ids": tuple(
+                ["government"]
+                + [organization.organization_id for organization in active_insurgents]
+            ),
+            "governance_production": total,
+            "nonstate_governance_updates": nonstate_updates,
+        }
 
     def on_economy(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         elapsed_days = float(event.payload.get(
@@ -515,9 +663,13 @@ class ProcessEngine:
                       if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"]
         for locality in self.world.localities.values():
             security = locality.control["government"].physical
+            access_pressure = locality_access_pressure(
+                self.world, locality.locality_id
+            )
             reference_net_fraction = (
                 (.002 + .004 * locality.infrastructure) * (0.5 + .5 * security)
                 - (.003 * locality.violence + .002 * locality.disruption)
+                - self.world.config.access_restriction.economic_penalty * access_pressure
                 - .001
             )
             growth_factor = max(0.0, 1.0 + reference_net_fraction) ** cycle_scale
@@ -533,9 +685,11 @@ class ProcessEngine:
             for insurgent in insurgents:
                 extraction = (
                     locality.economic_output * .00015 *
-                    locality.control["insurgent"].fiscal * cycle_scale
+                    locality.control.get(
+                        insurgent.organization_id, ControlVector()
+                    ).fiscal * cycle_scale
                 )
-                insurgent.resources += extraction / max(1, len(insurgents))
+                insurgent.resources += extraction
         # Organization.external_support is an organization-level annual
         # support flow. Credit it once per organization, not once per locality.
         for insurgent in insurgents:
@@ -549,6 +703,9 @@ class ProcessEngine:
     def on_mobility(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         moved = 0.0
         displaced = 0.0
+        returned = 0.0
+        resettled = 0.0
+        displaced_by_origin: dict[str, float] = {}
         elapsed_days = float(event.payload.get(
             "elapsed_days",
             event.payload.get("interval", self.world.config.intervals.mobility),
@@ -556,18 +713,88 @@ class ProcessEngine:
         if elapsed_days <= 0:
             return {"affected_entity_ids": (), "moved_population": 0.0,
                     "new_displaced_population": 0.0}
-        opportunity_probability = reference_probability(
-            clamp(self.world.config.movement_rate), elapsed_days, 1.0
+        cfg = self.world.config.civilian_dynamics
+        voluntary_probability = reference_probability(
+            clamp(
+                self.world.config.movement_rate
+                * cfg.voluntary_move_given_opportunity
+            ),
+            elapsed_days,
+            1.0,
         )
         belief_view = self.world.belief_view()
         for person in self.world.persons.values():
-            if person.external_state_id is not None:
-                continue
-            if self.rng.random() >= opportunity_probability:
+            if person.external_state_id is not None or person.weight <= 0:
                 continue
             origin = person.residence_locality_id
             neighbors = self.world.adjacency[origin]
             if not neighbors:
+                continue
+            if person.displaced:
+                if person.home_locality_id == origin:
+                    person.displaced = False
+                    person.displaced_since = None
+                    person.displacement_origin_locality_id = None
+                else:
+                    home_belief = person.expected_control_by_locality.get(
+                        person.home_locality_id, {}
+                    ).get(
+                        "government",
+                        person.expected_control.get("government", .5),
+                    )
+                    return_probability = reference_probability(
+                        clamp(cfg.return_reference_rate * (.5 + .5 * home_belief)),
+                        elapsed_days,
+                        1.0,
+                    )
+                    if self.rng.random() < return_probability:
+                        route, _, _ = shortest_locality_path(
+                            self.world, origin, person.home_locality_id, 1.0
+                        )
+                        if len(route) > 1:
+                            destination = route[1]
+                            person.residence_locality_id = destination
+                            moved += person.weight
+                            returned += person.weight
+                            if destination == person.home_locality_id:
+                                person.displaced = False
+                                person.displaced_since = None
+                                person.displacement_origin_locality_id = None
+                            continue
+                    displacement_age = (
+                        max(0.0, self.world.time - person.displaced_since)
+                        if person.displaced_since is not None else 0.0
+                    )
+                    if displacement_age >= cfg.minimum_resettlement_days:
+                        resettlement_probability = reference_probability(
+                            cfg.resettlement_reference_rate, elapsed_days, 1.0
+                        )
+                        if self.rng.random() < resettlement_probability:
+                            person.displaced = False
+                            person.displaced_since = None
+                            person.displacement_origin_locality_id = None
+                            person.home_locality_id = origin
+                            resettled += person.weight
+
+            origin_locality = self.world.localities[origin]
+            violence_pressure = clamp(
+                (origin_locality.violence - cfg.displacement_violence_threshold)
+                / max(1e-12, 1.0 - cfg.displacement_violence_threshold)
+            )
+            access_pressure = locality_access_pressure(self.world, origin)
+            forced_probability = reference_probability(
+                clamp(
+                    cfg.forced_displacement_reference_rate
+                    * max(violence_pressure, access_pressure)
+                ),
+                elapsed_days,
+                1.0,
+            )
+            forced = self.rng.random() < forced_probability
+            voluntary = (
+                not forced and self.rng.random() < voluntary_probability
+            )
+            if not forced and not voluntary:
                 continue
             candidates = list(neighbors)
             utilities = []
@@ -577,15 +804,32 @@ class ProcessEngine:
                 # hidden read of realized destination control.
                 security = belief_view.expected_destination_control(person.person_id, destination, "government")
                 livelihood = log(max(2, locality.economic_output / max(1, locality.population)))
-                utilities.append(exp(max(-10, min(10, 1.2 * security + .1 * livelihood - neighbors[destination]))))
+                restriction = edge_restriction_level(
+                    self.world, origin, destination, None
+                )
+                utility = (
+                    1.2 * security + .1 * livelihood - neighbors[destination]
+                    - self.world.config.access_restriction.civilian_utility_penalty
+                    * restriction
+                )
+                utilities.append(exp(max(-10, min(10, utility))))
             destination = self.rng.choices(candidates, weights=utilities, k=1)[0]
-            origin_locality = self.world.localities[origin]
-            forced = origin_locality.violence > .35 and self.rng.random() < origin_locality.violence
-            if forced or self.rng.random() < .08:
-                person.residence_locality_id = destination
-                person.displaced = forced and destination != person.home_locality_id
-                moved += person.weight
-                displaced += person.weight if person.displaced else 0
+            person.residence_locality_id = destination
+            moved += person.weight
+            if forced and destination != person.home_locality_id:
+                if not person.displaced:
+                    person.displaced_since = self.world.time
+                    person.displacement_origin_locality_id = origin
+                    person.displacement_count += 1
+                person.displaced = True
+                displaced += person.weight
+                displaced_by_origin[origin] = (
+                    displaced_by_origin.get(origin, 0.0) + person.weight
+                )
+            elif destination == person.home_locality_id:
+                person.displaced = False
+                person.displaced_since = None
+                person.displacement_origin_locality_id = None
         # ``displaced_population`` is a stock, not the number/mass of agents
         # sampled by this mobility event.  Recompute it from every displaced
         # representative so low movement rates cannot silently erase most of
@@ -597,7 +841,35 @@ class ProcessEngine:
                 displaced_by_locality[person.residence_locality_id] += person.weight
         for locality_id, population in displaced_by_locality.items():
             self.world.localities[locality_id].displaced_population = population
-        return {"affected_entity_ids": (), "moved_population": moved, "new_displaced_population": displaced}
+        for household in self.world.households.values():
+            by_locality: dict[str, float] = {}
+            for person_id in household.member_ids:
+                member = self.world.persons.get(person_id)
+                if (
+                    member is None or member.external_state_id is not None
+                    or member.weight <= 0
+                ):
+                    continue
+                by_locality[member.residence_locality_id] = (
+                    by_locality.get(member.residence_locality_id, 0.0)
+                    + member.weight
+                )
+            if by_locality:
+                household.residence_locality_id = max(
+                    by_locality,
+                    key=lambda locality_id: (by_locality[locality_id], locality_id),
+                )
+        for origin_locality_id, quantity in displaced_by_origin.items():
+            record_displacement_harm(
+                self.world, event_id, origin_locality_id, quantity
+            )
+        return {
+            "affected_entity_ids": (),
+            "moved_population": moved,
+            "new_displaced_population": displaced,
+            "returned_population": returned,
+            "resettled_population": resettled,
+        }
 
     def on_beliefs(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         # Beliefs are updated from local social signals only.  Realized control
@@ -612,31 +884,70 @@ class ProcessEngine:
                     "relays_dropped": 0}
         noise = self.world.config.observation_noise
         perceived_actors = ["government"]
-        if any(organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
-               for organization in self.world.organizations.values()):
+        active_insurgent_ids = sorted(
+            organization.organization_id
+            for organization in self.world.organizations.values()
+            if (
+                organization.kind is OrganizationKind.INSURGENT
+                and organization.status == "active"
+            )
+        )
+        if active_insurgent_ids:
             perceived_actors.append("insurgent")
+            perceived_actors.extend(
+                organization_id
+                for organization_id in active_insurgent_ids
+                if organization_id != "insurgent"
+            )
         locality_signals = {}
         for locality_id in self.world.localities:
             aggregate = locality_social_aggregation(self.world, locality_id)
+            franchise_profile = locality_franchise_support_profile(
+                self.world, locality_id
+            ) if active_insurgent_ids else {
+                "represented_franchise_support": {}
+            }
             for actor in perceived_actors:
                 # Communities are graph/mesoscale partitions, not equal-size
                 # population bins.  Destination beliefs therefore consume the
                 # represented-population aggregation rather than giving each
                 # sampled community one equal vote.
-                locality_signals[(locality_id, actor)] = (
-                    aggregate["government_cooperation"] if actor == "government"
-                    else aggregate["insurgent_sympathy"]
-                )
+                if actor == "government":
+                    signal = aggregate["government_cooperation"]
+                elif actor == "insurgent":
+                    signal = aggregate["insurgent_sympathy"]
+                else:
+                    signal = clamp(
+                        franchise_profile["represented_franchise_support"].get(
+                            actor, 0.0
+                        )
+                        / max(1.0, self.world.localities[locality_id].population)
+                    )
+                locality_signals[(locality_id, actor)] = signal
         for person in self.world.persons.values():
             community = self.world.social_communities.get(person.community_id)
             if community is None:
                 continue
             for actor in perceived_actors:
-                signal = (community.government_cooperation if actor == "government"
-                          else community.insurgent_sympathy)
+                if actor == "government":
+                    signal = community.government_cooperation
+                elif actor == "insurgent":
+                    signal = community.insurgent_sympathy
+                else:
+                    signal = locality_signals.get(
+                        (person.residence_locality_id, actor), 0.0
+                    )
                 observed = clamp(signal + self.rng.normalvariate(0, noise))
-                trust = person.trust.get(actor, .2)
-                old = person.expected_control.get(actor, .2)
+                trust = person.trust.get(
+                    actor,
+                    person.trust.get("insurgent", .2)
+                    if actor not in {"government", "insurgent"} else .2,
+                )
+                old = person.expected_control.get(
+                    actor,
+                    person.expected_control.get("insurgent", .2)
+                    if actor not in {"government", "insurgent"} else .2,
+                )
                 learning = reference_probability(
                     clamp(.12 * trust), elapsed_days, 1.0
                 )
@@ -1433,6 +1744,7 @@ class ProcessEngine:
                 "nonfielded_human_target": support.nonfielded_human_target,
                 "asset_violence": support.government_asset_target,
                 "coercion": support.civilian_coercion,
+                "access_restriction": support.access_restriction,
             },
         }
         if channel == "wait":
@@ -1445,14 +1757,6 @@ class ProcessEngine:
             actor_formation, target_formation = self.rng.choice(pairs)
             actor_kind = self.world.organizations[actor_formation.organization_id].kind
             target_kind = self.world.organizations[target_formation.organization_id].kind
-            if actor_kind is OrganizationKind.INSURGENT:
-                insurgent_formation = actor_formation
-                government_formation = target_formation
-            elif target_kind is OrganizationKind.INSURGENT:
-                insurgent_formation = target_formation
-                government_formation = actor_formation
-            else:
-                return {**common, "failure_reason": "battle_pair_has_no_insurgent_side"}
             # The initiator selected this target family from its beliefs and is
             # therefore aware of the intended target.  Defender awareness is
             # execution-time information and may differ.
@@ -1484,9 +1788,31 @@ class ProcessEngine:
                 1.0,
                 losses / max(
                     1.0,
-                    government_formation.personnel + insurgent_formation.personnel,
+                    actor_formation.personnel + target_formation.personnel,
                 ),
             )
+            government_losses = 0.0
+            insurgent_losses = 0.0
+            if (
+                actor_kind is OrganizationKind.INSURGENT
+                and target_kind is not OrganizationKind.INSURGENT
+            ):
+                insurgent_losses = -engagement.personnel_losses[
+                    actor_formation.formation_id
+                ]
+                government_losses = -engagement.personnel_losses[
+                    target_formation.formation_id
+                ]
+            elif (
+                target_kind is OrganizationKind.INSURGENT
+                and actor_kind is not OrganizationKind.INSURGENT
+            ):
+                insurgent_losses = -engagement.personnel_losses[
+                    target_formation.formation_id
+                ]
+                government_losses = -engagement.personnel_losses[
+                    actor_formation.formation_id
+                ]
             return {
                 **common,
                 "actor_ids": (
@@ -1503,12 +1829,12 @@ class ProcessEngine:
                 "target_type": "fielded_armed_formation",
                 "target_id": target_formation.formation_id,
                 "engagement_id": engagement.engagement_id,
-                "government_losses": -engagement.personnel_losses[
-                    government_formation.formation_id
-                ],
-                "insurgent_losses": -engagement.personnel_losses[
-                    insurgent_formation.formation_id
-                ],
+                "government_losses": government_losses,
+                "insurgent_losses": insurgent_losses,
+                "personnel_losses": {
+                    formation_id: -quantity
+                    for formation_id, quantity in engagement.personnel_losses.items()
+                },
                 "civilian_harm": engagement.civilian_harm,
                 "observations_by_actor": {
                     actor: tuple(
@@ -1589,6 +1915,13 @@ class ProcessEngine:
             intensity = min(1.0, realized_losses / max(1.0, exposed))
             locality = self.world.localities[locality_id]
             locality.violence = clamp(locality.violence * .85 + .25 * intensity)
+            record_relation_harm(
+                self.world,
+                organization_id,
+                target.organization_id,
+                intensity,
+                self.world.time,
+            )
             return {
                 **common,
                 "affected_entity_ids": (target.target_id,),
@@ -1697,6 +2030,91 @@ class ProcessEngine:
                 "compliance_probability": probability,
                 "complied": bool(complied),
                 "severity": probability if complied else 0.0,
+            }
+
+        if channel == "access_restriction":
+            candidates = sorted(self.world.adjacency.get(locality_id, {}))
+            if not candidates:
+                return {**common, "failure_reason": "no_adjacent_corridor"}
+            target_side = (
+                "government"
+                if organization.kind is OrganizationKind.INSURGENT
+                else "insurgent"
+            )
+            weights = []
+            for destination in candidates:
+                belief = self.world.belief_view(
+                    organization_id
+                ).locality_control(destination, target_side)
+                strategic = clamp(
+                    (belief.physical + belief.expected + belief.fiscal) / 3.0
+                )
+                weights.append(
+                    exp(max(
+                        -8.0,
+                        min(
+                            8.0,
+                            strategic
+                            - self.world.adjacency[locality_id][destination],
+                        ),
+                    ))
+                )
+            destination = self.rng.choices(
+                candidates, weights=weights, k=1
+            )[0]
+            capacity = clamp(
+                committed
+                / max(
+                    1e-12,
+                    committed
+                    + self.world.config.organization_ecology.minimum_formation_personnel,
+                )
+            )
+            supply_demand = (
+                committed
+                * self.world.config.logistics.presence_consumption_per_person_day
+                * max(interval_days, 1e-9)
+            )
+            consumed_supply, unmet_supply = consume_local_action_supply(
+                self.world, organization_id, locality_id, supply_demand
+            )
+            supply_fraction = (
+                consumed_supply / max(1e-12, supply_demand)
+                if supply_demand > 0 else 1.0
+            )
+            effort = capacity * clamp(supply_fraction)
+            if effort <= 0:
+                return {
+                    **common,
+                    "target_type": "locality_corridor",
+                    "target_id": destination,
+                    "supply_consumed": consumed_supply,
+                    "unmet_supply": unmet_supply,
+                    "failure_reason": "insufficient_access_effort",
+                }
+            restriction = build_access_restriction(
+                self.world,
+                organization_id,
+                locality_id,
+                destination,
+                effort,
+                self.world.time,
+            )
+            return {
+                **common,
+                "affected_entity_ids": (
+                    f"{restriction.locality_a_id}|{restriction.locality_b_id}",
+                ),
+                "latent_event": 1.0,
+                "state_based_violence_event": 0.0,
+                "record_event_type": "access_restriction",
+                "target_type": "locality_corridor",
+                "target_id": destination,
+                "access_level": restriction.level,
+                "access_effort": effort,
+                "supply_consumed": consumed_supply,
+                "unmet_supply": unmet_supply,
+                "severity": restriction.level,
             }
 
         return {**common, "failure_reason": "unsupported_action_channel"}

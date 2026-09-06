@@ -201,6 +201,10 @@ class Simulation:
         self.world.cumulative_supply_lost = 0.0
         self.world.cumulative_resource_to_supply = 0.0
         self.world.cumulative_civilian_harm = 0.0
+        self.world.cumulative_civilian_injuries = 0.0
+        self.world.cumulative_civilian_resource_loss = 0.0
+        self.world.cumulative_civilian_displacement = 0.0
+        self.world.civilian_harm_events.clear()
         self.world.cumulative_public_spending = 0.0
         self.world.cumulative_external_remittances = 0.0
         self.world.control_cost_consumed = {
