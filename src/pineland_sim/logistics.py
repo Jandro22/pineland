@@ -324,7 +324,8 @@ def generate_logistics_world(world: WorldState) -> None:
 
     world.initial_supply_stock = (
         sum(source.stock for source in world.supply_sources.values()) +
-        sum(formation.supply_stock for formation in world.formations.values())
+        sum(formation.supply_stock for formation in world.formations.values()) +
+        sum(world.organization_manpower_supply_reserves.values())
     )
 
 

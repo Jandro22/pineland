@@ -78,6 +78,29 @@ def _relocate_one_supply_source(world, organization_id: str, locality_id: str) -
     source.stock = max(1000.0, source.stock)
 
 
+def _fund_pool(world, organization_id: str, locality_id: str, quantity: float) -> float:
+    """Install explicitly equipped synthetic unfielded capacity without free materiel."""
+    key = (organization_id, locality_id)
+    quantity = max(0.0, float(quantity))
+    supply_per_fighter = (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+    reserve = quantity * supply_per_fighter
+    organization = world.organizations[organization_id]
+    if organization.resources < reserve:
+        raise RuntimeError("v5 synthetic capacity fixture lacks material backing")
+    organization.resources -= reserve
+    world.cumulative_resource_to_supply += reserve
+    world.organization_manpower_pools[key] = (
+        world.organization_manpower_pools.get(key, 0.0) + quantity
+    )
+    world.organization_manpower_supply_reserves[key] = (
+        world.organization_manpower_supply_reserves.get(key, 0.0) + reserve
+    )
+    return reserve
+
+
 def run_battery(seed: int = 2026090525) -> dict:
     gates: dict[str, dict] = {}
 
@@ -85,7 +108,7 @@ def run_battery(seed: int = 2026090525) -> dict:
     world = _world(seed)
     organization, formation = _insurgent(world)
     locality = formation.locality_id
-    world.organization_manpower_pools[(organization.organization_id, locality)] = 100.0
+    _fund_pool(world, organization.organization_id, locality, 100.0)
     _remove_government_targets(world, locality)
     support = local_action_support(world, organization.organization_id, locality)
     attempt = action_attempt_probability(world, organization.organization_id, locality, 1.0)
@@ -122,7 +145,7 @@ def run_battery(seed: int = 2026090525) -> dict:
     world = _world(seed + 2)
     organization, _ = _insurgent(world)
     locality = _human_target_locality(world)
-    world.organization_manpower_pools[(organization.organization_id, locality)] = 100.0
+    _fund_pool(world, organization.organization_id, locality, 100.0)
     for formation in world.formations.values():
         if (
             formation.locality_id == locality
@@ -159,6 +182,7 @@ def run_battery(seed: int = 2026090525) -> dict:
     for key in list(absence.organization_manpower_pools):
         if key[0] == organization.organization_id:
             del absence.organization_manpower_pools[key]
+            absence.organization_manpower_supply_reserves.pop(key, None)
     absence.localities[locality].control["insurgent"].physical = 0.0
     absence.localities[locality].control["insurgent"].social = 0.0
     absence.localities[locality].control["insurgent"].fiscal = 0.0
@@ -177,7 +201,7 @@ def run_battery(seed: int = 2026090525) -> dict:
     present = _world(seed + 4)
     organization, formation = _insurgent(present)
     locality = _human_target_locality(present)
-    present.organization_manpower_pools[(organization.organization_id, locality)] = 100.0
+    _fund_pool(present, organization.organization_id, locality, 100.0)
     missing = copy.deepcopy(present)
     for post in missing.security_posts.values():
         if post.locality_id == locality and post.formation_id is None:
@@ -205,11 +229,23 @@ def run_battery(seed: int = 2026090525) -> dict:
     weights_before = action_choice_weights(world, organization.organization_id, locality)
     attempt_before = action_attempt_probability(world, organization.organization_id, locality, 1.0)
     moved = formation.personnel
+    reserve = moved * (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+    if formation.supply_stock < reserve:
+        raise RuntimeError("formation-to-pool fixture lacks transferable material backing")
     world.organization_manpower_pools[(organization.organization_id, locality)] = (
         world.organization_manpower_pools.get(
             (organization.organization_id, locality), 0.0
         ) + moved
     )
+    world.organization_manpower_supply_reserves[(organization.organization_id, locality)] = (
+        world.organization_manpower_supply_reserves.get(
+            (organization.organization_id, locality), 0.0
+        ) + reserve
+    )
+    formation.supply_stock -= reserve
     formation.personnel = 0.0
     formation.operational_status = "ineffective"
     weights_after = action_choice_weights(world, organization.organization_id, locality)
@@ -251,17 +287,19 @@ def run_battery(seed: int = 2026090525) -> dict:
     organization, _ = _insurgent(world)
     origin = next(iter(world.localities))
     destination = next(item for item in world.localities if item != origin)
-    world.organization_manpower_pools[(organization.organization_id, origin)] = 50.0
+    reserve = _fund_pool(world, organization.organization_id, origin, 50.0)
     total_before = national_fighter_equivalents(world, organization.organization_id)
     origin_before = sum(local_fighter_equivalents(
         world, organization.organization_id, origin
     ))
     world.organization_manpower_pools[(organization.organization_id, origin)] = 0.0
+    world.organization_manpower_supply_reserves.pop((organization.organization_id, origin), None)
     world.organization_manpower_pools[(organization.organization_id, destination)] = (
         world.organization_manpower_pools.get(
             (organization.organization_id, destination), 0.0
         ) + 50.0
     )
+    world.organization_manpower_supply_reserves[(organization.organization_id, destination)] = reserve
     gates["complete_organization_relocation"] = {
         "passed": bool(
             national_fighter_equivalents(world, organization.organization_id) == total_before
@@ -278,13 +316,14 @@ def run_battery(seed: int = 2026090525) -> dict:
     capacity_world = _world(seed + 8)
     organization, formation = _insurgent(capacity_world)
     locality = _human_target_locality(capacity_world)
-    capacity_world.organization_manpower_pools[
-        (organization.organization_id, locality)
-    ] = 100.0
+    _fund_pool(capacity_world, organization.organization_id, locality, 100.0)
     absent_world = copy.deepcopy(capacity_world)
     absent_world.organization_manpower_pools[
         (organization.organization_id, locality)
     ] = 0.0
+    absent_world.organization_manpower_supply_reserves.pop(
+        (organization.organization_id, locality), None
+    )
     for own in absent_world.formations.values():
         if own.organization_id == organization.organization_id and own.locality_id == locality:
             own.personnel = 0.0

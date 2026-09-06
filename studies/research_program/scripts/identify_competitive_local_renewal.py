@@ -128,6 +128,7 @@ def build_synthetic_world(seed: int = 20260905):
         if key[0] == organization.organization_id
     ]:
         del world.organization_manpower_pools[key]
+        world.organization_manpower_supply_reserves.pop(key, None)
     for formation in world.formations.values():
         if formation.organization_id == organization.organization_id:
             formation.personnel = 0.0
