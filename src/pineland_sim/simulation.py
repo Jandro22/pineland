@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from typing import Callable
 
@@ -17,17 +18,85 @@ class SimulationResult:
 
 
 PolicyHook = Callable[[WorldState, float], None]
+_UNSET_POLICY_HOOK = object()
 
 
 class Simulation:
-    def __init__(self, world: WorldState, policy_hook: PolicyHook | None = None) -> None:
+    def __init__(
+        self,
+        world: WorldState,
+        policy_hook: PolicyHook | None = None,
+        stream_namespace: str = "",
+    ) -> None:
         self.world = world
         self.policy_hook = policy_hook
+        self.stream_namespace = str(stream_namespace)
         self.scheduler = EventScheduler(allow_negative=True)
-        self.rng = seeded_rng(world.config, "event-scheduling")
-        self.processes = ProcessEngine(world)
+        self.rng = seeded_rng(
+            world.config,
+            self._stream_name("event-scheduling"),
+        )
+        self.processes = ProcessEngine(
+            world,
+            stream_namespace=self.stream_namespace,
+        )
         self._initialized = False
         self._recruitment_clock_started = False
+
+    def _stream_name(self, stream: str) -> str:
+        if not self.stream_namespace:
+            return stream
+        return f"{self.stream_namespace}:{stream}"
+
+    def set_stream_namespace(self, stream_namespace: str) -> None:
+        """Fork future transition randomness at the current calendar boundary.
+
+        The world, scheduler, and event counter remain untouched.  Only future
+        stochastic streams are re-keyed, which is the distinction needed when
+        a particle filter duplicates a latent state after an observation.
+        """
+        self.stream_namespace = str(stream_namespace)
+        self.rng = seeded_rng(
+            self.world.config,
+            self._stream_name("event-scheduling"),
+        )
+        self.processes.set_stream_namespace(self.stream_namespace)
+
+    def clone(
+        self,
+        *,
+        policy_hook: PolicyHook | None | object = _UNSET_POLICY_HOOK,
+        stream_namespace: str | None = None,
+    ) -> "Simulation":
+        """Clone a live simulation, including its pending event queue.
+
+        ``WorldState.clone()`` is intentionally insufficient for a live
+        particle: scheduled contacts, recurring clocks, process RNG state,
+        and the event counter all affect the future.  This method copies the
+        complete simulation object and lets callers provide a separately
+        cloned policy hook (for example, a historical stock schedule).
+
+        Passing no hook argument copies the existing callable object.  Passing
+        ``policy_hook=None`` explicitly removes it.  Callers that need a
+        separately cloneable hook can deep-copy it before passing it here.
+        """
+        original_hook = self.policy_hook
+        # Callable closures are shallowly copied by deepcopy and can retain a
+        # mutable schedule in their closure.  Exclude the hook from the main
+        # copy; callers can pass a cloneable callable explicitly.
+        self.policy_hook = None
+        try:
+            cloned = copy.deepcopy(self)
+        finally:
+            self.policy_hook = original_hook
+
+        if policy_hook is _UNSET_POLICY_HOOK:
+            cloned.policy_hook = copy.deepcopy(original_hook)
+        else:
+            cloned.policy_hook = policy_hook  # type: ignore[assignment]
+        if stream_namespace is not None:
+            cloned.set_stream_namespace(stream_namespace)
+        return cloned
 
     def initialize(self) -> None:
         if self._initialized:
@@ -384,3 +453,38 @@ class Simulation:
         if not self.world.checkpoints or self.world.checkpoints[-1]["time"] != self.world.time:
             self.world.checkpoint()
         return SimulationResult(self.world, processed, self.world.time)
+
+
+@dataclass(slots=True)
+class SimulationParticle:
+    """A live simulation lineage used by sequential state estimation.
+
+    The wrapped simulation contains the full latent world, scheduler/event
+    queue, current time, and process RNG states.  ``lineage_id`` is metadata
+    for reproducibility; it is also included in the future stream namespace
+    after resampling so duplicated parents do not produce identical children.
+    """
+
+    simulation: Simulation
+    lineage_id: str = "root"
+    generation: int = 0
+
+    @property
+    def world(self) -> WorldState:
+        return self.simulation.world
+
+    @property
+    def time(self) -> float:
+        return self.simulation.world.time
+
+    def advance_to(self, until: float) -> SimulationResult:
+        return self.simulation.run(until=until)
+
+    def fork(self, child_index: int) -> "SimulationParticle":
+        child_lineage = f"{self.lineage_id}.{child_index}"
+        hook = copy.deepcopy(self.simulation.policy_hook)
+        cloned = self.simulation.clone(
+            policy_hook=hook,
+            stream_namespace=f"particle:{child_lineage}",
+        )
+        return type(self)(cloned, child_lineage, self.generation + 1)

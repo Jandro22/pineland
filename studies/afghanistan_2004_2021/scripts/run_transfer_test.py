@@ -102,6 +102,9 @@ def initialization_gate(world, inputs: dict, taliban_strength: float) -> dict:
             == expected["pakistan_border_segments"]
         ),
         "sanctuary_present": diagnostic["taliban_external_sanctuary"] == 1.0,
+        "sanctuary_relation": (
+            diagnostic["taliban_pakistan_sponsor_dependence"] == 1.0
+        ),
         "stock_ledger": abs(diagnostic["stock_ledger_residual"]) < 1e-6,
         "supply_ledger": supply_accounting["passed"],
     }

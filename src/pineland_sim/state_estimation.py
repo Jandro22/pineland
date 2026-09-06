@@ -113,13 +113,26 @@ def resample_particles(
     rng: random.Random,
     *,
     clone_state: Callable[[StateT], StateT] = deepcopy,
-) -> tuple[list[Particle[StateT]], dict[str, float | list[int]]]:
-    """Resample latent states and reset to an equal-weight posterior ensemble."""
+    fork_state: Callable[[StateT, int], StateT] | None = None,
+) -> tuple[list[Particle[StateT]], dict[str, float | int | list[int]]]:
+    """Resample latent states and reset to an equal-weight posterior ensemble.
+
+    ``fork_state`` is an optional particle-aware clone hook.  It receives the
+    selected parent state and the child position, allowing live simulator
+    particles to carry a distinct future stochastic lineage after a duplicate
+    parent is selected.  The original one-argument ``clone_state`` API remains
+    the default for ordinary immutable or deepcopyable states.
+    """
     weights = particle_weights(particles)
     indices = systematic_resample_indices(weights, rng)
     resampled = [
-        Particle(clone_state(particles[index].state), 0.0)
-        for index in indices
+        Particle(
+            (fork_state(particles[index].state, child_index)
+             if fork_state is not None
+             else clone_state(particles[index].state)),
+            0.0,
+        )
+        for child_index, index in enumerate(indices)
     ]
     return resampled, {
         "ess_before": effective_sample_size(weights),
@@ -134,7 +147,8 @@ def resample_if_degenerate(
     *,
     ess_fraction: float = 0.5,
     clone_state: Callable[[StateT], StateT] = deepcopy,
-) -> tuple[list[Particle[StateT]], dict[str, float | bool | list[int]]]:
+    fork_state: Callable[[StateT, int], StateT] | None = None,
+) -> tuple[list[Particle[StateT]], dict[str, float | int | bool | list[int]]]:
     """Resample only when ESS falls below a predeclared particle fraction."""
     if not 0 < ess_fraction <= 1:
         raise ValueError("ess_fraction must be in (0, 1]")
@@ -149,10 +163,124 @@ def resample_if_degenerate(
             "parent_indices": list(range(len(particles))),
         }
     resampled, diagnostics = resample_particles(
-        particles, rng, clone_state=clone_state
+        particles,
+        rng,
+        clone_state=clone_state,
+        fork_state=fork_state,
     )
     return resampled, {
         "resampled": True,
         "threshold": threshold,
         **diagnostics,
     }
+
+
+@dataclass(frozen=True, slots=True)
+class AssimilationObservation(Generic[ObservationT]):
+    """An observation presented to the state filter.
+
+    The split label is deliberately part of the value passed to the filter.
+    A filter configured for training-only assimilation rejects every other
+    label before it advances a particle, making accidental holdout updates a
+    hard error rather than a convention in a caller.
+    """
+
+    time: float
+    value: ObservationT
+    split: str = "training"
+    observation_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class FilterUpdateDiagnostics:
+    time: float
+    observation_id: str | None
+    split: str
+    prior_ess: float
+    posterior_ess: float
+    maximum_posterior_weight: float
+    resampled: bool
+    unique_parent_particles: int
+
+
+class SequentialParticleFilter(Generic[StateT, ObservationT]):
+    """Sequentially estimate latent state without changing transition rules.
+
+    The transition callback advances one state to an observation boundary.
+    The likelihood callback is read-only and is the only place where an
+    observation enters the particle weights.  Structural parameters therefore
+    remain in each state unchanged; resampling only changes the posterior
+    multiplicity of latent states.
+    """
+
+    def __init__(
+        self,
+        particles: Sequence[Particle[StateT]],
+        *,
+        transition: Callable[[StateT, float], None],
+        log_likelihood: Callable[[StateT, ObservationT], float],
+        rng: random.Random,
+        ess_fraction: float = 0.5,
+        allowed_split: str = "training",
+        clone_state: Callable[[StateT], StateT] = deepcopy,
+        fork_state: Callable[[StateT, int], StateT] | None = None,
+    ) -> None:
+        if not particles:
+            raise ValueError("a particle filter needs at least one particle")
+        if not 0 < ess_fraction <= 1:
+            raise ValueError("ess_fraction must be in (0, 1]")
+        self.particles = list(particles)
+        self.transition = transition
+        self.log_likelihood = log_likelihood
+        self.rng = rng
+        self.ess_fraction = ess_fraction
+        self.allowed_split = allowed_split
+        self.clone_state = clone_state
+        self.fork_state = fork_state
+        self.last_time = float("-inf")
+        self.history: list[FilterUpdateDiagnostics] = []
+
+    def assimilate(
+        self,
+        observation: AssimilationObservation[ObservationT],
+    ) -> FilterUpdateDiagnostics:
+        """Advance to and assimilate one predeclared observation boundary."""
+        if observation.split != self.allowed_split:
+            raise ValueError(
+                "particle filter refuses observations outside its declared "
+                f"split {self.allowed_split!r}: got {observation.split!r}"
+            )
+        if observation.time < self.last_time - 1e-12:
+            raise ValueError("observations must arrive in nondecreasing time order")
+
+        for particle in self.particles:
+            self.transition(particle.state, observation.time)
+
+        update = measurement_update(
+            self.particles,
+            observation.value,
+            self.log_likelihood,
+        )
+        resampled, resampling = resample_if_degenerate(
+            self.particles,
+            self.rng,
+            ess_fraction=self.ess_fraction,
+            clone_state=self.clone_state,
+            fork_state=self.fork_state,
+        )
+        self.particles = resampled
+        diagnostics = FilterUpdateDiagnostics(
+            time=float(observation.time),
+            observation_id=observation.observation_id,
+            split=observation.split,
+            prior_ess=float(update["prior_ess"]),
+            posterior_ess=float(update["posterior_ess"]),
+            maximum_posterior_weight=float(update["maximum_posterior_weight"]),
+            resampled=bool(resampling["resampled"]),
+            unique_parent_particles=int(
+                resampling.get("unique_parent_particles", len(self.particles))
+            ),
+        )
+        self.history.append(diagnostics)
+        self.last_time = float(observation.time)
+        return diagnostics

@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
+import random
 import sys
 
 import pytest
@@ -21,6 +22,7 @@ from historical_case import (  # noqa: E402
     condition_world,
     initialization_diagnostics,
     load_historical_inputs,
+    sample_taliban_spatial_prior,
 )
 
 
@@ -119,6 +121,48 @@ def test_conditioning_removes_synthetic_insurgent_social_state(generated_world):
     assert all(person.residence_locality_id in anchors
                for person in world.persons.values()
                if person.public_behavior in {"armed_participation", "insurgent_sympathy"})
+
+
+def test_afghanistan_sanctuary_maps_to_the_spatial_sponsor_relation(generated_world):
+    world = generated_world.clone()
+    inputs = load_historical_inputs()
+    condition_world(world, inputs, 7500)
+    organization = world.organizations["insurgent"]
+    assert organization.external_sanctuary == 1.0
+    assert organization.sponsor_dependence == {"pakistan": 1.0}
+    from pineland_sim.logistics import _sanctuary_access
+    border = next(iter(world.border_segments.values()))
+    assert _sanctuary_access(
+        world,
+        "insurgent",
+        border.locality_id,
+    ) > 0.0
+
+
+def test_preperiod_spatial_prior_conserves_strength_without_turning_everywhere_on(
+    generated_world,
+):
+    case = json.loads(
+        (STUDY / "config" / "case_environment.json").read_text(encoding="utf-8")
+    )
+    inputs = load_historical_inputs()
+    prior = sample_taliban_spatial_prior(
+        inputs,
+        random.Random(2026090611),
+        total_strength=7500,
+        preperiod_counts=case["preperiod_taliban_state_conflict_counts_2003"],
+    )
+    world = generated_world.clone()
+    condition_world(world, inputs, 7500, taliban_prior=prior)
+    diagnostic = initialization_diagnostics(world, inputs, 7500)
+    assert diagnostic["taliban_total_fighter_equivalents"] == pytest.approx(7500)
+    assert diagnostic["taliban_clandestine_personnel"] > 0
+    assert diagnostic["taliban_formations"] < len(case["preperiod_taliban_state_conflict_counts_2003"])
+    assert set(diagnostic["taliban_clandestine_localities"]) <= {
+        f"{district_id}-HQ"
+        for district_id in case["preperiod_taliban_state_conflict_counts_2003"]
+    }
+    world.assert_invariants()
 
 
 def test_observed_coalition_schedule_replaces_stock_without_breaking_ledgers(generated_world):
