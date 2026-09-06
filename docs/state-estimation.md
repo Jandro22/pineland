@@ -16,6 +16,8 @@ It uses complete 2004 province-week cells, freezes the posterior at the
 training boundary, and emits a weighted 2005 latent event-probability field
 including zero-risk cells on the complete province-week surface.
 It is separate from the consumed frozen-core 2005 scorer.
+The command-line default is 128 posterior particles; smaller counts remain
+available for bounded smoke tests through `--particles`.
 
 Afghanistan's pre-period spatial prior uses all available 2003 district
 evidence to sample fielded locality presence, fielded/clandestine composition,

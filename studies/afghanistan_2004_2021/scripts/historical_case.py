@@ -131,9 +131,8 @@ def sample_taliban_spatial_prior(
         raise ValueError("presence_scale must be positive")
 
     source_counts = preperiod_counts or inputs.get(
-        "preperiod_taliban_state_conflict_counts_2003",
-        inputs["initialization"]["taliban"]["anchor_weights"],
-    )
+        "preperiod_taliban_state_conflict_counts_2003"
+    ) or inputs["initialization"]["taliban"]["anchor_weights"]
     evidence: dict[str, float] = {}
     for source_id, count in source_counts.items():
         count = float(count)

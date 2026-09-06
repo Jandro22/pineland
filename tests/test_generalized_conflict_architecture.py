@@ -11,6 +11,7 @@ from pineland_sim.combat import resolve_engagement
 from pineland_sim.entities import ControlVector, RelationStatus
 from pineland_sim.events import ScheduledEvent
 from pineland_sim.logistics import create_movement_order, shortest_locality_path
+from pineland_sim.organizational_state import local_organizational_embeddedness
 from pineland_sim.organization_ecology import (
     _transfer_defecting_membership,
 )
@@ -215,6 +216,75 @@ def test_nonstate_governance_stock_composes_exactly_in_calendar_time():
             partitioned, 0.63, 0.022, 0.035, 10.0
         )
     assert partitioned == pytest.approx(once, abs=1e-12)
+
+
+def test_existing_membership_and_governance_provide_gradual_clandestine_hysteresis():
+    """Existing stocks persist after fielding is removed, then collapse together."""
+    world = _world(seed=8805)
+    organization = world.organizations["insurgent"]
+    formation = world.formations["PRF-01"]
+    locality_id = formation.locality_id
+    local_members = [
+        person for person in world.persons.values()
+        if (
+            person.person_id in organization.member_ids
+            and person.residence_locality_id == locality_id
+        )
+    ]
+    assert local_members
+    # Keep a small represented facilitator cohort so the union-of-channels
+    # metric does not saturate at one before the fielded formation is removed.
+    for person in local_members:
+        person.armed_fraction = 0.005
+
+    organization.institutional_quality = 1.0
+    organization.capital["organizational"] = 1.0
+    organization.phenotype["governance_investment"] = 1.0
+    engine = ProcessEngine(world, rng=random.Random(5))
+
+    world.time = 30.0
+    engine.on_governance(
+        "E-hysteresis-1",
+        ScheduledEvent(30.0, 70, 0, "governance", {"interval": 30.0, "elapsed_days": 30.0}),
+    )
+    with_formation = local_organizational_embeddedness(
+        world, organization.organization_id, locality_id
+    )
+
+    # Remove/mobile the fielded formation while retaining local members and
+    # the governance/control stock already established by the organization.
+    formation.personnel = 0.0
+    formation.moving = True
+    organization.phenotype["governance_investment"] = 0.0
+    world.time = 60.0
+    engine.on_governance(
+        "E-hysteresis-2",
+        ScheduledEvent(60.0, 70, 1, "governance", {"interval": 30.0, "elapsed_days": 30.0}),
+    )
+    without_formation = local_organizational_embeddedness(
+        world, organization.organization_id, locality_id
+    )
+    world.time = 90.0
+    engine.on_governance(
+        "E-hysteresis-3",
+        ScheduledEvent(90.0, 70, 2, "governance", {"interval": 30.0, "elapsed_days": 30.0}),
+    )
+    decayed = local_organizational_embeddedness(
+        world, organization.organization_id, locality_id
+    )
+    assert with_formation > 0.0
+    assert without_formation > decayed > 0.0
+
+    # Removing both people and institutional/control stocks collapses the
+    # existing representation; no hidden recent-event memory is involved.
+    organization.member_ids.clear()
+    for key in list(world.organization_manpower_pools):
+        if key[0] == organization.organization_id:
+            world.organization_manpower_pools.pop(key)
+    world.localities[locality_id].control[organization.organization_id] = ControlVector()
+    assert local_organizational_embeddedness(
+        world, organization.organization_id, locality_id
+    ) == pytest.approx(0.0)
 
 
 def test_hostile_access_restriction_increases_movement_time_and_supply_cost():

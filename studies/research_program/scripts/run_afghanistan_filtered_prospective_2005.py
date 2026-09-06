@@ -49,6 +49,7 @@ TRAINING_YEAR = "2004"
 TRAINING_END_DAY = 364.0  # complete weeks only; the boundary week is excluded
 FORECAST_START_DAY = 371.0  # first complete 2005 province-week
 FORECAST_END_DAY = 731.0
+DEFAULT_PARTICLE_COUNT = 128
 
 
 @dataclass(frozen=True, slots=True)
@@ -375,6 +376,10 @@ def run(
         "forecast_start_day": FORECAST_START_DAY,
         "forecast_end_day": FORECAST_END_DAY,
         "assimilation_split": "training",
+        # Compatibility field: "read" means admitted to the observation
+        # stream, not physically scanned while iterating the province-grouped
+        # CSV.  The explicit ``used`` field removes that ambiguity.
+        "holdout_outcomes_read": False,
         "holdout_outcomes_used": False,
         "observation_model": asdict(BernoulliEventObservationModel()),
         "filter_updates": [asdict(item) for item in filter_.history],
@@ -399,7 +404,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--strength", type=float, choices=(5000.0, 7500.0, 10000.0), required=True)
-    parser.add_argument("--particles", type=int, default=32)
+    parser.add_argument("--particles", type=int, default=DEFAULT_PARTICLE_COUNT)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     payload = run(
