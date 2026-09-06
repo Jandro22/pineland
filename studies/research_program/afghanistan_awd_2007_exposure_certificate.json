@@ -1,0 +1,26 @@
+{
+  "schema_version": "pineland.empirical_exposure_certificate.v1",
+  "case_id": "afghanistan_2004_2021",
+  "holdout_year": 2007,
+  "source_family": "Afghan_War_Diary_SIGACT",
+  "target": "coalition-recorded hostile insurgent military incident incidence by province-week",
+  "primary_prediction_layer": "recorded",
+  "target_labels_previously_inspected": false,
+  "created_before_target_label_access": true,
+  "target_surface": {
+    "panel_path": "studies/research_program/external_validation/afghan_war_diary_2004_2009/processed/awd_afghanistan_province_week.csv",
+    "target_column": "awd_reported_hostile_active",
+    "week_start_column": "week_start",
+    "week_index_column": "week_index",
+    "province_column": "province_id",
+    "region_column": "region_id",
+    "source_silence_semantics": "No qualifying report in this military archive; not latent peace."
+  },
+  "measurement_reason": "The Afghan War Diary is itself a reporting/observation surface. Therefore Pineland's recorded-event layer is the preregistered primary prediction and latent state-based violence is diagnostic.",
+  "certification_basis": [
+    "The project had not downloaded or parsed row-level Afghan War Diary CSV data before this certificate and mapping contract were written.",
+    "Only public documentation of the archive schema, coverage, and field meanings was consulted before sealing.",
+    "The 2007 UCDP surface is not being reused as the confirmatory target; the target source family is newly acquired coalition SIGACT reporting.",
+    "The mapping and holdout year are frozen before source event counts or province-week labels are observed."
+  ]
+}

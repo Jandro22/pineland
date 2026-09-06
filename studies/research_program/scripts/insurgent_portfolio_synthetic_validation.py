@@ -498,9 +498,14 @@ class _StayCapturingRng:
         return 0.0
 
     def choices(self, population, weights, k):
-        self.candidate_calls.append(tuple(population))
-        assert self.stay_locality_id in population
-        return [self.stay_locality_id]
+        # Reallocation now makes a separate operational-posture draw before
+        # selecting a destination.  This synthetic RNG is intended to force
+        # only the *destination* stay option; it must not mistake the posture
+        # vocabulary for a locality candidate set.
+        if self.stay_locality_id in population:
+            self.candidate_calls.append(tuple(population))
+            return [self.stay_locality_id]
+        return [population[0]]
 
 
 def _candidate_and_stay_metrics(seed):

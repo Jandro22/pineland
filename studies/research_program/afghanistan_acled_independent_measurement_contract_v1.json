@@ -1,0 +1,51 @@
+{
+  "schema_version": "pineland.afghanistan.acled_independent_measurement_contract.v1",
+  "created_before_replication_event_rows_inspected_for_pineland": true,
+  "purpose": "Independent source-family measurement cross-check for Afghanistan violence. This contract is not a replacement latent truth source and may not be used to tune Pineland.",
+  "source": {
+    "family": "ACLED_archival_replication_OLoughlin_Witmer_Linke",
+    "publisher": "University of Colorado Institute of Behavioral Science replication site",
+    "bundle_url": "https://ibs.colorado.edu/johno/afpak/data/ACLEDPaperReplication.zip",
+    "metadata_url": "https://ibs.colorado.edu/johno/afpak/data/ACLEDMetaData.txt",
+    "coverage_declared_by_metadata": "Afghanistan and Pakistan, 2008-2009",
+    "primary_event_file_declared_by_metadata": "afpak24may10_3actors.csv"
+  },
+  "target_surface": {
+    "country": "Afghanistan",
+    "primary_year": 2008,
+    "secondary_year": 2009,
+    "unit": "province-week",
+    "construct": "reported Taliban/Taleban versus Afghan-state-or-coalition armed violence",
+    "geography": "existing frozen Afghanistan 34-province analysis geography",
+    "week_definition": "floor((event_date - 2004-01-01).days / 7)"
+  },
+  "mapping_frozen_before_rows": {
+    "country_rule": "COUNTRY casefold equals afghanistan",
+    "actor_fields": ["ACTOR1", "ALLY_ACTOR1", "ACTOR2", "ALLY_ACTOR_2"],
+    "insurgent_regex": "(?i)\\b(taliban|taleban)\\b",
+    "state_or_coalition_regex": "(?i)(afghanistan armed forces|forces of afghanistan|government of afghanistan|security of afghanistan|afghan national army|\\bana\\b|police|international security assistance force|\\bisaf\\b|\\bnato\\b|coalition|united states|u\\.?s\\.? forces)",
+    "positive_cell_rule": "At least one actor/ally field matches insurgent_regex and at least one actor/ally field matches state_or_coalition_regex. Multiple events in one province-week collapse to one positive incidence cell.",
+    "negative_cell_rule": "Source-silent province-weeks are retained as source-silent cells for predictive source-family scoring, but are NOT interpreted as known latent negatives for measurement-operator sensitivity or false-positive estimation.",
+    "spatial_rule": "Point coordinates are assigned by point-in-polygon to the existing Afghanistan analysis province geometry. Boundary/unmapped points are retained as unmapped and never silently nearest-neighbor imputed.",
+    "date_rule": "EVENT_DATE is parsed as the event date; invalid or ambiguous dates are retained as rejected rows, not imputed.",
+    "actor_ambiguity_rule": "Rows failing the frozen lexical actor mapping are excluded from the primary construct even if other ACLED aggregate category flags imply insurgent, local, or foreign involvement."
+  },
+  "scientific_firewall": {
+    "pineland_predictions_may_not_change_mapping": true,
+    "ucdp_agreement_may_not_change_mapping": true,
+    "event_counts_may_not_change_mapping": true,
+    "primary_year_may_not_be_reselected_after_row_inspection": true,
+    "raw_bundle_must_be_hash_bound_before_extraction": true
+  },
+  "allowed_claims": [
+    "independent source-family predictive score on the frozen ACLED mapping",
+    "ACLED-UCDP province-week concordance/disagreement",
+    "measurement-source sensitivity of substantive conclusions"
+  ],
+  "forbidden_claims": [
+    "ACLED source silence is true absence",
+    "ACLED is ground truth",
+    "agreement with ACLED proves absence of Afghanistan overfitting",
+    "ACLED fit licenses tuning of latent or recording parameters"
+  ]
+}

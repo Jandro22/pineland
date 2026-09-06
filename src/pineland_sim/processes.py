@@ -16,6 +16,7 @@ from .entities import (
 from .events import ScheduledEvent
 from .networks import edge_between, locality_social_aggregation, refresh_community_aggregates
 from .physical import (
+    active_insurgent_ids,
     advance_patrol_presence_memory,
     ensure_zone_belief,
     recompute_contested_controls,
@@ -67,6 +68,43 @@ from .access import (
 )
 from .civilian import record_displacement_harm
 from .relations import record_relation_harm
+
+
+def _continuous_capacity_update(
+    current: float,
+    support: float,
+    gain_probability: float,
+    decay_probability: float,
+    elapsed_days: float,
+    reference_days: float = 30.0,
+) -> float:
+    """Exact fixed-covariate solution for a bounded gain/decay stock.
+
+    The reference-period gain and decay probabilities are converted to
+    continuous hazards for dV/dt = gain*support*(1-V) - decay*V.  Partitioning
+    the same elapsed calendar time therefore cannot change the result while
+    support is held fixed.
+    """
+    if elapsed_days <= 0:
+        return clamp(current)
+    reference_days = max(1e-12, float(reference_days))
+    gain_probability = clamp(gain_probability)
+    decay_probability = clamp(decay_probability)
+    gain_hazard = (
+        -log(max(1e-15, 1.0 - gain_probability)) / reference_days
+        * clamp(support)
+    )
+    decay_hazard = (
+        -log(max(1e-15, 1.0 - decay_probability)) / reference_days
+    )
+    total_hazard = gain_hazard + decay_hazard
+    if total_hazard <= 0:
+        return clamp(current)
+    equilibrium = gain_hazard / total_hazard
+    return clamp(
+        equilibrium
+        + (clamp(current) - equilibrium) * exp(-total_hazard * elapsed_days)
+    )
 
 
 class ProcessEngine:
@@ -206,9 +244,13 @@ class ProcessEngine:
                        "mixed" if source_types else "process_event")
         if record_source_override is not None:
             source_type = str(record_source_override)
-        synthetic = self._synthetic_record(
-            event_id, record_event_type, locality_id, severity,
-            actors[0] if actors else None, source_type,
+        synthetic = (
+            None
+            if event.event_type == "recording_noise"
+            else self._synthetic_record(
+                event_id, record_event_type, locality_id, severity,
+                actors[0] if actors else None, source_type,
+            )
         )
         if event.event_type == "contact":
             # Recording is an observation-layer decision made after the
@@ -217,13 +259,14 @@ class ProcessEngine:
             funnel = next((item for item in reversed(self.world.contact_funnel_records)
                            if item.get("event_id") == event_id), None)
             if funnel is not None:
-                draw_pass = int(bool(synthetic.recorded))
+                draw_pass = int(bool(synthetic and synthetic.recorded))
                 latent = int(float(raw_result.get("contact", 0.0)) > 0)
                 recorded = draw_pass * latent
                 # Preserve the draw (and RNG stream) for common-random-number
                 # experiments, but a failed opportunity is not an observable
                 # engagement.
-                synthetic.recorded = bool(recorded)
+                if synthetic is not None:
+                    synthetic.recorded = bool(recorded)
                 funnel["gate_counts"]["recording_draw_passes"] = draw_pass
                 funnel["gate_counts"]["recorded_engagements"] = recorded
                 funnel["gate_counts"]["recorded_contacts"] = recorded  # compatibility alias
@@ -239,7 +282,7 @@ class ProcessEngine:
             # Planning/failed execution/wait states are latent process records,
             # not historical events.  The recording operator is strictly
             # downstream of a realized action outcome.
-            if not bool(raw_result.get("latent_event", False)):
+            if synthetic is not None and not bool(raw_result.get("latent_event", False)):
                 synthetic.recorded = False
         if self.world.config.output_mode == "forensic":
             log_entry = EventLogEntry(
@@ -248,7 +291,8 @@ class ProcessEngine:
                 f"{self.world.config.random_stream_namespace}:process:{event.event_type}", "v0.1-defaults",
             )
             self.world.event_log.append(log_entry)
-            self.world.synthetic_records.append(synthetic)
+            if synthetic is not None:
+                self.world.synthetic_records.append(synthetic)
         elif self.world.config.output_mode == "ensemble":
             # Keep a compact event record for target extraction while avoiding
             # the large observation/state-delta payloads used in forensic mode.
@@ -258,7 +302,8 @@ class ProcessEngine:
                     event.causal_parent_ids, {}, synthetic,
                     f"{self.world.config.random_stream_namespace}:process:{event.event_type}", "v0.1-defaults",
                 ))
-                self.world.synthetic_records.append(synthetic)
+                if synthetic is not None:
+                    self.world.synthetic_records.append(synthetic)
         elif (
             self.world.config.output_mode == "calibration"
             and (
@@ -274,23 +319,84 @@ class ProcessEngine:
             # for event-panel scoring.  Retaining only this compact record is
             # an output-policy change; all process/recording RNG draws above
             # are identical to forensic and ensemble modes.
-            self.world.synthetic_records.append(synthetic)
-        # False recorded events are generated by the observation operator,
-        # never inserted into latent event truth or the causal ledger.
-        if (self.world.config.recording.enabled and
-                self.world.config.recording.false_event_rate > 0 and
-                self._recording_rng.random() < self.world.config.recording.false_event_rate):
-            false_record = SyntheticRecord(
-                f"{event_id}-FP", self.world.time, locality_id, "false_event", True,
-                self._recording_rng.uniform(0.05, .7), None, False, 0.0, "false_event")
-            if self.world.config.output_mode in {"forensic", "ensemble"}:
-                self.world.synthetic_records.append(false_record)
+            if synthetic is not None:
+                self.world.synthetic_records.append(synthetic)
         self.world.record_stock_transactions(event_id, event.event_type, before_stocks,
                                              self.world.tracked_stock_totals())
         if forensic:
             self.world.record_state_delta(event_id, event.event_type, before_controls, before_formations, actors)
         self.world.active_event_id = None
         return event_id
+
+    def on_recording_noise(
+        self, event_id: str, event: ScheduledEvent
+    ) -> dict[str, Any]:
+        """Generate spurious researcher-facing records independently of truth.
+
+        The false-event process is one calendar-time hazard per locality.
+        It never creates latent EventLogEntry truth, control effects, causal
+        ledger entries, or actor observations.
+        """
+        cfg = self.world.config.recording
+        elapsed_days = float(
+            event.payload.get(
+                "elapsed_days",
+                event.payload.get("interval", self.world.config.intervals.information),
+            )
+        )
+        if (
+            not cfg.enabled
+            or cfg.false_event_rate <= 0
+            or elapsed_days <= 0
+        ):
+            return {
+                "false_records": 0,
+                "record_source_type": "false_event",
+            }
+        probability = reference_probability(
+            cfg.false_event_rate, elapsed_days, 1.0
+        )
+        created = 0
+        for locality_id in sorted(self.world.localities):
+            if self.rng.random() >= probability:
+                continue
+            locality = self.world.localities[locality_id]
+            remoteness = clamp(locality.terrain_friction / 2.5)
+            geocoding_error = (
+                self.rng.random() < cfg.geocoding_error_rate
+            )
+            geocoding_distance = (
+                self.rng.expovariate(
+                    1.0
+                    / max(
+                        .1,
+                        cfg.geocoding_scale_km * (1.0 + 2.0 * remoteness),
+                    )
+                )
+                if geocoding_error else 0.0
+            )
+            false_record = SyntheticRecord(
+                f"{event_id}-FP-{locality_id}",
+                self.world.time,
+                locality_id,
+                "false_event",
+                True,
+                self.rng.uniform(.05, .7),
+                None,
+                geocoding_error,
+                geocoding_distance,
+                "false_event",
+            )
+            if self.world.config.output_mode in {
+                "forensic", "ensemble", "calibration"
+            }:
+                self.world.synthetic_records.append(false_record)
+            created += 1
+        return {
+            "false_records": created,
+            "false_event_probability": probability,
+            "record_source_type": "false_event",
+        }
 
     def _control(self, event_id: str, locality_id: str, actor: str, mechanism: str, **changes: float) -> None:
         vector = self.world.localities[locality_id].control.setdefault(actor, ControlVector())
@@ -326,7 +432,7 @@ class ProcessEngine:
                 and organization.status == "active"
             )
         )
-        if not active_ids or active_ids == ["insurgent"]:
+        if not active_ids or "insurgent" in active_ids:
             return
         locality = self.world.localities[locality_id]
         locality.control.setdefault("insurgent", ControlVector())
@@ -564,12 +670,6 @@ class ProcessEngine:
         ]
         if self.world.config.nonstate_governance.enabled and elapsed_days > 0:
             cfg = self.world.config.nonstate_governance
-            decay_fraction = reference_probability(
-                cfg.decay_per_30_days, elapsed_days, 30.0
-            )
-            gain_fraction = reference_probability(
-                cfg.gain_per_30_days, elapsed_days, 30.0
-            )
             for organization in active_insurgents:
                 for locality in self.world.localities.values():
                     rootedness = organization_local_rootedness(
@@ -618,13 +718,19 @@ class ProcessEngine:
                         "administrative", "legal", "fiscal", "expected"
                     ):
                         old = getattr(vector, dimension)
-                        retained = old * (1.0 - decay_fraction)
-                        gain = (
-                            gain_fraction * support * (1.0 - retained)
+                        effective_support = (
+                            support
                             if local_capacity >= cfg.minimum_local_capacity
                             else 0.0
                         )
-                        target = clamp(retained + gain)
+                        target = _continuous_capacity_update(
+                            old,
+                            effective_support,
+                            cfg.gain_per_30_days,
+                            cfg.decay_per_30_days,
+                            elapsed_days,
+                            reference_days=30.0,
+                        )
                         nonstate_updates += int(abs(target - old) > 1e-15)
                         self._set_control_dimension(
                             event_id,
@@ -1023,12 +1129,12 @@ class ProcessEngine:
             "migration": (0.0, 0.0),
             "neutral": (0.0, 0.0),
         }
-        active_insurgent_ids = sorted(
+        active_insurgent_org_ids = sorted(
             organization.organization_id
             for organization in self.world.organizations.values()
             if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
         )
-        insurgent_available = bool(active_insurgent_ids)
+        insurgent_available = bool(active_insurgent_org_ids)
         for person_id in sorted(self.world.persons):
             person = self.world.persons[person_id]
             old_affinity = dict(person.insurgent_affinity)
@@ -1036,7 +1142,7 @@ class ProcessEngine:
             government_signal = 0.0
             insurgent_signal = 0.0
             insurgent_signal_by_org = {organization_id: 0.0
-                                       for organization_id in active_insurgent_ids}
+                                       for organization_id in active_insurgent_org_ids}
             total_weight = 0.0
             for neighbor_id in neighbors:
                 neighbor = self.world.persons[neighbor_id]
@@ -1086,11 +1192,11 @@ class ProcessEngine:
                 insurgent_signal /= total_weight
                 for organization_id in insurgent_signal_by_org:
                     insurgent_signal_by_org[organization_id] /= total_weight
-            if len(active_insurgent_ids) == 1:
+            if len(active_insurgent_org_ids) == 1:
                 # Preserve the legacy one-insurgent interpretation of generic
                 # sympathy exactly: with no rival franchise, all insurgent
                 # social exposure belongs to the sole active organization.
-                insurgent_signal_by_org[active_insurgent_ids[0]] = insurgent_signal
+                insurgent_signal_by_org[active_insurgent_org_ids[0]] = insurgent_signal
             person.social_exposure = {
                 "government": clamp(government_signal),
                 "insurgent": clamp(insurgent_signal),
@@ -1159,20 +1265,20 @@ class ProcessEngine:
             def affinity_shares(values: dict[str, float], behavior: str) -> dict[str, float]:
                 positive = {
                     oid: max(0.0, float(values.get(oid, 0.0)))
-                    for oid in active_insurgent_ids
+                    for oid in active_insurgent_org_ids
                     if values.get(oid, 0.0) > 0
                 }
                 total = sum(positive.values())
                 if total > 0:
                     return {oid: value / total for oid, value in positive.items()}
-                if (len(active_insurgent_ids) == 1 and
+                if (len(active_insurgent_org_ids) == 1 and
                         behavior in {"insurgent_sympathy", "armed_participation"}):
-                    return {active_insurgent_ids[0]: 1.0}
+                    return {active_insurgent_org_ids[0]: 1.0}
                 return {}
 
             old_shares = affinity_shares(old_affinity, old_behavior)
             new_shares = affinity_shares(person.insurgent_affinity, new_behavior)
-            for organization_id in active_insurgent_ids:
+            for organization_id in active_insurgent_org_ids:
                 old_specific = old_insurgent * old_shares.get(organization_id, 0.0)
                 new_specific = new_insurgent * new_shares.get(organization_id, 0.0)
                 specific_shift = person.weight * (new_specific - old_specific)
@@ -1189,7 +1295,12 @@ class ProcessEngine:
             government_delta = .01 * locality_government_shift.get(locality_id, 0.0) / population
             insurgent_delta = .01 * locality_insurgent_shift.get(locality_id, 0.0) / population
             self._control(event_id, locality_id, "government", "social_network_influence", social=government_delta)
-            if insurgent_available:
+            # The literal "insurgent" key is a concrete organization while
+            # that organization remains active.  Do not overwrite it with a
+            # coalition aggregate; franchise-specific writes below own the
+            # concrete state.  Only materialize the legacy side key after the
+            # literal organization has ceased to be active.
+            if insurgent_available and "insurgent" not in active_insurgent_ids(self.world):
                 self._control(event_id, locality_id, "insurgent", "social_network_influence", social=insurgent_delta)
         for (locality_id, organization_id), represented_shift in locality_franchise_shift.items():
             population = max(1, self.world.localities[locality_id].population)
@@ -1197,6 +1308,10 @@ class ProcessEngine:
                 event_id, locality_id, organization_id,
                 "franchise_social_network_influence",
                 social=.01 * represented_shift / population,
+            )
+        for locality_id in set(locality_government_shift) | set(locality_insurgent_shift):
+            self._refresh_aggregate_insurgent_control(
+                event_id, locality_id, ("social",)
             )
         refresh_community_aggregates(self.world)
         represented_population = max(1e-12, self.world.weighted_population())

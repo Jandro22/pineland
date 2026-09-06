@@ -1,0 +1,42 @@
+{
+  "afghanistan_violence_reference": {
+    "artifact": null,
+    "artifact_exists": false,
+    "passed": false,
+    "required_construct": "province-week Taliban-government state-based violence",
+    "required_evidence": [
+      "at least two genuinely independent source families",
+      "positive and defensible negative/reference cells",
+      "independently corroborated actor attribution",
+      "source genealogy/dependence audit",
+      "measurement parameters estimated without Pineland fit"
+    ],
+    "sha256": null
+  },
+  "generic_measurement_identification": {
+    "artifact": "studies/research_program/measurement_operator_identifiability_audit_v1.json",
+    "authorized": false,
+    "sha256": "fcd84ab604b37663eca8c4e2625f9c0d9d6742036b53efab2d207d4d32bc00b6",
+    "unidentified_components": [
+      "actor_attribution",
+      "source_dependence",
+      "source_detection",
+      "source_false_positive",
+      "spatial_error",
+      "temporal_error"
+    ]
+  },
+  "instrumentation_recovery": {
+    "artifact": "studies/research_program/prospective_measurement_retention_recovery_v2.json",
+    "passed": true,
+    "sha256": "298efdd715ec0aae26025bc42f0de52cc16331c21837eba2650db0c227eeaa9c"
+  },
+  "interpretation": "The prospective retention machinery is structurally validated, but recorded-event promotion remains blocked unless independent historical measurement evidence identifies the observation operator. This gate may not be bypassed by fitting recording parameters to Afghanistan predictive outcomes.",
+  "licenses": {
+    "latent_mechanism_empirical_scoring": true,
+    "recorded_event_diagnostic_reporting": true,
+    "recorded_event_promotion_gate": false
+  },
+  "schema_version": "pineland.afghanistan.empirical_measurement_license.v1",
+  "status": "recorded_operator_blocked_pending_independent_measurement_evidence"
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "pineland.afghanistan.empirical_one_year_holdout_ledger.v1",
+  "scientific_rule": "A revealed holdout is permanently consumed. A failure may not be converted into a tuning set for a model that is then re-tested on the same year. Any post-failure mechanism change must be independently justified outside the failed outcomes and evaluated on a new sealed year.",
+  "holdouts": [
+    {
+      "year": 2005,
+      "status": "revealed_failed",
+      "score_artifact": "studies/research_program/afghanistan_performance/prospective_2005_score.json",
+      "result": false,
+      "allowed_future_role": "historical/training information only after the failure has been preserved; never a confirmatory holdout again"
+    },
+    {
+      "year": 2006,
+      "status": "exposed_in_project_not_eligible_as_pristine_holdout",
+      "score_artifact": null,
+      "result": null,
+      "exposure_evidence": [
+        "studies/research_program/evidence_exposure_ledger_v1.json",
+        "studies/research_program/civilian_harm_ucdp_event_crosscheck_v1.csv"
+      ],
+      "allowed_future_role": "descriptive or training/history only; cannot support a new anti-overfit confirmation claim"
+    }
+  ],
+  "next_required_validation_surface": {
+    "status": "not_yet_acquired",
+    "rule": "Use a genuinely new validation surface whose target labels were not available to mechanism development. Acceptable routes are a newly acquired independent Afghanistan event-measurement source with a frozen construct mapping, or a new external conflict/case. Before any target labels are inspected, create a year/source-specific exposure certificate and seal the model/protocol.",
+    "same_ucdp_later_year_is_sufficient": false
+  }
+}

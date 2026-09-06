@@ -573,6 +573,44 @@ def _apply_local_fighter_change(world, organization: Organization, locality_id: 
     return -removed, created
 
 
+def _transfer_defecting_membership(
+    world,
+    person,
+    source: Organization,
+    destination: Organization,
+) -> tuple[float, float]:
+    """Transfer one armed represented cohort between hostile/rival franchises.
+
+    Membership and fighter-equivalent manpower move together, but materiel
+    does not.  Source-side equipment remains in its pool/formation while the
+    destination must equip transferred manpower from its own resources under
+    the normal local-fighter accounting path.
+    """
+    represented_delta = person.weight * person.armed_fraction
+    fighter_delta = (
+        represented_delta
+        * world.config.organization_ecology.fighter_conversion_fraction
+    )
+    removed, _ = _apply_local_fighter_change(
+        world,
+        source,
+        person.residence_locality_id,
+        -fighter_delta,
+    )
+    transferable_fighters = max(0.0, -removed)
+    if transferable_fighters > 0:
+        _apply_local_fighter_change(
+            world,
+            destination,
+            person.residence_locality_id,
+            transferable_fighters,
+        )
+    source.member_ids.discard(person.person_id)
+    _set_armed_membership(person, destination, person.armed_fraction)
+    destination.member_ids.add(person.person_id)
+    return represented_delta, transferable_fighters
+
+
 def synchronize_memberships(world) -> int:
     """Reconcile person ownership and organization member sets at a boundary.
 
@@ -1267,29 +1305,12 @@ def recruit_and_retain(world, time: float, rng: random.Random,
                         if draw <= cumulative:
                             winner = rival
                             break
-                    represented_delta = person.weight * person.armed_fraction
-                    fighter_delta = (
-                        represented_delta * cfg.fighter_conversion_fraction
+                    (
+                        represented_delta,
+                        transferable_fighters,
+                    ) = _transfer_defecting_membership(
+                        world, person, current_org, winner
                     )
-                    removed, _ = _apply_local_fighter_change(
-                        world,
-                        current_org,
-                        person.residence_locality_id,
-                        -fighter_delta,
-                    )
-                    transferable_fighters = max(0.0, -removed)
-                    if transferable_fighters > 0:
-                        _apply_local_fighter_change(
-                            world,
-                            winner,
-                            person.residence_locality_id,
-                            transferable_fighters,
-                        )
-                    current_org.member_ids.discard(person.person_id)
-                    _set_armed_membership(
-                        person, winner, person.armed_fraction
-                    )
-                    winner.member_ids.add(person.person_id)
                     defections += represented_delta
                     fighter_defections += transferable_fighters
                     defected_this_interval = True

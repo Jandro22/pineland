@@ -17,6 +17,8 @@ from .entities import (
 )
 from .world import WorldState, seeded_initialization_rng, seeded_rng
 from .access import route_restriction_level
+from .relations import STATE_SECURITY_KINDS, organizations_hostile
+from .physical import aggregate_insurgent_control
 
 
 def command_edge_key(first_id: str, second_id: str) -> tuple[str, str]:
@@ -556,15 +558,81 @@ def _control_belief_value(
     return raw, adjusted, confidence
 
 
-def _reallocation_side_targets(world: WorldState, organization_id: str) -> tuple[str, str]:
+def _reallocation_targets(
+    world: WorldState, organization_id: str
+) -> tuple[str, tuple[str, ...]]:
+    """Return actor-specific own target and hostile belief targets."""
     organization = world.organizations[organization_id]
     if organization.kind is OrganizationKind.INSURGENT:
-        return "insurgent", "government"
-    return "government", "insurgent"
+        hostile: list[str] = []
+        hostile_state = False
+        for other in world.organizations.values():
+            if (
+                other.organization_id == organization_id
+                or other.status != "active"
+                or not organizations_hostile(
+                    world, organization_id, other.organization_id
+                )
+            ):
+                continue
+            if other.kind in STATE_SECURITY_KINDS:
+                hostile_state = True
+            else:
+                hostile.append(other.organization_id)
+        if hostile_state and "government" in world.organizations:
+            hostile.append("government")
+        return organization_id, tuple(dict.fromkeys(sorted(hostile)))
+
+    hostile_insurgents = sorted(
+        other.organization_id
+        for other in world.organizations.values()
+        if (
+            other.kind is OrganizationKind.INSURGENT
+            and other.status == "active"
+            and organizations_hostile(
+                world, organization_id, other.organization_id
+            )
+        )
+    )
+    if hostile_insurgents:
+        hostile_insurgents.append("insurgent")
+    own_target = (
+        "government"
+        if (
+            organization_id == "government"
+            or (
+                "government" in world.organizations
+                and organization.kind in STATE_SECURITY_KINDS
+            )
+        )
+        else organization_id
+    )
+    return own_target, tuple(dict.fromkeys(hostile_insurgents))
+
+
+def _opponent_control_belief(
+    world: WorldState,
+    organization_id: str,
+    opponent_targets: tuple[str, ...],
+    locality_id: str,
+) -> tuple[float, float, float, str | None]:
+    """Return the strongest confidence-shrunk hostile control belief."""
+    if not opponent_targets:
+        return 0.0, 0.0, 0.0, None
+    rows = [
+        (
+            *_control_belief_value(
+                world, organization_id, target_id, locality_id
+            ),
+            target_id,
+        )
+        for target_id in opponent_targets
+    ]
+    return max(rows, key=lambda row: (row[1], row[2], row[0], row[3]))
 
 
 def _believed_route_risk(
-    world: WorldState, organization_id: str, opponent_target: str,
+    world: WorldState, organization_id: str, opponent_targets: tuple[str, ...],
     route: list[str] | tuple[str, ...],
 ) -> float:
     """Mean believed opponent control on intermediate route localities."""
@@ -572,8 +640,8 @@ def _believed_route_risk(
     if not intermediate:
         return 0.0
     return sum(
-        _control_belief_value(
-            world, organization_id, opponent_target, locality_id
+        _opponent_control_belief(
+            world, organization_id, opponent_targets, locality_id
         )[1]
         for locality_id in intermediate
     ) / len(intermediate)
@@ -654,20 +722,28 @@ def reallocation_destination_score(
     if maximum_population is None:
         maximum_population = max(locality.population for locality in world.localities.values())
     organization = world.organizations[formation.organization_id]
-    own_target, opponent_target = _reallocation_side_targets(
+    own_target, opponent_targets = _reallocation_targets(
         world, formation.organization_id
     )
     own_raw, own_control, own_confidence = _control_belief_value(
         world, formation.organization_id, own_target, locality_id,
         legacy_fallback=True,
     )
-    opponent_raw, opponent_control, opponent_confidence = _control_belief_value(
-        world, formation.organization_id, opponent_target, locality_id
+    (
+        opponent_raw,
+        opponent_control,
+        opponent_confidence,
+        opponent_target,
+    ) = _opponent_control_belief(
+        world,
+        formation.organization_id,
+        opponent_targets,
+        locality_id,
     )
     importance = world.localities[locality_id].population / max(1.0, maximum_population)
     uncertainty = 1.0 - min(own_confidence, opponent_confidence)
     route_risk = _believed_route_risk(
-        world, formation.organization_id, opponent_target, route
+        world, formation.organization_id, opponent_targets, route
     )
     risk_tolerance = clamp(organization.phenotype.get("risk_tolerance", .5))
     route_risk_penalty = (1.0 - risk_tolerance) * route_risk
@@ -717,6 +793,8 @@ def reallocation_destination_score(
             "government_control": opponent_control,
             "opponent_control": opponent_control,
             "opponent_control_raw": opponent_raw,
+            "opponent_target": opponent_target,
+            "opponent_targets": opponent_targets,
             "own_control": own_control,
             "own_control_raw": own_raw,
             "operational_posture": active_posture,
@@ -739,6 +817,8 @@ def reallocation_destination_score(
             "insurgent_control": opponent_control,
             "opponent_control": opponent_control,
             "opponent_control_raw": opponent_raw,
+            "opponent_target": opponent_target,
+            "opponent_targets": opponent_targets,
             "own_control": own_control,
             "own_control_raw": own_raw,
         }
@@ -861,7 +941,7 @@ def choose_withdrawal_order(world: WorldState, formation_id: str, time: float, r
     insurgent = (
         world.organizations[formation.organization_id].kind is OrganizationKind.INSURGENT
     )
-    own_target, opponent_target = _reallocation_side_targets(
+    own_target, opponent_targets = _reallocation_targets(
         world, formation.organization_id
     )
     risk_tolerance = clamp(
@@ -880,8 +960,16 @@ def choose_withdrawal_order(world: WorldState, formation_id: str, time: float, r
             world, formation.organization_id, own_target, locality_id,
             legacy_fallback=True,
         )
-        _, opponent_control, opponent_confidence = _control_belief_value(
-            world, formation.organization_id, opponent_target, locality_id
+        (
+            _,
+            opponent_control,
+            opponent_confidence,
+            _,
+        ) = _opponent_control_belief(
+            world,
+            formation.organization_id,
+            opponent_targets,
+            locality_id,
         )
         uncertainty = 1.0 - min(own_confidence, opponent_confidence)
         refuge = (
@@ -895,7 +983,7 @@ def choose_withdrawal_order(world: WorldState, formation_id: str, time: float, r
             mobility=formation.mobility,
         ) if insurgent else 0.0
         route_risk = _believed_route_risk(
-            world, formation.organization_id, opponent_target, route
+            world, formation.organization_id, opponent_targets, route
         )
         score = (
             2.2 * refuge + 1.6 * sanctuary - .04 * travel_hours -
@@ -1103,8 +1191,10 @@ def update_logistics(world: WorldState, time: float, delta_days: float) -> dict[
             # Realized interdiction is an environment process and correctly
             # consumes truth.  It may change losses/delivery, but not the
             # quantity the actor decided to dispatch.
-            route_risk = sum(world.localities[lid].control.get("insurgent", ControlVector()).physical
-                             for lid in route) / max(1, len(route))
+            route_risk = sum(
+                aggregate_insurgent_control(world, lid).physical
+                for lid in route
+            ) / max(1, len(route))
             interdiction_loss = config.route_interdiction_rate * route_risk * max(1.0, travel_hours / 24)
             realized_efficiency *= exp(-interdiction_loss)
         quantity_sent = min(source.stock, desired_delivery / max(planned_efficiency, 1e-9))

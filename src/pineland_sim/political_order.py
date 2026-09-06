@@ -301,7 +301,15 @@ def run_election(world, time: float, rng: random.Random) -> Election:
             votes[party.organization_id] += person.weight * turnout * utility / utility_total
     prior = world.ruling_party_id
     winner_id = max(votes, key=votes.get) if votes else prior
-    election = Election(f"ELN{len(world.elections)+1:05d}", time, votes, abstention, winner_id, prior)
+    election = Election(
+        f"ELN{len(world.elections)+1:05d}",
+        time,
+        votes,
+        abstention,
+        winner_id,
+        prior,
+        represented_electorate=sum(person.weight for person in world.persons.values()),
+    )
     world.elections.append(election)
     world.ruling_party_id = winner_id
     for institution in world.political_institutions.values():

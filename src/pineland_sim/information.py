@@ -101,16 +101,19 @@ def _target_actors_for_observer(
     if observer is None:
         return ()
     hostile = sorted(
-        organization
-        for organization in world.organizations.values()
-        if (
-            organization.organization_id != observer_actor_id
-            and organization.status == "active"
-            and organizations_hostile(
-                world, observer_actor_id, organization.organization_id
+        (
+            organization
+            for organization in world.organizations.values()
+            if (
+                organization.organization_id != observer_actor_id
+                and organization.status == "active"
+                and organizations_hostile(
+                    world, observer_actor_id, organization.organization_id
+                )
             )
-        )
-    , key=lambda item: item.organization_id)
+        ),
+        key=lambda item: item.organization_id,
+    )
     if observer.kind is OrganizationKind.INSURGENT:
         targets: list[str] = []
         if (

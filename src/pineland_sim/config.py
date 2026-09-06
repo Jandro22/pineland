@@ -614,6 +614,9 @@ class RecordingConfig:
     severity_noise: float = 0.12
     geocoding_error_rate: float = 0.12
     geocoding_scale_km: float = 2.0
+    # Daily probability of an entirely spurious recorded event in one
+    # locality. This belongs to an independent recording-noise clock; it is
+    # not sampled once per latent process event.
     false_event_rate: float = 0.0
     # Source-specific observation operators.  Missing channels inherit the
     # top-level defaults, so old scenario files remain valid.
