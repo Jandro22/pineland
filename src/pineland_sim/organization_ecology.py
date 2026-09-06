@@ -19,6 +19,10 @@ from .relations import (
     update_relationship_ecology,
 )
 from .entities import RelationStatus
+from .organizational_state import (
+    local_membership_rootedness,
+    local_organizational_embeddedness,
+)
 
 
 def armed_organizations(world, active_only: bool = True):
@@ -104,33 +108,9 @@ def organization_local_rootedness(world, organization: Organization,
     base is replaced by outsiders.  No ethnicity label or empirical case rule
     is hard-coded.
     """
-    target = world.localities[locality_id]
-    represented_local = 0.0
-    home_local = 0.0
-    home_district = 0.0
-    for person_id in organization.member_ids:
-        person = world.persons.get(person_id)
-        if (person is None or person.organization_id != organization.organization_id or
-                person.armed_fraction <= 0 or person.residence_locality_id != locality_id):
-            continue
-        represented = person.weight * person.armed_fraction
-        represented_local += represented
-        if person.home_locality_id == locality_id:
-            home_local += represented
-        home = world.localities.get(person.home_locality_id)
-        if home is not None and home.district_id == target.district_id:
-            home_district += represented
-    if represented_local <= 1e-12:
-        return {
-            "represented_local_membership": 0.0,
-            "home_locality_share": 0.0,
-            "home_district_share": 0.0,
-        }
-    return {
-        "represented_local_membership": represented_local,
-        "home_locality_share": clamp(home_local / represented_local),
-        "home_district_share": clamp(home_district / represented_local),
-    }
+    return local_membership_rootedness(
+        world, organization.organization_id, locality_id
+    )
 
 
 def _organization_language_profiles(
@@ -434,11 +414,18 @@ def _create_local_recruitment_formation(world, organization: Organization,
         information = mean_trait("information", .45)
         mobility = mean_trait("mobility", organization.mobility)
         command = mean_trait("command", .5)
-        embeddedness = mean_trait("embeddedness", organization.local_knowledge)
+        embeddedness = mean_trait(
+            "embeddedness",
+            local_organizational_embeddedness(
+                world, organization.organization_id, locality_id
+            ),
+        )
     else:
         quality, cohesion, readiness = .4, organization.cohesion, .55
         information, mobility, command = .45, organization.mobility, .5
-        embeddedness = organization.local_knowledge
+        embeddedness = local_organizational_embeddedness(
+            world, organization.organization_id, locality_id
+        )
     formation = ArmedFormation(
         _next_recruitment_formation_id(world, organization.organization_id),
         organization.organization_id, locality_id, personnel, quality, cohesion,

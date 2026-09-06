@@ -15,7 +15,7 @@
         "local_control": 0.0
       },
       "effective_control": 0.0,
-      "information_language_comprehension": 0.52,
+      "information_language_comprehension": 0.76,
       "kind": "insurgent",
       "recruitment_intensity": 0.8224179572605875,
       "rooted": true,
@@ -69,7 +69,7 @@
         "local_control": 0.0
       },
       "effective_control": 0.0,
-      "information_language_comprehension": 0.52,
+      "information_language_comprehension": 0.76,
       "kind": "government",
       "recruitment_intensity": 0.8240107776573349,
       "rooted": true,
@@ -123,7 +123,7 @@
         "local_control": 0.0
       },
       "effective_control": 0.0,
-      "information_language_comprehension": 0.52,
+      "information_language_comprehension": 0.76,
       "kind": "military",
       "recruitment_intensity": 0.7890245418634942,
       "rooted": true,
@@ -177,7 +177,7 @@
         "local_control": 0.0
       },
       "effective_control": 0.0,
-      "information_language_comprehension": 0.52,
+      "information_language_comprehension": 0.76,
       "kind": "police",
       "recruitment_intensity": 0.8080505009794124,
       "rooted": true,
@@ -231,7 +231,7 @@
         "local_control": 0.0
       },
       "effective_control": 0.0,
-      "information_language_comprehension": 0.52,
+      "information_language_comprehension": 0.76,
       "kind": "foreign",
       "recruitment_intensity": 0.8311594047338678,
       "rooted": true,
@@ -285,7 +285,7 @@
         "local_control": 0.0
       },
       "effective_control": 0.0,
-      "information_language_comprehension": 0.52,
+      "information_language_comprehension": 0.76,
       "kind": "party",
       "recruitment_intensity": 0.8176820344883323,
       "rooted": true,
@@ -339,7 +339,7 @@
         "local_control": 0.0
       },
       "effective_control": 0.0,
-      "information_language_comprehension": 0.52,
+      "information_language_comprehension": 0.76,
       "kind": "civic",
       "recruitment_intensity": 0.800795284308089,
       "rooted": true,
@@ -384,7 +384,7 @@
     "concealment_or_sanctuary": false,
     "defection": false,
     "effective_control": false,
-    "information_access": false,
+    "information_access": true,
     "organization_survival": false,
     "recruitment": true,
     "reporting": false,
@@ -397,7 +397,7 @@
         "civilian_reporting_probability": 0.0,
         "concealment_embeddedness_input": 0.0,
         "effective_control": 0.0,
-        "information_language_comprehension": 0.0,
+        "information_language_comprehension": 0.24,
         "recruitment_intensity": 0.3279504575576608,
         "survival_social_base": 0.0,
         "taxation_extraction_opportunity": 0.0
@@ -409,7 +409,7 @@
         "civilian_reporting_probability": 0.0,
         "concealment_embeddedness_input": 0.0,
         "effective_control": 0.0,
-        "information_language_comprehension": 0.0,
+        "information_language_comprehension": 0.24,
         "recruitment_intensity": 0.3077099816292166,
         "survival_social_base": 0.0,
         "taxation_extraction_opportunity": 0.0
@@ -421,7 +421,7 @@
         "civilian_reporting_probability": 0.0,
         "concealment_embeddedness_input": 0.0,
         "effective_control": 0.0,
-        "information_language_comprehension": 0.0,
+        "information_language_comprehension": 0.24,
         "recruitment_intensity": 0.31307230995207,
         "survival_social_base": 0.0,
         "taxation_extraction_opportunity": 0.0
@@ -433,7 +433,7 @@
         "civilian_reporting_probability": 0.0,
         "concealment_embeddedness_input": 0.0,
         "effective_control": 0.0,
-        "information_language_comprehension": 0.0,
+        "information_language_comprehension": 0.24,
         "recruitment_intensity": 0.3142146896889165,
         "survival_social_base": 0.0,
         "taxation_extraction_opportunity": 0.0
@@ -445,7 +445,7 @@
         "civilian_reporting_probability": 0.0,
         "concealment_embeddedness_input": 0.0,
         "effective_control": 0.0,
-        "information_language_comprehension": 0.0,
+        "information_language_comprehension": 0.24,
         "recruitment_intensity": 0.33413761947988974,
         "survival_social_base": 0.0,
         "taxation_extraction_opportunity": 0.0
@@ -457,7 +457,7 @@
         "civilian_reporting_probability": 0.0,
         "concealment_embeddedness_input": 0.0,
         "effective_control": 0.0,
-        "information_language_comprehension": 0.0,
+        "information_language_comprehension": 0.24,
         "recruitment_intensity": 0.31750170345796225,
         "survival_social_base": 0.0,
         "taxation_extraction_opportunity": 0.0
@@ -469,7 +469,7 @@
         "civilian_reporting_probability": 0.0,
         "concealment_embeddedness_input": 0.0,
         "effective_control": 0.0,
-        "information_language_comprehension": 0.0,
+        "information_language_comprehension": 0.24,
         "recruitment_intensity": 0.3236973287961227,
         "survival_social_base": 0.0,
         "taxation_extraction_opportunity": 0.0

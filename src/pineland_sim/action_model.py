@@ -13,6 +13,12 @@ import random
 
 from .entities import OrganizationKind, clamp
 from .relations import organizations_hostile
+from .organizational_state import (
+    local_operational_knowledge,
+    local_organizational_embeddedness,
+)
+from .logistics import shortest_locality_path
+from .access import edge_restriction_level
 
 
 ACTION_ORGANIZATION_KINDS = {
@@ -35,6 +41,168 @@ VIOLENT_CHANNELS = {
     "nonfielded_human_target",
     "asset_violence",
 }
+
+
+def operational_reach_candidates(
+    world, organization_id: str, source_locality_id: str
+) -> list[tuple[str, float]]:
+    """Same-locality plus one-hop operational reach using existing mobility.
+
+    This is tactical/operational reach, not strategic relocation.  Adjacent
+    reach is attenuated by actual travel time and hostile corridor restriction.
+    No new distance coefficient is introduced: one day is the action clock.
+    """
+    organization = world.organizations[organization_id]
+    rows = [(source_locality_id, 1.0)]
+    for destination_id in sorted(world.adjacency.get(source_locality_id, {})):
+        route, _, travel_hours = shortest_locality_path(
+            world,
+            source_locality_id,
+            destination_id,
+            organization.mobility,
+        )
+        restriction = edge_restriction_level(
+            world,
+            source_locality_id,
+            destination_id,
+            organization_id,
+        )
+        adjusted_hours = travel_hours * (
+            1.0
+            + world.config.access_restriction.hostile_movement_penalty
+            * restriction
+        )
+        rows.append(
+            (destination_id, exp(-max(0.0, adjusted_hours) / 24.0))
+        )
+    return rows
+
+
+def _target_belief_weight(
+    world,
+    organization_id: str,
+    locality_id: str,
+    channel: str,
+) -> float:
+    organization = world.organizations[organization_id]
+    target_side = _opponent_side(organization.kind)
+    belief = world.belief_view(organization_id).locality_control(
+        locality_id, target_side
+    )
+    hostile_beliefs = _evidenced_hostile_control_beliefs(
+        world, organization_id, locality_id
+    )
+    if channel == "nonfielded_human_target":
+        signal = clamp((belief.formal + belief.physical) / 2.0)
+        if hostile_beliefs:
+            signal = max(
+                signal,
+                max(
+                    clamp((item.formal + item.physical) / 2.0)
+                    for item in hostile_beliefs
+                ),
+            )
+        return signal
+    if channel == "asset_violence":
+        return clamp(
+            (belief.administrative + belief.legal + belief.fiscal) / 3.0
+        )
+    return 0.0
+
+
+def _has_local_target_evidence(
+    world,
+    organization_id: str,
+    locality_id: str,
+) -> bool:
+    organization = world.organizations[organization_id]
+    target_side = _opponent_side(organization.kind)
+    targets = {target_side, *_hostile_target_ids(world, organization_id)}
+    for target_id in targets:
+        belief = world.control_beliefs.get(
+            (organization_id, target_id, locality_id)
+        )
+        if belief is not None and belief.evidence_count > 0:
+            return True
+    observer_ids = {organization_id}
+    observer_ids.update(
+        formation.formation_id
+        for formation in world.formations.values()
+        if formation.organization_id == organization_id
+    )
+    return any(
+        belief.observer_id in observer_ids
+        and belief.locality_id == locality_id
+        and belief.target_actor_id in targets
+        and belief.evidence_count > 0
+        for belief in (
+            *world.presence_beliefs.values(),
+            *world.node_presence_beliefs.values(),
+        )
+    )
+
+
+def reachable_target_belief(
+    world,
+    organization_id: str,
+    source_locality_id: str,
+    channel: str,
+) -> float:
+    return max(
+        (
+            reach
+            * (
+                _target_belief_weight(
+                    world, organization_id, locality_id, channel
+                )
+                if (
+                    locality_id == source_locality_id
+                    or _has_local_target_evidence(
+                        world, organization_id, locality_id
+                    )
+                )
+                else 0.0
+            )
+            for locality_id, reach in operational_reach_candidates(
+                world, organization_id, source_locality_id
+            )
+        ),
+        default=0.0,
+    )
+
+
+def choose_operational_target_locality(
+    world,
+    organization_id: str,
+    source_locality_id: str,
+    channel: str,
+    rng: random.Random,
+) -> tuple[str, float]:
+    candidates = operational_reach_candidates(
+        world, organization_id, source_locality_id
+    )
+    weights = [
+        reach
+        * (
+            _target_belief_weight(
+                world, organization_id, locality_id, channel
+            )
+            if (
+                locality_id == source_locality_id
+                or _has_local_target_evidence(
+                    world, organization_id, locality_id
+                )
+            )
+            else 0.0
+        )
+        for locality_id, reach in candidates
+    ]
+    if sum(weights) <= 0:
+        return source_locality_id, 1.0
+    selected = rng.choices(
+        list(range(len(candidates))), weights=weights, k=1
+    )[0]
+    return candidates[selected]
 
 
 @dataclass(frozen=True, slots=True)
@@ -224,8 +392,8 @@ def action_attempt_probability(world, organization_id: str, locality_id: str,
     """Continuous-time common action opportunity using the existing rate scale."""
     if interval_days <= 0:
         return 0.0
-    rate = max(0.0, float(world.config.contact_rate))
-    # ``contact_rate`` is an opportunity rate for one minimally viable action
+    rate = max(0.0, float(world.config.organized_action_rate))
+    # organized_action_rate is an opportunity rate for one minimally viable action
     # unit. Saturation discounts tiny/unformed stocks; committed equivalents
     # then preserve the number of independently usable units. Using saturation
     # alone collapsed 500 and 2,625 fighters to almost the same opportunity
@@ -274,6 +442,20 @@ def _hostile_target_ids(world, organization_id: str) -> list[str]:
     )
 
 
+def _evidenced_hostile_control_beliefs(
+    world, organization_id: str, locality_id: str
+) -> list:
+    """Concrete hostile beliefs only when backed by local actor evidence."""
+    rows = []
+    for target_id in _hostile_target_ids(world, organization_id):
+        belief = world.control_beliefs.get(
+            (organization_id, target_id, locality_id)
+        )
+        if belief is not None and belief.evidence_count > 0:
+            rows.append(belief.control_estimate)
+    return rows
+
+
 def _opponent_presence_belief(
     world, organization_id: str, locality_id: str, target_side: str
 ) -> float:
@@ -317,18 +499,18 @@ def action_choice_weights(world, organization_id: str, locality_id: str) -> dict
     perceived_presence = _opponent_presence_belief(
         world, organization_id, locality_id, target_side
     )
-    hostile_targets = _hostile_target_ids(world, organization_id)
-    hostile_beliefs = [
-        world.belief_view(organization_id).locality_control(locality_id, target_id)
-        for target_id in hostile_targets
-    ]
+    hostile_beliefs = _evidenced_hostile_control_beliefs(
+        world, organization_id, locality_id
+    )
     if hostile_beliefs:
         perceived_presence = max(
             perceived_presence,
             max(clamp(item.physical) for item in hostile_beliefs),
         )
     risk = clamp(organization.phenotype.get("risk_tolerance", 0.5))
-    embedded = clamp(organization.phenotype.get("local_embeddedness", 0.5))
+    embedded = local_organizational_embeddedness(
+        world, organization_id, locality_id
+    )
     governance = clamp(organization.phenotype.get("governance_investment", 0.5))
     fielded_share = clamp(fielded / max(1e-12, total))
 
@@ -340,15 +522,17 @@ def action_choice_weights(world, organization_id: str, locality_id: str) -> dict
             if world.ceasefires.get(organization_id) == "active"
             else 1.0
         )
-        human_target_belief = clamp((belief.formal + belief.physical) / 2.0)
-        if hostile_beliefs:
-            human_target_belief = max(
-                human_target_belief,
-                max(clamp((item.formal + item.physical) / 2.0)
-                    for item in hostile_beliefs),
-            )
-        asset_target_belief = clamp(
-            (belief.administrative + belief.legal + belief.fiscal) / 3.0
+        human_target_belief = reachable_target_belief(
+            world,
+            organization_id,
+            locality_id,
+            "nonfielded_human_target",
+        )
+        asset_target_belief = reachable_target_belief(
+            world,
+            organization_id,
+            locality_id,
+            "asset_violence",
         )
         asset_weight = (
             risk * asset_target_belief * ceasefire_scale
@@ -576,6 +760,8 @@ def execution_probability(
     locality_id: str,
     target_resistance: float,
     material_fraction: float = 1.0,
+    target_organization_id: str | None = None,
+    target_locality_id: str | None = None,
 ) -> float:
     """Execution feasibility from capacity, knowledge, target, and local supply.
 
@@ -584,9 +770,13 @@ def execution_probability(
     stock upstream; multiplying by it again made converted or delivered supply
     unusable and charged the same constraint twice.
     """
-    organization = world.organizations[organization_id]
     capacity = capacity_saturation(world, organization_id, locality_id)
-    knowledge = clamp(organization.local_knowledge)
+    knowledge = local_operational_knowledge(
+        world,
+        organization_id,
+        target_locality_id or locality_id,
+        target_organization_id,
+    )
     vulnerability = 1.0 - clamp(target_resistance)
     factors = (capacity, knowledge, vulnerability, clamp(material_fraction))
     if any(value <= 0 for value in factors):

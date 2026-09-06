@@ -17,7 +17,12 @@ def test_matched_worlds_preserve_null_consequences_instead_of_adding_mechanisms(
     result = MODULE.run_study(seed=20260905)
     effects = result["consequence_assessment_direct_rootedness_effect"]
     assert effects["recruitment"] is True
-    assert all(value is False for key, value in effects.items() if key != "recruitment")
+    assert effects["information_access"] is True
+    assert all(
+        value is False
+        for key, value in effects.items()
+        if key not in {"recruitment", "information_access"}
+    )
     assert result["core_model_modified"] is False
     assert result["historical_outcomes_used"] is False
 

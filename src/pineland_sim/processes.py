@@ -43,6 +43,7 @@ from .action_model import (
     asset_targets,
     available_battle_pairs,
     choose_action,
+    choose_operational_target_locality,
     committed_fighter_equivalents,
     consume_local_action_supply,
     execution_probability,
@@ -1970,11 +1971,25 @@ class ProcessEngine:
         )
 
         if channel == "nonfielded_human_target":
+            target_locality_id, operational_reach = (
+                choose_operational_target_locality(
+                    self.world,
+                    organization_id,
+                    locality_id,
+                    channel,
+                    self.rng,
+                )
+            )
             targets = nonfielded_human_targets(
-                self.world, organization_id, locality_id
+                self.world, organization_id, target_locality_id
             )
             if not targets:
-                return {**common, "failure_reason": "believed_human_target_absent"}
+                return {
+                    **common,
+                    "target_locality_id": target_locality_id,
+                    "operational_reach": operational_reach,
+                    "failure_reason": "believed_human_target_absent",
+                }
             target = self.rng.choices(
                 targets,
                 weights=[
@@ -1998,7 +2013,9 @@ class ProcessEngine:
                 if supply_demand > 0 else 1.0
             )
             probability = execution_probability(
-                self.world, organization_id, locality_id, resistance, supply_fraction
+                self.world, organization_id, locality_id, resistance, supply_fraction,
+                target_organization_id=target.organization_id,
+                target_locality_id=target_locality_id,
             )
             consumed_supply, unmet_supply = consume_local_action_supply(
                 self.world, organization_id, locality_id, supply_demand
@@ -2007,6 +2024,10 @@ class ProcessEngine:
             if draw >= probability:
                 return {
                     **common,
+                    "locality_id": target_locality_id,
+                    "source_locality_id": locality_id,
+                    "target_locality_id": target_locality_id,
+                    "operational_reach": operational_reach,
                     "target_type": target.target_type,
                     "target_id": target.target_id,
                     "execution_probability": probability,
@@ -2028,7 +2049,7 @@ class ProcessEngine:
             if realized_losses <= 0:
                 return {**common, "failure_reason": "target_stock_changed_before_execution"}
             intensity = min(1.0, realized_losses / max(1.0, exposed))
-            locality = self.world.localities[locality_id]
+            locality = self.world.localities[target_locality_id]
             locality.violence = clamp(locality.violence * .85 + .25 * intensity)
             record_relation_harm(
                 self.world,
@@ -2039,6 +2060,10 @@ class ProcessEngine:
             )
             return {
                 **common,
+                "locality_id": target_locality_id,
+                "source_locality_id": locality_id,
+                "target_locality_id": target_locality_id,
+                "operational_reach": operational_reach,
                 "affected_entity_ids": (target.target_id,),
                 "latent_event": 1.0,
                 "state_based_violence_event": 1.0,
@@ -2054,9 +2079,25 @@ class ProcessEngine:
             }
 
         if channel == "asset_violence":
-            targets = asset_targets(self.world, organization_id, locality_id)
+            target_locality_id, operational_reach = (
+                choose_operational_target_locality(
+                    self.world,
+                    organization_id,
+                    locality_id,
+                    channel,
+                    self.rng,
+                )
+            )
+            targets = asset_targets(
+                self.world, organization_id, target_locality_id
+            )
             if not targets:
-                return {**common, "failure_reason": "believed_asset_target_absent"}
+                return {
+                    **common,
+                    "target_locality_id": target_locality_id,
+                    "operational_reach": operational_reach,
+                    "failure_reason": "believed_asset_target_absent",
+                }
             target = self.rng.choices(
                 targets,
                 weights=[
@@ -2079,7 +2120,9 @@ class ProcessEngine:
                 if supply_demand > 0 else 1.0
             )
             probability = execution_probability(
-                self.world, organization_id, locality_id, hardness, supply_fraction
+                self.world, organization_id, locality_id, hardness, supply_fraction,
+                target_organization_id="government",
+                target_locality_id=target_locality_id,
             )
             consumed_supply, unmet_supply = consume_local_action_supply(
                 self.world, organization_id, locality_id, supply_demand
@@ -2088,6 +2131,10 @@ class ProcessEngine:
             if draw >= probability:
                 return {
                     **common,
+                    "locality_id": target_locality_id,
+                    "source_locality_id": locality_id,
+                    "target_locality_id": target_locality_id,
+                    "operational_reach": operational_reach,
                     "target_type": "political_institution",
                     "target_id": target.institution_id,
                     "execution_probability": probability,
@@ -2100,10 +2147,14 @@ class ProcessEngine:
             target.capacity = clamp(target.capacity * (1.0 - damage))
             target.integrity = clamp(target.integrity * (1.0 - damage))
             target.reach = clamp(target.reach * (1.0 - damage))
-            locality = self.world.localities[locality_id]
+            locality = self.world.localities[target_locality_id]
             locality.violence = clamp(locality.violence * .85 + .25 * damage)
             return {
                 **common,
+                "locality_id": target_locality_id,
+                "source_locality_id": locality_id,
+                "target_locality_id": target_locality_id,
+                "operational_reach": operational_reach,
                 "affected_entity_ids": (target.institution_id,),
                 "latent_event": 1.0,
                 "state_based_violence_event": 0.0,

@@ -1,0 +1,449 @@
+{
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "passed": true,
+  "results": [
+    {
+      "baseline": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D01-L02": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "checks": {
+        "base_removal_zeroes_risk": true,
+        "hotspot_follows_base": true,
+        "matched_baseline": true,
+        "reach_bounded": true,
+        "rooted_hotspot": true,
+        "untreated_control_zero": true
+      },
+      "control": "D01-L02",
+      "focal": "D01-L01",
+      "passed": true,
+      "removed": {
+        "embeddedness": 0.0,
+        "knowledge": 0.0,
+        "propensity": 0.0
+      },
+      "rooted": {
+        "D01-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        },
+        "D01-L02": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "seed": 2026090611,
+      "shuffled": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D01-L02": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        }
+      }
+    },
+    {
+      "baseline": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D02-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "checks": {
+        "base_removal_zeroes_risk": true,
+        "hotspot_follows_base": true,
+        "matched_baseline": true,
+        "reach_bounded": true,
+        "rooted_hotspot": true,
+        "untreated_control_zero": true
+      },
+      "control": "D02-L01",
+      "focal": "D01-L01",
+      "passed": true,
+      "removed": {
+        "embeddedness": 0.0,
+        "knowledge": 0.0,
+        "propensity": 0.0
+      },
+      "rooted": {
+        "D01-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        },
+        "D02-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "seed": 2026090612,
+      "shuffled": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D02-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        }
+      }
+    },
+    {
+      "baseline": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D01-L02": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "checks": {
+        "base_removal_zeroes_risk": true,
+        "hotspot_follows_base": true,
+        "matched_baseline": true,
+        "reach_bounded": true,
+        "rooted_hotspot": true,
+        "untreated_control_zero": true
+      },
+      "control": "D01-L02",
+      "focal": "D01-L01",
+      "passed": true,
+      "removed": {
+        "embeddedness": 0.0,
+        "knowledge": 0.0,
+        "propensity": 0.0
+      },
+      "rooted": {
+        "D01-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        },
+        "D01-L02": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "seed": 2026090613,
+      "shuffled": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D01-L02": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        }
+      }
+    },
+    {
+      "baseline": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D02-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "checks": {
+        "base_removal_zeroes_risk": true,
+        "hotspot_follows_base": true,
+        "matched_baseline": true,
+        "reach_bounded": true,
+        "rooted_hotspot": true,
+        "untreated_control_zero": true
+      },
+      "control": "D02-L01",
+      "focal": "D01-L01",
+      "passed": true,
+      "removed": {
+        "embeddedness": 0.0,
+        "knowledge": 0.0,
+        "propensity": 0.0
+      },
+      "rooted": {
+        "D01-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        },
+        "D02-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "seed": 2026090614,
+      "shuffled": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D02-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        }
+      }
+    },
+    {
+      "baseline": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D02-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "checks": {
+        "base_removal_zeroes_risk": true,
+        "hotspot_follows_base": true,
+        "matched_baseline": true,
+        "reach_bounded": true,
+        "rooted_hotspot": true,
+        "untreated_control_zero": true
+      },
+      "control": "D02-L01",
+      "focal": "D01-L01",
+      "passed": true,
+      "removed": {
+        "embeddedness": 0.0,
+        "knowledge": 0.0,
+        "propensity": 0.0
+      },
+      "rooted": {
+        "D01-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        },
+        "D02-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "seed": 2026090615,
+      "shuffled": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D02-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        }
+      }
+    },
+    {
+      "baseline": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D01-L02": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "checks": {
+        "base_removal_zeroes_risk": true,
+        "hotspot_follows_base": true,
+        "matched_baseline": true,
+        "reach_bounded": true,
+        "rooted_hotspot": true,
+        "untreated_control_zero": true
+      },
+      "control": "D01-L02",
+      "focal": "D01-L01",
+      "passed": true,
+      "removed": {
+        "embeddedness": 0.0,
+        "knowledge": 0.0,
+        "propensity": 0.0
+      },
+      "rooted": {
+        "D01-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        },
+        "D01-L02": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "seed": 2026090616,
+      "shuffled": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D01-L02": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        }
+      }
+    },
+    {
+      "baseline": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D01-L02": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "checks": {
+        "base_removal_zeroes_risk": true,
+        "hotspot_follows_base": true,
+        "matched_baseline": true,
+        "reach_bounded": true,
+        "rooted_hotspot": true,
+        "untreated_control_zero": true
+      },
+      "control": "D01-L02",
+      "focal": "D01-L01",
+      "passed": true,
+      "removed": {
+        "embeddedness": 0.0,
+        "knowledge": 0.0,
+        "propensity": 0.0
+      },
+      "rooted": {
+        "D01-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        },
+        "D01-L02": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "seed": 2026090617,
+      "shuffled": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D01-L02": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        }
+      }
+    },
+    {
+      "baseline": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D02-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "checks": {
+        "base_removal_zeroes_risk": true,
+        "hotspot_follows_base": true,
+        "matched_baseline": true,
+        "reach_bounded": true,
+        "rooted_hotspot": true,
+        "untreated_control_zero": true
+      },
+      "control": "D02-L01",
+      "focal": "D01-L01",
+      "passed": true,
+      "removed": {
+        "embeddedness": 0.0,
+        "knowledge": 0.0,
+        "propensity": 0.0
+      },
+      "rooted": {
+        "D01-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        },
+        "D02-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        }
+      },
+      "seed": 2026090618,
+      "shuffled": {
+        "D01-L01": {
+          "embeddedness": 0.0,
+          "knowledge": 0.0,
+          "propensity": 0.0
+        },
+        "D02-L01": {
+          "embeddedness": 1.0,
+          "knowledge": 0.8944271909999159,
+          "propensity": 0.009477167861327025
+        }
+      }
+    }
+  ],
+  "schema_version": "pineland.final_theory_hardening_recovery.v1",
+  "war_diary_rows_acquired": false
+}

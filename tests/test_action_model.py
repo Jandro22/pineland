@@ -9,14 +9,25 @@ from pineland_sim import Simulation, SimulationConfig, generate_pineland
 from pineland_sim.action_model import (
     action_attempt_probability,
     action_choice_weights,
+    choose_operational_target_locality,
     execution_probability,
     local_action_support,
     local_fighter_equivalents,
     national_fighter_equivalents,
+    reachable_target_belief,
 )
-from pineland_sim.entities import OrganizationKind
+from pineland_sim.entities import (
+    ActorBelief,
+    ControlVector,
+    OrganizationKind,
+    PresenceBelief,
+)
 from pineland_sim.events import ScheduledEvent
 from pineland_sim.processes import ProcessEngine
+from pineland_sim.organizational_state import (
+    local_operational_knowledge,
+    local_organizational_embeddedness,
+)
 
 
 def _world(seed: int = 41, *, output_mode: str = "forensic"):
@@ -102,6 +113,198 @@ def test_action_attempt_probability_composes_in_calendar_time():
         world, organization.organization_id, formation.locality_id, 2.0
     )
     assert math.isclose(p2, 1.0 - (1.0 - p1) ** 2, rel_tol=0, abs_tol=1e-12)
+
+
+def test_organized_action_hazard_is_independent_of_contact_hazard():
+    world = _world(seed=404)
+    organization, formation = _insurgent(world)
+    locality_id = formation.locality_id
+    world.config.organized_action_rate = 0.08
+    world.config.contact_rate = 0.0
+    baseline = action_attempt_probability(
+        world, organization.organization_id, locality_id, 1.0
+    )
+    world.config.contact_rate = 100.0
+    assert action_attempt_probability(
+        world, organization.organization_id, locality_id, 1.0
+    ) == baseline
+    world.config.organized_action_rate = 0.16
+    assert action_attempt_probability(
+        world, organization.organization_id, locality_id, 1.0
+    ) > baseline
+    world.config.organized_action_rate = 0.0
+    assert action_attempt_probability(
+        world, organization.organization_id, locality_id, 1.0
+    ) == 0.0
+
+
+def test_local_operational_knowledge_does_not_teleport_across_localities():
+    world = _world(seed=406)
+    organization, _ = _insurgent(world)
+    organization.local_knowledge = 1.0
+    locality_ids = sorted(world.localities)[:2]
+    focal, control = locality_ids
+    organization.member_ids.clear()
+    for formation in world.formations.values():
+        if formation.organization_id == organization.organization_id:
+            formation.personnel = 0.0
+    for locality_id in world.localities:
+        world.localities[locality_id].control[
+            organization.organization_id
+        ] = ControlVector()
+    world.organization_manpower_pools = {
+        key: value
+        for key, value in world.organization_manpower_pools.items()
+        if key[0] != organization.organization_id
+    }
+    world.organization_manpower_supply_reserves = {
+        key: value
+        for key, value in world.organization_manpower_supply_reserves.items()
+        if key[0] != organization.organization_id
+    }
+    quantity = world.config.organization_ecology.minimum_formation_personnel
+    supply_per_fighter = (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+    world.organization_manpower_pools[
+        (organization.organization_id, focal)
+    ] = quantity
+    world.organization_manpower_supply_reserves[
+        (organization.organization_id, focal)
+    ] = quantity * supply_per_fighter
+
+    assert local_organizational_embeddedness(
+        world, organization.organization_id, focal
+    ) > 0.0
+    assert local_operational_knowledge(
+        world, organization.organization_id, focal
+    ) > 0.0
+    assert local_operational_knowledge(
+        world, organization.organization_id, control
+    ) == 0.0
+
+
+def test_local_information_changes_knowledge_without_hidden_truth_read():
+    world = _world(seed=407)
+    organization, _ = _insurgent(world)
+    organization.local_knowledge = 1.0
+    focal = sorted(world.localities)[0]
+    organization.member_ids.clear()
+    for formation in world.formations.values():
+        if formation.organization_id == organization.organization_id:
+            formation.personnel = 0.0
+    world.localities[focal].control[organization.organization_id] = ControlVector()
+    world.organization_manpower_pools.pop(
+        (organization.organization_id, focal), None
+    )
+    world.organization_manpower_supply_reserves.pop(
+        (organization.organization_id, focal), None
+    )
+    world.presence_beliefs[
+        (organization.organization_id, "government", focal, "*")
+    ] = PresenceBelief(
+        observer_id=organization.organization_id,
+        target_actor_id="government",
+        locality_id=focal,
+        presence_estimate=0.8,
+        confidence=0.9,
+        evidence_count=1,
+    )
+    before = local_operational_knowledge(
+        world,
+        organization.organization_id,
+        focal,
+        "government",
+    )
+    assert before > 0.0
+    for formation in world.formations.values():
+        if formation.organization_id != organization.organization_id:
+            formation.locality_id = sorted(world.localities)[-1]
+    after = local_operational_knowledge(
+        world,
+        organization.organization_id,
+        focal,
+        "government",
+    )
+    assert after == before
+
+
+def test_adjacent_operational_reach_requires_actor_evidence():
+    world = _world(seed=408)
+    organization, formation = _insurgent(world)
+    source = formation.locality_id
+    adjacent = sorted(world.adjacency[source])[0]
+    organization_id = organization.organization_id
+    # Remove informative source-local target belief and plant a strong,
+    # evidence-backed adjacent belief. Other adjacent priors must not count.
+    for key, belief in list(world.control_beliefs.items()):
+        if key[0] == organization_id and key[2] == source:
+            world.control_beliefs[key] = ActorBelief(
+                organization_id,
+                source,
+                ControlVector(),
+                confidence=0.9,
+                updated_at=0.0,
+                evidence_count=1,
+            )
+    world.control_beliefs[(organization_id, "government", adjacent)] = ActorBelief(
+        organization_id,
+        adjacent,
+        ControlVector(formal=1.0, physical=1.0),
+        confidence=0.9,
+        updated_at=0.0,
+        evidence_count=1,
+    )
+    reachable = reachable_target_belief(
+        world, organization_id, source, "nonfielded_human_target"
+    )
+    assert reachable > 0.0
+    selected, reach = choose_operational_target_locality(
+        world,
+        organization_id,
+        source,
+        "nonfielded_human_target",
+        random.Random(1),
+    )
+    assert selected == adjacent
+    assert 0.0 < reach < 1.0
+
+
+def test_adjacent_operational_planning_is_truth_firewalled():
+    world = _world(seed=409)
+    organization, formation = _insurgent(world)
+    source = formation.locality_id
+    adjacent = sorted(world.adjacency[source])[0]
+    organization_id = organization.organization_id
+    for key, belief in list(world.control_beliefs.items()):
+        if key[0] == organization_id and key[2] == source:
+            world.control_beliefs[key] = ActorBelief(
+                organization_id,
+                source,
+                ControlVector(),
+                confidence=0.9,
+                updated_at=0.0,
+                evidence_count=1,
+            )
+    world.control_beliefs[(organization_id, "government", adjacent)] = ActorBelief(
+        organization_id,
+        adjacent,
+        ControlVector(formal=1.0, physical=1.0),
+        confidence=0.9,
+        updated_at=0.0,
+        evidence_count=1,
+    )
+    before = reachable_target_belief(
+        world, organization_id, source, "nonfielded_human_target"
+    )
+    for item in world.formations.values():
+        if item.organization_id != organization_id:
+            item.locality_id = source
+    after = reachable_target_belief(
+        world, organization_id, source, "nonfielded_human_target"
+    )
+    assert after == before
 
 
 def test_action_attempt_probability_preserves_multiple_capacity_units():

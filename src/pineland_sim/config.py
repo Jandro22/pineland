@@ -762,6 +762,10 @@ class SimulationConfig:
     # experiments to vary mobilization and retention independently.
     membership_exit_rate: float = 0.001
     contact_rate: float = 0.08
+    # Deliberate organized operational tempo is causally distinct from
+    # formation encounter/contact hazard. The default preserves the former
+    # shared numerical baseline; it is not selected from a historical fit.
+    organized_action_rate: float = 0.08
     random_stream_namespace: str = "baseline"
     # Output fidelity is deliberately orthogonal to the stochastic model.
     # ``forensic`` retains every event/state delta; ``ensemble`` retains
@@ -804,7 +808,7 @@ class SimulationConfig:
             if not 0 <= value <= 1:
                 raise ValueError(f"{name} must be in [0, 1]")
         for name in ("movement_rate", "recruitment_rate", "membership_exit_rate",
-                     "contact_rate"):
+                     "contact_rate", "organized_action_rate"):
             if getattr(self, name) < 0:
                 raise ValueError(f"{name} cannot be negative")
         for name, value in asdict(self.intervals).items():

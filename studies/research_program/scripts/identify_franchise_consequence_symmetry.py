@@ -202,8 +202,9 @@ def run_study(seed: int = 20260905) -> dict:
         },
         "negative_result": (
             "Under a matched home-origin intervention, direct effects are identified for recruitment "
-            "but not for information, reporting, concealment, extraction, survival, defection, "
-            "backlash, or effective control. These nulls are retained; no missing transition is added."
+            "and local information access, but not for reporting, concealment, extraction, survival, "
+            "defection, backlash, or effective control. The remaining nulls are retained; no missing "
+            "transition is added."
         ),
     }
 
