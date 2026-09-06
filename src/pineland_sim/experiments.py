@@ -47,6 +47,14 @@ def governance_surge(multiplier: float = 1.5, start_day: float = 30, end_day: fl
             for locality in world.localities.values():
                 locality.administrative_capacity = min(1.0, locality.administrative_capacity + capacity_gain)
                 locality.governance["leakage"] = max(0.0, locality.governance["leakage"] - leakage_reduction)
+                # Apply the technical-assistance package to the live state at
+                # its treatment date. Otherwise a short experiment ending
+                # before the next 30-day governance clock observes only an
+                # unused parameter change and falsely reports a zero effect.
+                control = locality.control["government"]
+                control.administrative = min(1.0, control.administrative + capacity_gain)
+                control.legal = min(1.0, control.legal + .75 * capacity_gain)
+                control.fiscal = min(1.0, control.fiscal + .5 * capacity_gain)
             # Policy hooks are explicit exogenous treatments.  Record their
             # stock effect before the next event boundary so global accounting
             # cannot mistake the intervention for unexplained drift.

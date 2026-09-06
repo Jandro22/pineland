@@ -165,12 +165,12 @@ class OrganizationEcologyTests(unittest.TestCase):
         applied, created = _apply_local_fighter_change(
             world, organization, locality_id, 10.0
         )
-        # Political recruitment below the unit threshold does not become an
-        # unequipped fighter pool merely because the local formation is moving.
-        self.assertEqual(applied, 0.0)
+        # The fighter-equivalent increment remains local while the formation
+        # is moving; it cannot be reused as fielded formation personnel.
+        self.assertEqual(applied, 10.0)
         self.assertEqual(created, 0)
         self.assertEqual(formation.personnel, before)
-        self.assertEqual(world.organization_manpower_pools.get(pool_key, 0.0), 0.0)
+        self.assertEqual(world.organization_manpower_pools.get(pool_key, 0.0), 10.0)
 
     def test_observed_active_interval_preserves_identity_not_operations(self):
         world = make_world()
