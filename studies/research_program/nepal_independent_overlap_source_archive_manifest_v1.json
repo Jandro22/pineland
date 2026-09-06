@@ -1,0 +1,32 @@
+{
+  "archived_count": 2,
+  "created_at_utc": "2026-09-06T00:42:24.695827+00:00",
+  "schema_version": "pineland.nepal_independent_overlap_source_archive.v1",
+  "sources": [
+    {
+      "archive_bytes": 409303,
+      "archive_path": "studies/nepal_2001_2006/data/raw/independent_overlap_sources_v1/timesofindia_ilam_blockade_2004.html",
+      "archive_sha256": "4a4a352bcf731fca03a4fb6e55acfe9bc0b7705a5913557972604e81adba8450",
+      "archived": true,
+      "headers_path": "studies/nepal_2001_2006/data/raw/independent_overlap_sources_v1/timesofindia_ilam_blockade_2004.headers.txt",
+      "independence_status": "plausibly_independent",
+      "publisher": "Times of India / TNN",
+      "source_id": "timesofindia_ilam_blockade_2004",
+      "title": "Pashupati businessmen scared over Maoist blockade",
+      "url": "https://timesofindia.indiatimes.com/world/rest-of-world/pashupati-businessmen-scared-over-maoist-blockade/articleshow/835271.cms"
+    },
+    {
+      "archive_bytes": 298245,
+      "archive_path": "studies/nepal_2001_2006/data/raw/independent_overlap_sources_v1/satp_nepalnews_khanar_school_2006.html",
+      "archive_sha256": "703fdc8d2d1d0e1ce4f750c7329422763e55ad09096b51708bbef16ff8798ef0",
+      "archived": true,
+      "headers_path": "studies/nepal_2001_2006/data/raw/independent_overlap_sources_v1/satp_nepalnews_khanar_school_2006.headers.txt",
+      "independence_status": "independence_uncertain",
+      "publisher": "SATP; item attributed to Nepal News",
+      "source_id": "satp_nepalnews_khanar_school_2006",
+      "title": "Timeline Terrorist Activities, Province No. 1 - October 2006",
+      "url": "https://satp.org/terrorist-activity/nepal-na-provinceno1-Oct-2006"
+    }
+  ],
+  "status": "candidate_sources_archived_before_blind_second_coding"
+}

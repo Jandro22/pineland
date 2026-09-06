@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "synthetic_construct_representation_audit_v1",
+  "status": "prospective_general_theory_diagnostic",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "purpose": "Determine whether externally observable control/presence constructs correspond to endogenous Pineland latent states, distinguishing direct, partial, and absent representation before any further historical use.",
+  "constructs": {
+    "armed_presence": {
+      "required_latent": ["fielded formations", "fixed security posts", "patrols"],
+      "criterion": "DIRECT if actor/locality/time presence is stored explicitly and can change through substantive processes."
+    },
+    "government_administrative_presence": {
+      "required_latent": ["government administrative control", "political/governance institution output"],
+      "criterion": "DIRECT_CONTINUOUS if government administrative control receives endogenous writes from governance/political production."
+    },
+    "insurgent_shadow_governance": {
+      "required_latent": ["insurgent administrative", "insurgent legal", "insurgent fiscal", "insurgent social"],
+      "criterion": "DIRECT_CONTINUOUS only if taxation/regulation/governance activity can endogenously build or decay the corresponding insurgent dimensions; initialized/inherited values alone are insufficient."
+    },
+    "territorial_access_constraint": {
+      "required_latent": ["civilian movement/access restriction state", "scope", "actor", "time"],
+      "criterion": "DIRECT only if civilian/organizational access restriction exists as a first-class latent state or process output; military/logistics route risk does not qualify."
+    }
+  },
+  "synthetic_design": {
+    "seeds": [2026090531, 2026090532, 2026090533, 2026090534],
+    "agent_count": 150,
+    "locality_count": 17,
+    "horizon_days": 120,
+    "execution": "one-shot baseline and one-shot event-boundary audit per seed"
+  },
+  "acceptance_and_classification_rules": [
+    "Observer must be dynamics-invariant relative to an uninstrumented run for every seed.",
+    "Government administrative/legal/fiscal/social/expected writes must be observable in synthetic execution or source-path inventory.",
+    "Insurgent nonphysical dimensions are classified PARTIAL if only a strict subset has endogenous writers while others are initialized/inherited or merely read by downstream equations.",
+    "Territorial access constraint is classified ABSENT if no first-class civilian-access state/process exists; military route risk/interdiction cannot satisfy this construct.",
+    "A representation gap is a general-theory/model-construct diagnosis, not a historical-fit explanation and not authorization for a core edit during the active historical confrontation."
+  ],
+  "interpretation": "A pass means the representation classification is identified. It does not mean every construct is adequately represented; PARTIAL or ABSENT is a valid scientific result."
+}

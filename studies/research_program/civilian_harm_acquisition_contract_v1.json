@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "status": "prospective_before_new_civilian_harm_source_discovery",
+  "parent_contract": "studies/research_program/future_outcome_evidence_acquisition_contract_v1.json",
+  "outcome": "civilian_harm",
+  "purpose": "Acquire historical civilian-harm evidence independently of Pineland residuals for Nepal 2001-2006 and Afghanistan 2004-2021.",
+  "case_sampling_frames": {
+    "nepal_2001_2006": {
+      "date_start": "2001-11-26",
+      "date_end": "2006-11-21",
+      "geography": "all frozen Nepal study districts; no district is selected because of Pineland fit",
+      "preferred_temporal_resolution": ["event/day", "month", "year"],
+      "minimum_confirmatory_coverage": {
+        "direct_harm": "at least two non-model source families with actor/date/geography attribution or an explicitly documented national surveillance series",
+        "displacement_or_resource_loss": "at least one independent source family with dated displacement or civilian property/resource-loss measurement",
+        "uncertainty": "source uncertainty/coverage limitations explicitly retained"
+      }
+    },
+    "afghanistan_2004_2021": {
+      "date_start": "2004-01-01",
+      "date_end": "2021-08-15",
+      "geography": "all frozen Afghanistan study districts/provinces/national aggregates accepted only at their source-supported resolution; no area selected because of Pineland fit",
+      "preferred_temporal_resolution": ["event/day", "month", "quarter", "year"],
+      "minimum_confirmatory_coverage": {
+        "direct_harm": "at least two non-model source families or one audited long-run surveillance system plus an independent overlap cross-check",
+        "displacement_or_resource_loss": "at least one independent longitudinal displacement/resource-loss series",
+        "uncertainty": "source uncertainty, access limitations, attribution rules, and temporal coverage explicitly retained"
+      }
+    }
+  },
+  "admissible_components": {
+    "direct_harm": [
+      "civilian death",
+      "civilian injury",
+      "civilian casualty",
+      "civilian-specific victimization with attributable actor or incident context"
+    ],
+    "displacement_or_resource_loss": [
+      "conflict-induced displacement",
+      "forced migration",
+      "civilian property destruction or seizure",
+      "livelihood/resource loss directly attributable to conflict or policy"
+    ]
+  },
+  "inadmissible_as_substitutes": [
+    "total battle deaths without civilian identification",
+    "violence-event count alone",
+    "Pineland cumulative_civilian_harm",
+    "generic refugee stock without conflict/date/geographic attribution",
+    "media volume or reporting intensity",
+    "control or territorial status"
+  ],
+  "candidate_source_family_classes": [
+    "UN or intergovernmental civilian-protection monitoring",
+    "national or independent human-rights monitoring",
+    "humanitarian displacement monitoring",
+    "conflict casualty datasets with explicit civilian classification",
+    "archival field reports with source-level provenance"
+  ],
+  "source_discovery_protocol": {
+    "allowed_search_terms": [
+      "case/country name",
+      "study dates or calendar year",
+      "civilian casualties/deaths/injuries",
+      "conflict displacement/IDPs/refugees",
+      "property/livelihood destruction",
+      "human rights annual report/protection of civilians"
+    ],
+    "forbidden_search_terms": [
+      "Pineland",
+      "model residual",
+      "underprediction",
+      "overprediction",
+      "failed district",
+      "historical mismatch"
+    ],
+    "opened_source_logging": "Every source document opened after this contract must be entered into civilian_harm_source_exposure_log_v1.csv whether usable, unusable, supportive, or contradictory.",
+    "source_family_dependence": "Syndicated, derivative, or repeated editions from the same originating monitoring system count as one source family unless independence is documented."
+  },
+  "coding_fields": [
+    "candidate_source_id",
+    "case_id",
+    "source_family",
+    "publisher_or_originator",
+    "source_title",
+    "source_url_or_archive_ref",
+    "date_opened",
+    "source_date_start",
+    "source_date_end",
+    "geographic_scope",
+    "direct_harm_available",
+    "displacement_available",
+    "resource_loss_available",
+    "actor_attribution_available",
+    "uncertainty_or_coverage_statement_available",
+    "potentially_admissible",
+    "exclusion_reason",
+    "first_coder_status",
+    "second_coder_status",
+    "immutable_archive_hash_if_available"
+  ],
+  "confirmatory_use_gate": [
+    "candidate exposure log complete for all opened sources",
+    "source-family dependence adjudicated",
+    "coding schema frozen before extracting outcome values",
+    "confirmatory records second-coded",
+    "pre-adjudication reliability reported",
+    "source uncertainty preserved",
+    "matching model harm components prospectively retained before any future model comparison"
+  ],
+  "historical_predictive_rescore_authorized": false,
+  "parameter_fitting_authorized": false,
+  "core_change_authorized": false
+}

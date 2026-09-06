@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "synthetic_state_to_action_transmission_v1",
+  "status": "prospective_after_nepal_v5_failure",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "motivation": "Nepal v5 has near-zero recorded and latent event probabilities with approximately chance event discrimination, while its model-implied control signal retains some temporal/joint ordering. The next synthetic question is whether local organizational state is transmitted monotonically into action opportunity and execution under controlled exposure.",
+  "design": {
+    "seeds": [2026090501, 2026090502, 2026090503, 2026090504, 2026090505, 2026090506, 2026090507, 2026090508],
+    "agent_count": 300,
+    "locality_count": 24,
+    "capacity_doses": [0.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0],
+    "interval_days": 1.0,
+    "target_resistance": 0.25,
+    "nuisance_normalization": [
+      "use a locality with an existing fixed government security target and no local insurgent field formation",
+      "hold actor beliefs fixed within seed across capacity doses",
+      "set insurgent local_knowledge and material capital to one in every dose",
+      "place one insurgent material source at the focal locality with identical ample stock in every dose"
+    ]
+  },
+  "primary_estimands": [
+    "capacity_to_attempt_dose_response",
+    "capacity_to_execution_dose_response",
+    "capacity_to_expected_nonfielded_latent_event_propensity",
+    "locality_specificity_of_capacity_effect"
+  ],
+  "secondary_falsifier": "At fixed beliefs and positive local capacity, removing the true fixed-security target must leave planning weights unchanged but prevent a forced nonfielded human-target action from realizing.",
+  "acceptance_gate": [
+    "zero capacity implies zero attempt and zero expected latent-event propensity",
+    "attempt probability is strictly increasing over every positive capacity dose",
+    "execution probability is strictly increasing over every positive capacity dose",
+    "expected nonfielded latent-event propensity is strictly increasing over every positive capacity dose",
+    "adding focal capacity does not change action-attempt probability in an untreated control locality",
+    "the target-access falsifier separates belief-based planning from truth-constrained execution",
+    "all eight seeds pass with stable model and tracked-diff hashes"
+  ],
+  "interpretation": "A pass establishes only that the implemented v5 state-to-action equations can transmit known local capacity monotonically under controlled synthetic exposure. It does not show that Nepal's historical latent state, beliefs, support, target access, or rate scale are correct."
+}

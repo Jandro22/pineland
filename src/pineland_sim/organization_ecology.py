@@ -414,7 +414,8 @@ def _next_recruitment_formation_id(world, organization_id: str) -> str:
 
 
 def _create_local_recruitment_formation(world, organization: Organization,
-                                        locality_id: str, personnel: float) -> ArmedFormation:
+                                        locality_id: str, personnel: float,
+                                        startup_stock: float | None = None) -> ArmedFormation:
     peers = [f for f in world.formations.values() if f.organization_id == organization.organization_id]
     if peers:
         mean_trait = lambda name, default: sum(getattr(f, name) for f in peers) / len(peers)
@@ -441,10 +442,11 @@ def _create_local_recruitment_formation(world, organization: Organization,
     startup = min(
         formation.supply_capacity * world.config.logistics.initial_supply_fraction,
         organization.resources * world.config.organization_ecology.onset_resource_fraction,
-    )
+    ) if startup_stock is None else min(formation.supply_capacity, max(0.0, startup_stock))
     formation.supply_stock = startup
-    organization.resources -= startup
-    world.cumulative_resource_to_supply += startup
+    if startup_stock is None:
+        organization.resources -= startup
+        world.cumulative_resource_to_supply += startup
     formation.sustainment = formation.supply_fraction()
     zones = [z for z in world.microzones.values() if z.locality_id == locality_id]
     if zones:
@@ -477,34 +479,59 @@ def _apply_local_fighter_change(world, organization: Organization, locality_id: 
     minimum = world.config.organization_ecology.minimum_formation_personnel
     created = 0
     if delta > 0:
+        # Membership is a political stock; fielded fighter equivalents require
+        # materiel. Previously this path created arbitrary formation personnel,
+        # enlarged their carrying capacity, and supplied none of it once the
+        # organization's small startup allocation was exhausted. Bound actual
+        # mobilization by the existing resource-to-supply ledger instead.
+        supply_per_fighter = (
+            world.config.logistics.formation_supply_days
+            * world.config.logistics.initial_supply_fraction
+        )
+        remaining = min(
+            delta,
+            organization.resources / max(1e-12, supply_per_fighter),
+        )
+        if remaining <= 1e-12:
+            return 0.0, 0
+        applied = 0.0
         local = [f for f in world.formations.values()
                  if f.organization_id == organization.organization_id and
                  f.locality_id == locality_id and
                  _formation_is_local_recruitment_source(f)]
         if local:
-            remaining = delta
             for formation in sorted(local, key=lambda f: (f.personnel, f.formation_id)):
                 room = max(0.0, target_size - formation.personnel)
                 amount = min(room, remaining)
                 if amount > 0:
+                    converted = amount * supply_per_fighter
+                    organization.resources -= converted
+                    world.cumulative_resource_to_supply += converted
                     formation.personnel += amount
+                    formation.supply_stock += converted
+                    applied += amount
                     remaining -= amount
                     _resize_formation_supply_capacity(world, formation)
                 if remaining <= 1e-12:
-                    return requested_delta, created
-            delta = remaining
-        pool = world.organization_manpower_pools.get(key, 0.0) + delta
-        # Materialize at most target-sized formations; this prevents the local
-        # pool itself from becoming another hidden PRF-01-style mega-unit.
-        while pool >= minimum:
-            size = min(pool, target_size)
-            _create_local_recruitment_formation(world, organization, locality_id, size)
-            pool -= size
+                    return applied, created
+        # Do not label an unequipped sub-threshold remainder as mobilized
+        # personnel. It remains represented political membership and can be
+        # reconsidered when a later recruitment increment is large enough.
+        while remaining >= minimum:
+            size = min(remaining, target_size)
+            converted = size * supply_per_fighter
+            organization.resources -= converted
+            world.cumulative_resource_to_supply += converted
+            _create_local_recruitment_formation(
+                world, organization, locality_id, size,
+                startup_stock=converted,
+            )
+            remaining -= size
+            applied += size
             created += 1
-            if pool < minimum:
+            if remaining < minimum:
                 break
-        world.organization_manpower_pools[key] = pool
-        return requested_delta, created
+        return applied, created
 
     remaining = -delta
     pool = world.organization_manpower_pools.get(key, 0.0)

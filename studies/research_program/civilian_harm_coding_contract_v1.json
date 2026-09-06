@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0.0",
+  "status": "prospective_before_candidate_source_value_coding",
+  "parent_acquisition_contract": "studies/research_program/civilian_harm_acquisition_contract_v1.json",
+  "estimand_contract": "studies/research_program/estimand_registry.json#registered_estimands/civilian_harm",
+  "outcome": "civilian_harm",
+  "principle": "Direct harm, displacement, and civilian resource loss remain separate observed components. No post-hoc scalar composite is permitted.",
+  "record_unit": "One source-supported claim at the narrowest jointly supported component, victim class, date interval, geography, and attribution scope.",
+  "component_ontology": {
+    "direct_harm": {
+      "allowed_measures": [
+        "civilian_deaths",
+        "civilian_injuries",
+        "civilian_casualties_deaths_plus_injuries",
+        "civilian_harm_other_source_native"
+      ],
+      "rules": [
+        "Deaths, injuries, and total casualties are never silently converted into one another.",
+        "If a source reports only total casualties, the death/injury split is UNKNOWN unless separately identified by that source or an independently frozen linkage rule.",
+        "Victim status must be explicitly civilian under the source's own classification rule; total battle deaths are inadmissible without a civilian classification.",
+        "Source-native disputed, probable, verified, alleged, or minimum counts remain distinguishable."
+      ]
+    },
+    "displacement": {
+      "allowed_measures": [
+        "new_internal_displacement_flow",
+        "internally_displaced_population_stock",
+        "conflict_refugee_outflow",
+        "conflict_refugee_stock",
+        "return_flow"
+      ],
+      "rules": [
+        "Flow, stock, and return measures are separate and cannot be summed as one quantity.",
+        "Internal displacement and cross-border refuge remain separate components.",
+        "Generic migration is excluded unless conflict/policy displacement is identified by the source.",
+        "A later IDP stock cannot be back-allocated across earlier dates without an independently frozen stock-flow reconstruction."
+      ]
+    },
+    "resource_loss": {
+      "allowed_measures": [
+        "civilian_property_destroyed",
+        "civilian_property_seized",
+        "livelihood_asset_loss",
+        "civilian_resource_extraction_or_confiscation",
+        "source_native_resource_loss"
+      ],
+      "rules": [
+        "Physical counts, currency values, land area, livestock, crop loss, and other native units remain separate unless a prospective valuation operator is independently justified.",
+        "Organization resource acquisition is not automatically civilian resource loss; the civilian-side loss must be observed or explicitly represented.",
+        "Taxation is not coded as harm solely because an armed actor levied it; coercive seizure/loss requires source-supported victim-side cost semantics."
+      ]
+    }
+  },
+  "required_coded_fields": [
+    "harm_record_id",
+    "candidate_source_id",
+    "case_id",
+    "source_family",
+    "source_locator",
+    "component",
+    "measure",
+    "value_point",
+    "value_lower",
+    "value_upper",
+    "unit",
+    "victim_class",
+    "actor_attribution",
+    "actor_attribution_certainty",
+    "date_start",
+    "date_end",
+    "temporal_precision",
+    "geographic_scope_type",
+    "geographic_scope_name_or_id",
+    "source_coverage_scope",
+    "source_access_or_reporting_limitation",
+    "verification_status",
+    "overlap_group_id",
+    "notes"
+  ],
+  "missingness_and_uncertainty": {
+    "unknown_is_not_zero": true,
+    "no_invented_numeric_interval": true,
+    "rule": "Use source-reported point/range values when available. If the source gives qualitative uncertainty only, preserve that qualitatively and leave unsupported numeric bounds blank rather than fabricating precision.",
+    "open_interval_rule": "Minimum/at-least counts use the reported value as a lower bound with no invented upper bound; maximum/at-most counts analogously retain only an upper bound.",
+    "classification_uncertainty_rule": "Civilian-status or actor-attribution uncertainty is coded separately from count uncertainty and cannot be collapsed into an arbitrary numeric discount."
+  },
+  "time_operator": {
+    "interval_censoring_preserved": true,
+    "no_midpoint_imputation": true,
+    "no_uniform_time_smearing": true,
+    "rule": "A claim covering an interval contributes only to comparisons whose declared temporal operator can consume interval-censored evidence; otherwise it remains unscored."
+  },
+  "spatial_operator": {
+    "narrowest_supported_scope": true,
+    "no_downscaling": true,
+    "no_upgrading_local_claim_to_district": true,
+    "rule": "National, province/district, locality, facility, and route-level observations remain at source-supported resolution. Aggregation is allowed only upward through a prospectively declared, complete-enough coverage operator."
+  },
+  "attribution_operator": {
+    "allowed_actor_categories": [
+      "government",
+      "insurgent",
+      "foreign_or_international_force",
+      "multiple_or_crossfire",
+      "other_armed_actor",
+      "unknown_or_unattributed"
+    ],
+    "rule": "Preserve source attribution. Do not infer perpetrator from territorial control, event type, geography, or Pineland state.",
+    "policy_harm_rule": "Policy-attributable harm is a separate pathway from combat harm and requires explicit intervention/policy attribution."
+  },
+  "source_dependence_and_overlap": {
+    "same_originating_monitoring_system_is_one_family": true,
+    "syndication_does_not_create_independence": true,
+    "overlap_group_required_when_records_may_describe_same_harm": true,
+    "rule": "Potentially overlapping reports are not added together unless event/person identity or a source-declared de-duplication rule establishes non-overlap. Cross-source agreement is evidence about measurement, not permission to double count."
+  },
+  "aggregation_and_comparison": {
+    "source_native_first": true,
+    "componentwise_only": true,
+    "allowed_direct_harm_rate": "civilian direct harm per 100000 represented civilian person-years only when numerator semantics match and denominator coverage is identified",
+    "displacement_reporting": "persons, represented population share, or source-native stock/flow rate as separately registered",
+    "resource_loss_reporting": "source-native units until a separate valuation contract exists",
+    "forbidden": [
+      "summing deaths plus displacement persons",
+      "combining injuries and deaths via post-hoc severity weights",
+      "converting resource loss to casualty equivalents",
+      "using violence as missing civilian harm",
+      "using Pineland fit to choose aggregation level"
+    ]
+  },
+  "first_coder_gate": {
+    "source_values_may_be_read_after_this_contract": true,
+    "confirmatory_use_after_first_coding": false,
+    "required_next_step": "Populate a source-bound first-coder table, then build a blind second-coder packet before adjudication."
+  },
+  "historical_predictive_rescore_authorized": false,
+  "parameter_fitting_authorized": false,
+  "core_change_authorized": false
+}

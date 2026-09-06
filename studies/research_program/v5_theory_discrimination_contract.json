@@ -1,0 +1,28 @@
+{
+  "schema_version": "pineland.theory_discrimination.v1",
+  "status": "declared_during_execution_before_v5_historical_results",
+  "purpose": "Extract a falsifiable theoretical constraint from the once-only frozen historical confrontation, including a negative result.",
+  "primary_gate_unchanged": "The recorded ensemble must beat the existing simple competitors on both log score and Brier score in every frozen holdout; diagnostics cannot override a failed primary gate.",
+  "historical_refit": false,
+  "new_mechanisms": false,
+  "diagnostic_not_confirmatory": true,
+  "comparisons": {
+    "identity": "Verify identical district-week keys, targets, split labels and simple-model predictions between the preserved v4 and v5 competitions.",
+    "frequency": "Report mean predicted activity and observed activity separately from ranking; more events alone do not establish more information.",
+    "ranking": "Report tie-aware ROC AUC for recorded and latent ensemble activity on every split, retaining undefined values when either outcome class is absent.",
+    "state_transmission": "Report the same equal-weight seven-axis insurgent-minus-government control composite used in the v4 diagnosis, using only checkpoints at or before each prediction week's start. This is a latent-state diagnostic, not a fitted probability or independently measured organizational capacity.",
+    "action_funnel": "Report each seed's aggregate action channel and failure-reason counts. Aggregates cannot identify the district-week support or belief bottleneck.",
+    "v4_v5": "Report paired row-level changes in squared error and AUC. Changes describe the architecture package and cannot isolate one internal mechanism."
+  },
+  "interpretation_rules": [
+    "A frequency increase without discrimination or proper-score improvement is a support correction without demonstrated predictive information.",
+    "Poor latent-event discrimination prevents attributing the entire failure to recording.",
+    "Better latent-event discrimination than recorded-event discrimination flags observation as a candidate bottleneck, not an identified cause.",
+    "Latent-state discrimination with weak event discrimination flags a possible state-to-action transmission bottleneck; it does not validate that latent state historically.",
+    "Failure in geographic holdout prevents a general spatial-transfer claim even if temporal discrimination improves.",
+    "A Nepal pass permits testing transfer, not declaring a general theory. Afghanistan must face its original violence and independent control criteria; uncertainty over initial strength is not repeated-seed uncertainty.",
+    "Absence of independently measured capacity, beliefs and action opportunities must remain missing evidence, not be replaced with event recurrence."
+  ],
+  "general_theory_promotion": "Requires independent cross-case predictive and construct validation plus intervention-relevant identification; software and synthetic gates alone are insufficient.",
+  "coin_inference_licensed": false
+}

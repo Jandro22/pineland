@@ -1,0 +1,10 @@
+{
+  "artifact": "studies/research_program/missing_construct_mechanism_discrimination_recovery_v1.json",
+  "artifact_sha256": "5be9b839bc6886f69d21e2dabf0e9ae594f3916495c0fad920e78d08fc4c2c61",
+  "contract": "studies/research_program/missing_construct_mechanism_discrimination_contract_v1.json",
+  "contract_sha256": "d54a66ba7638039875908d54a7bdb45e68765247eb03958f93a13690f7d0ea36",
+  "passed": true,
+  "runner": "studies/research_program/scripts/validate_missing_construct_mechanism_discrimination_v1.py",
+  "runner_sha256": "15ebbf4b1e6f170ab99093015ca7a4aebd00552335cc4e5a6142cd907dab39b6",
+  "schema_version": "pineland.missing_construct_mechanism_discrimination_manifest.v1"
+}

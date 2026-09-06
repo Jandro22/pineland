@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0.0",
+  "status": "pre_core_change_measurement_compatibility_assessment",
+  "historical_outcomes_used_to_change_model": false,
+  "purpose": "Declare whether the current Pineland implementation retains a semantically matched latent quantity for each civilian-harm component before any historical harm values are compared.",
+  "components": {
+    "direct_harm": {
+      "current_state": "partial_unidentified_units",
+      "implementation": [
+        "src/pineland_sim/combat.py computes engagement civilian_harm from population at risk, civilian_exposure_rate, combat intensity, exposure, and an exponential random draw",
+        "world.cumulative_civilian_harm accumulates that scalar",
+        "engagement records retain event time, locality, microzone, and event civilian_harm"
+      ],
+      "blocking_gap": "The scalar is documented as population-at-risk harm scaling, not as civilian deaths, injuries, or casualties. No independently validated observation operator currently maps it to historical casualty units.",
+      "historical_numeric_comparison_authorized": false
+    },
+    "internal_displacement": {
+      "current_state": "partial_state_and_flow_without_harm_attribution",
+      "implementation": [
+        "Person.displaced stores a boolean displacement state",
+        "Locality.displaced_population stores represented displaced population stock",
+        "mobility events return new_displaced_population represented mass when violence-driven forced movement occurs"
+      ],
+      "blocking_gap": "The pathway is triggered by locality violence and is not attributed to a responsible actor, engagement, intervention, or policy. Historical v5 outputs were not designed as a civilian-harm displacement panel.",
+      "historical_numeric_comparison_authorized": false
+    },
+    "cross_border_displacement": {
+      "current_state": "partial_migration_state_not_clean_harm_component",
+      "implementation": [
+        "Cross-border mobility distinguishes migration_status refuge, temporary_flight, economic_migration, and returned",
+        "process returns represented departure and return mass"
+      ],
+      "blocking_gap": "Departure cause is a mixed hazard using violence, fear, legitimacy, opportunity, kinship/language, and border permeability. The current state is not a clean observed conflict-refugee stock/flow with causal attribution.",
+      "historical_numeric_comparison_authorized": false
+    },
+    "resource_loss": {
+      "current_state": "missing_as_registered_civilian_harm_component",
+      "implementation": [
+        "Civilian resources and locality economic output exist as model states",
+        "organization extraction/tax/resource flows exist"
+      ],
+      "blocking_gap": "No registered civilian-side conflict/policy resource-loss ledger separates destruction, seizure, livelihood loss, or coercive extraction from ordinary economic/resource processes.",
+      "historical_numeric_comparison_authorized": false
+    }
+  },
+  "minimum_prospective_retention_after_historical_freeze": {
+    "direct_harm": [
+      "event_time",
+      "event_id",
+      "locality_id",
+      "microzone_id_if_applicable",
+      "harm_pathway",
+      "responsible_actor_or_attribution_set",
+      "latent_harm_native_unit",
+      "observation-layer harm record separately from truth"
+    ],
+    "internal_displacement": [
+      "newly_displaced_represented_population flow",
+      "displaced_population stock",
+      "origin",
+      "destination",
+      "time",
+      "trigger/pathway",
+      "actor_or_policy_attribution when identified",
+      "return/resolution flow"
+    ],
+    "cross_border_displacement": [
+      "refuge_outflow separated from temporary/economic migration",
+      "refugee stock",
+      "return flow",
+      "origin locality/district",
+      "destination state",
+      "time",
+      "identified conflict/policy pathway"
+    ],
+    "resource_loss": [
+      "loss event time and geography",
+      "victim represented population or household/community identity",
+      "loss type",
+      "native unit",
+      "amount",
+      "responsible actor/pathway",
+      "distinguish transfer/seizure from destruction and ordinary taxation"
+    ]
+  },
+  "prospective_identification_tests_required": [
+    "Known-truth synthetic direct-harm observation recovery with under-reporting/classification uncertainty separated from latent harm.",
+    "Known forced-displacement pulse recovers flow, stock, return, origin/destination, and attribution without counting voluntary/economic migration.",
+    "Cross-border conflict flight is separable from economic migration under matched opportunity conditions.",
+    "Known civilian resource-loss transactions are conserved and distinguish transfer from destruction.",
+    "Passive measurement retention leaves substantive dynamics and RNG streams unchanged."
+  ],
+  "current_historical_construct_validation_status": "blocked_on_semantic_and_retention_identification",
+  "interpretation": "Existing model mechanisms are scientifically useful building blocks, but none of the three registered civilian-harm components is currently ready for confirmatory numeric historical validation. This is a measurement-identification result, not evidence that historical harm is high or low and not authorization for a core change during the frozen confrontation."
+}

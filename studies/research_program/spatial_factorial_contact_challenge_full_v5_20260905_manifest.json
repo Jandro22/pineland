@@ -1,0 +1,16 @@
+{
+  "artifact": "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+  "artifact_sha256": "ceea35588afa7252a29ea2e319280365046ab785f6adac1853900aac3c492942",
+  "contract": "studies/research_program/spatial_factorial_contact_challenge_contract.json",
+  "contract_sha256": "92d1f66b240471b1a1a2e4542828957947372807fd7678399b4ef0d6c08af92c",
+  "core_change_licensed": false,
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "model_hashes": [
+    "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6"
+  ],
+  "schema_version": "1.0.0",
+  "script": "studies/research_program/scripts/run_spatial_factorial_pilot.py",
+  "script_sha256": "c339e2b6d7a8e35e0fae2fdcc35bb7dd2afb20d97a944922516d85b80d76647d",
+  "status": "synthetic_pilot_provenance_manifest"
+}

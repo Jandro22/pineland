@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "nepal_2001_2006",
+  "status": "exploratory_discovery_frozen_before_second_coding",
+  "purpose": "Acquire independent-source observations overlapping already-adjudicated place/time/construct cells for measurement-error identification, without using model outcomes or latent values.",
+  "historical_predictive_results_used_for_search": false,
+  "model_latent_values_used_for_search": false,
+  "candidate_cells": [
+    {
+      "candidate_id": "IND-ILAM-20040901-07-TOI",
+      "target_district_id": "NP-D03",
+      "target_district_name": "Ilam",
+      "target_window_start": "2004-09-01",
+      "target_window_end": "2004-09-07",
+      "target_construct_family": "territorial_access_constraint",
+      "existing_originating_family": "insec",
+      "candidate_source_id": "timesofindia_ilam_blockade_2004",
+      "candidate_source_title": "Pashupati businessmen scared over Maoist blockade",
+      "candidate_publisher": "Times of India / TNN",
+      "candidate_originating_family": "times_of_india_tnn",
+      "candidate_url": "https://timesofindia.indiatimes.com/world/rest-of-world/pashupati-businessmen-scared-over-maoist-blockade/articleshow/835271.cms",
+      "independence_status_before_second_coding": "plausibly_independent",
+      "independence_basis": "Named TNN reporter and Indian-border police/local-business sourcing; no identified INSEC or Nepali Times dependency in the retrieved article.",
+      "confirmatory_status": "NOT_YET_AUTHORIZED"
+    },
+    {
+      "candidate_id": "IND-SUNSARI-20061009-SATP",
+      "target_district_id": "NP-D06",
+      "target_district_name": "Sunsari",
+      "target_window_start": "2006-10-09",
+      "target_window_end": "2006-10-11",
+      "target_construct_family": "maoist_armed_presence",
+      "existing_originating_family": "kantipur",
+      "candidate_source_id": "satp_nepalnews_khanar_school_2006",
+      "candidate_source_title": "Timeline Terrorist Activities, Province No. 1 - October 2006",
+      "candidate_publisher": "SATP, explicitly attributing the claim to Nepal News",
+      "candidate_originating_family": "nepal_news_unverified_via_satp",
+      "candidate_url": "https://satp.org/terrorist-activity/nepal-na-provinceno1-Oct-2006",
+      "independence_status_before_second_coding": "uncertain_common_reporting_possible",
+      "independence_basis": "SATP attributes the item to Nepal News, but the primary Nepal News document has not been recovered and details closely match the Kantipur report; independence cannot be assumed.",
+      "confirmatory_status": "NOT_YET_AUTHORIZED"
+    }
+  ],
+  "admission_rules": [
+    "A candidate must be independently coded blind to the existing adjudicated row.",
+    "The independently coded observation must overlap the frozen district/time cell and recover the same construct family without being prompted with the expected answer.",
+    "Source genealogy must support a genuinely independent originating information pipeline before the candidate counts as replication.",
+    "A secondary aggregator does not count as an independent source if it merely republishes the same originating report.",
+    "Candidate disagreement is retained; no source is discarded because it fails to corroborate the existing evidence."
+  ],
+  "scientific_use": "Measurement-error identification only; no Nepal predictive rescore, parameter tuning, or core modification."
+}

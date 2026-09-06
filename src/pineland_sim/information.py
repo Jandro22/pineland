@@ -100,6 +100,17 @@ def _is_insurgent_actor(world: WorldState, actor_id: str | None) -> bool:
                  world.organizations[actor_id].kind is OrganizationKind.INSURGENT))
 
 
+def _formation_matches_target_actor(world: WorldState, formation: ArmedFormation,
+                                    target_actor_id: str) -> bool:
+    """Match aggregate conflict sides as well as concrete organization IDs."""
+    organization = world.organizations.get(formation.organization_id)
+    if target_actor_id == "insurgent":
+        return bool(organization and organization.kind is OrganizationKind.INSURGENT)
+    if target_actor_id == "government":
+        return bool(organization and organization.kind is not OrganizationKind.INSURGENT)
+    return formation.organization_id == target_actor_id
+
+
 def _observer_formation(world: WorldState, observer_id: str | None) -> ArmedFormation | None:
     if observer_id is None:
         return None
@@ -203,9 +214,7 @@ def _actual_target_presence(world: WorldState, target_actor_id: str,
                             locality_id: str, target_formation_id: str | None = None,
                             microzone_id: str | None = None) -> tuple[bool, float, str | None]:
     formations = [formation for formation in world.formations.values()
-                  if ((target_actor_id == "insurgent" and
-                       _is_insurgent_actor(world, formation.organization_id)) or
-                      formation.organization_id == target_actor_id) and
+                  if _formation_matches_target_actor(world, formation, target_actor_id) and
                   formation.personnel > 0 and not formation.moving and
                   formation.locality_id == locality_id]
     if target_formation_id is not None:
@@ -528,6 +537,22 @@ def _fuse_presence(world: WorldState, observation: Observation, recipient_id: st
         )
 
 
+def _corroboration_weight(history, timestamp: float, source_id: str,
+                          correlation: float) -> float:
+    """Exact capped independent-source weight, stopping once it saturates."""
+    sources: set[str] = set()
+    weight = 0.0
+    for stamp, identity in reversed(history):
+        if stamp < timestamp - 3.0:
+            break
+        if identity != source_id and abs(stamp - timestamp) <= 3.0 and identity not in sources:
+            sources.add(identity)
+            weight += 1.0 - correlation
+            if weight >= 3.0:
+                return 3.0
+    return weight
+
+
 def fuse_observation(world: WorldState, observation: Observation, recipient_id: str,
                      time: float | None = None, node: bool = False) -> float:
     """Fuse one observation into a recipient's local belief state.
@@ -557,20 +582,16 @@ def fuse_observation(world: WorldState, observation: Observation, recipient_id: 
     # only has a three-day memory, so scan the recent tail and stop as soon as
     # the lower window bound is crossed.  This preserves the estimator while
     # making long-horizon runs effectively linear in the number of reports.
-    corroborating_sources: set[str] = set()
-    lower_bound = observation.timestamp - 3.0
-    for timestamp, source_id in reversed(world.observation_source_index.get(index_key, ())):
-        if timestamp < lower_bound:
-            break
-        if source_id != observation.source_id and abs(timestamp - observation.timestamp) <= 3.0:
-            corroborating_sources.add(source_id)
     # Distinct source IDs remain visible, but correlated collection channels
     # contribute less than independent corroboration.  This prevents a burst
     # of reports copied from one administrative or social pipeline from being
     # treated as independent evidence.
     source_correlation = world.config.information.source_correlation.get(
         observation.source_type, .5)
-    corroboration = sum(1.0 - source_correlation for source_id in corroborating_sources)
+    corroboration = _corroboration_weight(
+        world.observation_source_index.get(index_key, ()), observation.timestamp,
+        observation.source_id, source_correlation,
+    )
     weight = clamp(observation.confidence * observation.quality * trust *
                    (language ** world.config.information.language_fusion_weight) * age_quality *
                    (1 + world.config.information.corroboration_bonus * min(3, corroboration)))
@@ -864,9 +885,8 @@ def _observe_from_source(world: WorldState, observer_actor_id: str, observer_nod
             locality_id, target_control, time, rng, _primary_zone(world, locality_id),
         )]
     targets = [formation for formation in world.formations.values()
-               if ((target_actor == "insurgent" and
-                    _is_insurgent_actor(world, formation.organization_id)) or
-                   formation.organization_id == target_actor) and formation.personnel > 0 and
+               if _formation_matches_target_actor(world, formation, target_actor) and
+               formation.personnel > 0 and
                formation.locality_id == locality_id and not formation.moving]
     microzone = _primary_zone(world, locality_id)
     observations: list[Observation] = []

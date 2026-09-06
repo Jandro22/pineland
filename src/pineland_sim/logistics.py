@@ -240,8 +240,10 @@ def generate_logistics_world(world: WorldState) -> None:
     world.command_edges.clear()
     world.supply_sources.clear()
     world.supply_shipments.clear()
+    world.active_shipment_ids.clear()
     world.in_transit_supply_total = 0.0
     world.movement_orders.clear()
+    world.active_movement_order_ids.clear()
     world.resource_flows.clear()
     world.control_cost_consumed = {locality_id: 0.0 for locality_id in world.localities}
     world.cumulative_supply_produced = 0.0
@@ -347,7 +349,19 @@ def create_movement_order(world: WorldState, formation_id: str, destination_id: 
         purpose=purpose,
     )
     world.movement_orders[order.order_id] = order
+    if order.status in {"pending", "moving"}:
+        world.active_movement_order_ids[order.order_id] = None
     return order
+
+
+def _active_movement_orders(world: WorldState):
+    """Visit live orders in archive insertion order, without scanning history."""
+    for order_id in list(world.active_movement_order_ids):
+        order = world.movement_orders.get(order_id)
+        if order is None or order.status not in {"pending", "moving"}:
+            world.active_movement_order_ids.pop(order_id, None)
+            continue
+        yield order
 
 
 def _local_armed_footholds(world: WorldState, organization_id: str) -> dict[str, float]:
@@ -608,13 +622,12 @@ def choose_reallocation_orders(
     decision_probability = reallocation_decision_probability(
         world.config.logistics.reallocation_rate, interval_days
     )
+    busy_formations = {order.formation_id for order in _active_movement_orders(world)}
     for formation in sorted(world.formations.values(), key=lambda item: item.formation_id):
         if (formation.moving or formation.outside_pineland or formation.personnel <= 0 or
                 formation.operational_status != "effective" or
                 formation.deployable_personnel() <= 0 or
-                any(order.formation_id == formation.formation_id and
-                    order.status in {"pending", "moving"}
-                    for order in world.movement_orders.values())):
+                formation.formation_id in busy_formations):
             continue
         if rng.random() >= decision_probability:
             continue
@@ -673,7 +686,7 @@ def choose_withdrawal_order(world: WorldState, formation_id: str, time: float, r
     if (formation.moving or formation.outside_pineland or formation.personnel <= 0 or
             any(order.formation_id == formation_id and
                 order.status in {"pending", "moving"}
-                for order in world.movement_orders.values())):
+                for order in _active_movement_orders(world))):
         return None
     candidates = [
         locality_id for locality_id in sorted(world.localities)
@@ -740,7 +753,7 @@ def choose_withdrawal_order(world: WorldState, formation_id: str, time: float, r
 def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | float]:
     departed = arrived = blocked = unavailable = 0
     movement_cost = 0.0
-    for order in world.movement_orders.values():
+    for order in _active_movement_orders(world):
         formation = world.formations[order.formation_id]
         if order.status == "pending" and order.execute_at <= time:
             withdrawal = order.purpose == "withdrawal"
@@ -750,10 +763,12 @@ def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | f
                         formation.deployable_personnel() <= 0
                     ))):
                 order.status = "blocked_unavailable"
+                world.active_movement_order_ids.pop(order.order_id, None)
                 unavailable += 1
                 continue
             if formation.supply_stock + 1e-12 < order.supply_cost:
                 order.status = "blocked_supply"
+                world.active_movement_order_ids.pop(order.order_id, None)
                 blocked += 1
                 continue
             consumed, _ = consume_formation_supply(
@@ -791,6 +806,7 @@ def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | f
                 patrol.response_fraction = .3
                 patrol.presence_accounted_at = time
             order.status = "arrived"
+            world.active_movement_order_ids.pop(order.order_id, None)
             arrived += 1
     return {"departed": departed, "arrived": arrived, "blocked_supply": blocked,
             "blocked_unavailable": unavailable,
@@ -833,13 +849,14 @@ def update_logistics(world: WorldState, time: float, delta_days: float) -> dict[
             _record_flow(world, time, "production", source.organization_id,
                          source.locality_id, quantity, source_id=source.source_id)
 
-    # Build the active-formation index while making the single shipment scan.
-    # The previous per-formation ``any(...)`` rescanned every historical
-    # shipment and became quadratic over long horizons.  This index is
-    # execution-only and is reconstructed each tick, so it cannot alter
-    # scientific state or reproducibility.
+    # Visit only in-flight shipments. Even one full archive scan per tick
+    # accumulates quadratic work as completed shipments grow with the horizon.
     active_shipment_formations: set[str] = set()
-    for shipment in world.supply_shipments.values():
+    for shipment_id in list(world.active_shipment_ids):
+        shipment = world.supply_shipments.get(shipment_id)
+        if shipment is None or shipment.status != "in_transit":
+            world.active_shipment_ids.pop(shipment_id, None)
+            continue
         if shipment.status == "in_transit" and shipment.arrives_at <= time:
             formation = world.formations[shipment.formation_id]
             accepted = min(shipment.quantity_deliverable,
@@ -848,6 +865,7 @@ def update_logistics(world: WorldState, time: float, delta_days: float) -> dict[
             formation.supply_stock += accepted
             formation.sustainment = formation.supply_fraction()
             shipment.status = "delivered"
+            world.active_shipment_ids.pop(shipment_id, None)
             world.in_transit_supply_total -= shipment.quantity_deliverable
             delivered += accepted
             if overflow:
@@ -942,6 +960,7 @@ def update_logistics(world: WorldState, time: float, delta_days: float) -> dict[
             quantity_deliverable, shipment_loss,
         )
         world.supply_shipments[shipment.shipment_id] = shipment
+        world.active_shipment_ids[shipment.shipment_id] = None
         world.in_transit_supply_total += shipment.quantity_deliverable
         shipments_created += 1
         _record_flow(world, time, "shipment_departure", formation.organization_id,

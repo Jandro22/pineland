@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "status": "prospective_before_blind_second_coding",
+  "purpose": "Independently recode source-interpreted civilian-harm evidence before confirmatory construct use. Structured UCDP extraction remains a separate hash/codebook-audited measurement family.",
+  "inputs_hidden_from_second_coder": [
+    "studies/research_program/civilian_harm_first_coder_v1.csv",
+    "studies/research_program/civilian_harm_first_coder_provenance_v1.json",
+    "studies/research_program/civilian_harm_first_coder_audit_v1.json",
+    "studies/research_program/civilian_harm_source_coverage_audit_v2.json",
+    "any Pineland predictions, residuals, model states, or historical fit diagnostics"
+  ],
+  "second_coder_inputs": [
+    "studies/research_program/civilian_harm_second_coder_packet_v1.csv",
+    "studies/research_program/civilian_harm_second_coder_instructions_v1.md",
+    "studies/research_program/civilian_harm_coding_contract_v1.json",
+    "the source documents/URLs named in the packet"
+  ],
+  "unit_of_blind_review": "source-locator task, not first-coder claim row",
+  "reason_for_locator_tasks": "A locator may contain zero, one, or multiple admissible harm claims. The second coder must independently recover all claims at that locator rather than being told how many the first coder found.",
+  "actor_ontology": [
+    "government",
+    "insurgent",
+    "foreign_or_international_force",
+    "multiple_or_crossfire",
+    "other_armed_actor",
+    "unknown_or_unattributed"
+  ],
+  "component_ontology": ["direct_harm", "displacement", "resource_loss"],
+  "task_output_rule": {
+    "one_or_more_rows_per_task": true,
+    "no_claim_row": "If no admissible claim exists, write exactly one row with claim_local_id=NONE and task_admissible=false.",
+    "multiple_claims": "If several distinct source-native claims exist, write one row per claim and use distinct claim_local_id values local to that blind task.",
+    "unknown_is_not_zero": true
+  },
+  "pre_adjudication_primary_metrics": {
+    "task_admissibility_exact_agreement_min": 0.85,
+    "task_component_set_mean_jaccard_min": 0.85,
+    "task_numeric_claim_count_exact_agreement_min": 0.80,
+    "matched_claim_component_exact_agreement_min": 0.90,
+    "matched_claim_measure_exact_agreement_min": 0.85,
+    "matched_claim_actor_exact_agreement_min": 0.80,
+    "matched_claim_temporal_overlap_min": 0.90,
+    "matched_claim_numeric_source_value_agreement_min": 0.90
+  },
+  "claim_matching_protocol": [
+    "Match only within the same blind task.",
+    "Create candidate pairs when the source-native numeric signature overlaps: exact value_point, or exact value_lower/value_upper pattern when a point is absent. Blank numeric values can match only other blank numeric values.",
+    "Require date intervals to overlap for a candidate pair; blank dates match only when both are blank.",
+    "When multiple candidate pairs remain, prefer exact normalized geographic-scope-name match, then exact measure match, then exact component match. Resolve one-to-one deterministically by lexical claim id as the final tie-breaker.",
+    "Unmatched first-coder and second-coder claims remain recovery disagreements; they are not discarded in adjudication.",
+    "Matching is for reliability accounting only and does not imply the coding labels agree."
+  ],
+  "numeric_agreement_rule": "Source-native numeric values agree only when point/lower/upper and unit are identical after whitespace/case normalization. No tolerance or post-hoc rounding is introduced.",
+  "temporal_overlap_rule": "For matched claims, intervals agree temporally when they overlap at least one calendar day. Exact-date agreement is additionally reported descriptively.",
+  "component_set_rule": "For each task, compare the set of coded components among admissible claims using Jaccard similarity; two empty sets score 1.0.",
+  "claim_count_rule": "Compare the number of admissible numeric source-native claims per task; task counts must match exactly for this metric.",
+  "adjudication_rule": [
+    "Primary pre-adjudication metrics are immutable after second-coder results are seen.",
+    "Every disagreement is retained in the agreement artifact before adjudication.",
+    "Adjudication may resolve source semantics but never erase or replace the primary reliability metrics.",
+    "If a source supports two distinct valid claims selected differently by coders, retain both when source-bound rather than forcing one into the other's slot.",
+    "Post-hoc ontology normalization, alternate thresholds, or relaxed matching may be reported only as explicitly secondary sensitivity analyses."
+  ],
+  "structured_ucdp_rule": {
+    "human_second_coding_of_every_ucdp_event_required": false,
+    "reason": "UCDP GED is a structured hash-locked dataset with deterministic extraction; human second coding targets interpretive source extraction, while UCDP gets independent schema/codebook/hash and extraction-code audit.",
+    "ucdp_semantic_mapping_requires_independent_review": true,
+    "ucdp_measurement_disagreement_with_unama_must_be_preserved": true
+  },
+  "confirmatory_use_authorized_before_agreement_and_adjudication": false,
+  "pineland_model_comparison_authorized": false,
+  "historical_predictive_rescore_authorized": false,
+  "parameter_fitting_authorized": false,
+  "core_change_authorized": false
+}

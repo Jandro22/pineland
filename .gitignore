@@ -2,11 +2,17 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+htmlcov/
 .venv/
 .docx-render/
 build/
 dist/
 outputs/
+tmp/
 studies/*/data/raw/
 studies/*/data/processed/
 studies/*/runs/

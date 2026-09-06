@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "status": "independent_overlap_first_coder_not_confirmatory",
+  "contract": "studies/research_program/civilian_harm_independent_overlap_acquisition_contract_v1.json",
+  "candidate_log": "studies/research_program/civilian_harm_independent_overlap_exposure_log_v1.csv",
+  "coded_table": "studies/research_program/civilian_harm_independent_overlap_first_coder_v1.csv",
+  "coded_on": "2026-09-05",
+  "selection_trigger": "first-coder source-independence coverage failure only",
+  "pineland_predictions_or_residuals_used": false,
+  "pineland_values_compared": false,
+  "historical_rescore_performed": false,
+  "core_or_parameter_change_performed": false,
+  "source_genealogy_findings": [
+    "INSEC is admitted as a second Nepal originating family only for explicit incident-level civilian records in its Yearbook. The pre-existing cumulative victim_total_cumulative field remains semantically insufficient and is not reclassified as civilian direct harm.",
+    "Afghanistan Rights Monitor is admitted as an independent Afghanistan overlap family because its 2010 report describes its own gathering and verification effort using indigenous knowledge and local conflict-affected-community information and reports a distinct casualty total.",
+    "Human Rights Watch is retained but excluded from the independence gate because its 2006-2008 aggregate casualty construction explicitly drew on UNAMA among several sources for some periods.",
+    "AIHRC's contemporaneously reported 2010 figures are retained as a candidate but do not count toward the gate until the primary collection methodology is verified."
+  ],
+  "source_byte_binding": {
+    "INSEC": "A separate locally archived INSEC complete-report PDF already has a hash, but it is not the same Yearbook 2007 byte stream used for these incident records; no false hash substitution is permitted.",
+    "ARM": "The primary report is source/title/locator bound in this pass; immutable source-byte acquisition remains pending.",
+    "rule": "URL identity is not a content hash. Blank hashes remain blank until exact bytes are archived and hashed."
+  },
+  "second_coder_required": true,
+  "confirmatory_use_authorized": false
+}

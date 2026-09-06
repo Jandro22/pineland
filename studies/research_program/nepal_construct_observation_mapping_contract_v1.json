@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "nepal_2001_2006",
+  "status": "prospective_before_second_coder_results_and_construct_scoring",
+  "purpose": "Map independently adjudicated historical control/presence evidence to stored Pineland v5 latent state only when construct, geography, and time are compatible.",
+  "stored_v5_state_known_to_be_available": {
+    "checkpoint_district_control": ["formal", "physical", "administrative", "legal", "fiscal", "social", "expected"],
+    "checkpoint_community_state": ["locality_id", "government_cooperation", "insurgent_sympathy"],
+    "trajectory_support": ["initial_formations", "movement_history", "final_formations"],
+    "not_assumed_available_without_separate_audit": ["dated locality-level seven-dimensional control", "dated security-post inventory", "dated patrol presence by locality", "dated nonfielded clandestine infrastructure"]
+  },
+  "spatial_compatibility_rules": [
+    "A district-wide historical claim may be compared with district-level checkpoint control if its observation construct has a declared dimension mapping.",
+    "A district-headquarters, VDC, village, road-corridor, school, market, or named-subdistrict claim must not be compared with district-wide control as if it described the whole district.",
+    "A locality-specific armed-presence claim may be scored only if the historical locality can be mapped unambiguously to a Pineland locality and dated fielded-presence state can be reconstructed from stored formation/movement history.",
+    "Community cooperation/sympathy is not a substitute for armed presence, administrative presence, or control.",
+    "No spatial aggregation or disaggregation may be chosen after looking at model values."
+  ],
+  "temporal_compatibility_rules": [
+    "Use only checkpoints or reconstructed state whose timestamp lies within the source interval, unless a predeclared nearest-time tolerance is established before values are inspected.",
+    "Do not carry historical observations forward/backward outside the source interval.",
+    "Do not treat a yearlong source interval as continuous presence if the source wording does not support continuity."
+  ],
+  "observable_mappings": {
+    "government_armed_presence": {
+      "preferred_model_state": "dated government formation/local security presence",
+      "district_control_proxy_allowed": false,
+      "fallback": "unscored construct evidence if dated local presence cannot be reconstructed"
+    },
+    "maoist_armed_presence": {
+      "preferred_model_state": "dated insurgent formation presence at compatible locality",
+      "district_control_proxy_allowed": false,
+      "fallback": "unscored construct evidence if dated local presence cannot be reconstructed"
+    },
+    "government_administrative_presence": {
+      "preferred_model_state": "government administrative control dimension",
+      "district_control_proxy_allowed": true,
+      "district_wide_source_required_for_numeric_district_score": true
+    },
+    "maoist_shadow_governance": {
+      "preferred_model_state": ["insurgent administrative", "insurgent legal", "insurgent fiscal", "insurgent social"],
+      "district_control_proxy_allowed": true,
+      "district_wide_source_required_for_numeric_district_score": true,
+      "note": "Specific taxation evidence primarily informs fiscal reach; NGO/permit/rule enforcement may inform administrative/legal reach. Do not collapse unlike observables without an explicit operator."
+    },
+    "checkpoint_or_patrol_presence": {
+      "preferred_model_state": "dated security/patrol presence",
+      "district_control_proxy_allowed": false,
+      "fallback": "unscored if dated patrol/post history is not retained"
+    },
+    "security_post_or_garrison_presence": {
+      "preferred_model_state": "dated fixed-security-post or formation presence",
+      "district_control_proxy_allowed": false,
+      "fallback": "unscored if dated post state is not retained"
+    },
+    "territorial_access_constraint": {
+      "preferred_model_state": ["dated physical presence", "movement/access state"],
+      "district_control_proxy_allowed": false,
+      "note": "A blockade is evidence about access/physical authority, not automatically a district control category."
+    },
+    "territorial_control_claim": {
+      "preferred_model_state": "existing frozen ordinal district-control projection",
+      "district_control_proxy_allowed": true,
+      "district_wide_source_required_for_numeric_district_score": true
+    }
+  },
+  "scoring_rule": {
+    "primary": "score only construct-compatible, spatially compatible, temporally compatible observations",
+    "incompatible_rows": "retain with reason as informative but unscored",
+    "ensemble": "report all eight fixed Nepal v5 members; do not promote a partial ensemble",
+    "uncertainty": "retain source coding uncertainty separately from model ensemble variation",
+    "no_new_fit": true,
+    "no_predictive_rescore": true,
+    "no_core_change": true
+  }
+}

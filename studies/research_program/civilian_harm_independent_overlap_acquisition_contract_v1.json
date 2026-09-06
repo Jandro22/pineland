@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "status": "prospective_before_independent_overlap_source_discovery",
+  "parent_contracts": [
+    "studies/research_program/civilian_harm_acquisition_contract_v1.json",
+    "studies/research_program/civilian_harm_coding_contract_v1.json"
+  ],
+  "triggering_audit": "studies/research_program/civilian_harm_first_coder_audit_v1.json",
+  "triggering_audit_sha256": "1fb1dbbe3123bdc77600362ad579114805db5a5ee0366c5ce53a4dc385aa0a66",
+  "purpose": "Fill the preregistered direct-civilian-harm source-independence gap in each historical case without selecting sources, dates, geographies, or records from Pineland residuals.",
+  "coverage_gap_at_freeze": {
+    "nepal_2001_2006": {
+      "direct_harm_originating_families": ["OHCHR"],
+      "required_increment": "one genuinely independent originating family with civilian-specific direct-harm semantics"
+    },
+    "afghanistan_2004_2021": {
+      "direct_harm_originating_families": ["UNAMA_OHCHR"],
+      "required_increment": "one genuinely independent overlap source family against the audited UNAMA/OHCHR long-run surveillance system"
+    }
+  },
+  "selection_firewall": {
+    "pineland_predictions_used": false,
+    "pineland_residuals_used": false,
+    "model_latent_values_used": false,
+    "allowed_selection_inputs": [
+      "case identity",
+      "frozen study dates",
+      "registered civilian-harm ontology",
+      "existing originating source family",
+      "source genealogy and independence",
+      "whether a source explicitly distinguishes civilian direct harm"
+    ],
+    "forbidden_selection_inputs": [
+      "districts or years where Pineland misses",
+      "error sign or magnitude",
+      "historical values expected to favor a mechanism",
+      "agreement with OHCHR or UNAMA as an inclusion criterion"
+    ]
+  },
+  "case_protocols": {
+    "nepal_2001_2006": {
+      "search_frame": "Full conflict-study interval 2001-11-26 through 2006-11-21; national or any frozen study district is eligible without reference to model output.",
+      "admissible_overlap": [
+        "independent incident-level civilian death or injury records overlapping any OHCHR-coded period",
+        "independent annual or cumulative civilian-specific casualty series whose victim ontology is explicit",
+        "independent human-rights monitoring with clearly civilian victim class and direct-harm unit"
+      ],
+      "inadmissible": [
+        "generic victim totals whose civilian status and death/injury unit are not established",
+        "UCDP event/fatality records already used in the predictive benchmark",
+        "sources reproducing OHCHR findings without an independent information pipeline"
+      ],
+      "existing_INSEC_rule": "INSEC may count only if the primary source itself establishes that the relevant numerical field is civilian direct harm under the frozen ontology. The existing processed label victim_total_cumulative is insufficient by itself."
+    },
+    "afghanistan_2004_2021": {
+      "search_frame": "Full study interval 2004-01-01 through 2021-08-15; overlap with any UNAMA/OHCHR monitoring year is eligible without reference to model output.",
+      "admissible_overlap": [
+        "independent civilian casualty monitoring using a separately originated incident collection system",
+        "independent human-rights investigation providing civilian death/injury counts for a preexisting UNAMA-covered time window",
+        "independent audited casualty series with documented source genealogy"
+      ],
+      "inadmissible": [
+        "reports whose numeric casualty figures are copied from UNAMA/OHCHR",
+        "coalition or government totals without civilian classification",
+        "sources selected because they disagree or agree with UNAMA",
+        "UCDP records already used in the predictive benchmark"
+      ],
+      "independence_rule": "Institutional distinctness alone is insufficient. The numeric claim must have an information pipeline not derived from UNAMA/OHCHR for the overlapping observation."
+    }
+  },
+  "candidate_logging": {
+    "file": "studies/research_program/civilian_harm_independent_overlap_exposure_log_v1.csv",
+    "rule": "Every candidate document opened after this freeze is logged whether admitted, excluded, contradictory, duplicative, or unusable."
+  },
+  "admission_fields": [
+    "candidate_overlap_id",
+    "case_id",
+    "source_family",
+    "publisher_or_originator",
+    "source_title",
+    "source_url_or_archive_ref",
+    "date_opened",
+    "overlap_date_start",
+    "overlap_date_end",
+    "geographic_scope",
+    "civilian_direct_harm_semantics_explicit",
+    "numeric_value_available",
+    "information_pipeline_independent",
+    "independence_basis",
+    "dependency_risk",
+    "admission_status",
+    "exclusion_reason",
+    "immutable_archive_hash_if_available"
+  ],
+  "success_gate": {
+    "nepal": "At least one admitted independent originating family beyond OHCHR with explicit civilian direct-harm semantics.",
+    "afghanistan": "At least one admitted independent overlap family beyond UNAMA/OHCHR with an independently originated civilian direct-harm numeric observation.",
+    "disagreement_rule": "Disagreement with the existing family is retained and does not disqualify a source.",
+    "confirmatory_use_after_success": false,
+    "reason_confirmatory_still_blocked": "Blind second coding, reliability assessment, source-byte immutability where obtainable, and model semantic compatibility remain required."
+  },
+  "historical_predictive_rescore_authorized": false,
+  "parameter_fitting_authorized": false,
+  "core_change_authorized": false
+}

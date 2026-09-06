@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 import sys
 
@@ -65,3 +66,29 @@ def test_province_adjacency_aggregates_cross_province_district_edges(tmp_path):
         '{"neighbors":{"D1":["D2"],"D2":["D1","D3"],"D3":["D2"]}}'
     )
     assert MODULE.province_adjacency(tmp_path) == {"P1":["P2"], "P2":["P1"]}
+
+
+def test_execution_contract_separates_checkout_from_release_and_rejects_input_drift(tmp_path, monkeypatch):
+    import pineland_sim.reproducibility as reproducibility
+    monkeypatch.setattr(MODULE, "ROOT", tmp_path)
+    monkeypatch.setattr(reproducibility, "require_certified_core", lambda root: {"passed": True})
+    program = tmp_path / "studies/research_program"
+    program.mkdir(parents=True)
+    freeze = {"model_sha256": "model", "tracked_diff_sha256": "precommit",
+              "certificate_payload_sha256": "certificate"}
+    (program / "core_freeze.json").write_text(json.dumps(freeze))
+    panel = tmp_path / "panel.csv"
+    panel.write_text("unit,target\na,1\n")
+    contract = {**freeze, "tracked_diff_sha256": "execution",
+                "input_sha256": {"panel.csv": MODULE.sha256(panel)}}
+    path = tmp_path / "contract.json"
+    path.write_text(json.dumps(contract))
+    assert MODULE.frozen_core(path) == ("model", "execution")
+    assert MODULE.frozen_core() == ("model", "precommit")
+    panel.write_text("unit,target\na,0\n")
+    with pytest.raises(ValueError, match="input drift"):
+        MODULE.frozen_core(path)
+    contract["model_sha256"] = "another-model"
+    path.write_text(json.dumps(contract))
+    with pytest.raises(ValueError, match="frozen core"):
+        MODULE.frozen_core(path)

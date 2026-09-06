@@ -30,8 +30,22 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def frozen_core() -> tuple[str, str]:
+def frozen_core(execution_contract: Path | None = None) -> tuple[str, str]:
     freeze = json.loads((ROOT / "studies/research_program/core_freeze.json").read_text())
+    if execution_contract is not None:
+        from pineland_sim.reproducibility import require_certified_core
+        require_certified_core(ROOT)
+        contract = json.loads(execution_contract.read_text())
+        if contract["model_sha256"] != freeze["model_sha256"]:
+            raise ValueError("execution contract does not match frozen core")
+        if contract["certificate_payload_sha256"] != freeze["certificate_payload_sha256"]:
+            raise ValueError("execution contract does not match certificate")
+        if not contract.get("input_sha256"):
+            raise ValueError("execution contract must pin study inputs")
+        for name, expected in contract["input_sha256"].items():
+            if sha256(ROOT / name) != expected:
+                raise ValueError(f"execution input drift: {name}")
+        return contract["model_sha256"], contract["tracked_diff_sha256"]
     return freeze["model_sha256"], freeze["tracked_diff_sha256"]
 
 
@@ -182,8 +196,9 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--expected-members", type=int, required=True)
     parser.add_argument("--final-stage", action="store_true")
+    parser.add_argument("--execution-contract", type=Path)
     args = parser.parse_args()
-    model_hash, diff_hash = frozen_core()
+    model_hash, diff_hash = frozen_core(args.execution_contract)
     loader = nepal_inputs if args.case == "nepal" else afghanistan_inputs
     panel, files, recorded, latent, adjacency, unit_col, time_col, cell_time_col = loader(
         args.run_dir.resolve(), model_hash, diff_hash
@@ -237,6 +252,7 @@ def main() -> int:
         "scores_sha256": sha256(args.output_dir / "scores.csv"),
         "decision_sha256": sha256(args.output_dir / "decision.json"),
         "metadata": metadata,
+        "execution_contract_sha256": sha256(args.execution_contract) if args.execution_contract else None,
     }
     (args.output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(json.dumps(report, indent=2, sort_keys=True))

@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "status": "prospective_before_new_outcome_source_discovery",
+  "purpose": "Acquire independent historical evidence for currently missing outcome operators without selecting sources based on Pineland fit or residuals.",
+  "source_selection_firewall": [
+    "Search terms may contain case, dates, geography, actor identity, and the contracted construct/components, but never Pineland residuals or error direction.",
+    "The geographic sample must be declared before opening candidate source documents; it may be full-case, a frozen holdout, or a reproducible probability sample independent of Pineland values.",
+    "Every candidate source opened during confirmatory acquisition is logged, including unusable and contradictory sources.",
+    "Source-family dependence is recorded so syndicated or derivative reports are not counted as independent evidence.",
+    "First-coder records remain separate from second coding and adjudication.",
+    "No evidence source may change the frozen Nepal/Afghanistan predictive confrontation or tune core mechanisms."
+  ],
+  "priority_order": [
+    {
+      "outcome": "civilian_harm",
+      "reason": "Required as a harm constraint for every eventual intervention claim and currently missing in both cases.",
+      "minimum_fields": ["direct_harm", "displacement_or_resource_loss", "uncertainty_interval", "actor_attribution", "date_interval", "geography", "source_family"]
+    },
+    {
+      "outcome": "institutional_capacity",
+      "reason": "Needed to distinguish durable local capacity from temporary foreign/security-force stock.",
+      "minimum_fields": ["local_capacity", "continuity", "post_support_capacity", "service_or_security_function", "date_interval", "geography", "source_family"]
+    },
+    {
+      "outcome": "recurrence",
+      "reason": "Needed to distinguish post-settlement reactivation from ordinary violence persistence or reporting gaps.",
+      "minimum_fields": ["settlement_or_withdrawal_time", "quiet_state_evidence", "recurrence_window", "reactivation", "actor_identity", "recording_uncertainty"]
+    },
+    {
+      "outcome": "insurgent_regeneration",
+      "reason": "Historically identifies the core local-reproduction theory rather than using event recurrence as a proxy.",
+      "minimum_fields": ["activation_id", "viability", "activation_day", "activation_end_day", "parent_activation_or_edge_evidence", "parent_pathway", "right_censoring"]
+    },
+    {
+      "outcome": "foreign_dependence",
+      "reason": "Requires independent post-support outcomes in addition to already exposed support/force schedules.",
+      "minimum_fields": ["local_capacity", "foreign_support", "post_support_outcome", "support_change_time", "geography", "uncertainty_interval"]
+    }
+  ],
+  "coding_schema_required_for_all": [
+    "candidate_source_id",
+    "source_family",
+    "access_carrier",
+    "publisher_or_originator",
+    "date_opened",
+    "search_protocol_id",
+    "sampling_cell",
+    "source_locator",
+    "construct",
+    "direct_measurement_or_proxy",
+    "actor_identity",
+    "date_start",
+    "date_end",
+    "geography",
+    "uncertainty",
+    "first_coder",
+    "second_coder",
+    "adjudication_status",
+    "immutable_archive_hash_if_available"
+  ],
+  "gates_before_historical_construct_use": [
+    "coverage gate frozen before coding results",
+    "observation operator frozen before model comparison",
+    "second coding completed for confirmatory sample",
+    "pre-adjudication reliability reported without post-hoc threshold changes",
+    "all disagreements adjudicated or retained unresolved",
+    "source-level uncertainty and missingness preserved",
+    "compatible latent state is prospectively retained at matching geography/time"
+  ]
+}

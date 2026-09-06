@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "status": "prospective_before_ucdp_civilian_death_value_extraction",
+  "purpose": "Use the already-frozen UCDP GED 26.1 archive as an independent civilian-death measurement family for Nepal and Afghanistan without changing the historical violence confrontation.",
+  "source": {
+    "dataset": "UCDP Georeferenced Event Dataset 26.1",
+    "archive_sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
+    "nepal_archive": "studies/nepal_2001_2006/data/raw/ged261-csv.zip",
+    "afghanistan_archive": "studies/afghanistan_2004_2021/data/raw/ged261-csv.zip",
+    "raw_variable": "deaths_civilians",
+    "processed_panel_note": "The existing case processed UCDP CSVs omit deaths_civilians because they were built for the frozen violence task. Civilian-harm extraction therefore reads the hash-locked raw archive, not a reconstructed or model-conditioned value."
+  },
+  "frozen_semantics": {
+    "direct_harm_component": "civilian_deaths",
+    "ucdp_definition": "Best estimate of dead civilians in the event. In state-based/non-state events it records civilian collateral deaths from fighting; in one-sided violence it records civilians killed by side A.",
+    "numeric_uncertainty": "No civilian-specific lower/upper interval is available from low/high total-fatality fields; do not copy total-fatality uncertainty onto deaths_civilians.",
+    "unknown_is_not_zero": true,
+    "injuries_available": false,
+    "displacement_available": false,
+    "resource_loss_available": false
+  },
+  "case_filters": {
+    "nepal_2001_2006": {
+      "country": "Nepal",
+      "date_start": "2001-11-26",
+      "date_end": "2006-11-21"
+    },
+    "afghanistan_2004_2021": {
+      "country": "Afghanistan",
+      "date_start": "2004-01-01",
+      "date_end": "2021-08-15"
+    }
+  },
+  "extraction_rules": [
+    "Select only raw GED events whose country is the declared case and whose event interval overlaps the frozen case window.",
+    "Retain the raw UCDP event id, date_start, date_end, date_prec, where_prec, side_a, side_b, type_of_violence, source fields, and deaths_civilians.",
+    "Do not use best, low, or high total fatalities as civilian deaths.",
+    "Do not infer civilian injuries from deaths.",
+    "Do not use UCDP event count as a civilian-harm quantity.",
+    "Events with deaths_civilians equal to zero remain valid source records for extraction completeness but are not converted into positive harm claims.",
+    "No event is selected or excluded because of Pineland predictions, residuals, latent state, or whether it agrees with OHCHR/UNAMA."
+  ],
+  "registered_outputs": {
+    "event_level": "studies/research_program/civilian_harm_ucdp_event_crosscheck_v1.csv",
+    "annual_summary": "studies/research_program/civilian_harm_ucdp_annual_crosscheck_v1.csv",
+    "measurement_overlap": "studies/research_program/civilian_harm_ucdp_overlap_audit_v1.json"
+  },
+  "annual_summary_rule": {
+    "measure": "sum of deaths_civilians for source events by case and calendar year within the frozen case window",
+    "date_assignment": "An event contributes to an annual numeric total only when its full UCDP date_start/date_end interval lies inside the case window and within one calendar year. Boundary-crossing or year-crossing intervals are retained event-level and flagged but not fractionally allocated or midpoint-imputed.",
+    "partial_boundary_years": "2001 Nepal and 2021 Afghanistan are explicitly labeled partial-window years",
+    "interpretation": "Independent measurement series for civilian deaths, not ground truth and not a model scoring target."
+  },
+  "overlap_crosscheck_rule": {
+    "afghanistan": "Compare UCDP annual civilian-death totals descriptively with same-calendar-period UNAMA/OHCHR totals where both are available; never tune or select years based on agreement.",
+    "nepal": "Use UCDP as an independent event-level civilian-death family. OHCHR's 2006 investigated-incident sample is not treated as population surveillance, so differences in totals are not interpreted as model or source failure.",
+    "metrics": [
+      "coverage overlap by year",
+      "annual count ratio where definitions/time windows match",
+      "Spearman annual rank correlation when at least four matched full years exist",
+      "exact-event concordance only when date/location identity is unambiguous"
+    ],
+    "no_success_threshold": "This is a measurement-concordance diagnostic. No post-hoc numerical pass threshold is created from the observed source agreement."
+  },
+  "source_family": "UCDP_GED",
+  "independent_from": ["OHCHR_Nepal", "UNAMA_OHCHR_Afghanistan"],
+  "limitations": [
+    "UCDP and UN/OHCHR sources may sometimes cite overlapping underlying news or field reports; institutional coding systems are independent but raw-information dependence may remain.",
+    "deaths_civilians is a best estimate only and does not carry a civilian-specific numeric interval.",
+    "Differences in event inclusion, civilian classification, temporal precision, and verification standards are expected and must be preserved."
+  ],
+  "historical_predictive_rescore_authorized": false,
+  "pineland_model_comparison_authorized": false,
+  "parameter_fitting_authorized": false,
+  "core_change_authorized": false
+}

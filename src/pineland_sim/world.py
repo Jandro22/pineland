@@ -118,6 +118,9 @@ class WorldState:
     supply_sources: dict[str, SupplySource] = field(default_factory=dict)
     supply_shipments: dict[str, SupplyShipment] = field(default_factory=dict)
     movement_orders: dict[str, FormationMovementOrder] = field(default_factory=dict)
+    # Ordered execution indexes; completed records remain in the audit archives.
+    active_shipment_ids: dict[str, None] = field(default_factory=dict)
+    active_movement_order_ids: dict[str, None] = field(default_factory=dict)
     resource_flows: list[ResourceFlow] = field(default_factory=list)
     control_cost_consumed: dict[str, float] = field(default_factory=dict)
     organizations: dict[str, Organization] = field(default_factory=dict)
@@ -187,6 +190,7 @@ class WorldState:
     contact_funnel_records: list[dict[str, Any]] = field(default_factory=list)
     contact_funnel_counts: dict[str, int] = field(default_factory=dict)
     action_funnel_counts: dict[str, int] = field(default_factory=dict)
+    action_funnel_by_actor_locality: dict[str, dict[str, int]] = field(default_factory=dict)
     recruitment_total: float = 0.0
     behavior_change_total: int = 0
     behavior_change_represented_population: float = 0.0

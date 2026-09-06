@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "nepal_2001_2006",
+  "status": "prospective_source_acquisition_before_new_evidence_review",
+  "frozen_scope": {
+    "study_start": "2001-11-26",
+    "study_end": "2006-11-21",
+    "priority_period_start": "2005-01-01",
+    "priority_period_end": "2006-11-21",
+    "priority_geography": "frozen Eastern Development Region geographic holdout",
+    "priority_districts": [
+      {"district_id": "NP-D01", "district_name": "Taplejung"},
+      {"district_id": "NP-D02", "district_name": "Panchthar"},
+      {"district_id": "NP-D03", "district_name": "Ilam"},
+      {"district_id": "NP-D04", "district_name": "Jhapa"},
+      {"district_id": "NP-D05", "district_name": "Morang"},
+      {"district_id": "NP-D06", "district_name": "Sunsari"},
+      {"district_id": "NP-D07", "district_name": "Dhankuta"},
+      {"district_id": "NP-D08", "district_name": "Terhathum"},
+      {"district_id": "NP-D09", "district_name": "Sankhuwasabha"},
+      {"district_id": "NP-D10", "district_name": "Bhojpur"},
+      {"district_id": "NP-D11", "district_name": "Solukhumbu"},
+      {"district_id": "NP-D12", "district_name": "Okhaldhunga"},
+      {"district_id": "NP-D13", "district_name": "Khotang"},
+      {"district_id": "NP-D14", "district_name": "Udayapur"},
+      {"district_id": "NP-D15", "district_name": "Saptari"},
+      {"district_id": "NP-D16", "district_name": "Siraha"}
+    ]
+  },
+  "admissible_observables": [
+    "government_armed_presence",
+    "maoist_armed_presence",
+    "government_administrative_presence",
+    "maoist_shadow_governance",
+    "checkpoint_or_patrol_presence",
+    "security_post_or_garrison_presence",
+    "territorial_access_constraint",
+    "territorial_control_claim"
+  ],
+  "inadmissible_as_control_evidence_by_itself": [
+    "violence_event_count",
+    "fatality_count",
+    "attack occurrence",
+    "district-wide political support inference",
+    "absence of reporting"
+  ],
+  "source_priority": [
+    "contemporaneous official or intergovernmental reporting",
+    "contemporaneous field reporting with named geography/date",
+    "retrospective official reports with source-specific dated claims",
+    "peer-reviewed or scholarly sources quoting identifiable primary evidence"
+  ],
+  "required_record_fields": [
+    "source_id",
+    "source_title",
+    "publisher",
+    "source_url_or_archive_ref",
+    "record_id",
+    "date_start",
+    "date_end",
+    "district_id",
+    "district_name",
+    "actor_id",
+    "observable",
+    "value_or_category",
+    "spatial_scope",
+    "temporal_precision",
+    "confidence",
+    "source_passage_or_precise_locator",
+    "coding_rationale",
+    "coder",
+    "second_coder",
+    "adjudication_status"
+  ],
+  "coding_rules": [
+    "Code only what the source directly supports at its stated spatial and temporal scope.",
+    "Do not expand a locality statement to an entire district unless the source explicitly does so.",
+    "Do not carry any observation forward or backward outside its stated interval.",
+    "Do not infer control from violence or nonviolence alone.",
+    "Conflicting admissible observations are retained separately and flagged for adjudication.",
+    "Missing evidence remains UNKNOWN.",
+    "No newly acquired observation may enter parameter fitting or alter the frozen Nepal predictive confrontation."
+  ],
+  "target_coverage_gate": {
+    "minimum_unique_eastern_holdout_districts_with_admissible_evidence": 8,
+    "minimum_unique_eastern_holdout_districts_with_2005_2006_evidence": 6,
+    "minimum_distinct_source_families": 2,
+    "required_independence_from_ucdp": true,
+    "required_source_level_uncertainty_retained": true,
+    "required_second_coder_before_confirmatory_use": true
+  },
+  "scientific_use_if_gate_passes": "Construct-validity assessment only. No calibration, no historical rescoring, and no modification of predictive holdout results.",
+  "scientific_use_if_gate_fails": "Report Nepal longitudinal/local-control construct validity as unresolved and preserve the historical predictive failure without mechanistic tuning."
+}

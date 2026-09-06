@@ -1,0 +1,10 @@
+{
+  "artifact": "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+  "artifact_sha256": "c5607d7a4583547703215070d42165243a8c23ad4e9c08d2c0662f1636fdbdf7",
+  "contract": "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+  "contract_sha256": "5d3cd7035885cb718835f961efb43429a595bc133351fe9d5284bbb9e819baf8",
+  "passed": true,
+  "runner": "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+  "runner_sha256": "d079446064ee6841d13c634330bd95c25f84c71a3f936861c91cd13ab9a96fc1",
+  "schema_version": "pineland.synthetic_contact_routing_repair_manifest.v2"
+}

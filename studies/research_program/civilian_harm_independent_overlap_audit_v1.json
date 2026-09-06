@@ -1,0 +1,39 @@
+{
+  "admitted_independent_families_by_case": {
+    "afghanistan_2004_2021": [
+      "Afghanistan_Rights_Monitor"
+    ],
+    "nepal_2001_2006": [
+      "INSEC_human_rights_yearbook"
+    ]
+  },
+  "artifact_hashes": {
+    "candidate_log": "896d28c0ff7109c9430174aaf979a59d54d805269df5325eb961340f5fe3723e",
+    "coded_overlap_table": "1a524eea87b5c544f89fdcf57d96ee1c8cc86324d9ce91eb741c36113df4fa90",
+    "contract": "234bb67b16bd0a3858f722a519ee41bc358d22a152677f76f8bc5370530ef752",
+    "provenance": "e2c2b11bcd56bb92a3d2bcae94ca7aaeb177cf427013cef2a2278cf53a4cd689",
+    "triggering_first_coder_audit": "1fb1dbbe3123bdc77600362ad579114805db5a5ee0366c5ce53a4dc385aa0a66"
+  },
+  "baseline_first_coder_coverage_gate_passed": false,
+  "candidate_count": 5,
+  "coded_admitted_records_by_case": {
+    "afghanistan_2004_2021": 2,
+    "nepal_2001_2006": 2
+  },
+  "gates": {
+    "admitted_sources_have_coded_direct_harm": true,
+    "afghanistan_independent_overlap_family_acquired": true,
+    "confirmatory_use_authorized": false,
+    "core_change_authorized": false,
+    "historical_rescore_authorized": false,
+    "model_comparison_authorized": false,
+    "nepal_second_direct_harm_family_acquired": true,
+    "parameter_fitting_authorized": false,
+    "source_independence_coverage_gate_passed": true,
+    "triggering_audit_hash_locked": true
+  },
+  "interpretation": "The source-independence gap that blocked the first-coder coverage gate is now filled at the discovery/first-coding level: INSEC supplies explicit Nepal civilian incident evidence independent of OHCHR, and Afghanistan Rights Monitor supplies an independently originated 2010 casualty estimate overlapping the UNAMA/OHCHR monitoring era. This does not authorize confirmatory historical harm validation: blind second coding, reliability assessment, source-byte binding where obtainable, and Pineland semantic/retention identification remain outstanding.",
+  "next_licensed_step": "Freeze and build a blind second-coder packet containing the union of the original first-coder harm records and admitted independent-overlap records, while withholding first-coder values and decisions.",
+  "schema_version": "pineland.civilian_harm_independent_overlap_audit.v1",
+  "status": "source_independence_coverage_audit_not_confirmatory"
+}

@@ -1,0 +1,290 @@
+{
+  "afghanistan": {
+    "analysis_district_rows": 401,
+    "blocking_reasons": [
+      "The SIGAR evidence is a single October 2017 cross-section, not a longitudinal 2004-2021 control panel.",
+      "Eight harmonized districts have no single-source SIGAR category after the 407-to-401 crosswalk; seven are multi-source aggregates.",
+      "At least one harmonized district has no numeric SIGAR control value and must remain missing.",
+      "The prospective control-validation plan explicitly lacks a preregistered training-only numeric success threshold."
+    ],
+    "checks": {
+      "all_401_analysis_districts_present": true,
+      "all_401_have_numeric_control_index": false,
+      "all_401_have_single_source_category": false,
+      "crosswalk_accounts_for_407_source_rows": true,
+      "independent_control_source_declared": true,
+      "longitudinal_pre_target_control_panel_exists": false,
+      "observation_operator_prospective": true,
+      "observation_operator_unfitted": true,
+      "training_only_control_success_threshold_preregistered": false
+    },
+    "construct_validity_gate_passed": false,
+    "crosswalk_relation_counts": {
+      "historical_name_alias": 18,
+      "normalized_exact": 216,
+      "same_district_admin_transfer": 2,
+      "split_child_to_parent": 7,
+      "unique_spelling_match": 164
+    },
+    "districts_without_numeric_control_index": [
+      {
+        "district": "Patoo",
+        "district_id": "AF2409",
+        "province": "Daykundi"
+      }
+    ],
+    "inputs": [
+      {
+        "bytes": 1392,
+        "path": "studies/afghanistan_2004_2021/config/study_design.json",
+        "sha256": "71a3e54d3de4c7869af0acd392c1ceb8d7f4e36ef203a41268bc9545127fa2ea"
+      },
+      {
+        "bytes": 1652,
+        "path": "studies/afghanistan_2004_2021/config/control_observation_model.json",
+        "sha256": "6886e8ce781bd660b1921c4785ec008bf8dd02d4c719e85f9e1032a1612f59a5"
+      },
+      {
+        "bytes": 2157,
+        "path": "studies/afghanistan_2004_2021/config/control_validation_plan.json",
+        "sha256": "9bbb35c4cf5ab55714d8f236d6ddb96c7a645c482cb8e943b36df6bee5eff1a9"
+      },
+      {
+        "bytes": 23600,
+        "path": "studies/afghanistan_2004_2021/data/processed/sigar_oct2017_control_401.csv",
+        "sha256": "9e93dc7e0e7b05da73773e5103e25333570225e249b4f1d71cb05b40e47cb6e9"
+      },
+      {
+        "bytes": 40852,
+        "path": "studies/afghanistan_2004_2021/data/processed/sigar_407_to_401_crosswalk.csv",
+        "sha256": "af93130b1072cfb2f6d0b07075b9dcf0c91f7c99db6930e584ad29178d4ae4ee"
+      },
+      {
+        "bytes": 2347,
+        "path": "studies/afghanistan_2004_2021/data/processed/source_manifest.json",
+        "sha256": "108db7ed121f9ed7e4eccabb38bac5023045b6ea2ce7263185d8443ffc7a6775"
+      }
+    ],
+    "multi_source_aggregate_rows": 7,
+    "permitted_use": "Independent target-date construct assessment with the frozen observation operator, preserving crosswalk/missingness uncertainty; not calibration and not evidence that the entire latent control trajectory is historically valid.",
+    "rows_without_numeric_control_index": 1,
+    "rows_without_single_source_status": 8,
+    "source_crosswalk_rows": 407,
+    "status": "strong_single_snapshot_with_crosswalk_not_longitudinal_construct_validation",
+    "target_date": "2017-10-15",
+    "unique_analysis_district_ids": 401
+  },
+  "core_modified": false,
+  "historical_outcomes_used_for_parameter_fitting": false,
+  "nepal": {
+    "analytical_period_district_ids": [
+      "NP-D52",
+      "NP-D53",
+      "NP-D69"
+    ],
+    "analytical_period_overlap_rows": 3,
+    "analytical_period_unique_districts": 3,
+    "blocking_reasons": [
+      "Only three sparse independent observations overlap the frozen analytical period.",
+      "No independent sparse-control observation lies in the frozen Eastern geographic holdout.",
+      "The evidence is purposive and cannot validate a longitudinal district-week latent-control trajectory.",
+      "The control-presence plan status is stale relative to the now-ingested sparse evidence file.",
+      "The sparse-evidence provenance claims four analytical-period overlaps, but the frozen study dates yield three."
+    ],
+    "checks": {
+      "has_any_analytical_period_control_evidence": true,
+      "has_geographic_holdout_control_evidence": false,
+      "has_longitudinal_representative_control_panel": false,
+      "independent_of_ucdp_claimed": true,
+      "missingness_not_carried_forward": true,
+      "plan_status_is_stale": true,
+      "provenance_overlap_count_matches_frozen_study_period": false,
+      "structured_sparse_evidence_exists": true
+    },
+    "construct_validity_gate_passed": false,
+    "geographic_holdout_overlap_rows": 0,
+    "inputs": [
+      {
+        "bytes": 975,
+        "path": "studies/nepal_2001_2006/config/study.json",
+        "sha256": "a87904aee01568e4f1f44c695cd28cc29eb9b65f4743eae09452b80481624100"
+      },
+      {
+        "bytes": 989,
+        "path": "studies/nepal_2001_2006/config/split_manifest.json",
+        "sha256": "5a0e79f75e8831e31a00514769be59f77b9107d4d580f3bc9878f9597f407392"
+      },
+      {
+        "bytes": 3080,
+        "path": "studies/nepal_2001_2006/config/control_presence_evidence_plan.json",
+        "sha256": "d43a18b0df36442c89e4c398f6034b619ea387fa4c3e08b95228d17c4e63c4e9"
+      },
+      {
+        "bytes": 704,
+        "path": "studies/nepal_2001_2006/config/control_presence_projection.json",
+        "sha256": "e1deae4d1444c4e3de4b488c736fbd61383eceeab963afbf84ad76da8dc62300"
+      },
+      {
+        "bytes": 2130,
+        "path": "studies/nepal_2001_2006/data/processed/nepal_sparse_control_presence.csv",
+        "sha256": "2f6a4a37bc73c53a14ff2e75bfeb507c426889a9ff991169cbc9c95c9362c111"
+      },
+      {
+        "bytes": 1110,
+        "path": "studies/nepal_2001_2006/data/processed/nepal_sparse_control_presence_provenance.json",
+        "sha256": "946b91d9e2e009b8c929717790f14890a7805c77b4a402c4b91a56503061044b"
+      },
+      {
+        "bytes": 3776,
+        "path": "studies/nepal_2001_2006/config/districts.csv",
+        "sha256": "b3255dc8f035868b9eeab8250bb08bc87f76af896705b4c9843473ad2488c5b5"
+      }
+    ],
+    "permitted_use": "Independent qualitative/sparse construct cross-check on the three overlapping training-geography observations only; not calibration, not geographic-holdout validation, and not longitudinal control scoring.",
+    "projection_frozen_before_accuracy": true,
+    "provenance_claimed_overlap_rows": 4,
+    "status": "sparse_independent_evidence_not_longitudinal_panel",
+    "study_period": {
+      "end": "2006-11-21",
+      "start": "2001-11-26"
+    },
+    "total_sparse_rows": 6,
+    "training_geography_overlap_rows": 3
+  },
+  "program_gate": {
+    "next_evidence_priority": [
+      "Nepal: independently code additional dated actor-specific presence/control evidence, prioritizing the frozen Eastern geographic holdout and 2005-2006 period.",
+      "Afghanistan: construct a harmonized pre-target longitudinal control/presence panel or explicitly retain target-date-only construct validation.",
+      "For both: preserve source-level uncertainty, actor identity, date interval, geography, and missingness rather than imputing from violence."
+    ],
+    "passed": false,
+    "reason": "Neither case currently supplies the longitudinal, independently measured local control/presence evidence required to validate the full latent-control trajectory. Afghanistan has a strong target-date cross-section; Nepal has only sparse training-geography evidence."
+  },
+  "repository_after": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/local_action_diagnostic_identification_contract_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1_manifest.json",
+      "studies/research_program/scripts/audit_construct_validity_readiness_v1.py",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_local_action_diagnostic_identification.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1_manifest.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "repository_before": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/local_action_diagnostic_identification_contract_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1.json",
+      "studies/research_program/local_action_diagnostic_identification_recovery_v1_manifest.json",
+      "studies/research_program/scripts/audit_construct_validity_readiness_v1.py",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_local_action_diagnostic_identification.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1_manifest.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "schema_version": "pineland.construct_validity_readiness_audit.v1",
+  "status": "audit_not_model_change",
+  "tracked_diff_stable": true
+}

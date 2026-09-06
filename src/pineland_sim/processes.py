@@ -127,6 +127,13 @@ class ProcessEngine:
         if event.event_type == "organized_action":
             channel = str(raw_result.get("action_channel", "unknown"))
             reason = str(raw_result.get("failure_reason") or "realized")
+            actor_locality_key = (
+                f"{event.payload.get('organization_id', 'unknown')}|"
+                f"{raw_result.get('locality_id', event.payload.get('locality_id', 'unknown'))}"
+            )
+            local_funnel = self.world.action_funnel_by_actor_locality.setdefault(
+                actor_locality_key, {}
+            )
             for key in (
                 "scheduled",
                 f"channel:{channel}",
@@ -135,13 +142,18 @@ class ProcessEngine:
                 self.world.action_funnel_counts[key] = (
                     self.world.action_funnel_counts.get(key, 0) + 1
                 )
+                local_funnel[key] = local_funnel.get(key, 0) + 1
             if bool(raw_result.get("latent_event", False)):
                 self.world.action_funnel_counts["latent_events"] = (
                     self.world.action_funnel_counts.get("latent_events", 0) + 1
                 )
+                local_funnel["latent_events"] = local_funnel.get("latent_events", 0) + 1
             if float(raw_result.get("state_based_violence_event", 0.0)) > 0:
                 self.world.action_funnel_counts["state_based_violence_events"] = (
                     self.world.action_funnel_counts.get("state_based_violence_events", 0) + 1
+                )
+                local_funnel["state_based_violence_events"] = (
+                    local_funnel.get("state_based_violence_events", 0) + 1
                 )
         if event.event_type == "contact" and float(raw_result.get("contact", 0.0)) > 0:
             self.world.contact_event_times.append(self.world.time)

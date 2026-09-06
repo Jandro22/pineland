@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "synthetic_local_action_diagnostic_identification_v1",
+  "status": "prospective_after_state_to_action_recovery",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "purpose": "Determine whether locality-level diagnostics can distinguish capacity, opportunity, belief/choice, target-access, and execution bottlenecks that aggregate action-funnel counts cannot identify.",
+  "design": {
+    "seeds": [2026090511, 2026090512, 2026090513, 2026090514, 2026090515, 2026090516, 2026090517, 2026090518],
+    "agent_count": 300,
+    "locality_count": 24,
+    "local_fighter_capacity": 100.0,
+    "interval_days": 1.0,
+    "belief_low": 0.0,
+    "belief_high": 1.0,
+    "conditions": [
+      "no_local_capacity",
+      "opportunity_blocked",
+      "low_belief_target_present",
+      "high_belief_target_present",
+      "high_belief_target_absent",
+      "execution_feasibility_blocked"
+    ]
+  },
+  "diagnostic_stages": [
+    "capacity",
+    "opportunity",
+    "belief_choice",
+    "target_access",
+    "execution",
+    "realized"
+  ],
+  "semantic_hypothesis": "The raw failure labels believed_human_target_absent and believed_asset_target_absent occur after action selection and truth-side target enumeration, so they are target-access/execution-stage diagnostics rather than direct evidence that the actor held an absent-target belief.",
+  "acceptance_gate": [
+    "no-capacity condition localizes to capacity",
+    "blocked attempt localizes to opportunity",
+    "raising only focal government-control belief strictly increases focal nonfielded-human-target choice probability",
+    "the same belief manipulation leaves an untreated control locality unchanged",
+    "high-belief target-present forced execution realizes a latent event",
+    "high-belief target-absent condition preserves the high planning weight but localizes to target_access",
+    "execution-feasibility block localizes to execution",
+    "all eight seeds satisfy the stage-identification gates with stable source hashes"
+  ],
+  "interpretation": "A pass validates a locality-level diagnostic decomposition for synthetic identification. It does not identify which stage failed historically in Nepal or Afghanistan without locality-resolved historical evidence."
+}

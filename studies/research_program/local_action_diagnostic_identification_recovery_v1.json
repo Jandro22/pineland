@@ -1,0 +1,2026 @@
+{
+  "contract_sha256": "64afb0302c13b35ffbef5bcac4d9373ac5456d9ad300fe1e5cf1c8dc2ed6d88a",
+  "core_modified": false,
+  "experiment_id": "synthetic_local_action_diagnostic_identification_v1",
+  "global_gates": {
+    "all_seed_gates_pass": true,
+    "model_hash_stable": true,
+    "tracked_diff_stable": true
+  },
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "interpretation": "A pass validates a locality-level diagnostic decomposition for synthetic identification. It does not identify which stage failed historically in Nepal or Afghanistan without locality-resolved historical evidence.",
+  "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+  "passed": true,
+  "repository_after": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/local_action_diagnostic_identification_contract_v1.json",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_local_action_diagnostic_identification.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1_manifest.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "repository_before": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/local_action_diagnostic_identification_contract_v1.json",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_local_action_diagnostic_identification.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1.json",
+      "studies/research_program/state_to_action_transmission_recovery_v1_manifest.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "results": [
+    {
+      "belief_choice_contrast": {
+        "high_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "high_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.24046434494195687,
+          "nonfielded_choice_weight": 0.58,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.41459369817578773
+        },
+        "low_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "low_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.0,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.0,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_choice_weight": 0.0,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.7987220447284346
+        }
+      },
+      "control_locality": "D04-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "absent_target_localized_to_access": true,
+        "absent_target_preserves_planning_belief": true,
+        "capacity_localized": true,
+        "control_locality_choice_unchanged": true,
+        "execution_failure_localized": true,
+        "focal_belief_changes_choice": true,
+        "opportunity_localized": true,
+        "present_target_realizes": true
+      },
+      "localized_diagnostics": {
+        "execution_feasibility_blocked": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "execution_failed",
+          "semantic_note": null,
+          "stage": "execution",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "high_belief_target_absent": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "believed_human_target_absent",
+          "semantic_note": "raw label contains 'believed' but this branch is reached only after channel selection and truth-side target enumeration",
+          "stage": "target_access",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "high_belief_target_present": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "realized",
+          "semantic_note": null,
+          "stage": "realized",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "no_local_capacity": {
+          "planner_nonfielded_choice_probability": 0.0,
+          "raw_failure_reason": "no_local_fighter_capacity",
+          "semantic_note": null,
+          "stage": "capacity",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "opportunity_blocked": {
+          "planner_nonfielded_choice_probability": 0.15829694323144106,
+          "raw_failure_reason": "no_action_opportunity",
+          "semantic_note": null,
+          "stage": "opportunity",
+          "truth_target_available_at_planning_snapshot": true
+        }
+      },
+      "passed": true,
+      "raw_results": {
+        "execution_feasibility_blocked": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 0.0,
+          "failure_reason": "execution_failed",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "high_belief_target_absent": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "failure_reason": "believed_human_target_absent",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": false
+          }
+        },
+        "high_belief_target_present": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "affected_entity_ids": [
+            "POST-D01-L01-POLICE"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 1.0,
+          "failure_reason": null,
+          "latent_event": 1.0,
+          "locality_id": "D01-L01",
+          "record_event_type": "state_based_violence",
+          "record_source_type": "organized_action",
+          "severity": 0.023999999999999997,
+          "state_based_violence_event": 1.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_personnel_losses": -4.68,
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "no_local_capacity": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "failure_reason": "no_local_fighter_capacity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        },
+        "opportunity_blocked": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.9560342718892494,
+          "attempt_probability": 0.0,
+          "failure_reason": "no_action_opportunity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        }
+      },
+      "seed": 2026090511
+    },
+    {
+      "belief_choice_contrast": {
+        "high_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "high_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.24046434494195687,
+          "nonfielded_choice_weight": 0.58,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.41459369817578773
+        },
+        "low_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "low_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.0,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.0,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_choice_weight": 0.0,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.7987220447284346
+        }
+      },
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "absent_target_localized_to_access": true,
+        "absent_target_preserves_planning_belief": true,
+        "capacity_localized": true,
+        "control_locality_choice_unchanged": true,
+        "execution_failure_localized": true,
+        "focal_belief_changes_choice": true,
+        "opportunity_localized": true,
+        "present_target_realizes": true
+      },
+      "localized_diagnostics": {
+        "execution_feasibility_blocked": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "execution_failed",
+          "semantic_note": null,
+          "stage": "execution",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "high_belief_target_absent": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "believed_human_target_absent",
+          "semantic_note": "raw label contains 'believed' but this branch is reached only after channel selection and truth-side target enumeration",
+          "stage": "target_access",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "high_belief_target_present": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "realized",
+          "semantic_note": null,
+          "stage": "realized",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "no_local_capacity": {
+          "planner_nonfielded_choice_probability": 0.0,
+          "raw_failure_reason": "no_local_fighter_capacity",
+          "semantic_note": null,
+          "stage": "capacity",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "opportunity_blocked": {
+          "planner_nonfielded_choice_probability": 0.15829694323144106,
+          "raw_failure_reason": "no_action_opportunity",
+          "semantic_note": null,
+          "stage": "opportunity",
+          "truth_target_available_at_planning_snapshot": true
+        }
+      },
+      "passed": true,
+      "raw_results": {
+        "execution_feasibility_blocked": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 0.0,
+          "failure_reason": "execution_failed",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "high_belief_target_absent": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "failure_reason": "believed_human_target_absent",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": false
+          }
+        },
+        "high_belief_target_present": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "affected_entity_ids": [
+            "POST-D01-L01-POLICE"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 1.0,
+          "failure_reason": null,
+          "latent_event": 1.0,
+          "locality_id": "D01-L01",
+          "record_event_type": "state_based_violence",
+          "record_source_type": "organized_action",
+          "severity": 0.023999999999999997,
+          "state_based_violence_event": 1.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_personnel_losses": -4.68,
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "no_local_capacity": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "failure_reason": "no_local_fighter_capacity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        },
+        "opportunity_blocked": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.9560342718892494,
+          "attempt_probability": 0.0,
+          "failure_reason": "no_action_opportunity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        }
+      },
+      "seed": 2026090512
+    },
+    {
+      "belief_choice_contrast": {
+        "high_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "high_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.24046434494195687,
+          "nonfielded_choice_weight": 0.58,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.41459369817578773
+        },
+        "low_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "low_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.0,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.0,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_choice_weight": 0.0,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.7987220447284346
+        }
+      },
+      "control_locality": "D06-L01",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "absent_target_localized_to_access": true,
+        "absent_target_preserves_planning_belief": true,
+        "capacity_localized": true,
+        "control_locality_choice_unchanged": true,
+        "execution_failure_localized": true,
+        "focal_belief_changes_choice": true,
+        "opportunity_localized": true,
+        "present_target_realizes": true
+      },
+      "localized_diagnostics": {
+        "execution_feasibility_blocked": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "execution_failed",
+          "semantic_note": null,
+          "stage": "execution",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "high_belief_target_absent": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "believed_human_target_absent",
+          "semantic_note": "raw label contains 'believed' but this branch is reached only after channel selection and truth-side target enumeration",
+          "stage": "target_access",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "high_belief_target_present": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "realized",
+          "semantic_note": null,
+          "stage": "realized",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "no_local_capacity": {
+          "planner_nonfielded_choice_probability": 0.0,
+          "raw_failure_reason": "no_local_fighter_capacity",
+          "semantic_note": null,
+          "stage": "capacity",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "opportunity_blocked": {
+          "planner_nonfielded_choice_probability": 0.15829694323144106,
+          "raw_failure_reason": "no_action_opportunity",
+          "semantic_note": null,
+          "stage": "opportunity",
+          "truth_target_available_at_planning_snapshot": true
+        }
+      },
+      "passed": true,
+      "raw_results": {
+        "execution_feasibility_blocked": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 0.0,
+          "failure_reason": "execution_failed",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "high_belief_target_absent": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "failure_reason": "believed_human_target_absent",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": false
+          }
+        },
+        "high_belief_target_present": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "affected_entity_ids": [
+            "POST-D01-L01-POLICE"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 1.0,
+          "failure_reason": null,
+          "latent_event": 1.0,
+          "locality_id": "D01-L01",
+          "record_event_type": "state_based_violence",
+          "record_source_type": "organized_action",
+          "severity": 0.023999999999999997,
+          "state_based_violence_event": 1.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_personnel_losses": -4.68,
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "no_local_capacity": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "failure_reason": "no_local_fighter_capacity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        },
+        "opportunity_blocked": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.9560342718892494,
+          "attempt_probability": 0.0,
+          "failure_reason": "no_action_opportunity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        }
+      },
+      "seed": 2026090513
+    },
+    {
+      "belief_choice_contrast": {
+        "high_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "high_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.24046434494195687,
+          "nonfielded_choice_weight": 0.58,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.41459369817578773
+        },
+        "low_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "low_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.0,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.0,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_choice_weight": 0.0,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.7987220447284346
+        }
+      },
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "absent_target_localized_to_access": true,
+        "absent_target_preserves_planning_belief": true,
+        "capacity_localized": true,
+        "control_locality_choice_unchanged": true,
+        "execution_failure_localized": true,
+        "focal_belief_changes_choice": true,
+        "opportunity_localized": true,
+        "present_target_realizes": true
+      },
+      "localized_diagnostics": {
+        "execution_feasibility_blocked": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "execution_failed",
+          "semantic_note": null,
+          "stage": "execution",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "high_belief_target_absent": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "believed_human_target_absent",
+          "semantic_note": "raw label contains 'believed' but this branch is reached only after channel selection and truth-side target enumeration",
+          "stage": "target_access",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "high_belief_target_present": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "realized",
+          "semantic_note": null,
+          "stage": "realized",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "no_local_capacity": {
+          "planner_nonfielded_choice_probability": 0.0,
+          "raw_failure_reason": "no_local_fighter_capacity",
+          "semantic_note": null,
+          "stage": "capacity",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "opportunity_blocked": {
+          "planner_nonfielded_choice_probability": 0.15829694323144106,
+          "raw_failure_reason": "no_action_opportunity",
+          "semantic_note": null,
+          "stage": "opportunity",
+          "truth_target_available_at_planning_snapshot": true
+        }
+      },
+      "passed": true,
+      "raw_results": {
+        "execution_feasibility_blocked": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 0.0,
+          "failure_reason": "execution_failed",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "high_belief_target_absent": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "failure_reason": "believed_human_target_absent",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": false
+          }
+        },
+        "high_belief_target_present": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "affected_entity_ids": [
+            "POST-D01-L01-POLICE"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 1.0,
+          "failure_reason": null,
+          "latent_event": 1.0,
+          "locality_id": "D01-L01",
+          "record_event_type": "state_based_violence",
+          "record_source_type": "organized_action",
+          "severity": 0.023999999999999997,
+          "state_based_violence_event": 1.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_personnel_losses": -4.68,
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "no_local_capacity": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "failure_reason": "no_local_fighter_capacity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        },
+        "opportunity_blocked": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.9560342718892494,
+          "attempt_probability": 0.0,
+          "failure_reason": "no_action_opportunity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        }
+      },
+      "seed": 2026090514
+    },
+    {
+      "belief_choice_contrast": {
+        "high_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "high_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.24046434494195687,
+          "nonfielded_choice_weight": 0.58,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.41459369817578773
+        },
+        "low_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "low_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.0,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.0,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_choice_weight": 0.0,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.7987220447284346
+        }
+      },
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "absent_target_localized_to_access": true,
+        "absent_target_preserves_planning_belief": true,
+        "capacity_localized": true,
+        "control_locality_choice_unchanged": true,
+        "execution_failure_localized": true,
+        "focal_belief_changes_choice": true,
+        "opportunity_localized": true,
+        "present_target_realizes": true
+      },
+      "localized_diagnostics": {
+        "execution_feasibility_blocked": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "execution_failed",
+          "semantic_note": null,
+          "stage": "execution",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "high_belief_target_absent": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "believed_human_target_absent",
+          "semantic_note": "raw label contains 'believed' but this branch is reached only after channel selection and truth-side target enumeration",
+          "stage": "target_access",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "high_belief_target_present": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "realized",
+          "semantic_note": null,
+          "stage": "realized",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "no_local_capacity": {
+          "planner_nonfielded_choice_probability": 0.0,
+          "raw_failure_reason": "no_local_fighter_capacity",
+          "semantic_note": null,
+          "stage": "capacity",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "opportunity_blocked": {
+          "planner_nonfielded_choice_probability": 0.15829694323144106,
+          "raw_failure_reason": "no_action_opportunity",
+          "semantic_note": null,
+          "stage": "opportunity",
+          "truth_target_available_at_planning_snapshot": true
+        }
+      },
+      "passed": true,
+      "raw_results": {
+        "execution_feasibility_blocked": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 0.0,
+          "failure_reason": "execution_failed",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "high_belief_target_absent": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "failure_reason": "believed_human_target_absent",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": false
+          }
+        },
+        "high_belief_target_present": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "affected_entity_ids": [
+            "POST-D01-L01-POLICE"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 1.0,
+          "failure_reason": null,
+          "latent_event": 1.0,
+          "locality_id": "D01-L01",
+          "record_event_type": "state_based_violence",
+          "record_source_type": "organized_action",
+          "severity": 0.023999999999999997,
+          "state_based_violence_event": 1.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_personnel_losses": -4.68,
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "no_local_capacity": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "failure_reason": "no_local_fighter_capacity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        },
+        "opportunity_blocked": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.9560342718892494,
+          "attempt_probability": 0.0,
+          "failure_reason": "no_action_opportunity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        }
+      },
+      "seed": 2026090515
+    },
+    {
+      "belief_choice_contrast": {
+        "high_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "high_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.24046434494195687,
+          "nonfielded_choice_weight": 0.58,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.41459369817578773
+        },
+        "low_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "low_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.0,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.0,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_choice_weight": 0.0,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.7987220447284346
+        }
+      },
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "absent_target_localized_to_access": true,
+        "absent_target_preserves_planning_belief": true,
+        "capacity_localized": true,
+        "control_locality_choice_unchanged": true,
+        "execution_failure_localized": true,
+        "focal_belief_changes_choice": true,
+        "opportunity_localized": true,
+        "present_target_realizes": true
+      },
+      "localized_diagnostics": {
+        "execution_feasibility_blocked": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "execution_failed",
+          "semantic_note": null,
+          "stage": "execution",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "high_belief_target_absent": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "believed_human_target_absent",
+          "semantic_note": "raw label contains 'believed' but this branch is reached only after channel selection and truth-side target enumeration",
+          "stage": "target_access",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "high_belief_target_present": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "realized",
+          "semantic_note": null,
+          "stage": "realized",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "no_local_capacity": {
+          "planner_nonfielded_choice_probability": 0.0,
+          "raw_failure_reason": "no_local_fighter_capacity",
+          "semantic_note": null,
+          "stage": "capacity",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "opportunity_blocked": {
+          "planner_nonfielded_choice_probability": 0.15829694323144106,
+          "raw_failure_reason": "no_action_opportunity",
+          "semantic_note": null,
+          "stage": "opportunity",
+          "truth_target_available_at_planning_snapshot": true
+        }
+      },
+      "passed": true,
+      "raw_results": {
+        "execution_feasibility_blocked": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 0.0,
+          "failure_reason": "execution_failed",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "high_belief_target_absent": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "failure_reason": "believed_human_target_absent",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": false
+          }
+        },
+        "high_belief_target_present": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "affected_entity_ids": [
+            "POST-D01-L01-POLICE"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 1.0,
+          "failure_reason": null,
+          "latent_event": 1.0,
+          "locality_id": "D01-L01",
+          "record_event_type": "state_based_violence",
+          "record_source_type": "organized_action",
+          "severity": 0.023999999999999997,
+          "state_based_violence_event": 1.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_personnel_losses": -4.68,
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "no_local_capacity": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "failure_reason": "no_local_fighter_capacity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        },
+        "opportunity_blocked": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.9560342718892494,
+          "attempt_probability": 0.0,
+          "failure_reason": "no_action_opportunity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        }
+      },
+      "seed": 2026090516
+    },
+    {
+      "belief_choice_contrast": {
+        "high_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "high_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.24046434494195687,
+          "nonfielded_choice_weight": 0.58,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.41459369817578773
+        },
+        "low_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "low_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.0,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.0,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_choice_weight": 0.0,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.7987220447284346
+        }
+      },
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "absent_target_localized_to_access": true,
+        "absent_target_preserves_planning_belief": true,
+        "capacity_localized": true,
+        "control_locality_choice_unchanged": true,
+        "execution_failure_localized": true,
+        "focal_belief_changes_choice": true,
+        "opportunity_localized": true,
+        "present_target_realizes": true
+      },
+      "localized_diagnostics": {
+        "execution_feasibility_blocked": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "execution_failed",
+          "semantic_note": null,
+          "stage": "execution",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "high_belief_target_absent": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "believed_human_target_absent",
+          "semantic_note": "raw label contains 'believed' but this branch is reached only after channel selection and truth-side target enumeration",
+          "stage": "target_access",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "high_belief_target_present": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "realized",
+          "semantic_note": null,
+          "stage": "realized",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "no_local_capacity": {
+          "planner_nonfielded_choice_probability": 0.0,
+          "raw_failure_reason": "no_local_fighter_capacity",
+          "semantic_note": null,
+          "stage": "capacity",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "opportunity_blocked": {
+          "planner_nonfielded_choice_probability": 0.15829694323144106,
+          "raw_failure_reason": "no_action_opportunity",
+          "semantic_note": null,
+          "stage": "opportunity",
+          "truth_target_available_at_planning_snapshot": true
+        }
+      },
+      "passed": true,
+      "raw_results": {
+        "execution_feasibility_blocked": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 0.0,
+          "failure_reason": "execution_failed",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "high_belief_target_absent": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "failure_reason": "believed_human_target_absent",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": false
+          }
+        },
+        "high_belief_target_present": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "affected_entity_ids": [
+            "POST-D01-L01-POLICE"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 1.0,
+          "failure_reason": null,
+          "latent_event": 1.0,
+          "locality_id": "D01-L01",
+          "record_event_type": "state_based_violence",
+          "record_source_type": "organized_action",
+          "severity": 0.023999999999999997,
+          "state_based_violence_event": 1.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_personnel_losses": -4.68,
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "no_local_capacity": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "failure_reason": "no_local_fighter_capacity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        },
+        "opportunity_blocked": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.9560342718892494,
+          "attempt_probability": 0.0,
+          "failure_reason": "no_action_opportunity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        }
+      },
+      "seed": 2026090517
+    },
+    {
+      "belief_choice_contrast": {
+        "high_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "high_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.24046434494195687,
+          "nonfielded_choice_weight": 0.58,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.41459369817578773
+        },
+        "low_control": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.29,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.29,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_choice_weight": 0.29,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.5458515283842795
+        },
+        "low_focal": {
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.0,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.0,
+            "wait": 1.0
+          },
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_choice_weight": 0.0,
+          "nonfielded_target_truth_available": true,
+          "total_fighter_equivalents": 100.0,
+          "wait_choice_probability": 0.7987220447284346
+        }
+      },
+      "control_locality": "D04-L01",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "absent_target_localized_to_access": true,
+        "absent_target_preserves_planning_belief": true,
+        "capacity_localized": true,
+        "control_locality_choice_unchanged": true,
+        "execution_failure_localized": true,
+        "focal_belief_changes_choice": true,
+        "opportunity_localized": true,
+        "present_target_realizes": true
+      },
+      "localized_diagnostics": {
+        "execution_feasibility_blocked": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "execution_failed",
+          "semantic_note": null,
+          "stage": "execution",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "high_belief_target_absent": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "believed_human_target_absent",
+          "semantic_note": "raw label contains 'believed' but this branch is reached only after channel selection and truth-side target enumeration",
+          "stage": "target_access",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "high_belief_target_present": {
+          "planner_nonfielded_choice_probability": 0.24046434494195687,
+          "raw_failure_reason": "realized",
+          "semantic_note": null,
+          "stage": "realized",
+          "truth_target_available_at_planning_snapshot": true
+        },
+        "no_local_capacity": {
+          "planner_nonfielded_choice_probability": 0.0,
+          "raw_failure_reason": "no_local_fighter_capacity",
+          "semantic_note": null,
+          "stage": "capacity",
+          "truth_target_available_at_planning_snapshot": false
+        },
+        "opportunity_blocked": {
+          "planner_nonfielded_choice_probability": 0.15829694323144106,
+          "raw_failure_reason": "no_action_opportunity",
+          "semantic_note": null,
+          "stage": "opportunity",
+          "truth_target_available_at_planning_snapshot": true
+        }
+      },
+      "passed": true,
+      "raw_results": {
+        "execution_feasibility_blocked": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 0.0,
+          "failure_reason": "execution_failed",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "high_belief_target_absent": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "failure_reason": "believed_human_target_absent",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": false
+          }
+        },
+        "high_belief_target_present": {
+          "action_channel": "nonfielded_human_target",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "affected_entity_ids": [
+            "POST-D01-L01-POLICE"
+          ],
+          "attempt_draw": 0.03709487096766517,
+          "attempt_probability": 1.0,
+          "choice_weights": {
+            "armed_confrontation": 0.0,
+            "asset_violence": 0.58,
+            "coercion": 0.252,
+            "nonfielded_human_target": 0.58,
+            "wait": 1.0
+          },
+          "committed_fighter_equivalents": 57.14285714285714,
+          "execution_draw": 0.5640091169691802,
+          "execution_probability": 1.0,
+          "failure_reason": null,
+          "latent_event": 1.0,
+          "locality_id": "D01-L01",
+          "record_event_type": "state_based_violence",
+          "record_source_type": "organized_action",
+          "severity": 0.023999999999999997,
+          "state_based_violence_event": 1.0,
+          "supply_consumed": 0.0,
+          "support": {
+            "armed_confrontation": false,
+            "asset_violence": true,
+            "coercion": true,
+            "nonfielded_human_target": true
+          },
+          "target_id": "POST-D01-L01-POLICE",
+          "target_personnel_losses": -4.68,
+          "target_type": "fixed_security_post",
+          "unmet_supply": 4.0
+        },
+        "no_local_capacity": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "failure_reason": "no_local_fighter_capacity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        },
+        "opportunity_blocked": {
+          "action_channel": "wait",
+          "actor_ids": [
+            "insurgent"
+          ],
+          "attempt_draw": 0.9560342718892494,
+          "attempt_probability": 0.0,
+          "failure_reason": "no_action_opportunity",
+          "latent_event": 0.0,
+          "locality_id": "D01-L01",
+          "record_source_type": "organized_action",
+          "state_based_violence_event": 0.0
+        }
+      },
+      "seed": 2026090518
+    }
+  ],
+  "runner_sha256": "17336a7eafb21310efad14c204e209099b56378376993469dd6701c92a2094d1",
+  "schema_version": "pineland.local_action_diagnostic_identification_recovery.v1",
+  "semantic_finding": "The raw 'believed_*_target_absent' labels are execution-stage truth/access failures after channel selection; they cannot identify erroneous actor beliefs by themselves."
+}

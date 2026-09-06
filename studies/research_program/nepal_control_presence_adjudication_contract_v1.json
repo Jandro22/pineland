@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "nepal_2001_2006",
+  "status": "prospective_before_second_coder_results",
+  "inputs": {
+    "first_coder": "studies/nepal_2001_2006/data/processed/nepal_eastern_control_presence_staging_v1.csv",
+    "blind_packet": "studies/research_program/nepal_second_coder_packet_v1.csv",
+    "blind_key": "studies/research_program/nepal_second_coder_blind_key_v1.json",
+    "second_coder_expected": "studies/research_program/nepal_second_coder_completed_v1.csv"
+  },
+  "independence_rules": [
+    "Second coder must not inspect the first-coder staging file or blind key before locking all rows.",
+    "Second coder may inspect only the blind packet, coding instructions, and linked/independently located source documents.",
+    "Second coder writes a separate completed file; first-pass records remain immutable.",
+    "Agreement is computed only after the completed second-coder file is hashed and locked."
+  ],
+  "agreement_estimands": {
+    "admissibility": "proportion agreeing whether a sampled source cell contains any admissible control/presence observation",
+    "actor": "exact agreement on actor_id among rows both coders deem admissible",
+    "observable": "exact agreement on the eight-category observable field among rows both coders deem admissible",
+    "temporal_overlap": "whether independently coded date intervals overlap at all",
+    "spatial_scope": "reported descriptively because free-text scopes are not a stable nominal scale",
+    "confidence": "reported descriptively and never used as an agreement gate"
+  },
+  "pre_adjudication_quality_gate": {
+    "minimum_admissibility_agreement": 0.80,
+    "minimum_actor_agreement_among_jointly_admissible": 0.80,
+    "minimum_observable_agreement_among_jointly_admissible": 0.70,
+    "minimum_temporal_overlap_among_jointly_admissible": 0.80
+  },
+  "adjudication_rules": [
+    "Every disagreement is retained explicitly; no majority-by-model rule is allowed.",
+    "Adjudication must return to the underlying source and record a precise passage/page/paragraph locator.",
+    "When two interpretations are both defensible, retain the narrower spatial/temporal claim or mark the cell uncertain rather than forcing agreement.",
+    "Rows judged NOT_ADMISSIBLE by either coder receive explicit review before inclusion.",
+    "No adjudicated record is converted into district-wide control unless the source directly supports district-wide scope.",
+    "No historical predictive rescore, parameter fitting, or core modification is authorized by this adjudication."
+  ],
+  "confirmatory_construct_use_gate": [
+    "second-coder file is complete and provenance-bound",
+    "pre-adjudication agreement metrics are reported",
+    "all disagreements are adjudicated or explicitly retained as unresolved",
+    "final admissible evidence still satisfies the frozen Nepal acquisition coverage gate",
+    "construct assessment uses only the source-supported spatial and temporal scopes"
+  ]
+}

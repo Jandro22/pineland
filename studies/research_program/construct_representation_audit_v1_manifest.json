@@ -1,0 +1,10 @@
+{
+  "artifact": "studies/research_program/construct_representation_audit_v1.json",
+  "artifact_sha256": "ae5decd643176581f00cc73b6c14b55c3b4d2871072bc1b0ef020ecf89b32a06",
+  "contract": "studies/research_program/construct_representation_contract_v1.json",
+  "contract_sha256": "32472331c7a30946e24117d2984559986aa92cab2afce6b75e6160ef65a3e1c2",
+  "runner": "studies/research_program/scripts/audit_construct_representation_v1.py",
+  "runner_sha256": "0c4fbad6ec45df4acc759986c21aed1b8f887dc197aab7eb5de0b238558532a3",
+  "schema_version": "pineland.construct_representation_manifest.v1",
+  "scientific_gate_passed": true
+}

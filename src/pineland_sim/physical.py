@@ -310,6 +310,8 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
                 distances[post.microzone_id] = mobilization_delay
                 heapq.heappush(queue, (mobilization_delay, post.microzone_id))
     for patrol in world.patrols.values():
+        if patrol.locality_id != locality_id:
+            continue
         formation = world.formations[patrol.formation_id]
         effective_fraction = (
             patrol.response_fraction * formation.availability * formation.effective_readiness()
@@ -446,7 +448,7 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
     )
     if active_insurgents:
         actors.append("insurgent")
-        actors.extend(active_insurgents)
+        actors.extend(actor for actor in active_insurgents if actor != "insurgent")
     raw_aggregate: dict[str, float] = {}
     raw_zones: dict[str, dict[str, float]] = {}
     for actor in actors:

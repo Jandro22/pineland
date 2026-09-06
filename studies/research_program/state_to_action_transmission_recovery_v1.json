@@ -1,0 +1,977 @@
+{
+  "contract_sha256": "0eb775ddb2330f8bd09cd2b1dc34a990141c1f6efe694c08ec6624769e9ba088",
+  "core_modified": false,
+  "experiment_id": "synthetic_state_to_action_transmission_v1",
+  "global_gates": {
+    "all_seeds_pass": true,
+    "model_hash_stable": true,
+    "tracked_diff_stable": true
+  },
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "interpretation": "A pass establishes only that the implemented v5 state-to-action equations can transmit known local capacity monotonically under controlled synthetic exposure. It does not show that Nepal's historical latent state, beliefs, support, target access, or rate scale are correct.",
+  "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+  "passed": true,
+  "repository_after": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "repository_before": {
+    "commit_hash": "09dfa8859fffeb63bbf20d6d0bd9a95733133120",
+    "dirty_paths": [
+      "docs/coin-general-theory-scientific-roadmap-2026-09-05.md",
+      "studies/research_program/estimand_registry.json",
+      "studies/research_program/historical_revalidation_v5/afghanistan_full.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_init.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_smoke.log",
+      "studies/research_program/historical_revalidation_v5/afghanistan_year.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_queue_state.json",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log",
+      "studies/research_program/historical_revalidation_v5/autonomous_supervisor.ps1",
+      "studies/research_program/historical_revalidation_v5/execution_contract.json",
+      "studies/research_program/historical_revalidation_v5/nepal_competition.log",
+      "studies/research_program/historical_revalidation_v5/nepal_full.log",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.json",
+      "studies/research_program/historical_revalidation_v5/nepal_theory_diagnosis.log",
+      "studies/research_program/historical_revalidation_v5/postcompletion_helper.log",
+      "studies/research_program/historical_revalidation_v5/readout.md",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_coordinator.stdout.log",
+      "studies/research_program/historical_revalidation_v5/resumed_processes.json",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stderr.log",
+      "studies/research_program/historical_revalidation_v5/resumed_watcher.stdout.log",
+      "studies/research_program/historical_revalidation_v5/status.json",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stderr.log",
+      "studies/research_program/historical_revalidation_v5/synthetic_retry_spatial_full.stdout.log",
+      "studies/research_program/historical_revalidation_v5/worker_check_20260905T2110Z.json",
+      "studies/research_program/scripts/diagnose_v5_afghanistan_confrontation.py",
+      "studies/research_program/scripts/diagnose_v5_historical_confrontation.py",
+      "studies/research_program/scripts/finalize_v5_historical_confrontation.py",
+      "studies/research_program/scripts/run_spatial_contact_routing_repair_v2.py",
+      "studies/research_program/scripts/run_v5_historical_confrontation.py",
+      "studies/research_program/scripts/validate_estimand_registry.py",
+      "studies/research_program/scripts/validate_state_to_action_transmission.py",
+      "studies/research_program/scripts/watch_v5_historical_confrontation.py",
+      "studies/research_program/spatial_contact_routing_repair_contract_v2.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_full_manifest.json",
+      "studies/research_program/spatial_contact_routing_repair_v2_smoke_8811.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905_manifest.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905.json",
+      "studies/research_program/spatial_factorial_full_v5_20260905_manifest.json",
+      "studies/research_program/state_to_action_transmission_contract_v1.json",
+      "studies/research_program/v5_theory_discrimination_contract.json",
+      "tests/test_aligned_predictive_competition.py",
+      "tests/test_estimand_registry.py",
+      "tests/test_v5_afghanistan_diagnosis.py",
+      "tests/test_v5_historical_diagnosis.py",
+      "tudies/research_program/scripts/run_aligned_predictive_competition.py"
+    ],
+    "dirty_tree": true,
+    "tracked_diff_sha256": "185b264ec8dd53dbc62a8c0d34a9ad201f48d5d9288f2837380e8ee34faed9c7"
+  },
+  "results": [
+    {
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "attempt_strict_dose_response": true,
+        "control_locality_unchanged": true,
+        "execution_strict_dose_response": true,
+        "latent_propensity_strict_dose_response": true,
+        "positive_capacity_has_target_support": true,
+        "target_truth_does_not_change_planning": true,
+        "target_truth_gates_realization": true,
+        "zero_capacity_zero_attempt": true,
+        "zero_capacity_zero_propensity": true
+      },
+      "passed": true,
+      "reference_nonfielded_weight": 0.29,
+      "rows": [
+        {
+          "attempt_probability": 0.0,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 0.0,
+          "execution_probability": 0.0,
+          "expected_nonfielded_latent_event_propensity": 0.0,
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_target_supported": false,
+          "total_fighter_equivalents": 0.0
+        },
+        {
+          "attempt_probability": 0.00498752080731768,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 5.0,
+          "execution_probability": 0.5422358855988493,
+          "expected_nonfielded_latent_event_propensity": 0.00042810027344464583,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 5.0
+        },
+        {
+          "attempt_probability": 0.009367612673195858,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 10.0,
+          "execution_probability": 0.615358873518161,
+          "expected_nonfielded_latent_event_propensity": 0.0009124937984816337,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 10.0
+        },
+        {
+          "attempt_probability": 0.019801326693244747,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 25.0,
+          "execution_probability": 0.7154845405526278,
+          "expected_nonfielded_latent_event_propensity": 0.002242678770807928,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 25.0
+        },
+        {
+          "attempt_probability": 0.0314934179208024,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 50.0,
+          "execution_probability": 0.7860030855966228,
+          "expected_nonfielded_latent_event_propensity": 0.0039184704486370375,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 50.0
+        },
+        {
+          "attempt_probability": 0.0446851296922135,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 100.0,
+          "execution_probability": 0.8441208798441101,
+          "expected_nonfielded_latent_event_propensity": 0.005970905451749145,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 100.0
+        },
+        {
+          "attempt_probability": 0.05968322098604295,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 250.0,
+          "execution_probability": 0.8958258332961956,
+          "expected_nonfielded_latent_event_propensity": 0.008463468144296203,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 250.0
+        },
+        {
+          "attempt_probability": 0.0672007033359675,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 500.0,
+          "execution_probability": 0.9180634225845274,
+          "expected_nonfielded_latent_event_propensity": 0.009766051983823517,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 500.0
+        }
+      ],
+      "seed": 2026090501,
+      "target_access_falsifier": {
+        "missing_failure_reason": "believed_human_target_absent",
+        "missing_latent_event": 0.0,
+        "planning_weights_unchanged_when_hidden_target_removed": true,
+        "present_latent_event": 1.0
+      }
+    },
+    {
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "attempt_strict_dose_response": true,
+        "control_locality_unchanged": true,
+        "execution_strict_dose_response": true,
+        "latent_propensity_strict_dose_response": true,
+        "positive_capacity_has_target_support": true,
+        "target_truth_does_not_change_planning": true,
+        "target_truth_gates_realization": true,
+        "zero_capacity_zero_attempt": true,
+        "zero_capacity_zero_propensity": true
+      },
+      "passed": true,
+      "reference_nonfielded_weight": 0.29,
+      "rows": [
+        {
+          "attempt_probability": 0.0,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 0.0,
+          "execution_probability": 0.0,
+          "expected_nonfielded_latent_event_propensity": 0.0,
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_target_supported": false,
+          "total_fighter_equivalents": 0.0
+        },
+        {
+          "attempt_probability": 0.00498752080731768,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 5.0,
+          "execution_probability": 0.5422358855988493,
+          "expected_nonfielded_latent_event_propensity": 0.00042810027344464583,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 5.0
+        },
+        {
+          "attempt_probability": 0.009367612673195858,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 10.0,
+          "execution_probability": 0.615358873518161,
+          "expected_nonfielded_latent_event_propensity": 0.0009124937984816337,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 10.0
+        },
+        {
+          "attempt_probability": 0.019801326693244747,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 25.0,
+          "execution_probability": 0.7154845405526278,
+          "expected_nonfielded_latent_event_propensity": 0.002242678770807928,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 25.0
+        },
+        {
+          "attempt_probability": 0.0314934179208024,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 50.0,
+          "execution_probability": 0.7860030855966228,
+          "expected_nonfielded_latent_event_propensity": 0.0039184704486370375,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 50.0
+        },
+        {
+          "attempt_probability": 0.0446851296922135,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 100.0,
+          "execution_probability": 0.8441208798441101,
+          "expected_nonfielded_latent_event_propensity": 0.005970905451749145,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 100.0
+        },
+        {
+          "attempt_probability": 0.05968322098604295,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 250.0,
+          "execution_probability": 0.8958258332961956,
+          "expected_nonfielded_latent_event_propensity": 0.008463468144296203,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 250.0
+        },
+        {
+          "attempt_probability": 0.0672007033359675,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 500.0,
+          "execution_probability": 0.9180634225845274,
+          "expected_nonfielded_latent_event_propensity": 0.009766051983823517,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 500.0
+        }
+      ],
+      "seed": 2026090502,
+      "target_access_falsifier": {
+        "missing_failure_reason": "believed_human_target_absent",
+        "missing_latent_event": 0.0,
+        "planning_weights_unchanged_when_hidden_target_removed": true,
+        "present_latent_event": 1.0
+      }
+    },
+    {
+      "control_locality": "D04-L01",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "attempt_strict_dose_response": true,
+        "control_locality_unchanged": true,
+        "execution_strict_dose_response": true,
+        "latent_propensity_strict_dose_response": true,
+        "positive_capacity_has_target_support": true,
+        "target_truth_does_not_change_planning": true,
+        "target_truth_gates_realization": true,
+        "zero_capacity_zero_attempt": true,
+        "zero_capacity_zero_propensity": true
+      },
+      "passed": true,
+      "reference_nonfielded_weight": 0.29,
+      "rows": [
+        {
+          "attempt_probability": 0.0,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 0.0,
+          "execution_probability": 0.0,
+          "expected_nonfielded_latent_event_propensity": 0.0,
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_target_supported": false,
+          "total_fighter_equivalents": 0.0
+        },
+        {
+          "attempt_probability": 0.00498752080731768,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 5.0,
+          "execution_probability": 0.5422358855988493,
+          "expected_nonfielded_latent_event_propensity": 0.00042810027344464583,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 5.0
+        },
+        {
+          "attempt_probability": 0.009367612673195858,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 10.0,
+          "execution_probability": 0.615358873518161,
+          "expected_nonfielded_latent_event_propensity": 0.0009124937984816337,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 10.0
+        },
+        {
+          "attempt_probability": 0.019801326693244747,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 25.0,
+          "execution_probability": 0.7154845405526278,
+          "expected_nonfielded_latent_event_propensity": 0.002242678770807928,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 25.0
+        },
+        {
+          "attempt_probability": 0.0314934179208024,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 50.0,
+          "execution_probability": 0.7860030855966228,
+          "expected_nonfielded_latent_event_propensity": 0.0039184704486370375,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 50.0
+        },
+        {
+          "attempt_probability": 0.0446851296922135,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 100.0,
+          "execution_probability": 0.8441208798441101,
+          "expected_nonfielded_latent_event_propensity": 0.005970905451749145,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 100.0
+        },
+        {
+          "attempt_probability": 0.05968322098604295,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 250.0,
+          "execution_probability": 0.8958258332961956,
+          "expected_nonfielded_latent_event_propensity": 0.008463468144296203,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 250.0
+        },
+        {
+          "attempt_probability": 0.0672007033359675,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 500.0,
+          "execution_probability": 0.9180634225845274,
+          "expected_nonfielded_latent_event_propensity": 0.009766051983823517,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 500.0
+        }
+      ],
+      "seed": 2026090503,
+      "target_access_falsifier": {
+        "missing_failure_reason": "believed_human_target_absent",
+        "missing_latent_event": 0.0,
+        "planning_weights_unchanged_when_hidden_target_removed": true,
+        "present_latent_event": 1.0
+      }
+    },
+    {
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "attempt_strict_dose_response": true,
+        "control_locality_unchanged": true,
+        "execution_strict_dose_response": true,
+        "latent_propensity_strict_dose_response": true,
+        "positive_capacity_has_target_support": true,
+        "target_truth_does_not_change_planning": true,
+        "target_truth_gates_realization": true,
+        "zero_capacity_zero_attempt": true,
+        "zero_capacity_zero_propensity": true
+      },
+      "passed": true,
+      "reference_nonfielded_weight": 0.29,
+      "rows": [
+        {
+          "attempt_probability": 0.0,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 0.0,
+          "execution_probability": 0.0,
+          "expected_nonfielded_latent_event_propensity": 0.0,
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_target_supported": false,
+          "total_fighter_equivalents": 0.0
+        },
+        {
+          "attempt_probability": 0.00498752080731768,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 5.0,
+          "execution_probability": 0.5422358855988493,
+          "expected_nonfielded_latent_event_propensity": 0.00042810027344464583,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 5.0
+        },
+        {
+          "attempt_probability": 0.009367612673195858,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 10.0,
+          "execution_probability": 0.615358873518161,
+          "expected_nonfielded_latent_event_propensity": 0.0009124937984816337,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 10.0
+        },
+        {
+          "attempt_probability": 0.019801326693244747,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 25.0,
+          "execution_probability": 0.7154845405526278,
+          "expected_nonfielded_latent_event_propensity": 0.002242678770807928,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 25.0
+        },
+        {
+          "attempt_probability": 0.0314934179208024,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 50.0,
+          "execution_probability": 0.7860030855966228,
+          "expected_nonfielded_latent_event_propensity": 0.0039184704486370375,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 50.0
+        },
+        {
+          "attempt_probability": 0.0446851296922135,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 100.0,
+          "execution_probability": 0.8441208798441101,
+          "expected_nonfielded_latent_event_propensity": 0.005970905451749145,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 100.0
+        },
+        {
+          "attempt_probability": 0.05968322098604295,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 250.0,
+          "execution_probability": 0.8958258332961956,
+          "expected_nonfielded_latent_event_propensity": 0.008463468144296203,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 250.0
+        },
+        {
+          "attempt_probability": 0.0672007033359675,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 500.0,
+          "execution_probability": 0.9180634225845274,
+          "expected_nonfielded_latent_event_propensity": 0.009766051983823517,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 500.0
+        }
+      ],
+      "seed": 2026090504,
+      "target_access_falsifier": {
+        "missing_failure_reason": "believed_human_target_absent",
+        "missing_latent_event": 0.0,
+        "planning_weights_unchanged_when_hidden_target_removed": true,
+        "present_latent_event": 1.0
+      }
+    },
+    {
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "attempt_strict_dose_response": true,
+        "control_locality_unchanged": true,
+        "execution_strict_dose_response": true,
+        "latent_propensity_strict_dose_response": true,
+        "positive_capacity_has_target_support": true,
+        "target_truth_does_not_change_planning": true,
+        "target_truth_gates_realization": true,
+        "zero_capacity_zero_attempt": true,
+        "zero_capacity_zero_propensity": true
+      },
+      "passed": true,
+      "reference_nonfielded_weight": 0.29,
+      "rows": [
+        {
+          "attempt_probability": 0.0,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 0.0,
+          "execution_probability": 0.0,
+          "expected_nonfielded_latent_event_propensity": 0.0,
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_target_supported": false,
+          "total_fighter_equivalents": 0.0
+        },
+        {
+          "attempt_probability": 0.00498752080731768,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 5.0,
+          "execution_probability": 0.5422358855988493,
+          "expected_nonfielded_latent_event_propensity": 0.00042810027344464583,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 5.0
+        },
+        {
+          "attempt_probability": 0.009367612673195858,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 10.0,
+          "execution_probability": 0.615358873518161,
+          "expected_nonfielded_latent_event_propensity": 0.0009124937984816337,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 10.0
+        },
+        {
+          "attempt_probability": 0.019801326693244747,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 25.0,
+          "execution_probability": 0.7154845405526278,
+          "expected_nonfielded_latent_event_propensity": 0.002242678770807928,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 25.0
+        },
+        {
+          "attempt_probability": 0.0314934179208024,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 50.0,
+          "execution_probability": 0.7860030855966228,
+          "expected_nonfielded_latent_event_propensity": 0.0039184704486370375,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 50.0
+        },
+        {
+          "attempt_probability": 0.0446851296922135,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 100.0,
+          "execution_probability": 0.8441208798441101,
+          "expected_nonfielded_latent_event_propensity": 0.005970905451749145,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 100.0
+        },
+        {
+          "attempt_probability": 0.05968322098604295,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 250.0,
+          "execution_probability": 0.8958258332961956,
+          "expected_nonfielded_latent_event_propensity": 0.008463468144296203,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 250.0
+        },
+        {
+          "attempt_probability": 0.0672007033359675,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 500.0,
+          "execution_probability": 0.9180634225845274,
+          "expected_nonfielded_latent_event_propensity": 0.009766051983823517,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 500.0
+        }
+      ],
+      "seed": 2026090505,
+      "target_access_falsifier": {
+        "missing_failure_reason": "believed_human_target_absent",
+        "missing_latent_event": 0.0,
+        "planning_weights_unchanged_when_hidden_target_removed": true,
+        "present_latent_event": 1.0
+      }
+    },
+    {
+      "control_locality": "D04-L01",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "attempt_strict_dose_response": true,
+        "control_locality_unchanged": true,
+        "execution_strict_dose_response": true,
+        "latent_propensity_strict_dose_response": true,
+        "positive_capacity_has_target_support": true,
+        "target_truth_does_not_change_planning": true,
+        "target_truth_gates_realization": true,
+        "zero_capacity_zero_attempt": true,
+        "zero_capacity_zero_propensity": true
+      },
+      "passed": true,
+      "reference_nonfielded_weight": 0.29,
+      "rows": [
+        {
+          "attempt_probability": 0.0,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 0.0,
+          "execution_probability": 0.0,
+          "expected_nonfielded_latent_event_propensity": 0.0,
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_target_supported": false,
+          "total_fighter_equivalents": 0.0
+        },
+        {
+          "attempt_probability": 0.00498752080731768,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 5.0,
+          "execution_probability": 0.5422358855988493,
+          "expected_nonfielded_latent_event_propensity": 0.00042810027344464583,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 5.0
+        },
+        {
+          "attempt_probability": 0.009367612673195858,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 10.0,
+          "execution_probability": 0.615358873518161,
+          "expected_nonfielded_latent_event_propensity": 0.0009124937984816337,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 10.0
+        },
+        {
+          "attempt_probability": 0.019801326693244747,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 25.0,
+          "execution_probability": 0.7154845405526278,
+          "expected_nonfielded_latent_event_propensity": 0.002242678770807928,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 25.0
+        },
+        {
+          "attempt_probability": 0.0314934179208024,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 50.0,
+          "execution_probability": 0.7860030855966228,
+          "expected_nonfielded_latent_event_propensity": 0.0039184704486370375,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 50.0
+        },
+        {
+          "attempt_probability": 0.0446851296922135,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 100.0,
+          "execution_probability": 0.8441208798441101,
+          "expected_nonfielded_latent_event_propensity": 0.005970905451749145,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 100.0
+        },
+        {
+          "attempt_probability": 0.05968322098604295,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 250.0,
+          "execution_probability": 0.8958258332961956,
+          "expected_nonfielded_latent_event_propensity": 0.008463468144296203,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 250.0
+        },
+        {
+          "attempt_probability": 0.0672007033359675,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 500.0,
+          "execution_probability": 0.9180634225845274,
+          "expected_nonfielded_latent_event_propensity": 0.009766051983823517,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 500.0
+        }
+      ],
+      "seed": 2026090506,
+      "target_access_falsifier": {
+        "missing_failure_reason": "believed_human_target_absent",
+        "missing_latent_event": 0.0,
+        "planning_weights_unchanged_when_hidden_target_removed": true,
+        "present_latent_event": 1.0
+      }
+    },
+    {
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "attempt_strict_dose_response": true,
+        "control_locality_unchanged": true,
+        "execution_strict_dose_response": true,
+        "latent_propensity_strict_dose_response": true,
+        "positive_capacity_has_target_support": true,
+        "target_truth_does_not_change_planning": true,
+        "target_truth_gates_realization": true,
+        "zero_capacity_zero_attempt": true,
+        "zero_capacity_zero_propensity": true
+      },
+      "passed": true,
+      "reference_nonfielded_weight": 0.29,
+      "rows": [
+        {
+          "attempt_probability": 0.0,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 0.0,
+          "execution_probability": 0.0,
+          "expected_nonfielded_latent_event_propensity": 0.0,
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_target_supported": false,
+          "total_fighter_equivalents": 0.0
+        },
+        {
+          "attempt_probability": 0.00498752080731768,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 5.0,
+          "execution_probability": 0.5422358855988493,
+          "expected_nonfielded_latent_event_propensity": 0.00042810027344464583,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 5.0
+        },
+        {
+          "attempt_probability": 0.009367612673195858,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 10.0,
+          "execution_probability": 0.615358873518161,
+          "expected_nonfielded_latent_event_propensity": 0.0009124937984816337,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 10.0
+        },
+        {
+          "attempt_probability": 0.019801326693244747,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 25.0,
+          "execution_probability": 0.7154845405526278,
+          "expected_nonfielded_latent_event_propensity": 0.002242678770807928,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 25.0
+        },
+        {
+          "attempt_probability": 0.0314934179208024,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 50.0,
+          "execution_probability": 0.7860030855966228,
+          "expected_nonfielded_latent_event_propensity": 0.0039184704486370375,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 50.0
+        },
+        {
+          "attempt_probability": 0.0446851296922135,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 100.0,
+          "execution_probability": 0.8441208798441101,
+          "expected_nonfielded_latent_event_propensity": 0.005970905451749145,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 100.0
+        },
+        {
+          "attempt_probability": 0.05968322098604295,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 250.0,
+          "execution_probability": 0.8958258332961956,
+          "expected_nonfielded_latent_event_propensity": 0.008463468144296203,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 250.0
+        },
+        {
+          "attempt_probability": 0.0672007033359675,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 500.0,
+          "execution_probability": 0.9180634225845274,
+          "expected_nonfielded_latent_event_propensity": 0.009766051983823517,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 500.0
+        }
+      ],
+      "seed": 2026090507,
+      "target_access_falsifier": {
+        "missing_failure_reason": "believed_human_target_absent",
+        "missing_latent_event": 0.0,
+        "planning_weights_unchanged_when_hidden_target_removed": true,
+        "present_latent_event": 1.0
+      }
+    },
+    {
+      "control_locality": "D01-L02",
+      "focal_locality": "D01-L01",
+      "gates": {
+        "attempt_strict_dose_response": true,
+        "control_locality_unchanged": true,
+        "execution_strict_dose_response": true,
+        "latent_propensity_strict_dose_response": true,
+        "positive_capacity_has_target_support": true,
+        "target_truth_does_not_change_planning": true,
+        "target_truth_gates_realization": true,
+        "zero_capacity_zero_attempt": true,
+        "zero_capacity_zero_propensity": true
+      },
+      "passed": true,
+      "reference_nonfielded_weight": 0.29,
+      "rows": [
+        {
+          "attempt_probability": 0.0,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 0.0,
+          "execution_probability": 0.0,
+          "expected_nonfielded_latent_event_propensity": 0.0,
+          "nonfielded_choice_probability": 0.0,
+          "nonfielded_target_supported": false,
+          "total_fighter_equivalents": 0.0
+        },
+        {
+          "attempt_probability": 0.00498752080731768,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 5.0,
+          "execution_probability": 0.5422358855988493,
+          "expected_nonfielded_latent_event_propensity": 0.00042810027344464583,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 5.0
+        },
+        {
+          "attempt_probability": 0.009367612673195858,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 10.0,
+          "execution_probability": 0.615358873518161,
+          "expected_nonfielded_latent_event_propensity": 0.0009124937984816337,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 10.0
+        },
+        {
+          "attempt_probability": 0.019801326693244747,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 25.0,
+          "execution_probability": 0.7154845405526278,
+          "expected_nonfielded_latent_event_propensity": 0.002242678770807928,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 25.0
+        },
+        {
+          "attempt_probability": 0.0314934179208024,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 50.0,
+          "execution_probability": 0.7860030855966228,
+          "expected_nonfielded_latent_event_propensity": 0.0039184704486370375,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 50.0
+        },
+        {
+          "attempt_probability": 0.0446851296922135,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 100.0,
+          "execution_probability": 0.8441208798441101,
+          "expected_nonfielded_latent_event_propensity": 0.005970905451749145,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 100.0
+        },
+        {
+          "attempt_probability": 0.05968322098604295,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 250.0,
+          "execution_probability": 0.8958258332961956,
+          "expected_nonfielded_latent_event_propensity": 0.008463468144296203,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 250.0
+        },
+        {
+          "attempt_probability": 0.0672007033359675,
+          "control_locality_attempt_probability": 0.0,
+          "dose": 500.0,
+          "execution_probability": 0.9180634225845274,
+          "expected_nonfielded_latent_event_propensity": 0.009766051983823517,
+          "nonfielded_choice_probability": 0.15829694323144106,
+          "nonfielded_target_supported": true,
+          "total_fighter_equivalents": 500.0
+        }
+      ],
+      "seed": 2026090508,
+      "target_access_falsifier": {
+        "missing_failure_reason": "believed_human_target_absent",
+        "missing_latent_event": 0.0,
+        "planning_weights_unchanged_when_hidden_target_removed": true,
+        "present_latent_event": 1.0
+      }
+    }
+  ],
+  "runner_sha256": "12e949b537b2daf73139a5a9718dc25504dcd02df501631bb8ce40b64d568ba4",
+  "schema_version": "pineland.state_to_action_transmission_recovery.v1"
+}

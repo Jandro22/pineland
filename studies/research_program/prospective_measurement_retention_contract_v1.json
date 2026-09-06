@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "synthetic_prospective_measurement_retention_v1",
+  "status": "prospective_after_nepal_retention_identification_failure",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "purpose": "Prove that future validation runs can retain the locality/time-resolved latent, belief, support, lifecycle, and recorded layers required for construct validation without changing model dynamics.",
+  "synthetic_design": {
+    "seeds": [2026090521, 2026090522],
+    "agent_count": 150,
+    "locality_count": 17,
+    "horizon_days": 7,
+    "daily_snapshot_days": [0, 1, 2, 3, 4, 5, 6, 7]
+  },
+  "required_daily_layers": {
+    "truth": [
+      "seven-dimensional control for every locality/actor vector",
+      "formation locality, microzone, personnel, availability, readiness, command, moving/effectiveness state",
+      "fixed security-post locality/microzone/personnel/availability",
+      "patrol locality/microzone/availability and route history",
+      "organization-locality manpower pools"
+    ],
+    "actor_information": [
+      "observer-target-locality control beliefs with confidence and update time",
+      "presence beliefs with personnel/presence estimates and confidence",
+      "node-local presence beliefs where present"
+    ],
+    "action_support": [
+      "local fighter equivalents split into fielded/unfielded",
+      "battle, nonfielded-human-target, asset, and coercion support booleans/quantities"
+    ],
+    "record_layer": [
+      "latent synthetic record identity and recorded flag",
+      "reported event type/severity/actor/geocoding fields"
+    ]
+  },
+  "required_event_boundary_layer": [
+    "formation births",
+    "formation removals",
+    "formation locality/microzone/moving/status changes",
+    "event time",
+    "event type",
+    "process event id"
+  ],
+  "scientific_firewall": [
+    "The observer is study-layer instrumentation only and may not modify transition equations, scheduler order, RNG streams, or recording probabilities.",
+    "An instrumented run must end in the same deterministic retained-state fingerprint as an otherwise identical uninstrumented run.",
+    "Historical Nepal is not rerun to repair its missing retention; the limitation is preserved.",
+    "Afghanistan's active historical confrontation is not modified or interrupted."
+  ],
+  "acceptance_gate": [
+    "all declared snapshot days captured",
+    "all required daily layers structurally present",
+    "event-boundary lifecycle detector passes birth/change/removal unit recovery",
+    "instrumented and baseline final retained-state fingerprints are identical for every seed",
+    "model hash is stable",
+    "historical tracked-diff hash is stable"
+  ],
+  "interpretation": "A pass validates prospective measurement retention architecture only. It does not repair Nepal construct validity, establish historical fit, or authorize parameter/core changes."
+  ,
+  "preflight_amendments": [
+    {
+      "reason": "Initial execution was rejected by SimulationConfig.validate before world generation because locality_count=12 is below Pineland's structural minimum of 17.",
+      "change": "locality_count 12 -> 17",
+      "scientific_outcomes_seen_before_change": false,
+      "acceptance_gate_changed": false,
+      "mechanism_or_parameter_changed": false
+    }
+  ]
+}
