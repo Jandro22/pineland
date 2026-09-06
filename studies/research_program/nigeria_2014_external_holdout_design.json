@@ -1,0 +1,91 @@
+{
+  "schema_version": "pineland.nigeria_2014_external_holdout_design.v1",
+  "case_id": "nigeria_boko_haram_2014",
+  "role": "fresh external one-year anti-overfit transfer test",
+  "target_year": 2014,
+  "simulation_initialization_date": "2013-01-01",
+  "forecast_start": "2014-01-01",
+  "forecast_end_exclusive": "2015-01-01",
+  "target_unit": "state-week",
+  "target_construct": "Boko Haram-government state-based violence incidence",
+  "outcome_source": {
+    "family": "UCDP GED 26.1",
+    "archive": "studies/afghanistan_2004_2021/data/raw/ged261-csv.zip",
+    "archive_sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
+    "event_type_rule": "type_of_violence == 1",
+    "country_rule": "country casefold == nigeria",
+    "government_regex": "(?i)^government of nigeria$",
+    "insurgent_regex": "(?i)(boko[ -]?haram|jama.?atu ahlis sunna|jama.?at ahl)",
+    "actor_fields": ["side_a", "side_b"],
+    "date_rule": "date_start determines event state-week; target scoring requires date_start in calendar 2014",
+    "preperiod_rule": "calendar 2013 matching events may identify initial geographic anchors only"
+  },
+  "geography_source": {
+    "family": "GADM 4.1",
+    "url": "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_NGA_1.json.zip",
+    "unit": "36 states plus Federal Capital Territory",
+    "license_note": "academic/non-commercial use"
+  },
+  "population_source": {
+    "family": "WorldPop Global 2000-2020 1km",
+    "url": "https://data.worldpop.org/GIS/Population/Global_2000_2020_1km/2014/NGA/nga_ppp_2014_1km_ASCII_XYZ.zip",
+    "doi": "10.5258/SOTON/WP00670",
+    "unit": "people per approximately 1km grid cell",
+    "license": "CC BY 4.0"
+  },
+  "case_construction": {
+    "one_locality_per_state": true,
+    "locality_coordinate": "population-weighted state centroid from WorldPop cells",
+    "state_population": "sum WorldPop 2014 cells within GADM state polygon",
+    "adjacency": "GADM polygon boundary intersection/touch; disconnected artifacts bridged only by shortest polygon distance and explicitly reported",
+    "terrain_friction": 1.0,
+    "infrastructure": 0.5,
+    "administrative_capacity": 0.5,
+    "observability": 0.5,
+    "language_pattern": "FS",
+    "neutral_covariate_rule": "No 2014 violence outcome may set any environmental covariate."
+  },
+  "initialization": {
+    "preperiod_year": 2013,
+    "insurgent_anchor_rule": "top five states by matching 2013 UCDP state-based event count, ties by state ID",
+    "initial_strengths": [5000, 10000, 20000],
+    "strength_role": "initialization uncertainty strata, not fitted values",
+    "agent_count": 740,
+    "stochastic_seeds": [20140117, 20140224, 20140331, 20140407]
+  },
+  "prediction": {
+    "primary_layer": "latent state-based violence",
+    "cell_probability": "Jeffreys-smoothed ensemble incidence: (hits + 0.5)/(members + 1)",
+    "recorded_layer": "diagnostic only until independently licensed"
+  },
+  "competitors": {
+    "fit_scope": "2013 matching target rows only",
+    "models": [
+      "global_rate",
+      "state_empirical_bayes",
+      "training_history_self_exciting"
+    ],
+    "state_empirical_bayes_prior_rows": 52,
+    "self_excitation_alpha": 0.18,
+    "self_excitation_decay_per_week": 0.20,
+    "2014_outcomes_update_history": false
+  },
+  "acceptance": {
+    "complete_12_member_ensemble": true,
+    "all_structural_and_conservation_gates": true,
+    "proper_score_rule": "Pineland must strictly beat the best 2013-trained competitor on both mean Brier loss and mean log score over every 2014 state-week cell.",
+    "cluster_bootstrap": {
+      "cluster": "state",
+      "repetitions": 5000,
+      "seed": 20140614,
+      "minimum_improvement_probability_brier": 0.95,
+      "minimum_improvement_probability_log_score": 0.95
+    },
+    "strength_robustness": "Each four-seed strength stratum must beat global_rate on at least one proper score and may be worse by no more than 0.002 Brier or 0.01 mean log score on the other.",
+    "no_post_reveal_changes": true
+  },
+  "interpretation": {
+    "pass": "Fresh external one-year empirical support against declared simple competitors; evidence against Afghanistan-specific outcome overfitting. Not proof of a universal theory.",
+    "fail": "Preserve failure; Nigeria 2014 becomes consumed and may not be used for tuning followed by re-testing on the same target."
+  }
+}
