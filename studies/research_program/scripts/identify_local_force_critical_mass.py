@@ -43,6 +43,36 @@ def _org(world):
     return next(o for o in world.organizations.values()
                 if o.kind is OrganizationKind.INSURGENT and o.status == "active")
 
+
+def _set_equipped_pool(world, org, lid: str, quantity: float) -> None:
+    """Set a synthetic pool while preserving its deliberately nonbinding funding."""
+    key = (org.organization_id, lid)
+    quantity = max(0.0, float(quantity))
+    supply_per_fighter = (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+    desired = quantity * supply_per_fighter
+    current = max(0.0, world.organization_manpower_supply_reserves.get(key, 0.0))
+    if desired > current:
+        delta = desired - current
+        if org.resources < delta:
+            raise RuntimeError("critical-mass fixture exhausted its nonbinding funding")
+        org.resources -= delta
+        world.cumulative_resource_to_supply += delta
+    elif current > desired:
+        # Removing a synthetic armed pool removes its associated equipment from
+        # usable organizational stock without violating material conservation.
+        world.demobilized_arms += current - desired
+    if quantity > 0:
+        world.organization_manpower_pools[key] = quantity
+    else:
+        world.organization_manpower_pools.pop(key, None)
+    if desired > 0:
+        world.organization_manpower_supply_reserves[key] = desired
+    else:
+        world.organization_manpower_supply_reserves.pop(key, None)
+
 def _targets(world, org, n: int) -> list[str]:
     occupied = {f.locality_id for f in world.formations.values()
                 if f.organization_id == org.organization_id and f.personnel > 0}
@@ -112,7 +142,7 @@ def run_concentration_condition(n: int, total_represented: float = 2000.0,
     share = total_represented / n
     cfg = world.config.organization_ecology
     for lid in lids:
-        world.organization_manpower_pools[(org.organization_id, lid)] = 0.0
+        _set_equipped_pool(world, org, lid, 0.0)
         _set_members(world, org, lid, share)
     tracer = LocalityActivationTracer(world)
     tracer.initialize(0.0)
@@ -155,7 +185,7 @@ def run_threshold_sweep(seed: int = SEED) -> dict[str, Any]:
         world = _world(seed)
         org = _org(world)
         lid = _targets(world, org, 1)[0]
-        world.organization_manpower_pools[(org.organization_id, lid)] = 0.0
+        _set_equipped_pool(world, org, lid, 0.0)
         _set_members(world, org, lid, mass)
         _, births = _apply_local_fighter_change(
             world, org, lid,
@@ -190,12 +220,12 @@ def run_pool_alignment(seed: int = SEED) -> dict[str, Any]:
         org = _org(world)
         recruit, a, b = _targets(world, org, 3)
         for lid in (recruit, a, b):
-            world.organization_manpower_pools[(org.organization_id, lid)] = 0.0
+            _set_equipped_pool(world, org, lid, 0.0)
         if condition == "aligned":
-            world.organization_manpower_pools[(org.organization_id, recruit)] = prepool
+            _set_equipped_pool(world, org, recruit, prepool)
         else:
-            world.organization_manpower_pools[(org.organization_id, a)] = prepool / 2
-            world.organization_manpower_pools[(org.organization_id, b)] = prepool / 2
+            _set_equipped_pool(world, org, a, prepool / 2)
+            _set_equipped_pool(world, org, b, prepool / 2)
         _set_members(world, org, recruit, new_members)
         tracer = LocalityActivationTracer(world)
         tracer.initialize(0.0)
@@ -223,7 +253,7 @@ def run_hysteresis(seed: int = SEED) -> dict[str, Any]:
     fo = _org(formed)
     fl = _targets(formed, fo, 1)[0]
     _set_members(formed, fo, fl, represented)
-    formed.organization_manpower_pools[(fo.organization_id, fl)] = prepool
+    _set_equipped_pool(formed, fo, fl, prepool)
     _apply_local_fighter_change(formed, fo, fl, recruited)
     _apply_local_fighter_change(formed, fo, fl, -loss)
     f_access = _access(formed, fo, fl)
@@ -233,7 +263,7 @@ def run_hysteresis(seed: int = SEED) -> dict[str, Any]:
     po = _org(pooled)
     pl = _targets(pooled, po, 1)[0]
     _set_members(pooled, po, pl, represented)
-    pooled.organization_manpower_pools[(po.organization_id, pl)] = current
+    _set_equipped_pool(pooled, po, pl, current)
     p_access = _access(pooled, po, pl)
 
     minimum = formed.config.organization_ecology.minimum_formation_personnel
@@ -268,7 +298,7 @@ def run_movement_control(seed: int = SEED) -> dict[str, Any]:
     represented = cfg.minimum_formation_personnel / cfg.fighter_conversion_fraction
     origin = _targets(world, org, 1)[0]
     target = sorted(world.adjacency[origin])[0]
-    world.organization_manpower_pools[(org.organization_id, origin)] = 0.0
+    _set_equipped_pool(world, org, origin, 0.0)
     _set_members(world, org, origin, represented)
 
     tracer = LocalityActivationTracer(world)

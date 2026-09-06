@@ -71,7 +71,8 @@ def run_one(seed: int, design: dict) -> dict:
     daily_layers = all(
         all(key in snap for key in ("truth", "actor_information", "action_support", "record_layer"))
         and all(key in snap["truth"] for key in (
-            "control", "formations", "security_posts", "patrols", "organization_manpower_pools"
+            "control", "formations", "security_posts", "patrols",
+            "organization_manpower_pools", "organization_manpower_supply_reserves"
         ))
         and all(key in snap["actor_information"] for key in (
             "control_beliefs", "presence_beliefs", "node_presence_beliefs"

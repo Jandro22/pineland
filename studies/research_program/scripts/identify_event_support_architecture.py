@@ -133,6 +133,10 @@ def run_study(seed: int = 2026090621) -> dict:
         key: value for key, value in absence.organization_manpower_pools.items()
         if key[0] != insurgent.organization_id
     }
+    absence.organization_manpower_supply_reserves = {
+        key: value for key, value in absence.organization_manpower_supply_reserves.items()
+        if key[0] != insurgent.organization_id
+    }
     absence.localities[locality_id].control["insurgent"] = ControlVector()
     absence.localities[locality_id].control["government"] = ControlVector()
     dominance_metrics = _event_metrics(dominance)

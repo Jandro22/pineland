@@ -126,6 +126,12 @@ def snapshot(world, label: str) -> dict:
         f"{organization_id}|{locality_id}": float(quantity)
         for (organization_id, locality_id), quantity in sorted(world.organization_manpower_pools.items())
     }
+    manpower_supply = {
+        f"{organization_id}|{locality_id}": float(quantity)
+        for (organization_id, locality_id), quantity in sorted(
+            world.organization_manpower_supply_reserves.items()
+        )
+    }
     control_beliefs = {
         f"{observer}|{target}|{locality_id}": {
             "control_estimate": belief.control_estimate.to_dict(),
@@ -174,6 +180,7 @@ def snapshot(world, label: str) -> dict:
             "security_posts": security_posts,
             "patrols": patrols,
             "organization_manpower_pools": manpower,
+            "organization_manpower_supply_reserves": manpower_supply,
         },
         "actor_information": {
             "control_beliefs": control_beliefs,
@@ -197,6 +204,10 @@ def retained_fingerprint(world) -> str:
         "security_posts": {key: asdict(value) for key, value in sorted(world.security_posts.items())},
         "patrols": {key: asdict(value) for key, value in sorted(world.patrols.items())},
         "manpower": {f"{a}|{l}": q for (a, l), q in sorted(world.organization_manpower_pools.items())},
+        "manpower_supply": {
+            f"{a}|{l}": q
+            for (a, l), q in sorted(world.organization_manpower_supply_reserves.items())
+        },
         "control_beliefs": {
             f"{o}|{t}|{l}": asdict(b) for (o, t, l), b in sorted(world.control_beliefs.items())
         },
@@ -259,7 +270,8 @@ def run_one(seed: int, design: dict) -> dict:
     daily_layers = all(
         all(key in snap for key in ("truth", "actor_information", "action_support", "record_layer"))
         and all(key in snap["truth"] for key in (
-            "control", "formations", "security_posts", "patrols", "organization_manpower_pools"
+            "control", "formations", "security_posts", "patrols",
+            "organization_manpower_pools", "organization_manpower_supply_reserves"
         ))
         and all(key in snap["actor_information"] for key in (
             "control_beliefs", "presence_beliefs", "node_presence_beliefs"

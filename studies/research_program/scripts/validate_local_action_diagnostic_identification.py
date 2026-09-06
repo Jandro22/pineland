@@ -91,8 +91,23 @@ def _set_control_belief(world, organization_id: str, locality_id: str, value: fl
 
 
 def _prepare_capacity_supply(world, organization_id: str, locality_id: str, capacity: float) -> None:
-    world.organization_manpower_pools[(organization_id, locality_id)] = max(0.0, float(capacity))
     organization = world.organizations[organization_id]
+    key = (organization_id, locality_id)
+    capacity = max(0.0, float(capacity))
+    world.organization_manpower_pools[key] = capacity
+    supply_per_fighter = (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+    reserve = capacity * supply_per_fighter
+    if reserve:
+        if organization.resources < reserve:
+            raise RuntimeError("synthetic capacity fixture lacks its declared material backing")
+        organization.resources -= reserve
+        world.cumulative_resource_to_supply += reserve
+        world.organization_manpower_supply_reserves[key] = reserve
+    else:
+        world.organization_manpower_supply_reserves.pop(key, None)
     organization.local_knowledge = 1.0
     organization.capital["material"] = 1.0
     source = next(item for item in world.supply_sources.values() if item.organization_id == organization_id)
@@ -206,6 +221,9 @@ def run_seed(seed: int, contract: dict) -> dict:
     # 1) Capacity gate.
     no_capacity = copy.deepcopy(base)
     no_capacity.organization_manpower_pools[(organization.organization_id, focal)] = 0.0
+    no_capacity.organization_manpower_supply_reserves.pop(
+        (organization.organization_id, focal), None
+    )
     no_capacity_result = ProcessEngine(no_capacity, rng=random.Random(1)).on_organized_action(
         "NO-CAPACITY", _event(organization.organization_id, focal, interval)
     )

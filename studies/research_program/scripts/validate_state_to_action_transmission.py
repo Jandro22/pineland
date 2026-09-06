@@ -66,7 +66,22 @@ def _fixed_target_localities(world, organization_id: str) -> list[str]:
 def _prepare_dose_world(base, organization_id: str, locality_id: str, dose: float):
     world = copy.deepcopy(base)
     organization = world.organizations[organization_id]
-    world.organization_manpower_pools[(organization_id, locality_id)] = float(dose)
+    key = (organization_id, locality_id)
+    dose = max(0.0, float(dose))
+    world.organization_manpower_pools[key] = dose
+    supply_per_fighter = (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+    reserve = dose * supply_per_fighter
+    if reserve:
+        if organization.resources < reserve:
+            raise RuntimeError("synthetic dose fixture lacks its declared nonbinding funding")
+        organization.resources -= reserve
+        world.cumulative_resource_to_supply += reserve
+        world.organization_manpower_supply_reserves[key] = reserve
+    else:
+        world.organization_manpower_supply_reserves.pop(key, None)
     organization.local_knowledge = 1.0
     organization.capital["material"] = 1.0
     source = next(
