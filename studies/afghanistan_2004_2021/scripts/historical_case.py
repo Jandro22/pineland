@@ -215,8 +215,8 @@ def _install_pakistan(world, inputs: dict[str, Any]) -> None:
     )
 
 
-def _scale_police_posts(world, inputs: dict[str, Any]) -> None:
-    target = float(inputs["initialization"]["anp"]["personnel"])
+def _set_police_post_stock(world, target: float) -> None:
+    """Set the observed aggregate police stock using the declared spatial rule."""
     posts = [
         post for post in world.security_posts.values()
         if post.organization_id == "police" and post.formation_id is None
@@ -228,6 +228,12 @@ def _scale_police_posts(world, inputs: dict[str, Any]) -> None:
         share = world.localities[post.locality_id].population / total_population
         post.personnel = target * share
         post.fixed_presence = clamp(post.personnel / 250.0)
+
+
+def _scale_police_posts(world, inputs: dict[str, Any]) -> None:
+    _set_police_post_stock(
+        world, float(inputs["initialization"]["anp"]["personnel"])
+    )
 
 
 def _reset_accounting_baselines(world) -> None:
@@ -350,7 +356,7 @@ def initialization_diagnostics(world, inputs: dict[str, Any],
 
 
 class HistoricalCoalitionSchedule:
-    """Condition aggregate international-force stock at observed schedule dates."""
+    """Condition observed coalition and police stocks at their source dates."""
 
     def __init__(self, inputs: dict[str, Any]):
         self.schedule = []
@@ -360,6 +366,13 @@ class HistoricalCoalitionSchedule:
         self.schedule.sort(key=lambda item: item[0])
         # Day zero is already installed in condition_world.
         self.cursor = 1
+        self.police_schedule = []
+        for row in inputs["initialization"]["anp"].get("stock_schedule", []):
+            day = (date.fromisoformat(row["date"]) - START).days
+            self.police_schedule.append((day, dict(row)))
+        self.police_schedule.sort(key=lambda item: item[0])
+        # Day zero is already installed in condition_world.
+        self.police_cursor = 1
         self.applied: list[dict[str, Any]] = []
         self.control_validation_day = (
             date.fromisoformat(inputs["control_validation"]["source_date"]) - START
@@ -423,10 +436,35 @@ class HistoricalCoalitionSchedule:
             after,
         )
         self.applied.append({
+            "stock": "coalition_personnel",
             "time": world.time,
             "date": row["date"],
             "target_personnel": target,
             "realized_personnel": sum(f.personnel for f in formations),
+            "source_id": row["source_id"],
+            "observation_type": row["observation_type"],
+        })
+
+    def _apply_police_stock(self, world, target: float, row: dict[str, Any]) -> None:
+        before = world.tracked_stock_totals()
+        _set_police_post_stock(world, target)
+        after = world.tracked_stock_totals()
+        world.record_stock_transactions(
+            f"HIST-ANP-{row['date']}",
+            "policy_treatment",
+            before,
+            after,
+        )
+        realized = sum(
+            post.personnel for post in world.security_posts.values()
+            if post.organization_id == "police" and post.formation_id is None
+        )
+        self.applied.append({
+            "stock": "police_personnel",
+            "time": world.time,
+            "date": row["date"],
+            "target_personnel": target,
+            "realized_personnel": realized,
             "source_id": row["source_id"],
             "observation_type": row["observation_type"],
         })
@@ -436,6 +474,13 @@ class HistoricalCoalitionSchedule:
             _, row = self.schedule[self.cursor]
             self._apply_stock(world, float(row["total"]), row)
             self.cursor += 1
+        while (
+            self.police_cursor < len(self.police_schedule)
+            and self.police_schedule[self.police_cursor][0] <= time
+        ):
+            _, row = self.police_schedule[self.police_cursor]
+            self._apply_police_stock(world, float(row["total"]), row)
+            self.police_cursor += 1
         if self.control_snapshot is None and time >= self.control_validation_day:
             self.control_snapshot = {
                 locality_id: {

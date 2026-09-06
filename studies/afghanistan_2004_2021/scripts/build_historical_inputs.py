@@ -151,6 +151,20 @@ def main() -> None:
                     "spring 2004 State comment: rapidly growing police force "
                     "numbers over 6,000; 8,800+ fielded by 29 Apr 2004 testimony"
                 ),
+                "stock_schedule": [
+                    {
+                        "date": "2004-01-01",
+                        "total": 6000,
+                        "observation_type": "conservative_floor_carried_back_from_spring_2004",
+                        "source_id": "gao_04_403_state_comment",
+                    },
+                    {
+                        "date": "2004-04-29",
+                        "total": 8800,
+                        "observation_type": "dated_fielded_strength_floor",
+                        "source_id": "gao_04_403_congressional_testimony",
+                    },
+                ],
                 "not_claimed": "exact 1 Jan 2004 police headcount or district deployment",
             },
             "taliban": {

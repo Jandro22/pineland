@@ -39,6 +39,20 @@
       "personnel": 6000,
       "source_id": "gao_04_403_state_comment",
       "source_observation": "spring 2004 State comment: rapidly growing police force numbers over 6,000; 8,800+ fielded by 29 Apr 2004 testimony",
+      "stock_schedule": [
+        {
+          "date": "2004-01-01",
+          "observation_type": "conservative_floor_carried_back_from_spring_2004",
+          "source_id": "gao_04_403_state_comment",
+          "total": 6000
+        },
+        {
+          "date": "2004-04-29",
+          "observation_type": "dated_fielded_strength_floor",
+          "source_id": "gao_04_403_congressional_testimony",
+          "total": 8800
+        }
+      ],
       "value_semantics": "conservative_floor_carried_back_from_spring_2004"
     },
     "taliban": {

@@ -54,6 +54,12 @@ def test_historical_input_package_keeps_uncertainty_and_archived_troop_values():
     assert schedule["2018-01-01"]["us"] == 14000
     assert schedule["2021-01-15"]["total"] == 9592
     assert schedule["2021-08-15"]["total"] == 6000
+    police_schedule = {
+        row["date"]: row
+        for row in inputs["initialization"]["anp"]["stock_schedule"]
+    }
+    assert police_schedule["2004-01-01"]["total"] == 6000
+    assert police_schedule["2004-04-29"]["total"] == 8800
 
 
 def test_sigar_407_to_401_crosswalk_is_complete_except_patoo():
@@ -125,7 +131,38 @@ def test_observed_coalition_schedule_replaces_stock_without_breaking_ledgers(gen
         if formation.organization_id == "coalition"
     )
     assert personnel == pytest.approx(26700)
-    assert schedule.applied[-1]["date"] == "2005-01-01"
+    coalition_update = next(
+        item for item in schedule.applied
+        if item["stock"] == "coalition_personnel" and item["date"] == "2005-01-01"
+    )
+    assert coalition_update["realized_personnel"] == pytest.approx(26700)
     assert abs(world.stock_ledger_residual()) < 1e-8
     assert abs(world.supply_conservation_residual()) < 1e-8
+    world.assert_invariants()
+
+
+def test_observed_police_schedule_replaces_depleted_stock_and_records_inflow(generated_world):
+    world = generated_world.clone()
+    inputs = load_historical_inputs()
+    condition_world(world, inputs, 7500)
+    posts = [
+        post for post in world.security_posts.values()
+        if post.organization_id == "police" and post.formation_id is None
+    ]
+    before_loss = world.tracked_stock_totals()
+    posts[0].personnel = 0.0
+    world.record_stock_transactions(
+        "TEST-POLICE-LOSS", "organized_action", before_loss,
+        world.tracked_stock_totals(),
+    )
+    schedule = HistoricalCoalitionSchedule(inputs)
+    world.time = 119.0  # 2004-04-29 in a leap year.
+    schedule(world, world.time)
+    assert sum(post.personnel for post in posts) == pytest.approx(8800)
+    assert posts[0].personnel > 0
+    applied = next(item for item in schedule.applied if item["stock"] == "police_personnel")
+    assert applied["date"] == "2004-04-29"
+    assert any(item.event_id == "HIST-ANP-2004-04-29"
+               for item in world.stock_transactions)
+    assert abs(world.stock_ledger_residual()) < 1e-8
     world.assert_invariants()
