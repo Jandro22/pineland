@@ -389,6 +389,11 @@ def run_matched_recovery_tests(seed: int = 20260905) -> dict[str, Any]:
     config = SimulationConfig(seed=seed, horizon_days=1.0, agent_count=600,
                               locality_count=24, output_mode="calibration")
     base = generate_pineland(config)
+    # Matched stage-recovery tests condition on a nonbinding common resource
+    # budget so they isolate exposure, recruitment, conversion, and birth.
+    for organization in base.organizations.values():
+        if organization.kind is OrganizationKind.INSURGENT:
+            organization.resources = max(organization.resources, 1_000_000.0)
     frontier = _initial_frontier(base, _snapshot(base))
     if not frontier:
         return {"passed": False, "historical_outcomes_used": False,

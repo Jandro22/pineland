@@ -28,9 +28,16 @@ class _ZeroRng:
         return 0.0
 
 def _world(seed: int):
-    return generate_pineland(SimulationConfig(
+    world = generate_pineland(SimulationConfig(
         agent_count=600, locality_count=34, horizon_days=1, seed=seed,
         output_mode="ensemble"))
+    # This study identifies the spatial manpower threshold while holding
+    # financing nonbinding. Resource-backed mobilization otherwise conflates
+    # the intended critical-mass treatment with an accidental funding limit.
+    for organization in world.organizations.values():
+        if organization.kind is OrganizationKind.INSURGENT:
+            organization.resources = max(organization.resources, 1_000_000.0)
+    return world
 
 def _org(world):
     return next(o for o in world.organizations.values()
