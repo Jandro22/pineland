@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import ceil
+from math import ceil, cos, exp, hypot, pi, sin
 import heapq
 
 from .config import SimulationConfig
@@ -16,8 +16,7 @@ from .entities import (
     OrganizationKind,
     Person,
 )
-from .world import WorldState, seeded_rng
-from math import cos, pi, sin, hypot
+from .world import WorldState, seeded_initialization_rng
 from typing import Any
 from .networks import generate_social_network
 from .physical import generate_physical_world
@@ -73,13 +72,104 @@ def _language_vector(pattern: str, rng) -> dict[str, float]:
     return values
 
 
+def _balanced_bounded(values: list[float], target_mean: float,
+                      lower: float = 0.0, upper: float = 1.0) -> list[float]:
+    """Shift bounded prior draws so their represented mean is exact."""
+    if not values:
+        return []
+    target = max(lower, min(upper, float(target_mean)))
+    lo = lower - max(values)
+    hi = upper - min(values)
+    for _ in range(80):
+        mid = (lo + hi) / 2.0
+        shifted = [max(lower, min(upper, value + mid)) for value in values]
+        if sum(shifted) / len(shifted) < target:
+            lo = mid
+        else:
+            hi = mid
+    delta = (lo + hi) / 2.0
+    return [max(lower, min(upper, value + delta)) for value in values]
+
+
+def _empirical_language_prior_means(pattern: str) -> dict[str, float]:
+    parts = [part for part in pattern.split("/") if part in LANGUAGES]
+    primary = parts[0] if parts else "FS"
+    means = {language: .16 for language in LANGUAGES}
+    means[primary] = .85
+    for language in parts[1:]:
+        means[language] = .675
+    if primary != "FS":
+        means["FS"] = max(means["FS"], .475)
+    return means
+
+
+def _empirical_population_profiles(config: SimulationConfig, locality_id: str,
+                                   language_pattern: str, count: int) -> list[dict[str, Any]]:
+    """Build case-stable balanced prior quadrature for one empirical locality.
+
+    No historical outcome is consulted. The means are analytical means of the
+    pre-existing generic priors, with documented language midpoint semantics.
+    Stochastic forecast seeds therefore cannot invent different locality-level
+    political psychologies.
+    """
+    rng = seeded_initialization_rng(config, f"empirical-population:{locality_id}")
+    grievance = _balanced_bounded([rng.betavariate(2, 9) for _ in range(count)], 2 / 11)
+    fear = _balanced_bounded([rng.betavariate(2, 8) for _ in range(count)], .2)
+    efficacy = _balanced_bounded([rng.betavariate(4, 4) for _ in range(count)], .5)
+    identities = {
+        name: _balanced_bounded([rng.random() for _ in range(count)], .5)
+        for name in ("local", "district", "federal")
+    }
+    preferences = {
+        f"party-{index}": _balanced_bounded([rng.random() for _ in range(count)], .5)
+        for index in range(1, 4)
+    }
+    trust = {
+        "government": _balanced_bounded(
+            [rng.uniform(.3, .8) for _ in range(count)], .55, .3, .8
+        ),
+        "insurgent": _balanced_bounded(
+            [rng.uniform(.05, .35) for _ in range(count)], .20, .05, .35
+        ),
+    }
+    raw_languages = [_language_vector(language_pattern, rng) for _ in range(count)]
+    language_means = _empirical_language_prior_means(language_pattern)
+    languages = {
+        language: _balanced_bounded(
+            [row[language] for row in raw_languages], language_means[language]
+        )
+        for language in LANGUAGES
+    }
+    raw_resources = [rng.lognormvariate(0, .55) for _ in range(count)]
+    target_resource_mean = exp(.5 * .55 ** 2)
+    resource_scale = target_resource_mean / max(1e-12, sum(raw_resources) / count)
+    resources = [value * resource_scale for value in raw_resources]
+    raw_ages = [max(1, min(90, round(rng.normalvariate(34, 18)))) for _ in range(count)]
+    if count == 1:
+        raw_ages[0] = 34
+    return [
+        {
+            "age": raw_ages[index],
+            "languages": {language: languages[language][index] for language in LANGUAGES},
+            "identities": {name: identities[name][index] for name in identities},
+            "preferences": {name: preferences[name][index] for name in preferences},
+            "grievance": grievance[index],
+            "fear": fear[index],
+            "efficacy": efficacy[index],
+            "trust": {name: trust[name][index] for name in trust},
+            "resource_per_capita": resources[index],
+        }
+        for index in range(count)
+    ]
+
+
 def generate_pineland(config: SimulationConfig | None = None,
                       empirical_geography: dict[str, Any] | None = None) -> WorldState:
     config = config or SimulationConfig()
     config.validate()
-    rng = seeded_rng(config, "world-generation")
-    geography_rng = seeded_rng(config, "geography-generation")
-    force_rng = seeded_rng(config, "force-generation")
+    rng = seeded_initialization_rng(config, "world-generation")
+    geography_rng = seeded_initialization_rng(config, "geography-generation")
+    force_rng = seeded_initialization_rng(config, "force-generation")
     world = WorldState(config=config)
 
     for row in DISTRICT_REGISTRY:
@@ -211,6 +301,8 @@ def generate_pineland(config: SimulationConfig | None = None,
     # multinomial expectation.
     person_index = 0
     household_index = 0
+    empirical_profiles: dict[str, list[dict[str, Any]]] = {}
+    empirical_profile_cursor: dict[str, int] = {}
 
     def add_household(locality_id: str, size: int, person_weight: float) -> None:
         nonlocal person_index, household_index
@@ -220,20 +312,42 @@ def generate_pineland(config: SimulationConfig | None = None,
         for _ in range(size):
             person_id = f"P{person_index:08d}"
             member_ids.append(person_id)
-            languages = _language_vector(district.language_pattern, rng)
-            preferences = {f"party-{j}": rng.random() for j in range(1, 4)}
+            profile = None
+            if locality_id in empirical_profiles:
+                cursor = empirical_profile_cursor.get(locality_id, 0)
+                profile = empirical_profiles[locality_id][cursor]
+                empirical_profile_cursor[locality_id] = cursor + 1
+            languages = (
+                dict(profile["languages"]) if profile is not None
+                else _language_vector(district.language_pattern, rng)
+            )
+            preferences = (
+                dict(profile["preferences"]) if profile is not None
+                else {f"party-{j}": rng.random() for j in range(1, 4)}
+            )
             person = Person(
                 person_id, household_id, locality_id, locality_id, person_weight,
-                max(1, min(90, round(rng.normalvariate(34, 18)))), languages,
-                {"local": rng.random(), "district": rng.random(), "federal": rng.random()}, preferences,
-                grievance=max(0, min(1, rng.betavariate(2, 9))), fear=rng.betavariate(2, 8),
-                efficacy=rng.betavariate(4, 4), expected_control={"government": .7, "insurgent": .1},
-                trust={"government": rng.uniform(.3, .8), "insurgent": rng.uniform(.05, .35)},
+                (profile["age"] if profile is not None
+                 else max(1, min(90, round(rng.normalvariate(34, 18))))),
+                languages,
+                (dict(profile["identities"]) if profile is not None else
+                 {"local": rng.random(), "district": rng.random(), "federal": rng.random()}),
+                preferences,
+                grievance=(profile["grievance"] if profile is not None
+                           else max(0, min(1, rng.betavariate(2, 9)))),
+                fear=(profile["fear"] if profile is not None else rng.betavariate(2, 8)),
+                efficacy=(profile["efficacy"] if profile is not None else rng.betavariate(4, 4)),
+                expected_control={"government": .7, "insurgent": .1},
+                trust=(dict(profile["trust"]) if profile is not None else
+                       {"government": rng.uniform(.3, .8), "insurgent": rng.uniform(.05, .35)}),
                 # Draw a per-capita endowment, then materialize the liquid
                 # stock owned by the represented cohort. The old token-level
                 # draw made national civilian resources proportional to
                 # agent_count rather than represented population.
-                resources=person_weight * rng.lognormvariate(0, .55),
+                resources=person_weight * (
+                    profile["resource_per_capita"] if profile is not None
+                    else rng.lognormvariate(0, .55)
+                ),
             )
             world.persons[person_id] = person
             person_index += 1
@@ -262,6 +376,13 @@ def generate_pineland(config: SimulationConfig | None = None,
             extra[locality_id] += 1
         for locality_id in locality_ids:
             count = 1 + extra[locality_id]
+            empirical_profiles[locality_id] = _empirical_population_profiles(
+                config,
+                locality_id,
+                world.districts[world.localities[locality_id].district_id].language_pattern,
+                count,
+            )
+            empirical_profile_cursor[locality_id] = 0
             person_weight = world.localities[locality_id].population / count
             remaining = count
             while remaining:
@@ -436,6 +557,10 @@ def _replace_with_empirical_geography(world: WorldState,
             float(row.get("urbanization", .35)), row.get("language_pattern", "FS"),
             row.get("role", "empirical geographic container"),
             float(row.get("connectivity", .5)),
+            empirical_covariates={
+                str(key): float(value)
+                for key, value in dict(row.get("empirical_covariates", {})).items()
+            },
         )
         world.districts[district.district_id] = district
         if schema == "2.0.0":

@@ -1122,3 +1122,17 @@ def seeded_rng(config: SimulationConfig, stream: str) -> random.Random:
     token = f"{config.seed}:{config.random_stream_namespace}:{stream}".encode()
     value = int.from_bytes(__import__("hashlib").sha256(token).digest()[:8], "big")
     return random.Random(value)
+
+
+def seeded_initialization_rng(config: SimulationConfig, stream: str) -> random.Random:
+    """Return a reproducible RNG for initial latent-state construction.
+
+    Empirical ensembles often need to hold the initial latent world fixed while
+    varying only subsequent process randomness. Falling back to seed keeps old
+    configurations on the former stream identity; an explicit initialization
+    seed decouples those two uncertainty sources.
+    """
+    seed = config.seed if config.initialization_seed is None else config.initialization_seed
+    token = f"{seed}:{config.random_stream_namespace}:{stream}".encode()
+    value = int.from_bytes(__import__("hashlib").sha256(token).digest()[:8], "big")
+    return random.Random(value)

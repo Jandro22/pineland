@@ -10,6 +10,7 @@ from pineland_sim import SimulationConfig, generate_pineland
 from pineland_sim.entities import OrganizationKind
 from pineland_sim.logistics import (
     _sanctuary_access,
+    _select_insurgent_operational_posture,
     choose_reallocation_orders,
     reallocation_decision_probability,
     reallocation_destination_score,
@@ -26,6 +27,20 @@ class MaxChoiceRng:
     def choices(self, population, weights, k):
         index = max(range(len(weights)), key=weights.__getitem__)
         return [population[index]]
+
+
+class FixedPostureRng:
+    def __init__(self, random_value, posture):
+        self.random_value = random_value
+        self.posture = posture
+        self.choice_calls = 0
+
+    def random(self):
+        return self.random_value
+
+    def choices(self, population, weights, k):
+        self.choice_calls += 1
+        return [self.posture]
 
 
 def synthetic_world(seed: int = 20260905):
@@ -183,6 +198,67 @@ def test_insurgent_policy_supports_frontier_and_persistent_foothold_channels():
     )
     assert with_foothold["foothold"] == 1.0
     assert with_foothold["utility"] > secure_score["utility"]
+
+
+def test_insurgent_posture_uses_existing_persistence_and_portfolio_weights():
+    world = synthetic_world(2026090531)
+    formation = focal(world, insurgent=True)
+    organization = world.organizations[formation.organization_id]
+    formation.operational_posture = "stronghold"
+    organization.persistence = 1.0
+    retain = FixedPostureRng(.5, "frontier")
+    assert _select_insurgent_operational_posture(world, formation, retain) == "stronghold"
+    assert retain.choice_calls == 0
+
+    organization.persistence = 0.0
+    redraw = FixedPostureRng(.5, "foothold")
+    assert _select_insurgent_operational_posture(world, formation, redraw) == "foothold"
+    assert redraw.choice_calls == 1
+    assert formation.operational_posture == "foothold"
+
+
+def test_posture_specific_scores_recover_existing_theory_channels():
+    world = synthetic_world(2026090532)
+    formation = focal(world, insurgent=True)
+    organization = world.organizations[formation.organization_id]
+    organization.external_sanctuary = 0.0
+    organization.sponsor_dependence.clear()
+    locality_id = next(
+        locality_id for locality_id in sorted(world.localities)
+        if locality_id != formation.locality_id
+    )
+    set_control_beliefs(
+        world, formation, locality_id,
+        own=.8, opponent=.2, own_confidence=.6, opponent_confidence=.6,
+    )
+    common = dict(
+        travel_hours=0.0,
+        maximum_population=world.localities[locality_id].population,
+        footholds={locality_id: .7},
+        route=[formation.locality_id, locality_id],
+    )
+    frontier = reallocation_destination_score(
+        world, formation, locality_id, posture="frontier", **common
+    )
+    foothold = reallocation_destination_score(
+        world, formation, locality_id, posture="foothold", **common
+    )
+    stronghold = reallocation_destination_score(
+        world, formation, locality_id, posture="stronghold", **common
+    )
+    exploration = reallocation_destination_score(
+        world, formation, locality_id, posture="exploration", **common
+    )
+    assert frontier["strategic"] == frontier["frontier"]
+    assert foothold["strategic"] == foothold["foothold"]
+    assert stronghold["strategic"] == stronghold["own_control"]
+    assert exploration["strategic"] == exploration["uncertainty"]
+    assert {
+        frontier["operational_posture"],
+        foothold["operational_posture"],
+        stronghold["operational_posture"],
+        exploration["operational_posture"],
+    } == {"frontier", "foothold", "stronghold", "exploration"}
 
 
 def test_low_confidence_does_not_make_extreme_control_a_hidden_strong_signal():

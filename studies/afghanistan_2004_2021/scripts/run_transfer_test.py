@@ -44,6 +44,10 @@ def _config(seed: int, horizon: float):
 
     config = SimulationConfig(
         seed=seed,
+        # Hold January-2004 latent construction fixed across stochastic
+        # forecast members. This seed predates the benchmark and is not chosen
+        # from any 2004+ outcome.
+        initialization_seed=20040101,
         horizon_days=horizon,
         agent_count=401,
         locality_count=401,

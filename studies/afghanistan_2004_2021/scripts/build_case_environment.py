@@ -10,6 +10,7 @@ No 2004-2021 benchmark outcome is used in case construction.
 from __future__ import annotations
 
 import csv
+from collections import deque
 import hashlib
 import io
 import json
@@ -39,6 +40,43 @@ def sha256(path: Path) -> str:
 def rows(path: Path) -> list[dict[str, str]]:
     with path.open(encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
+
+
+def topology_connectivity(neighbors: dict[str, list[str]]) -> dict[str, float]:
+    """Return outcome-free percentile harmonic closeness on the district graph.
+
+    The empirical adapter previously assigned connectivity=.5 to every Afghan
+    district even though a frozen national adjacency graph was already part of
+    the case package. Harmonic closeness uses only that pre-outcome topology.
+    Percentile scaling preserves ordering without introducing a fitted
+    coefficient or importing later road-network data.
+    """
+    nodes = sorted(neighbors)
+    raw: dict[str, float] = {}
+    for source in nodes:
+        distance = {source: 0}
+        queue = deque([source])
+        while queue:
+            node = queue.popleft()
+            for target in neighbors.get(node, []):
+                if target not in distance:
+                    distance[target] = distance[node] + 1
+                    queue.append(target)
+        if len(distance) != len(nodes):
+            raise RuntimeError(f"district adjacency disconnected from {source}")
+        raw[source] = sum(
+            1.0 / steps for target, steps in distance.items()
+            if target != source and steps > 0
+        ) / max(1, len(nodes) - 1)
+
+    ordered_values = sorted(raw.values())
+    connectivity = {}
+    for node, value in raw.items():
+        lower = sum(candidate < value for candidate in ordered_values)
+        equal = sum(candidate == value for candidate in ordered_values)
+        average_rank = lower + (equal - 1) / 2.0
+        connectivity[node] = average_rank / max(1, len(nodes) - 1)
+    return connectivity
 
 
 def preperiod_taliban_anchors(count: int = 8) -> tuple[list[str], dict[str, int]]:
@@ -84,12 +122,25 @@ def main() -> None:
     center_rows = rows(PROCESSED / "district_centers.csv")
     population_rows = rows(PROCESSED / "population_2004.csv")
     adjacency = json.loads((PROCESSED / "district_adjacency.json").read_text(encoding="utf-8"))
+    graph_connectivity = topology_connectivity(adjacency["neighbors"])
     if (len(region_rows), len(province_rows), len(district_rows), len(center_rows),
             len(population_rows)) != (8, 34, 401, 401, 401):
         raise RuntimeError("unexpected Afghanistan processed geography dimensions")
 
     population = {row["district_id"]: int(row["population_2004"])
                   for row in population_rows}
+    population_covariates = {
+        row["district_id"]: {
+            "population_density_per_sqkm": float(row["population_density_per_sqkm"]),
+            "positive_worldpop_1km_cells": int(row["positive_worldpop_1km_cells"]),
+            "population_weighted_cell_density": float(
+                row["population_weighted_cell_density"]
+            ),
+            "effective_populated_cells": float(row["effective_populated_cells"]),
+            "settlement_concentration_hhi": float(row["settlement_concentration_hhi"]),
+        }
+        for row in population_rows
+    }
     centers = {row["district_id"]: row for row in center_rows}
     if set(population) != {row["district_id"] for row in district_rows} or set(centers) != set(population):
         raise RuntimeError("district population/center registry mismatch")
@@ -121,7 +172,8 @@ def main() -> None:
             "terrain": "empirical mixed terrain",
             "urbanization": 0.35,
             "language_pattern": "FS",
-            "connectivity": 0.5,
+            "connectivity": graph_connectivity[district_id],
+            "empirical_covariates": population_covariates[district_id],
             "role": "harmonized 2004-2021 physical district",
             "unit_type": row["unit_type"],
         })
@@ -180,6 +232,27 @@ def main() -> None:
             "administrative_capacity": 0.5,
             "observability": 0.5,
             "language_pattern": "FS pending independent district language-profile integration",
+        },
+        "derived_non_outcome_inputs": {
+            "district_connectivity": {
+                "source": "district_adjacency.json",
+                "estimand": "percentile harmonic closeness on the frozen 401-district adjacency graph",
+                "historical_outcomes_used": False,
+                "fitted_coefficients": False,
+            },
+            "worldpop_settlement_structure": {
+                "source": "afg_ppp_2004_1km_UNadj_ASCII_XYZ.zip",
+                "estimands": [
+                    "population_density_per_sqkm",
+                    "positive_worldpop_1km_cells",
+                    "population_weighted_cell_density",
+                    "effective_populated_cells",
+                    "settlement_concentration_hhi",
+                ],
+                "historical_outcomes_used": False,
+                "fitted_coefficients": False,
+                "model_equations_currently_changed_by_covariates": False,
+            },
         },
         "source_hashes": {
             "study_design.json": sha256(DESIGN),

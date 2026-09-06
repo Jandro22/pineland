@@ -111,6 +111,9 @@ class District:
     role: str
     connectivity: float
     locality_ids: list[str] = field(default_factory=list)
+    # Source-bound case covariates can be retained before a theory mapping is
+    # licensed. Keeping them here does not make them causal inputs by itself.
+    empirical_covariates: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -822,6 +825,11 @@ class ArmedFormation:
     external_state_id: str | None = None
     outside_pineland: bool = False
     current_microzone_id: str | None = None
+    # Persistent strategic mode for ordinary insurgent reallocation. This is
+    # not a historical label and does not change physical feasibility. The
+    # generic organization persistence trait governs whether an established
+    # posture survives the next strategic reconsideration.
+    operational_posture: str = "portfolio"
 
     def supply_fraction(self) -> float:
         return clamp(self.supply_stock / self.supply_capacity) if self.supply_capacity > 0 else clamp(self.sustainment)

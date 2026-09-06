@@ -8,7 +8,7 @@ import random
 from statistics import mean, median
 
 from .entities import LANGUAGES, SocialCommunity, SocialEdge, clamp
-from .world import WorldState, seeded_rng
+from .world import WorldState, seeded_initialization_rng
 
 
 def language_compatibility(first: dict[str, float], second: dict[str, float]) -> float:
@@ -178,7 +178,7 @@ def _language_profile(world: WorldState, member_ids: list[str]) -> dict[str, flo
 def generate_social_network(world: WorldState) -> None:
     """Build household, community, and cross-community information/social ties."""
     config = world.config.social_network
-    rng = seeded_rng(world.config, "social-network-generation")
+    rng = seeded_initialization_rng(world.config, "social-network-generation")
     world.social_communities.clear()
     world.social_edges.clear()
     world.social_neighbors = {person_id: [] for person_id in world.persons}

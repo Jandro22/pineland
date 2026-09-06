@@ -98,7 +98,7 @@ def run(seed: int, strength: float, output: Path) -> dict:
                 if owner == "insurgent"
             ),
         },
-        "empirical_2005_outcomes_read": false,
+        "empirical_2005_outcomes_read": False,
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

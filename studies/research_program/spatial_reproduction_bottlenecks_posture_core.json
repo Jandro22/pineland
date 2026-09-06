@@ -1,0 +1,839 @@
+{
+  "agent_count": 900,
+  "aggregate": {
+    "frontier_opportunity_count": 27,
+    "interpretation_rule": "Rank identified stages by conditional loss fraction. Movement is a competing gross-spread route and is excluded from net genealogy R_I.",
+    "largest_identified_bottleneck": "formation_birth",
+    "largest_local_reproduction_bottleneck": "formation_birth",
+    "ranking_by_conditional_loss_fraction": [
+      {
+        "loss_fraction": 0.7692307692307693,
+        "lost_opportunities": 10,
+        "opportunity_denominator": 13,
+        "rank": 1,
+        "stage": "formation_birth"
+      },
+      {
+        "loss_fraction": 0.4444444444444444,
+        "lost_opportunities": 12,
+        "opportunity_denominator": 27,
+        "rank": 2,
+        "stage": "movement_relocation"
+      },
+      {
+        "loss_fraction": 0.4090909090909091,
+        "lost_opportunities": 9,
+        "opportunity_denominator": 22,
+        "rank": 3,
+        "stage": "recruitment_response"
+      },
+      {
+        "loss_fraction": 0.3333333333333333,
+        "lost_opportunities": 1,
+        "opportunity_denominator": 3,
+        "rank": 4,
+        "stage": "survival_after_birth"
+      },
+      {
+        "loss_fraction": 0.18518518518518517,
+        "lost_opportunities": 5,
+        "opportunity_denominator": 27,
+        "rank": 5,
+        "stage": "contact_information_exposure"
+      },
+      {
+        "loss_fraction": 0.0,
+        "lost_opportunities": 0,
+        "opportunity_denominator": 13,
+        "rank": 6,
+        "stage": "local_fighter_conversion"
+      }
+    ],
+    "stage_counts": {
+      "contact_information_exposure": {
+        "denominator_definition": "initial road-adjacent unoccupied frontier localities",
+        "identified": true,
+        "loss_fraction": 0.18518518518518517,
+        "lost_opportunities": 5,
+        "opportunity_denominator": 27,
+        "realized_numerator": 22
+      },
+      "formation_birth": {
+        "denominator_definition": "frontier localities with positive recruitment-induced fighter conversion",
+        "identified": true,
+        "loss_fraction": 0.7692307692307693,
+        "lost_opportunities": 10,
+        "opportunity_denominator": 13,
+        "realized_numerator": 3
+      },
+      "local_fighter_conversion": {
+        "denominator_definition": "frontier localities with positive represented armed recruitment",
+        "identified": true,
+        "loss_fraction": 0.0,
+        "lost_opportunities": 0,
+        "opportunity_denominator": 13,
+        "realized_numerator": 13
+      },
+      "movement_relocation": {
+        "denominator_definition": "initial frontier localities; competing gross-spread route",
+        "identified": true,
+        "loss_fraction": 0.4444444444444444,
+        "lost_opportunities": 12,
+        "opportunity_denominator": 27,
+        "realized_numerator": 15
+      },
+      "recruitment_response": {
+        "denominator_definition": "frontier localities with source-attributed cross-local insurgent social exposure",
+        "identified": true,
+        "loss_fraction": 0.4090909090909091,
+        "lost_opportunities": 9,
+        "opportunity_denominator": 22,
+        "realized_numerator": 13
+      },
+      "survival_after_birth": {
+        "denominator_definition": "recruitment-born frontier locality activations with a complete survival follow-up window",
+        "identified": true,
+        "loss_fraction": 0.3333333333333333,
+        "lost_opportunities": 1,
+        "opportunity_denominator": 3,
+        "realized_numerator": 2
+      }
+    }
+  },
+  "core_changed_during_study": false,
+  "core_model_modified": false,
+  "core_source_hashes": {
+    "src/pineland_sim/config.py": "870839ea419c62794daa96c54e185fb6805a62e436e19664ecab69ffa0420916",
+    "src/pineland_sim/generator.py": "ba5981869a04e3563fc110add9e7b625552889691cc41936de651e0d7daa3b3c",
+    "src/pineland_sim/logistics.py": "3148e11a1358739db2b817ca6802623d09e574f2c1542c0dd9c5cc3378f8e0e1",
+    "src/pineland_sim/networks.py": "e57497142854e2374497ca9ecb7d629bcbdb85d5fb48dca6953be7a75acf7780",
+    "src/pineland_sim/organization_ecology.py": "cff9f9f462b8dc761bcb3f9f7de74d21dd86638d5504c66bbafb326386434849",
+    "src/pineland_sim/processes.py": "0dd4fab1efe1cbbcf72958dc2d779c656af90790fd22136b6d0c33797b7e64b1",
+    "src/pineland_sim/simulation.py": "36552264d38305af3d3d4b7cec26856b0dcc344b1adab14df066589d0396f4cf"
+  },
+  "empirical_parameter_fitting": false,
+  "estimand": "conditional stage realization in the initial road-connected synthetic frontier cohort",
+  "falsification_rules": {
+    "contact_information_exposure": "Deleting only the focal source-target social bridge eliminates focal target exposure; restoring it recovers exposure.",
+    "formation_birth": "Subthreshold fighter inflow pools; crossing the live minimum births a unit.",
+    "local_fighter_conversion": "With exposure and recruitment present, zero conversion yields zero local fighter gain and positive conversion recovers fighter gain.",
+    "movement_relocation": "A supplied command-passing connected movement order arrives.",
+    "recruitment_response": "With source exposure present, zero recruitment hazard blocks focal recruitment and a high hazard with matched draws recovers it.",
+    "survival_after_birth": "The matched newborn locality is viable with effective newborn force and nonviable when those newborns are made ineffective.",
+    "survival_censoring": "Births lacking complete follow-up are censored, not scored as deaths."
+  },
+  "historical_outcomes_used": false,
+  "horizon_days": 60.0,
+  "interpretive_guardrails": [
+    "The contact/information stage is cross-local social exposure, not combat contact.",
+    "Movement is a parallel gross-spread pathway and is not algebraically spliced into the sequential social-recruitment chain.",
+    "Conditional loss fractions use explicit stage-specific denominators and are diagnostic, not fitted causal effect sizes.",
+    "The observation-only genealogy R_I is supplementary and preserves relocation versus non-relocation pathway semantics."
+  ],
+  "locality_count": 24,
+  "matched_intervention_recovery": {
+    "birth_trigger_delta": 38.250000001,
+    "empirical_parameter_fitting": false,
+    "forced_movement_order_status": "arrived",
+    "historical_outcomes_used": false,
+    "minimum_formation_personnel": 75.0,
+    "passed": true,
+    "placebo_source_bridge_exposure": 0.0,
+    "pool_after_subthreshold_delta": 36.75,
+    "recovered_conversion_fighter_gain": 29333.333333333332,
+    "recovered_source_bridge_exposure": 0.005544541262060602,
+    "recovered_target_armed_fraction": 1.0,
+    "seed": 20260905,
+    "source_locality_id": "D08-L01",
+    "stage_gates": {
+      "contact_information_exposure": true,
+      "formation_birth": true,
+      "local_fighter_conversion": true,
+      "movement_relocation": true,
+      "recruitment_response": true,
+      "survival_after_birth": true
+    },
+    "subthreshold_fighter_delta": 36.75,
+    "survival_falsified_when_newborns_ineffective": true,
+    "survival_recovered": true,
+    "target_locality_id": "D01-L02",
+    "zero_conversion_fighter_gain": 0.0,
+    "zero_rate_target_armed_fraction": 0.0
+  },
+  "model_sha256_end": "d6ef4352d55778cff744eedfccedec0f2327cf51698df28b5ad4acea511f0276",
+  "model_sha256_start": "d6ef4352d55778cff744eedfccedec0f2327cf51698df28b5ad4acea511f0276",
+  "negative_results_preserved": true,
+  "provenance_valid": true,
+  "runs": [
+    {
+      "frontier_opportunity_count": 10,
+      "genealogy": {
+        "followup_days": 30.0,
+        "gross_R_I": 0.425531914893617,
+        "gross_by_pathway": {
+          "armed_member_migration": 0.0425531914893617,
+          "formation_relocation": 0.10638297872340426,
+          "formation_seeded_local_recruitment": 0.0425531914893617,
+          "local_member_to_force_generation": 0.19148936170212766,
+          "member_foothold_maturation": 0.0425531914893617
+        },
+        "identified": true,
+        "net_R_I_excluding_relocation_edges": 0.3191489361702128,
+        "note": "Supplementary observation-only genealogy; ranking uses frontier opportunities."
+      },
+      "horizon_days": 60.0,
+      "opportunities": [
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": 10.5,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D08-L01"
+          ],
+          "target_locality_id": "D01-L02"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D10-L01"
+          ],
+          "target_locality_id": "D01-L03"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": 23.5,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D06-L01"
+          ],
+          "target_locality_id": "D01-L04"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D08-L01"
+          ],
+          "target_locality_id": "D01-L06"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": 26.75,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D02-L01",
+            "D03-L01",
+            "D05-L01"
+          ],
+          "target_locality_id": "D04-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D16-L01"
+          ],
+          "target_locality_id": "D07-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": false,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D10-L01"
+          ],
+          "target_locality_id": "D09-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": 29.5,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D10-L01",
+            "D12-L01"
+          ],
+          "target_locality_id": "D11-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": false,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": 12.75,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D13-L01"
+          ],
+          "target_locality_id": "D14-L02"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": true,
+          "birth_survived_window": true,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": 21.0,
+          "local_birth_ids": [
+            "PRF-16"
+          ],
+          "recruitment_seen": true,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D10-L01"
+          ],
+          "target_locality_id": "D17-L01"
+        }
+      ],
+      "seed": 20260905,
+      "stage_counts": {
+        "contact_information_exposure": {
+          "denominator_definition": "initial road-adjacent unoccupied frontier localities",
+          "identified": true,
+          "loss_fraction": 0.2,
+          "lost_opportunities": 2,
+          "opportunity_denominator": 10,
+          "realized_numerator": 8
+        },
+        "formation_birth": {
+          "denominator_definition": "frontier localities with positive recruitment-induced fighter conversion",
+          "identified": true,
+          "loss_fraction": 0.8,
+          "lost_opportunities": 4,
+          "opportunity_denominator": 5,
+          "realized_numerator": 1
+        },
+        "local_fighter_conversion": {
+          "denominator_definition": "frontier localities with positive represented armed recruitment",
+          "identified": true,
+          "loss_fraction": 0.0,
+          "lost_opportunities": 0,
+          "opportunity_denominator": 5,
+          "realized_numerator": 5
+        },
+        "movement_relocation": {
+          "denominator_definition": "initial frontier localities; competing gross-spread route",
+          "identified": true,
+          "loss_fraction": 0.5,
+          "lost_opportunities": 5,
+          "opportunity_denominator": 10,
+          "realized_numerator": 5
+        },
+        "recruitment_response": {
+          "denominator_definition": "frontier localities with source-attributed cross-local insurgent social exposure",
+          "identified": true,
+          "loss_fraction": 0.375,
+          "lost_opportunities": 3,
+          "opportunity_denominator": 8,
+          "realized_numerator": 5
+        },
+        "survival_after_birth": {
+          "denominator_definition": "recruitment-born frontier locality activations with a complete survival follow-up window",
+          "identified": true,
+          "loss_fraction": 0.0,
+          "lost_opportunities": 0,
+          "opportunity_denominator": 1,
+          "realized_numerator": 1
+        }
+      }
+    },
+    {
+      "frontier_opportunity_count": 10,
+      "genealogy": {
+        "followup_days": 30.0,
+        "gross_R_I": 0.4318181818181818,
+        "gross_by_pathway": {
+          "armed_member_migration": 0.022727272727272728,
+          "formation_relocation": 0.18181818181818182,
+          "local_member_to_force_generation": 0.13636363636363635,
+          "member_foothold_maturation": 0.09090909090909091
+        },
+        "identified": true,
+        "net_R_I_excluding_relocation_edges": 0.25,
+        "note": "Supplementary observation-only genealogy; ranking uses frontier opportunities."
+      },
+      "horizon_days": 60.0,
+      "opportunities": [
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": 31.75,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D05-L01",
+            "D07-L01",
+            "D16-L01"
+          ],
+          "target_locality_id": "D06-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": 33.75,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D07-L01"
+          ],
+          "target_locality_id": "D06-L02"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": false,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": 9.5,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D10-L01"
+          ],
+          "target_locality_id": "D09-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D10-L01"
+          ],
+          "target_locality_id": "D09-L02"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": false,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": 7.75,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D03-L01",
+            "D04-L01"
+          ],
+          "target_locality_id": "D09-L03"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": true,
+          "birth_survived_window": true,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": 21.0,
+          "local_birth_ids": [
+            "PRF-14",
+            "PRF-21"
+          ],
+          "recruitment_seen": true,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D10-L01"
+          ],
+          "target_locality_id": "D11-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": 30.5,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D13-L01"
+          ],
+          "target_locality_id": "D12-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": 22.75,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D13-L01"
+          ],
+          "target_locality_id": "D14-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D07-L01"
+          ],
+          "target_locality_id": "D15-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D10-L01",
+            "D17-L02"
+          ],
+          "target_locality_id": "D17-L01"
+        }
+      ],
+      "seed": 20260906,
+      "stage_counts": {
+        "contact_information_exposure": {
+          "denominator_definition": "initial road-adjacent unoccupied frontier localities",
+          "identified": true,
+          "loss_fraction": 0.2,
+          "lost_opportunities": 2,
+          "opportunity_denominator": 10,
+          "realized_numerator": 8
+        },
+        "formation_birth": {
+          "denominator_definition": "frontier localities with positive recruitment-induced fighter conversion",
+          "identified": true,
+          "loss_fraction": 0.8,
+          "lost_opportunities": 4,
+          "opportunity_denominator": 5,
+          "realized_numerator": 1
+        },
+        "local_fighter_conversion": {
+          "denominator_definition": "frontier localities with positive represented armed recruitment",
+          "identified": true,
+          "loss_fraction": 0.0,
+          "lost_opportunities": 0,
+          "opportunity_denominator": 5,
+          "realized_numerator": 5
+        },
+        "movement_relocation": {
+          "denominator_definition": "initial frontier localities; competing gross-spread route",
+          "identified": true,
+          "loss_fraction": 0.4,
+          "lost_opportunities": 4,
+          "opportunity_denominator": 10,
+          "realized_numerator": 6
+        },
+        "recruitment_response": {
+          "denominator_definition": "frontier localities with source-attributed cross-local insurgent social exposure",
+          "identified": true,
+          "loss_fraction": 0.375,
+          "lost_opportunities": 3,
+          "opportunity_denominator": 8,
+          "realized_numerator": 5
+        },
+        "survival_after_birth": {
+          "denominator_definition": "recruitment-born frontier locality activations with a complete survival follow-up window",
+          "identified": true,
+          "loss_fraction": 0.0,
+          "lost_opportunities": 0,
+          "opportunity_denominator": 1,
+          "realized_numerator": 1
+        }
+      }
+    },
+    {
+      "frontier_opportunity_count": 7,
+      "genealogy": {
+        "followup_days": 30.0,
+        "gross_R_I": 0.38461538461538464,
+        "gross_by_pathway": {
+          "armed_member_migration": 0.07692307692307693,
+          "formation_relocation": 0.07692307692307693,
+          "local_member_to_force_generation": 0.1282051282051282,
+          "member_foothold_maturation": 0.10256410256410256
+        },
+        "identified": true,
+        "net_R_I_excluding_relocation_edges": 0.3076923076923077,
+        "note": "Supplementary observation-only genealogy; ranking uses frontier opportunities."
+      },
+      "horizon_days": 60.0,
+      "opportunities": [
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D02-L01",
+            "D02-L02"
+          ],
+          "target_locality_id": "D04-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": 59.0,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D07-L01",
+            "D16-L01"
+          ],
+          "target_locality_id": "D06-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": false,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D07-L01"
+          ],
+          "target_locality_id": "D06-L02"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": 26.5,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D07-L01"
+          ],
+          "target_locality_id": "D07-L02"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": true,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": 28.0,
+          "local_birth_ids": [
+            "PRF-14"
+          ],
+          "recruitment_seen": true,
+          "relocation_day": 29.5,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D12-L01"
+          ],
+          "target_locality_id": "D11-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": false,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": false,
+          "relocation_day": null,
+          "relocation_seen": false,
+          "source_locality_ids": [
+            "D13-L01"
+          ],
+          "target_locality_id": "D14-L01"
+        },
+        {
+          "access_seen": true,
+          "birth_complete_followup": false,
+          "birth_survived_window": false,
+          "exposure_seen": true,
+          "fighter_conversion_seen": true,
+          "local_birth_day": null,
+          "local_birth_ids": [],
+          "recruitment_seen": true,
+          "relocation_day": 51.5,
+          "relocation_seen": true,
+          "source_locality_ids": [
+            "D07-L01"
+          ],
+          "target_locality_id": "D15-L01"
+        }
+      ],
+      "seed": 20260907,
+      "stage_counts": {
+        "contact_information_exposure": {
+          "denominator_definition": "initial road-adjacent unoccupied frontier localities",
+          "identified": true,
+          "loss_fraction": 0.14285714285714285,
+          "lost_opportunities": 1,
+          "opportunity_denominator": 7,
+          "realized_numerator": 6
+        },
+        "formation_birth": {
+          "denominator_definition": "frontier localities with positive recruitment-induced fighter conversion",
+          "identified": true,
+          "loss_fraction": 0.6666666666666666,
+          "lost_opportunities": 2,
+          "opportunity_denominator": 3,
+          "realized_numerator": 1
+        },
+        "local_fighter_conversion": {
+          "denominator_definition": "frontier localities with positive represented armed recruitment",
+          "identified": true,
+          "loss_fraction": 0.0,
+          "lost_opportunities": 0,
+          "opportunity_denominator": 3,
+          "realized_numerator": 3
+        },
+        "movement_relocation": {
+          "denominator_definition": "initial frontier localities; competing gross-spread route",
+          "identified": true,
+          "loss_fraction": 0.42857142857142855,
+          "lost_opportunities": 3,
+          "opportunity_denominator": 7,
+          "realized_numerator": 4
+        },
+        "recruitment_response": {
+          "denominator_definition": "frontier localities with source-attributed cross-local insurgent social exposure",
+          "identified": true,
+          "loss_fraction": 0.5,
+          "lost_opportunities": 3,
+          "opportunity_denominator": 6,
+          "realized_numerator": 3
+        },
+        "survival_after_birth": {
+          "denominator_definition": "recruitment-born frontier locality activations with a complete survival follow-up window",
+          "identified": true,
+          "loss_fraction": 1.0,
+          "lost_opportunities": 1,
+          "opportunity_denominator": 1,
+          "realized_numerator": 0
+        }
+      }
+    }
+  ],
+  "schema_version": "1.0.0",
+  "script_sha256_end": "7f7596c319448eee13d1df781b972f363fa240df5b18e921459fa7a89a788f8e",
+  "script_sha256_start": "7f7596c319448eee13d1df781b972f363fa240df5b18e921459fa7a89a788f8e",
+  "seeds": [
+    20260905,
+    20260906,
+    20260907
+  ],
+  "status": "synthetic_connected_spatial_reproduction_bottleneck_decomposition",
+  "study_changed_during_study": false,
+  "survival_window_days": 14.0
+}

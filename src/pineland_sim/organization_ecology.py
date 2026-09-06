@@ -598,7 +598,7 @@ def synchronize_memberships(world) -> int:
 
 
 def initialize_organization_ecology(world) -> None:
-    rng = __import__("pineland_sim.world", fromlist=["seeded_rng"]).seeded_rng(
+    rng = __import__("pineland_sim.world", fromlist=["seeded_initialization_rng"]).seeded_initialization_rng(
         world.config, "organization-ecology-generation")
     for organization in armed_organizations(world, active_only=False):
         if not organization.member_ids:

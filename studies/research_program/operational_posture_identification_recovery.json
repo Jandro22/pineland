@@ -1,0 +1,247 @@
+{
+  "aggregate": {
+    "high_persistence": {
+      "mean_occupied_localities": 19.375,
+      "mean_posture_run_command_boundaries": 25.553033986894114,
+      "mean_reallocation_orders": 59.25,
+      "mean_switch_rate": 0.004795106551525475
+    },
+    "low_persistence": {
+      "mean_occupied_localities": 21,
+      "mean_posture_run_command_boundaries": 7.269064902000455,
+      "mean_reallocation_orders": 64.125,
+      "mean_switch_rate": 0.10860689986361023
+    }
+  },
+  "cells": {
+    "high_persistence": [
+      {
+        "established_posture_transitions": 443,
+        "mean_posture_run_command_boundaries": 23,
+        "occupied_localities": 18,
+        "persistence": 0.95,
+        "reallocation_orders": 47,
+        "seed": 2026090601,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 3.259629011154175e-09,
+        "switch_rate": 0.006772009029345372,
+        "switches": 3
+      },
+      {
+        "established_posture_transitions": 536,
+        "mean_posture_run_command_boundaries": 24.17391304347826,
+        "occupied_localities": 21,
+        "persistence": 0.95,
+        "reallocation_orders": 68,
+        "seed": 2026090602,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 1.3969838619232178e-09,
+        "switch_rate": 0.005597014925373134,
+        "switches": 3
+      },
+      {
+        "established_posture_transitions": 494,
+        "mean_posture_run_command_boundaries": 21.458333333333332,
+        "occupied_localities": 19,
+        "persistence": 0.95,
+        "reallocation_orders": 73,
+        "seed": 2026090603,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 2.561137080192566e-09,
+        "switch_rate": 0.006072874493927126,
+        "switches": 3
+      },
+      {
+        "established_posture_transitions": 409,
+        "mean_posture_run_command_boundaries": 28.133333333333333,
+        "occupied_localities": 19,
+        "persistence": 0.95,
+        "reallocation_orders": 54,
+        "seed": 2026090604,
+        "stock_ledger_residual": 2.842170943040401e-14,
+        "supply_conservation_residual": 2.7939677238464355e-09,
+        "switch_rate": 0.004889975550122249,
+        "switches": 2
+      },
+      {
+        "established_posture_transitions": 436,
+        "mean_posture_run_command_boundaries": 23.842105263157894,
+        "occupied_localities": 23,
+        "persistence": 0.95,
+        "reallocation_orders": 51,
+        "seed": 2026090605,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 1.1641532182693481e-09,
+        "switch_rate": 0.0045871559633027525,
+        "switches": 2
+      },
+      {
+        "established_posture_transitions": 500,
+        "mean_posture_run_command_boundaries": 27.210526315789473,
+        "occupied_localities": 18,
+        "persistence": 0.95,
+        "reallocation_orders": 60,
+        "seed": 2026090606,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": -9.313225746154785e-10,
+        "switch_rate": 0.004,
+        "switches": 2
+      },
+      {
+        "established_posture_transitions": 359,
+        "mean_posture_run_command_boundaries": 30.833333333333332,
+        "occupied_localities": 15,
+        "persistence": 0.95,
+        "reallocation_orders": 47,
+        "seed": 2026090607,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 3.14321368932724e-09,
+        "switch_rate": 0.002785515320334262,
+        "switches": 1
+      },
+      {
+        "established_posture_transitions": 547,
+        "mean_posture_run_command_boundaries": 25.772727272727273,
+        "occupied_localities": 22,
+        "persistence": 0.95,
+        "reallocation_orders": 74,
+        "seed": 2026090608,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": -1.6298145055770874e-09,
+        "switch_rate": 0.003656307129798903,
+        "switches": 2
+      }
+    ],
+    "low_persistence": [
+      {
+        "established_posture_transitions": 478,
+        "mean_posture_run_command_boundaries": 8.016129032258064,
+        "occupied_localities": 20,
+        "persistence": 0.0,
+        "reallocation_orders": 58,
+        "seed": 2026090601,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 3.259629011154175e-09,
+        "switch_rate": 0.0899581589958159,
+        "switches": 43
+      },
+      {
+        "established_posture_transitions": 581,
+        "mean_posture_run_command_boundaries": 5.911764705882353,
+        "occupied_localities": 24,
+        "persistence": 0.0,
+        "reallocation_orders": 104,
+        "seed": 2026090602,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 9.313225746154785e-10,
+        "switch_rate": 0.13769363166953527,
+        "switches": 80
+      },
+      {
+        "established_posture_transitions": 541,
+        "mean_posture_run_command_boundaries": 8.25,
+        "occupied_localities": 24,
+        "persistence": 0.0,
+        "reallocation_orders": 62,
+        "seed": 2026090603,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": -1.1641532182693481e-09,
+        "switch_rate": 0.08872458410351201,
+        "switches": 48
+      },
+      {
+        "established_posture_transitions": 452,
+        "mean_posture_run_command_boundaries": 7.380952380952381,
+        "occupied_localities": 24,
+        "persistence": 0.0,
+        "reallocation_orders": 54,
+        "seed": 2026090604,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 2.7939677238464355e-09,
+        "switch_rate": 0.11061946902654868,
+        "switches": 50
+      },
+      {
+        "established_posture_transitions": 476,
+        "mean_posture_run_command_boundaries": 7.130434782608695,
+        "occupied_localities": 20,
+        "persistence": 0.0,
+        "reallocation_orders": 62,
+        "seed": 2026090605,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 2.3283064365386963e-10,
+        "switch_rate": 0.11134453781512606,
+        "switches": 53
+      },
+      {
+        "established_posture_transitions": 474,
+        "mean_posture_run_command_boundaries": 6.648648648648648,
+        "occupied_localities": 20,
+        "persistence": 0.0,
+        "reallocation_orders": 61,
+        "seed": 2026090606,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": -2.7939677238464355e-09,
+        "switch_rate": 0.11814345991561181,
+        "switches": 56
+      },
+      {
+        "established_posture_transitions": 362,
+        "mean_posture_run_command_boundaries": 7.957446808510638,
+        "occupied_localities": 17,
+        "persistence": 0.0,
+        "reallocation_orders": 41,
+        "seed": 2026090607,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 1.5133991837501526e-09,
+        "switch_rate": 0.09668508287292818,
+        "switches": 35
+      },
+      {
+        "established_posture_transitions": 510,
+        "mean_posture_run_command_boundaries": 6.857142857142857,
+        "occupied_localities": 19,
+        "persistence": 0.0,
+        "reallocation_orders": 71,
+        "seed": 2026090608,
+        "stock_ledger_residual": 0.0,
+        "supply_conservation_residual": 9.313225746154785e-10,
+        "switch_rate": 0.11568627450980393,
+        "switches": 59
+      }
+    ]
+  },
+  "checks": {
+    "higher_persistence_extends_posture_runs": true,
+    "higher_persistence_reduces_switch_rate": true,
+    "mobility_remains_live_high": true,
+    "mobility_remains_live_low": true,
+    "model_hash_stable": true,
+    "stock_ledgers_clean": true,
+    "supply_ledgers_clean": true
+  },
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "horizon_days": 45.0,
+  "intervention": {
+    "high": 0.95,
+    "low": 0.0,
+    "note": "Extreme synthetic interventions identify mechanism direction; production persistence values are unchanged.",
+    "parameter": "Organization.persistence"
+  },
+  "model_sha256_end": "4a915bebafdcda5de27f6069e73942d6531c0ba252e3f0b49c6614df2a40510c",
+  "model_sha256_start": "4a915bebafdcda5de27f6069e73942d6531c0ba252e3f0b49c6614df2a40510c",
+  "passed": true,
+  "schema_version": "1.0",
+  "seeds": [
+    2026090601,
+    2026090602,
+    2026090603,
+    2026090604,
+    2026090605,
+    2026090606,
+    2026090607,
+    2026090608
+  ],
+  "status": "synthetic_identification_recovery_not_empirical_fit"
+}

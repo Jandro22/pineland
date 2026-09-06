@@ -38,6 +38,8 @@ def main() -> None:
         raise RuntimeError("expected 401 unique COD district polygons")
     tree = STRtree(polygons)
     totals = np.zeros(len(polygons), dtype=float)
+    squared_totals = np.zeros(len(polygons), dtype=float)
+    populated_cells = np.zeros(len(polygons), dtype=np.int64)
     matched_points = 0
     boundary_reassigned_points = 0
     matched_population = 0.0
@@ -64,6 +66,8 @@ def main() -> None:
                     if np.any(counts > 1):
                         raise RuntimeError("WorldPop point matched multiple COD districts")
                     np.add.at(totals, polygon_indices, vals[point_indices])
+                    np.add.at(squared_totals, polygon_indices, vals[point_indices] ** 2)
+                    np.add.at(populated_cells, polygon_indices, 1)
                     matched_points += len(point_indices)
                     matched_population += float(vals[point_indices].sum())
                 matched_mask = np.zeros(len(vals), dtype=bool)
@@ -81,6 +85,12 @@ def main() -> None:
                             f"WorldPop/COD boundary mismatch exceeds 10 km: {float(distance_km.max())}"
                         )
                     np.add.at(totals, nearest_polygon_indices, vals[source_indices])
+                    np.add.at(
+                        squared_totals,
+                        nearest_polygon_indices,
+                        vals[source_indices] ** 2,
+                    )
+                    np.add.at(populated_cells, nearest_polygon_indices, 1)
                     boundary_reassigned_points += len(source_indices)
                     boundary_reassigned_population += float(vals[source_indices].sum())
                     maximum_boundary_reassignment_km = max(
@@ -104,6 +114,9 @@ def main() -> None:
     rows = []
     for index, pcode in enumerate(pcodes):
         meta = district_meta[pcode]
+        area_sqkm = float(meta["area_sqkm"])
+        total = float(totals[index])
+        sum_squares = float(squared_totals[index])
         rows.append({
             "district_id": pcode,
             "district_name": meta["district_name"],
@@ -112,6 +125,18 @@ def main() -> None:
             "region_id": meta["region_id"],
             "worldpop_2004_float": f"{totals[index]:.6f}",
             "population_2004": int(integers[index]),
+            "area_sqkm": f"{area_sqkm:.8f}",
+            "population_density_per_sqkm": f"{total / area_sqkm:.8f}",
+            "positive_worldpop_1km_cells": int(populated_cells[index]),
+            # Expected grid-cell population experienced by a randomly selected
+            # resident. This is threshold-free and rises when settlement is
+            # concentrated into denser 1-km cells.
+            "population_weighted_cell_density": f"{sum_squares / total:.8f}",
+            # Inverse-HHI effective number of populated cells. Together with
+            # total population it distinguishes diffuse from concentrated
+            # settlement without choosing an arbitrary urban cutoff.
+            "effective_populated_cells": f"{(total * total) / sum_squares:.8f}",
+            "settlement_concentration_hhi": f"{sum_squares / (total * total):.12f}",
         })
     rows.sort(key=lambda row: row["district_id"])
     with (OUT / "population_2004.csv").open("w", encoding="utf-8", newline="") as handle:
@@ -124,6 +149,13 @@ def main() -> None:
         "district_registry_sha256": digest(DISTRICTS),
         "districts": len(rows),
        "national_population_2004": national_target,
+       "retained_settlement_covariates": [
+           "population_density_per_sqkm",
+           "positive_worldpop_1km_cells",
+           "population_weighted_cell_density",
+           "effective_populated_cells",
+           "settlement_concentration_hhi",
+       ],
        "matched_positive_grid_points": matched_points,
         "boundary_reassigned_positive_grid_points": boundary_reassigned_points,
        "matched_population": matched_population,
