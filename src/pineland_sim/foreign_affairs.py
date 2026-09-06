@@ -25,7 +25,7 @@ def _record_transfer(world, time, kind, source, destination, amount, border, eve
 
 
 def initialize_foreign_system(world) -> None:
-    rng = __import__("pineland_sim.world", fromlist=["seeded_rng"]).seeded_rng(
+    rng = __import__("pineland_sim.world", fromlist=["seeded_initialization_rng"]).seeded_initialization_rng(
         world.config, "foreign-system-generation")
     count = world.config.foreign_affairs.neighbor_count
     patterns = ("FS", "AR", "VE", "TA", "FS/AR", "VE/TA")

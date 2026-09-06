@@ -15,7 +15,7 @@ from .entities import (
     SupplySource,
     clamp,
 )
-from .world import WorldState, seeded_rng
+from .world import WorldState, seeded_initialization_rng, seeded_rng
 
 
 def command_edge_key(first_id: str, second_id: str) -> tuple[str, str]:
@@ -236,7 +236,7 @@ def _record_flow(world: WorldState, time: float, flow_type: str, organization_id
 
 def generate_logistics_world(world: WorldState) -> None:
     config = world.config.logistics
-    rng = seeded_rng(world.config, "logistics-world-generation")
+    rng = seeded_initialization_rng(world.config, "logistics-world-generation")
     world.command_edges.clear()
     world.supply_sources.clear()
     world.supply_shipments.clear()
@@ -564,6 +564,44 @@ def _believed_route_risk(
     ) / len(intermediate)
 
 
+INSURGENT_OPERATIONAL_POSTURES = (
+    "frontier",
+    "foothold",
+    "stronghold",
+    "exploration",
+)
+
+
+def _select_insurgent_operational_posture(world: WorldState, formation, rng) -> str:
+    """Retain or redraw an insurgent formation's strategic movement posture.
+
+    The mechanism reuses existing general theory: Organization.persistence is
+    the probability that an established posture survives a strategic
+    reconsideration, while the existing four reallocation weights define the
+    distribution of newly chosen postures. No case-specific parameter or
+    historical outcome enters this choice.
+    """
+    organization = world.organizations[formation.organization_id]
+    if organization.kind is not OrganizationKind.INSURGENT:
+        return "portfolio"
+    current = getattr(formation, "operational_posture", "portfolio")
+    if (
+        current in INSURGENT_OPERATIONAL_POSTURES
+        and rng.random() < clamp(organization.persistence)
+    ):
+        return current
+    cfg = world.config.logistics
+    weights = [
+        cfg.insurgent_frontier_weight,
+        cfg.insurgent_foothold_weight,
+        cfg.insurgent_stronghold_weight,
+        cfg.reallocation_exploration_weight,
+    ]
+    posture = rng.choices(INSURGENT_OPERATIONAL_POSTURES, weights=weights, k=1)[0]
+    formation.operational_posture = posture
+    return posture
+
+
 def reallocation_destination_score(
     world: WorldState,
     formation,
@@ -573,16 +611,19 @@ def reallocation_destination_score(
     maximum_population: float | None = None,
     footholds: dict[str, float] | None = None,
     route: list[str] | tuple[str, ...] | None = None,
-) -> dict[str, float]:
+    posture: str | None = None,
+) -> dict[str, Any]:
     """Return actor-belief-based destination components and log utility.
 
     The current locality is a legitimate candidate, giving every formation an
     explicit stay option.  State-aligned forces respond to insecure territorial
     coverage, including threatened strongpoints rather than only low-own-control
     gaps.  Insurgents use the existing frontier/foothold/stronghold/exploration
-    portfolio, augmented by spatial sponsor-sanctuary access.  Both sides use
-    confidence-shrunk beliefs and believed intermediate-route risk; model truth
-    is never consulted.
+    portfolio, augmented by spatial sponsor-sanctuary access. When a posture is
+    supplied, one channel is the current strategic objective; otherwise the
+    legacy weighted portfolio score is returned for diagnostics and direct
+    callers. Both sides use confidence-shrunk beliefs and believed
+    intermediate-route risk; model truth is never consulted.
     """
     if travel_hours is None or route is None:
         if locality_id == formation.locality_id:
@@ -626,12 +667,25 @@ def reallocation_destination_score(
         # perceived government reach is weak.  The floor keeps contested
         # destinations selectable rather than imposing a hard gate.
         frontier = (1.0 - own_control) * (0.35 + 0.65 * (1.0 - opponent_control))
-        base_strategic = (
-            cfg.insurgent_frontier_weight * frontier +
-            cfg.insurgent_foothold_weight * foothold +
-            cfg.insurgent_stronghold_weight * own_control +
-            cfg.reallocation_exploration_weight * uncertainty
-        )
+        posture_values = {
+            "frontier": frontier,
+            "foothold": foothold,
+            "stronghold": own_control,
+            "exploration": uncertainty,
+        }
+        if posture is None or posture == "portfolio":
+            base_strategic = (
+                cfg.insurgent_frontier_weight * frontier +
+                cfg.insurgent_foothold_weight * foothold +
+                cfg.insurgent_stronghold_weight * own_control +
+                cfg.reallocation_exploration_weight * uncertainty
+            )
+            active_posture = "portfolio"
+        else:
+            if posture not in posture_values:
+                raise ValueError(f"unsupported insurgent operational posture: {posture}")
+            base_strategic = posture_values[posture]
+            active_posture = posture
         sanctuary = _sanctuary_access(
             world, formation.organization_id, locality_id,
             mobility=formation.mobility,
@@ -650,6 +704,7 @@ def reallocation_destination_score(
             "opponent_control_raw": opponent_raw,
             "own_control": own_control,
             "own_control_raw": own_raw,
+            "operational_posture": active_posture,
         }
     else:
         gap = 1.0 - own_control
@@ -720,6 +775,9 @@ def choose_reallocation_orders(
                 formation.organization_id,
                 _local_armed_footholds(world, formation.organization_id),
             )
+            posture = _select_insurgent_operational_posture(world, formation, rng)
+        else:
+            posture = None
         moving_personnel = formation.personnel * formation.availability
         if world.config.logistics.reallocation_destination_scope == "adjacent":
             destination_ids = sorted({
@@ -747,6 +805,7 @@ def choose_reallocation_orders(
                 maximum_population=maximum_population,
                 footholds=foothold_cache.get(formation.organization_id),
                 route=route,
+                posture=posture,
             )
             candidates.append(locality_id)
             utilities.append(exp(max(-8, min(8, components["utility"]))))

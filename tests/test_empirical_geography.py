@@ -12,6 +12,34 @@ REPAIRED_CASE = ROOT / "studies" / "nepal_2001_2006" / "config" / "case_environm
 AFGHAN_CASE = ROOT / "studies" / "afghanistan_2004_2021" / "config" / "case_environment.json"
 
 
+def _minimal_v3_specification():
+    return {
+        "schema_version": "3.0.0",
+        "geographic_containers": [
+            {"container_id": "R1", "name": "Region One", "level": "region"},
+            {"container_id": "P1", "name": "Province One", "level": "province",
+             "parent_id": "R1"},
+        ],
+        "districts": [
+            {"district_id": f"D{i}", "name": f"District {i}", "population": 1000,
+             "container_ids": {"region": "R1", "province": "P1"}}
+            for i in range(1, 18)
+        ],
+        "localities": [
+            {"locality_id": f"L{i}", "district_id": f"D{i}", "name": f"Center {i}",
+             "kind": "town", "population": 1000, "x_km": float(i), "y_km": 0.0,
+             "administrative_role": "district_headquarters"}
+            for i in range(1, 18)
+        ],
+        "adjacency": {
+            f"L{i}": [neighbor for neighbor in (f"L{i-1}" if i > 1 else None,
+                                                  f"L{i+1}" if i < 17 else None)
+                       if neighbor]
+            for i in range(1, 18)
+        },
+    }
+
+
 def test_nepal_case_geography_instantiates_75_historical_localities():
     specification = json.loads(CASE.read_text(encoding="utf-8"))
     config = SimulationConfig(agent_count=150, locality_count=75, horizon_days=1, seed=12001)
@@ -126,37 +154,85 @@ def test_schema_v3_supports_generic_region_province_district_hierarchy():
     # localities.  Exercise the generic hierarchy adapter at that supported
     # boundary rather than weakening the global simulator invariant merely to
     # create a one-node unit fixture.
-    specification = {
-        "schema_version": "3.0.0",
-        "geographic_containers": [
-            {"container_id": "R1", "name": "Region One", "level": "region"},
-            {"container_id": "P1", "name": "Province One", "level": "province",
-             "parent_id": "R1"},
-        ],
-        "districts": [
-            {"district_id": f"D{i}", "name": f"District {i}", "population": 1000,
-             "container_ids": {"region": "R1", "province": "P1"}}
-            for i in range(1, 18)
-        ],
-        "localities": [
-            {"locality_id": f"L{i}", "district_id": f"D{i}", "name": f"Center {i}",
-             "kind": "town", "population": 1000, "x_km": float(i), "y_km": 0.0,
-             "administrative_role": "district_headquarters"}
-            for i in range(1, 18)
-        ],
-        "adjacency": {
-            f"L{i}": [neighbor for neighbor in (f"L{i-1}" if i > 1 else None,
-                                                  f"L{i+1}" if i < 17 else None)
-                       if neighbor]
-            for i in range(1, 18)
-        },
-    }
+    specification = _minimal_v3_specification()
     config = SimulationConfig(agent_count=17, locality_count=17, horizon_days=1,
                               include_insurgency=False, seed=12006)
     world = generate_pineland(config, empirical_geography=specification)
     assert world.district_hierarchy["D1"] == {"region": "R1", "province": "P1"}
     assert world.geographic_containers["P1"]["parent_id"] == "R1"
     world.assert_invariants()
+
+
+def test_empirical_initialization_seed_separates_initial_state_from_process_seed():
+    specification = _minimal_v3_specification()
+    worlds = []
+    for seed in (12061, 99881):
+        config = SimulationConfig(
+            agent_count=68, locality_count=17, horizon_days=1,
+            include_insurgency=False, seed=seed, initialization_seed=777,
+        )
+        worlds.append(generate_pineland(config, empirical_geography=specification))
+    first, second = worlds
+    person_state = lambda world: [
+        (
+            person.person_id, person.residence_locality_id, person.weight,
+            person.grievance, person.fear, person.efficacy,
+            tuple(sorted(person.identities.items())),
+            tuple(sorted(person.languages.items())),
+            tuple(sorted(person.trust.items())),
+            person.resources, person.community_id,
+        )
+        for person in world.persons.values()
+    ]
+    edge_state = lambda world: [
+        (
+            key, edge.layers, edge.weight, edge.trust,
+            edge.language_compatibility, edge.represented_relationships,
+        )
+        for key, edge in sorted(world.social_edges.items())
+    ]
+    zone_state = lambda world: [
+        (
+            zone.microzone_id, zone.population_share, zone.infrastructure,
+            zone.terrain_friction, zone.observability,
+        )
+        for zone in sorted(world.microzones.values(), key=lambda item: item.microzone_id)
+    ]
+    assert person_state(first) == person_state(second)
+    assert edge_state(first) == edge_state(second)
+    assert zone_state(first) == zone_state(second)
+
+
+def test_empirical_population_prior_means_are_resolution_stable():
+    specification = _minimal_v3_specification()
+    worlds = []
+    for agents in (17, 68):
+        config = SimulationConfig(
+            agent_count=agents, locality_count=17, horizon_days=1,
+            include_insurgency=False, seed=12062, initialization_seed=777,
+        )
+        worlds.append(generate_pineland(config, empirical_geography=specification))
+    targets = {"grievance": 2 / 11, "fear": .2, "efficacy": .5}
+    for world in worlds:
+        for locality_id in world.localities:
+            residents = [
+                person for person in world.persons.values()
+                if person.residence_locality_id == locality_id
+            ]
+            represented = sum(person.weight for person in residents)
+            for field, target in targets.items():
+                mean = sum(
+                    person.weight * getattr(person, field) for person in residents
+                ) / represented
+                assert mean == pytest.approx(target, abs=1e-12)
+            for identity in ("local", "district", "federal"):
+                mean = sum(
+                    person.weight * person.identities[identity] for person in residents
+                ) / represented
+                assert mean == pytest.approx(.5, abs=1e-12)
+            assert sum(person.resources for person in residents) / represented == pytest.approx(
+                1.0 * __import__("math").exp(.5 * .55 ** 2), abs=1e-12
+            )
 
 
 def test_repaired_initial_force_dispersion_is_geographic_not_identifier_order():

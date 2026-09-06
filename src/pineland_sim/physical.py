@@ -14,7 +14,7 @@ from .entities import (
     SecurityPost,
     clamp,
 )
-from .world import WorldState, seeded_rng
+from .world import WorldState, seeded_initialization_rng
 
 
 def physical_edge_key(first_id: str, second_id: str) -> tuple[str, str]:
@@ -72,7 +72,7 @@ def _actor_matches_organization(world: WorldState, organization_id: str,
 
 def generate_physical_world(world: WorldState) -> None:
     config = world.config.physical
-    rng = seeded_rng(world.config, "physical-world-generation")
+    rng = seeded_initialization_rng(world.config, "physical-world-generation")
     world.microzones.clear()
     world.microzone_ids_by_locality.clear()
     world.physical_edges.clear()

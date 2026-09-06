@@ -31,7 +31,7 @@ def _transfer(world, time, kind, source, destination, locality, amount, purpose)
 
 
 def initialize_political_order(world) -> None:
-    rng = __import__("pineland_sim.world", fromlist=["seeded_rng"]).seeded_rng(
+    rng = __import__("pineland_sim.world", fromlist=["seeded_initialization_rng"]).seeded_initialization_rng(
         world.config, "political-order-generation")
     parties = sorted((o for o in world.organizations.values() if o.kind.value == "party"),
                      key=lambda o: o.organization_id)

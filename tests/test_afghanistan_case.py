@@ -33,6 +33,42 @@ def test_afghanistan_case_instantiates_full_hierarchy_and_population():
     world.assert_invariants()
 
 
+def test_afghanistan_connectivity_is_derived_from_frozen_topology_not_constant():
+    specification = json.loads(CASE.read_text(encoding="utf-8"))
+    values = [float(row["connectivity"]) for row in specification["districts"]]
+    assert len(set(round(value, 12) for value in values)) > 100
+    assert min(values) >= 0.0
+    assert max(values) <= 1.0
+    assert min(values) == 0.0
+    assert max(values) == 1.0
+    metadata = specification["derived_non_outcome_inputs"]["district_connectivity"]
+    assert metadata["historical_outcomes_used"] is False
+    assert metadata["fitted_coefficients"] is False
+
+
+def test_afghanistan_retains_worldpop_settlement_covariates_without_using_outcomes():
+    specification = json.loads(CASE.read_text(encoding="utf-8"))
+    rows = specification["districts"]
+    assert all("empirical_covariates" in row for row in rows)
+    density = [
+        row["empirical_covariates"]["population_density_per_sqkm"]
+        for row in rows
+    ]
+    concentration = [
+        row["empirical_covariates"]["settlement_concentration_hhi"]
+        for row in rows
+    ]
+    assert min(density) > 0
+    assert max(density) > min(density) * 10
+    assert max(concentration) > min(concentration)
+    metadata = specification["derived_non_outcome_inputs"][
+        "worldpop_settlement_structure"
+    ]
+    assert metadata["historical_outcomes_used"] is False
+    assert metadata["fitted_coefficients"] is False
+    assert metadata["model_equations_currently_changed_by_covariates"] is False
+
+
 def test_afghanistan_primary_panel_is_frozen_complete_province_week_surface():
     panel = pd.read_csv(PANEL)
     assert len(panel) == 31_280

@@ -620,6 +620,12 @@ class PeaceProcessConfig:
 @dataclass(slots=True)
 class SimulationConfig:
     seed: int = 20260902
+    # Dynamic process randomness and uncertain initial-state construction are
+    # scientifically distinct. When this is None, initialization preserves
+    # historical behavior and uses seed. Empirical studies can freeze a
+    # sourced/synthetic initial state across stochastic forecast members by
+    # supplying one fixed initialization seed while varying seed.
+    initialization_seed: int | None = None
     horizon_days: float = 365.0
     agent_count: int = 75_000
     locality_count: int = 72
@@ -661,6 +667,8 @@ class SimulationConfig:
     def validate(self) -> None:
         if self.agent_count < 1:
             raise ValueError("agent_count must be positive")
+        if self.initialization_seed is not None and not isinstance(self.initialization_seed, int):
+            raise ValueError("initialization_seed must be an integer or None")
         if not 17 <= self.locality_count:
             raise ValueError("locality_count must be at least 17")
         if self.horizon_days <= 0:
