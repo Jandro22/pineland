@@ -38,6 +38,13 @@ def _pair(world):
     return insurgent, government
 
 
+def _reserve_for(world, quantity: float) -> float:
+    return quantity * (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+
+
 def test_formation_to_pool_transfer_preserves_capacity_but_not_battle_support():
     world = _world()
     insurgent, _ = _pair(world)
@@ -47,9 +54,13 @@ def test_formation_to_pool_transfer_preserves_capacity_but_not_battle_support():
     national_before = national_fighter_equivalents(world, insurgent.organization_id)
 
     moved = insurgent.personnel
+    reserve = _reserve_for(world, moved)
+    assert insurgent.supply_stock >= reserve
     world.organization_manpower_pools[(insurgent.organization_id, locality)] = (
         world.organization_manpower_pools.get((insurgent.organization_id, locality), 0.0) + moved
     )
+    world.organization_manpower_supply_reserves[(insurgent.organization_id, locality)] = reserve
+    insurgent.supply_stock -= reserve
     insurgent.personnel = 0.0
     insurgent.operational_status = "ineffective"
     after = local_action_support(world, insurgent.organization_id, locality)
@@ -67,9 +78,15 @@ def test_pool_to_formation_transfer_does_not_create_fighter_equivalents():
     locality = insurgent.locality_id
     quantity = 60.0
     world.organization_manpower_pools[(insurgent.organization_id, locality)] = quantity
+    reserve = _reserve_for(world, quantity)
+    assert insurgent.supply_stock >= reserve
+    insurgent.supply_stock -= reserve
+    world.organization_manpower_supply_reserves[(insurgent.organization_id, locality)] = reserve
     before = national_fighter_equivalents(world, insurgent.organization_id)
     insurgent.personnel += quantity
+    insurgent.supply_stock += reserve
     world.organization_manpower_pools[(insurgent.organization_id, locality)] = 0.0
+    world.organization_manpower_supply_reserves.pop((insurgent.organization_id, locality))
     after = national_fighter_equivalents(world, insurgent.organization_id)
     assert after == before
 
@@ -80,11 +97,17 @@ def test_relocation_moves_local_support_without_reproduction():
     origin = insurgent.locality_id
     destination = next(locality for locality in world.localities if locality != origin)
     world.organization_manpower_pools[(insurgent.organization_id, origin)] = 50.0
+    reserve = _reserve_for(world, 50.0)
+    assert insurgent.supply_stock >= reserve
+    insurgent.supply_stock -= reserve
+    world.organization_manpower_supply_reserves[(insurgent.organization_id, origin)] = reserve
     before_total = national_fighter_equivalents(world, insurgent.organization_id)
     origin_before = local_action_support(world, insurgent.organization_id, origin).total_fighter_equivalents
 
     world.organization_manpower_pools[(insurgent.organization_id, origin)] = 0.0
+    reserve = world.organization_manpower_supply_reserves.pop((insurgent.organization_id, origin))
     world.organization_manpower_pools[(insurgent.organization_id, destination)] = 50.0
+    world.organization_manpower_supply_reserves[(insurgent.organization_id, destination)] = reserve
     origin_after = local_action_support(world, insurgent.organization_id, origin).total_fighter_equivalents
     destination_after = local_action_support(world, insurgent.organization_id, destination).total_fighter_equivalents
 

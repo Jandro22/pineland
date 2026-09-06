@@ -130,6 +130,11 @@ class WorldState:
     # it waits here until enough manpower exists to form a local unit instead
     # of teleporting into the first national formation.
     organization_manpower_pools: dict[tuple[str, str], float] = field(default_factory=dict)
+    # Physical materiel reserved for those local unfielded pools.  Manpower
+    # and equipment are intentionally separate stocks: recruitment can create
+    # people without creating weapons/sustainment, and only the equipped share
+    # can contribute to organized armed action or become a fielded formation.
+    organization_manpower_supply_reserves: dict[tuple[str, str], float] = field(default_factory=dict)
     engagements: dict[str, Engagement] = field(default_factory=dict)
     leaders: dict[str, LeadershipAgent] = field(default_factory=dict)
     proto_organizations: dict[str, ProtoOrganization] = field(default_factory=dict)
@@ -304,6 +309,7 @@ class WorldState:
             "military_supply": (
                 sum(source.stock for source in self.supply_sources.values()) +
                 sum(formation.supply_stock for formation in self.formations.values()) +
+                sum(self.organization_manpower_supply_reserves.values()) +
                 self.demobilized_arms +
                 self.in_transit_supply_total
             ),
@@ -617,6 +623,8 @@ class WorldState:
                 raise AssertionError("unassigned person retains armed_fraction")
         if any(value < -tolerance for value in self.organization_manpower_pools.values()):
             raise AssertionError("negative local manpower pool")
+        if any(value < -tolerance for value in self.organization_manpower_supply_reserves.values()):
+            raise AssertionError("negative local manpower supply reserve")
         for district_id, hierarchy in self.district_hierarchy.items():
             if district_id not in self.districts:
                 raise AssertionError("district hierarchy references missing district")
@@ -695,6 +703,7 @@ class WorldState:
         if self.supply_sources:
             current_supply = sum(source.stock for source in self.supply_sources.values())
             current_supply += sum(formation.supply_stock for formation in self.formations.values())
+            current_supply += sum(self.organization_manpower_supply_reserves.values())
             current_supply += self.demobilized_arms
             current_supply += self.in_transit_supply_total
             expected_supply = (self.initial_supply_stock + self.cumulative_supply_produced +
@@ -786,6 +795,9 @@ class WorldState:
                 self.organizations[person.organization_id].status == "active"
             ),
             "mobilized_fighter_pool": sum(self.organization_manpower_pools.values()),
+            "mobilized_fighter_pool_supply": sum(
+                self.organization_manpower_supply_reserves.values()
+            ),
             "active_insurgent_formation_personnel": sum(
                 formation.personnel for formation in self.formations.values()
                 if formation.organization_id in self.organizations and
@@ -848,6 +860,7 @@ class WorldState:
         """Current minus expected supply under the explicit stock ledger."""
         current = sum(source.stock for source in self.supply_sources.values())
         current += sum(formation.supply_stock for formation in self.formations.values())
+        current += sum(self.organization_manpower_supply_reserves.values())
         current += self.demobilized_arms
         current += self.in_transit_supply_total
         expected = (self.initial_supply_stock + self.cumulative_supply_produced +

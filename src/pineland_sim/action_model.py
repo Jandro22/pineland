@@ -86,11 +86,21 @@ class NonfieldedHumanTarget:
 
 
 def local_fighter_equivalents(world, organization_id: str, locality_id: str) -> tuple[float, float]:
-    """Return local unfielded and fielded fighter-equivalent stocks exactly once."""
-    unfielded = max(
+    """Return local *equipped* unfielded and fielded fighter equivalents."""
+    pooled_manpower = max(
         0.0,
         float(world.organization_manpower_pools.get((organization_id, locality_id), 0.0)),
     )
+    supply_per_fighter = max(
+        1e-12,
+        float(world.config.logistics.formation_supply_days)
+        * float(world.config.logistics.initial_supply_fraction),
+    )
+    reserve = max(
+        0.0,
+        float(world.organization_manpower_supply_reserves.get((organization_id, locality_id), 0.0)),
+    )
+    unfielded = min(pooled_manpower, reserve / supply_per_fighter)
     fielded = sum(
         max(0.0, float(formation.personnel))
         for formation in world.formations.values()
@@ -103,10 +113,14 @@ def local_fighter_equivalents(world, organization_id: str, locality_id: str) -> 
 
 
 def national_fighter_equivalents(world, organization_id: str) -> float:
+    localities = {
+        locality_id
+        for (owner, locality_id), quantity in world.organization_manpower_pools.items()
+        if owner == organization_id and quantity > 0
+    }
     pooled = sum(
-        max(0.0, float(quantity))
-        for (owner, _), quantity in world.organization_manpower_pools.items()
-        if owner == organization_id
+        local_fighter_equivalents(world, organization_id, locality_id)[0]
+        for locality_id in localities
     )
     fielded = sum(
         max(0.0, float(formation.personnel))
@@ -148,7 +162,11 @@ def local_action_supply_available(world, organization_id: str, locality_id: str)
         if source.organization_id == organization_id
         and source.locality_id == locality_id
     )
-    return formation_stock + source_stock
+    reserve_stock = max(
+        0.0,
+        float(world.organization_manpower_supply_reserves.get((organization_id, locality_id), 0.0)),
+    )
+    return formation_stock + source_stock + reserve_stock
 
 
 def consume_local_action_supply(
@@ -183,6 +201,17 @@ def consume_local_action_supply(
         source.stock -= take
         consumed += take
         remaining -= take
+    if remaining > 0:
+        key = (organization_id, locality_id)
+        reserve = max(0.0, world.organization_manpower_supply_reserves.get(key, 0.0))
+        take = min(reserve, remaining)
+        reserve -= take
+        consumed += take
+        remaining -= take
+        if reserve > 1e-12:
+            world.organization_manpower_supply_reserves[key] = reserve
+        else:
+            world.organization_manpower_supply_reserves.pop(key, None)
     world.cumulative_supply_consumed += consumed
     return consumed, max(0.0, demanded - consumed)
 
@@ -469,6 +498,18 @@ def apply_nonfielded_target_losses(world, target: NonfieldedHumanTarget, losses:
             world.organization_manpower_pools[target.backing_pool_key] = remaining
         else:
             world.organization_manpower_pools.pop(target.backing_pool_key, None)
+        reserve = max(
+            0.0,
+            world.organization_manpower_supply_reserves.get(target.backing_pool_key, 0.0),
+        )
+        if available > 0 and reserve > 0 and realized > 0:
+            lost_supply = reserve * (realized / available)
+            reserve -= lost_supply
+            world.cumulative_supply_lost += lost_supply
+            if reserve > 1e-12:
+                world.organization_manpower_supply_reserves[target.backing_pool_key] = reserve
+            else:
+                world.organization_manpower_supply_reserves.pop(target.backing_pool_key, None)
         return realized
     return 0.0
 

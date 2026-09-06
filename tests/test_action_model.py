@@ -72,6 +72,26 @@ def _action_event(organization_id: str, locality_id: str, interval_days: float =
     )
 
 
+def _fund_pool(world, organization_id: str, locality_id: str, quantity: float) -> None:
+    """Create explicitly equipped unfielded capacity for action-model tests."""
+    key = (organization_id, locality_id)
+    supply_per_fighter = (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+    reserve = quantity * supply_per_fighter
+    organization = world.organizations[organization_id]
+    assert organization.resources >= reserve
+    organization.resources -= reserve
+    world.cumulative_resource_to_supply += reserve
+    world.organization_manpower_pools[key] = (
+        world.organization_manpower_pools.get(key, 0.0) + quantity
+    )
+    world.organization_manpower_supply_reserves[key] = (
+        world.organization_manpower_supply_reserves.get(key, 0.0) + reserve
+    )
+
+
 def test_action_attempt_probability_composes_in_calendar_time():
     world = _world()
     organization, formation = _insurgent(world)
@@ -134,11 +154,18 @@ def test_formation_to_pool_transfer_preserves_capacity_and_nonbattle_choice():
         world, organization.organization_id, locality_id, 1.0
     )
     moved = formation.personnel
+    reserve = moved * (
+        world.config.logistics.formation_supply_days
+        * world.config.logistics.initial_supply_fraction
+    )
+    assert formation.supply_stock >= reserve
     world.organization_manpower_pools[(organization.organization_id, locality_id)] = (
         world.organization_manpower_pools.get(
             (organization.organization_id, locality_id), 0.0
         ) + moved
     )
+    world.organization_manpower_supply_reserves[(organization.organization_id, locality_id)] = reserve
+    formation.supply_stock -= reserve
     formation.personnel = 0.0
     formation.operational_status = "ineffective"
     after_weights = action_choice_weights(world, organization.organization_id, locality_id)
@@ -158,17 +185,21 @@ def test_relocation_moves_local_capacity_without_reproduction():
     organization, _ = _insurgent(world)
     origin = next(iter(world.localities))
     destination = next(item for item in world.localities if item != origin)
-    world.organization_manpower_pools[(organization.organization_id, origin)] = 50.0
+    _fund_pool(world, organization.organization_id, origin, 50.0)
     before = national_fighter_equivalents(world, organization.organization_id)
     origin_before = sum(local_fighter_equivalents(
         world, organization.organization_id, origin
     ))
     world.organization_manpower_pools[(organization.organization_id, origin)] = 0.0
+    reserve = world.organization_manpower_supply_reserves.pop(
+        (organization.organization_id, origin)
+    )
     world.organization_manpower_pools[(organization.organization_id, destination)] = (
         world.organization_manpower_pools.get(
             (organization.organization_id, destination), 0.0
         ) + 50.0
     )
+    world.organization_manpower_supply_reserves[(organization.organization_id, destination)] = reserve
     assert national_fighter_equivalents(world, organization.organization_id) == before
     assert sum(local_fighter_equivalents(
         world, organization.organization_id, origin
@@ -182,7 +213,7 @@ def test_false_target_belief_changes_execution_not_planning():
     world = _world(seed=45)
     organization, _ = _insurgent(world)
     locality_id = _human_target_locality(world)
-    world.organization_manpower_pools[(organization.organization_id, locality_id)] = 100.0
+    _fund_pool(world, organization.organization_id, locality_id, 100.0)
     missing = copy.deepcopy(world)
     for post in missing.security_posts.values():
         if post.locality_id == locality_id and post.formation_id is None:
@@ -217,7 +248,7 @@ def test_asset_violence_does_not_count_as_state_based_human_violence():
     world = _world(seed=46)
     organization, _ = _insurgent(world)
     locality_id = next(iter(world.localities))
-    world.organization_manpower_pools[(organization.organization_id, locality_id)] = 100.0
+    _fund_pool(world, organization.organization_id, locality_id, 100.0)
     forced_choice = (
         "asset_violence",
         action_choice_weights(world, organization.organization_id, locality_id),
@@ -243,7 +274,7 @@ def test_nonfielded_human_attack_updates_manpower_ledger_as_destruction():
     world = _world(seed=47)
     organization, _ = _insurgent(world)
     locality_id = _human_target_locality(world)
-    world.organization_manpower_pools[(organization.organization_id, locality_id)] = 100.0
+    _fund_pool(world, organization.organization_id, locality_id, 100.0)
     world.initialize_stock_ledger()
     before = world.tracked_stock_totals()["fixed_security_personnel"]
     forced_choice = (
@@ -311,7 +342,7 @@ def test_local_action_support_distinguishes_battle_from_other_targets():
     world = _world(seed=50)
     organization, formation = _insurgent(world)
     locality_id = _human_target_locality(world)
-    world.organization_manpower_pools[(organization.organization_id, locality_id)] = 50.0
+    _fund_pool(world, organization.organization_id, locality_id, 50.0)
     formation.personnel = 0.0
     formation.operational_status = "ineffective"
     support = local_action_support(world, organization.organization_id, locality_id)
@@ -332,7 +363,13 @@ def test_distant_supply_cannot_materialize_local_nonbattle_attack():
             for institution in world.political_institutions.values()
         )
     )
-    world.organization_manpower_pools[(organization.organization_id, locality_id)] = 100.0
+    # Keep armed personnel at the target locality but strip its local
+    # consumable stock.  Distant national stock must not teleport into the
+    # execution gate.
+    formation.locality_id = locality_id
+    formation.current_microzone_id = None
+    formation.personnel = max(100.0, formation.personnel)
+    formation.supply_stock = 0.0
     # Ensure every organization-owned material stock is physically elsewhere.
     for source in world.supply_sources.values():
         if source.organization_id == organization.organization_id:
@@ -356,11 +393,32 @@ def test_distant_supply_cannot_materialize_local_nonbattle_attack():
     assert result["unmet_supply"] > 0.0
 
 
+def test_unequipped_manpower_pool_does_not_create_action_capacity():
+    world = _world(seed=511)
+    organization, _ = _insurgent(world)
+    occupied = {
+        formation.locality_id for formation in world.formations.values()
+        if formation.organization_id == organization.organization_id
+    }
+    locality_id = next(locality for locality in world.localities if locality not in occupied)
+    key = (organization.organization_id, locality_id)
+    world.organization_manpower_pools[key] = 100.0
+    assert key not in world.organization_manpower_supply_reserves
+    unfielded, fielded = local_fighter_equivalents(
+        world, organization.organization_id, locality_id
+    )
+    assert unfielded == 0.0
+    assert fielded == 0.0
+    assert action_attempt_probability(
+        world, organization.organization_id, locality_id, 1.0
+    ) == 0.0
+
+
 def test_selected_nonbattle_action_consumes_local_material_budget_once():
     world = _world(seed=52)
     organization, formation = _insurgent(world)
     locality_id = next(iter(world.localities))
-    world.organization_manpower_pools[(organization.organization_id, locality_id)] = 100.0
+    _fund_pool(world, organization.organization_id, locality_id, 100.0)
     source = next(
         item for item in world.supply_sources.values()
         if item.organization_id == organization.organization_id
@@ -451,9 +509,12 @@ def test_same_zero_violence_history_different_hidden_capacity_diverges_after_com
     capacity_world = _world(seed=55)
     insurgent, formation = _insurgent(capacity_world)
     locality_id = _human_target_locality(capacity_world)
-    capacity_world.organization_manpower_pools[(insurgent.organization_id, locality_id)] = 100.0
+    _fund_pool(capacity_world, insurgent.organization_id, locality_id, 100.0)
     absent_world = copy.deepcopy(capacity_world)
     absent_world.organization_manpower_pools.pop((insurgent.organization_id, locality_id), None)
+    absent_world.organization_manpower_supply_reserves.pop(
+        (insurgent.organization_id, locality_id), None
+    )
     for item in absent_world.formations.values():
         if item.organization_id == insurgent.organization_id and item.locality_id == locality_id:
             item.personnel = 0.0

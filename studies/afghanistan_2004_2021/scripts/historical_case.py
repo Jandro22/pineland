@@ -127,6 +127,7 @@ def _reset_insurgent_membership(world) -> None:
     insurgent.member_ids.clear()
     refresh_community_aggregates(world)
     world.organization_manpower_pools.clear()
+    world.organization_manpower_supply_reserves.clear()
     world.proto_organizations.clear()
     world.organization_transitions.clear()
     world.organization_eligibility_log.clear()

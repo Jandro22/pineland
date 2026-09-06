@@ -347,11 +347,17 @@ def _implement(world, agreement: PeaceAgreement, time: float, event_id: str,
                 if key[0] == org.organization_id:
                     pooled_demobilized += quantity
                     del world.organization_manpower_pools[key]
+            pooled_arms = 0.0
+            for key, quantity in list(world.organization_manpower_supply_reserves.items()):
+                if key[0] == org.organization_id:
+                    pooled_arms += quantity
+                    del world.organization_manpower_supply_reserves[key]
             world.demobilized_personnel += pooled_demobilized
-            if pooled_demobilized:
+            world.demobilized_arms += pooled_arms
+            if pooled_demobilized or pooled_arms:
                 world.peace_transitions.append(PeaceTransition(
                     f"PX{len(world.peace_transitions)+1:07d}", time, "demobilization",
-                    agreement.agreement_id, (org.organization_id,), pooled_demobilized, 0.0, 0,
+                    agreement.agreement_id, (org.organization_id,), pooled_demobilized, pooled_arms, 0,
                     {"pending_local_manpower_pool": True}))
             org.status = "political"
             world.ceasefires[org.organization_id] = "settled"

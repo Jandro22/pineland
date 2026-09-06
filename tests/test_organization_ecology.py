@@ -303,6 +303,40 @@ class OrganizationEcologyTests(unittest.TestCase):
         self.assertEqual(formation.locality_id, locality_id)
         self.assertNotEqual(formation.formation_id, "PRF-01")
 
+    def test_unfunded_recruits_remain_manpower_but_only_equipped_share_is_action_capable(self):
+        from pineland_sim.action_model import local_fighter_equivalents
+
+        world = make_world(seed=8101)
+        organization = world.organizations["insurgent"]
+        occupied = {f.locality_id for f in world.formations.values()
+                    if f.organization_id == organization.organization_id}
+        locality_id = next(key for key in world.localities if key not in occupied)
+        supply_per_fighter = (
+            world.config.logistics.formation_supply_days
+            * world.config.logistics.initial_supply_fraction
+        )
+        organization.resources = 20.0 * supply_per_fighter
+        before_residual = world.supply_conservation_residual()
+
+        applied, created = _apply_local_fighter_change(
+            world, organization, locality_id, 50.0,
+        )
+
+        key = (organization.organization_id, locality_id)
+        self.assertEqual(applied, 50.0)
+        self.assertEqual(created, 0)
+        self.assertAlmostEqual(world.organization_manpower_pools[key], 50.0)
+        self.assertAlmostEqual(
+            world.organization_manpower_supply_reserves[key],
+            20.0 * supply_per_fighter,
+        )
+        unfielded, fielded = local_fighter_equivalents(
+            world, organization.organization_id, locality_id,
+        )
+        self.assertAlmostEqual(unfielded, 20.0)
+        self.assertEqual(fielded, 0.0)
+        self.assertAlmostEqual(world.supply_conservation_residual(), before_residual)
+
     def test_fractional_recruitment_step_is_bounded(self):
         world = make_world()
         organization = world.organizations["insurgent"]
