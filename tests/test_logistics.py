@@ -218,7 +218,61 @@ class LogisticsTests(unittest.TestCase):
         update_logistics(self.world, 1, 0.0)
         self.assertEqual(formation.supply_stock, before_stock)
         self.assertGreaterEqual(formation.supply_capacity, formation.supply_stock)
+
+    def test_supply_production_tracks_force_growth(self):
+        organization_id = self.world.formations["FDF-01"].organization_id
+        formations = [
+            formation for formation in self.world.formations.values()
+            if formation.organization_id == organization_id
+        ]
+        before = self.world.tracked_stock_totals()
+        for formation in formations:
+            formation.personnel *= 2
+        self.world.record_stock_transactions(
+            "T-FORCE-GROWTH", "test", before, self.world.tracked_stock_totals()
+        )
+        before_update = self.world.tracked_stock_totals()
+        update_logistics(self.world, 1, 0.0)
+        self.world.record_stock_transactions(
+            "T-LOGISTICS-UPDATE", "logistics", before_update,
+            self.world.tracked_stock_totals(),
+        )
+        actual = sum(
+            source.production_per_day for source in self.world.supply_sources.values()
+            if source.organization_id == organization_id and source.operational
+        )
+        cfg = self.world.config.logistics
+        expected = (
+            sum(formation.personnel for formation in formations)
+            * cfg.presence_consumption_per_person_day
+            * cfg.organization_sustainment_coverage
+        )
+        self.assertAlmostEqual(actual, expected)
         self.world.assert_invariants()
+
+    def test_insurgent_base_production_tracks_home_force_not_civilian_population(self):
+        organization, formations = next(
+            (organization, [
+                formation for formation in self.world.formations.values()
+                if formation.organization_id == organization.organization_id
+            ])
+            for organization in self.world.organizations.values()
+            if organization.kind.value == "insurgent"
+        )
+        if len(formations) < 2:
+            self.skipTest("fixture has fewer than two insurgent formations")
+        first, second = formations[:2]
+        first.personnel = 4 * second.personnel
+        update_logistics(self.world, 1, 0.0)
+        production = {
+            source.locality_id: source.production_per_day
+            for source in self.world.supply_sources.values()
+            if source.organization_id == organization.organization_id
+        }
+        self.assertAlmostEqual(
+            production[first.home_locality_id] / production[second.home_locality_id],
+            4.0,
+        )
 
     def test_logistics_trajectory_is_reproducible(self):
         first = Simulation(self.world.clone()).run(until=5).world

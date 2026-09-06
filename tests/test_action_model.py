@@ -9,6 +9,7 @@ from pineland_sim import Simulation, SimulationConfig, generate_pineland
 from pineland_sim.action_model import (
     action_attempt_probability,
     action_choice_weights,
+    execution_probability,
     local_action_support,
     local_fighter_equivalents,
     national_fighter_equivalents,
@@ -38,6 +39,18 @@ def _insurgent(world):
         if item.organization_id == organization.organization_id
     )
     return organization, formation
+
+
+def test_execution_uses_local_supply_without_double_charging_organization_cash():
+    world = _world()
+    organization, formation = _insurgent(world)
+    locality_id = formation.locality_id
+    funded = execution_probability(world, organization.organization_id, locality_id, .2, .8)
+    organization.resources = 0.0
+    organization.capital["material"] = 0.0
+    converted = execution_probability(world, organization.organization_id, locality_id, .2, .8)
+    assert converted == funded
+    assert converted > 0.0
 
 
 def _human_target_locality(world) -> str:

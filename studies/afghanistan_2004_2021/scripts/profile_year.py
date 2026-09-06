@@ -64,12 +64,30 @@ def run(days: float, profile: bool = False) -> dict:
         schedule(state, day)
         if day >= last_day + 30:
             now = time.perf_counter()
+            actor_funnels = {}
+            for actor_locality, counts in state.action_funnel_by_actor_locality.items():
+                actor = actor_locality.split("|", 1)[0]
+                actor_bucket = actor_funnels.setdefault(actor, {})
+                for key, value in counts.items():
+                    actor_bucket[key] = actor_bucket.get(key, 0) + value
+            insurgent_formations = [
+                formation for formation in state.formations.values()
+                if formation.organization_id == "insurgent" and formation.personnel > 0
+            ]
             row = {"start_day": last_day, "end_day": day,
                    "wall_seconds": now - last_wall,
                    "formations": len(state.formations),
                    "observations": len(state.observations),
                    "shipments": len(state.supply_shipments),
-                   "movement_orders": len(state.movement_orders)}
+                   "movement_orders": len(state.movement_orders),
+                   "action_funnel_by_actor_cumulative": actor_funnels,
+                   "insurgent_personnel": sum(f.personnel for f in insurgent_formations),
+                   "insurgent_available_personnel": sum(
+                       f.available_personnel() for f in insurgent_formations
+                   ),
+                   "insurgent_zero_supply_formations": sum(
+                       f.supply_fraction() <= 1e-12 for f in insurgent_formations
+                   )}
             windows.append(row)
             print(json.dumps(row), flush=True)
             last_day, last_wall = day, now
