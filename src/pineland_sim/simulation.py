@@ -319,6 +319,7 @@ class Simulation:
         self.world.information_relays.clear()
         self.world.next_information_relay_sequence = 1
         self.world.active_information_relays.clear()
+        self.world.information_relay_due_heap.clear()
         self.world.information_detections = {
             "true_positive": 0,
             "false_positive": 0,

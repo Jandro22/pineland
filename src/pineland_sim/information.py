@@ -15,6 +15,7 @@ is calculated in :func:`information_diagnostics`.
 from collections import deque
 from array import array
 from dataclasses import asdict
+import heapq
 from math import exp, log
 import random
 from typing import Any, Iterable
@@ -63,6 +64,7 @@ def initialize_information_world(world: WorldState) -> None:
     world.information_relays.clear()
     world.next_information_relay_sequence = 1
     world.active_information_relays.clear()
+    world.information_relay_due_heap.clear()
     world.presence_beliefs.clear()
     world.node_presence_beliefs.clear()
     world.control_beliefs.clear()
@@ -1184,7 +1186,28 @@ def _queue_relay(world: WorldState, observation: Observation, time: float) -> In
     )
     world.information_relays[relay_id] = relay
     world.active_information_relays.add(relay_id)
+    heapq.heappush(
+        world.information_relay_due_heap,
+        (float(relay.arrives_at), relay_id),
+    )
     return relay
+
+
+def _due_information_relay_ids(world: WorldState, time: float) -> list[str]:
+    """Pop exact information-clock buckets and preserve legacy RNG order."""
+    candidate_ids: list[str] = []
+    heap = world.information_relay_due_heap
+    while heap and heap[0][0] <= float(time) + 1e-12:
+        _, relay_id = heapq.heappop(heap)
+        candidate_ids.append(relay_id)
+    # Relay IDs are monotonically allocated. Sorting the due subset reproduces
+    # the previous sorted(active_information_relays) traversal exactly even
+    # when a newer relay has an earlier delivery time.
+    return sorted(
+        relay_id
+        for relay_id in set(candidate_ids)
+        if relay_id in world.active_information_relays
+    )
 
 
 def ingest_observation(world: WorldState, observation: Observation,
@@ -1568,14 +1591,10 @@ def generate_background_observations(world: WorldState, time: float,
     for locality_id in (
         world.ordered_locality_ids or tuple(sorted(world.localities))
     ):
-        community_ids = world.social_community_ids_by_locality.get(locality_id)
-        communities = (
-            [world.social_communities[community_id] for community_id in community_ids]
-            if community_ids is not None else
-            [community for community in world.social_communities.values()
-             if community.locality_id == locality_id]
+        community_ids, cumulative_weights = world.community_selection_weights(
+            locality_id
         )
-        if not communities:
+        if not community_ids:
             # Administrative, elite-brokerage, and interpretation channels are
             # locality capabilities, not literal sampled civilians.  Preserve
             # them in populated coarse-resolution localities even when no
@@ -1604,30 +1623,19 @@ def generate_background_observations(world: WorldState, time: float,
                         formation_index, target_actor_cache,
                     ))
             continue
-        if len(communities) == 1:
+        if len(community_ids) == 1:
             # random.choices on a one-element population still consumes one
             # RNG draw even though the result cannot vary. Preserve that draw
             # exactly while avoiding a pointless represented-weight reduction.
             rng.random()
-            community = communities[0]
+            community = world.social_communities[community_ids[0]]
         else:
-            community = rng.choices(
-                communities,
-                weights=[
-                    max(
-                        1.0,
-                        world.represented_weight_by_community.get(
-                            item.community_id,
-                            sum(
-                                world.persons[pid].weight
-                                for pid in item.member_ids
-                            ),
-                        ),
-                    )
-                    for item in communities
-                ],
+            community_id = rng.choices(
+                community_ids,
+                cum_weights=cumulative_weights,
                 k=1,
             )[0]
+            community = world.social_communities[community_id]
         # Civilian and social channels are deliberately independent: cooperation
         # improves source access, but neither channel creates physical presence.
         for source_type in ("civilian", "social_network"):
@@ -1730,7 +1738,7 @@ def process_information(world: WorldState, time: float,
         generated = generate_background_observations(world, time, rng)
         delivered = dropped = 0
         delivered_ids: list[str] = []
-        for relay_id in sorted(world.active_information_relays):
+        for relay_id in _due_information_relay_ids(world, time):
             relay = world.information_relays.get(relay_id)
             if relay is None or relay.status != "in_transit":
                 world.active_information_relays.discard(relay_id)

@@ -100,6 +100,13 @@ class WorldState:
     ordered_social_community_ids: tuple[str, ...] = field(default_factory=tuple)
     person_ids_by_community: dict[str, tuple[str, ...]] = field(default_factory=dict)
     represented_weight_by_community: dict[str, float] = field(default_factory=dict)
+    # Cached cumulative weights for the deterministic community representative
+    # draw in the information process. Values are invalidated by the same
+    # mutation APIs that update represented community mass.
+    community_selection_cache: dict[
+        str, tuple[tuple[str, ...], tuple[float, ...]]
+    ] = field(default_factory=dict)
+    community_selection_cache_dirty: set[str] = field(default_factory=set)
     social_edges: dict[tuple[str, str], SocialEdge] = field(default_factory=dict)
     social_neighbors: dict[str, list[str]] = field(default_factory=dict)
     social_community_ids_by_locality: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -132,6 +139,12 @@ class WorldState:
     # retained for forensic output, while this bounded index keeps recurring
     # information passes from sorting/scanning historical relays.
     active_information_relays: set[str] = field(default_factory=set)
+    # Exact due-time heap for information delivery. Processing pops only
+    # arrivals that are due at the requested time; relay IDs are sorted after
+    # extraction to preserve the legacy RNG order.
+    information_relay_due_heap: list[tuple[float, str]] = field(
+        default_factory=list
+    )
     # Per-information-tick memoization only; cleared before the next model
     # boundary so this never becomes part of a particle's latent state.
     information_execution_cache: dict[tuple[Any, ...], Any] = field(default_factory=dict)
@@ -416,6 +429,8 @@ class WorldState:
             locality_id: tuple(sorted(community_ids))
             for locality_id, community_ids in communities_by_locality.items()
         }
+        self.community_selection_cache.clear()
+        self.community_selection_cache_dirty.clear()
         self.patrol_ids_by_formation = {}
         for patrol_id, patrol in self.patrols.items():
             self.patrol_ids_by_formation.setdefault(
@@ -598,7 +613,51 @@ class WorldState:
                 )
                 + delta
             )
+            community = self.social_communities.get(person.community_id)
+            if community is not None:
+                self.community_selection_cache_dirty.add(community.locality_id)
         person.weight = new_weight
+
+    def community_selection_weights(
+        self, locality_id: str
+    ) -> tuple[tuple[str, ...], tuple[float, ...]]:
+        """Return stable community IDs and cumulative draw weights.
+
+        The cumulative values are built in the same ordered floating-point
+        sequence as ``random.choices(weights=...)``. Reusing them removes the
+        repeated reduction from each information tick without changing the
+        single RNG draw or selection order.
+        """
+        cached = self.community_selection_cache.get(locality_id)
+        if cached is not None and locality_id not in self.community_selection_cache_dirty:
+            return cached
+        community_ids = self.social_community_ids_by_locality.get(locality_id)
+        if community_ids is None:
+            community_ids = tuple(sorted(
+                community_id
+                for community_id, community in self.social_communities.items()
+                if community.locality_id == locality_id
+            ))
+        cumulative: list[float] = []
+        total = 0.0
+        for community_id in community_ids:
+            weight = max(
+                1.0,
+                self.represented_weight_by_community.get(
+                    community_id,
+                    sum(
+                        self.persons[person_id].weight
+                        for person_id in self.social_communities[community_id].member_ids
+                        if person_id in self.persons
+                    ),
+                ),
+            )
+            total += weight
+            cumulative.append(total)
+        result = (tuple(community_ids), tuple(cumulative))
+        self.community_selection_cache[locality_id] = result
+        self.community_selection_cache_dirty.discard(locality_id)
+        return result
 
     def persons_in_locality(self, locality_id: str):
         """Return resident representatives, using the exact particle index."""
@@ -1820,6 +1879,8 @@ class WorldState:
             "unassigned_person_ids",
             "represented_weight_by_locality",
             "represented_weight_by_community",
+            "community_selection_cache",
+            "community_selection_cache_dirty",
             "microzones_by_locality",
             "formation_ids_by_locality",
             "formation_ids_by_organization",
@@ -1910,8 +1971,10 @@ class WorldState:
             "locality_route_metrics_cache",
             "command_path_cache",
             "information_execution_cache",
+            "community_selection_cache",
         ):
             state[field_name] = {}
+        state["community_selection_cache_dirty"] = set()
         return None, state
 
 

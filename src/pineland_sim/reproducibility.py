@@ -75,6 +75,7 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "security_posts_by_locality", "social_community_ids_by_locality",
     "information_execution_cache",
     "information_cache_active",
+    "community_selection_cache", "community_selection_cache_dirty",
     "execution_profile", "execution_backend", "performance_counters",
     "engagements", "state_based_event_times",
     "state_based_event_localities", "state_based_events",

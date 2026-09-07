@@ -19,6 +19,7 @@ from pathlib import Path
 import pickle
 import random
 import sys
+from time import perf_counter, process_time
 from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -70,6 +71,7 @@ POSTERIOR_CACHE_SCHEMA = "pineland.afghanistan.posterior_cache.v1"
 TRAINING_RESTART_SCHEMA = "pineland.afghanistan.training_restart.v1"
 INITIAL_PARTICLE_CACHE_SCHEMA = "pineland.afghanistan.initial_particle_cache.v1"
 FORECAST_CACHE_SCHEMA = "pineland.afghanistan.forecast_cache.v1"
+RESIDENT_CACHE_SCHEMA = "pineland.afghanistan.resident_particle_cache.v1"
 COMPETITOR_INFORMATION_CONTRACT = {
     "schema_version": "pineland.afghanistan.information_matched_competitors.v1",
     "evaluation_surface": "observed province-week Taliban-state-security incidence",
@@ -642,6 +644,148 @@ def _load_posterior_cache(
     )
 
 
+def _resident_cache_paths(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+    *,
+    stage: str,
+    completed_week_index: int | None = None,
+) -> tuple[Path, Path, str]:
+    digest = _posterior_cache_digest(cache_key)
+    suffix = (
+        f"-week-{int(completed_week_index):03d}"
+        if completed_week_index is not None else ""
+    )
+    prefix = f"{stage}-resident-{digest}{suffix}"
+    return (
+        cache_dir / f"{prefix}.json",
+        cache_dir / f"{prefix}.meta.pkl",
+        prefix,
+    )
+
+
+def _save_resident_particle_cache(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+    filter_: SequentialParticleFilter[
+        SimulationParticle, ProvinceWeekObservation
+    ],
+    executor: PersistentParticlePool,
+    *,
+    stage: str,
+    completed_week_index: int | None = None,
+) -> Path:
+    """Persist filter metadata centrally and live particle payloads in workers."""
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path, metadata_path, prefix = _resident_cache_paths(
+        cache_dir,
+        cache_key,
+        stage=stage,
+        completed_week_index=completed_week_index,
+    )
+    metadata = pickle.dumps(
+        _snapshot_filter(filter_),
+        protocol=pickle.HIGHEST_PROTOCOL,
+    )
+    metadata_sha256 = hashlib.sha256(metadata).hexdigest()
+    metadata_tmp = metadata_path.with_suffix(metadata_path.suffix + ".tmp")
+    metadata_tmp.write_bytes(metadata)
+    os.replace(metadata_tmp, metadata_path)
+    persisted = executor.persist_states(str(cache_dir.resolve()), prefix)
+    manifest = {
+        "schema_version": RESIDENT_CACHE_SCHEMA,
+        "cache_key": cache_key,
+        "stage": stage,
+        "completed_week_index": completed_week_index,
+        "metadata_path": str(metadata_path.resolve()),
+        "metadata_sha256": metadata_sha256,
+        "particles": persisted,
+        "canonical_scientific_artifact": False,
+    }
+    manifest_tmp = manifest_path.with_suffix(manifest_path.suffix + ".tmp")
+    manifest_tmp.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(manifest_tmp, manifest_path)
+    return manifest_path
+
+
+def _load_resident_particle_cache(
+    manifest_path: Path,
+    cache_key: dict[str, object],
+    *,
+    filter_seed: int,
+) -> tuple[
+    SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation],
+    Path,
+    list[str],
+    int | None,
+]:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != RESIDENT_CACHE_SCHEMA:
+        raise ValueError("resident particle cache schema mismatch")
+    if manifest.get("cache_key") != cache_key:
+        raise ValueError("resident particle cache provenance mismatch")
+    metadata_path = Path(manifest["metadata_path"])
+    if not metadata_path.exists():
+        raise ValueError("resident particle cache metadata is missing")
+    metadata = metadata_path.read_bytes()
+    if hashlib.sha256(metadata).hexdigest() != manifest.get("metadata_sha256"):
+        raise ValueError("resident particle cache metadata hash mismatch")
+    particle_rows = sorted(
+        manifest["particles"], key=lambda row: int(row["slot"])
+    )
+    expected_slots = list(range(len(particle_rows)))
+    if [int(row["slot"]) for row in particle_rows] != expected_slots:
+        raise ValueError("resident particle cache slots are not contiguous")
+    state_paths: list[str] = []
+    for row in particle_rows:
+        path = Path(row["path"])
+        if not path.exists() or path.stat().st_size != int(row["bytes"]):
+            raise ValueError("resident particle cache state payload is missing or truncated")
+        if file_sha256(path) != row.get("payload_sha256"):
+            raise ValueError("resident particle cache state payload hash mismatch")
+        state_paths.append(str(path))
+    filter_ = _restore_filter(
+        pickle.loads(metadata), filter_seed=filter_seed
+    )
+    return (
+        filter_,
+        manifest_path,
+        state_paths,
+        manifest.get("completed_week_index"),
+    )
+
+
+def _load_latest_resident_training_restart(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+    *,
+    filter_seed: int,
+) -> tuple[
+    SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation] | None,
+    Path | None,
+    int | None,
+    list[str] | None,
+]:
+    digest = _posterior_cache_digest(cache_key)
+    candidates = sorted(
+        cache_dir.glob(f"training-resident-{digest}-week-*.json"),
+        reverse=True,
+    ) if cache_dir.exists() else []
+    for manifest_path in candidates:
+        try:
+            filter_, manifest, paths, week = _load_resident_particle_cache(
+                manifest_path, cache_key, filter_seed=filter_seed
+            )
+            filter_.frozen = False
+            return filter_, manifest, week, paths
+        except (KeyError, TypeError, ValueError, OSError, pickle.PickleError):
+            continue
+    return None, None, None, None
+
+
 def _forecast_cache_key(
     cache_key: dict[str, object],
     filter_: SequentialParticleFilter[
@@ -651,19 +795,30 @@ def _forecast_cache_key(
     start_day: float,
     end_day: float,
     forecast_branches: int,
+    particle_metadata: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     """Bind forecast reuse to the exact frozen posterior and forecast contract."""
+    if particle_metadata is None:
+        particle_metadata = [
+            {
+                "lineage_id": particle.state.lineage_id,
+                "decision_state_sha256": decision_state_sha256(
+                    particle.state.world
+                ),
+            }
+            for particle in filter_.particles
+        ]
     return {
         "schema_version": FORECAST_CACHE_SCHEMA,
         "posterior_cache_key_sha256": _posterior_cache_digest(cache_key),
         "posterior_last_time": float(filter_.last_time),
         "posterior_weights": particle_weights(filter_.particles),
         "posterior_lineages": [
-            particle.state.lineage_id for particle in filter_.particles
+            str(item["lineage_id"]) for item in particle_metadata
         ],
         "posterior_decision_state_sha256": [
-            decision_state_sha256(particle.state.world)
-            for particle in filter_.particles
+            str(item["decision_state_sha256"])
+            for item in particle_metadata
         ],
         "forecast_start_day": float(start_day),
         "forecast_end_day": float(end_day),
@@ -952,6 +1107,40 @@ def _nested_persistent_job(
     )
 
 
+def _resident_particle_job(
+    state: SimulationParticle,
+    time: float,
+    payload,
+) -> tuple[SimulationParticle, float, dict[str, object]]:
+    """Dispatch training and forecast work through one resident pool."""
+    if (
+        isinstance(payload, tuple)
+        and len(payload) == 2
+        and payload[0] == "forecast"
+    ):
+        return _forecast_persistent_job(state, time, payload[1])
+    return _nested_persistent_job(state, time, payload)
+
+
+def _resident_particle_identity(state: SimulationParticle) -> dict[str, object]:
+    """Return cache-key metadata without exporting the resident state."""
+    world = state.world
+    provinces = tuple(sorted({
+        world.evaluation_region_by_locality.get(
+            locality_id,
+            world.district_hierarchy[world.localities[locality_id].district_id][
+                "province"
+            ],
+        )
+        for locality_id in world.localities
+    }))
+    return {
+        "lineage_id": state.lineage_id,
+        "decision_state_sha256": decision_state_sha256(world),
+        "province_ids": provinces,
+    }
+
+
 def make_nested_propagator(
     *,
     branches: int,
@@ -979,6 +1168,8 @@ def run_training_filter(
     restart_every_weeks: int = 13,
     collect_worker_diagnostics: bool = False,
     balance_resampling: bool = True,
+    resident_pool: PersistentParticlePool | None = None,
+    keep_resident: bool = False,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
     if workers < 1:
         raise ValueError("workers must be positive")
@@ -986,6 +1177,8 @@ def run_training_filter(
         raise ValueError("restart cache key is required when restart caching is enabled")
     if restart_every_weeks < 1:
         raise ValueError("restart_every_weeks must be positive")
+    if resident_pool is not None and workers == 1:
+        raise ValueError("resident_pool requires workers greater than one")
     filter_ = resume_filter or SequentialParticleFilter(
         particles,
         transition=lambda state, time: None,
@@ -1034,14 +1227,26 @@ def run_training_filter(
         ):
             return
         refresh_nested_diagnostics()
-        states = executor.snapshot() if executor is not None else None
-        _save_training_restart(
-            restart_cache_dir,
-            restart_cache_key,
-            filter_,
-            completed_week_index=observation.week_index,
-            states=states,
-        )
+        if executor is not None and all(
+            particle.state is None for particle in filter_.particles
+        ):
+            _save_resident_particle_cache(
+                restart_cache_dir,
+                restart_cache_key,
+                filter_,
+                executor,
+                stage="training",
+                completed_week_index=observation.week_index,
+            )
+        else:
+            states = executor.snapshot() if executor is not None else None
+            _save_training_restart(
+                restart_cache_dir,
+                restart_cache_key,
+                filter_,
+                completed_week_index=observation.week_index,
+                states=states,
+            )
 
     def assimilate_one(
         observation: ProvinceWeekObservation,
@@ -1147,25 +1352,32 @@ def run_training_filter(
             assimilate_one(observation, None)
             maybe_save_restart(observation, None)
     else:
-        initial_states = [particle.state for particle in filter_.particles]
-        with PersistentParticlePool(
-            initial_states,
-            propagate=_nested_persistent_job,
-            fork_state=_fork_particle_state,
-            workers=workers,
-        ) as executor:
+        owns_executor = resident_pool is None
+        executor = resident_pool
+        if executor is None:
+            initial_states = [particle.state for particle in filter_.particles]
+            executor = PersistentParticlePool(
+                initial_states,
+                propagate=_resident_particle_job,
+                fork_state=_fork_particle_state,
+                workers=workers,
+                summarize_state=_resident_particle_identity,
+            )
+        try:
             # The coordinator retains only weights/ancestry metadata while
             # workers own the mutable simulation objects.
             filter_.particles = [
                 Particle(None, particle.log_weight)
                 for particle in filter_.particles
             ]
-            del initial_states
-            particles = []
             for observation in ordered_observations:
                 assimilate_one(observation, executor)
                 maybe_save_restart(observation, executor)
-            _reattach_particle_states(filter_, executor.snapshot())
+            if owns_executor or not keep_resident:
+                _reattach_particle_states(filter_, executor.snapshot())
+        finally:
+            if owns_executor or not keep_resident:
+                executor.close()
     filter_.freeze()
     refresh_nested_diagnostics()
     if collect_worker_diagnostics:
@@ -1284,6 +1496,8 @@ def forecast_weighted_field(
     end_day: float = FORECAST_END_DAY,
     forecast_branches: int = 3,
     workers: int = 1,
+    resident_pool: PersistentParticlePool | None = None,
+    resident_particle_metadata: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     """Freeze the posterior and return target-compatible event probabilities."""
     if forecast_branches < 1:
@@ -1292,11 +1506,23 @@ def forecast_weighted_field(
         raise ValueError("workers must be positive")
     filter_.freeze()
     weights = particle_weights(filter_.particles)
-    provinces = tuple(sorted({
-        _province_for_locality(particle.state.world, locality_id)
-        for particle in filter_.particles
-        for locality_id in particle.state.world.localities
-    }))
+    if resident_pool is None:
+        provinces = tuple(sorted({
+            _province_for_locality(particle.state.world, locality_id)
+            for particle in filter_.particles
+            for locality_id in particle.state.world.localities
+        }))
+    else:
+        metadata = (
+            resident_particle_metadata
+            if resident_particle_metadata is not None
+            else [metadata for _, metadata in resident_pool.summarize()]
+        )
+        provinces = tuple(sorted({
+            province
+            for particle_metadata in metadata
+            for province in particle_metadata["province_ids"]
+        }))
     province_bits = {
         province: 1 << index for index, province in enumerate(provinces)
     }
@@ -1327,25 +1553,35 @@ def forecast_weighted_field(
             for particle in filter_.particles
         ]
     else:
-        initial_states = [particle.state for particle in filter_.particles]
-        with PersistentParticlePool(
-            initial_states,
-            propagate=_forecast_persistent_job,
-            fork_state=_fork_particle_state,
-            workers=workers,
-        ) as executor:
+        owns_executor = resident_pool is None
+        executor = resident_pool
+        if executor is None:
+            initial_states = [particle.state for particle in filter_.particles]
+            executor = PersistentParticlePool(
+                initial_states,
+                propagate=_resident_particle_job,
+                fork_state=_fork_particle_state,
+                workers=workers,
+                summarize_state=_resident_particle_identity,
+            )
+        try:
             filter_.particles = [
                 Particle(None, particle.log_weight)
                 for particle in filter_.particles
             ]
-            del initial_states
             worker_payloads = [
                 diagnostics
                 for _, _, diagnostics in executor.propagate(
                     end_day,
-                    (start_day, end_day, forecast_branches, province_bits),
+                    (
+                        "forecast",
+                        (start_day, end_day, forecast_branches, province_bits),
+                    ),
                 )
             ]
+        finally:
+            if owns_executor:
+                executor.close()
         completed = [
             payload["branch_week_masks"] for payload in worker_payloads
         ]
@@ -1419,6 +1655,13 @@ def run(
     initial_cache_dir: Path | None = None,
     forecast_cache_dir: Path | None = None,
 ) -> dict:
+    run_started = perf_counter()
+    coordinator_cpu_started = process_time()
+    training_wall_seconds = 0.0
+    training_cpu_seconds = 0.0
+    forecast_wall_seconds = 0.0
+    forecast_cpu_seconds = 0.0
+    resident_worker_cpu_seconds: float | None = None
     repo = repository_state(ROOT)
     empty_diff_sha256 = hashlib.sha256(b"").hexdigest()
     if repo["tracked_diff_sha256"] != empty_diff_sha256:
@@ -1488,38 +1731,72 @@ def run(
     training_restart_hit = False
     training_restart_manifest: Path | None = None
     training_restart_week: int | None = None
+    resident_state_paths: list[str] | None = None
+    resume_state_paths: list[str] | None = None
     initial_particle_cache_hits = 0
     initial_particle_cache_attempts = 0
     forecast_cache_hit = False
     forecast_cache_manifest: Path | None = None
+    resident_pool: PersistentParticlePool | None = None
     if posterior_cache_dir is not None:
-        manifest_path, payload_path = _posterior_cache_paths(
-            posterior_cache_dir, cache_key
-        )
-        if manifest_path.exists() and payload_path.exists():
-            filter_, posterior_cache_manifest = _load_posterior_cache(
+        if workers > 1:
+            manifest_path, _, _ = _resident_cache_paths(
                 posterior_cache_dir,
                 cache_key,
-                filter_seed=filter_seed,
+                stage="posterior",
             )
-            posterior_cache_hit = True
+            if manifest_path.exists():
+                (
+                    filter_,
+                    posterior_cache_manifest,
+                    resident_state_paths,
+                    _,
+                ) = _load_resident_particle_cache(
+                    manifest_path, cache_key, filter_seed=filter_seed
+                )
+                posterior_cache_hit = True
+            else:
+                filter_ = None
         else:
-            filter_ = None
+            manifest_path, payload_path = _posterior_cache_paths(
+                posterior_cache_dir, cache_key
+            )
+            if manifest_path.exists() and payload_path.exists():
+                filter_, posterior_cache_manifest = _load_posterior_cache(
+                    posterior_cache_dir,
+                    cache_key,
+                    filter_seed=filter_seed,
+                )
+                posterior_cache_hit = True
+            else:
+                filter_ = None
     else:
         filter_ = None
 
     if filter_ is None:
         resume_filter = None
         if training_restart_dir is not None:
-            (
-                resume_filter,
-                training_restart_manifest,
-                training_restart_week,
-            ) = _load_latest_training_restart(
-                training_restart_dir,
-                cache_key,
-                filter_seed=filter_seed,
-            )
+            if workers > 1:
+                (
+                    resume_filter,
+                    training_restart_manifest,
+                    training_restart_week,
+                    resume_state_paths,
+                ) = _load_latest_resident_training_restart(
+                    training_restart_dir,
+                    cache_key,
+                    filter_seed=filter_seed,
+                )
+            else:
+                (
+                    resume_filter,
+                    training_restart_manifest,
+                    training_restart_week,
+                ) = _load_latest_training_restart(
+                    training_restart_dir,
+                    cache_key,
+                    filter_seed=filter_seed,
+                )
             training_restart_hit = resume_filter is not None
         if resume_filter is None:
             initial_particles = []
@@ -1567,6 +1844,28 @@ def run(
             del base_world
         else:
             initial_particles = []
+        if workers > 1:
+            if resume_state_paths is not None:
+                resident_pool = PersistentParticlePool(
+                    state_paths=resume_state_paths,
+                    propagate=_resident_particle_job,
+                    fork_state=_fork_particle_state,
+                    workers=workers,
+                    summarize_state=_resident_particle_identity,
+                )
+            else:
+                resident_pool = PersistentParticlePool(
+                    [
+                        particle.state
+                        for particle in (initial_particles or resume_filter.particles)
+                    ],
+                    propagate=_resident_particle_job,
+                    fork_state=_fork_particle_state,
+                    workers=workers,
+                    summarize_state=_resident_particle_identity,
+                )
+        training_started = perf_counter()
+        training_cpu_started = process_time()
         filter_ = run_training_filter(
             initial_particles,
             observations,
@@ -1577,40 +1876,91 @@ def run(
             restart_cache_dir=training_restart_dir,
             restart_cache_key=cache_key if training_restart_dir is not None else None,
             restart_every_weeks=restart_every_weeks,
+            resident_pool=resident_pool,
+            keep_resident=resident_pool is not None,
         )
+        training_wall_seconds = perf_counter() - training_started
+        training_cpu_seconds = process_time() - training_cpu_started
         if posterior_cache_dir is not None:
-            posterior_cache_manifest, _ = _save_posterior_cache(
-                posterior_cache_dir, cache_key, filter_
-            )
+            if resident_pool is not None:
+                posterior_cache_manifest = _save_resident_particle_cache(
+                    posterior_cache_dir,
+                    cache_key,
+                    filter_,
+                    resident_pool,
+                    stage="posterior",
+                )
+            else:
+                posterior_cache_manifest, _ = _save_posterior_cache(
+                    posterior_cache_dir, cache_key, filter_
+                )
     posterior_boundary = max(observation.end_day for observation in observations)
     if abs(filter_.last_time - posterior_boundary) > 1e-9:
         raise ValueError(
             "posterior cache/training state does not end at the declared boundary"
         )
+    if (
+        resident_pool is None
+        and workers > 1
+        and filter_.particles
+    ):
+        if resident_state_paths is not None:
+            resident_pool = PersistentParticlePool(
+                state_paths=resident_state_paths,
+                propagate=_resident_particle_job,
+                fork_state=_fork_particle_state,
+                workers=workers,
+                summarize_state=_resident_particle_identity,
+            )
+        elif filter_.particles[0].state is not None:
+            resident_pool = PersistentParticlePool(
+                [particle.state for particle in filter_.particles],
+                propagate=_resident_particle_job,
+                fork_state=_fork_particle_state,
+                workers=workers,
+                summarize_state=_resident_particle_identity,
+            )
+    resident_metadata = (
+        [metadata for _, metadata in resident_pool.summarize()]
+        if resident_pool is not None else None
+    )
     forecast_key = _forecast_cache_key(
         cache_key,
         filter_,
         start_day=FORECAST_START_DAY,
         end_day=FORECAST_END_DAY,
         forecast_branches=forecast_branches,
+        particle_metadata=resident_metadata,
     )
-    cached_forecast = (
-        _load_forecast_cache(forecast_cache_dir, forecast_key)
-        if forecast_cache_dir is not None else None
-    )
-    if cached_forecast is None:
-        forecast = forecast_weighted_field(
-            filter_,
-            forecast_branches=forecast_branches,
-            workers=workers,
+    forecast_started = perf_counter()
+    forecast_cpu_started = process_time()
+    try:
+        cached_forecast = (
+            _load_forecast_cache(forecast_cache_dir, forecast_key)
+            if forecast_cache_dir is not None else None
         )
-        if forecast_cache_dir is not None:
-            forecast_cache_manifest, _ = _save_forecast_cache(
-                forecast_cache_dir, forecast_key, forecast
+        if cached_forecast is None:
+            forecast = forecast_weighted_field(
+                filter_,
+                forecast_branches=forecast_branches,
+                workers=workers,
+                resident_pool=resident_pool,
+                resident_particle_metadata=resident_metadata,
             )
-    else:
-        forecast, forecast_cache_manifest = cached_forecast
-        forecast_cache_hit = True
+            if forecast_cache_dir is not None:
+                forecast_cache_manifest, _ = _save_forecast_cache(
+                    forecast_cache_dir, forecast_key, forecast
+                )
+        else:
+            forecast, forecast_cache_manifest = cached_forecast
+            forecast_cache_hit = True
+    finally:
+        forecast_wall_seconds = perf_counter() - forecast_started
+        forecast_cpu_seconds = process_time() - forecast_cpu_started
+        if resident_pool is not None:
+            resident_worker_cpu_seconds = resident_pool.cpu_seconds()
+            resident_pool.close()
+            resident_pool = None
     filter_diagnostics = [asdict(item) for item in filter_.history]
     smc_diagnostics = {
         **filter_.ancestry_diagnostics(),
@@ -1758,6 +2108,22 @@ def run(
         "posterior_particle_summaries": forecast[
             "posterior_particle_summaries"
         ],
+        "performance": {
+            "wall_seconds_before_artifact_write": perf_counter() - run_started,
+            "coordinator_cpu_seconds_before_artifact_write": (
+                process_time() - coordinator_cpu_started
+            ),
+            "training_wall_seconds": training_wall_seconds,
+            "training_coordinator_cpu_seconds": training_cpu_seconds,
+            "forecast_wall_seconds": forecast_wall_seconds,
+            "forecast_coordinator_cpu_seconds": forecast_cpu_seconds,
+            "resident_worker_cpu_seconds": resident_worker_cpu_seconds,
+            "resident_worker_count": workers if workers > 1 else 0,
+            "full_state_snapshot_used": False,
+            "posterior_cache_hit": posterior_cache_hit,
+            "forecast_cache_hit": forecast_cache_hit,
+            "canonical_scientific_artifact": False,
+        },
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -1769,6 +2135,9 @@ def main() -> None:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--strength", type=float, choices=DEFAULT_STRENGTHS)
     parser.add_argument("--particles", type=int, default=DEFAULT_PARTICLE_COUNT)
+    parser.add_argument("--likelihood-branches", type=int, default=3)
+    parser.add_argument("--forecast-branches", type=int, default=3)
+    parser.add_argument("--horizon", type=float, default=FORECAST_END_DAY)
     parser.add_argument(
         "--workers",
         type=int,
@@ -1819,6 +2188,9 @@ def main() -> None:
         taliban_strength=args.strength,
         particles=args.particles,
         workers=args.workers,
+        likelihood_branches=args.likelihood_branches,
+        forecast_branches=args.forecast_branches,
+        horizon=args.horizon,
         posterior_cache_dir=args.posterior_cache_dir,
         training_restart_dir=args.training_restart_dir,
         restart_every_weeks=args.restart_every_weeks,
