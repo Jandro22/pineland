@@ -93,14 +93,19 @@ class Simulation:
                     "scheduler_backend must be 'heap' or 'calendar'"
                 )
         if execution_backend is not None:
-            if execution_backend not in {"reference", "optimized"}:
+            if execution_backend not in {"reference", "optimized", "ensemble"}:
                 raise ValueError(
-                    "execution_backend must be 'reference' or 'optimized'"
+                    "execution_backend must be 'reference', 'optimized', or 'ensemble'"
                 )
             self.world.execution_backend = execution_backend
-            if execution_backend == "optimized":
+            if execution_backend in {"optimized", "ensemble"}:
                 self.world.rebuild_runtime_entity_indexes()
                 self.world.rebuild_compact_information_state()
+            if execution_backend == "ensemble":
+                # Compilation is lazy at the first information boundary so a
+                # caller may finish conditioning/initialization before paying
+                # the source-plan setup cost.
+                self.world.numeric_information_runtime = None
         if validate_invariants is not None:
             self._validate_invariants = bool(validate_invariants)
         if checkpointing is not None:

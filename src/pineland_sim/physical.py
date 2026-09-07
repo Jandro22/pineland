@@ -305,7 +305,7 @@ def ensure_zone_belief(world: WorldState, actor_id: str, microzone_id: str,
         belief = ActorZoneBelief(actor_id, microzone_id, .5, .35, float(time))
         world.zone_beliefs[key] = belief
     compact = getattr(world, "compact_zone_state", None)
-    if world.execution_backend == "optimized" and compact is not None:
+    if world.execution_backend in {"optimized", "ensemble"} and compact is not None:
         compact.ensure(key, belief)
     return belief
 

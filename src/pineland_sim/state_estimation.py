@@ -11,7 +11,7 @@ from copy import deepcopy
 from collections import Counter
 from concurrent.futures import Executor
 from dataclasses import dataclass
-from math import exp, isfinite, log
+from math import ceil, exp, expm1, isfinite, log, log1p, sqrt
 import multiprocessing as mp
 import hashlib
 import os
@@ -19,7 +19,7 @@ import pickle
 import random
 from time import perf_counter
 import traceback
-from typing import Callable, Generic, Iterable, Iterator, Sequence, TypeVar
+from typing import Callable, Generic, Iterable, Iterator, Mapping, Sequence, TypeVar
 
 
 StateT = TypeVar("StateT")
@@ -1237,3 +1237,307 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         self.history.append(diagnostics)
         self.last_time = float(observation.time)
         return diagnostics
+
+
+def probability_at_least_one(probabilities: Iterable[float]) -> float:
+    """Return ``1 - prod(1-p_i)`` with stable survival arithmetic."""
+    log_survival = 0.0
+    for raw_probability in probabilities:
+        probability = min(1.0, max(0.0, float(raw_probability)))
+        if probability >= 1.0:
+            return 1.0
+        if probability > 0.0:
+            log_survival += log1p(-probability)
+    return min(1.0, max(0.0, -expm1(log_survival)))
+
+
+def hazard_to_probability(hazard_per_day: float, interval_days: float = 1.0) -> float:
+    """Convert a continuous-time hazard into an interval probability."""
+    interval_days = float(interval_days)
+    if interval_days < 0:
+        raise ValueError("interval_days cannot be negative")
+    hazard = max(0.0, float(hazard_per_day))
+    return min(1.0, max(0.0, -expm1(-hazard * interval_days)))
+
+
+def probability_to_hazard(probability: float, interval_days: float = 1.0) -> float:
+    """Convert an interval probability into its equivalent constant hazard."""
+    interval_days = float(interval_days)
+    if interval_days <= 0:
+        raise ValueError("interval_days must be positive")
+    probability = min(1.0, max(0.0, float(probability)))
+    if probability >= 1.0:
+        return float("inf")
+    return -log1p(-probability) / interval_days
+
+
+def aggregate_hazard(hazards: Iterable[float]) -> float:
+    """Add independent continuous hazards without converting through p-space."""
+    return sum(max(0.0, float(hazard)) for hazard in hazards)
+
+
+def aggregate_hazard_probability(
+    hazards: Iterable[float],
+    interval_days: float = 1.0,
+) -> float:
+    """Return the probability of at least one event from independent hazards."""
+    return hazard_to_probability(aggregate_hazard(hazards), interval_days)
+
+
+@dataclass(frozen=True, slots=True)
+class RaoBlackwellizedActivityLikelihood:
+    """Likelihood for binary activity observations from opportunity hazards.
+
+    A trajectory supplies one or more opportunity hazards for each locality or
+    evaluation unit.  Their uncertainty is integrated analytically with
+    ``P(Y=1)=1-exp(-sum(lambda_i) * dt)`` rather than estimated by a fixed
+    number of fully simulated descendants.
+    """
+
+    epsilon: float = 1.0e-12
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= float(self.epsilon) < 0.5:
+            raise ValueError("epsilon must be in [0, .5)")
+
+    def probability_from_hazards(
+        self,
+        hazards: Iterable[float],
+        *,
+        interval_days: float = 1.0,
+    ) -> float:
+        return aggregate_hazard_probability(hazards, interval_days)
+
+    def probability_from_opportunities(
+        self,
+        probabilities: Iterable[float],
+    ) -> float:
+        return probability_at_least_one(probabilities)
+
+    def log_likelihood(
+        self,
+        observed: bool | int | float,
+        hazards: Iterable[float],
+        *,
+        interval_days: float = 1.0,
+        inputs_are_probabilities: bool = False,
+    ) -> float:
+        probability = (
+            self.probability_from_opportunities(hazards)
+            if inputs_are_probabilities
+            else self.probability_from_hazards(
+                hazards, interval_days=interval_days
+            )
+        )
+        epsilon = float(self.epsilon)
+        if epsilon:
+            probability = min(1.0 - epsilon, max(epsilon, probability))
+        y = bool(observed)
+        return log(probability if y else 1.0 - probability)
+
+    def score(
+        self,
+        observed_by_unit: Mapping[str, bool | int | float],
+        hazards_by_unit: Mapping[str, Iterable[float]],
+        *,
+        interval_days: float = 1.0,
+        inputs_are_probabilities: bool = False,
+    ) -> float:
+        """Sum unit log likelihoods in deterministic key order."""
+        return sum(
+            self.log_likelihood(
+                observed_by_unit[unit],
+                hazards_by_unit.get(unit, ()),
+                interval_days=interval_days,
+                inputs_are_probabilities=inputs_are_probabilities,
+            )
+            for unit in sorted(observed_by_unit)
+        )
+
+    __call__ = log_likelihood
+
+
+# Shorter spelling retained for callers that use the statistical term rather
+# than the activity-specific name.
+RaoBlackwellizedHazardLikelihood = RaoBlackwellizedActivityLikelihood
+
+
+def guided_importance_log_weight(
+    log_transition_density: float,
+    log_likelihood: float,
+    log_proposal_density: float,
+    *,
+    log_prior_weight: float = 0.0,
+) -> float:
+    """Return the log importance correction for a guided SMC proposal."""
+    return (
+        float(log_prior_weight)
+        + float(log_transition_density)
+        + float(log_likelihood)
+        - float(log_proposal_density)
+    )
+
+
+def guided_log_weights(
+    log_prior_weights: Sequence[float],
+    log_transition_densities: Sequence[float],
+    log_likelihoods: Sequence[float],
+    log_proposal_densities: Sequence[float],
+) -> list[float]:
+    """Vector form of :func:`guided_importance_log_weight`."""
+    lengths = {
+        len(log_prior_weights),
+        len(log_transition_densities),
+        len(log_likelihoods),
+        len(log_proposal_densities),
+    }
+    if len(lengths) != 1:
+        raise ValueError("guided SMC arrays must have equal lengths")
+    return [
+        guided_importance_log_weight(
+            transition, likelihood, proposal, log_prior_weight=prior
+        )
+        for prior, transition, likelihood, proposal in zip(
+            log_prior_weights,
+            log_transition_densities,
+            log_likelihoods,
+            log_proposal_densities,
+        )
+    ]
+
+
+def monte_carlo_standard_error(
+    values: Sequence[float],
+    *,
+    weights: Sequence[float] | None = None,
+) -> float:
+    """Estimate Monte Carlo standard error for unweighted or weighted draws."""
+    if not values:
+        raise ValueError("MCSE needs at least one draw")
+    numeric = [float(value) for value in values]
+    if any(not isfinite(value) for value in numeric):
+        raise ValueError("MCSE values must be finite")
+    if weights is None:
+        count = len(numeric)
+        if count < 2:
+            return 0.0
+        mean = sum(numeric) / count
+        variance = sum((value - mean) ** 2 for value in numeric) / (count - 1)
+        return sqrt(max(0.0, variance) / count)
+    if len(weights) != len(numeric):
+        raise ValueError("MCSE weights must match values")
+    nonnegative = [max(0.0, float(weight)) for weight in weights]
+    total = sum(nonnegative)
+    if total <= 0:
+        raise ValueError("MCSE weights must have positive mass")
+    normalized = [weight / total for weight in nonnegative]
+    mean = sum(weight * value for weight, value in zip(normalized, numeric))
+    sum_squared_weights = sum(weight * weight for weight in normalized)
+    if sum_squared_weights >= 1.0:
+        return 0.0
+    # The finite-sample weighted variance correction and effective sample size
+    # are both needed: treating a concentrated posterior as n raw draws is
+    # overconfident.
+    variance = sum(
+        weight * (value - mean) ** 2
+        for weight, value in zip(normalized, numeric)
+    ) / (1.0 - sum_squared_weights)
+    effective_n = 1.0 / sum_squared_weights
+    return sqrt(max(0.0, variance) / effective_n)
+
+
+def binary_mcse(
+    probability_or_values: float | Sequence[float],
+    sample_count: int | None = None,
+) -> float:
+    """Return Bernoulli MCSE from ``p,n`` or a binary draw sequence."""
+    if isinstance(probability_or_values, (int, float)):
+        probability = min(1.0, max(0.0, float(probability_or_values)))
+        if sample_count is None:
+            raise ValueError("sample_count is required when probability is scalar")
+        count = int(sample_count)
+        if count < 1:
+            raise ValueError("sample_count must be positive")
+        return sqrt(probability * (1.0 - probability) / count)
+    values = [float(value) for value in probability_or_values]
+    if not values or any(value not in (0.0, 1.0) for value in values):
+        raise ValueError("binary draws must be a nonempty 0/1 sequence")
+    probability = sum(values) / len(values)
+    return sqrt(probability * (1.0 - probability) / len(values))
+
+
+def required_trajectories_for_mcse(
+    probability: float | None,
+    tolerance: float,
+    *,
+    z_value: float = 1.0,
+) -> int:
+    """Conservative draw count for a binary posterior probability MCSE target."""
+    tolerance = float(tolerance)
+    z_value = float(z_value)
+    if tolerance <= 0.0 or z_value <= 0.0:
+        raise ValueError("tolerance and z_value must be positive")
+    variance_bound = 0.25 if probability is None else min(
+        0.25,
+        max(0.0, float(probability)) * (1.0 - min(1.0, max(0.0, float(probability)))),
+    )
+    return max(1, int(ceil(variance_bound * z_value * z_value / (tolerance * tolerance))))
+
+
+@dataclass(frozen=True, slots=True)
+class AdaptiveMonteCarloResult:
+    estimate: float
+    mcse: float
+    sample_count: int
+    batches: int
+    converged: bool
+    values: tuple[float, ...]
+
+
+def adaptive_monte_carlo(
+    sample: Callable[[], float],
+    *,
+    tolerance: float,
+    min_samples: int = 32,
+    max_samples: int = 4096,
+    batch_size: int = 32,
+) -> AdaptiveMonteCarloResult:
+    """Draw until empirical MCSE is below ``tolerance`` or budget is exhausted."""
+    tolerance = float(tolerance)
+    min_samples = int(min_samples)
+    max_samples = int(max_samples)
+    batch_size = int(batch_size)
+    if tolerance <= 0.0:
+        raise ValueError("tolerance must be positive")
+    if min_samples < 1 or max_samples < min_samples or batch_size < 1:
+        raise ValueError("invalid adaptive Monte Carlo sample budget")
+    values: list[float] = []
+    batches = 0
+    converged = False
+    while len(values) < max_samples:
+        draw_count = min(batch_size, max_samples - len(values))
+        for _ in range(draw_count):
+            value = float(sample())
+            if not isfinite(value):
+                raise ValueError("adaptive Monte Carlo sampler returned a non-finite value")
+            values.append(value)
+        batches += 1
+        if len(values) >= min_samples:
+            mcse = monte_carlo_standard_error(values)
+            if mcse <= tolerance:
+                converged = True
+                break
+    estimate = sum(values) / len(values)
+    return AdaptiveMonteCarloResult(
+        estimate=estimate,
+        mcse=monte_carlo_standard_error(values),
+        sample_count=len(values),
+        batches=batches,
+        converged=converged,
+        values=tuple(values),
+    )
+
+
+# Public aliases make the intent explicit at call sites in study runners.
+at_least_one_event_probability = probability_at_least_one
+adaptive_posterior_predictive = adaptive_monte_carlo

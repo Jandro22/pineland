@@ -11,10 +11,34 @@ from .entities import AgreementProvision, Negotiation, PeaceAgreement, PeaceTran
 from .entities import StateBasedEvent
 from .generator import generate_pineland
 from .simulation import Simulation, SimulationParticle, SimulationResult
+from .action_model import (
+    action_attempt_hazard,
+    action_attempt_probability,
+    action_execution_hazard,
+)
 from .compact_information_state import (
     CompactControlBeliefState,
     CompactPresenceBeliefState,
     CompactZoneBeliefState,
+)
+from .ensemble import (
+    EnsembleBeliefState,
+    EnsembleParticleFilter,
+    EnsembleState,
+    InformationEventBuffer,
+    NumericInformationEventEngine,
+    NumericInformationRuntime,
+    InformationSourcePlan,
+    NumericIdTable,
+    NumericInformationEventBuffer,
+    PackedFilterUpdate,
+    PackedParticleFilter,
+    NumericRelayBuffer,
+    ParticleBatchState,
+    RelayBuffer,
+    StaticWorldTopology,
+    advance_batch,
+    process_information_numeric,
 )
 from .state_estimation import (
     AssimilationObservation,
@@ -23,6 +47,22 @@ from .state_estimation import (
     PersistentParticlePool,
     PosteriorSupportExhausted,
     SequentialParticleFilter,
+    AdaptiveMonteCarloResult,
+    RaoBlackwellizedActivityLikelihood,
+    RaoBlackwellizedHazardLikelihood,
+    adaptive_monte_carlo,
+    adaptive_posterior_predictive,
+    aggregate_hazard,
+    aggregate_hazard_probability,
+    at_least_one_event_probability,
+    binary_mcse,
+    guided_importance_log_weight,
+    guided_log_weights,
+    hazard_to_probability,
+    monte_carlo_standard_error,
+    probability_at_least_one,
+    probability_to_hazard,
+    required_trajectories_for_mcse,
 )
 from .validation import (ParameterSpec, empirical_target_contract, parameter_registry,
                          model_ladder_holdout)
@@ -47,14 +87,30 @@ __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "Exter
            "PoliticalInstitution", "PoliticalOrderConfig", "PoliticalTransfer",
            "PolicyImplementation", "ProtoOrganization", "LocalElite", "Election",
            "StateBasedEvent",
-           "Simulation", "SimulationConfig",
+           "Simulation", "SimulationConfig", "action_attempt_hazard",
+           "action_attempt_probability", "action_execution_hazard",
            "SimulationParticle", "SimulationResult", "generate_pineland",
            "CompactControlBeliefState", "CompactPresenceBeliefState",
-           "CompactZoneBeliefState"]
+           "CompactZoneBeliefState", "EnsembleBeliefState", "EnsembleParticleFilter",
+           "EnsembleState",
+           "InformationEventBuffer", "InformationSourcePlan",
+           "NumericInformationEventEngine", "NumericInformationRuntime", "NumericIdTable",
+           "NumericInformationEventBuffer", "PackedFilterUpdate", "PackedParticleFilter",
+           "NumericRelayBuffer",
+           "ParticleBatchState", "RelayBuffer", "StaticWorldTopology",
+           "advance_batch", "process_information_numeric"]
 __all__ += [
     "AssimilationObservation", "FilterUpdateDiagnostics", "Particle",
     "PersistentParticlePool",
     "PosteriorSupportExhausted", "SequentialParticleFilter",
+    "AdaptiveMonteCarloResult", "RaoBlackwellizedActivityLikelihood",
+    "RaoBlackwellizedHazardLikelihood", "adaptive_monte_carlo",
+    "adaptive_posterior_predictive", "aggregate_hazard",
+    "aggregate_hazard_probability", "at_least_one_event_probability",
+    "binary_mcse", "guided_importance_log_weight", "guided_log_weights",
+    "hazard_to_probability", "monte_carlo_standard_error",
+    "probability_at_least_one", "probability_to_hazard",
+    "required_trajectories_for_mcse",
 ]
 __all__ += ["AgreementProvision", "Negotiation", "PeaceAgreement", "PeaceProcessConfig",
             "PeaceTransition"]

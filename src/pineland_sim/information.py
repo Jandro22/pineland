@@ -62,6 +62,10 @@ def initialize_information_world(world: WorldState) -> None:
     """Create actor priors and clear run-specific observation state."""
     # Any existing numeric control store describes the beliefs being replaced;
     # invalidate it before rebuilding the run-local priors below.
+    # A compiled numeric runtime owns the old codebook, event rows, and relay
+    # queues. It must not survive a fresh initialization with new priors or
+    # entity topology.
+    world.numeric_information_runtime = None
     world.compact_control_state = None
     world.compact_presence_state = None
     world.compact_node_presence_state = None
@@ -115,7 +119,7 @@ def initialize_information_world(world: WorldState) -> None:
                     world.config.information.prior_confidence, world.time,
                 )
                 world.control_beliefs[(observer_id, target_id, locality_id)] = belief
-    if world.execution_backend == "optimized":
+    if world.execution_backend in {"optimized", "ensemble"}:
         world.rebuild_compact_information_state()
 
 
@@ -664,7 +668,7 @@ def _fuse_control_immediate(
         return
 
     compact = getattr(world, "compact_control_state", None)
-    if world.execution_backend == "optimized" and compact is not None:
+    if world.execution_backend in {"optimized", "ensemble"} and compact is not None:
         belief = _ensure_control_belief(
             world, recipient_id, target_actor_id, observation.locality_id
         )
@@ -858,7 +862,7 @@ def _apply_control_auxiliary(
         if zone_belief is not None:
             zone_key = (zone_actor, observation.microzone_id)
             compact_zone = getattr(world, "compact_zone_state", None)
-            if world.execution_backend == "optimized" and compact_zone is not None:
+            if world.execution_backend in {"optimized", "ensemble"} and compact_zone is not None:
                 compact_zone.ensure(zone_key, zone_belief)
                 compact_zone.fuse(
                     zone_key,
@@ -1038,7 +1042,7 @@ def _flush_compact_native_control_chunk(
 
     zone_batched = False
     if (
-        world.execution_backend == "optimized"
+        world.execution_backend in {"optimized", "ensemble"}
         and native_information_batch_enabled()
     ):
         zone_batched = _flush_compact_native_zone_fusions(world, chunk)
@@ -1068,7 +1072,7 @@ def _flush_native_control_chunk(
     if not chunk or not native_kernels_available():
         return False
     compact = getattr(world, "compact_control_state", None)
-    if world.execution_backend == "optimized" and compact is not None:
+    if world.execution_backend in {"optimized", "ensemble"} and compact is not None:
         return _flush_compact_native_control_chunk(world, compact, chunk)
     belief_by_key: dict[tuple[str, str, str], ActorBelief] = {}
     state_index_by_key: dict[tuple[str, str, str], int] = {}
@@ -1226,7 +1230,7 @@ def _flush_compact_control_fusions(
 
     zone_batched = False
     if (
-        world.execution_backend == "optimized"
+        world.execution_backend in {"optimized", "ensemble"}
         and native_information_batch_enabled()
     ):
         zone_batched = _flush_compact_native_zone_fusions(world, pending)
@@ -1268,11 +1272,11 @@ def _flush_control_fusions(world: WorldState) -> int:
     world.defer_control_fusions = False
     try:
         native_enabled = (
-            world.execution_backend == "optimized"
+            world.execution_backend in {"optimized", "ensemble"}
             and native_control_batch_enabled()
         )
         compact = getattr(world, "compact_control_state", None)
-        if world.execution_backend == "optimized" and compact is not None and not native_enabled:
+        if world.execution_backend in {"optimized", "ensemble"} and compact is not None and not native_enabled:
             return _flush_compact_control_fusions(world, compact, pending)
         if not native_enabled:
             for observation, recipient_id, time, weight in pending:
@@ -1319,7 +1323,7 @@ def _ensure_presence_belief(world: WorldState, observer_id: str, target_actor_id
         "compact_node_presence_state" if node else "compact_presence_state",
         None,
     )
-    if world.execution_backend == "optimized" and compact is not None:
+    if world.execution_backend in {"optimized", "ensemble"} and compact is not None:
         compact.ensure(key, belief)
     return belief
 
@@ -1341,7 +1345,7 @@ presence_belief = get_presence_belief
 def _fuse_presence(world: WorldState, observation: Observation, recipient_id: str,
                    time: float, weight: float, node: bool = False) -> None:
     if (
-        world.execution_backend == "optimized"
+        world.execution_backend in {"optimized", "ensemble"}
         and world.execution_profile == "particle"
         and getattr(world, "compact_presence_state", None) is not None
         and getattr(world, "defer_presence_fusions", False)
@@ -1379,7 +1383,7 @@ def _fuse_presence_immediate(world: WorldState, observation: Observation,
             recipient_id, target_actor_id, observation.locality_id,
             key_target, observation.microzone_id,
         )
-        if world.execution_backend == "optimized" and compact is not None:
+        if world.execution_backend in {"optimized", "ensemble"} and compact is not None:
             compact.fuse(
                 belief_key,
                 presence,
@@ -2198,21 +2202,21 @@ def decay_information(world: WorldState, time: float) -> None:
     for belief in world.beliefs.values():
         belief.confidence = clamp(belief.confidence * default_factor)
     compact = getattr(world, "compact_control_state", None)
-    if world.execution_backend == "optimized" and compact is not None:
+    if world.execution_backend in {"optimized", "ensemble"} and compact is not None:
         compact.decay(elapsed, config.default_decay_rate)
         compact.sync_confidence_to_beliefs(world.control_beliefs)
     else:
         for belief in getattr(world, "control_beliefs", {}).values():
             belief.confidence = clamp(belief.confidence * default_factor)
     compact_zone = getattr(world, "compact_zone_state", None)
-    if world.execution_backend == "optimized" and compact_zone is not None:
+    if world.execution_backend in {"optimized", "ensemble"} and compact_zone is not None:
         compact_zone.configure_decay(config.formation_decay_rate)
         compact_zone.advance_decay(time)
     else:
         for belief in world.zone_beliefs.values():
             belief.confidence = clamp(belief.confidence * formation_factor)
     compact_presence = getattr(world, "compact_presence_state", None)
-    if world.execution_backend == "optimized" and compact_presence is not None:
+    if world.execution_backend in {"optimized", "ensemble"} and compact_presence is not None:
         compact_presence.configure_decay(
             config.default_decay_rate, config.formation_decay_rate
         )
@@ -2222,7 +2226,7 @@ def decay_information(world: WorldState, time: float) -> None:
             factor = formation_factor if belief.target_id else default_factor
             belief.confidence = clamp(belief.confidence * factor)
     compact_node_presence = getattr(world, "compact_node_presence_state", None)
-    if world.execution_backend == "optimized" and compact_node_presence is not None:
+    if world.execution_backend in {"optimized", "ensemble"} and compact_node_presence is not None:
         compact_node_presence.configure_decay(
             config.default_decay_rate, config.formation_decay_rate
         )
@@ -2255,12 +2259,12 @@ def process_information(world: WorldState, time: float,
     world.information_execution_cache.clear()
     world.information_cache_active = True
     batch_control = (
-        world.execution_backend == "optimized"
+        world.execution_backend in {"optimized", "ensemble"}
         and world.execution_profile == "particle"
         and world.compact_control_state is not None
     )
     batch_presence = (
-        world.execution_backend == "optimized"
+        world.execution_backend in {"optimized", "ensemble"}
         and world.execution_profile == "particle"
         and world.compact_presence_state is not None
     )
