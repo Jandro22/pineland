@@ -187,6 +187,7 @@ def local_operational_information(
             and belief.target_actor_id in targets
             and belief.evidence_count > 0
         ):
+            world.materialize_compact_confidence(belief)
             evidence.append(
                 clamp(belief.confidence) * clamp(belief.presence_estimate)
             )

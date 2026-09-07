@@ -13,6 +13,9 @@ from concurrent.futures import Executor
 from dataclasses import dataclass
 from math import exp, isfinite, log
 import multiprocessing as mp
+import hashlib
+import os
+import pickle
 import random
 from time import perf_counter
 import traceback
@@ -64,8 +67,10 @@ def _resident_particle_worker(
     result_queue,
     peer_command_queues,
     initial_states,
+    initial_state_paths,
     propagate,
     fork_state,
+    summarize_state,
 ) -> None:
     """Run particle states in one resident process.
 
@@ -73,7 +78,17 @@ def _resident_particle_worker(
     diagnostics during propagation.  Mutable states stay resident and are
     forked locally after the coordinator sends parent indices.
     """
-    states = dict(initial_states)
+    if initial_states is not None:
+        states = dict(initial_states)
+    else:
+        states = {}
+        try:
+            for slot, path in initial_state_paths:
+                with open(path, "rb") as handle:
+                    states[int(slot)] = pickle.load(handle)
+        except BaseException:
+            result_queue.put(("error", traceback.format_exc()))
+            return
     shared_route_caches = _share_resident_static_route_caches(states)
     pending_imports: dict[int, dict[int, StateT]] = {}
     try:
@@ -234,6 +249,64 @@ def _resident_particle_worker(
             if command == "snapshot":
                 result_queue.put(("snapshot", list(states.items())))
                 continue
+            if command == "summarize":
+                if summarize_state is None:
+                    raise RuntimeError(
+                        "resident particle pool has no state summarizer"
+                    )
+                result_queue.put((
+                    "summarize",
+                    [
+                        (slot, summarize_state(states[slot]))
+                        for slot in sorted(states)
+                    ],
+                ))
+                continue
+            if command == "persist":
+                cache_dir, prefix = payload
+                cache_dir = os.fspath(cache_dir)
+                os.makedirs(cache_dir, exist_ok=True)
+                persisted = []
+                for slot in sorted(states):
+                    path = os.path.join(
+                        cache_dir, f"{prefix}-particle-{int(slot):06d}.pkl"
+                    )
+                    temporary = f"{path}.tmp-{os.getpid()}"
+                    with open(temporary, "wb") as handle:
+                        pickle.dump(
+                            states[slot], handle, protocol=pickle.HIGHEST_PROTOCOL
+                        )
+                        handle.flush()
+                        os.fsync(handle.fileno())
+                    os.replace(temporary, path)
+                    with open(path, "rb") as handle:
+                        payload_bytes = handle.read()
+                    metadata = (
+                        summarize_state(states[slot])
+                        if summarize_state is not None else {}
+                    )
+                    persisted.append({
+                        "slot": int(slot),
+                        "path": path,
+                        "bytes": len(payload_bytes),
+                        "payload_sha256": hashlib.sha256(
+                            payload_bytes
+                        ).hexdigest(),
+                        "metadata": metadata,
+                    })
+                result_queue.put(("persist", persisted))
+                continue
+            if command == "metrics":
+                process_times = os.times()
+                result_queue.put((
+                    "metrics",
+                    {
+                        "cpu_seconds": float(
+                            process_times.user + process_times.system
+                        ),
+                    },
+                ))
+                continue
             raise ValueError(f"unknown resident particle command: {command!r}")
     except BaseException:
         result_queue.put(("error", traceback.format_exc()))
@@ -255,28 +328,44 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
 
     def __init__(
         self,
-        states: Sequence[StateT],
+        states: Sequence[StateT] | None = None,
         *,
         propagate: Callable[[StateT, float, ObservationT], tuple[StateT, float, ResultT]],
         fork_state: Callable[[StateT, int], StateT],
         workers: int,
+        state_paths: Sequence[str] | None = None,
+        summarize_state: Callable[[StateT], object] | None = None,
     ) -> None:
-        if not states:
+        if (states is None) == (state_paths is None):
+            raise ValueError(
+                "provide exactly one of states or state_paths"
+            )
+        if states is not None and not states:
             raise ValueError("a persistent particle pool needs at least one state")
+        if state_paths is not None and not state_paths:
+            raise ValueError("a persistent particle pool needs at least one state path")
         if workers < 1:
             raise ValueError("workers must be positive")
         self._closed = False
         self._context = mp.get_context("spawn")
         self._propagate = propagate
         self._fork_state = fork_state
+        self._summarize_state = summarize_state
         self._workers = []
         self._assignment: dict[int, int] = {}
         self._resample_generation = 0
-        worker_count = min(int(workers), len(states))
+        particle_count = len(states) if states is not None else len(state_paths)
+        worker_count = min(int(workers), particle_count)
         partitions = [[] for _ in range(worker_count)]
-        for slot, state in enumerate(states):
+        path_partitions = [[] for _ in range(worker_count)]
+        for slot in range(particle_count):
             worker_index = slot % worker_count
-            partitions[worker_index].append((slot, state))
+            if states is not None:
+                partitions[worker_index].append((slot, states[slot]))
+            else:
+                path_partitions[worker_index].append(
+                    (slot, os.fspath(state_paths[slot]))
+                )
             self._assignment[slot] = worker_index
         command_queues = [
             self._context.Queue() for _ in range(worker_count)
@@ -294,9 +383,11 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
                     command_queue,
                     result_queue,
                     command_queues,
-                    initial_states,
+                    initial_states if states is not None else None,
+                    path_partitions[worker_index] if state_paths is not None else None,
                     self._propagate,
                     self._fork_state,
+                    self._summarize_state,
                 ),
             )
             process.start()
@@ -505,6 +596,48 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
         if sorted(states) != expected_slots:
             raise RuntimeError("resident particle worker returned an incomplete snapshot")
         return [states[slot] for slot in expected_slots]
+
+    def summarize(self) -> list[tuple[int, object]]:
+        """Return compact per-slot metadata without exporting particle state."""
+        self._send_to_all("summarize", None)
+        summaries: dict[int, object] = {}
+        for _, _, result_queue in self._workers:
+            summaries.update(dict(self._receive(result_queue, "summarize")))
+        expected_slots = list(range(len(self._assignment)))
+        if sorted(summaries) != expected_slots:
+            raise RuntimeError(
+                "resident particle worker returned incomplete summaries"
+            )
+        return [(slot, summaries[slot]) for slot in expected_slots]
+
+    def persist_states(
+        self, cache_dir: str, prefix: str
+    ) -> list[dict[str, object]]:
+        """Persist resident states worker-side and return metadata only.
+
+        The state payload never crosses back through the coordinator. Files are
+        committed with flush/fsync followed by atomic rename, so a manifest can
+        safely reference only complete payloads.
+        """
+        self._send_to_all("persist", (os.fspath(cache_dir), str(prefix)))
+        persisted = []
+        for _, _, result_queue in self._workers:
+            persisted.extend(self._receive(result_queue, "persist"))
+        persisted.sort(key=lambda row: int(row["slot"]))
+        expected_slots = list(range(len(self._assignment)))
+        if [int(row["slot"]) for row in persisted] != expected_slots:
+            raise RuntimeError(
+                "resident particle worker persisted an incomplete particle set"
+            )
+        return persisted
+
+    def cpu_seconds(self) -> float:
+        """Return aggregate user+system CPU time for resident workers."""
+        self._send_to_all("metrics", None)
+        return sum(
+            float(self._receive(result_queue, "metrics")["cpu_seconds"])
+            for _, _, result_queue in self._workers
+        )
 
     def close(self) -> None:
         if self._closed:

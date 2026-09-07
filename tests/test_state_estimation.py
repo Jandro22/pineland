@@ -36,6 +36,10 @@ def _resident_test_fork(state, child_index):
     return state + 1000 * child_index
 
 
+def _resident_test_summary(state):
+    return {"value": state}
+
+
 def test_bounded_process_map_preserves_order_with_a_small_submission_window():
     with ThreadPoolExecutor(max_workers=2) as executor:
         values = list(bounded_process_map(
@@ -59,6 +63,34 @@ def test_persistent_particle_pool_keeps_parent_forks_on_their_worker():
         assert pool.snapshot() == [13, 1013, 2010, 3011]
 
 
+def test_persistent_particle_pool_persists_and_reloads_worker_side(tmp_path):
+    with PersistentParticlePool(
+        [4, 5, 6, 7],
+        propagate=_resident_test_propagate,
+        fork_state=_resident_test_fork,
+        workers=2,
+        summarize_state=_resident_test_summary,
+    ) as pool:
+        rows = pool.persist_states(str(tmp_path), "resident")
+        assert [row["slot"] for row in rows] == [0, 1, 2, 3]
+        assert all(row["bytes"] > 0 for row in rows)
+        paths = [str(row["path"]) for row in rows]
+
+    with PersistentParticlePool(
+        state_paths=paths,
+        propagate=_resident_test_propagate,
+        fork_state=_resident_test_fork,
+        workers=2,
+        summarize_state=_resident_test_summary,
+    ) as pool:
+        assert pool.summarize() == [
+            (0, {"value": 4}),
+            (1, {"value": 5}),
+            (2, {"value": 6}),
+            (3, {"value": 7}),
+        ]
+
+
 def test_persistent_particle_pool_profiled_propagation_reports_workers():
     with PersistentParticlePool(
         [0, 1, 2, 3],
@@ -71,6 +103,7 @@ def test_persistent_particle_pool_profiled_propagation_reports_workers():
         assert len(workers) == 2
         assert sum(item["state_count"] for item in workers) == 4
         assert all(item["wall_seconds"] >= 0 for item in workers)
+        assert pool.cpu_seconds() >= 0
 
 
 def test_persistent_particle_pool_reports_assignment_imbalance_after_resampling():

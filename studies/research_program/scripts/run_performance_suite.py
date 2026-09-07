@@ -67,7 +67,7 @@ def main() -> None:
                 "--particles", "8",
                 "--branches", "1",
                 "--days", "1",
-                "--workers", "1", "2", "4", "6", "8", "10",
+                "--workers", "1", "2", "4", "6", "8", "10", "12", "16",
                 "--output", str(args.output_dir / "worker_scaling.json"),
             ],
         ),

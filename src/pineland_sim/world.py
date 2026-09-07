@@ -100,6 +100,13 @@ class WorldState:
     ordered_social_community_ids: tuple[str, ...] = field(default_factory=tuple)
     person_ids_by_community: dict[str, tuple[str, ...]] = field(default_factory=dict)
     represented_weight_by_community: dict[str, float] = field(default_factory=dict)
+    # Cached cumulative weights for the deterministic community representative
+    # draw in the information process. Values are invalidated by the same
+    # mutation APIs that update represented community mass.
+    community_selection_cache: dict[
+        str, tuple[tuple[str, ...], tuple[float, ...]]
+    ] = field(default_factory=dict)
+    community_selection_cache_dirty: set[str] = field(default_factory=set)
     social_edges: dict[tuple[str, str], SocialEdge] = field(default_factory=dict)
     social_neighbors: dict[str, list[str]] = field(default_factory=dict)
     social_community_ids_by_locality: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -132,6 +139,12 @@ class WorldState:
     # retained for forensic output, while this bounded index keeps recurring
     # information passes from sorting/scanning historical relays.
     active_information_relays: set[str] = field(default_factory=set)
+    # Exact due-time heap for information delivery. Processing pops only
+    # arrivals that are due at the requested time; relay IDs are sorted after
+    # extraction to preserve the legacy RNG order.
+    information_relay_due_heap: list[tuple[float, str]] = field(
+        default_factory=list
+    )
     # Per-information-tick memoization only; cleared before the next model
     # boundary so this never becomes part of a particle's latent state.
     information_execution_cache: dict[tuple[Any, ...], Any] = field(default_factory=dict)
@@ -144,6 +157,13 @@ class WorldState:
         default_factory=list
     )
     defer_control_fusions: bool = False
+    # Presence updates generated during one information event can be applied
+    # in order to compact rows and mirrored once per touched row before relay
+    # delivery. This is execution-only and never enters scientific hashes.
+    deferred_presence_fusions: list[tuple[Any, str, float, bool, float]] = field(
+        default_factory=list
+    )
+    defer_presence_fusions: bool = False
     presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     node_presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     control_beliefs: dict[tuple[str, str, str], ActorBelief] = field(default_factory=dict)
@@ -307,6 +327,15 @@ class WorldState:
     # deliberately favors defensive scans; optimized may trust maintained
     # derived indexes. It is excluded from scientific state hashes.
     execution_backend: str = "reference"
+    # Persistent structure-of-arrays control-belief state used by the
+    # optimized information backend. It is an execution representation of
+    # ``control_beliefs`` and is excluded from scientific hashes.
+    compact_control_state: Any = None
+    # Persistent numeric presence/zone rows used by the optimized information
+    # backend. The object dictionaries remain the scientific/API views.
+    compact_presence_state: Any = None
+    compact_node_presence_state: Any = None
+    compact_zone_state: Any = None
     # Optional profiling counters. None on normal execution so hot paths pay
     # only a single identity check when instrumentation is explicitly enabled.
     performance_counters: dict[str, int] | None = None
@@ -416,6 +445,8 @@ class WorldState:
             locality_id: tuple(sorted(community_ids))
             for locality_id, community_ids in communities_by_locality.items()
         }
+        self.community_selection_cache.clear()
+        self.community_selection_cache_dirty.clear()
         self.patrol_ids_by_formation = {}
         for patrol_id, patrol in self.patrols.items():
             self.patrol_ids_by_formation.setdefault(
@@ -424,6 +455,100 @@ class WorldState:
         for patrol_ids in self.patrol_ids_by_formation.values():
             patrol_ids.sort()
         self.refresh_operational_indexes()
+
+    def rebuild_compact_information_state(self) -> None:
+        """Build all optimized information rows from the oracle objects."""
+        from .compact_information_state import (
+            CompactControlBeliefState,
+            CompactPresenceBeliefState,
+            CompactZoneBeliefState,
+        )
+
+        self.compact_control_state = CompactControlBeliefState.from_beliefs(
+            self.control_beliefs
+        )
+        self.compact_presence_state = CompactPresenceBeliefState.from_beliefs(
+            self.presence_beliefs
+        )
+        self.compact_presence_state.configure_decay(
+            self.config.information.default_decay_rate,
+            self.config.information.formation_decay_rate,
+        )
+        self.compact_presence_state.set_decay_clock(
+            self.last_information_decay_at
+        )
+        self.compact_node_presence_state = CompactPresenceBeliefState.from_beliefs(
+            self.node_presence_beliefs
+        )
+        self.compact_node_presence_state.configure_decay(
+            self.config.information.default_decay_rate,
+            self.config.information.formation_decay_rate,
+        )
+        self.compact_node_presence_state.set_decay_clock(
+            self.last_information_decay_at
+        )
+        self.compact_zone_state = CompactZoneBeliefState.from_beliefs(
+            self.zone_beliefs
+        )
+        self.compact_zone_state.configure_decay(
+            self.config.information.formation_decay_rate
+        )
+        self.compact_zone_state.set_decay_clock(self.last_information_decay_at)
+
+    def materialize_compact_confidence(self, belief: Any) -> float:
+        """Return a logical confidence value at ``world.time``.
+
+        Optimized information rows own lazy confidence decay. Object beliefs
+        are views, so direct policy/diagnostic readers call this boundary
+        method before using a confidence value.
+        """
+        if self.execution_backend != "optimized":
+            return float(belief.confidence)
+        if hasattr(belief, "presence_estimate"):
+            key = (
+                belief.observer_id,
+                belief.target_actor_id,
+                f"{belief.locality_id}:{belief.microzone_id or '*'}",
+                belief.target_id or "*",
+            )
+            for container_name, compact_name in (
+                ("presence_beliefs", "compact_presence_state"),
+                ("node_presence_beliefs", "compact_node_presence_state"),
+            ):
+                if getattr(self, container_name).get(key) is belief:
+                    compact = getattr(self, compact_name)
+                    compact.materialize(key, self.time)
+                    belief.confidence = compact.state[
+                        compact.index(key) * compact.STRIDE + compact.CONFIDENCE_OFFSET
+                    ]
+                    return float(belief.confidence)
+        elif hasattr(belief, "physical_control_estimate"):
+            key = (belief.actor_id, belief.microzone_id)
+            if self.zone_beliefs.get(key) is belief:
+                compact = self.compact_zone_state
+                if compact is not None:
+                    compact.materialize(key, self.time)
+                    belief.confidence = compact.state[
+                        compact.index(key) * compact.STRIDE + compact.CONFIDENCE_OFFSET
+                    ]
+                    return float(belief.confidence)
+        return float(belief.confidence)
+
+    def materialize_compact_information_confidences(self) -> None:
+        """Materialize all lazy information confidence views at the boundary."""
+        if self.execution_backend != "optimized":
+            return
+        for compact, beliefs in (
+            (self.compact_presence_state, self.presence_beliefs),
+            (self.compact_node_presence_state, self.node_presence_beliefs),
+            (self.compact_zone_state, self.zone_beliefs),
+        ):
+            if compact is not None:
+                compact.sync_confidence_to_beliefs(beliefs, self.time)
+
+    def rebuild_compact_control_state(self) -> None:
+        """Backward-compatible alias that rebuilds the information rows."""
+        self.rebuild_compact_information_state()
 
     def refresh_operational_indexes(self) -> None:
         """Refresh small derived indexes for active actors and local capacity.
@@ -598,7 +723,51 @@ class WorldState:
                 )
                 + delta
             )
+            community = self.social_communities.get(person.community_id)
+            if community is not None:
+                self.community_selection_cache_dirty.add(community.locality_id)
         person.weight = new_weight
+
+    def community_selection_weights(
+        self, locality_id: str
+    ) -> tuple[tuple[str, ...], tuple[float, ...]]:
+        """Return stable community IDs and cumulative draw weights.
+
+        The cumulative values are built in the same ordered floating-point
+        sequence as ``random.choices(weights=...)``. Reusing them removes the
+        repeated reduction from each information tick without changing the
+        single RNG draw or selection order.
+        """
+        cached = self.community_selection_cache.get(locality_id)
+        if cached is not None and locality_id not in self.community_selection_cache_dirty:
+            return cached
+        community_ids = self.social_community_ids_by_locality.get(locality_id)
+        if community_ids is None:
+            community_ids = tuple(sorted(
+                community_id
+                for community_id, community in self.social_communities.items()
+                if community.locality_id == locality_id
+            ))
+        cumulative: list[float] = []
+        total = 0.0
+        for community_id in community_ids:
+            weight = max(
+                1.0,
+                self.represented_weight_by_community.get(
+                    community_id,
+                    sum(
+                        self.persons[person_id].weight
+                        for person_id in self.social_communities[community_id].member_ids
+                        if person_id in self.persons
+                    ),
+                ),
+            )
+            total += weight
+            cumulative.append(total)
+        result = (tuple(community_ids), tuple(cumulative))
+        self.community_selection_cache[locality_id] = result
+        self.community_selection_cache_dirty.discard(locality_id)
+        return result
 
     def persons_in_locality(self, locality_id: str):
         """Return resident representatives, using the exact particle index."""
@@ -1166,6 +1335,10 @@ class WorldState:
         ))
 
     def assert_invariants(self, tolerance: float = 1e-6) -> None:
+        # Compact information rows are authoritative in optimized runs;
+        # expose exact logical confidence before invariant checks read the
+        # compatibility object views.
+        self.materialize_compact_information_confidences()
         resident = self.weighted_population()
         expected = self.initial_population - self.cumulative_deaths + self.cumulative_external_inflow
         if abs(resident - expected) > max(tolerance, expected * 1e-10):
@@ -1820,6 +1993,8 @@ class WorldState:
             "unassigned_person_ids",
             "represented_weight_by_locality",
             "represented_weight_by_community",
+            "community_selection_cache",
+            "community_selection_cache_dirty",
             "microzones_by_locality",
             "formation_ids_by_locality",
             "formation_ids_by_organization",
@@ -1859,6 +2034,11 @@ class WorldState:
                     key: copy.copy(belief)
                     for key, belief in value.items()
                 }
+            elif item.name in {
+                "compact_control_state", "compact_presence_state",
+                "compact_node_presence_state", "compact_zone_state",
+            }:
+                value = value.clone() if value is not None else None
             elif item.name == "observations":
                 # Observation payload/provenance dictionaries are immutable
                 # after construction. Only the wrapper's received_at field
@@ -1910,8 +2090,10 @@ class WorldState:
             "locality_route_metrics_cache",
             "command_path_cache",
             "information_execution_cache",
+            "community_selection_cache",
         ):
             state[field_name] = {}
+        state["community_selection_cache_dirty"] = set()
         return None, state
 
 

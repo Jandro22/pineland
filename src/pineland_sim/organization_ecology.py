@@ -1380,7 +1380,10 @@ def _observable_peer_profile(world, observer_id: str, peer_id: str):
     presence_by_locality = {}
     for belief in world.presence_beliefs.values():
         if (belief.observer_id != observer_id or belief.target_actor_id != peer_id or
-                belief.target_id is not None or belief.confidence <= 0):
+                belief.target_id is not None):
+            continue
+        world.materialize_compact_confidence(belief)
+        if belief.confidence <= 0:
             continue
         current = presence_by_locality.get(belief.locality_id)
         if current is None or belief.confidence > current.confidence:

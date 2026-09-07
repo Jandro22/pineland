@@ -75,7 +75,11 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "security_posts_by_locality", "social_community_ids_by_locality",
     "information_execution_cache",
     "information_cache_active",
+    "community_selection_cache", "community_selection_cache_dirty",
     "execution_profile", "execution_backend", "performance_counters",
+    "compact_control_state", "compact_presence_state",
+    "compact_node_presence_state", "compact_zone_state",
+    "deferred_presence_fusions", "defer_presence_fusions",
     "engagements", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
 })
@@ -97,7 +101,8 @@ PARTICLE_ARCHIVE_WORLD_FIELDS = frozenset({
     "civilian_harm_events", "resource_flows",
     "information_execution_cache",
     "information_cache_active", "deferred_control_fusions",
-    "defer_control_fusions", "performance_counters", "engagements",
+    "defer_control_fusions", "deferred_presence_fusions", "defer_presence_fusions",
+    "performance_counters", "engagements",
 })
 
 OUTPUT_ONLY_SUMMARY_FIELDS = frozenset({
@@ -346,6 +351,9 @@ def scientific_config_sha256(config: SimulationConfig) -> str:
 
 def decision_state_payload(world: Any) -> dict[str, Any]:
     """Canonical future-decision state, excluding output-only archives."""
+    materialize = getattr(world, "materialize_compact_information_confidences", None)
+    if materialize is not None:
+        materialize()
     active_relay_ids = set(getattr(world, "active_information_relays", set()))
     active_relays = {
         relay_id: world.information_relays[relay_id]

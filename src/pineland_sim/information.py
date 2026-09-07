@@ -15,6 +15,7 @@ is calculated in :func:`information_diagnostics`.
 from collections import deque
 from array import array
 from dataclasses import asdict
+import heapq
 from math import exp, log
 import random
 from typing import Any, Iterable
@@ -44,7 +45,10 @@ from .organizational_state import local_organizational_embeddedness
 from .native_kernels import (
     available as native_kernels_available,
     control_batch_enabled as native_control_batch_enabled,
+    information_batch_enabled as native_information_batch_enabled,
     fuse_control7_batch as native_fuse_control7_batch,
+    fuse_presence_batch as native_fuse_presence_batch,
+    fuse_zone_batch as native_fuse_zone_batch,
 )
 
 
@@ -56,6 +60,12 @@ OBSERVATION_SOURCE_TYPES = (
 
 def initialize_information_world(world: WorldState) -> None:
     """Create actor priors and clear run-specific observation state."""
+    # Any existing numeric control store describes the beliefs being replaced;
+    # invalidate it before rebuilding the run-local priors below.
+    world.compact_control_state = None
+    world.compact_presence_state = None
+    world.compact_node_presence_state = None
+    world.compact_zone_state = None
     world.observations.clear()
     world.next_observation_sequence = 1
     world.observation_index.clear()
@@ -63,6 +73,7 @@ def initialize_information_world(world: WorldState) -> None:
     world.information_relays.clear()
     world.next_information_relay_sequence = 1
     world.active_information_relays.clear()
+    world.information_relay_due_heap.clear()
     world.presence_beliefs.clear()
     world.node_presence_beliefs.clear()
     world.control_beliefs.clear()
@@ -73,6 +84,8 @@ def initialize_information_world(world: WorldState) -> None:
         "true_negative": 0,
     }
     world.information_detection_by_source.clear()
+    world.deferred_presence_fusions.clear()
+    world.defer_presence_fusions = False
     world.last_information_decay_at = world.time
     for observer_id in (
         world.ordered_organization_ids or tuple(sorted(world.organizations))
@@ -102,6 +115,8 @@ def initialize_information_world(world: WorldState) -> None:
                     world.config.information.prior_confidence, world.time,
                 )
                 world.control_beliefs[(observer_id, target_id, locality_id)] = belief
+    if world.execution_backend == "optimized":
+        world.rebuild_compact_information_state()
 
 
 def _logit(probability: float) -> float:
@@ -387,6 +402,14 @@ def _actual_target_presence(world: WorldState, target_actor_id: str,
                             microzone_id: str | None = None,
                             formation_index: dict[tuple[str, str], list[ArmedFormation]] | None = None,
                             ) -> tuple[bool, float, str | None]:
+    cache_key = (
+        "actual_presence", target_actor_id, locality_id,
+        target_formation_id, microzone_id,
+    )
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return cached
     candidates = (
         formation_index.get((target_actor_id, locality_id), ())
         if formation_index is not None else
@@ -413,7 +436,10 @@ def _actual_target_presence(world: WorldState, target_actor_id: str,
         personnel += formation.personnel
         if chosen is None or formation.personnel > chosen.personnel:
             chosen = formation
-    return chosen is not None, personnel, chosen.formation_id if chosen else None
+    result = (chosen is not None, personnel, chosen.formation_id if chosen else None)
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def detection_probability(world: WorldState, observer_id: str,
@@ -425,6 +451,14 @@ def detection_probability(world: WorldState, observer_id: str,
     enter the logit.  This is a detection model, not a combat model.
     """
     config = world.config.information
+    cache_key = (
+        "detection_probability", observer_id, target_formation_id,
+        locality_id, source_type, microzone_id,
+    )
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return float(cached)
     observer_formation = _observer_formation(world, observer_id)
     observer_actor_id = (observer_formation.organization_id if observer_formation
                          else observer_id if observer_id in world.organizations else "government")
@@ -457,8 +491,12 @@ def detection_probability(world: WorldState, observer_id: str,
     terrain_penalty = clamp(locality.terrain_friction / 2.5)
     base = config.contact_true_positive_rate if source_type == "contact" else config.true_positive_rate
     if base <= 0:
+        if world.information_cache_active:
+            world.information_execution_cache[cache_key] = 0.0
         return 0.0
     if base >= 1:
+        if world.information_cache_active:
+            world.information_execution_cache[cache_key] = 1.0
         return 1.0
     score = (_logit(base) + config.detection_pressure_bonus * pressure +
              config.detection_exposure_bonus * exposure +
@@ -472,21 +510,36 @@ def detection_probability(world: WorldState, observer_id: str,
             concealment = config.insurgent_concealment * (
                 .5 + .5 * organization.phenotype.get("dispersion", .5))
             score -= .9 * concealment
-    return clamp(logistic(score))
+    result = clamp(logistic(score))
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def false_positive_probability(world: WorldState, observer_id: str, locality_id: str,
                                source_type: str = "patrol",
                                microzone_id: str | None = None) -> float:
     config = world.config.information
+    cache_key = (
+        "false_positive_probability", observer_id, locality_id,
+        source_type, microzone_id,
+    )
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return float(cached)
     locality = world.localities[locality_id]
     observability = locality.observability
     if microzone_id and microzone_id in world.microzones:
         observability = world.microzones[microzone_id].observability
     base = config.contact_false_positive_rate if source_type == "contact" else config.false_positive_rate
     if base <= 0:
+        if world.information_cache_active:
+            world.information_execution_cache[cache_key] = 0.0
         return 0.0
     if base >= 1:
+        if world.information_cache_active:
+            world.information_execution_cache[cache_key] = 1.0
         return 1.0
     # Difficult terrain and poor comprehension make ambiguous reports more likely.
     language = language_comprehension(world,
@@ -494,7 +547,10 @@ def false_positive_probability(world: WorldState, observer_id: str, locality_id:
                                       if _observer_formation(world, observer_id) else observer_id,
                                       locality_id, source_type, observer_id)
     score = _logit(base) + .3 * (1 - observability) + .25 * (1 - language)
-    return clamp(logistic(score))
+    result = clamp(logistic(score))
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def _new_observation(world: WorldState, *, observer_actor_id: str, observer_node_id: str | None,
@@ -597,6 +653,31 @@ def _fuse_control_immediate(
     physical_value = value.get("physical_control")
     if not isinstance(control_values, dict) and physical_value is None:
         return
+
+    compact = getattr(world, "compact_control_state", None)
+    if world.execution_backend == "optimized" and compact is not None:
+        belief = _ensure_control_belief(
+            world, recipient_id, target_actor_id, observation.locality_id
+        )
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        compact.ensure(key, belief)
+        values = control_values if isinstance(control_values, dict) else {
+            "physical": physical_value
+        }
+        compact.fuse(
+            key,
+            values,
+            float(time),
+            float(weight),
+            world.config.information.contradiction_memory_days,
+            world.config.information.contradiction_penalty,
+        )
+        compact.write_to_belief(key, belief)
+        _apply_control_auxiliary(
+            world, observation, recipient_id, time, weight, values, belief
+        )
+        return
+
     belief = _ensure_control_belief(
         world, recipient_id, target_actor_id, observation.locality_id
     )
@@ -755,30 +836,46 @@ def _apply_control_auxiliary(
     weight: float,
     values: dict[str, Any],
     belief: ActorBelief,
+    *,
+    apply_zone: bool = True,
 ) -> None:
     target_actor_id = observation.target_actor_id
     if target_actor_id is None:
         return
-    if observation.microzone_id and "physical" in values:
+    if apply_zone and observation.microzone_id and "physical" in values:
         zone_actor = (world.formations[recipient_id].organization_id
                       if recipient_id in world.formations else recipient_id)
         zone_belief = world.zone_beliefs.get((zone_actor, observation.microzone_id))
         if zone_belief is not None:
-            old_zone = zone_belief.physical_control_estimate
-            prior_zone = max(.02, zone_belief.confidence)
-            zone_value, zone_confidence, zone_contradiction = _fuse_scalar(
-                old_zone, prior_zone, clamp(float(values["physical"])), weight,
-                _decayed_contradiction(world, zone_belief.contradiction_index,
-                                       zone_belief.updated_at, time),
-                world.config.information.contradiction_penalty,
-            )
-            zone_belief.physical_control_estimate = zone_value
-            zone_belief.confidence = zone_confidence
-            zone_belief.contradiction_index = zone_contradiction
-            zone_belief.updated_at = time
-            zone_belief.evidence_count += 1
-            if weight >= .12:
-                zone_belief.last_reliable_observation_at = time
+            zone_key = (zone_actor, observation.microzone_id)
+            compact_zone = getattr(world, "compact_zone_state", None)
+            if world.execution_backend == "optimized" and compact_zone is not None:
+                compact_zone.ensure(zone_key, zone_belief)
+                compact_zone.fuse(
+                    zone_key,
+                    clamp(float(values["physical"])),
+                    float(time),
+                    float(weight),
+                    world.config.information.contradiction_memory_days,
+                    world.config.information.contradiction_penalty,
+                )
+                compact_zone.write_to_belief(zone_key, zone_belief)
+            else:
+                old_zone = zone_belief.physical_control_estimate
+                prior_zone = max(.02, zone_belief.confidence)
+                zone_value, zone_confidence, zone_contradiction = _fuse_scalar(
+                    old_zone, prior_zone, clamp(float(values["physical"])), weight,
+                    _decayed_contradiction(world, zone_belief.contradiction_index,
+                                           zone_belief.updated_at, time),
+                    world.config.information.contradiction_penalty,
+                )
+                zone_belief.physical_control_estimate = zone_value
+                zone_belief.confidence = zone_confidence
+                zone_belief.contradiction_index = zone_contradiction
+                zone_belief.updated_at = time
+                zone_belief.evidence_count += 1
+                if weight >= .12:
+                    zone_belief.last_reliable_observation_at = time
     # Existing beliefs remain the backward-compatible perceived state used by
     # the Phase 3 movement policy when the observed actor is the observer's side.
     if (_is_insurgent_actor(world, target_actor_id) and _is_insurgent_actor(world, recipient_id)) or \
@@ -797,6 +894,67 @@ def _apply_control_auxiliary(
             legacy.last_reliable_observation_at = belief.last_reliable_observation_at
             legacy.evidence_count = belief.evidence_count
             legacy.contradiction_index = belief.contradiction_index
+
+
+def _flush_compact_native_zone_fusions(
+    world: WorldState,
+    pending: list[tuple[Observation, str, float, float]],
+) -> bool:
+    """Fuse zone rows directly in the persistent compact state."""
+    compact = getattr(world, "compact_zone_state", None)
+    if compact is None:
+        return False
+    state_indices = array("I")
+    times = array("d")
+    weights = array("d")
+    observed = array("d")
+    touched: dict[tuple[str, str], ActorZoneBelief] = {}
+    for observation, recipient_id, time, weight in pending:
+        if observation.microzone_id is None:
+            continue
+        values = observation.estimated_value.get("control")
+        physical_value = observation.estimated_value.get("physical_control")
+        if isinstance(values, dict):
+            if "physical" not in values:
+                continue
+            physical = values["physical"]
+        elif physical_value is not None:
+            physical = physical_value
+        else:
+            continue
+        zone_actor = (world.formations[recipient_id].organization_id
+                      if recipient_id in world.formations else recipient_id)
+        key = (zone_actor, observation.microzone_id)
+        belief = world.zone_beliefs.get(key)
+        if belief is None:
+            continue
+        compact.ensure(key, belief)
+        # Native kernels operate on materialized rows. This is the only
+        # touched-row boundary needed for lazy decay; untouched rows remain
+        # compressed behind their reference clocks.
+        compact.materialize(key)
+        state_indices.append(compact.index(key))
+        times.append(float(time))
+        weights.append(float(weight))
+        observed.append(clamp(float(physical)))
+        touched[key] = belief
+    if not state_indices:
+        return True
+    if not native_fuse_zone_batch(
+        compact.state,
+        len(compact),
+        state_indices,
+        times,
+        weights,
+        observed,
+        contradiction_memory_days=world.config.information.contradiction_memory_days,
+        contradiction_penalty=world.config.information.contradiction_penalty,
+        state_stride=6,
+    ):
+        return False
+    for key, belief in touched.items():
+        compact.write_to_belief(key, belief)
+    return True
 
 
 def _canonical_control_tuple(
@@ -820,12 +978,89 @@ def _canonical_control_tuple(
     )
 
 
+def _flush_compact_native_control_chunk(
+    world: WorldState,
+    compact: Any,
+    chunk: list[tuple[Observation, str, float, float]],
+) -> bool:
+    """Fuse a canonical batch directly into the persistent control rows."""
+    state_index_by_key: dict[tuple[str, str, str], int] = {}
+    update_indices = array("I")
+    times = array("d")
+    weights = array("d")
+    observed = array("d")
+
+    for observation, recipient_id, time, weight in chunk:
+        target_actor_id = observation.target_actor_id
+        canonical = _canonical_control_tuple(observation)
+        if target_actor_id is None or canonical is None:
+            return False
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        index = state_index_by_key.get(key)
+        if index is None:
+            belief = _ensure_control_belief(
+                world, recipient_id, target_actor_id, observation.locality_id
+            )
+            index = compact.ensure(key, belief)
+            state_index_by_key[key] = index
+        update_indices.append(index)
+        times.append(float(time))
+        weights.append(float(weight))
+        observed.extend(canonical)
+
+    if not native_fuse_control7_batch(
+        compact.state,
+        len(compact),
+        update_indices,
+        times,
+        weights,
+        observed,
+        contradiction_memory_days=(
+            world.config.information.contradiction_memory_days
+        ),
+        contradiction_penalty=world.config.information.contradiction_penalty,
+        state_stride=13,
+    ):
+        return False
+
+    for key in state_index_by_key:
+        belief = world.control_beliefs[key]
+        compact.write_to_belief(key, belief)
+
+    zone_batched = False
+    if (
+        world.execution_backend == "optimized"
+        and native_information_batch_enabled()
+    ):
+        zone_batched = _flush_compact_native_zone_fusions(world, chunk)
+
+    # Zone beliefs and legacy own-side mirrors are still object-model state;
+    # apply them in original observation order after the numeric batch.
+    for observation, recipient_id, time, weight in chunk:
+        target_actor_id = observation.target_actor_id
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        _apply_control_auxiliary(
+            world,
+            observation,
+            recipient_id,
+            time,
+            weight,
+            observation.estimated_value["control"],
+            world.control_beliefs[key],
+            apply_zone=not zone_batched,
+        )
+    return True
+
+
 def _flush_native_control_chunk(
     world: WorldState,
     chunk: list[tuple[Observation, str, float, float]],
 ) -> bool:
     if not chunk or not native_kernels_available():
         return False
+    compact = getattr(world, "compact_control_state", None)
+    if world.execution_backend == "optimized" and compact is not None:
+        return _flush_compact_native_control_chunk(world, compact, chunk)
     belief_by_key: dict[tuple[str, str, str], ActorBelief] = {}
     state_index_by_key: dict[tuple[str, str, str], int] = {}
     state_keys: list[tuple[str, str, str]] = []
@@ -944,6 +1179,77 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
     )
 
 
+def _flush_compact_control_fusions(
+    world: WorldState,
+    compact: Any,
+    pending: list[tuple[Observation, str, float, float]],
+) -> int:
+    """Apply deferred control updates and mirror touched rows once."""
+    touched: dict[tuple[str, str, str], ActorBelief] = {}
+    for observation, recipient_id, time, weight in pending:
+        target_actor_id = observation.target_actor_id
+        if target_actor_id is None:
+            continue
+        values = observation.estimated_value.get("control")
+        physical_value = observation.estimated_value.get("physical_control")
+        if not isinstance(values, dict) and physical_value is None:
+            continue
+        values = values if isinstance(values, dict) else {
+            "physical": physical_value
+        }
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        belief = _ensure_control_belief(
+            world, recipient_id, target_actor_id, observation.locality_id
+        )
+        compact.ensure(key, belief)
+        compact.fuse(
+            key,
+            values,
+            float(time),
+            float(weight),
+            world.config.information.contradiction_memory_days,
+            world.config.information.contradiction_penalty,
+        )
+        touched[key] = belief
+
+    for key, belief in touched.items():
+        compact.write_to_belief(key, belief)
+
+    zone_batched = False
+    if (
+        world.execution_backend == "optimized"
+        and native_information_batch_enabled()
+    ):
+        zone_batched = _flush_compact_native_zone_fusions(world, pending)
+
+    # Auxiliary zone recurrences and legacy own-side mirrors remain in their
+    # original observation order. They do not read control state between
+    # updates, so one object-model mirror per touched row is exact.
+    for observation, recipient_id, time, weight in pending:
+        target_actor_id = observation.target_actor_id
+        if target_actor_id is None:
+            continue
+        values = observation.estimated_value.get("control")
+        physical_value = observation.estimated_value.get("physical_control")
+        if not isinstance(values, dict) and physical_value is None:
+            continue
+        values = values if isinstance(values, dict) else {
+            "physical": physical_value
+        }
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        _apply_control_auxiliary(
+            world,
+            observation,
+            recipient_id,
+            time,
+            weight,
+            values,
+            touched[key],
+            apply_zone=not zone_batched,
+        )
+    return len(pending)
+
+
 def _flush_control_fusions(world: WorldState) -> int:
     pending = world.deferred_control_fusions
     if not pending:
@@ -956,6 +1262,9 @@ def _flush_control_fusions(world: WorldState) -> int:
             world.execution_backend == "optimized"
             and native_control_batch_enabled()
         )
+        compact = getattr(world, "compact_control_state", None)
+        if world.execution_backend == "optimized" and compact is not None and not native_enabled:
+            return _flush_compact_control_fusions(world, compact, pending)
         if not native_enabled:
             for observation, recipient_id, time, weight in pending:
                 _fuse_control_immediate(
@@ -996,6 +1305,13 @@ def _ensure_presence_belief(world: WorldState, observer_id: str, target_actor_id
                                 0.0, world.config.information.prior_confidence, 0.0,
                                 target_id=target_id, microzone_id=microzone_id)
         container[key] = belief
+    compact = getattr(
+        world,
+        "compact_node_presence_state" if node else "compact_presence_state",
+        None,
+    )
+    if world.execution_backend == "optimized" and compact is not None:
+        compact.ensure(key, belief)
     return belief
 
 
@@ -1015,6 +1331,22 @@ presence_belief = get_presence_belief
 
 def _fuse_presence(world: WorldState, observation: Observation, recipient_id: str,
                    time: float, weight: float, node: bool = False) -> None:
+    if (
+        world.execution_backend == "optimized"
+        and world.execution_profile == "particle"
+        and getattr(world, "compact_presence_state", None) is not None
+        and getattr(world, "defer_presence_fusions", False)
+    ):
+        world.deferred_presence_fusions.append(
+            (observation, recipient_id, float(time), bool(node), float(weight))
+        )
+        return
+    _fuse_presence_immediate(world, observation, recipient_id, time, weight, node)
+
+
+def _fuse_presence_immediate(world: WorldState, observation: Observation,
+                             recipient_id: str, time: float, weight: float,
+                             node: bool = False) -> None:
     target_actor_id = observation.target_actor_id
     if target_actor_id is None or "presence" not in observation.estimated_value:
         return
@@ -1029,21 +1361,42 @@ def _fuse_presence(world: WorldState, observation: Observation, recipient_id: st
             world, recipient_id, target_actor_id, observation.locality_id,
             key_target, observation.microzone_id, node,
         )
-        new, confidence, contradiction = _fuse_scalar(
-            belief.presence_estimate, belief.confidence, presence, weight,
-            _decayed_contradiction(world, belief.contradiction_index, belief.updated_at, time),
-            world.config.information.contradiction_penalty,
+        compact = getattr(
+            world,
+            "compact_node_presence_state" if node else "compact_presence_state",
+            None,
         )
-        belief.presence_estimate = new
-        belief.personnel_estimate = ((belief.personnel_estimate * max(.02, belief.confidence) +
-                                      personnel * weight) /
-                                     (max(.02, belief.confidence) + weight))
-        belief.confidence = confidence
-        belief.contradiction_index = contradiction
-        belief.updated_at = time
-        belief.evidence_count += 1
-        if weight >= .12:
-            belief.last_reliable_observation_at = time
+        belief_key = _presence_key(
+            recipient_id, target_actor_id, observation.locality_id,
+            key_target, observation.microzone_id,
+        )
+        if world.execution_backend == "optimized" and compact is not None:
+            compact.fuse(
+                belief_key,
+                presence,
+                personnel,
+                float(time),
+                float(weight),
+                world.config.information.contradiction_memory_days,
+                world.config.information.contradiction_penalty,
+            )
+            compact.write_to_belief(belief_key, belief)
+        else:
+            new, confidence, contradiction = _fuse_scalar(
+                belief.presence_estimate, belief.confidence, presence, weight,
+                _decayed_contradiction(world, belief.contradiction_index, belief.updated_at, time),
+                world.config.information.contradiction_penalty,
+            )
+            belief.presence_estimate = new
+            belief.personnel_estimate = ((belief.personnel_estimate * max(.02, belief.confidence) +
+                                          personnel * weight) /
+                                         (max(.02, belief.confidence) + weight))
+            belief.confidence = confidence
+            belief.contradiction_index = contradiction
+            belief.updated_at = time
+            belief.evidence_count += 1
+            if weight >= .12:
+                belief.last_reliable_observation_at = time
     # Violence/repression is a separate actor-local belief.  It is updated
     # from the same reported observation operator but is never read from the
     # realized locality state by decision code.
@@ -1054,6 +1407,109 @@ def _fuse_presence(world: WorldState, observation: Observation, recipient_id: st
             (prior * belief.violence_estimate + weight * observed_violence) /
             (prior + weight)
         )
+
+
+def _flush_compact_presence_fusions(
+    world: WorldState,
+    pending: list[tuple[Observation, str, float, bool, float]],
+) -> int:
+    """Apply one event's presence rows, mirroring each touched row once."""
+    compact_by_node = {
+        False: world.compact_presence_state,
+        True: world.compact_node_presence_state,
+    }
+    touched: dict[tuple[bool, tuple[str, str, str, str]], PresenceBelief] = {}
+    use_native = native_information_batch_enabled()
+    native_payloads = {
+        False: [array("I"), array("d"), array("d"), array("d"), array("d")],
+        True: [array("I"), array("d"), array("d"), array("d"), array("d")],
+    }
+    for observation, recipient_id, time, node, weight in pending:
+        target_actor_id = observation.target_actor_id
+        if target_actor_id is None or "presence" not in observation.estimated_value:
+            continue
+        target_id = observation.target_id or observation.target_formation_id
+        presence = clamp(float(observation.estimated_value.get("presence", 0.0)))
+        personnel = max(0.0, float(observation.estimated_value.get("personnel", 0.0)))
+        compact = compact_by_node[node]
+        for key_target in (target_id, None) if target_id is not None else (None,):
+            belief = _ensure_presence_belief(
+                world, recipient_id, target_actor_id, observation.locality_id,
+                key_target, observation.microzone_id, node,
+            )
+            key = _presence_key(
+                recipient_id, target_actor_id, observation.locality_id,
+                key_target, observation.microzone_id,
+            )
+            if use_native:
+                indices, times, weights, observed_presence, observed_personnel = (
+                    native_payloads[node]
+                )
+                indices.append(compact.index(key))
+                times.append(float(time))
+                weights.append(float(weight))
+                observed_presence.append(presence)
+                observed_personnel.append(personnel)
+            else:
+                compact.fuse(
+                    key,
+                    presence,
+                    personnel,
+                    float(time),
+                    float(weight),
+                    world.config.information.contradiction_memory_days,
+                    world.config.information.contradiction_penalty,
+                )
+            touched[(node, key)] = belief
+    if use_native:
+        for node, payload in native_payloads.items():
+            indices, times, weights, observed_presence, observed_personnel = payload
+            if not indices:
+                continue
+            compact = compact_by_node[node]
+            # Native recurrence must see logical confidence at each update
+            # time; materialize only rows in this event.
+            for index in indices:
+                compact.materialize(compact.keys[index])
+            if not native_fuse_presence_batch(
+                compact.state,
+                len(compact),
+                indices,
+                times,
+                weights,
+                observed_presence,
+                observed_personnel,
+                contradiction_memory_days=world.config.information.contradiction_memory_days,
+                contradiction_penalty=world.config.information.contradiction_penalty,
+                state_stride=7,
+            ):
+                raise RuntimeError("native presence fusion was requested but unavailable")
+    for (node, key), belief in touched.items():
+        compact_by_node[node].write_to_belief(key, belief)
+    return len(pending)
+
+
+def _flush_presence_fusions(world: WorldState) -> int:
+    pending = world.deferred_presence_fusions
+    if not pending:
+        return 0
+    world.deferred_presence_fusions = []
+    prior = world.defer_presence_fusions
+    world.defer_presence_fusions = False
+    try:
+        # PresenceBelief currently has a compatibility violence side-channel
+        # that is not part of its declared slots. Preserve the legacy path if
+        # such a payload is ever supplied rather than batching around it.
+        if any("violence" in item[0].estimated_value for item in pending):
+            for observation, recipient_id, time, node, weight in pending:
+                _fuse_presence_immediate(
+                    world, observation, recipient_id, time, weight, node
+                )
+        else:
+            _flush_compact_presence_fusions(world, pending)
+    finally:
+        world.defer_presence_fusions = prior
+    return len(pending)
 
 
 def _corroboration_weight(history, timestamp: float, source_id: str,
@@ -1184,7 +1640,28 @@ def _queue_relay(world: WorldState, observation: Observation, time: float) -> In
     )
     world.information_relays[relay_id] = relay
     world.active_information_relays.add(relay_id)
+    heapq.heappush(
+        world.information_relay_due_heap,
+        (float(relay.arrives_at), relay_id),
+    )
     return relay
+
+
+def _due_information_relay_ids(world: WorldState, time: float) -> list[str]:
+    """Pop exact information-clock buckets and preserve legacy RNG order."""
+    candidate_ids: list[str] = []
+    heap = world.information_relay_due_heap
+    while heap and heap[0][0] <= float(time) + 1e-12:
+        _, relay_id = heapq.heappop(heap)
+        candidate_ids.append(relay_id)
+    # Relay IDs are monotonically allocated. Sorting the due subset reproduces
+    # the previous sorted(active_information_relays) traversal exactly even
+    # when a newer relay has an earlier delivery time.
+    return sorted(
+        relay_id
+        for relay_id in set(candidate_ids)
+        if relay_id in world.active_information_relays
+    )
 
 
 def ingest_observation(world: WorldState, observation: Observation,
@@ -1568,14 +2045,10 @@ def generate_background_observations(world: WorldState, time: float,
     for locality_id in (
         world.ordered_locality_ids or tuple(sorted(world.localities))
     ):
-        community_ids = world.social_community_ids_by_locality.get(locality_id)
-        communities = (
-            [world.social_communities[community_id] for community_id in community_ids]
-            if community_ids is not None else
-            [community for community in world.social_communities.values()
-             if community.locality_id == locality_id]
+        community_ids, cumulative_weights = world.community_selection_weights(
+            locality_id
         )
-        if not communities:
+        if not community_ids:
             # Administrative, elite-brokerage, and interpretation channels are
             # locality capabilities, not literal sampled civilians.  Preserve
             # them in populated coarse-resolution localities even when no
@@ -1604,30 +2077,19 @@ def generate_background_observations(world: WorldState, time: float,
                         formation_index, target_actor_cache,
                     ))
             continue
-        if len(communities) == 1:
+        if len(community_ids) == 1:
             # random.choices on a one-element population still consumes one
             # RNG draw even though the result cannot vary. Preserve that draw
             # exactly while avoiding a pointless represented-weight reduction.
             rng.random()
-            community = communities[0]
+            community = world.social_communities[community_ids[0]]
         else:
-            community = rng.choices(
-                communities,
-                weights=[
-                    max(
-                        1.0,
-                        world.represented_weight_by_community.get(
-                            item.community_id,
-                            sum(
-                                world.persons[pid].weight
-                                for pid in item.member_ids
-                            ),
-                        ),
-                    )
-                    for item in communities
-                ],
+            community_id = rng.choices(
+                community_ids,
+                cum_weights=cumulative_weights,
                 k=1,
             )[0]
+            community = world.social_communities[community_id]
         # Civilian and social channels are deliberately independent: cooperation
         # improves source access, but neither channel creates physical presence.
         for source_type in ("civilian", "social_network"):
@@ -1697,16 +2159,40 @@ def decay_information(world: WorldState, time: float) -> None:
     formation_factor = exp(-config.formation_decay_rate * elapsed)
     for belief in world.beliefs.values():
         belief.confidence = clamp(belief.confidence * default_factor)
-    for belief in getattr(world, "control_beliefs", {}).values():
-        belief.confidence = clamp(belief.confidence * default_factor)
-    for belief in world.zone_beliefs.values():
-        belief.confidence = clamp(belief.confidence * formation_factor)
-    for belief in world.presence_beliefs.values():
-        factor = formation_factor if belief.target_id else default_factor
-        belief.confidence = clamp(belief.confidence * factor)
-    for belief in world.node_presence_beliefs.values():
-        factor = formation_factor if belief.target_id else default_factor
-        belief.confidence = clamp(belief.confidence * factor)
+    compact = getattr(world, "compact_control_state", None)
+    if world.execution_backend == "optimized" and compact is not None:
+        compact.decay(elapsed, config.default_decay_rate)
+        compact.sync_confidence_to_beliefs(world.control_beliefs)
+    else:
+        for belief in getattr(world, "control_beliefs", {}).values():
+            belief.confidence = clamp(belief.confidence * default_factor)
+    compact_zone = getattr(world, "compact_zone_state", None)
+    if world.execution_backend == "optimized" and compact_zone is not None:
+        compact_zone.configure_decay(config.formation_decay_rate)
+        compact_zone.advance_decay(time)
+    else:
+        for belief in world.zone_beliefs.values():
+            belief.confidence = clamp(belief.confidence * formation_factor)
+    compact_presence = getattr(world, "compact_presence_state", None)
+    if world.execution_backend == "optimized" and compact_presence is not None:
+        compact_presence.configure_decay(
+            config.default_decay_rate, config.formation_decay_rate
+        )
+        compact_presence.advance_decay(time)
+    else:
+        for belief in world.presence_beliefs.values():
+            factor = formation_factor if belief.target_id else default_factor
+            belief.confidence = clamp(belief.confidence * factor)
+    compact_node_presence = getattr(world, "compact_node_presence_state", None)
+    if world.execution_backend == "optimized" and compact_node_presence is not None:
+        compact_node_presence.configure_decay(
+            config.default_decay_rate, config.formation_decay_rate
+        )
+        compact_node_presence.advance_decay(time)
+    else:
+        for belief in world.node_presence_beliefs.values():
+            factor = formation_factor if belief.target_id else default_factor
+            belief.confidence = clamp(belief.confidence * factor)
     world.last_information_decay_at = time
 
 
@@ -1721,16 +2207,23 @@ def process_information(world: WorldState, time: float,
     batch_control = (
         world.execution_backend == "optimized"
         and world.execution_profile == "particle"
-        and native_control_batch_enabled()
+        and world.compact_control_state is not None
+    )
+    batch_presence = (
+        world.execution_backend == "optimized"
+        and world.execution_profile == "particle"
+        and world.compact_presence_state is not None
     )
     world.defer_control_fusions = batch_control
     world.deferred_control_fusions.clear()
+    world.defer_presence_fusions = batch_presence
+    world.deferred_presence_fusions.clear()
     try:
         decay_information(world, time)
         generated = generate_background_observations(world, time, rng)
         delivered = dropped = 0
         delivered_ids: list[str] = []
-        for relay_id in sorted(world.active_information_relays):
+        for relay_id in _due_information_relay_ids(world, time):
             relay = world.information_relays.get(relay_id)
             if relay is None or relay.status != "in_transit":
                 world.active_information_relays.discard(relay_id)
@@ -1762,6 +2255,10 @@ def process_information(world: WorldState, time: float,
                 relay.status = "dropped"
                 world.active_information_relays.discard(relay_id)
                 dropped += 1
+        # Generated local fusions precede this loop, so the single queue still
+        # preserves generated-before-relayed recurrence order while allowing
+        # one native/compact batch for the whole information event.
+        flushed_presence_fusions = _flush_presence_fusions(world)
         flushed_control_fusions = _flush_control_fusions(world)
         _prune_information_history(world, time)
         return {"generated": len(generated),
@@ -1770,10 +2267,13 @@ def process_information(world: WorldState, time: float,
                 "delivered_observation_ids": tuple(delivered_ids),
                 "relays_dropped": dropped,
                 "active_relays": len(world.active_information_relays),
-                "control_fusions": flushed_control_fusions}
+                "control_fusions": flushed_control_fusions,
+                "presence_fusions": flushed_presence_fusions}
     finally:
         world.defer_control_fusions = False
         world.deferred_control_fusions.clear()
+        world.defer_presence_fusions = False
+        world.deferred_presence_fusions.clear()
         world.information_execution_cache.clear()
         world.information_cache_active = False
 
@@ -1892,6 +2392,7 @@ def _belief_record(belief: Any, time: float) -> dict[str, Any]:
 
 def information_diagnostics(world: WorldState) -> dict[str, Any]:
     """Return analyst-facing information age, error, source, and relay measures."""
+    world.materialize_compact_information_confidences()
     by_type: dict[str, int] = {}
     by_source: dict[str, int] = {}
     for observation in world.observations.values():
