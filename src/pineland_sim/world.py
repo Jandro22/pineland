@@ -1783,7 +1783,7 @@ class WorldState:
         # avoidable part of a particle fork while all mutable state remains
         # isolated below.
         shared_fields = {
-            "config", "districts", "geographic_containers", "district_hierarchy",
+            "config", "geographic_containers", "district_hierarchy",
             "evaluation_region_by_locality",
             "social_edges", "social_neighbors", "social_community_ids_by_locality",
             "adjacency", "microzone_ids_by_locality", "physical_neighbors",

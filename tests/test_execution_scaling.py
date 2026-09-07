@@ -159,6 +159,19 @@ def test_particle_clone_shares_only_read_only_observation_payloads():
     assert cloned.microzone_ids_by_locality is world.microzone_ids_by_locality
 
 
+def test_particle_clone_does_not_alias_mutable_district_population():
+    world = generate_pineland(
+        SimulationConfig(agent_count=80, locality_count=17, horizon_days=1, seed=927)
+    )
+    cloned = world.clone(share_static=True)
+    district_id = next(iter(world.districts))
+    assert cloned.districts is not world.districts
+    assert cloned.districts[district_id] is not world.districts[district_id]
+    original_population = world.districts[district_id].population
+    cloned.districts[district_id].population -= 1
+    assert world.districts[district_id].population == original_population
+
+
 def test_command_path_cache_is_invalidated_by_new_edge():
     from pineland_sim.logistics import _add_command_edge, command_path
 
