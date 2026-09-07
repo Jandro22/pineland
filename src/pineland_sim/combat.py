@@ -300,16 +300,17 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
             formation.operational_status = "ineffective"
             formation.availability = min(formation.availability, .08)
             ineffective.append(formation.formation_id)
-        world.causal_ledger.extend((
-            CausalContribution(time, formation.locality_id, "formation_personnel",
-                               -losses[formation.formation_id], "combat", event_id),
-            CausalContribution(time, formation.locality_id, "formation_cohesion",
-                               formation.cohesion - before_cohesion[formation.formation_id],
-                               "combat", event_id),
-            CausalContribution(time, formation.locality_id, "formation_readiness",
-                               formation.readiness - before_readiness[formation.formation_id],
-                               "combat", event_id),
-        ))
+        if world.execution_profile != "particle":
+            world.causal_ledger.extend((
+                CausalContribution(time, formation.locality_id, "formation_personnel",
+                                   -losses[formation.formation_id], "combat", event_id),
+                CausalContribution(time, formation.locality_id, "formation_cohesion",
+                                   formation.cohesion - before_cohesion[formation.formation_id],
+                                   "combat", event_id),
+                CausalContribution(time, formation.locality_id, "formation_readiness",
+                                   formation.readiness - before_readiness[formation.formation_id],
+                                   "combat", event_id),
+            ))
 
     locality = world.localities[a.locality_id]
     intensity = min(1.0, (frac_a + frac_b) / max(.001, 2 * cfg.base_attrition_rate))

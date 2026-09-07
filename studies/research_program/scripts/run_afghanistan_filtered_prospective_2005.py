@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import argparse
-from concurrent.futures import ProcessPoolExecutor
+import copy
 import csv
 import hashlib
 import json
@@ -41,14 +41,16 @@ from historical_case import (  # noqa: E402
 from pineland_sim import (  # noqa: E402
     AssimilationObservation,
     Particle,
+    PersistentParticlePool,
     SequentialParticleFilter,
     Simulation,
     SimulationConfig,
     SimulationParticle,
     generate_pineland,
 )
-from pineland_sim.state_estimation import particle_weights  # noqa: E402
-from pineland_sim.relations import STATE_SECURITY_KINDS  # noqa: E402
+from pineland_sim.state_estimation import (  # noqa: E402
+    particle_weights,
+)
 from pineland_sim.reproducibility import (  # noqa: E402
     file_sha256,
     model_sha256,
@@ -344,10 +346,15 @@ def build_initial_particle(
     horizon: float,
     case: dict,
     inputs: dict,
+    base_world=None,
 ) -> Particle[SimulationParticle]:
     """Create one prior particle with an independent latent spatial draw."""
     config = _config(seed, horizon)
-    world = generate_pineland(config, empirical_geography=case)
+    world = (
+        copy.deepcopy(base_world)
+        if base_world is not None
+        else generate_pineland(config, empirical_geography=case)
+    )
     prior_rng = random.Random(
         seed * 1_000_003 + particle_index * 97_409 + int(taliban_strength)
     )
@@ -377,6 +384,11 @@ def build_initial_particle(
         policy_hook=schedule,
         stream_namespace=f"particle:{seed}:prior:{particle_index}",
     )
+    simulation.configure_execution(
+        validate_invariants=False,
+        checkpointing=False,
+        retain_output_archives=False,
+    )
     return Particle(
         SimulationParticle(
             simulation,
@@ -396,16 +408,9 @@ def _active_provinces(
 ) -> set[str]:
     world = state.world
     return {
-        _province_for_locality(world, event.locality_id)
-        for event in world.state_based_events
-        if observation.start_day <= float(event.time) < observation.end_day
-        and event.locality_id in world.localities
-        and "insurgent" in event.actor_organization_ids
-        and any(
-            world.organizations.get(actor) is not None
-            and world.organizations[actor].kind in STATE_SECURITY_KINDS
-            for actor in event.actor_organization_ids
-            if actor != "insurgent"
+        _province_for_locality(world, locality_id)
+        for locality_id in world.state_based_event_localities_by_week.get(
+            observation.week_index, ()
         )
     }
 
@@ -426,6 +431,23 @@ def _nested_particle_job(
     )
     new_state, likelihood = propagator(state, time, observation)
     return new_state, likelihood, propagator.diagnostics()
+
+
+def _fork_particle_state(state: SimulationParticle, child_index: int) -> SimulationParticle:
+    """Pickle-safe fork callback for the generic resident particle pool."""
+    return state.fork(child_index)
+
+
+def _nested_persistent_job(
+    state: SimulationParticle,
+    time: float,
+    payload: tuple[ProvinceWeekObservation, int, int],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    """Resident-worker adapter for the nested forecast propagator."""
+    observation, branches, filter_seed = payload
+    return _nested_particle_job(
+        (state, time, observation, branches, filter_seed)
+    )
 
 
 def make_nested_propagator(
@@ -466,23 +488,31 @@ def run_training_filter(
 
     def assimilate_one(
         observation: ProvinceWeekObservation,
-        executor: ProcessPoolExecutor | None,
+        executor: object | None,
     ) -> None:
         nonlocal nested_calls, exact_calls, mismatch_sum, max_mismatch
-        jobs = [
-            (
-                particle.state,
-                observation.end_day,
-                observation,
-                likelihood_branches,
-                filter_seed,
-            )
-            for particle in filter_.particles
-        ]
         if executor is None:
+            jobs = [
+                (
+                    particle.state,
+                    observation.end_day,
+                    observation,
+                    likelihood_branches,
+                    filter_seed,
+                )
+                for particle in filter_.particles
+            ]
             completed = list(map(_nested_particle_job, jobs))
         else:
-            completed = list(executor.map(_nested_particle_job, jobs, chunksize=1))
+            completed = executor.propagate(
+                observation.end_day,
+                (observation, likelihood_branches, filter_seed),
+            )
+        if executor is not None:
+            completed = [
+                (None, likelihood, diagnostics)
+                for _, likelihood, diagnostics in completed
+            ]
         propagated = [(state, likelihood) for state, likelihood, _ in completed]
         for _, _, diagnostics in completed:
             calls = int(diagnostics["nested_propagation_calls"])
@@ -500,24 +530,38 @@ def run_training_filter(
                     ]
                 ),
             )
-        filter_.assimilate_precomputed(
-            AssimilationObservation(
-                time=observation.end_day,
-                value=observation,
-                split="training",
-                observation_id=f"province-week-{observation.week_index}",
-            ),
-            propagated,
+        assimilation = AssimilationObservation(
+            time=observation.end_day,
+            value=observation,
+            split="training",
+            observation_id=f"province-week-{observation.week_index}",
         )
+        if executor is None:
+            filter_.assimilate_precomputed(assimilation, propagated)
+        else:
+            diagnostics, parent_indices = filter_.assimilate_scores(
+                assimilation,
+                [likelihood for _, likelihood, _ in completed],
+            )
+            if diagnostics.resampled:
+                executor.resample(parent_indices)
 
     ordered_observations = list(observations)
     if workers == 1:
         for observation in ordered_observations:
             assimilate_one(observation, None)
     else:
-        with ProcessPoolExecutor(max_workers=workers) as executor:
+        with PersistentParticlePool(
+            [particle.state for particle in filter_.particles],
+            propagate=_nested_persistent_job,
+            fork_state=_fork_particle_state,
+            workers=workers,
+        ) as executor:
             for observation in ordered_observations:
                 assimilate_one(observation, executor)
+            filter_.particles = [
+                Particle(state, 0.0) for state in executor.snapshot()
+            ]
     filter_.freeze()
     filter_.nested_propagator_diagnostics = {
         "nested_propagation_calls": nested_calls,
@@ -541,18 +585,13 @@ def _forecast_cells(
     end_day: float,
 ) -> set[tuple[str, int]]:
     world = state.world
+    first_week = int(start_day // 7)
+    last_week = int(math.ceil(end_day / 7.0))
     return {
-        (_province_for_locality(world, event.locality_id), int(float(event.time) // 7))
-        for event in world.state_based_events
-        if start_day <= float(event.time) < end_day
-        and event.locality_id in world.localities
-        and "insurgent" in event.actor_organization_ids
-        and any(
-            world.organizations.get(actor) is not None
-            and world.organizations[actor].kind in STATE_SECURITY_KINDS
-            for actor in event.actor_organization_ids
-            if actor != "insurgent"
-        )
+        (province, week)
+        for week in range(first_week, last_week)
+        for locality_id in world.state_based_event_localities_by_week.get(week, ())
+        for province in (_province_for_locality(world, locality_id),)
     }
 
 
@@ -568,6 +607,18 @@ def _forecast_particle_job(
             _forecast_cells(branch, start_day=start_day, end_day=end_day)
         )
     return branch_cell_sets
+
+
+def _forecast_persistent_job(
+    state: SimulationParticle,
+    time: float,
+    payload: tuple[float, float, int],
+) -> tuple[SimulationParticle, float, list[set[tuple[str, int]]]]:
+    """Run forecast branches in a resident worker and return only cells."""
+    start_day, end_day, forecast_branches = payload
+    return state, 0.0, _forecast_particle_job(
+        (state, start_day, end_day, forecast_branches)
+    )
 
 
 def forecast_weighted_field(
@@ -606,10 +657,18 @@ def forecast_weighted_field(
     if workers == 1:
         completed = list(map(_forecast_particle_job, jobs))
     else:
-        with ProcessPoolExecutor(max_workers=workers) as executor:
-            completed = list(
-                executor.map(_forecast_particle_job, jobs, chunksize=1)
-            )
+        with PersistentParticlePool(
+            [particle.state for particle in filter_.particles],
+            propagate=_forecast_persistent_job,
+            fork_state=_fork_particle_state,
+            workers=workers,
+        ) as executor:
+            completed = [
+                diagnostics
+                for _, _, diagnostics in executor.propagate(
+                    end_day, (start_day, end_day, forecast_branches)
+                )
+            ]
     for branch_cell_sets, weight in zip(completed, weights):
         cells = set().union(*branch_cell_sets) if branch_cell_sets else set()
         member_cells.append([
@@ -703,6 +762,9 @@ def run(
             separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()
+    base_world = generate_pineland(
+        _config(seed, horizon), empirical_geography=case
+    )
     initial_particles = [
         build_initial_particle(
             seed=seed,
@@ -712,9 +774,11 @@ def run(
             horizon=horizon,
             case=case,
             inputs=inputs,
+            base_world=base_world,
         )
         for index in range(particles)
     ]
+    del base_world
     filter_ = run_training_filter(
         initial_particles,
         observations,

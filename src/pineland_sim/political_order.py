@@ -227,7 +227,7 @@ def process_political_order(world, time: float, event_id: str, rng: random.Rando
         })
         for dimension, old in before.items():
             delta = getattr(locality.control["government"], dimension) - old
-            if delta:
+            if delta and world.execution_profile != "particle":
                 world.causal_ledger.append(CausalContribution(
                     time, locality.locality_id, dimension, delta,
                     "political_policy_implementation", event_id))

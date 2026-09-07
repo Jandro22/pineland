@@ -1,6 +1,7 @@
 import json
 import math
 import random
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -15,7 +16,9 @@ from pineland_sim import (
 )
 from pineland_sim.entities import OrganizationKind
 from pineland_sim.state_estimation import (
+    bounded_process_map,
     Particle,
+    PersistentParticlePool,
     effective_sample_size,
     measurement_update,
     normalize_log_weights,
@@ -23,6 +26,37 @@ from pineland_sim.state_estimation import (
     resample_if_degenerate,
     systematic_resample_indices,
 )
+
+
+def _resident_test_propagate(state, time, observation):
+    return state + observation, 0.0, {"time": time}
+
+
+def _resident_test_fork(state, child_index):
+    return state + 1000 * child_index
+
+
+def test_bounded_process_map_preserves_order_with_a_small_submission_window():
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        values = list(bounded_process_map(
+            executor,
+            lambda value: value * value,
+            range(8),
+            max_in_flight=2,
+        ))
+    assert values == [value * value for value in range(8)]
+
+
+def test_persistent_particle_pool_keeps_parent_forks_on_their_worker():
+    with PersistentParticlePool(
+        [0, 1, 2, 3],
+        propagate=_resident_test_propagate,
+        fork_state=_resident_test_fork,
+        workers=2,
+    ) as pool:
+        assert [result[0] for result in pool.propagate(7.0, 10)] == list(range(4))
+        pool.resample([3, 3, 0, 1])
+        assert pool.snapshot() == [13, 1013, 2010, 3011]
 
 
 def test_log_weight_normalization_and_ess_are_numerically_stable():

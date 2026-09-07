@@ -190,7 +190,8 @@ class ProcessEngine:
             ),
         )
         self.world.active_event_id = event_id
-        before_stocks = self.world.tracked_stock_totals()
+        particle_mode = self.world.execution_profile == "particle"
+        before_stocks = {} if particle_mode else self.world.tracked_stock_totals()
         forensic = self.world.config.output_mode == "forensic"
         before_controls = ({
             locality_id: {actor: vector.to_dict() for actor, vector in locality.control.items()}
@@ -217,8 +218,9 @@ class ProcessEngine:
             self.world.active_event_id = None
             raise
         raw_result = dict(result)
-        self.world.event_counts[event.event_type] = self.world.event_counts.get(event.event_type, 0) + 1
-        if event.event_type == "organized_action":
+        if not particle_mode:
+            self.world.event_counts[event.event_type] = self.world.event_counts.get(event.event_type, 0) + 1
+        if not particle_mode and event.event_type == "organized_action":
             channel = str(raw_result.get("action_channel", "unknown"))
             reason = str(raw_result.get("failure_reason") or "realized")
             actor_locality_key = (
@@ -250,10 +252,12 @@ class ProcessEngine:
                     local_funnel.get("state_based_violence_events", 0) + 1
                 )
         if event.event_type == "contact" and float(raw_result.get("contact", 0.0)) > 0:
-            self.world.contact_event_times.append(self.world.time)
+            if not particle_mode:
+                self.world.contact_event_times.append(self.world.time)
             locality = raw_result.get("locality_id", event.payload.get("locality_id"))
             if locality is not None:
-                self.world.contact_event_localities.append(str(locality))
+                if not particle_mode:
+                    self.world.contact_event_localities.append(str(locality))
                 self.world.record_state_based_event(
                     time=self.world.time,
                     locality_id=str(locality),
@@ -311,13 +315,13 @@ class ProcessEngine:
             source_type = str(record_source_override)
         synthetic = (
             None
-            if event.event_type == "recording_noise"
+            if particle_mode or event.event_type == "recording_noise"
             else self._synthetic_record(
                 event_id, record_event_type, locality_id, severity,
                 actors[0] if actors else None, source_type,
             )
         )
-        if event.event_type == "contact":
+        if not particle_mode and event.event_type == "contact":
             # Recording is an observation-layer decision made after the
             # contact handler. Attach it to the same forensic trace without
             # drawing another random number or altering the event result.
@@ -343,13 +347,13 @@ class ProcessEngine:
                     if value:
                         self.world.contact_funnel_counts[key] = (
                             self.world.contact_funnel_counts.get(key, 0) + value)
-        elif event.event_type == "organized_action":
+        elif not particle_mode and event.event_type == "organized_action":
             # Planning/failed execution/wait states are latent process records,
             # not historical events.  The recording operator is strictly
             # downstream of a realized action outcome.
             if synthetic is not None and not bool(raw_result.get("latent_event", False)):
                 synthetic.recorded = False
-        if self.world.config.output_mode == "forensic":
+        if not particle_mode and self.world.config.output_mode == "forensic":
             log_entry = EventLogEntry(
                 event_id, event.time, event.event_type, locality_id, actors, affected, result,
                 event.causal_parent_ids, observations, synthetic,
@@ -358,7 +362,7 @@ class ProcessEngine:
             self.world.event_log.append(log_entry)
             if synthetic is not None:
                 self.world.synthetic_records.append(synthetic)
-        elif self.world.config.output_mode == "ensemble":
+        elif not particle_mode and self.world.config.output_mode == "ensemble":
             # Keep a compact event record for target extraction while avoiding
             # the large observation/state-delta payloads used in forensic mode.
             if event.event_type != "organized_action" or bool(raw_result.get("latent_event", False)):
@@ -369,7 +373,7 @@ class ProcessEngine:
                 ))
                 if synthetic is not None:
                     self.world.synthetic_records.append(synthetic)
-        elif (
+        elif not particle_mode and (
             self.world.config.output_mode == "calibration"
             and (
                 event.event_type == "contact"
@@ -386,8 +390,9 @@ class ProcessEngine:
             # are identical to forensic and ensemble modes.
             if synthetic is not None:
                 self.world.synthetic_records.append(synthetic)
-        self.world.record_stock_transactions(event_id, event.event_type, before_stocks,
-                                             self.world.tracked_stock_totals())
+        if not particle_mode:
+            self.world.record_stock_transactions(event_id, event.event_type, before_stocks,
+                                                 self.world.tracked_stock_totals())
         if forensic:
             self.world.record_state_delta(event_id, event.event_type, before_controls, before_formations, actors)
         self.world.active_event_id = None
@@ -469,7 +474,7 @@ class ProcessEngine:
         vector.update(changes)
         for dimension, old in before.items():
             realized = getattr(vector, dimension) - old
-            if realized:
+            if realized and self.world.execution_profile != "particle":
                 self.world.causal_ledger.append(
                     CausalContribution(self.world.time, locality_id, dimension, realized, mechanism, event_id)
                 )
@@ -480,7 +485,7 @@ class ProcessEngine:
         old = getattr(vector, dimension)
         new = clamp(target)
         setattr(vector, dimension, new)
-        if new != old:
+        if new != old and self.world.execution_profile != "particle":
             self.world.causal_ledger.append(
                 CausalContribution(self.world.time, locality_id, dimension, new - old, mechanism, event_id)
             )

@@ -9,14 +9,250 @@ from __future__ import annotations
 
 from copy import deepcopy
 from collections import Counter
+from concurrent.futures import Executor
 from dataclasses import dataclass
 from math import exp, isfinite, log
+import multiprocessing as mp
 import random
-from typing import Callable, Generic, Sequence, TypeVar
+import traceback
+from typing import Callable, Generic, Iterable, Iterator, Sequence, TypeVar
 
 
 StateT = TypeVar("StateT")
 ObservationT = TypeVar("ObservationT")
+JobT = TypeVar("JobT")
+ResultT = TypeVar("ResultT")
+
+
+def _resident_particle_worker(
+    command_queue,
+    result_queue,
+    initial_states,
+    propagate,
+    fork_state,
+) -> None:
+    """Run particle states in one resident process.
+
+    The worker protocol deliberately returns only scores and compact
+    diagnostics during propagation.  Mutable states stay resident and are
+    forked locally after the coordinator sends parent indices.
+    """
+    states = dict(initial_states)
+    try:
+        while True:
+            command, payload = command_queue.get()
+            if command == "shutdown":
+                result_queue.put(("shutdown", None))
+                return
+            if command == "propagate":
+                time, observation = payload
+                results = []
+                for slot in sorted(states):
+                    new_state, score, diagnostics = propagate(
+                        states[slot], time, observation
+                    )
+                    states[slot] = new_state
+                    results.append((slot, score, diagnostics))
+                result_queue.put(("propagate", results))
+                continue
+            if command == "resample":
+                # The mapping is child slot -> locally resident parent slot.
+                # All children are assigned to the worker that owns their
+                # parent, so no state migration is needed.
+                parent_by_child = payload
+                states = {
+                    child: fork_state(states[parent], child)
+                    for child, parent in parent_by_child.items()
+                }
+                result_queue.put(("resample", None))
+                continue
+            if command == "snapshot":
+                result_queue.put(("snapshot", list(states.items())))
+                continue
+            raise ValueError(f"unknown resident particle command: {command!r}")
+    except BaseException:
+        result_queue.put(("error", traceback.format_exc()))
+
+
+class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
+    """Keep particle states resident while a filter advances.
+
+    Each worker owns a changing subset of globally indexed particles.  On a
+    resampling step, every child is assigned to its selected parent's worker;
+    the worker performs the normal state fork locally.  Consequently the
+    coordinator exchanges only observations, scores, ancestry indices, and
+    compact diagnostics—not a full simulation object graph every week.
+
+    ``propagate`` must return ``(new_state, score, diagnostics)`` and both
+    callbacks must be importable/pickleable top-level callables when the spawn
+    multiprocessing context is used (the Windows default).
+    """
+
+    def __init__(
+        self,
+        states: Sequence[StateT],
+        *,
+        propagate: Callable[[StateT, float, ObservationT], tuple[StateT, float, ResultT]],
+        fork_state: Callable[[StateT, int], StateT],
+        workers: int,
+    ) -> None:
+        if not states:
+            raise ValueError("a persistent particle pool needs at least one state")
+        if workers < 1:
+            raise ValueError("workers must be positive")
+        self._closed = False
+        self._context = mp.get_context("spawn")
+        self._propagate = propagate
+        self._fork_state = fork_state
+        self._workers = []
+        self._assignment: dict[int, int] = {}
+        worker_count = min(int(workers), len(states))
+        partitions = [[] for _ in range(worker_count)]
+        for slot, state in enumerate(states):
+            worker_index = slot % worker_count
+            partitions[worker_index].append((slot, state))
+            self._assignment[slot] = worker_index
+        for initial_states in partitions:
+            command_queue = self._context.Queue()
+            result_queue = self._context.Queue()
+            process = self._context.Process(
+                target=_resident_particle_worker,
+                args=(
+                    command_queue,
+                    result_queue,
+                    initial_states,
+                    self._propagate,
+                    self._fork_state,
+                ),
+            )
+            process.start()
+            self._workers.append((process, command_queue, result_queue))
+
+    def _send_to_all(self, command: str, payload) -> None:
+        for _, command_queue, _ in self._workers:
+            command_queue.put((command, payload))
+
+    @staticmethod
+    def _receive(result_queue, expected: str):
+        command, payload = result_queue.get()
+        if command == "error":
+            raise RuntimeError(f"resident particle worker failed:\n{payload}")
+        if command != expected:
+            raise RuntimeError(
+                f"resident particle worker returned {command!r}, expected {expected!r}"
+            )
+        return payload
+
+    def propagate(
+        self,
+        time: float,
+        observation: ObservationT,
+    ) -> list[tuple[int, float, ResultT]]:
+        """Advance every resident particle and return ordered compact results."""
+        self._send_to_all("propagate", (float(time), observation))
+        results = []
+        for _, _, result_queue in self._workers:
+            results.extend(self._receive(result_queue, "propagate"))
+        results.sort(key=lambda item: item[0])
+        expected_slots = list(range(len(self._assignment)))
+        if [item[0] for item in results] != expected_slots:
+            raise RuntimeError("resident particle worker returned an incomplete particle set")
+        return results
+
+    def resample(self, parent_indices: Sequence[int]) -> None:
+        """Fork resampled children on the workers holding their parents."""
+        if len(parent_indices) != len(self._assignment):
+            raise ValueError("resampling must return one parent per particle")
+        by_worker: list[dict[int, int]] = [
+            {} for _ in self._workers
+        ]
+        new_assignment: dict[int, int] = {}
+        for child, parent in enumerate(parent_indices):
+            parent = int(parent)
+            worker_index = self._assignment.get(parent)
+            if worker_index is None:
+                raise ValueError(f"resampling referenced unknown parent {parent}")
+            by_worker[worker_index][child] = parent
+            new_assignment[child] = worker_index
+        for worker_index, (_, command_queue, _) in enumerate(self._workers):
+            command_queue.put(("resample", by_worker[worker_index]))
+        for _, _, result_queue in self._workers:
+            self._receive(result_queue, "resample")
+        self._assignment = new_assignment
+
+    def snapshot(self) -> list[StateT]:
+        """Return the current ordered states, paying the IPC cost once."""
+        self._send_to_all("snapshot", None)
+        states: dict[int, StateT] = {}
+        for _, _, result_queue in self._workers:
+            states.update(dict(self._receive(result_queue, "snapshot")))
+        expected_slots = list(range(len(self._assignment)))
+        if sorted(states) != expected_slots:
+            raise RuntimeError("resident particle worker returned an incomplete snapshot")
+        return [states[slot] for slot in expected_slots]
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        for _, command_queue, _ in self._workers:
+            command_queue.put(("shutdown", None))
+        for process, _, result_queue in self._workers:
+            try:
+                self._receive(result_queue, "shutdown")
+            finally:
+                process.join(timeout=10)
+                if process.is_alive():
+                    process.terminate()
+                    process.join(timeout=2)
+        self._workers.clear()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
+        self.close()
+
+
+def bounded_process_map(
+    executor: Executor,
+    function: Callable[[JobT], ResultT],
+    jobs: Iterable[JobT],
+    *,
+    max_in_flight: int,
+) -> Iterator[ResultT]:
+    """Yield ordered executor results without eagerly queuing every job."""
+    if max_in_flight < 1:
+        raise ValueError("max_in_flight must be positive")
+    iterator = iter(jobs)
+    pending = {}
+    next_index = 0
+    while len(pending) < max_in_flight:
+        try:
+            job = next(iterator)
+        except StopIteration:
+            break
+        pending[next_index] = executor.submit(function, job)
+        next_index += 1
+    result_index = 0
+    while pending:
+        result = pending.pop(result_index).result()
+        yield result
+        result_index += 1
+        try:
+            job = next(iterator)
+        except StopIteration:
+            continue
+        pending[next_index] = executor.submit(function, job)
+        next_index += 1
+
+
+def chunked(items: Sequence[JobT], chunk_size: int) -> Iterator[list[JobT]]:
+    """Yield deterministic contiguous batches for process-isolated work."""
+    if chunk_size < 1:
+        raise ValueError("chunk_size must be positive")
+    for start in range(0, len(items), chunk_size):
+        yield list(items[start:start + chunk_size])
 
 
 @dataclass(slots=True)
@@ -415,6 +651,78 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         """
         self._validate_observation(observation)
         return self._commit_propagated_update(observation, propagated)
+
+    def assimilate_scores(
+        self,
+        observation: AssimilationObservation[ObservationT],
+        likelihoods: Sequence[float],
+    ) -> tuple[FilterUpdateDiagnostics, list[int]]:
+        """Commit scores when a separate execution engine owns particle state.
+
+        This keeps weighting, ESS thresholds, systematic resampling, and
+        ancestry accounting identical to ``assimilate_precomputed`` while a
+        resident worker pool keeps the actual mutable states out of the
+        coordinator process.  The returned parent indices are the only state
+        operation the external executor needs to perform.
+        """
+        self._validate_observation(observation)
+        if len(likelihoods) != len(self.particles):
+            raise ValueError("score count must equal the particle count")
+        prior = particle_weights(self.particles, strict=True)
+        for particle, prior_weight, likelihood in zip(
+            self.particles, prior, likelihoods
+        ):
+            likelihood = float(likelihood)
+            particle.log_weight = (
+                -float("inf")
+                if prior_weight <= 0 or not isfinite(likelihood)
+                else log(prior_weight) + likelihood
+            )
+        posterior = particle_weights(self.particles, strict=True)
+        for particle, weight in zip(self.particles, posterior):
+            particle.log_weight = log(weight) if weight > 0 else -float("inf")
+        update = {
+            "prior_ess": effective_sample_size(prior),
+            "posterior_ess": effective_sample_size(posterior),
+            "maximum_posterior_weight": max(posterior),
+        }
+        previous_roots = list(self._root_ancestors)
+        threshold = self.ess_fraction * len(self.particles)
+        if update["posterior_ess"] >= threshold:
+            parent_indices = list(range(len(self.particles)))
+            resampled = False
+        else:
+            parent_indices = systematic_resample_indices(posterior, self.rng)
+            resampled = True
+        if resampled:
+            self.particles = [
+                Particle(self.particles[index].state, 0.0)
+                for index in parent_indices
+            ]
+            self._root_ancestors = [
+                previous_roots[index] for index in parent_indices
+            ]
+            self._resampling_events += 1
+        ancestry = self.ancestry_diagnostics()
+        diagnostics = FilterUpdateDiagnostics(
+            time=float(observation.time),
+            observation_id=observation.observation_id,
+            split=observation.split,
+            prior_ess=float(update["prior_ess"]),
+            posterior_ess=float(update["posterior_ess"]),
+            maximum_posterior_weight=float(update["maximum_posterior_weight"]),
+            resampled=resampled,
+            unique_parent_particles=len(set(parent_indices)),
+            distinct_root_ancestors=int(ancestry["distinct_root_ancestors"]),
+            lineage_entropy=float(ancestry["lineage_entropy"]),
+            maximum_ancestry_concentration=float(
+                ancestry["maximum_ancestry_concentration"]
+            ),
+            resampling_events=int(ancestry["resampling_events"]),
+        )
+        self.history.append(diagnostics)
+        self.last_time = float(observation.time)
+        return diagnostics, parent_indices
 
     def assimilate(
         self,

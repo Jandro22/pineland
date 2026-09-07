@@ -42,6 +42,11 @@ class Simulation:
         )
         self._initialized = False
         self._recruitment_clock_started = False
+        # These execution controls affect bookkeeping only.  Defaults retain
+        # the historical full-audit/full-archive behavior.
+        self._validate_invariants = True
+        self._checkpointing = True
+        self._retain_output_archives = True
 
     def _stream_name(self, stream: str) -> str:
         if not self.stream_namespace:
@@ -62,11 +67,32 @@ class Simulation:
         )
         self.processes.set_stream_namespace(self.stream_namespace)
 
+    def configure_execution(
+        self,
+        *,
+        validate_invariants: bool | None = None,
+        checkpointing: bool | None = None,
+        retain_output_archives: bool | None = None,
+    ) -> None:
+        """Configure a simulation's bookkeeping policy before initialization."""
+        if self._initialized and checkpointing is not None and bool(checkpointing) != self._checkpointing:
+            raise RuntimeError("checkpointing cannot change after simulation initialization")
+        if validate_invariants is not None:
+            self._validate_invariants = bool(validate_invariants)
+        if checkpointing is not None:
+            self._checkpointing = bool(checkpointing)
+        if retain_output_archives is not None:
+            self._retain_output_archives = bool(retain_output_archives)
+            self.world.execution_profile = (
+                "particle" if not self._retain_output_archives else "standard"
+            )
+
     def clone(
         self,
         *,
         policy_hook: PolicyHook | None | object = _UNSET_POLICY_HOOK,
         stream_namespace: str | None = None,
+        copy_output_archives: bool | None = None,
     ) -> "Simulation":
         """Clone a live simulation, including its pending event queue.
 
@@ -81,19 +107,38 @@ class Simulation:
         separately cloneable hook can deep-copy it before passing it here.
         """
         original_hook = self.policy_hook
+        original_world = self.world
+        original_process_world = self.processes.world
+        preserve_archives = (
+            self._retain_output_archives
+            if copy_output_archives is None else bool(copy_output_archives)
+        )
+        detached_archives = None if preserve_archives else original_world.detach_particle_archives()
+        if not preserve_archives:
+            self.world = None  # type: ignore[assignment]
+            self.processes.world = None  # type: ignore[assignment]
         # Callable closures are shallowly copied by deepcopy and can retain a
         # mutable schedule in their closure.  Exclude the hook from the main
         # copy; callers can pass a cloneable callable explicitly.
         self.policy_hook = None
         try:
             cloned = copy.deepcopy(self)
+            if not preserve_archives:
+                cloned.world = original_world.clone(share_static=True)
+                cloned.processes.world = cloned.world
         finally:
             self.policy_hook = original_hook
+            self.world = original_world
+            self.processes.world = original_process_world
+            if detached_archives is not None:
+                original_world.restore_particle_archives(detached_archives)
 
         if policy_hook is _UNSET_POLICY_HOOK:
             cloned.policy_hook = copy.deepcopy(original_hook)
         else:
             cloned.policy_hook = policy_hook  # type: ignore[assignment]
+        if not preserve_archives:
+            cloned.world.execution_profile = "particle"
         if stream_namespace is not None:
             cloned.set_stream_namespace(stream_namespace)
         return cloned
@@ -106,8 +151,13 @@ class Simulation:
         if self.world.config.burn_in_days > 0:
             self._run_burn_in()
 
-    def _populate_scheduler(self, start_time: float) -> None:
+    def _populate_scheduler(
+        self, start_time: float, *, include_checkpoints: bool | None = None
+    ) -> None:
         intervals = self.world.config.intervals
+        include_checkpoints = (
+            self._checkpointing if include_checkpoints is None else include_checkpoints
+        )
         for patrol_id in sorted(self.world.patrols):
             self.scheduler.schedule(start_time, "patrol", {"patrol_id": patrol_id}, priority=30)
         recurring = [
@@ -126,13 +176,14 @@ class Simulation:
             ("mobility", intervals.mobility, 50),
             ("governance", intervals.governance, 70),
             ("economy", intervals.economy, 80),
-            # False reports are an observation-layer process with their own
-            # calendar clock. Reuse the information cadence rather than tying
-            # false positives to the number of latent events that happened to
-            # execute in the same period.
-            ("recording_noise", intervals.information, 85),
-            ("checkpoint", intervals.checkpoint, 90),
         ]
+        if self.world.execution_profile != "particle":
+            # False reports are an observation-layer process with its own
+            # calendar clock. Particle propagation does not need this output
+            # layer, so it is omitted without touching latent process RNGs.
+            recurring.append(("recording_noise", intervals.information, 85))
+        if include_checkpoints:
+            recurring.append(("checkpoint", intervals.checkpoint, 90))
         for event_type, interval, priority in recurring:
             self.scheduler.schedule(
                 start_time,
@@ -157,7 +208,7 @@ class Simulation:
         self.world.time = -burn_in
         self.world.in_burn_in = True
         self._recruitment_clock_started = False
-        self._populate_scheduler(-burn_in)
+        self._populate_scheduler(-burn_in, include_checkpoints=self._checkpointing)
         processed = 0
         while len(self.scheduler):
             next_time = self.scheduler.peek_time()
@@ -219,6 +270,7 @@ class Simulation:
         self.world.state_based_event_times.clear()
         self.world.state_based_event_localities.clear()
         self.world.state_based_events.clear()
+        self.world.state_based_event_localities_by_week.clear()
         self.world.contact_funnel_records.clear()
         self.world.contact_funnel_counts.clear()
         self.world.action_funnel_counts.clear()
@@ -292,7 +344,7 @@ class Simulation:
         self.processes.event_counter = 0
         self.scheduler = EventScheduler(allow_negative=True)
         self._recruitment_clock_started = False
-        self._populate_scheduler(0.0)
+        self._populate_scheduler(0.0, include_checkpoints=self._checkpointing)
 
     def _reschedule(self, event_type: str, payload: dict, current_time: float) -> None:
         intervals = self.world.config.intervals
@@ -385,7 +437,18 @@ class Simulation:
                     priority=18,
                 )
 
-    def run(self, until: float | None = None, max_events: int | None = None) -> SimulationResult:
+    def run(
+        self,
+        until: float | None = None,
+        max_events: int | None = None,
+        *,
+        validate_invariants: bool | None = None,
+        checkpoint: bool | None = None,
+    ) -> SimulationResult:
+        if validate_invariants is not None:
+            self._validate_invariants = bool(validate_invariants)
+        if checkpoint is not None:
+            self._checkpointing = bool(checkpoint)
         self.initialize()
         horizon = self.world.config.horizon_days if until is None else until
         if horizon < self.world.time - 1e-12:
@@ -404,6 +467,9 @@ class Simulation:
             if next_time is None or next_time > horizon:
                 break
             event = self.scheduler.pop_next()
+            if event.event_type == "checkpoint" and not self._checkpointing:
+                processed += 1
+                continue
             if event.time < self.world.time:
                 raise AssertionError("scheduler time moved backward")
             self.world.time = event.time
@@ -451,9 +517,14 @@ class Simulation:
 
             advance_patrol_presence_memory(self.world, horizon)
             self.world.time = horizon
-        self.world.assert_invariants()
-        if not self.world.checkpoints or self.world.checkpoints[-1]["time"] != self.world.time:
+        if self._validate_invariants:
+            self.world.assert_invariants()
+        if self._checkpointing and (
+            not self.world.checkpoints or self.world.checkpoints[-1]["time"] != self.world.time
+        ):
             self.world.checkpoint()
+        if not self._retain_output_archives:
+            self.world.clear_particle_archives()
         return SimulationResult(self.world, processed, self.world.time)
 
 
@@ -488,5 +559,6 @@ class SimulationParticle:
         cloned = self.simulation.clone(
             policy_hook=hook,
             stream_namespace=f"particle:{child_lineage}",
+            copy_output_archives=self.simulation._retain_output_archives,
         )
         return type(self)(cloned, child_lineage, self.generation + 1)

@@ -42,15 +42,36 @@ VOLATILE_PROVENANCE_KEYS = frozenset({
 OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "event_log", "event_counts", "contact_event_times",
     "contact_event_localities", "contact_funnel_records",
-      "contact_funnel_counts", "recruitment_total", "behavior_change_total",
-      "action_funnel_counts", "action_funnel_by_actor_locality",
+    "contact_funnel_counts", "recruitment_total", "behavior_change_total",
+    "action_funnel_counts", "action_funnel_by_actor_locality",
     "behavior_change_represented_population",
     "causal_ledger", "synthetic_records", "checkpoints", "state_deltas",
     "stock_transactions", "organization_eligibility_log",
     "organization_onset_log", "observation_index",
     "civilian_harm_events",
+    "stock_ledger_deltas", "stock_ledger_by_class",
+    "stock_ledger_by_boundary", "stock_ledger_by_flow_kind",
+    "stock_ledger_event_ids", "stock_ledger_transaction_count",
     "locality_path_cache", "locality_travel_time_cache", "in_transit_supply_total",
     "active_shipment_ids", "active_movement_order_ids",
+    "execution_profile",
+})
+
+# Particle propagation needs the future-decision state, not the forensic
+# archives accumulated for publication.  Keep this narrower than
+# OUTPUT_ONLY_WORLD_FIELDS: active shipment/movement indexes and route caches
+# are derived execution state that still affect future transitions.
+PARTICLE_ARCHIVE_WORLD_FIELDS = frozenset({
+    "event_log", "event_counts", "contact_event_times",
+    "contact_event_localities", "contact_funnel_records",
+    "contact_funnel_counts", "action_funnel_counts",
+    "action_funnel_by_actor_locality", "recruitment_total",
+    "behavior_change_total", "behavior_change_represented_population",
+    "causal_ledger", "synthetic_records", "checkpoints", "state_deltas",
+    "stock_transactions", "organization_eligibility_log",
+    "organization_onset_log", "state_based_event_times",
+    "state_based_event_localities", "state_based_events",
+    "civilian_harm_events",
 })
 
 OUTPUT_ONLY_SUMMARY_FIELDS = frozenset({

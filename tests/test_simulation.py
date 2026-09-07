@@ -24,6 +24,48 @@ class SimulationTests(unittest.TestCase):
         locality_id = result.world.causal_ledger[0].locality_id
         self.assertTrue(locality_control_change(result.world, locality_id))
 
+    def test_particle_execution_policy_keeps_target_index_without_archives(self):
+        config = small_config(horizon_days=2, output_mode="ensemble")
+        world = generate_pineland(config)
+        locality_id = next(iter(world.localities))
+        world.record_state_based_event(
+            time=1.0,
+            locality_id=locality_id,
+            actor_organization_ids=("insurgent", "government"),
+        )
+        simulation = Simulation(world)
+        simulation.configure_execution(
+            validate_invariants=False,
+            checkpointing=False,
+            retain_output_archives=False,
+        )
+        world = simulation.run().world
+        self.assertFalse(world.checkpoints)
+        self.assertFalse(world.event_log)
+        self.assertFalse(world.stock_transactions)
+        self.assertIn(locality_id, world.state_based_event_localities_by_week[0])
+
+    def test_particle_fork_does_not_deepcopy_output_archives(self):
+        config = small_config(horizon_days=2, output_mode="ensemble")
+        parent = Simulation(generate_pineland(config))
+        parent.configure_execution(
+            validate_invariants=False,
+            checkpointing=False,
+            retain_output_archives=False,
+        )
+        parent.run()
+        particle = __import__("pineland_sim").SimulationParticle(parent)
+        child = particle.fork(0)
+        self.assertFalse(child.world.checkpoints)
+        self.assertFalse(child.world.event_log)
+        self.assertIsNot(child.world.localities, particle.world.localities)
+        self.assertIs(child.world.adjacency, particle.world.adjacency)
+        child.world.localities[next(iter(child.world.localities))].violence += 1.0
+        self.assertNotEqual(
+            child.world.localities[next(iter(child.world.localities))].violence,
+            particle.world.localities[next(iter(particle.world.localities))].violence,
+        )
+
     def test_same_seed_reproduces_trajectory(self):
         first = Simulation(generate_pineland(small_config())).run().world
         second = Simulation(generate_pineland(small_config())).run().world
