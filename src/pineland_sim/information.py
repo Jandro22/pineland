@@ -598,10 +598,13 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
     )
     penalty = world.config.information.contradiction_penalty
     prior = max(.02, prior_confidence)
+    contradiction = belief.contradiction_index
+    estimate = belief.control_estimate
+    confidence = belief.confidence
     for dimension, observed in values.items():
         if dimension not in CONTROL_DIMENSIONS:
             continue
-        old = getattr(belief.control_estimate, dimension)
+        old = getattr(estimate, dimension)
         observed_value = clamp(float(observed))
         # Inline the scalar update in this seven-dimensional hot loop.  The
         # arithmetic and update order are intentionally identical to
@@ -611,16 +614,16 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
             (prior * old + weight * observed_value) / denominator
         )
         contradiction = (
-            belief.contradiction_index * contradiction_decay
+            contradiction * contradiction_decay
             + weight * abs(observed_value - old)
         )
         confidence = clamp(
             denominator / (1.0 + denominator)
             * exp(-penalty * contradiction)
         )
-        setattr(belief.control_estimate, dimension, new)
-        belief.confidence = confidence
-        belief.contradiction_index = contradiction
+        setattr(estimate, dimension, new)
+    belief.confidence = confidence
+    belief.contradiction_index = contradiction
     belief.updated_at = time
     belief.evidence_count += 1
     if weight >= .12:
@@ -753,7 +756,9 @@ def _corroboration_weight(history, timestamp: float, source_id: str,
 
 
 def fuse_observation(world: WorldState, observation: Observation, recipient_id: str,
-                     time: float | None = None, node: bool = False) -> float:
+                     time: float | None = None, node: bool = False,
+                     *, trust_override: float | None = None,
+                     language_override: float | None = None) -> float:
     """Fuse one observation into a recipient's local belief state.
 
     Returns the effective evidence weight used by the estimator.  No world
@@ -764,11 +769,22 @@ def fuse_observation(world: WorldState, observation: Observation, recipient_id: 
     recipient_actor = (recipient_id if recipient_id in world.organizations else
                        world.formations[recipient_id].organization_id
                        if recipient_id in world.formations else observation.observer_actor_id)
-    trust = source_trust(world, recipient_actor, observation.source_type,
-                         observation.locality_id, observation.source_id)
-    language = language_comprehension(
-        world, recipient_actor,
-        observation.locality_id, observation.source_type, observation.source_id,
+    trust = (
+        float(trust_override)
+        if trust_override is not None
+        else source_trust(
+            world, recipient_actor, observation.source_type,
+            observation.locality_id, observation.source_id,
+        )
+    )
+    language = (
+        float(language_override)
+        if language_override is not None
+        else language_comprehension(
+            world, recipient_actor,
+            observation.locality_id, observation.source_type,
+            observation.source_id,
+        )
     )
     age_quality = exp(-observation.decay_rate * max(0.0, time - observation.timestamp))
     # Corroboration counts independent source identities, not repeated
@@ -855,7 +871,9 @@ def _queue_relay(world: WorldState, observation: Observation, time: float) -> In
 
 
 def ingest_observation(world: WorldState, observation: Observation,
-                       time: float | None = None, rng: random.Random | None = None) -> float:
+                       time: float | None = None, rng: random.Random | None = None,
+                       *, local_trust: float | None = None,
+                       local_language: float | None = None) -> float:
     """Deliver an observation locally and enqueue its headquarters relay."""
     time = observation.timestamp if time is None else time
     observation.received_at = time
@@ -865,10 +883,16 @@ def ingest_observation(world: WorldState, observation: Observation,
         # the delayed relay below. This preserves organizational knowledge
         # geography instead of collapsing local and national beliefs.
         local_weight = fuse_observation(
-            world, observation, observation.observer_node_id, time, node=True
+            world, observation, observation.observer_node_id, time, node=True,
+            trust_override=local_trust,
+            language_override=local_language,
         )
     else:
-        local_weight = fuse_observation(world, observation, observation.observer_actor_id, time)
+        local_weight = fuse_observation(
+            world, observation, observation.observer_actor_id, time,
+            trust_override=local_trust,
+            language_override=local_language,
+        )
     _queue_relay(world, observation, time)
     return local_weight
 
@@ -967,7 +991,10 @@ def observe_target(world: WorldState, observer_actor_id: str, observer_node_id: 
         estimated_value=estimated, quality=quality, confidence=confidence,
         provenance=provenance,
     )
-    ingest_observation(world, observation, time, rng)
+    ingest_observation(
+        world, observation, time, rng,
+        local_trust=trust,
+    )
     return observation
 
 
@@ -1018,7 +1045,11 @@ def observe_control(world: WorldState, observer_actor_id: str, observer_node_id:
             }
         ),
     )
-    ingest_observation(world, observation, time, rng)
+    ingest_observation(
+        world, observation, time, rng,
+        local_trust=trust,
+        local_language=language,
+    )
     return observation
 
 
