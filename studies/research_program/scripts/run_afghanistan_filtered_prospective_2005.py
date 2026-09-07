@@ -110,49 +110,129 @@ class ProvinceWeekObservation:
     provinces: tuple[str, ...]
 
 
-@dataclass(frozen=True, slots=True)
-class BernoulliEventObservationModel:
-    """Predeclared event-incidence observation model for filtering."""
+def _jeffreys_branch_probability(active_count: int, branches: int) -> float:
+    """Finite-Monte-Carlo estimate of target-compatible event probability.
 
-    sensitivity: float = 0.80
-    false_positive_rate: float = 0.02
+    The 1/2,1/2 Jeffreys pseudo-counts regularize a finite nested simulation
+    estimate so that a small branch sample never converts numerical absence
+    into a claim of zero physical probability. This is a Monte-Carlo
+    estimator, not a historical source sensitivity/false-positive model.
+    """
+    if branches < 1:
+        raise ValueError("branches must be at least one")
+    if not 0 <= active_count <= branches:
+        raise ValueError("active_count must lie in [0, branches]")
+    return (active_count + 0.5) / (branches + 1.0)
 
-    def __post_init__(self) -> None:
-        if not 0 < self.sensitivity < 1:
-            raise ValueError("sensitivity must be in (0, 1)")
-        if not 0 < self.false_positive_rate < 1:
-            raise ValueError("false_positive_rate must be in (0, 1)")
 
-    def log_probability(
+def _bernoulli_log_probability(
+    probability: float,
+    observed_active: bool,
+) -> float:
+    probability = min(1.0, max(0.0, float(probability)))
+    if not observed_active:
+        probability = 1.0 - probability
+    if probability <= 0.0:
+        return -float("inf")
+    return math.log(probability)
+
+
+def _conditioned_branch_index(
+    branch_active_provinces: list[set[str]],
+    observed_active_provinces: frozenset[str],
+    rng: random.Random,
+) -> tuple[int, int, bool]:
+    """Select the nested descendant most consistent with the observation.
+
+    Exact matching descendants are selected when present. With a finite nested
+    sample, an exact 34-province surface may be absent; in that case the
+    minimum-Hamming descendants form the deterministic approximation set and
+    only tie-breaking is random. The mismatch is returned for diagnostics.
+    """
+    if not branch_active_provinces:
+        raise ValueError("at least one branch is required")
+    mismatches = [
+        len(active.symmetric_difference(observed_active_provinces))
+        for active in branch_active_provinces
+    ]
+    minimum = min(mismatches)
+    candidates = [
+        index for index, mismatch in enumerate(mismatches)
+        if mismatch == minimum
+    ]
+    selected = candidates[rng.randrange(len(candidates))]
+    return selected, minimum, minimum == 0
+
+
+class NestedOperationalPropagator:
+    """Nested predictive likelihood plus observation-conditioned descendant."""
+
+    def __init__(self, *, branches: int, rng: random.Random) -> None:
+        if branches < 1:
+            raise ValueError("likelihood branches must be at least one")
+        self.branches = branches
+        self.rng = rng
+        self.calls = 0
+        self.exact_match_calls = 0
+        self.minimum_mismatch_sum = 0
+        self.maximum_minimum_mismatch = 0
+
+    def __call__(
         self,
-        predicted_active: bool | float,
-        observed_active: bool,
-    ) -> float:
-        if isinstance(predicted_active, bool):
-            latent_probability = 1.0 if predicted_active else 0.0
-        else:
-            latent_probability = min(1.0, max(0.0, float(predicted_active)))
-        return self.log_probability_from_latent_probability(
-            latent_probability,
-            observed_active,
+        state: SimulationParticle,
+        time: float,
+        observation: ProvinceWeekObservation,
+    ) -> tuple[SimulationParticle, float]:
+        branch_states: list[SimulationParticle] = []
+        branch_active: list[set[str]] = []
+        active_counts = {province: 0 for province in observation.provinces}
+        for branch_index in range(self.branches):
+            branch = state.fork(branch_index)
+            branch.advance_to(time)
+            active = _active_provinces(branch, observation)
+            branch_states.append(branch)
+            branch_active.append(active)
+            for province in active:
+                if province in active_counts:
+                    active_counts[province] += 1
+
+        log_likelihood = 0.0
+        for province in observation.provinces:
+            probability = _jeffreys_branch_probability(
+                active_counts[province], self.branches
+            )
+            log_likelihood += _bernoulli_log_probability(
+                probability,
+                province in observation.active_provinces,
+            )
+
+        selected, minimum_mismatch, exact = _conditioned_branch_index(
+            branch_active,
+            observation.active_provinces,
+            self.rng,
         )
+        self.calls += 1
+        self.exact_match_calls += int(exact)
+        self.minimum_mismatch_sum += minimum_mismatch
+        self.maximum_minimum_mismatch = max(
+            self.maximum_minimum_mismatch, minimum_mismatch
+        )
+        return branch_states[selected], log_likelihood
 
-    def observed_probability(self, latent_probability: float) -> float:
-        """Apply the declared measurement operator to latent incidence."""
-        latent_probability = min(1.0, max(0.0, float(latent_probability)))
-        return self.false_positive_rate + (
-            self.sensitivity - self.false_positive_rate
-        ) * latent_probability
-
-    def log_probability_from_latent_probability(
-        self,
-        latent_probability: float,
-        observed_active: bool,
-    ) -> float:
-        probability = self.observed_probability(latent_probability)
-        if not observed_active:
-            probability = 1.0 - probability
-        return math.log(probability)
+    def diagnostics(self) -> dict[str, float | int]:
+        return {
+            "nested_propagation_calls": self.calls,
+            "exact_descendant_match_calls": self.exact_match_calls,
+            "exact_descendant_match_fraction": (
+                self.exact_match_calls / self.calls if self.calls else 0.0
+            ),
+            "mean_minimum_descendant_hamming_mismatch": (
+                self.minimum_mismatch_sum / self.calls if self.calls else 0.0
+            ),
+            "maximum_minimum_descendant_hamming_mismatch": (
+                self.maximum_minimum_mismatch
+            ),
+        }
 
 
 def _load_case() -> dict:
@@ -307,61 +387,12 @@ def _active_provinces(
     }
 
 
-def make_log_likelihood(
-    observation_model: BernoulliEventObservationModel,
-):
-    def log_likelihood(
-        state: SimulationParticle,
-        observation: ProvinceWeekObservation,
-    ) -> float:
-        predicted = _active_provinces(state, observation)
-        return sum(
-            observation_model.log_probability(
-                province in predicted,
-                province in observation.active_provinces,
-            )
-            for province in observation.provinces
-        )
-
-    return log_likelihood
-
-
 def make_nested_propagator(
-    observation_model: BernoulliEventObservationModel,
     *,
     branches: int,
     rng: random.Random,
 ):
-    """Estimate P(observation | latent state) with short nested continuations."""
-    if branches < 1:
-        raise ValueError("likelihood branches must be at least one")
-
-    def propagate_and_score(
-        state: SimulationParticle,
-        time: float,
-        observation: ProvinceWeekObservation,
-    ) -> tuple[SimulationParticle, float]:
-        branch_states = []
-        active_counts = {province: 0 for province in observation.provinces}
-        for branch_index in range(branches):
-            branch = state.fork(branch_index)
-            branch.advance_to(time)
-            branch_states.append(branch)
-            for province in _active_provinces(branch, observation):
-                if province in active_counts:
-                    active_counts[province] += 1
-        log_likelihood = 0.0
-        for province in observation.provinces:
-            latent_probability = active_counts[province] / branches
-            log_likelihood += observation_model.log_probability_from_latent_probability(
-                latent_probability,
-                province in observation.active_provinces,
-            )
-        # Keep one realized branch as the particle's continuing aleatory path;
-        # the likelihood itself is based on all short continuations.
-        return branch_states[rng.randrange(branches)], log_likelihood
-
-    return propagate_and_score
+    return NestedOperationalPropagator(branches=branches, rng=rng)
 
 
 def run_training_filter(
@@ -369,18 +400,16 @@ def run_training_filter(
     observations: Iterable[ProvinceWeekObservation],
     *,
     filter_seed: int,
-    observation_model: BernoulliEventObservationModel | None = None,
     ess_fraction: float = 0.5,
     likelihood_branches: int = 3,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
-    model = observation_model or BernoulliEventObservationModel()
+    propagator = make_nested_propagator(
+        branches=likelihood_branches,
+        rng=random.Random(filter_seed + 7919),
+    )
     filter_ = SequentialParticleFilter(
         particles,
-        propagate_and_score=make_nested_propagator(
-            model,
-            branches=likelihood_branches,
-            rng=random.Random(filter_seed + 7919),
-        ),
+        propagate_and_score=propagator,
         rng=random.Random(filter_seed),
         ess_fraction=ess_fraction,
         allowed_split="training",
@@ -396,6 +425,7 @@ def run_training_filter(
             )
         )
     filter_.freeze()
+    filter_.nested_propagator_diagnostics = propagator.diagnostics()
     return filter_
 
 
@@ -426,13 +456,11 @@ def forecast_weighted_field(
     *,
     start_day: float = FORECAST_START_DAY,
     end_day: float = FORECAST_END_DAY,
-    observation_model: BernoulliEventObservationModel | None = None,
     forecast_branches: int = 3,
 ) -> dict[str, object]:
-    """Freeze the posterior and return latent and observed incidence fields."""
+    """Freeze the posterior and return target-compatible event probabilities."""
     if forecast_branches < 1:
         raise ValueError("forecast branches must be at least one")
-    model = observation_model or BernoulliEventObservationModel()
     filter_.freeze()
     weights = particle_weights(filter_.particles)
     provinces = sorted({
@@ -475,11 +503,6 @@ def forecast_weighted_field(
                     latent_probability.get(cell, 0.0)
                     + weight / forecast_branches
                 )
-    observed_probability = {
-        cell: model.observed_probability(probability)
-        for cell, probability in latent_probability.items()
-    }
-
     def field_rows(values: dict[tuple[str, int], float]) -> list[dict[str, object]]:
         return [
             {
@@ -492,11 +515,9 @@ def forecast_weighted_field(
 
     return {
         "posterior_weights": weights,
-        # The primary predictive estimand is observed province-week incidence;
-        # latent mechanistic incidence remains available for explanation.
-        "probability_field": field_rows(observed_probability),
-        "latent_probability_field": field_rows(latent_probability),
-        "observed_probability_field": field_rows(observed_probability),
+        "probability_field": field_rows(latent_probability),
+        "mechanistic_event_probability_field": field_rows(latent_probability),
+        "target_probability_field": field_rows(latent_probability),
         "member_active_cells": member_cells,
         "forecast_branch_cells": forecast_branch_cells,
         "forecast_branches": forecast_branches,
@@ -543,18 +564,15 @@ def run(
         )
         for index in range(particles)
     ]
-    observation_model = BernoulliEventObservationModel()
     filter_ = run_training_filter(
         initial_particles,
         observations,
         filter_seed=seed + 17_003,
-        observation_model=observation_model,
         likelihood_branches=likelihood_branches,
     )
     posterior_boundary = max(observation.end_day for observation in observations)
     forecast = forecast_weighted_field(
         filter_,
-        observation_model=observation_model,
         forecast_branches=forecast_branches,
     )
     filter_diagnostics = [asdict(item) for item in filter_.history]
@@ -613,28 +631,42 @@ def run(
         # CSV.  The explicit ``used`` field removes that ambiguity.
         "holdout_outcomes_read": False,
         "holdout_outcomes_used": False,
-        "observation_model": asdict(observation_model),
+        "quantitative_measurement_operator_applied": False,
+        "measurement_operator_status": (
+            "not quantitatively identified; no sensitivity or false-positive "
+            "transform is applied in this benchmark"
+        ),
+        "assimilation_probability_estimator": (
+            "Jeffreys-regularized nested Monte-Carlo probability of the "
+            "target-compatible event surface"
+        ),
         "competitor_information_contract": COMPETITOR_INFORMATION_CONTRACT,
         "likelihood_branches": likelihood_branches,
         "forecast_branches": forecast_branches,
         "filter_updates": filter_diagnostics,
+        "nested_propagator_diagnostics": getattr(
+            filter_, "nested_propagator_diagnostics", {}
+        ),
         "smc_diagnostics": smc_diagnostics,
         "posterior_probability_field": forecast["probability_field"],
-        "posterior_latent_probability_field": forecast["latent_probability_field"],
-        "posterior_observed_probability_field": forecast["observed_probability_field"],
+        "posterior_mechanistic_event_probability_field": forecast[
+            "mechanistic_event_probability_field"
+        ],
+        "posterior_target_probability_field": forecast["target_probability_field"],
         "posterior_weights": forecast["posterior_weights"],
         "member_active_cells": forecast["member_active_cells"],
         "forecast_branch_cells": forecast["forecast_branch_cells"],
         "posterior_frozen": filter_.frozen,
-        "predictive_estimand": "observed_province_week_conflict_incidence",
-        "latent_estimand": "latent_Taliban_state_security_event_incidence",
+        "predictive_estimand": "target_compatible_province_week_event_incidence",
+        "mechanistic_estimand": "Taliban_state_security_event_incidence",
         "actor_existence_conditioning": (
             "conditional spatial conflict forecast given Taliban identity persistence"
         ),
         "probability_field_definition": (
-            "posterior predictive probability of an observed province-week "
-            "Taliban-state-security conflict event for every surface cell; "
-            "latent mechanistic incidence is reported separately"
+            "posterior predictive probability of a target-compatible "
+            "province-week Taliban-state-security event for every surface "
+            "cell; no unlicensed quantitative historical measurement "
+            "operator is applied"
         ),
         "posterior_particle_summaries": [
             particle.state.world.summary() for particle in filter_.particles

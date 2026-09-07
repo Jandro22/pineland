@@ -13,10 +13,10 @@ observation labeled outside its declared split before advancing any particle.
 The Afghanistan development runner is
 `studies/research_program/scripts/run_afghanistan_filtered_prospective_2005.py`.
 It uses complete 2004 province-week cells, freezes the posterior at the
-training boundary, and emits both a latent mechanistic field and the primary
-observed province-week predictive field. The latter applies the declared
-Bernoulli observation operator, including its false-positive floor, on the
-complete province-week surface.
+training boundary, and emits the posterior predictive probability of the
+target-compatible Taliban-state-security event surface. No quantitative
+historical source sensitivity or false-positive transform is applied because
+the repository's measurement-identification audit does not license one.
 It is separate from the consumed frozen-core 2005 scorer.
 The command-line default is 128 posterior particles; smaller counts remain
 available for bounded smoke tests through the --particles option.
@@ -31,8 +31,14 @@ mapping separates a spatial sponsor-links access relation from political or
 resource sponsor-dependence.
 
 Training assimilation uses short nested continuations from each latent state
-to estimate P(observation | state) before applying the measurement operator.
-This keeps aleatory event draws separate from epistemic state weights. The
+to estimate the target-compatible province-week event probabilities directly.
+Finite nested Monte Carlo is regularized only with Jeffreys 1/2,1/2
+pseudo-counts; these are numerical probability-estimation pseudo-counts, not
+historical measurement-error parameters. The continuing descendant is selected
+from exact-matching nested branches when available and otherwise from the
+minimum-Hamming approximation set, with approximation quality reported. This
+keeps aleatory event draws separate from epistemic state weights while also
+conditioning the propagated latent state on the training observation. The
 filter raises a hard support-exhaustion diagnostic instead of silently
 uniformizing an impossible posterior, and reports ESS plus distinct root
 ancestors, lineage entropy, resampling count, and maximum ancestry
