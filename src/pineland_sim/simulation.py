@@ -100,7 +100,7 @@ class Simulation:
             self.world.execution_backend = execution_backend
             if execution_backend == "optimized":
                 self.world.rebuild_runtime_entity_indexes()
-                self.world.rebuild_compact_control_state()
+                self.world.rebuild_compact_information_state()
         if validate_invariants is not None:
             self._validate_invariants = bool(validate_invariants)
         if checkpointing is not None:
@@ -115,7 +115,7 @@ class Simulation:
                 self.world.rebuild_runtime_entity_indexes()
                 if execution_backend is None:
                     self.world.execution_backend = "optimized"
-                    self.world.rebuild_compact_control_state()
+                    self.world.rebuild_compact_information_state()
             self.world.execution_profile = (
                 "particle" if not self._retain_output_archives else "standard"
             )

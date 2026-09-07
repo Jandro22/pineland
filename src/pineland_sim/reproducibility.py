@@ -77,7 +77,8 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "information_cache_active",
     "community_selection_cache", "community_selection_cache_dirty",
     "execution_profile", "execution_backend", "performance_counters",
-    "compact_control_state",
+    "compact_control_state", "compact_presence_state",
+    "compact_node_presence_state", "compact_zone_state",
     "engagements", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
 })

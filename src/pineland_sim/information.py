@@ -60,6 +60,9 @@ def initialize_information_world(world: WorldState) -> None:
     # Any existing numeric control store describes the beliefs being replaced;
     # invalidate it before rebuilding the run-local priors below.
     world.compact_control_state = None
+    world.compact_presence_state = None
+    world.compact_node_presence_state = None
+    world.compact_zone_state = None
     world.observations.clear()
     world.next_observation_sequence = 1
     world.observation_index.clear()
@@ -108,7 +111,7 @@ def initialize_information_world(world: WorldState) -> None:
                 )
                 world.control_beliefs[(observer_id, target_id, locality_id)] = belief
     if world.execution_backend == "optimized":
-        world.rebuild_compact_control_state()
+        world.rebuild_compact_information_state()
 
 
 def _logit(probability: float) -> float:
@@ -796,21 +799,35 @@ def _apply_control_auxiliary(
                       if recipient_id in world.formations else recipient_id)
         zone_belief = world.zone_beliefs.get((zone_actor, observation.microzone_id))
         if zone_belief is not None:
-            old_zone = zone_belief.physical_control_estimate
-            prior_zone = max(.02, zone_belief.confidence)
-            zone_value, zone_confidence, zone_contradiction = _fuse_scalar(
-                old_zone, prior_zone, clamp(float(values["physical"])), weight,
-                _decayed_contradiction(world, zone_belief.contradiction_index,
-                                       zone_belief.updated_at, time),
-                world.config.information.contradiction_penalty,
-            )
-            zone_belief.physical_control_estimate = zone_value
-            zone_belief.confidence = zone_confidence
-            zone_belief.contradiction_index = zone_contradiction
-            zone_belief.updated_at = time
-            zone_belief.evidence_count += 1
-            if weight >= .12:
-                zone_belief.last_reliable_observation_at = time
+            zone_key = (zone_actor, observation.microzone_id)
+            compact_zone = getattr(world, "compact_zone_state", None)
+            if world.execution_backend == "optimized" and compact_zone is not None:
+                compact_zone.ensure(zone_key, zone_belief)
+                compact_zone.fuse(
+                    zone_key,
+                    clamp(float(values["physical"])),
+                    float(time),
+                    float(weight),
+                    world.config.information.contradiction_memory_days,
+                    world.config.information.contradiction_penalty,
+                )
+                compact_zone.write_to_belief(zone_key, zone_belief)
+            else:
+                old_zone = zone_belief.physical_control_estimate
+                prior_zone = max(.02, zone_belief.confidence)
+                zone_value, zone_confidence, zone_contradiction = _fuse_scalar(
+                    old_zone, prior_zone, clamp(float(values["physical"])), weight,
+                    _decayed_contradiction(world, zone_belief.contradiction_index,
+                                           zone_belief.updated_at, time),
+                    world.config.information.contradiction_penalty,
+                )
+                zone_belief.physical_control_estimate = zone_value
+                zone_belief.confidence = zone_confidence
+                zone_belief.contradiction_index = zone_contradiction
+                zone_belief.updated_at = time
+                zone_belief.evidence_count += 1
+                if weight >= .12:
+                    zone_belief.last_reliable_observation_at = time
     # Existing beliefs remain the backward-compatible perceived state used by
     # the Phase 3 movement policy when the observed actor is the observer's side.
     if (_is_insurgent_actor(world, target_actor_id) and _is_insurgent_actor(world, recipient_id)) or \
@@ -1163,6 +1180,13 @@ def _ensure_presence_belief(world: WorldState, observer_id: str, target_actor_id
                                 0.0, world.config.information.prior_confidence, 0.0,
                                 target_id=target_id, microzone_id=microzone_id)
         container[key] = belief
+    compact = getattr(
+        world,
+        "compact_node_presence_state" if node else "compact_presence_state",
+        None,
+    )
+    if world.execution_backend == "optimized" and compact is not None:
+        compact.ensure(key, belief)
     return belief
 
 
@@ -1196,21 +1220,42 @@ def _fuse_presence(world: WorldState, observation: Observation, recipient_id: st
             world, recipient_id, target_actor_id, observation.locality_id,
             key_target, observation.microzone_id, node,
         )
-        new, confidence, contradiction = _fuse_scalar(
-            belief.presence_estimate, belief.confidence, presence, weight,
-            _decayed_contradiction(world, belief.contradiction_index, belief.updated_at, time),
-            world.config.information.contradiction_penalty,
+        compact = getattr(
+            world,
+            "compact_node_presence_state" if node else "compact_presence_state",
+            None,
         )
-        belief.presence_estimate = new
-        belief.personnel_estimate = ((belief.personnel_estimate * max(.02, belief.confidence) +
-                                      personnel * weight) /
-                                     (max(.02, belief.confidence) + weight))
-        belief.confidence = confidence
-        belief.contradiction_index = contradiction
-        belief.updated_at = time
-        belief.evidence_count += 1
-        if weight >= .12:
-            belief.last_reliable_observation_at = time
+        belief_key = _presence_key(
+            recipient_id, target_actor_id, observation.locality_id,
+            key_target, observation.microzone_id,
+        )
+        if world.execution_backend == "optimized" and compact is not None:
+            compact.fuse(
+                belief_key,
+                presence,
+                personnel,
+                float(time),
+                float(weight),
+                world.config.information.contradiction_memory_days,
+                world.config.information.contradiction_penalty,
+            )
+            compact.write_to_belief(belief_key, belief)
+        else:
+            new, confidence, contradiction = _fuse_scalar(
+                belief.presence_estimate, belief.confidence, presence, weight,
+                _decayed_contradiction(world, belief.contradiction_index, belief.updated_at, time),
+                world.config.information.contradiction_penalty,
+            )
+            belief.presence_estimate = new
+            belief.personnel_estimate = ((belief.personnel_estimate * max(.02, belief.confidence) +
+                                          personnel * weight) /
+                                         (max(.02, belief.confidence) + weight))
+            belief.confidence = confidence
+            belief.contradiction_index = contradiction
+            belief.updated_at = time
+            belief.evidence_count += 1
+            if weight >= .12:
+                belief.last_reliable_observation_at = time
     # Violence/repression is a separate actor-local belief.  It is updated
     # from the same reported observation operator but is never read from the
     # realized locality state by decision code.
@@ -1877,14 +1922,33 @@ def decay_information(world: WorldState, time: float) -> None:
     else:
         for belief in getattr(world, "control_beliefs", {}).values():
             belief.confidence = clamp(belief.confidence * default_factor)
-    for belief in world.zone_beliefs.values():
-        belief.confidence = clamp(belief.confidence * formation_factor)
-    for belief in world.presence_beliefs.values():
-        factor = formation_factor if belief.target_id else default_factor
-        belief.confidence = clamp(belief.confidence * factor)
-    for belief in world.node_presence_beliefs.values():
-        factor = formation_factor if belief.target_id else default_factor
-        belief.confidence = clamp(belief.confidence * factor)
+    compact_zone = getattr(world, "compact_zone_state", None)
+    if world.execution_backend == "optimized" and compact_zone is not None:
+        compact_zone.decay(elapsed, config.formation_decay_rate)
+        compact_zone.sync_confidence_to_beliefs(world.zone_beliefs)
+    else:
+        for belief in world.zone_beliefs.values():
+            belief.confidence = clamp(belief.confidence * formation_factor)
+    compact_presence = getattr(world, "compact_presence_state", None)
+    if world.execution_backend == "optimized" and compact_presence is not None:
+        compact_presence.decay(
+            elapsed, config.default_decay_rate, config.formation_decay_rate
+        )
+        compact_presence.sync_confidence_to_beliefs(world.presence_beliefs)
+    else:
+        for belief in world.presence_beliefs.values():
+            factor = formation_factor if belief.target_id else default_factor
+            belief.confidence = clamp(belief.confidence * factor)
+    compact_node_presence = getattr(world, "compact_node_presence_state", None)
+    if world.execution_backend == "optimized" and compact_node_presence is not None:
+        compact_node_presence.decay(
+            elapsed, config.default_decay_rate, config.formation_decay_rate
+        )
+        compact_node_presence.sync_confidence_to_beliefs(world.node_presence_beliefs)
+    else:
+        for belief in world.node_presence_beliefs.values():
+            factor = formation_factor if belief.target_id else default_factor
+            belief.confidence = clamp(belief.confidence * factor)
     world.last_information_decay_at = time
 
 

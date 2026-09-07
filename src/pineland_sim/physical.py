@@ -161,6 +161,7 @@ def generate_physical_world(world: WorldState) -> None:
     world.security_post_ids_by_locality.clear()
     world.patrols.clear()
     world.zone_beliefs.clear()
+    world.compact_zone_state = None
 
     role_names = ("Civic Core", "Market", "Residential", "Transit", "Industrial",
                   "Institutional", "Perimeter", "Outer Settlement")
@@ -296,6 +297,9 @@ def ensure_zone_belief(world: WorldState, actor_id: str, microzone_id: str,
     if belief is None:
         belief = ActorZoneBelief(actor_id, microzone_id, .5, .35, float(time))
         world.zone_beliefs[key] = belief
+    compact = getattr(world, "compact_zone_state", None)
+    if world.execution_backend == "optimized" and compact is not None:
+        compact.ensure(key, belief)
     return belief
 
 

@@ -5,7 +5,9 @@ import pytest
 from pineland_sim import Simulation, SimulationConfig, generate_pineland
 from pineland_sim.compact_information_state import (
     CONTROL_STATE_STRIDE,
+    CompactPresenceBeliefState,
     CompactControlBeliefState,
+    CompactZoneBeliefState,
 )
 from pineland_sim.entities import ActorBelief, ControlVector, Observation
 from pineland_sim.information import fuse_observation
@@ -89,6 +91,73 @@ def test_compact_store_can_append_a_new_target_without_reindexing_existing_rows(
     compact.ensure(second, belief)
     assert compact.index(first) == first_index
     assert len(compact.state) == 2 * CONTROL_STATE_STRIDE
+
+
+def test_optimized_presence_and_zone_rows_match_the_object_oracle_exactly():
+    config = SimulationConfig(
+        agent_count=40, locality_count=17, horizon_days=1, seed=2303
+    )
+    reference = generate_pineland(config)
+    optimized = reference.clone()
+    Simulation(optimized).configure_execution(execution_backend="optimized")
+
+    locality_id = next(iter(reference.localities))
+    microzone_id = next(
+        zone.microzone_id for zone in reference.microzones.values()
+        if zone.locality_id == locality_id
+    )
+    observation = Observation(
+        observation_id="compact-presence-test",
+        target_id="insurgent",
+        locality_id=locality_id,
+        timestamp=0.0,
+        source_id="test-source",
+        source_type="patrol",
+        observation_type="presence",
+        estimated_value={
+            "presence": 0.8,
+            "personnel": 17.0,
+            "control": {"physical": 0.65},
+        },
+        confidence=0.7,
+        provenance={},
+        observer_actor_id="fdf",
+        target_actor_id="insurgent",
+        microzone_id=microzone_id,
+    )
+    for world in (reference, optimized):
+        fuse_observation(
+            world, observation, "fdf", 1.0,
+            trust_override=1.0, language_override=1.0,
+        )
+
+    assert decision_state_sha256(reference) == decision_state_sha256(optimized)
+    assert optimized.compact_presence_state.equivalent_to_beliefs(
+        optimized.presence_beliefs
+    )
+    assert optimized.compact_node_presence_state.equivalent_to_beliefs(
+        optimized.node_presence_beliefs
+    )
+    assert optimized.compact_zone_state.equivalent_to_beliefs(
+        optimized.zone_beliefs
+    )
+    assert CompactPresenceBeliefState.from_beliefs(
+        dict(reversed(tuple(optimized.presence_beliefs.items())))
+    ).state_sha256() == optimized.compact_presence_state.state_sha256()
+    assert CompactZoneBeliefState.from_beliefs(
+        dict(reversed(tuple(optimized.zone_beliefs.items())))
+    ).state_sha256() == optimized.compact_zone_state.state_sha256()
+
+
+def test_compact_information_rows_are_independent_across_particle_clones():
+    optimized = generate_pineland(
+        SimulationConfig(agent_count=40, locality_count=17, seed=2304)
+    )
+    Simulation(optimized).configure_execution(execution_backend="optimized")
+    clone = optimized.clone()
+    key = next(iter(optimized.compact_zone_state.keys))
+    clone.compact_zone_state.state[0] += 0.1
+    assert clone.compact_zone_state.row(key) != optimized.compact_zone_state.row(key)
 
 
 @pytest.mark.skipif(not native_available(), reason="native kernel is optional")

@@ -324,6 +324,11 @@ class WorldState:
     # optimized information backend. It is an execution representation of
     # ``control_beliefs`` and is excluded from scientific hashes.
     compact_control_state: Any = None
+    # Persistent numeric presence/zone rows used by the optimized information
+    # backend. The object dictionaries remain the scientific/API views.
+    compact_presence_state: Any = None
+    compact_node_presence_state: Any = None
+    compact_zone_state: Any = None
     # Optional profiling counters. None on normal execution so hot paths pay
     # only a single identity check when instrumentation is explicitly enabled.
     performance_counters: dict[str, int] | None = None
@@ -444,13 +449,30 @@ class WorldState:
             patrol_ids.sort()
         self.refresh_operational_indexes()
 
-    def rebuild_compact_control_state(self) -> None:
-        """Build optimized control-belief arrays from the oracle objects."""
-        from .compact_information_state import CompactControlBeliefState
+    def rebuild_compact_information_state(self) -> None:
+        """Build all optimized information rows from the oracle objects."""
+        from .compact_information_state import (
+            CompactControlBeliefState,
+            CompactPresenceBeliefState,
+            CompactZoneBeliefState,
+        )
 
         self.compact_control_state = CompactControlBeliefState.from_beliefs(
             self.control_beliefs
         )
+        self.compact_presence_state = CompactPresenceBeliefState.from_beliefs(
+            self.presence_beliefs
+        )
+        self.compact_node_presence_state = CompactPresenceBeliefState.from_beliefs(
+            self.node_presence_beliefs
+        )
+        self.compact_zone_state = CompactZoneBeliefState.from_beliefs(
+            self.zone_beliefs
+        )
+
+    def rebuild_compact_control_state(self) -> None:
+        """Backward-compatible alias that rebuilds the information rows."""
+        self.rebuild_compact_information_state()
 
     def refresh_operational_indexes(self) -> None:
         """Refresh small derived indexes for active actors and local capacity.
@@ -1932,6 +1954,11 @@ class WorldState:
                     key: copy.copy(belief)
                     for key, belief in value.items()
                 }
+            elif item.name in {
+                "compact_control_state", "compact_presence_state",
+                "compact_node_presence_state", "compact_zone_state",
+            }:
+                value = value.clone() if value is not None else None
             elif item.name == "observations":
                 # Observation payload/provenance dictionaries are immutable
                 # after construction. Only the wrapper's received_at field

@@ -11,7 +11,11 @@ from .entities import AgreementProvision, Negotiation, PeaceAgreement, PeaceTran
 from .entities import StateBasedEvent
 from .generator import generate_pineland
 from .simulation import Simulation, SimulationParticle, SimulationResult
-from .compact_information_state import CompactControlBeliefState
+from .compact_information_state import (
+    CompactControlBeliefState,
+    CompactPresenceBeliefState,
+    CompactZoneBeliefState,
+)
 from .state_estimation import (
     AssimilationObservation,
     FilterUpdateDiagnostics,
@@ -45,7 +49,8 @@ __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "Exter
            "StateBasedEvent",
            "Simulation", "SimulationConfig",
            "SimulationParticle", "SimulationResult", "generate_pineland",
-           "CompactControlBeliefState"]
+           "CompactControlBeliefState", "CompactPresenceBeliefState",
+           "CompactZoneBeliefState"]
 __all__ += [
     "AssimilationObservation", "FilterUpdateDiagnostics", "Particle",
     "PersistentParticlePool",
