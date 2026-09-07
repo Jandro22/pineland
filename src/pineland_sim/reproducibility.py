@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections import deque
 from collections.abc import Mapping
+from array import array
 from dataclasses import asdict, fields, is_dataclass
 from enum import Enum
 import hashlib
@@ -131,6 +132,11 @@ def _normalized(value: Any) -> Any:
             item.name: _normalized(getattr(value, item.name))
             for item in fields(value)
         }
+    if isinstance(value, array):
+        return {
+            "__array_typecode__": value.typecode,
+            "values": [_normalized(item) for item in value],
+        }
     if isinstance(value, Enum):
         return _normalized(value.value)
     if isinstance(value, Path):
@@ -157,6 +163,22 @@ def _normalized(value: Any) -> Any:
         return value
     if hasattr(value, "__dict__"):
         return _normalized(vars(value))
+    # Compact execution objects intentionally use ``__slots__`` to avoid a
+    # per-instance dictionary.  Falling through to repr() would put a process
+    # memory address into the scientific decision hash, making an otherwise
+    # identical native/fallback run appear non-deterministic.
+    slots = getattr(type(value), "__slots__", ())
+    if isinstance(slots, str):
+        slots = (slots,)
+    if slots:
+        return {
+            "__type__": f"{type(value).__module__}.{type(value).__qualname__}",
+            "__slots__": {
+                slot: _normalized(getattr(value, slot))
+                for slot in slots
+                if hasattr(value, slot)
+            },
+        }
     return repr(value)
 
 

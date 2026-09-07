@@ -1406,6 +1406,49 @@ def guided_log_weights(
     ]
 
 
+@dataclass(frozen=True, slots=True)
+class GuidedProposalPropagator(Generic[StateT, ObservationT]):
+    """Turn an observation-guided proposal into an SMC weight increment.
+
+    ``propose`` may use the current observation to construct a new state.  The
+    two density callbacks then supply the transition density ``p`` and the
+    proposal density ``q`` for that realized state.  The returned score is
+    exactly ``log p + log likelihood - log q``; prior particle mass remains in
+    the filter and is not double-counted here.
+    """
+
+    propose: Callable[[StateT, float, ObservationT], StateT]
+    log_transition_density: Callable[
+        [StateT, StateT, float, ObservationT], float
+    ]
+    log_proposal_density: Callable[
+        [StateT, StateT, float, ObservationT], float
+    ]
+    log_likelihood: Callable[[StateT, ObservationT], float]
+
+    def __call__(
+        self,
+        state: StateT,
+        time: float,
+        observation: ObservationT,
+    ) -> tuple[StateT, float]:
+        proposed = self.propose(state, float(time), observation)
+        return proposed, guided_importance_log_weight(
+            self.log_transition_density(
+                state, proposed, float(time), observation
+            ),
+            self.log_likelihood(proposed, observation),
+            self.log_proposal_density(
+                state, proposed, float(time), observation
+            ),
+        )
+
+
+# A descriptive alias for call sites that model proposals as transition
+# kernels rather than propagators.
+GuidedSMCPropagator = GuidedProposalPropagator
+
+
 def monte_carlo_standard_error(
     values: Sequence[float],
     *,

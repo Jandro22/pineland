@@ -50,8 +50,13 @@ from pineland_sim import (  # noqa: E402
     generate_pineland,
 )
 from pineland_sim.state_estimation import (  # noqa: E402
+    binary_mcse,
+    GuidedProposalPropagator,
+    monte_carlo_standard_error,
+    RaoBlackwellizedActivityLikelihood,
     particle_weights,
 )
+from pineland_sim.experimental_methods import ExperimentalMethodGate  # noqa: E402
 from pineland_sim.reproducibility import (  # noqa: E402
     decision_state_sha256,
     file_sha256,
@@ -311,6 +316,77 @@ class NestedOperationalPropagator:
             "maximum_minimum_descendant_hamming_mismatch": (
                 self.maximum_minimum_mismatch
             ),
+        }
+
+
+class RaoBlackwellizedOperationalPropagator:
+    """One-trajectory operational propagator using the action-hazard ledger.
+
+    Organized-action opportunities already expose their integrated hazard in
+    the latent world.  This propagator scores the complete province-week
+    surface from those hazards instead of simulating a fixed collection of
+    descendant branches and selecting one by Hamming distance.  It is an
+    explicitly opt-in research method; the historical runner keeps the nested
+    branch contract unless a caller supplies a validated method gate.
+    """
+
+    def __init__(
+        self,
+        *,
+        likelihood: RaoBlackwellizedActivityLikelihood | None = None,
+        channels: tuple[str, ...] = ("organized_action",),
+    ) -> None:
+        self.likelihood = likelihood or RaoBlackwellizedActivityLikelihood()
+        self.channels = tuple(str(channel) for channel in channels)
+        self.calls = 0
+        self.hazard_opportunities = 0
+
+    def _hazards_by_province(
+        self,
+        state: SimulationParticle,
+        observation: ProvinceWeekObservation,
+    ) -> dict[str, tuple[float, ...]]:
+        hazards: dict[str, list[float]] = {
+            province: [] for province in observation.provinces
+        }
+        for (week, locality_id, channel), integrated_hazard in sorted(
+            state.world.activity_hazard_ledger.items()
+        ):
+            if int(week) != int(observation.week_index):
+                continue
+            if self.channels and str(channel) not in self.channels:
+                continue
+            province = _province_for_locality(state.world, locality_id)
+            if province in hazards and float(integrated_hazard) > 0.0:
+                hazards[province].append(float(integrated_hazard))
+                self.hazard_opportunities += 1
+        return {province: tuple(values) for province, values in hazards.items()}
+
+    def __call__(
+        self,
+        state: SimulationParticle,
+        time: float,
+        observation: ProvinceWeekObservation,
+    ) -> tuple[SimulationParticle, float]:
+        state.advance_to(time)
+        hazards = self._hazards_by_province(state, observation)
+        observed = {
+            province: province in observation.active_provinces
+            for province in observation.provinces
+        }
+        score = self.likelihood.score(observed, hazards)
+        self.calls += 1
+        return state, float(score)
+
+    def diagnostics(self) -> dict[str, float | int]:
+        return {
+            "rao_blackwellized_calls": self.calls,
+            "hazard_opportunities": self.hazard_opportunities,
+            "nested_propagation_calls": 0,
+            "exact_descendant_match_calls": 0,
+            "exact_descendant_match_fraction": 0.0,
+            "mean_minimum_descendant_hamming_mismatch": 0.0,
+            "maximum_minimum_descendant_hamming_mismatch": 0,
         }
 
 
@@ -796,6 +872,10 @@ def _forecast_cache_key(
     end_day: float,
     forecast_branches: int,
     particle_metadata: list[dict[str, object]] | None = None,
+    mcse_tolerance: float | None = None,
+    min_forecast_trajectories: int = 32,
+    max_forecast_trajectories: int | None = None,
+    forecast_seed: int | None = None,
 ) -> dict[str, object]:
     """Bind forecast reuse to the exact frozen posterior and forecast contract."""
     if particle_metadata is None:
@@ -823,6 +903,15 @@ def _forecast_cache_key(
         "forecast_start_day": float(start_day),
         "forecast_end_day": float(end_day),
         "forecast_branches": int(forecast_branches),
+        "forecast_mcse_tolerance": (
+            None if mcse_tolerance is None else float(mcse_tolerance)
+        ),
+        "min_forecast_trajectories": int(min_forecast_trajectories),
+        "max_forecast_trajectories": (
+            None if max_forecast_trajectories is None
+            else int(max_forecast_trajectories)
+        ),
+        "forecast_seed": None if forecast_seed is None else int(forecast_seed),
         "python_cache_tag": sys.implementation.cache_tag,
     }
 
@@ -945,7 +1034,12 @@ def load_training_observations(
     return observations
 
 
-def _config(seed: int, horizon: float) -> SimulationConfig:
+def _config(
+    seed: int,
+    horizon: float,
+    *,
+    execution_backend: str = "optimized",
+) -> SimulationConfig:
     config = SimulationConfig(
         seed=seed,
         initialization_seed=20040101,
@@ -954,6 +1048,8 @@ def _config(seed: int, horizon: float) -> SimulationConfig:
         locality_count=401,
         output_mode="ensemble",
     )
+    if execution_backend not in {"optimized", "ensemble"}:
+        raise ValueError("execution_backend must be 'optimized' or 'ensemble'")
     config.information.observation_retention_days = 90.0
     config.organization_ecology.observed_active_intervals = {
         "insurgent": [[0.0, horizon]]
@@ -974,9 +1070,10 @@ def build_initial_particle(
     case: dict,
     inputs: dict,
     base_world=None,
+    execution_backend: str = "optimized",
 ) -> Particle[SimulationParticle]:
     """Create one prior particle with an independent latent spatial draw."""
-    config = _config(seed, horizon)
+    config = _config(seed, horizon, execution_backend=execution_backend)
     world = (
         base_world.clone(share_static=True)
         if base_world is not None
@@ -1012,6 +1109,7 @@ def build_initial_particle(
         stream_namespace=f"particle:{seed}:prior:{particle_index}",
     )
     simulation.configure_execution(
+        execution_backend=execution_backend,
         validate_invariants=False,
         checkpointing=False,
         retain_output_archives=False,
@@ -1090,6 +1188,42 @@ def _nested_particle_job(
     return new_state, likelihood, propagator.diagnostics()
 
 
+def _rao_blackwellized_particle_job(
+    job: tuple[
+        SimulationParticle,
+        float,
+        ProvinceWeekObservation,
+        RaoBlackwellizedActivityLikelihood | None,
+    ],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    state, time, observation, likelihood = job
+    propagator = RaoBlackwellizedOperationalPropagator(
+        likelihood=likelihood,
+    )
+    new_state, score = propagator(state, time, observation)
+    return new_state, score, propagator.diagnostics()
+
+
+def _guided_particle_job(
+    job: tuple[
+        SimulationParticle,
+        float,
+        ProvinceWeekObservation,
+        GuidedProposalPropagator,
+    ],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    state, time, observation, propagator = job
+    new_state, score = propagator(state, time, observation)
+    return new_state, float(score), {
+        "guided_propagation_calls": 1,
+        "nested_propagation_calls": 0,
+        "exact_descendant_match_calls": 0,
+        "exact_descendant_match_fraction": 0.0,
+        "mean_minimum_descendant_hamming_mismatch": 0.0,
+        "maximum_minimum_descendant_hamming_mismatch": 0,
+    }
+
+
 def _fork_particle_state(state: SimulationParticle, child_index: int) -> SimulationParticle:
     """Pickle-safe fork callback for the generic resident particle pool."""
     return state.fork(child_index)
@@ -1159,6 +1293,10 @@ def run_training_filter(
     filter_seed: int,
     ess_fraction: float = 0.5,
     likelihood_branches: int = 3,
+    likelihood_method: str = "nested",
+    rb_likelihood: RaoBlackwellizedActivityLikelihood | None = None,
+    guided_propagator: GuidedProposalPropagator | None = None,
+    method_gate: ExperimentalMethodGate | None = None,
     workers: int = 1,
     resume_filter: SequentialParticleFilter[
         SimulationParticle, ProvinceWeekObservation
@@ -1179,6 +1317,27 @@ def run_training_filter(
         raise ValueError("restart_every_weeks must be positive")
     if resident_pool is not None and workers == 1:
         raise ValueError("resident_pool requires workers greater than one")
+    likelihood_method = str(likelihood_method)
+    if likelihood_method not in {"nested", "rao_blackwellized", "guided"}:
+        raise ValueError(
+            "likelihood_method must be 'nested', 'rao_blackwellized', or 'guided'"
+        )
+    if guided_propagator is not None:
+        if likelihood_method not in {"nested", "guided"}:
+            raise ValueError("guided_propagator conflicts with the selected likelihood method")
+        likelihood_method = "guided"
+    if likelihood_method != "nested":
+        if method_gate is None:
+            raise RuntimeError(
+                f"{likelihood_method} requires a provenance-bound method gate"
+            )
+        method_gate.require_synthetic_validation()
+        if workers != 1 or resident_pool is not None:
+            raise ValueError(
+                "research likelihood methods currently require the in-process executor"
+            )
+        if likelihood_method == "guided" and guided_propagator is None:
+            raise ValueError("guided likelihood mode requires guided_propagator")
     filter_ = resume_filter or SequentialParticleFilter(
         particles,
         transition=lambda state, time: None,
@@ -1198,6 +1357,8 @@ def run_training_filter(
     max_mismatch = int(
         prior_nested.get("maximum_minimum_descendant_hamming_mismatch", 0)
     )
+    method_diagnostics = dict(getattr(filter_, "method_diagnostics", {}))
+    filter_.likelihood_method = likelihood_method
     worker_balance_history = list(
         getattr(filter_, "worker_balance_history", [])
     )
@@ -1214,6 +1375,10 @@ def run_training_filter(
             ),
             "maximum_minimum_descendant_hamming_mismatch": max_mismatch,
             "workers": workers,
+        }
+        filter_.method_diagnostics = {
+            "likelihood_method": likelihood_method,
+            **method_diagnostics,
         }
 
     def maybe_save_restart(
@@ -1254,17 +1419,41 @@ def run_training_filter(
     ) -> None:
         nonlocal nested_calls, exact_calls, mismatch_sum, max_mismatch
         if executor is None:
-            jobs = [
-                (
-                    particle.state,
-                    observation.end_day,
-                    observation,
-                    likelihood_branches,
-                    filter_seed,
-                )
-                for particle in filter_.particles
-            ]
-            completed = list(map(_nested_particle_job, jobs))
+            if likelihood_method == "nested":
+                jobs = [
+                    (
+                        particle.state,
+                        observation.end_day,
+                        observation,
+                        likelihood_branches,
+                        filter_seed,
+                    )
+                    for particle in filter_.particles
+                ]
+                completed = list(map(_nested_particle_job, jobs))
+            elif likelihood_method == "rao_blackwellized":
+                jobs = [
+                    (
+                        particle.state,
+                        observation.end_day,
+                        observation,
+                        rb_likelihood,
+                    )
+                    for particle in filter_.particles
+                ]
+                completed = list(map(_rao_blackwellized_particle_job, jobs))
+            else:
+                assert guided_propagator is not None
+                jobs = [
+                    (
+                        particle.state,
+                        observation.end_day,
+                        observation,
+                        guided_propagator,
+                    )
+                    for particle in filter_.particles
+                ]
+                completed = list(map(_guided_particle_job, jobs))
         else:
             assignment_before = (
                 executor.assignment_counts()
@@ -1303,6 +1492,9 @@ def run_training_filter(
                     ]
                 ),
             )
+            for key, value in diagnostics.items():
+                if key.endswith("_calls") or key == "hazard_opportunities":
+                    method_diagnostics[key] = int(method_diagnostics.get(key, 0)) + int(value)
         assimilation = AssimilationObservation(
             time=observation.end_day,
             value=observation,
@@ -1489,6 +1681,140 @@ def _forecast_persistent_job(
     }
 
 
+def forecast_mcse_controlled_field(
+    filter_: SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation],
+    *,
+    start_day: float = FORECAST_START_DAY,
+    end_day: float = FORECAST_END_DAY,
+    tolerance: float,
+    min_trajectories: int = 32,
+    max_trajectories: int = 4096,
+    seed: int = 0,
+) -> dict[str, object]:
+    """Sample posterior-predictive trajectories until the field MCSE converges.
+
+    A posterior member is selected with its frozen SMC weight for each
+    trajectory, then one independent future is forked from that member.  The
+    returned field is therefore an ordinary posterior-predictive Monte Carlo
+    estimator; unlike the legacy branch count, the stopping rule is attached
+    to its stated precision target.  This mode is intentionally in-process
+    until the same vector contract is available to resident workers.
+    """
+    tolerance = float(tolerance)
+    min_trajectories = int(min_trajectories)
+    max_trajectories = int(max_trajectories)
+    if tolerance <= 0.0:
+        raise ValueError("forecast MCSE tolerance must be positive")
+    if min_trajectories < 1 or max_trajectories < min_trajectories:
+        raise ValueError("invalid forecast trajectory budget")
+    if not filter_.particles or any(
+        particle.state is None for particle in filter_.particles
+    ):
+        raise ValueError("MCSE-controlled forecast requires resident particle states")
+    filter_.freeze()
+    weights = particle_weights(filter_.particles)
+    provinces = tuple(sorted({
+        _province_for_locality(particle.state.world, locality_id)
+        for particle in filter_.particles
+        for locality_id in particle.state.world.localities
+    }))
+    province_bits = {
+        province: 1 << index for index, province in enumerate(provinces)
+    }
+    first_week = int(start_day // 7)
+    last_week = int(math.ceil(end_day / 7.0))
+    cells = tuple(
+        (province, week)
+        for week in range(first_week, last_week)
+        for province in provinces
+    )
+    values_by_cell: dict[tuple[str, int], list[float]] = {
+        cell: [] for cell in cells
+    }
+    member_cells: list[list[dict[str, int | str]]] = []
+    branch_cells: list[list[list[dict[str, int | str]]]] = []
+    rng = random.Random(int(seed))
+    trajectory_count = 0
+    converged = False
+    maximum_mcse = float("inf")
+    while trajectory_count < max_trajectories:
+        particle_index = rng.choices(
+            range(len(filter_.particles)), weights=weights, k=1
+        )[0]
+        branch = filter_.particles[particle_index].state.fork(trajectory_count)
+        branch.advance_to(end_day)
+        masks = _forecast_week_masks(
+            branch,
+            start_day=start_day,
+            end_day=end_day,
+            province_bits=province_bits,
+        )
+        active_cells = _mask_cells(masks, provinces, province_bits)
+        member_cells.append([
+            {"province_id": province, "week_index": week}
+            for province, week in sorted(active_cells)
+        ])
+        branch_cells.append([[
+            {"province_id": province, "week_index": week}
+            for province, week in sorted(active_cells)
+        ]])
+        for province, week in cells:
+            values_by_cell[(province, week)].append(
+                1.0 if (province, week) in active_cells else 0.0
+            )
+        trajectory_count += 1
+        if trajectory_count >= min_trajectories:
+            maximum_mcse = max(
+                (
+                    binary_mcse(values)
+                    for values in values_by_cell.values()
+                ),
+                default=0.0,
+            )
+            if maximum_mcse <= tolerance:
+                converged = True
+                break
+    if not converged:
+        maximum_mcse = max(
+            (
+                binary_mcse(values)
+                for values in values_by_cell.values()
+            ),
+            default=0.0,
+        )
+    latent_probability = {
+        cell: sum(values) / trajectory_count
+        for cell, values in values_by_cell.items()
+    }
+    field_rows = [
+        {
+            "province_id": province,
+            "week_index": week,
+            "probability": latent_probability[(province, week)],
+            "mcse": monte_carlo_standard_error(
+                values_by_cell[(province, week)]
+            ),
+        }
+        for province, week in cells
+    ]
+    return {
+        "posterior_weights": weights,
+        "probability_field": field_rows,
+        "mechanistic_event_probability_field": field_rows,
+        "target_probability_field": field_rows,
+        "member_active_cells": member_cells,
+        "forecast_branch_cells": branch_cells,
+        "forecast_branches": 1,
+        "forecast_trajectories": trajectory_count,
+        "forecast_mcse_tolerance": tolerance,
+        "maximum_mcse": maximum_mcse,
+        "mcse_converged": converged,
+        "posterior_particle_summaries": [
+            particle.state.world.summary() for particle in filter_.particles
+        ],
+    }
+
+
 def forecast_weighted_field(
     filter_: SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation],
     *,
@@ -1498,8 +1824,26 @@ def forecast_weighted_field(
     workers: int = 1,
     resident_pool: PersistentParticlePool | None = None,
     resident_particle_metadata: list[dict[str, object]] | None = None,
+    mcse_tolerance: float | None = None,
+    min_forecast_trajectories: int = 32,
+    max_forecast_trajectories: int = 4096,
+    forecast_seed: int = 0,
 ) -> dict[str, object]:
     """Freeze the posterior and return target-compatible event probabilities."""
+    if mcse_tolerance is not None:
+        if workers != 1 or resident_pool is not None:
+            raise ValueError(
+                "MCSE-controlled forecasts currently require in-process states"
+            )
+        return forecast_mcse_controlled_field(
+            filter_,
+            start_day=start_day,
+            end_day=end_day,
+            tolerance=mcse_tolerance,
+            min_trajectories=min_forecast_trajectories,
+            max_trajectories=max_forecast_trajectories,
+            seed=forecast_seed,
+        )
     if forecast_branches < 1:
         raise ValueError("forecast branches must be at least one")
     if workers < 1:
@@ -1647,7 +1991,14 @@ def run(
     horizon: float = FORECAST_END_DAY,
     strengths: tuple[float, ...] = DEFAULT_STRENGTHS,
     likelihood_branches: int = 3,
+    likelihood_method: str = "nested",
+    execution_backend: str = "optimized",
     forecast_branches: int = 3,
+    forecast_mcse_tolerance: float | None = None,
+    min_forecast_trajectories: int = 32,
+    max_forecast_trajectories: int | None = None,
+    forecast_seed: int | None = None,
+    method_gate: ExperimentalMethodGate | None = None,
     workers: int = 1,
     posterior_cache_dir: Path | None = None,
     training_restart_dir: Path | None = None,
@@ -1723,7 +2074,19 @@ def run(
             for index in range(particles)
         ],
         "likelihood_branches": int(likelihood_branches),
+        "likelihood_method": str(likelihood_method),
+        "execution_backend": str(execution_backend),
         "horizon": float(horizon),
+        "forecast_mcse_tolerance": (
+            None if forecast_mcse_tolerance is None
+            else float(forecast_mcse_tolerance)
+        ),
+        "min_forecast_trajectories": int(min_forecast_trajectories),
+        "max_forecast_trajectories": (
+            None if max_forecast_trajectories is None
+            else int(max_forecast_trajectories)
+        ),
+        "forecast_seed": None if forecast_seed is None else int(forecast_seed),
         "python_cache_tag": sys.implementation.cache_tag,
     }
     posterior_cache_hit = False
@@ -1835,6 +2198,7 @@ def run(
                     case=case,
                     inputs=inputs,
                     base_world=base_world,
+                    execution_backend=execution_backend,
                 )
                 if initial_cache_dir is not None:
                     _save_initial_particle_cache(
@@ -1871,6 +2235,8 @@ def run(
             observations,
             filter_seed=filter_seed,
             likelihood_branches=likelihood_branches,
+            likelihood_method=likelihood_method,
+            method_gate=method_gate,
             workers=workers,
             resume_filter=resume_filter,
             restart_cache_dir=training_restart_dir,
@@ -1931,6 +2297,10 @@ def run(
         end_day=FORECAST_END_DAY,
         forecast_branches=forecast_branches,
         particle_metadata=resident_metadata,
+        mcse_tolerance=forecast_mcse_tolerance,
+        min_forecast_trajectories=min_forecast_trajectories,
+        max_forecast_trajectories=max_forecast_trajectories,
+        forecast_seed=forecast_seed,
     )
     forecast_started = perf_counter()
     forecast_cpu_started = process_time()
@@ -1946,6 +2316,13 @@ def run(
                 workers=workers,
                 resident_pool=resident_pool,
                 resident_particle_metadata=resident_metadata,
+                mcse_tolerance=forecast_mcse_tolerance,
+                min_forecast_trajectories=min_forecast_trajectories,
+                max_forecast_trajectories=(
+                    4096 if max_forecast_trajectories is None
+                    else max_forecast_trajectories
+                ),
+                forecast_seed=0 if forecast_seed is None else forecast_seed,
             )
             if forecast_cache_dir is not None:
                 forecast_cache_manifest, _ = _save_forecast_cache(

@@ -1035,9 +1035,8 @@ class NumericInformationEventEngine:
     static source order and community selection live in
     :class:`InformationSourcePlan`; this class performs report gates, noisy
     payload generation, numeric event appends, and optional packed-state
-    fusions. It is also the ABI used by a future native event kernel: all
-    per-row inputs are fixed-width arrays and the returned buffer is already
-    numeric.
+    fusions. Its per-row inputs are fixed-width arrays, so the optional native
+    event ABI and the exact Python fallback share one representation.
     """
 
     plan: InformationSourcePlan
@@ -1311,7 +1310,15 @@ class NumericInformationEventEngine:
         record_negative: bool = True,
         world: Any | None = None,
     ) -> dict[str, int | float | InformationEventBuffer | RelayBuffer]:
-        """Run one event using CPython ``random.Random`` draw order."""
+        """Run one event using CPython ``random.Random`` draw order.
+
+        The normal path is a fixed-width Python numeric fallback.  When the
+        optional DLL exposes the event ABI, contiguous source groups are sent
+        to native in a small number of calls.  Group boundaries are deliberate:
+        each locality choice is made immediately before its selected sources,
+        exactly where the reference generator makes it, so native report draws
+        cannot perturb later community selection draws.
+        """
         buffer = (
             event_buffer
             if event_buffer is not None
@@ -1359,11 +1366,22 @@ class NumericInformationEventEngine:
             )
             self.next_relay_sequence += 1
             relay_rows += 1
-        for source_index in self.plan.iter_selected_source_indices(rng):
-            source_attempts += 1
-            if rng.random() >= self.report_probability[source_index]:
-                continue
-            reported_sources += 1
+
+        def consume_detection(
+            source_index: int,
+            *,
+            target_actor_code: int,
+            target_formation_code: int,
+            target_present: bool,
+            probability: float,
+            detected: bool,
+            quality: float,
+            confidence: float,
+            presence: float,
+            personnel: float,
+            attribution_confidence: float,
+        ) -> None:
+            nonlocal detection_rows, detected_rows
             observer_code = int(self.plan.observer[source_index])
             node_code = int(self.plan.node[source_index])
             source_code = int(self.plan.source[source_index])
@@ -1371,183 +1389,144 @@ class NumericInformationEventEngine:
             locality_code = int(self.plan.locality[source_index])
             microzone_code = int(self.source_microzone[source_index])
             source_type = self.plan.codes.value(source_type_code)
-            quality_base = float(self.source_quality_base[source_index])
             trust = float(self.source_trust[source_index])
             language = float(self.language[source_index])
             recipient_code = node_code or observer_code
-            start = self.plan.target_offsets[source_index]
-            end = self.plan.target_offsets[source_index + 1]
-            for target_index in range(start, end):
-                present = bool(self.target_present[target_index])
-                probability = float(self.target_detection_probability[target_index])
-                detected = bool(rng.random() < probability)
-                if not detected and not record_negative:
-                    continue
-                quality = max(0.0, min(1.0, quality_base * (0.85 + 0.3 * rng.random())))
-                personnel = float(self.target_personnel[target_index])
-                if detected:
-                    estimate = personnel * (0.65 + 0.7 * rng.random())
-                    if not present:
-                        estimate = max(1.0, rng.uniform(20.0, 250.0))
-                else:
-                    estimate = 0.0
-                attribution_mistake = bool(
-                    present and detected
-                    and rng.random() < self.attribution_error_rate
-                )
-                reported_actor = (
-                    int(self.target_alternate_actor[target_index])
-                    if attribution_mistake and self.target_alternate_actor[target_index]
-                    else int(self.plan.target_actor[target_index])
-                )
-                formation = int(self.target_formation[target_index])
-                reported_formation = 0 if attribution_mistake else formation
-                confidence = (
-                    self.positive_report_confidence
-                    if detected else self.negative_report_confidence
-                )
-                observation_sequence = self.next_sequence
-                buffer.append_detection_codes(
-                    self.next_sequence,
-                    observer=observer_code,
-                    node=node_code,
-                    source=source_code,
-                    source_type=source_type_code,
-                    locality=locality_code,
-                    microzone=microzone_code,
-                    target_actor=reported_actor,
-                    target_formation=reported_formation,
-                    timestamp=time,
-                    confidence=confidence,
-                    quality=quality,
-                    presence=1.0 if detected else 0.0,
-                    personnel=estimate,
-                    detection_probability=probability,
-                    detected=detected,
-                    attribution_confidence=0.25 if attribution_mistake else 0.9,
-                )
-                append_relay(source_index, observation_sequence)
-                self.next_sequence += 1
-                detection_rows += 1
-                detected_rows += int(detected)
-                weight = _numeric_event_weight(
-                    world,
-                    codes=self.plan.codes,
-                    observer_code=observer_code,
-                    recipient_code=recipient_code,
-                    source_code=source_code,
-                    source_type_code=source_type_code,
-                    locality_code=locality_code,
-                    target_actor_code=reported_actor,
-                    target_formation_code=reported_formation,
-                    timestamp=float(time),
-                    observation_type="detection",
-                    confidence=confidence,
-                    quality=quality,
-                    fallback=max(
-                        0.0,
-                        min(
-                            1.0,
-                            confidence * quality * trust
-                            * (language ** self.language_fusion_weight),
-                        ),
+            observation_sequence = self.next_sequence
+            buffer.append_detection_codes(
+                observation_sequence,
+                observer=observer_code,
+                node=node_code,
+                source=source_code,
+                source_type=source_type_code,
+                locality=locality_code,
+                microzone=microzone_code,
+                target_actor=int(target_actor_code),
+                target_formation=int(target_formation_code),
+                timestamp=time,
+                confidence=float(confidence),
+                quality=float(quality),
+                presence=float(presence),
+                personnel=float(personnel),
+                detection_probability=float(probability),
+                detected=bool(detected),
+                attribution_confidence=float(attribution_confidence),
+            )
+            append_relay(source_index, observation_sequence)
+            self.next_sequence += 1
+            detection_rows += 1
+            detected_rows += int(detected)
+            weight = _numeric_event_weight(
+                world,
+                codes=self.plan.codes,
+                observer_code=observer_code,
+                recipient_code=recipient_code,
+                source_code=source_code,
+                source_type_code=source_type_code,
+                locality_code=locality_code,
+                target_actor_code=int(target_actor_code),
+                target_formation_code=int(target_formation_code),
+                timestamp=float(time),
+                observation_type="detection",
+                confidence=float(confidence),
+                quality=float(quality),
+                fallback=max(
+                    0.0,
+                    min(
+                        1.0,
+                        float(confidence) * float(quality) * trust
+                        * (language ** self.language_fusion_weight),
                     ),
-                )
-                _record_numeric_history(
-                    world,
-                    codes=self.plan.codes,
-                    source_code=source_code,
-                    source_type_code=source_type_code,
-                    locality_code=locality_code,
-                    target_actor_code=reported_actor,
-                    timestamp=float(time),
-                    observation_type="detection",
-                )
-                if world is not None and world.execution_profile != "particle":
-                    outcome = (
-                        "true_positive" if present and detected else
-                        "false_negative" if present else
-                        "false_positive" if detected else "true_negative"
-                    )
-                    world.information_detections[outcome] = (
-                        world.information_detections.get(outcome, 0) + 1
-                    )
-                    by_source = world.information_detection_by_source.setdefault(
-                        source_type or "unknown",
-                        {"true_positive": 0, "false_positive": 0,
-                         "false_negative": 0, "true_negative": 0},
-                    )
-                    by_source[outcome] += 1
-                if presence_state is not None or node_presence_state is not None:
-                    observer_id = self.plan.codes.value(recipient_code)
-                    target_actor_id = self.plan.codes.value(reported_actor)
-                    locality_id = self.plan.codes.value(locality_code)
-                    location_id = self.plan.codes.value(microzone_code) or "*"
-                    target_id = self.plan.codes.value(reported_formation) or "*"
-                    if observer_id is not None and target_actor_id is not None and locality_id is not None:
-                        update = (
-                            0,
-                            (observer_id, target_actor_id, f"{locality_id}:{location_id}", target_id),
-                            float(time), weight, 1.0 if detected else 0.0, estimate,
-                        )
-                        if reported_formation:
-                            update_key = update[1]
-                            wildcard = (
-                                update_key[0], update_key[1], update_key[2], "*"
-                            )
-                            if presence_state is not None:
-                                presence_state.ensure_key(
-                                    wildcard, prior_confidence=prior_confidence
-                                )
-                            if node_code and node_presence_state is not None:
-                                node_presence_state.ensure_key(
-                                    wildcard, prior_confidence=prior_confidence
-                                )
-                            if presence_state is not None:
-                                presence_state.ensure_key(
-                                    update_key, prior_confidence=prior_confidence
-                                )
-                            if node_code and node_presence_state is not None:
-                                node_presence_state.ensure_key(
-                                    update_key, prior_confidence=prior_confidence
-                                )
-                        else:
-                            if presence_state is not None:
-                                presence_state.ensure_key(
-                                    update[1], prior_confidence=prior_confidence
-                                )
-                            if node_code and node_presence_state is not None:
-                                node_presence_state.ensure_key(update[1], prior_confidence=prior_confidence)
-                        if node_code:
-                            if node_presence_state is not None:
-                                node_updates.append(update)
-                                if reported_formation:
-                                    node_updates.append((0, wildcard, float(time), weight, 1.0 if detected else 0.0, estimate))
-                        elif presence_state is not None:
-                            presence_updates.append(update)
-                            if reported_formation:
-                                presence_updates.append((0, wildcard, float(time), weight, 1.0 if detected else 0.0, estimate))
-            control_quality = max(0.0, min(1.0, quality_base * (0.85 + 0.3 * rng.random())))
-            # The reference observes source quality once per emitted control
-            # report and derives its noise from that realized quality.  Keep
-            # this draw-dependent value separate from the static compiled
-            # quality baseline so the CPython RNG stream remains identical.
-            noise = float(self.observation_noise) * (
-                1.35 - 0.55 * control_quality * language
+                ),
             )
-            control_offset = source_index * len(CONTROL_DIMENSIONS)
-            estimated_control = tuple(
-                max(0.0, min(1.0, float(self.source_control[control_offset + dimension])
-                              + rng.uniform(-noise, noise)))
-                for dimension in range(len(CONTROL_DIMENSIONS))
+            _record_numeric_history(
+                world,
+                codes=self.plan.codes,
+                source_code=source_code,
+                source_type_code=source_type_code,
+                locality_code=locality_code,
+                target_actor_code=int(target_actor_code),
+                timestamp=float(time),
+                observation_type="detection",
             )
-            violence = max(0.0, min(1.0, float(self.source_violence[source_index])
-                                    + rng.uniform(-noise, noise)))
-            control_confidence = max(0.0, min(1.0, 0.45 + 0.45 * trust))
+            if world is not None and world.execution_profile != "particle":
+                outcome = (
+                    "true_positive" if target_present and detected else
+                    "false_negative" if target_present else
+                    "false_positive" if detected else "true_negative"
+                )
+                world.information_detections[outcome] = (
+                    world.information_detections.get(outcome, 0) + 1
+                )
+                by_source = world.information_detection_by_source.setdefault(
+                    source_type or "unknown",
+                    {"true_positive": 0, "false_positive": 0,
+                     "false_negative": 0, "true_negative": 0},
+                )
+                by_source[outcome] += 1
+            if presence_state is None and node_presence_state is None:
+                return
+            observer_id = self.plan.codes.value(recipient_code)
+            target_actor_id = self.plan.codes.value(int(target_actor_code))
+            locality_id = self.plan.codes.value(locality_code)
+            location_id = self.plan.codes.value(microzone_code) or "*"
+            target_id = self.plan.codes.value(int(target_formation_code)) or "*"
+            if observer_id is None or target_actor_id is None or locality_id is None:
+                return
+            update = (
+                0,
+                (observer_id, target_actor_id, f"{locality_id}:{location_id}", target_id),
+                float(time), weight, float(presence), float(personnel),
+            )
+            wildcard = None
+            if target_formation_code:
+                update_key = update[1]
+                wildcard = (update_key[0], update_key[1], update_key[2], "*")
+                if presence_state is not None:
+                    presence_state.ensure_key(wildcard, prior_confidence=prior_confidence)
+                if node_code and node_presence_state is not None:
+                    node_presence_state.ensure_key(wildcard, prior_confidence=prior_confidence)
+                if presence_state is not None:
+                    presence_state.ensure_key(update_key, prior_confidence=prior_confidence)
+                if node_code and node_presence_state is not None:
+                    node_presence_state.ensure_key(update_key, prior_confidence=prior_confidence)
+            else:
+                if presence_state is not None:
+                    presence_state.ensure_key(update[1], prior_confidence=prior_confidence)
+                if node_code and node_presence_state is not None:
+                    node_presence_state.ensure_key(update[1], prior_confidence=prior_confidence)
+            if node_code:
+                if node_presence_state is not None:
+                    node_updates.append(update)
+                    if wildcard is not None:
+                        node_updates.append((0, wildcard, float(time), weight, float(presence), float(personnel)))
+            elif presence_state is not None:
+                presence_updates.append(update)
+                if wildcard is not None:
+                    presence_updates.append((0, wildcard, float(time), weight, float(presence), float(personnel)))
+
+        def consume_control(
+            source_index: int,
+            *,
+            estimated_control: Sequence[float],
+            quality: float,
+            confidence: float,
+            violence: float,
+        ) -> None:
+            nonlocal control_rows
+            observer_code = int(self.plan.observer[source_index])
+            node_code = int(self.plan.node[source_index])
+            source_code = int(self.plan.source[source_index])
+            source_type_code = int(self.plan.source_type[source_index])
+            locality_code = int(self.plan.locality[source_index])
+            microzone_code = int(self.source_microzone[source_index])
+            trust = float(self.source_trust[source_index])
+            language = float(self.language[source_index])
+            recipient_code = node_code or observer_code
             control_target = int(self.source_control_target[source_index])
             observation_sequence = self.next_sequence
             buffer.append_control_codes(
-                self.next_sequence,
+                observation_sequence,
                 observer=observer_code,
                 node=node_code,
                 source=source_code,
@@ -1556,11 +1535,11 @@ class NumericInformationEventEngine:
                 microzone=microzone_code,
                 target_actor=control_target,
                 timestamp=time,
-                confidence=control_confidence,
-                quality=control_quality,
+                confidence=float(confidence),
+                quality=float(quality),
                 control=estimated_control,
-                physical_control=estimated_control[1],
-                violence=violence,
+                physical_control=float(estimated_control[1]),
+                violence=float(violence),
             )
             append_relay(source_index, observation_sequence)
             self.next_sequence += 1
@@ -1577,13 +1556,13 @@ class NumericInformationEventEngine:
                 target_formation_code=0,
                 timestamp=float(time),
                 observation_type="physical_control",
-                confidence=control_confidence,
-                quality=control_quality,
+                confidence=float(confidence),
+                quality=float(quality),
                 fallback=max(
                     0.0,
                     min(
                         1.0,
-                        control_confidence * control_quality * trust
+                        float(confidence) * float(quality) * trust
                         * (language ** self.language_fusion_weight),
                     ),
                 ),
@@ -1604,9 +1583,7 @@ class NumericInformationEventEngine:
                 locality_id = self.plan.codes.value(locality_code)
                 if observer_id is not None and target_id is not None and locality_id is not None:
                     key = (observer_id, target_id, locality_id)
-                    control_state.ensure_key(
-                        key, prior_confidence=prior_confidence
-                    )
+                    control_state.ensure_key(key, prior_confidence=prior_confidence)
                     control_updates.append((0, key, float(time), weight, estimated_control))
             if zone_state is not None and microzone_code:
                 recipient_id = self.plan.codes.value(
@@ -1614,16 +1591,222 @@ class NumericInformationEventEngine:
                 ) or self.plan.codes.value(recipient_code)
                 microzone_id = self.plan.codes.value(microzone_code)
                 if recipient_id is not None and microzone_id is not None:
-                    # A control report updates the actor-local microzone
-                    # physical-control recurrence.  Detection rows do not:
-                    # their payload is presence/personnel only.
                     zone_key = (recipient_id, microzone_id)
-                    zone_state.ensure_key(
-                        zone_key, prior_confidence=prior_confidence
+                    zone_state.ensure_key(zone_key, prior_confidence=prior_confidence)
+                    zone_updates.append((0, zone_key, float(time), weight, float(estimated_control[1])))
+
+        def consume_native_rows(native_result: Any) -> None:
+            nonlocal reported_sources
+            reported = set()
+            for row_index in range(native_result.row_count):
+                source_index = int(native_result.source_index[row_index])
+                reported.add(source_index)
+                if int(native_result.kind[row_index]) == 1:
+                    consume_detection(
+                        source_index,
+                        target_actor_code=int(native_result.target_actor[row_index]),
+                        target_formation_code=int(native_result.target_formation[row_index]),
+                        target_present=bool(native_result.target_present[row_index]),
+                        probability=float(native_result.detection_probability[row_index]),
+                        detected=bool(native_result.detected[row_index]),
+                        quality=float(native_result.quality[row_index]),
+                        confidence=float(native_result.confidence[row_index]),
+                        presence=float(native_result.presence[row_index]),
+                        personnel=float(native_result.personnel[row_index]),
+                        attribution_confidence=float(native_result.attribution_confidence[row_index]),
                     )
-                    zone_updates.append((
-                        0, zone_key, float(time), weight, estimated_control[1],
-                    ))
+                else:
+                    offset = row_index * len(CONTROL_DIMENSIONS)
+                    consume_control(
+                        source_index,
+                        estimated_control=tuple(float(value) for value in native_result.control[offset:offset + len(CONTROL_DIMENSIONS)]),
+                        quality=float(native_result.quality[row_index]),
+                        confidence=float(native_result.confidence[row_index]),
+                        violence=float(native_result.violence[row_index]),
+                    )
+            reported_sources += len(reported)
+
+        def native_rng_compatible() -> bool:
+            if not hasattr(rng, "getstate") or not hasattr(rng, "setstate"):
+                return False
+            state = rng.getstate()
+            return (
+                isinstance(state, tuple) and len(state) == 3
+                and state[0] == 3
+                and isinstance(state[1], tuple) and len(state[1]) == 625
+            )
+
+        native_enabled = False
+        if native_rng_compatible():
+            from .native_kernels import information_event_enabled
+
+            native_enabled = information_event_enabled()
+
+        if native_enabled:
+            from .native_kernels import native_information_event_batch
+
+            initial_sources = tuple(
+                index for index in self.plan.always_sources
+                if self.plan.codes.value(self.plan.source_type[index]) == "fixed_post"
+                or (
+                    self.plan.codes.value(self.plan.source_type[index]) != "organization_member"
+                    and not any(self.plan.locality_source_groups)
+                )
+            )
+            member_sources = tuple(
+                index for index in self.plan.always_sources
+                if self.plan.codes.value(self.plan.source_type[index]) == "organization_member"
+            )
+            def process_native_batch(batch: Sequence[int]) -> None:
+                nonlocal source_attempts
+                source_attempts += len(batch)
+                native_result = native_information_event_batch(
+                    rng,
+                    selected_sources=array("I", batch),
+                    source_observer=self.plan.observer,
+                    source_node=self.plan.node,
+                    source=self.plan.source,
+                    source_type=self.plan.source_type,
+                    source_locality=self.plan.locality,
+                    source_microzone=self.source_microzone,
+                    source_control_target=self.source_control_target,
+                    source_control=self.source_control,
+                    source_violence=self.source_violence,
+                    report_probability=self.report_probability,
+                    source_quality_base=self.source_quality_base,
+                    source_trust=self.source_trust,
+                    language=self.language,
+                    target_offsets=self.plan.target_offsets,
+                    target_actor=self.plan.target_actor,
+                    target_present=self.target_present,
+                    target_personnel=self.target_personnel,
+                    target_detection_probability=self.target_detection_probability,
+                    target_formation=self.target_formation,
+                    target_alternate_actor=self.target_alternate_actor,
+                    time=float(time),
+                    observation_noise=self.observation_noise,
+                    positive_report_confidence=self.positive_report_confidence,
+                    negative_report_confidence=self.negative_report_confidence,
+                    attribution_error_rate=self.attribution_error_rate,
+                    record_negative=record_negative,
+                    next_sequence=self.next_sequence,
+                )
+                if native_result is None:
+                    raise RuntimeError("native information event lost RNG compatibility")
+                consume_native_rows(native_result)
+                if native_result.next_sequence != self.next_sequence:
+                    raise RuntimeError("native information sequence disagrees with emitted rows")
+
+            # Do not construct the complete batch list first: locality
+            # selection draws must occur after fixed-post report draws and
+            # before the selected locality's report draws.
+            if initial_sources:
+                process_native_batch(initial_sources)
+            for locality_index, groups in enumerate(self.plan.locality_source_groups):
+                if groups:
+                    if len(groups) == 1:
+                        # random.choices over one item still consumes one draw.
+                        rng.random()
+                        batch = groups[0]
+                    else:
+                        choice = rng.choices(
+                            range(len(groups)),
+                            cum_weights=self.plan.locality_cumulative_weights[locality_index],
+                            k=1,
+                        )[0]
+                        batch = groups[int(choice)]
+                else:
+                    batch = self.plan.locality_fallback_sources[locality_index]
+                if batch:
+                    process_native_batch(batch)
+            if member_sources:
+                process_native_batch(member_sources)
+        else:
+            for source_index in self.plan.iter_selected_source_indices(rng):
+                source_attempts += 1
+                if rng.random() >= self.report_probability[source_index]:
+                    continue
+                reported_sources += 1
+                quality_base = float(self.source_quality_base[source_index])
+                trust = float(self.source_trust[source_index])
+                language = float(self.language[source_index])
+                start = self.plan.target_offsets[source_index]
+                end = self.plan.target_offsets[source_index + 1]
+                for target_index in range(start, end):
+                    present = bool(self.target_present[target_index])
+                    probability = float(self.target_detection_probability[target_index])
+                    detected = bool(rng.random() < probability)
+                    if not detected and not record_negative:
+                        continue
+                    quality = max(0.0, min(1.0, quality_base * (0.85 + 0.3 * rng.random())))
+                    personnel = float(self.target_personnel[target_index])
+                    if detected:
+                        estimate = personnel * (0.65 + 0.7 * rng.random())
+                        if not present:
+                            estimate = max(1.0, rng.uniform(20.0, 250.0))
+                    else:
+                        estimate = 0.0
+                    attribution_mistake = bool(
+                        present and detected
+                        and rng.random() < self.attribution_error_rate
+                    )
+                    reported_actor = (
+                        int(self.target_alternate_actor[target_index])
+                        if attribution_mistake and self.target_alternate_actor[target_index]
+                        else int(self.plan.target_actor[target_index])
+                    )
+                    formation = int(self.target_formation[target_index])
+                    reported_formation = 0 if attribution_mistake else formation
+                    consume_detection(
+                        source_index,
+                        target_actor_code=reported_actor,
+                        target_formation_code=reported_formation,
+                        target_present=present,
+                        probability=probability,
+                        detected=detected,
+                        quality=quality,
+                        confidence=(
+                            self.positive_report_confidence
+                            if detected else self.negative_report_confidence
+                        ),
+                        presence=1.0 if detected else 0.0,
+                        personnel=estimate,
+                        attribution_confidence=0.25 if attribution_mistake else 0.9,
+                    )
+                control_quality = max(
+                    0.0,
+                    min(1.0, quality_base * (0.85 + 0.3 * rng.random())),
+                )
+                noise = float(self.observation_noise) * (
+                    1.35 - 0.55 * control_quality * language
+                )
+                control_offset = source_index * len(CONTROL_DIMENSIONS)
+                estimated_control = tuple(
+                    max(
+                        0.0,
+                        min(
+                            1.0,
+                            float(self.source_control[control_offset + dimension])
+                            + rng.uniform(-noise, noise),
+                        ),
+                    )
+                    for dimension in range(len(CONTROL_DIMENSIONS))
+                )
+                violence = max(
+                    0.0,
+                    min(
+                        1.0,
+                        float(self.source_violence[source_index])
+                        + rng.uniform(-noise, noise),
+                    ),
+                )
+                consume_control(
+                    source_index,
+                    estimated_control=estimated_control,
+                    quality=control_quality,
+                    confidence=max(0.0, min(1.0, 0.45 + 0.45 * trust)),
+                    violence=violence,
+                )
 
         if control_state is not None:
             control_state.fuse_control(
