@@ -320,6 +320,10 @@ class WorldState:
     # deliberately favors defensive scans; optimized may trust maintained
     # derived indexes. It is excluded from scientific state hashes.
     execution_backend: str = "reference"
+    # Persistent structure-of-arrays control-belief state used by the
+    # optimized information backend. It is an execution representation of
+    # ``control_beliefs`` and is excluded from scientific hashes.
+    compact_control_state: Any = None
     # Optional profiling counters. None on normal execution so hot paths pay
     # only a single identity check when instrumentation is explicitly enabled.
     performance_counters: dict[str, int] | None = None
@@ -439,6 +443,14 @@ class WorldState:
         for patrol_ids in self.patrol_ids_by_formation.values():
             patrol_ids.sort()
         self.refresh_operational_indexes()
+
+    def rebuild_compact_control_state(self) -> None:
+        """Build optimized control-belief arrays from the oracle objects."""
+        from .compact_information_state import CompactControlBeliefState
+
+        self.compact_control_state = CompactControlBeliefState.from_beliefs(
+            self.control_beliefs
+        )
 
     def refresh_operational_indexes(self) -> None:
         """Refresh small derived indexes for active actors and local capacity.

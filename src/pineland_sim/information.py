@@ -57,6 +57,9 @@ OBSERVATION_SOURCE_TYPES = (
 
 def initialize_information_world(world: WorldState) -> None:
     """Create actor priors and clear run-specific observation state."""
+    # Any existing numeric control store describes the beliefs being replaced;
+    # invalidate it before rebuilding the run-local priors below.
+    world.compact_control_state = None
     world.observations.clear()
     world.next_observation_sequence = 1
     world.observation_index.clear()
@@ -104,6 +107,8 @@ def initialize_information_world(world: WorldState) -> None:
                     world.config.information.prior_confidence, world.time,
                 )
                 world.control_beliefs[(observer_id, target_id, locality_id)] = belief
+    if world.execution_backend == "optimized":
+        world.rebuild_compact_control_state()
 
 
 def _logit(probability: float) -> float:
@@ -599,6 +604,31 @@ def _fuse_control_immediate(
     physical_value = value.get("physical_control")
     if not isinstance(control_values, dict) and physical_value is None:
         return
+
+    compact = getattr(world, "compact_control_state", None)
+    if world.execution_backend == "optimized" and compact is not None:
+        belief = _ensure_control_belief(
+            world, recipient_id, target_actor_id, observation.locality_id
+        )
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        compact.ensure(key, belief)
+        values = control_values if isinstance(control_values, dict) else {
+            "physical": physical_value
+        }
+        compact.fuse(
+            key,
+            values,
+            float(time),
+            float(weight),
+            world.config.information.contradiction_memory_days,
+            world.config.information.contradiction_penalty,
+        )
+        compact.write_to_belief(key, belief)
+        _apply_control_auxiliary(
+            world, observation, recipient_id, time, weight, values, belief
+        )
+        return
+
     belief = _ensure_control_belief(
         world, recipient_id, target_actor_id, observation.locality_id
     )
@@ -822,12 +852,81 @@ def _canonical_control_tuple(
     )
 
 
+def _flush_compact_native_control_chunk(
+    world: WorldState,
+    compact: Any,
+    chunk: list[tuple[Observation, str, float, float]],
+) -> bool:
+    """Fuse a canonical batch directly into the persistent control rows."""
+    state_index_by_key: dict[tuple[str, str, str], int] = {}
+    update_indices = array("I")
+    times = array("d")
+    weights = array("d")
+    observed = array("d")
+
+    for observation, recipient_id, time, weight in chunk:
+        target_actor_id = observation.target_actor_id
+        canonical = _canonical_control_tuple(observation)
+        if target_actor_id is None or canonical is None:
+            return False
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        index = state_index_by_key.get(key)
+        if index is None:
+            belief = _ensure_control_belief(
+                world, recipient_id, target_actor_id, observation.locality_id
+            )
+            index = compact.ensure(key, belief)
+            state_index_by_key[key] = index
+        update_indices.append(index)
+        times.append(float(time))
+        weights.append(float(weight))
+        observed.extend(canonical)
+
+    if not native_fuse_control7_batch(
+        compact.state,
+        len(compact),
+        update_indices,
+        times,
+        weights,
+        observed,
+        contradiction_memory_days=(
+            world.config.information.contradiction_memory_days
+        ),
+        contradiction_penalty=world.config.information.contradiction_penalty,
+        state_stride=13,
+    ):
+        return False
+
+    for key in state_index_by_key:
+        belief = world.control_beliefs[key]
+        compact.write_to_belief(key, belief)
+
+    # Zone beliefs and legacy own-side mirrors are still object-model state;
+    # apply them in original observation order after the numeric batch.
+    for observation, recipient_id, time, weight in chunk:
+        target_actor_id = observation.target_actor_id
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        _apply_control_auxiliary(
+            world,
+            observation,
+            recipient_id,
+            time,
+            weight,
+            observation.estimated_value["control"],
+            world.control_beliefs[key],
+        )
+    return True
+
+
 def _flush_native_control_chunk(
     world: WorldState,
     chunk: list[tuple[Observation, str, float, float]],
 ) -> bool:
     if not chunk or not native_kernels_available():
         return False
+    compact = getattr(world, "compact_control_state", None)
+    if world.execution_backend == "optimized" and compact is not None:
+        return _flush_compact_native_control_chunk(world, compact, chunk)
     belief_by_key: dict[tuple[str, str, str], ActorBelief] = {}
     state_index_by_key: dict[tuple[str, str, str], int] = {}
     state_keys: list[tuple[str, str, str]] = []
@@ -1705,8 +1804,13 @@ def decay_information(world: WorldState, time: float) -> None:
     formation_factor = exp(-config.formation_decay_rate * elapsed)
     for belief in world.beliefs.values():
         belief.confidence = clamp(belief.confidence * default_factor)
-    for belief in getattr(world, "control_beliefs", {}).values():
-        belief.confidence = clamp(belief.confidence * default_factor)
+    compact = getattr(world, "compact_control_state", None)
+    if world.execution_backend == "optimized" and compact is not None:
+        compact.decay(elapsed, config.default_decay_rate)
+        compact.sync_confidence_to_beliefs(world.control_beliefs)
+    else:
+        for belief in getattr(world, "control_beliefs", {}).values():
+            belief.confidence = clamp(belief.confidence * default_factor)
     for belief in world.zone_beliefs.values():
         belief.confidence = clamp(belief.confidence * formation_factor)
     for belief in world.presence_beliefs.values():

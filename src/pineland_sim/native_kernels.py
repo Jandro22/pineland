@@ -69,6 +69,7 @@ def fuse_control7_batch(
     *,
     contradiction_memory_days: float,
     contradiction_penalty: float,
+    state_stride: int = 12,
 ) -> bool:
     library = _load()
     if library is None:
@@ -85,8 +86,10 @@ def fuse_control7_batch(
         raise ValueError("update arrays have inconsistent lengths")
     if len(observed) != update_count * 7:
         raise ValueError("observed must contain seven values per update")
-    if len(states) != state_count * 12:
-        raise ValueError("states must contain twelve values per belief")
+    if state_stride < 12:
+        raise ValueError("state_stride must contain at least twelve values per belief")
+    if len(states) != state_count * state_stride:
+        raise ValueError("states length does not match state_stride")
 
     state_buffer = (ctypes.c_double * len(states)).from_buffer(states)
     index_buffer = (
@@ -100,7 +103,7 @@ def fuse_control7_batch(
     result = library.pineland_fuse_control7_batch(
         state_buffer,
         state_count,
-        12,
+        state_stride,
         index_buffer,
         time_buffer,
         weight_buffer,
