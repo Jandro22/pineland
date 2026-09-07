@@ -68,6 +68,11 @@ def _run_one(runner, initial_states, observation, *, workers: int, branches: int
         snapshots = [state for state, _, _ in results]
         snapshot_seconds = 0.0
         scores = [score for _, score, _ in results]
+        worker_rows = [{
+            "worker_index": 0,
+            "wall_seconds": propagation_seconds,
+            "state_count": len(states),
+        }]
     else:
         pool_started = perf_counter()
         pool = PersistentParticlePool(
@@ -79,7 +84,7 @@ def _run_one(runner, initial_states, observation, *, workers: int, branches: int
         startup_seconds = perf_counter() - pool_started
         try:
             propagation_started = perf_counter()
-            compact = pool.propagate(
+            compact, worker_rows = pool.propagate_profiled(
                 observation.end_day,
                 (observation, branches, filter_seed),
             )
@@ -100,6 +105,16 @@ def _run_one(runner, initial_states, observation, *, workers: int, branches: int
         "total_seconds": total_seconds,
         "decision_state_sha256": hashes,
         "scores": scores,
+        "worker_compute": worker_rows,
+        "estimated_worker_idle_seconds": (
+            sum(
+                max(
+                    item["wall_seconds"] for item in worker_rows
+                ) - item["wall_seconds"]
+                for item in worker_rows
+            )
+            if len(worker_rows) > 1 else 0.0
+        ),
     }
 
 
@@ -124,6 +139,7 @@ def main() -> None:
         runner._config(args.seed, max(60.0, args.days)),
         empirical_geography=case,
     )
+    runner._precompute_province_lookup(base_world)
     initial_states = [
         runner.build_initial_particle(
             seed=args.seed,

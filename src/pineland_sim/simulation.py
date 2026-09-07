@@ -74,6 +74,7 @@ class Simulation:
         checkpointing: bool | None = None,
         retain_output_archives: bool | None = None,
         scheduler_backend: str | None = None,
+        execution_backend: str | None = None,
     ) -> None:
         """Configure a simulation's bookkeeping policy before initialization."""
         if self._initialized and checkpointing is not None and bool(checkpointing) != self._checkpointing:
@@ -91,6 +92,14 @@ class Simulation:
                 raise ValueError(
                     "scheduler_backend must be 'heap' or 'calendar'"
                 )
+        if execution_backend is not None:
+            if execution_backend not in {"reference", "optimized"}:
+                raise ValueError(
+                    "execution_backend must be 'reference' or 'optimized'"
+                )
+            self.world.execution_backend = execution_backend
+            if execution_backend == "optimized":
+                self.world.rebuild_runtime_entity_indexes()
         if validate_invariants is not None:
             self._validate_invariants = bool(validate_invariants)
         if checkpointing is not None:
@@ -103,6 +112,8 @@ class Simulation:
                 # standard mode. Rebuild all derived execution indexes once
                 # before any particle hot path begins trusting them.
                 self.world.rebuild_runtime_entity_indexes()
+                if execution_backend is None:
+                    self.world.execution_backend = "optimized"
             self.world.execution_profile = (
                 "particle" if not self._retain_output_archives else "standard"
             )
@@ -373,6 +384,12 @@ class Simulation:
         if event_type == "patrol":
             interval = payload.get("next_interval", intervals.patrol)
         if interval:
+            if self.world.performance_counters is not None:
+                self.world.performance_counters["scheduler_reschedules"] = (
+                    self.world.performance_counters.get(
+                        "scheduler_reschedules", 0
+                    ) + 1
+                )
             next_payload = dict(payload)
             if event_type != "patrol":
                 next_payload["elapsed_days"] = float(interval)
@@ -434,31 +451,15 @@ class Simulation:
             else max(0.0, float(interval_days))
         )
         action_time = current_time if realization_time is None else realization_time
-        operational_localities: dict[str, set[str]] = {}
-        for (organization_id, locality_id), quantity in (
-            self.world.organization_manpower_pools.items()
-        ):
-            if quantity > 0:
-                operational_localities.setdefault(organization_id, set()).add(
-                    locality_id
-                )
-        for formation in self.world.formations.values():
-            if (
-                formation.personnel > 0
-                and not formation.moving
-                and not formation.outside_pineland
-            ):
-                operational_localities.setdefault(
-                    formation.organization_id, set()
-                ).add(formation.locality_id)
+        self.world.refresh_operational_indexes()
+        operational_localities = (
+            self.world.operational_locality_ids_by_organization
+        )
 
-        for organization in sorted(
-            (
-                item for item in self.world.organizations.values()
-                if item.kind in ACTION_ORGANIZATION_KINDS and item.status == "active"
-            ),
-            key=lambda item: item.organization_id,
-        ):
+        for organization_id in self.world.active_organization_ids:
+            organization = self.world.organizations[organization_id]
+            if organization.kind not in ACTION_ORGANIZATION_KINDS:
+                continue
             for locality_id in sorted(
                 operational_localities.get(organization.organization_id, ())
             ):

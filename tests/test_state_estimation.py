@@ -59,6 +59,20 @@ def test_persistent_particle_pool_keeps_parent_forks_on_their_worker():
         assert pool.snapshot() == [13, 1013, 2010, 3011]
 
 
+def test_persistent_particle_pool_profiled_propagation_reports_workers():
+    with PersistentParticlePool(
+        [0, 1, 2, 3],
+        propagate=_resident_test_propagate,
+        fork_state=_resident_test_fork,
+        workers=2,
+    ) as pool:
+        results, workers = pool.propagate_profiled(7.0, 10)
+        assert [result[0] for result in results] == list(range(4))
+        assert len(workers) == 2
+        assert sum(item["state_count"] for item in workers) == 4
+        assert all(item["wall_seconds"] >= 0 for item in workers)
+
+
 def test_log_weight_normalization_and_ess_are_numerically_stable():
     weights = normalize_log_weights([-10000.0, -10001.0, -10002.0])
     assert sum(weights) == pytest.approx(1.0)

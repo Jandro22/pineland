@@ -61,6 +61,8 @@ class EventTimingProbe:
         self._original_execute = original
         self._previous_counters = self.simulation.world.performance_counters
         self.simulation.world.performance_counters = {}
+        if hasattr(self.simulation.scheduler, "enable_metrics"):
+            self.simulation.scheduler.enable_metrics(True)
 
         def timed_execute(event):
             started = perf_counter()
@@ -79,6 +81,8 @@ class EventTimingProbe:
         if self._original_execute is not None:
             self.simulation.processes.execute = self._original_execute
         self.simulation.world.performance_counters = self._previous_counters
+        if hasattr(self.simulation.scheduler, "enable_metrics"):
+            self.simulation.scheduler.enable_metrics(False)
 
     def to_dict(self) -> dict[str, dict[str, float | int]]:
         return {
@@ -93,6 +97,10 @@ def profile_simulation_events(simulation, *, until: float) -> dict[str, Any]:
     with EventTimingProbe(simulation) as probe:
         simulation.run(until=until)
         counters = dict(simulation.world.performance_counters or {})
+        scheduler_metrics = (
+            simulation.scheduler.metrics()
+            if hasattr(simulation.scheduler, "metrics") else {}
+        )
         active_sets = {
             "formations": len(simulation.world.formations),
             "active_information_relays": len(
@@ -106,11 +114,17 @@ def profile_simulation_events(simulation, *, until: float) -> dict[str, Any]:
                 simulation.world.state_based_event_localities_by_week
             ),
         }
+        active_sets.update({
+            f"{name}_localities": len(localities)
+            for name, localities
+            in simulation.world.active_locality_sets().items()
+        })
     return {
         "wall_seconds": perf_counter() - started,
         "until": float(until),
         "event_types": probe.to_dict(),
         "scheduler_max_pending": probe.scheduler_max_pending,
+        "scheduler_metrics": scheduler_metrics,
         "cache_counters": counters,
         "active_sets": active_sets,
     }
@@ -170,15 +184,17 @@ def runtime_manifest() -> dict[str, Any]:
 
 def compare_reference_optimized(world, *, until: float) -> dict[str, Any]:
     """Dual-run a small world and localize any execution-semantic mismatch."""
-    from .reproducibility import decision_state_component_hashes
+    from .reproducibility import (
+        decision_state_component_hashes,
+        simulation_execution_sha256,
+    )
     from .simulation import Simulation
 
     reference = Simulation(world.clone())
     optimized = Simulation(world.clone())
+    reference.configure_execution(execution_backend="reference")
     optimized.configure_execution(
-        validate_invariants=False,
-        checkpointing=False,
-        retain_output_archives=False,
+        execution_backend="optimized",
     )
     reference_started = perf_counter()
     reference.run(until=until)
@@ -194,6 +210,10 @@ def compare_reference_optimized(world, *, until: float) -> dict[str, Any]:
     )
     return {
         "exact_decision_state_equivalence": not differing,
+        "exact_execution_state_equivalence": (
+            simulation_execution_sha256(reference)
+            == simulation_execution_sha256(optimized)
+        ),
         "differing_components": differing,
         "reference_seconds": reference_seconds,
         "optimized_seconds": optimized_seconds,

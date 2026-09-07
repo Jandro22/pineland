@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from math import exp, isfinite, log
 import multiprocessing as mp
 import random
+from time import perf_counter
 import traceback
 from typing import Callable, Generic, Iterable, Iterator, Sequence, TypeVar
 
@@ -54,6 +55,25 @@ def _resident_particle_worker(
                     states[slot] = new_state
                     results.append((slot, score, diagnostics))
                 result_queue.put(("propagate", results))
+                continue
+            if command == "propagate_profiled":
+                time, observation = payload
+                started = perf_counter()
+                results = []
+                for slot in sorted(states):
+                    new_state, score, diagnostics = propagate(
+                        states[slot], time, observation
+                    )
+                    states[slot] = new_state
+                    results.append((slot, score, diagnostics))
+                result_queue.put((
+                    "propagate_profiled",
+                    {
+                        "results": results,
+                        "wall_seconds": perf_counter() - started,
+                        "state_count": len(states),
+                    },
+                ))
                 continue
             if command == "resample":
                 # The mapping is child slot -> locally resident parent slot.
@@ -158,6 +178,38 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
         if [item[0] for item in results] != expected_slots:
             raise RuntimeError("resident particle worker returned an incomplete particle set")
         return results
+
+    def propagate_profiled(
+        self,
+        time: float,
+        observation: ObservationT,
+    ) -> tuple[
+        list[tuple[int, float, ResultT]],
+        list[dict[str, float | int]],
+    ]:
+        """Advance particles and return worker-local compute diagnostics."""
+        self._send_to_all(
+            "propagate_profiled", (float(time), observation)
+        )
+        results = []
+        worker_rows = []
+        for worker_index, (_, _, result_queue) in enumerate(self._workers):
+            payload = self._receive(
+                result_queue, "propagate_profiled"
+            )
+            results.extend(payload["results"])
+            worker_rows.append({
+                "worker_index": worker_index,
+                "wall_seconds": float(payload["wall_seconds"]),
+                "state_count": int(payload["state_count"]),
+            })
+        results.sort(key=lambda item: item[0])
+        expected_slots = list(range(len(self._assignment)))
+        if [item[0] for item in results] != expected_slots:
+            raise RuntimeError(
+                "resident particle worker returned an incomplete particle set"
+            )
+        return results, worker_rows
 
     def resample(self, parent_indices: Sequence[int]) -> None:
         """Fork resampled children on the workers holding their parents."""

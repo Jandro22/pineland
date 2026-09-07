@@ -569,6 +569,10 @@ def generate_pineland(config: SimulationConfig | None = None,
                     config.information.prior_confidence, 0,
                 )
 
+    # All generation layers have now assigned communities, organizations,
+    # formations, patrols, and locality membership. Build derived execution
+    # indexes once from the complete initialized world.
+    world.rebuild_runtime_entity_indexes()
     world.initial_population = world.weighted_population()
     world.initialize_stock_ledger()
     world.assert_invariants()

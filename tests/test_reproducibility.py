@@ -10,6 +10,7 @@ from pineland_sim.reproducibility import (
     decision_state_sha256,
     isolated_run_signature,
     substantive_file_sha256,
+    simulation_execution_sha256,
     trajectory_sha256,
 )
 
@@ -84,6 +85,20 @@ def test_process_isolated_parallel_execution_is_deterministic():
         assert not differing_components, differing_components
         assert actual["decision_state_sha256"] == expected["decision_state_sha256"]
         assert actual["trajectory_sha256"] == expected["trajectory_sha256"]
+
+
+def test_simulation_execution_hash_covers_scheduler_and_rng_future():
+    world = generate_pineland(_config(days=2, mode="ensemble"))
+    simulation = Simulation(world)
+    simulation.run(until=0.5)
+    clone = simulation.clone()
+    assert simulation_execution_sha256(clone) == (
+        simulation_execution_sha256(simulation)
+    )
+    clone.set_stream_namespace("different-lineage")
+    assert simulation_execution_sha256(clone) != (
+        simulation_execution_sha256(simulation)
+    )
 
 
 def test_verification_timestamps_do_not_change_substantive_case_hash(tmp_path):

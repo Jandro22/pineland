@@ -175,6 +175,59 @@ def test_posterior_cache_round_trip_preserves_filter_state(tmp_path):
     }
 
 
+def test_initial_particle_cache_round_trip_is_content_addressed(tmp_path):
+    cache_key = {
+        "source_commit": "commit",
+        "model_sha256": "model",
+        "runner_sha256": "runner",
+        "case_sha256": "case",
+        "historical_inputs_sha256": "inputs",
+        "seed": 7,
+        "horizon": 60.0,
+        "python_cache_tag": "test",
+    }
+    key = MODULE._initial_particle_cache_key(
+        cache_key,
+        particle_index=2,
+        taliban_strength=7500.0,
+        prior_family="test-family",
+    )
+    particle = MODULE.Particle("cached-state", -0.25)
+    manifest, payload = MODULE._save_initial_particle_cache(
+        tmp_path, key, particle
+    )
+    assert manifest.exists()
+    assert payload.exists()
+    restored = MODULE._load_initial_particle_cache(tmp_path, key)
+    assert restored.state == "cached-state"
+    assert restored.log_weight == -0.25
+
+
+def test_forecast_cache_round_trip_is_content_addressed(tmp_path):
+    key = {
+        "schema_version": MODULE.FORECAST_CACHE_SCHEMA,
+        "posterior": "exact-test-posterior",
+        "forecast_branches": 3,
+    }
+    forecast = {
+        "posterior_weights": [0.5, 0.5],
+        "probability_field": [
+            {"province_id": "P1", "week_index": 53, "probability": 0.25}
+        ],
+        "forecast_branches": 3,
+    }
+    manifest, payload = MODULE._save_forecast_cache(
+        tmp_path, key, forecast
+    )
+    assert manifest.exists()
+    assert payload.exists()
+    restored = MODULE._load_forecast_cache(tmp_path, key)
+    assert restored is not None
+    restored_forecast, restored_manifest = restored
+    assert restored_manifest == manifest
+    assert restored_forecast == forecast
+
+
 def test_training_restart_round_trip_selects_latest_valid_boundary(tmp_path):
     filter_ = MODULE.SequentialParticleFilter(
         [MODULE.Particle("a", math.log(0.6)), MODULE.Particle("b", math.log(0.4))],

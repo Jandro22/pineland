@@ -63,6 +63,7 @@ from .entities import (
     StateBasedEvent,
     StateDelta,
     CivilianHarmEvent,
+    ControlVector,
 )
 
 
@@ -72,27 +73,38 @@ class WorldState:
     time: float = 0.0
     in_burn_in: bool = False
     districts: dict[str, District] = field(default_factory=dict)
+    ordered_district_ids: tuple[str, ...] = field(default_factory=tuple)
     # Optional higher-level empirical hierarchy (e.g. Nepal development
     # regions/zones).  Core mechanics operate on districts/localities; this
     # metadata preserves historically correct administrative nesting without
     # overloading District to mean a region.
     geographic_containers: dict[str, dict[str, Any]] = field(default_factory=dict)
     district_hierarchy: dict[str, dict[str, str]] = field(default_factory=dict)
+    # Optional case/evaluation lookup (for example Afghanistan locality to
+    # province). It is execution/evaluation metadata, not a transition input.
+    evaluation_region_by_locality: dict[str, str] = field(default_factory=dict)
     localities: dict[str, Locality] = field(default_factory=dict)
+    ordered_locality_ids: tuple[str, ...] = field(default_factory=tuple)
     primary_language_by_locality: dict[str, str] = field(default_factory=dict)
     multilingual_locality_ids: set[str] = field(default_factory=set)
     households: dict[str, Household] = field(default_factory=dict)
     persons: dict[str, Person] = field(default_factory=dict)
+    ordered_person_ids: tuple[str, ...] = field(default_factory=tuple)
     person_ids_by_residence_locality: dict[str, list[str]] = field(
         default_factory=dict
     )
     person_ids_by_organization: dict[str, list[str]] = field(default_factory=dict)
     unassigned_person_ids: set[str] = field(default_factory=set)
+    represented_weight_by_locality: dict[str, float] = field(default_factory=dict)
     social_communities: dict[str, SocialCommunity] = field(default_factory=dict)
+    ordered_social_community_ids: tuple[str, ...] = field(default_factory=tuple)
+    person_ids_by_community: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    represented_weight_by_community: dict[str, float] = field(default_factory=dict)
     social_edges: dict[tuple[str, str], SocialEdge] = field(default_factory=dict)
     social_neighbors: dict[str, list[str]] = field(default_factory=dict)
     social_community_ids_by_locality: dict[str, tuple[str, ...]] = field(default_factory=dict)
     microzones: dict[str, Microzone] = field(default_factory=dict)
+    ordered_microzone_ids: tuple[str, ...] = field(default_factory=tuple)
     microzone_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
     microzones_by_locality: dict[str, tuple[Microzone, ...]] = field(default_factory=dict)
     primary_microzone_by_locality: dict[str, str] = field(default_factory=dict)
@@ -148,8 +160,18 @@ class WorldState:
     resource_flows: list[ResourceFlow] = field(default_factory=list)
     control_cost_consumed: dict[str, float] = field(default_factory=dict)
     organizations: dict[str, Organization] = field(default_factory=dict)
+    ordered_organization_ids: tuple[str, ...] = field(default_factory=tuple)
+    active_organization_ids: tuple[str, ...] = field(default_factory=tuple)
+    active_insurgent_organization_ids: tuple[str, ...] = field(default_factory=tuple)
+    operational_locality_ids_by_organization: dict[str, set[str]] = field(
+        default_factory=dict
+    )
+    active_operational_locality_ids: set[str] = field(default_factory=set)
     organization_relations: dict[tuple[str, str], OrganizationRelation] = field(default_factory=dict)
     formations: dict[str, ArmedFormation] = field(default_factory=dict)
+    formation_ids_by_organization: dict[str, tuple[str, ...]] = field(
+        default_factory=dict
+    )
     # Recruited fighter-equivalent manpower is first created where the
     # represented population lives.  If no local effective formation exists,
     # it waits here until enough manpower exists to form a local unit instead
@@ -273,6 +295,10 @@ class WorldState:
     # Runtime bookkeeping profile. This is deliberately excluded from
     # scientific state hashes and never changes transition equations.
     execution_profile: str = "standard"
+    # Implementation backend is separate from output retention. Reference
+    # deliberately favors defensive scans; optimized may trust maintained
+    # derived indexes. It is excluded from scientific state hashes.
+    execution_backend: str = "reference"
     # Optional profiling counters. None on normal execution so hot paths pay
     # only a single identity check when instrumentation is explicitly enabled.
     performance_counters: dict[str, int] | None = None
@@ -284,6 +310,12 @@ class WorldState:
 
     def rebuild_runtime_entity_indexes(self) -> None:
         """Build deterministic locality indexes used by hot execution paths."""
+        self.ordered_district_ids = tuple(sorted(self.districts))
+        self.ordered_locality_ids = tuple(sorted(self.localities))
+        self.ordered_person_ids = tuple(sorted(self.persons))
+        self.ordered_social_community_ids = tuple(sorted(self.social_communities))
+        self.ordered_microzone_ids = tuple(sorted(self.microzones))
+        self.ordered_organization_ids = tuple(sorted(self.organizations))
         self.primary_language_by_locality = {}
         self.multilingual_locality_ids = set()
         for locality_id, locality in self.localities.items():
@@ -296,10 +328,19 @@ class WorldState:
         self.person_ids_by_residence_locality = {}
         self.person_ids_by_organization = {}
         self.unassigned_person_ids = set()
+        self.represented_weight_by_locality = {
+            locality_id: 0.0 for locality_id in self.localities
+        }
         for person_id, person in self.persons.items():
             self.person_ids_by_residence_locality.setdefault(
                 person.residence_locality_id, []
             ).append(person_id)
+            self.represented_weight_by_locality[person.residence_locality_id] = (
+                self.represented_weight_by_locality.get(
+                    person.residence_locality_id, 0.0
+                )
+                + person.weight
+            )
             if person.organization_id is None:
                 self.unassigned_person_ids.add(person_id)
             else:
@@ -346,9 +387,22 @@ class WorldState:
             for locality_id, post_ids in self.security_post_ids_by_locality.items()
         }
         communities_by_locality: dict[str, list[str]] = {}
+        self.person_ids_by_community = {}
+        self.represented_weight_by_community = {}
         for community_id, community in self.social_communities.items():
             communities_by_locality.setdefault(community.locality_id, []).append(
                 community_id
+            )
+            self.person_ids_by_community[community_id] = tuple(
+                sorted(
+                    person_id
+                    for person_id in community.member_ids
+                    if person_id in self.persons
+                )
+            )
+            self.represented_weight_by_community[community_id] = sum(
+                self.persons[person_id].weight
+                for person_id in self.person_ids_by_community[community_id]
             )
         self.social_community_ids_by_locality = {
             locality_id: tuple(sorted(community_ids))
@@ -361,6 +415,140 @@ class WorldState:
             ).append(patrol_id)
         for patrol_ids in self.patrol_ids_by_formation.values():
             patrol_ids.sort()
+        self.refresh_operational_indexes()
+
+    def refresh_operational_indexes(self) -> None:
+        """Refresh small derived indexes for active actors and local capacity.
+
+        This scans organizations, formations, and nonzero manpower pools only;
+        it never scans the representative civilian population.
+        """
+        self.ordered_organization_ids = tuple(sorted(self.organizations))
+        self.active_organization_ids = tuple(
+            organization_id
+            for organization_id in self.ordered_organization_ids
+            if self.organizations[organization_id].status == "active"
+        )
+        self.active_insurgent_organization_ids = tuple(
+            organization_id
+            for organization_id in self.active_organization_ids
+            if self.organizations[organization_id].kind is OrganizationKind.INSURGENT
+        )
+        formations_by_organization: dict[str, list[str]] = {}
+        for formation_id, formation in self.formations.items():
+            formations_by_organization.setdefault(
+                formation.organization_id, []
+            ).append(formation_id)
+        self.formation_ids_by_organization = {
+            organization_id: tuple(sorted(formation_ids))
+            for organization_id, formation_ids
+            in formations_by_organization.items()
+        }
+        operational: dict[str, set[str]] = {}
+        for (organization_id, locality_id), quantity in (
+            self.organization_manpower_pools.items()
+        ):
+            if quantity > 0:
+                operational.setdefault(organization_id, set()).add(locality_id)
+        for formation in self.formations.values():
+            if (
+                formation.personnel > 0
+                and not formation.moving
+                and not formation.outside_pineland
+            ):
+                operational.setdefault(
+                    formation.organization_id, set()
+                ).add(formation.locality_id)
+        self.operational_locality_ids_by_organization = operational
+        self.active_operational_locality_ids = {
+            locality_id
+            for organization_id in self.active_organization_ids
+            for locality_id in operational.get(organization_id, ())
+        }
+
+    def active_locality_sets(self) -> dict[str, set[str]]:
+        """Derived locality work sets for sparse execution/profiling.
+
+        These are deliberately recomputed from compact runtime state. They do
+        not become scientific state and no process is skipped merely because a
+        locality is absent from one set.
+        """
+        self.refresh_operational_indexes()
+        formation = {
+            item.locality_id
+            for item in self.formations.values()
+            if item.personnel > 0 and not item.outside_pineland
+        }
+        moving = {
+            item.locality_id
+            for item in self.formations.values()
+            if item.personnel > 0 and item.moving and not item.outside_pineland
+        }
+        manpower = {
+            locality_id
+            for (_, locality_id), quantity
+            in self.organization_manpower_pools.items()
+            if quantity > 0
+        }
+        active_insurgents = set(self.active_insurgent_organization_ids)
+        insurgent_presence = {
+            item.locality_id
+            for item in self.formations.values()
+            if (
+                item.personnel > 0
+                and not item.moving
+                and not item.outside_pineland
+                and item.organization_id in active_insurgents
+            )
+        }
+        recruitment = {
+            locality_id
+            for organization_id in active_insurgents
+            for locality_id in self.operational_locality_ids_by_organization.get(
+                organization_id, ()
+            )
+        }
+        conflict = set(
+            self.state_based_event_localities_by_week.get(
+                int(float(self.time) // 7), ()
+            )
+        )
+        information = set()
+        for relay_id in self.active_information_relays:
+            relay = self.information_relays.get(relay_id)
+            if relay is None or relay.status != "in_transit":
+                continue
+            observation = self.observations.get(relay.observation_id)
+            if observation is not None:
+                information.add(observation.locality_id)
+        contested = set()
+        for locality_id, locality in self.localities.items():
+            government = locality.control.get("government")
+            if government is None or government.physical <= 0.05:
+                continue
+            insurgent_physical = max(
+                (
+                    locality.control[organization_id].physical
+                    for organization_id in active_insurgents
+                    if organization_id in locality.control
+                ),
+                default=locality.control.get(
+                    "insurgent", ControlVector()
+                ).physical,
+            )
+            if insurgent_physical > 0.05:
+                contested.add(locality_id)
+        return {
+            "operational": set(self.active_operational_locality_ids),
+            "formation": formation,
+            "moving_formation": moving,
+            "manpower": manpower,
+            "insurgent_presence": insurgent_presence,
+            "recruitment_capable": recruitment,
+            "recent_conflict": conflict,
+            "active_information": information,
+            "contested": contested,
+        }
 
     def relocate_person(self, person: Person, locality_id: str) -> None:
         """Move one representative while keeping the residence index exact."""
@@ -374,11 +562,42 @@ class WorldState:
             locality_id, []
         ).append(person.person_id)
         self.person_ids_by_residence_locality[locality_id].sort()
+        self.represented_weight_by_locality[old_locality] = (
+            self.represented_weight_by_locality.get(old_locality, 0.0)
+            - person.weight
+        )
+        self.represented_weight_by_locality[locality_id] = (
+            self.represented_weight_by_locality.get(locality_id, 0.0)
+            + person.weight
+        )
         person.residence_locality_id = locality_id
+
+    def set_person_weight(self, person: Person, weight: float) -> None:
+        """Update represented mass and its exact locality/community aggregates."""
+        new_weight = max(0.0, float(weight))
+        delta = new_weight - person.weight
+        if abs(delta) <= 1e-15:
+            person.weight = new_weight
+            return
+        locality_id = person.residence_locality_id
+        self.represented_weight_by_locality[locality_id] = (
+            self.represented_weight_by_locality.get(locality_id, 0.0) + delta
+        )
+        if person.community_id is not None:
+            self.represented_weight_by_community[person.community_id] = (
+                self.represented_weight_by_community.get(
+                    person.community_id, 0.0
+                )
+                + delta
+            )
+        person.weight = new_weight
 
     def persons_in_locality(self, locality_id: str):
         """Return resident representatives, using the exact particle index."""
-        if self.execution_profile == "particle":
+        if (
+            self.execution_profile == "particle"
+            or self.execution_backend == "optimized"
+        ):
             return (
                 self.persons[person_id]
                 for person_id in self.person_ids_by_residence_locality.get(
@@ -417,7 +636,10 @@ class WorldState:
 
     def unassigned_people(self):
         """Iterate unassigned representatives using the particle index."""
-        if self.execution_profile == "particle":
+        if (
+            self.execution_profile == "particle"
+            or self.execution_backend == "optimized"
+        ):
             return (
                 self.persons[person_id]
                 for person_id in sorted(self.unassigned_person_ids)
@@ -434,6 +656,15 @@ class WorldState:
         self.formation_ids_by_locality.setdefault(
             formation.locality_id, []
         ).append(formation.formation_id)
+        existing = list(
+            self.formation_ids_by_organization.get(
+                formation.organization_id, ()
+            )
+        )
+        existing.append(formation.formation_id)
+        self.formation_ids_by_organization[formation.organization_id] = (
+            tuple(sorted(set(existing)))
+        )
 
     def relocate_formation(self, formation: ArmedFormation, locality_id: str) -> None:
         """Move a formation while keeping the locality index exact."""
@@ -1553,6 +1784,7 @@ class WorldState:
         # isolated below.
         shared_fields = {
             "config", "districts", "geographic_containers", "district_hierarchy",
+            "evaluation_region_by_locality",
             "social_edges", "social_neighbors", "social_community_ids_by_locality",
             "adjacency", "microzone_ids_by_locality", "physical_neighbors",
             "primary_language_by_locality", "multilingual_locality_ids",
@@ -1578,8 +1810,11 @@ class WorldState:
             "person_ids_by_residence_locality",
             "person_ids_by_organization",
             "unassigned_person_ids",
+            "represented_weight_by_locality",
+            "represented_weight_by_community",
             "microzones_by_locality",
             "formation_ids_by_locality",
+            "formation_ids_by_organization",
             "patrol_ids_by_locality",
             "patrol_ids_by_formation",
             "security_post_ids_by_locality",

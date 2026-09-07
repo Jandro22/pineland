@@ -50,7 +50,7 @@ def apply_direct_civilian_harm(
             old_armed_mass = old_weight * person.armed_fraction
             share = civilian_mass[person.person_id] / represented
             new_weight = max(0.0, old_weight - deaths * share)
-            person.weight = new_weight
+            world.set_person_weight(person, new_weight)
             # Direct civilian harm is allocated to the non-armed represented
             # share. Preserve absolute armed membership when a mixed
             # representative loses civilian weight.
