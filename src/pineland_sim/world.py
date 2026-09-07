@@ -84,6 +84,7 @@ class WorldState:
     social_communities: dict[str, SocialCommunity] = field(default_factory=dict)
     social_edges: dict[tuple[str, str], SocialEdge] = field(default_factory=dict)
     social_neighbors: dict[str, list[str]] = field(default_factory=dict)
+    social_community_ids_by_locality: dict[str, tuple[str, ...]] = field(default_factory=dict)
     microzones: dict[str, Microzone] = field(default_factory=dict)
     microzone_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
     microzones_by_locality: dict[str, tuple[Microzone, ...]] = field(default_factory=dict)
@@ -95,6 +96,7 @@ class WorldState:
     patrols: dict[str, Patrol] = field(default_factory=dict)
     formation_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
     patrol_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
+    patrol_ids_by_formation: dict[str, list[str]] = field(default_factory=dict)
     security_posts_by_locality: dict[str, tuple[SecurityPost, ...]] = field(default_factory=dict)
     zone_beliefs: dict[tuple[str, str], ActorZoneBelief] = field(default_factory=dict)
     observations: dict[str, Observation] = field(default_factory=dict)
@@ -291,6 +293,22 @@ class WorldState:
             )
             for locality_id, post_ids in self.security_post_ids_by_locality.items()
         }
+        communities_by_locality: dict[str, list[str]] = {}
+        for community_id, community in self.social_communities.items():
+            communities_by_locality.setdefault(community.locality_id, []).append(
+                community_id
+            )
+        self.social_community_ids_by_locality = {
+            locality_id: tuple(sorted(community_ids))
+            for locality_id, community_ids in communities_by_locality.items()
+        }
+        self.patrol_ids_by_formation = {}
+        for patrol_id, patrol in self.patrols.items():
+            self.patrol_ids_by_formation.setdefault(
+                patrol.formation_id, []
+            ).append(patrol_id)
+        for patrol_ids in self.patrol_ids_by_formation.values():
+            patrol_ids.sort()
 
     def register_formation(self, formation: ArmedFormation) -> None:
         """Register a newly created formation in the locality execution index."""
@@ -318,6 +336,9 @@ class WorldState:
         self.patrols[patrol.patrol_id] = patrol
         self.patrol_ids_by_locality.setdefault(
             patrol.locality_id, []
+        ).append(patrol.patrol_id)
+        self.patrol_ids_by_formation.setdefault(
+            patrol.formation_id, []
         ).append(patrol.patrol_id)
 
     def relocate_patrol(self, patrol: Patrol, locality_id: str) -> None:
@@ -1384,7 +1405,8 @@ class WorldState:
         # isolated below.
         shared_fields = {
             "districts", "geographic_containers", "district_hierarchy",
-            "social_edges", "social_neighbors", "adjacency",
+            "social_edges", "social_neighbors", "social_community_ids_by_locality",
+            "adjacency",
         }
         cloned = copy.copy(self)
         for item in fields(self):

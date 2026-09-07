@@ -180,6 +180,7 @@ def generate_social_network(world: WorldState) -> None:
     config = world.config.social_network
     rng = seeded_initialization_rng(world.config, "social-network-generation")
     world.social_communities.clear()
+    world.social_community_ids_by_locality.clear()
     world.social_edges.clear()
     world.social_neighbors = {person_id: [] for person_id in world.persons}
 
@@ -237,6 +238,10 @@ def generate_social_network(world: WorldState) -> None:
     communities_by_locality: dict[str, list[str]] = defaultdict(list)
     for community in world.social_communities.values():
         communities_by_locality[community.locality_id].append(community.community_id)
+    world.social_community_ids_by_locality = {
+        locality_id: tuple(sorted(community_ids))
+        for locality_id, community_ids in communities_by_locality.items()
+    }
 
     # Multilingual representatives anchor cross-community information bridges.
     # The role itself is represented social capacity, not a count of literal

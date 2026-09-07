@@ -55,10 +55,12 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "locality_path_cache", "locality_travel_time_cache", "in_transit_supply_total",
     "active_shipment_ids", "active_movement_order_ids",
     "microzones_by_locality", "formation_ids_by_locality",
-    "patrol_ids_by_locality", "security_posts_by_locality",
+    "patrol_ids_by_locality", "patrol_ids_by_formation",
+    "security_posts_by_locality", "social_community_ids_by_locality",
     "information_execution_cache",
     "information_cache_active",
-    "execution_profile",
+    "execution_profile", "engagements", "state_based_event_times",
+    "state_based_event_localities", "state_based_events",
 })
 
 # Particle propagation needs the future-decision state, not the forensic
@@ -77,7 +79,7 @@ PARTICLE_ARCHIVE_WORLD_FIELDS = frozenset({
     "state_based_event_localities", "state_based_events",
     "civilian_harm_events",
     "information_execution_cache",
-    "information_cache_active",
+    "information_cache_active", "engagements",
 })
 
 OUTPUT_ONLY_SUMMARY_FIELDS = frozenset({

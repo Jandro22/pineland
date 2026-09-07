@@ -237,7 +237,7 @@ def language_comprehension(world: WorldState, observer_actor_id: str,
         cached = world.information_execution_cache.get(cache_key)
         if cached is not None:
             return float(cached)
-    embeddedness_key = (observer_actor_id, locality_id)
+    embeddedness_key = ("embeddedness", observer_actor_id, locality_id)
     local_embeddedness = (
         world.information_execution_cache.get(embeddedness_key)
         if world.information_cache_active else None
@@ -346,24 +346,32 @@ def _actual_target_presence(world: WorldState, target_actor_id: str,
                             microzone_id: str | None = None,
                             formation_index: dict[tuple[str, str], list[ArmedFormation]] | None = None,
                             ) -> tuple[bool, float, str | None]:
-    formations = list(formation_index.get((target_actor_id, locality_id), ())) if formation_index is not None else [
-        formation for formation in world.formations.values()
-        if _formation_matches_target_actor(world, formation, target_actor_id)
-        and formation.personnel > 0 and not formation.moving
-        and formation.locality_id == locality_id
-    ]
-    if target_formation_id is not None:
-        formations = [formation for formation in formations
-                      if formation.formation_id == target_formation_id]
-    if microzone_id is not None:
-        formations = [formation for formation in formations
-                      if formation.current_microzone_id == microzone_id or
-                      any(patrol.formation_id == formation.formation_id and
-                          patrol.current_microzone_id == microzone_id
-                          for patrol in world.patrols.values())]
-    personnel = sum(formation.personnel for formation in formations)
-    chosen = max(formations, key=lambda formation: formation.personnel).formation_id if formations else None
-    return bool(formations), personnel, chosen
+    candidates = (
+        formation_index.get((target_actor_id, locality_id), ())
+        if formation_index is not None else
+        (formation for formation in world.formations.values()
+         if _formation_matches_target_actor(world, formation, target_actor_id)
+         and formation.personnel > 0 and not formation.moving
+         and formation.locality_id == locality_id)
+    )
+    personnel = 0.0
+    chosen: ArmedFormation | None = None
+    for formation in candidates:
+        if target_formation_id is not None and formation.formation_id != target_formation_id:
+            continue
+        if microzone_id is not None and formation.current_microzone_id != microzone_id:
+            patrol_ids = world.patrol_ids_by_formation.get(formation.formation_id)
+            if patrol_ids is None:
+                patrols = (patrol for patrol in world.patrols.values()
+                           if patrol.formation_id == formation.formation_id)
+            else:
+                patrols = (world.patrols[patrol_id] for patrol_id in patrol_ids)
+            if not any(patrol.current_microzone_id == microzone_id for patrol in patrols):
+                continue
+        personnel += formation.personnel
+        if chosen is None or formation.personnel > chosen.personnel:
+            chosen = formation
+    return chosen is not None, personnel, chosen.formation_id if chosen else None
 
 
 def detection_probability(world: WorldState, observer_id: str,
@@ -1095,8 +1103,13 @@ def generate_background_observations(world: WorldState, time: float,
         ))
 
     for locality_id in sorted(world.localities):
-        communities = [community for community in world.social_communities.values()
-                       if community.locality_id == locality_id]
+        community_ids = world.social_community_ids_by_locality.get(locality_id)
+        communities = (
+            [world.social_communities[community_id] for community_id in community_ids]
+            if community_ids is not None else
+            [community for community in world.social_communities.values()
+             if community.locality_id == locality_id]
+        )
         if not communities:
             # Administrative, elite-brokerage, and interpretation channels are
             # locality capabilities, not literal sampled civilians.  Preserve
