@@ -661,10 +661,19 @@ class ProcessEngine:
         return result
 
     def on_physical_refresh(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
+        # Public hooks may move formations by assigning locality_id directly;
+        # refresh the dynamic locality indexes once at the event boundary so
+        # the sparse paths remain exact without rebuilding per locality.
+        self.world.rebuild_runtime_entity_indexes()
+        from .physical import advance_patrol_presence_memory
+
+        advance_patrol_presence_memory(self.world, self.world.time)
         changed = 0
         total = 0.0
         for locality_id in sorted(self.world.localities):
-            aggregates = recompute_contested_controls(self.world, locality_id, self.world.time)
+            aggregates = recompute_contested_controls(
+                self.world, locality_id, self.world.time, advance_memory=False
+            )
             for actor, aggregate in aggregates.items():
                 before = self.world.localities[locality_id].control.setdefault(
                     actor, ControlVector()).physical
@@ -679,8 +688,15 @@ class ProcessEngine:
                         )
                     return formation.organization_id == actor
 
-                formations = [formation for formation in self.world.formations.values()
-                              if formation.locality_id == locality_id and matches_actor(formation)]
+                formation_ids = self.world.formation_ids_by_locality.get(locality_id)
+                formations = [
+                    self.world.formations[formation_id]
+                    for formation_id in formation_ids
+                ] if formation_ids is not None else [
+                    formation for formation in self.world.formations.values()
+                    if formation.locality_id == locality_id
+                ]
+                formations = [formation for formation in formations if matches_actor(formation)]
                 constrained = any(formation.moving or formation.supply_fraction() < .4 or
                                   formation.command < .5 or formation.availability < .5
                                   for formation in formations)

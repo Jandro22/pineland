@@ -86,12 +86,16 @@ class WorldState:
     social_neighbors: dict[str, list[str]] = field(default_factory=dict)
     microzones: dict[str, Microzone] = field(default_factory=dict)
     microzone_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
+    microzones_by_locality: dict[str, tuple[Microzone, ...]] = field(default_factory=dict)
     primary_microzone_by_locality: dict[str, str] = field(default_factory=dict)
     physical_edges: dict[tuple[str, str], PhysicalEdge] = field(default_factory=dict)
     physical_neighbors: dict[str, dict[str, tuple[str, str]]] = field(default_factory=dict)
     security_posts: dict[str, SecurityPost] = field(default_factory=dict)
     security_post_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
     patrols: dict[str, Patrol] = field(default_factory=dict)
+    formation_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
+    patrol_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
+    security_posts_by_locality: dict[str, tuple[SecurityPost, ...]] = field(default_factory=dict)
     zone_beliefs: dict[tuple[str, str], ActorZoneBelief] = field(default_factory=dict)
     observations: dict[str, Observation] = field(default_factory=dict)
     next_observation_sequence: int = 1
@@ -107,6 +111,10 @@ class WorldState:
     # retained for forensic output, while this bounded index keeps recurring
     # information passes from sorting/scanning historical relays.
     active_information_relays: set[str] = field(default_factory=set)
+    # Per-information-tick memoization only; cleared before the next model
+    # boundary so this never becomes part of a particle's latent state.
+    information_execution_cache: dict[tuple[Any, ...], Any] = field(default_factory=dict)
+    information_cache_active: bool = False
     presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     node_presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     control_beliefs: dict[tuple[str, str, str], ActorBelief] = field(default_factory=dict)
@@ -250,6 +258,81 @@ class WorldState:
     def observation_records(self) -> list[Observation]:
         """Stable list view for analysis code that prefers event-log semantics."""
         return list(self.observations.values())
+
+    def rebuild_runtime_entity_indexes(self) -> None:
+        """Build deterministic locality indexes used by hot execution paths."""
+        self.microzones_by_locality = {
+            locality_id: tuple(
+                self.microzones[zone_id]
+                for zone_id in zone_ids
+                if zone_id in self.microzones
+            )
+            for locality_id, zone_ids in self.microzone_ids_by_locality.items()
+        }
+        self.formation_ids_by_locality = {}
+        for formation_id, formation in self.formations.items():
+            self.formation_ids_by_locality.setdefault(
+                formation.locality_id, []
+            ).append(formation_id)
+        for formation_ids in self.formation_ids_by_locality.values():
+            formation_ids.sort()
+        self.patrol_ids_by_locality = {}
+        for patrol_id, patrol in self.patrols.items():
+            self.patrol_ids_by_locality.setdefault(
+                patrol.locality_id, []
+            ).append(patrol_id)
+        for patrol_ids in self.patrol_ids_by_locality.values():
+            patrol_ids.sort()
+        self.security_posts_by_locality = {
+            locality_id: tuple(
+                self.security_posts[post_id]
+                for post_id in post_ids
+                if post_id in self.security_posts
+            )
+            for locality_id, post_ids in self.security_post_ids_by_locality.items()
+        }
+
+    def register_formation(self, formation: ArmedFormation) -> None:
+        """Register a newly created formation in the locality execution index."""
+        self.formations[formation.formation_id] = formation
+        self.formation_ids_by_locality.setdefault(
+            formation.locality_id, []
+        ).append(formation.formation_id)
+
+    def relocate_formation(self, formation: ArmedFormation, locality_id: str) -> None:
+        """Move a formation while keeping the locality index exact."""
+        old_locality = formation.locality_id
+        if old_locality == locality_id:
+            return
+        old_ids = self.formation_ids_by_locality.get(old_locality, [])
+        if formation.formation_id in old_ids:
+            old_ids.remove(formation.formation_id)
+        self.formation_ids_by_locality.setdefault(locality_id, []).append(
+            formation.formation_id
+        )
+        self.formation_ids_by_locality[locality_id].sort()
+        formation.locality_id = locality_id
+
+    def register_patrol(self, patrol: Patrol) -> None:
+        """Register a newly created patrol in the locality execution index."""
+        self.patrols[patrol.patrol_id] = patrol
+        self.patrol_ids_by_locality.setdefault(
+            patrol.locality_id, []
+        ).append(patrol.patrol_id)
+
+    def relocate_patrol(self, patrol: Patrol, locality_id: str) -> None:
+        """Move a patrol while keeping the locality index exact."""
+        old_locality = patrol.locality_id
+        if old_locality == locality_id:
+            return
+        old_ids = self.patrol_ids_by_locality.get(old_locality, [])
+        if patrol.patrol_id in old_ids:
+            old_ids.remove(patrol.patrol_id)
+        self.patrol_ids_by_locality.setdefault(locality_id, []).append(
+            patrol.patrol_id
+        )
+        self.patrol_ids_by_locality[locality_id].sort()
+        patrol.locality_id = locality_id
 
     def record_state_based_event(
         self,

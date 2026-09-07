@@ -54,6 +54,10 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "stock_ledger_event_ids", "stock_ledger_transaction_count",
     "locality_path_cache", "locality_travel_time_cache", "in_transit_supply_total",
     "active_shipment_ids", "active_movement_order_ids",
+    "microzones_by_locality", "formation_ids_by_locality",
+    "patrol_ids_by_locality", "security_posts_by_locality",
+    "information_execution_cache",
+    "information_cache_active",
     "execution_profile",
 })
 
@@ -72,6 +76,8 @@ PARTICLE_ARCHIVE_WORLD_FIELDS = frozenset({
     "organization_onset_log", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
     "civilian_harm_events",
+    "information_execution_cache",
+    "information_cache_active",
 })
 
 OUTPUT_ONLY_SUMMARY_FIELDS = frozenset({

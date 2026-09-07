@@ -361,7 +361,7 @@ def begin_intervention(world, state: ForeignState, time: float, mode: str,
         # Runtime intervention materiel is an external inflow, not a rewrite
         # of the generated baseline stock.
         world.cumulative_supply_produced += formation.supply_stock
-        world.formations[fid] = formation
+        world.register_formation(formation)
         _add_command_edge(world, f"CMD:{oid}", fid, oid, .7, 7.0)
         sid = f"SUP-{oid}"
         world.supply_sources[sid] = SupplySource(sid, oid, border.locality_id,
@@ -370,12 +370,13 @@ def begin_intervention(world, state: ForeignState, time: float, mode: str,
         zone = max((z for z in world.microzones.values() if z.locality_id == border.locality_id),
                    key=lambda z: z.population_share)
         pid = f"PATROL-{fid}"
-        world.patrols[pid] = Patrol(pid, fid, oid, border.locality_id,
-                                   zone.microzone_id, [zone.microzone_id], time, .35)
+        world.register_patrol(Patrol(pid, fid, oid, border.locality_id,
+                                     zone.microzone_id, [zone.microzone_id], time, .35))
         postid = f"POST-{fid}"
         world.security_posts[postid] = SecurityPost(postid, oid, border.locality_id,
                                                     zone.microzone_id, personnel*.15, .2, .7, fid)
         world.security_post_ids_by_locality.setdefault(border.locality_id, []).append(postid)
+        world.rebuild_runtime_entity_indexes()
         intervention.force_formation_ids.add(fid)
     # Intervention creation is an explicit external inflow even when invoked
     # directly by an experiment rather than through the scheduler.

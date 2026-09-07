@@ -230,9 +230,24 @@ def language_comprehension(world: WorldState, observer_actor_id: str,
     organization = world.organizations.get(observer_actor_id)
     if organization is None:
         return 0.25
-    local_embeddedness = local_organizational_embeddedness(
-        world, observer_actor_id, locality_id
+    cache_key = (
+        "language", observer_actor_id, locality_id, source_type, source_id
     )
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return float(cached)
+    embeddedness_key = (observer_actor_id, locality_id)
+    local_embeddedness = (
+        world.information_execution_cache.get(embeddedness_key)
+        if world.information_cache_active else None
+    )
+    if local_embeddedness is None:
+        local_embeddedness = local_organizational_embeddedness(
+            world, observer_actor_id, locality_id
+        )
+        if world.information_cache_active:
+            world.information_execution_cache[embeddedness_key] = local_embeddedness
     district = world.districts[world.localities[locality_id].district_id]
     primary = district.language_pattern.split("/")[0]
     if source_type in {"civilian", "social_network", "political_elite", "interpreter"}:
@@ -249,16 +264,26 @@ def language_comprehension(world: WorldState, observer_actor_id: str,
             base = 0.22 + 0.62 * max(community.language_profile.values(), default=.2)
             if source_type == "interpreter":
                 base += 0.15
-        return clamp(base, .08, 1.0)
-    formation = _observer_formation(world, source_id)
-    if formation is not None:
-        return clamp(.35 + .55 * formation.information + .1 * local_embeddedness,
-                     .1, 1.0)
-    return clamp(.45 + .45 * local_embeddedness, .1, 1.0)
+        result = clamp(base, .08, 1.0)
+    else:
+        formation = _observer_formation(world, source_id)
+        if formation is not None:
+            result = clamp(.35 + .55 * formation.information + .1 * local_embeddedness,
+                           .1, 1.0)
+        else:
+            result = clamp(.45 + .45 * local_embeddedness, .1, 1.0)
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def source_trust(world: WorldState, observer_actor_id: str, source_type: str,
                  locality_id: str, source_id: str | None = None) -> float:
+    cache_key = ("trust", observer_actor_id, source_type, locality_id, source_id)
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return float(cached)
     config = world.config.information
     trust = config.source_trust.get(source_type, .5)
     organization = world.organizations.get(observer_actor_id)
@@ -270,7 +295,10 @@ def source_trust(world: WorldState, observer_actor_id: str, source_type: str,
             cooperation = (community.government_cooperation if not _is_insurgent_actor(world, observer_actor_id)
                            else community.insurgent_sympathy)
             trust *= .7 + .6 * clamp(cooperation)
-    return clamp(trust, .02, 1.0)
+    result = clamp(trust, .02, 1.0)
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def source_quality(world: WorldState, observer_actor_id: str, source_type: str,
@@ -939,6 +967,11 @@ def observe_patrol(world: WorldState, patrol_id: str, time: float,
 
 def _report_probability(world: WorldState, observer_actor_id: str, locality_id: str,
                         source_type: str, source_id: str | None) -> float:
+    cache_key = ("report", observer_actor_id, locality_id, source_type, source_id)
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return float(cached)
     config = world.config.information
     rates = {
         "civilian": config.civilian_report_rate,
@@ -971,19 +1004,30 @@ def _report_probability(world: WorldState, observer_actor_id: str, locality_id: 
     # Source-availability priors were introduced on the original six-hour
     # information collection cycle.  Preserve that reference-period meaning
     # when the numerical information scheduler is refined or coarsened.
-    return reference_probability(
+    result = reference_probability(
         clamp(probability),
         world.config.intervals.information,
         0.25,
     )
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def _observe_from_source(world: WorldState, observer_actor_id: str, observer_node_id: str | None,
                          source_id: str, source_type: str, locality_id: str,
                          time: float, rng: random.Random,
                          formation_index: dict[tuple[str, str], list[ArmedFormation]] | None = None,
+                         target_actor_cache: dict[str, tuple[str, ...]] | None = None,
                          ) -> list[Observation]:
-    target_actors = _target_actors_for_observer(world, observer_actor_id)
+    target_actors = (
+        target_actor_cache.get(observer_actor_id)
+        if target_actor_cache is not None else None
+    )
+    if target_actors is None:
+        target_actors = _target_actors_for_observer(world, observer_actor_id)
+        if target_actor_cache is not None:
+            target_actor_cache[observer_actor_id] = target_actors
     local_node = observer_node_id or source_id
     if rng.random() >= _report_probability(
             world, observer_actor_id, locality_id, source_type, source_id):
@@ -1036,6 +1080,7 @@ def generate_background_observations(world: WorldState, time: float,
     rng = rng or seeded_rng(world.config, f"information:{time:.6f}")
     observations: list[Observation] = []
     formation_index = _information_formation_index(world)
+    target_actor_cache: dict[str, tuple[str, ...]] = {}
     for post in sorted(world.security_posts.values(), key=lambda item: item.post_id):
         if post.available_fraction <= 0:
             continue
@@ -1046,7 +1091,7 @@ def generate_background_observations(world: WorldState, time: float,
         observations.extend(_observe_from_source(
             world, observer, post.formation_id or post.post_id, post.post_id,
             "fixed_post", post.locality_id, time, rng,
-            formation_index,
+            formation_index, target_actor_cache,
         ))
 
     for locality_id in sorted(world.localities):
@@ -1061,7 +1106,7 @@ def generate_background_observations(world: WorldState, time: float,
                 observations.extend(_observe_from_source(
                     world, "government", None, f"ADMIN:{locality_id}",
                     "administrative", locality_id, time, rng,
-                    formation_index,
+                    formation_index, target_actor_cache,
                 ))
                 if clamp(world.localities[locality_id].governance.get(
                         "elite_access_capacity",
@@ -1069,14 +1114,14 @@ def generate_background_observations(world: WorldState, time: float,
                     observations.extend(_observe_from_source(
                         world, "government", None, f"ELITE-CAP:{locality_id}",
                         "political_elite", locality_id, time, rng,
-                        formation_index,
+                        formation_index, target_actor_cache,
                     ))
                 district = world.districts[world.localities[locality_id].district_id]
                 if "/" in district.language_pattern and world.localities[locality_id].population > 0:
                     observations.extend(_observe_from_source(
                         world, "government", None, f"INTERPRETER-CAP:{locality_id}",
                         "interpreter", locality_id, time, rng,
-                        formation_index,
+                        formation_index, target_actor_cache,
                     ))
             continue
         community = rng.choices(
@@ -1091,7 +1136,7 @@ def generate_background_observations(world: WorldState, time: float,
                 observations.extend(_observe_from_source(
                     world, "government", None, community.community_id, source_type,
                     locality_id, time, rng,
-                    formation_index,
+                    formation_index, target_actor_cache,
                 ))
         if "government" in world.organizations:
             for source_type, source_id in (
@@ -1101,14 +1146,14 @@ def generate_background_observations(world: WorldState, time: float,
                 observations.extend(_observe_from_source(
                     world, "government", None, source_id, source_type,
                     locality_id, time, rng,
-                    formation_index,
+                    formation_index, target_actor_cache,
                 ))
         for insurgent_id in sorted(organization.organization_id for organization in world.organizations.values()
                                    if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"):
             observations.extend(_observe_from_source(
                 world, insurgent_id, None, community.community_id, "civilian",
                 locality_id, time, rng,
-                formation_index,
+                formation_index, target_actor_cache,
             ))
         # A bridge/interpreter channel is only sampled where language diversity
         # makes it meaningful; it degrades less than an untranslated report.
@@ -1117,7 +1162,7 @@ def generate_background_observations(world: WorldState, time: float,
             observations.extend(_observe_from_source(
                 world, "government", None, community.community_id, "interpreter",
                 locality_id, time, rng,
-                formation_index,
+                formation_index, target_actor_cache,
             ))
 
     for formation in sorted(world.formations.values(), key=lambda item: item.formation_id):
@@ -1127,7 +1172,7 @@ def generate_background_observations(world: WorldState, time: float,
             world, formation.organization_id, formation.formation_id,
             formation.formation_id, "organization_member", formation.locality_id,
             time, rng,
-            formation_index,
+            formation_index, target_actor_cache,
         ))
     return observations
 
@@ -1167,49 +1212,55 @@ def process_information(world: WorldState, time: float,
                         rng: random.Random | None = None) -> dict[str, Any]:
     """Age beliefs, generate reports, and deliver due command-network relays."""
     rng = rng or seeded_rng(world.config, f"information-process:{time:.6f}")
-    decay_information(world, time)
-    generated = generate_background_observations(world, time, rng)
-    delivered = dropped = 0
-    delivered_ids: list[str] = []
-    for relay_id in sorted(world.active_information_relays):
-        relay = world.information_relays.get(relay_id)
-        if relay is None or relay.status != "in_transit":
-            world.active_information_relays.discard(relay_id)
-            continue
-        if relay.arrives_at > time:
-            continue
-        observation = world.observations.get(relay.observation_id)
-        if observation is None:
-            relay.status = "dropped"
-            world.active_information_relays.discard(relay_id)
-            dropped += 1
-            continue
-        if rng.random() <= relay.reliability:
-            relay.status = "delivered"
-            world.active_information_relays.discard(relay_id)
-            relay.delivered_at = time
-            observation.received_at = time
-            fuse_observation(world, observation, relay.organization_id, time)
-            fuse_observation(world, observation, relay.destination_node_id, time, node=True)
-            source_org = world.organizations.get(observation.observer_actor_id)
-            if (source_org is not None and source_org.kind is not OrganizationKind.INSURGENT and
-                    "government" in world.organizations):
-                # Government headquarters receives subordinate security reports
-                # through the command relay; it does not read the hidden state.
-                fuse_observation(world, observation, "government", time)
-            delivered += 1
-            delivered_ids.append(observation.observation_id)
-        else:
-            relay.status = "dropped"
-            world.active_information_relays.discard(relay_id)
-            dropped += 1
-    _prune_information_history(world, time)
-    return {"generated": len(generated),
-            "observation_ids": tuple(item.observation_id for item in generated),
-            "relays_delivered": delivered,
-            "delivered_observation_ids": tuple(delivered_ids),
-            "relays_dropped": dropped,
-            "active_relays": len(world.active_information_relays)}
+    world.information_execution_cache.clear()
+    world.information_cache_active = True
+    try:
+        decay_information(world, time)
+        generated = generate_background_observations(world, time, rng)
+        delivered = dropped = 0
+        delivered_ids: list[str] = []
+        for relay_id in sorted(world.active_information_relays):
+            relay = world.information_relays.get(relay_id)
+            if relay is None or relay.status != "in_transit":
+                world.active_information_relays.discard(relay_id)
+                continue
+            if relay.arrives_at > time:
+                continue
+            observation = world.observations.get(relay.observation_id)
+            if observation is None:
+                relay.status = "dropped"
+                world.active_information_relays.discard(relay_id)
+                dropped += 1
+                continue
+            if rng.random() <= relay.reliability:
+                relay.status = "delivered"
+                world.active_information_relays.discard(relay_id)
+                relay.delivered_at = time
+                observation.received_at = time
+                fuse_observation(world, observation, relay.organization_id, time)
+                fuse_observation(world, observation, relay.destination_node_id, time, node=True)
+                source_org = world.organizations.get(observation.observer_actor_id)
+                if (source_org is not None and source_org.kind is not OrganizationKind.INSURGENT and
+                        "government" in world.organizations):
+                    # Government headquarters receives subordinate security reports
+                    # through the command relay; it does not read the hidden state.
+                    fuse_observation(world, observation, "government", time)
+                delivered += 1
+                delivered_ids.append(observation.observation_id)
+            else:
+                relay.status = "dropped"
+                world.active_information_relays.discard(relay_id)
+                dropped += 1
+        _prune_information_history(world, time)
+        return {"generated": len(generated),
+                "observation_ids": tuple(item.observation_id for item in generated),
+                "relays_delivered": delivered,
+                "delivered_observation_ids": tuple(delivered_ids),
+                "relays_dropped": dropped,
+                "active_relays": len(world.active_information_relays)}
+    finally:
+        world.information_execution_cache.clear()
+        world.information_cache_active = False
 
 
 def _prune_information_history(world: WorldState, time: float) -> None:
