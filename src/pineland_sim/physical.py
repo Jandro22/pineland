@@ -110,9 +110,11 @@ def zones_in_locality(world: WorldState, locality_id: str) -> list[Microzone]:
 
 
 def posts_in_locality(world: WorldState, locality_id: str) -> list[SecurityPost]:
-    cached_posts = world.security_posts_by_locality.get(locality_id)
-    if cached_posts is not None:
-        return cached_posts
+    if locality_id in world.security_posts_by_locality:
+        return tuple(
+            post for post in world.security_posts_by_locality[locality_id]
+            if post.post_id in world.security_posts
+        )
     post_ids = world.security_post_ids_by_locality.get(locality_id)
     if post_ids is not None:
         return [world.security_posts[post_id] for post_id in post_ids]
@@ -239,7 +241,8 @@ def generate_physical_world(world: WorldState) -> None:
     advance_patrol_presence_memory(world, 0.0)
     for locality_id in world.localities:
         aggregates = recompute_contested_controls(
-            world, locality_id, 0.0, advance_memory=False
+            world, locality_id, 0.0, advance_memory=False,
+            use_runtime_indexes=True,
         )
         for actor, aggregate in aggregates.items():
             world.localities[locality_id].control.setdefault(actor, ControlVector()).physical = aggregate
@@ -371,7 +374,8 @@ def advance_patrol_presence_memory(world: WorldState, time: float,
     return total_contribution
 
 
-def response_times(world: WorldState, locality_id: str, actor: str, time: float) -> dict[str, float]:
+def response_times(world: WorldState, locality_id: str, actor: str, time: float,
+                   *, use_runtime_indexes: bool = False) -> dict[str, float]:
     zone_ids = [zone.microzone_id for zone in zones_in_locality(world, locality_id)]
     distances = {zone_id: inf for zone_id in zone_ids}
     queue: list[tuple[float, str]] = []
@@ -392,9 +396,10 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
             if mobilization_delay < distances[post.microzone_id]:
                 distances[post.microzone_id] = mobilization_delay
                 heapq.heappush(queue, (mobilization_delay, post.microzone_id))
-    patrol_ids = world.patrol_ids_by_locality.get(locality_id)
+    patrol_ids = world.patrol_ids_by_locality.get(locality_id) if use_runtime_indexes else None
     patrols = (
-        (world.patrols[patrol_id] for patrol_id in patrol_ids)
+        (world.patrols[patrol_id] for patrol_id in patrol_ids
+         if patrol_id in world.patrols)
         if patrol_ids is not None
         else (patrol for patrol in world.patrols.values()
               if patrol.locality_id == locality_id)
@@ -417,9 +422,10 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
     # patrol object (the normal case for insurgent formations).  Its explicit
     # current microzone is the source location; this keeps both sides
     # symmetric and removes the former patrol-only presence assumption.
-    formation_ids = world.formation_ids_by_locality.get(locality_id)
+    formation_ids = world.formation_ids_by_locality.get(locality_id) if use_runtime_indexes else None
     formations = (
-        (world.formations[formation_id] for formation_id in formation_ids)
+        (world.formations[formation_id] for formation_id in formation_ids
+         if formation_id in world.formations)
         if formation_ids is not None
         else (formation for formation in world.formations.values()
               if formation.locality_id == locality_id)
@@ -453,7 +459,8 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float)
 def recompute_microzone_control(world: WorldState, locality_id: str,
                                 actor: str, time: float,
                                 apply_contestation: bool = True,
-                                *, advance_memory: bool = True) -> float:
+                                *, advance_memory: bool = True,
+                                use_runtime_indexes: bool = False) -> float:
     config = world.config.physical
     # Direct callers receive the same completed patrol-memory accounting as a
     # scheduled physical refresh. Repeated calls at the same time are idempotent
@@ -465,7 +472,10 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
     local_zones = zones_in_locality(world, locality_id)
     if local_zones:
         default_zone = max(local_zones, key=lambda zone: zone.population_share).microzone_id
-        formation_ids = world.formation_ids_by_locality.get(locality_id)
+        formation_ids = (
+            world.formation_ids_by_locality.get(locality_id)
+            if use_runtime_indexes else None
+        )
         formations = (
             (world.formations[formation_id] for formation_id in formation_ids)
             if formation_ids is not None
@@ -488,7 +498,10 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
         )
         else actor
     )
-    times = response_times(world, locality_id, effective_actor, time)
+    times = response_times(
+        world, locality_id, effective_actor, time,
+        use_runtime_indexes=use_runtime_indexes,
+    )
     posts_by_zone: dict[str, float] = {}
     for post in posts_in_locality(world, locality_id):
         if _actor_matches_organization(world, post.organization_id, effective_actor):
@@ -504,7 +517,10 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
             posts_by_zone[post.microzone_id] = posts_by_zone.get(post.microzone_id, 0.0) + effective_presence
     formations_by_zone: dict[str, float] = {}
     locality = world.localities[locality_id]
-    formation_ids = world.formation_ids_by_locality.get(locality_id)
+    formation_ids = (
+        world.formation_ids_by_locality.get(locality_id)
+        if use_runtime_indexes else None
+    )
     formations = (
         (world.formations[formation_id] for formation_id in formation_ids)
         if formation_ids is not None
@@ -551,12 +567,14 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
                 recompute_microzone_control(
                     world, locality_id, _INSURGENT_SIDE_ACTOR, time,
                     apply_contestation=False, advance_memory=False,
+                    use_runtime_indexes=use_runtime_indexes,
                 )
                 opponent_key = _INSURGENT_SIDE_ACTOR
             else:
                 recompute_microzone_control(
                     world, locality_id, opponent, time,
                     apply_contestation=False, advance_memory=False,
+                    use_runtime_indexes=use_runtime_indexes,
                 )
                 opponent_key = opponent
             adjusted = 0.0
@@ -576,7 +594,8 @@ def recompute_microzone_control(world: WorldState, locality_id: str,
 
 def recompute_contested_controls(world: WorldState, locality_id: str, time: float,
                                  competition_strength: float = .35,
-                                 *, advance_memory: bool = True) -> dict[str, float]:
+                                 *, advance_memory: bool = True,
+                                 use_runtime_indexes: bool = False) -> dict[str, float]:
     """Recompute side-level and franchise-level physical reach.
 
     Raw reach is generated independently from posts, presence and response;
@@ -596,7 +615,7 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
     for actor in actors:
         raw_aggregate[actor] = recompute_microzone_control(
             world, locality_id, actor, time, apply_contestation=False,
-            advance_memory=False)
+            advance_memory=False, use_runtime_indexes=use_runtime_indexes)
         raw_zones[actor] = {
             zone.microzone_id: zone.physical_control.get(actor, 0.0)
             for zone in zones_in_locality(world, locality_id)
@@ -605,6 +624,7 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
         recompute_microzone_control(
             world, locality_id, _INSURGENT_SIDE_ACTOR, time,
             apply_contestation=False, advance_memory=False,
+            use_runtime_indexes=use_runtime_indexes,
         )
         raw_zones[_INSURGENT_SIDE_ACTOR] = {
             zone.microzone_id: zone.physical_control.get(

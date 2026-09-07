@@ -365,7 +365,8 @@ def _actual_target_presence(world: WorldState, target_actor_id: str,
                 patrols = (patrol for patrol in world.patrols.values()
                            if patrol.formation_id == formation.formation_id)
             else:
-                patrols = (world.patrols[patrol_id] for patrol_id in patrol_ids)
+                patrols = (world.patrols[patrol_id] for patrol_id in patrol_ids
+                           if patrol_id in world.patrols)
             if not any(patrol.current_microzone_id == microzone_id for patrol in patrols):
                 continue
         personnel += formation.personnel
