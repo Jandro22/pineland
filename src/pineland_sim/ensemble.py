@@ -3256,7 +3256,12 @@ def process_information_numeric(
 
 @dataclass(slots=True)
 class ParticleBatchState:
-    """Packed ensemble state with optional reference-world synchronization."""
+    """Packed ensemble state with optional reference-world synchronization.
+
+    hot_state is the authoritative mutable execution representation used by
+    NativeEnsembleRunner. The retained particles are reference/export views
+    and are not consulted by the hot physical/action loop.
+    """
 
     topology: StaticWorldTopology
     times: array
@@ -3267,6 +3272,7 @@ class ParticleBatchState:
     node_presence_state: EnsembleBeliefState
     zone_state: EnsembleBeliefState
     particles: list[Any] = field(default_factory=list, repr=False)
+    hot_state: Any | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         self.times = array("d", self.times)
@@ -3349,7 +3355,7 @@ class ParticleBatchState:
             presence_rows(worlds, "compact_zone_state", "zone_beliefs", ZONE_STATE_STRIDE),
             ZONE_STATE_STRIDE,
         )
-        return cls(
+        batch = cls(
             topology,
             array("d", [float(item.time) for item in particles]),
             array("d", [float(getattr(item, "log_weight", 0.0)) for item in particles]),
@@ -3357,6 +3363,9 @@ class ParticleBatchState:
             control_state, presence_state, node_presence_state, zone_state,
             list(particles),
         )
+        from .native_ensemble import PackedHotState
+        batch.hot_state = PackedHotState.from_particles(particles, topology)
+        return batch
 
     def gather(self, parent_indices: Sequence[int], *, clone_reference_states: bool = False) -> None:
         parents = tuple(int(index) for index in parent_indices)
@@ -3364,6 +3373,8 @@ class ParticleBatchState:
             raise ValueError("invalid particle parent indices")
         for state in (self.control_state, self.presence_state, self.node_presence_state, self.zone_state):
             state.gather(parents)
+        if self.hot_state is not None:
+            self.hot_state.gather(parents)
         old_times = self.times
         old_weights = self.weights
         old_lineages = self.lineage_ids
@@ -3382,6 +3393,62 @@ class ParticleBatchState:
                 ]
             else:
                 self.particles = [self.particles[index] for index in parents]
+
+    def refresh_beliefs_from_world(self, particle_index: int) -> None:
+        """Pull one lane's compact belief rows from its Python view."""
+        if not self.particles:
+            raise RuntimeError("belief refresh needs a retained Python view")
+        particle_index = int(particle_index)
+        world = self.particles[particle_index].world
+        from .compact_information_state import (
+            CompactControlBeliefState,
+            CompactPresenceBeliefState,
+            CompactZoneBeliefState,
+        )
+
+        def write_rows(
+            state: EnsembleBeliefState,
+            compact: Any,
+            fallback: dict,
+            row_factory: Any,
+        ) -> None:
+            for key in state.keys:
+                if compact is not None and key in compact.key_to_index:
+                    row = compact.row(key)
+                elif key in fallback:
+                    row = row_factory(fallback[key])
+                else:
+                    continue
+                base = (
+                    particle_index * state.entity_count + state.key_to_index[key]
+                ) * state.stride
+                for field_index, value in enumerate(row):
+                    state.values[base + field_index] = float(value)
+
+        write_rows(
+            self.control_state,
+            getattr(world, "compact_control_state", None),
+            world.control_beliefs,
+            CompactControlBeliefState._belief_row,
+        )
+        write_rows(
+            self.presence_state,
+            getattr(world, "compact_presence_state", None),
+            world.presence_beliefs,
+            CompactPresenceBeliefState._belief_row,
+        )
+        write_rows(
+            self.node_presence_state,
+            getattr(world, "compact_node_presence_state", None),
+            world.node_presence_beliefs,
+            CompactPresenceBeliefState._belief_row,
+        )
+        write_rows(
+            self.zone_state,
+            getattr(world, "compact_zone_state", None),
+            world.zone_beliefs,
+            CompactZoneBeliefState._belief_row,
+        )
 
     def synchronize_to_worlds(self) -> None:
         """Mirror packed rows into legacy objects at an explicit boundary."""
@@ -3451,6 +3518,10 @@ class ParticleBatchState:
                     world.zone_beliefs[key] = ActorZoneBelief(key[0], key[1], 0.5, world.config.information.prior_confidence, 0.0)
                 compact_zone.write_to_belief(key, world.zone_beliefs[key])
             world.compact_zone_state = compact_zone
+            if self.hot_state is not None:
+                self.hot_state.export_lane_to_world(
+                    particle_index, world, self.topology
+                )
             world.time = float(self.times[particle_index])
 
     def state_sha256(self) -> str:
@@ -3460,6 +3531,22 @@ class ParticleBatchState:
         digest.update(self.weights.tobytes())
         for state in (self.control_state, self.presence_state, self.node_presence_state, self.zone_state):
             digest.update(state.sha256().encode())
+        if self.hot_state is not None:
+            for name in (
+                "organization_present", "organization_active",
+                "organization_kind", "formation_present",
+                "formation_organization", "formation_locality",
+                "formation_microzone", "formation_values", "formation_flags",
+                "manpower_pool", "manpower_supply_reserve",
+                "supply_source_stock", "post_values", "post_indices",
+                "patrol_values", "patrol_indices", "zone_presence_memory",
+                "zone_presence_updated_at", "zone_physical_control",
+                "config_values",
+            ):
+                digest.update(getattr(self.hot_state, name).tobytes())
+            for name in sorted(self.hot_state.next_clocks):
+                digest.update(name.encode())
+                digest.update(self.hot_state.next_clocks[name].tobytes())
         return digest.hexdigest()
 
     def advance_to(self, until: float, *, runner: Any | None = None) -> None:
@@ -3472,7 +3559,11 @@ class ParticleBatchState:
         """
         until = float(until)
         if runner is not None:
-            runner(self, until)
+            advance = getattr(runner, "advance", None)
+            if callable(advance):
+                advance(self, min(self.times), until)
+            else:
+                runner(self, until)
             self.times = array("d", [until] * self.particle_count)
             return
         if not self.particles:
@@ -3525,6 +3616,7 @@ class PackedParticleFilter:
     strict_support: bool = True
     resampling_events: int = 0
     history: list[PackedFilterUpdate] = field(default_factory=list)
+    runner: Any | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if not 0.0 < float(self.ess_fraction) <= 1.0:
@@ -3538,12 +3630,36 @@ class PackedParticleFilter:
         rng: Any,
         ess_fraction: float = 0.5,
         topology: StaticWorldTopology | None = None,
+        native_runner: bool = False,
+        sparse_boundary: Any | None = None,
     ) -> "PackedParticleFilter":
-        return cls(
-            ParticleBatchState.from_particles(particles, topology=topology),
+        batch = ParticleBatchState.from_particles(particles, topology=topology)
+        result = cls(
+            batch,
             rng,
             ess_fraction=ess_fraction,
         )
+        if native_runner:
+            from .native_ensemble import NativeEnsembleRunner
+            result.runner = NativeEnsembleRunner.from_batch(
+                batch, sparse_boundary=sparse_boundary
+            )
+        return result
+
+    def enable_native_runner(
+        self,
+        *,
+        sparse_boundary: Any | None = None,
+        enable_information_boundary: bool = True,
+    ) -> Any:
+        """Install and return the production packed ensemble runner."""
+        from .native_ensemble import NativeEnsembleRunner
+        self.runner = NativeEnsembleRunner.from_batch(
+            self.batch,
+            sparse_boundary=sparse_boundary,
+            enable_information_boundary=enable_information_boundary,
+        )
+        return self.runner
 
     @property
     def particle_count(self) -> int:
@@ -3593,8 +3709,9 @@ class PackedParticleFilter:
             systematic_resample_indices,
         )
 
-        if runner is not None:
-            self.batch.advance_to(float(until), runner=runner)
+        active_runner = runner if runner is not None else self.runner
+        if active_runner is not None:
+            self.batch.advance_to(float(until), runner=active_runner)
         else:
             if float(until) < min(self.batch.times):
                 raise ValueError("packed filter boundary cannot move backward")

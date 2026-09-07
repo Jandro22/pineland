@@ -51,6 +51,7 @@ from pineland_sim import (  # noqa: E402
 )
 from pineland_sim.state_estimation import (  # noqa: E402
     binary_mcse,
+    binary_mcse_upper_bound,
     GuidedProposalPropagator,
     monte_carlo_standard_error,
     RaoBlackwellizedActivityLikelihood,
@@ -1757,8 +1758,9 @@ def forecast_mcse_controlled_field(
     trajectory, then one independent future is forked from that member.  The
     returned field is therefore an ordinary posterior-predictive Monte Carlo
     estimator; unlike the legacy branch count, the stopping rule is attached
-    to its stated precision target.  This mode is intentionally in-process
-    until the same vector contract is available to resident workers.
+    to its stated precision target. Resident workers may evaluate future
+    trajectories concurrently while results are consumed in deterministic
+    prefix order.
     """
     tolerance = float(tolerance)
     min_trajectories = int(min_trajectories)
@@ -1838,7 +1840,10 @@ def forecast_mcse_controlled_field(
         trajectory_count += 1
         if trajectory_count >= min_trajectories:
             maximum_mcse = max(
-                (binary_mcse(values) for values in values_by_cell.values()),
+                (
+                    binary_mcse_upper_bound(values)
+                    for values in values_by_cell.values()
+                ),
                 default=0.0,
             )
             if maximum_mcse <= tolerance:
@@ -1894,7 +1899,7 @@ def forecast_mcse_controlled_field(
     if not converged:
         maximum_mcse = max(
             (
-                binary_mcse(values)
+                binary_mcse_upper_bound(values)
                 for values in values_by_cell.values()
             ),
             default=0.0,
