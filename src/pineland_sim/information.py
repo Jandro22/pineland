@@ -603,15 +603,16 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
     confidence = belief.confidence
     denominator = prior + weight
     confidence_scale = denominator / (1.0 + denominator)
-    for dimension, observed in values.items():
-        if dimension not in CONTROL_DIMENSIONS:
-            continue
-        old = getattr(estimate, dimension)
-        observed_value = clamp(float(observed))
-        # Inline the scalar update in this seven-dimensional hot loop.  The
-        # arithmetic and update order are intentionally identical to
-        # _fuse_scalar; avoiding ~1.6M Python calls matters at national scale.
-        new = clamp(
+    if (
+        len(values) == 7
+        and tuple(values) == CONTROL_DIMENSIONS
+    ):
+        # Canonical background control reports always carry the seven control
+        # fields in CONTROL_DIMENSIONS order. Fully unroll this extremely hot
+        # path while preserving the exact scalar arithmetic/update sequence.
+        observed_value = clamp(float(values["formal"]))
+        old = estimate.formal
+        estimate.formal = clamp(
             (prior * old + weight * observed_value) / denominator
         )
         contradiction = (
@@ -621,7 +622,101 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
         confidence = clamp(
             confidence_scale * exp(-penalty * contradiction)
         )
-        setattr(estimate, dimension, new)
+
+        observed_value = clamp(float(values["physical"]))
+        old = estimate.physical
+        estimate.physical = clamp(
+            (prior * old + weight * observed_value) / denominator
+        )
+        contradiction = (
+            contradiction * contradiction_decay
+            + weight * abs(observed_value - old)
+        )
+        confidence = clamp(
+            confidence_scale * exp(-penalty * contradiction)
+        )
+
+        observed_value = clamp(float(values["administrative"]))
+        old = estimate.administrative
+        estimate.administrative = clamp(
+            (prior * old + weight * observed_value) / denominator
+        )
+        contradiction = (
+            contradiction * contradiction_decay
+            + weight * abs(observed_value - old)
+        )
+        confidence = clamp(
+            confidence_scale * exp(-penalty * contradiction)
+        )
+
+        observed_value = clamp(float(values["legal"]))
+        old = estimate.legal
+        estimate.legal = clamp(
+            (prior * old + weight * observed_value) / denominator
+        )
+        contradiction = (
+            contradiction * contradiction_decay
+            + weight * abs(observed_value - old)
+        )
+        confidence = clamp(
+            confidence_scale * exp(-penalty * contradiction)
+        )
+
+        observed_value = clamp(float(values["fiscal"]))
+        old = estimate.fiscal
+        estimate.fiscal = clamp(
+            (prior * old + weight * observed_value) / denominator
+        )
+        contradiction = (
+            contradiction * contradiction_decay
+            + weight * abs(observed_value - old)
+        )
+        confidence = clamp(
+            confidence_scale * exp(-penalty * contradiction)
+        )
+
+        observed_value = clamp(float(values["social"]))
+        old = estimate.social
+        estimate.social = clamp(
+            (prior * old + weight * observed_value) / denominator
+        )
+        contradiction = (
+            contradiction * contradiction_decay
+            + weight * abs(observed_value - old)
+        )
+        confidence = clamp(
+            confidence_scale * exp(-penalty * contradiction)
+        )
+
+        observed_value = clamp(float(values["expected"]))
+        old = estimate.expected
+        estimate.expected = clamp(
+            (prior * old + weight * observed_value) / denominator
+        )
+        contradiction = (
+            contradiction * contradiction_decay
+            + weight * abs(observed_value - old)
+        )
+        confidence = clamp(
+            confidence_scale * exp(-penalty * contradiction)
+        )
+    else:
+        for dimension, observed in values.items():
+            if dimension not in CONTROL_DIMENSIONS:
+                continue
+            old = getattr(estimate, dimension)
+            observed_value = clamp(float(observed))
+            new = clamp(
+                (prior * old + weight * observed_value) / denominator
+            )
+            contradiction = (
+                contradiction * contradiction_decay
+                + weight * abs(observed_value - old)
+            )
+            confidence = clamp(
+                confidence_scale * exp(-penalty * contradiction)
+            )
+            setattr(estimate, dimension, new)
     belief.confidence = confidence
     belief.contradiction_index = contradiction
     belief.updated_at = time
