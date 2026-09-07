@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from collections import deque
 import json
 from pathlib import Path
@@ -86,12 +86,16 @@ class WorldState:
     social_neighbors: dict[str, list[str]] = field(default_factory=dict)
     microzones: dict[str, Microzone] = field(default_factory=dict)
     microzone_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
+    microzones_by_locality: dict[str, tuple[Microzone, ...]] = field(default_factory=dict)
     primary_microzone_by_locality: dict[str, str] = field(default_factory=dict)
     physical_edges: dict[tuple[str, str], PhysicalEdge] = field(default_factory=dict)
     physical_neighbors: dict[str, dict[str, tuple[str, str]]] = field(default_factory=dict)
     security_posts: dict[str, SecurityPost] = field(default_factory=dict)
     security_post_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
     patrols: dict[str, Patrol] = field(default_factory=dict)
+    formation_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
+    patrol_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
+    security_posts_by_locality: dict[str, tuple[SecurityPost, ...]] = field(default_factory=dict)
     zone_beliefs: dict[tuple[str, str], ActorZoneBelief] = field(default_factory=dict)
     observations: dict[str, Observation] = field(default_factory=dict)
     next_observation_sequence: int = 1
@@ -107,6 +111,10 @@ class WorldState:
     # retained for forensic output, while this bounded index keeps recurring
     # information passes from sorting/scanning historical relays.
     active_information_relays: set[str] = field(default_factory=set)
+    # Per-information-tick memoization only; cleared before the next model
+    # boundary so this never becomes part of a particle's latent state.
+    information_execution_cache: dict[tuple[Any, ...], Any] = field(default_factory=dict)
+    information_cache_active: bool = False
     presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     node_presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     control_beliefs: dict[tuple[str, str, str], ActorBelief] = field(default_factory=dict)
@@ -196,6 +204,10 @@ class WorldState:
     state_based_event_times: list[float] = field(default_factory=list)
     state_based_event_localities: list[str] = field(default_factory=list)
     state_based_events: list[StateBasedEvent] = field(default_factory=list)
+    # Generic compact locality-period target index used by filtering and
+    # forecasting. Case layers can map locality IDs to their own evaluation
+    # surface (province, district, region, or another spatial unit).
+    state_based_event_localities_by_week: dict[int, set[str]] = field(default_factory=dict)
     # Contact-forensic traces are emitted at every scheduled contact event.
     # They are diagnostic observations of the pipeline, not additional random
     # draws or state transitions.
@@ -228,13 +240,99 @@ class WorldState:
     in_transit_supply_total: float = 0.0
     stock_transactions: list[StockTransaction] = field(default_factory=list)
     state_deltas: list[StateDelta] = field(default_factory=list)
+    # Running ledger aggregates make conservation checks O(stock domains),
+    # instead of repeatedly scanning the complete transaction history.
+    stock_ledger_deltas: dict[str, float] = field(default_factory=dict)
+    stock_ledger_by_class: dict[str, dict[str, float]] = field(default_factory=dict)
+    stock_ledger_by_boundary: dict[str, float] = field(default_factory=dict)
+    stock_ledger_by_flow_kind: dict[str, dict[str, float]] = field(default_factory=dict)
+    stock_ledger_event_ids: set[str] = field(default_factory=set)
+    stock_ledger_transaction_count: int = 0
     initial_tracked_stocks: dict[str, float] = field(default_factory=dict)
     active_event_id: str | None = None
+    # Runtime bookkeeping profile. This is deliberately excluded from
+    # scientific state hashes and never changes transition equations.
+    execution_profile: str = "standard"
 
     @property
     def observation_records(self) -> list[Observation]:
         """Stable list view for analysis code that prefers event-log semantics."""
         return list(self.observations.values())
+
+    def rebuild_runtime_entity_indexes(self) -> None:
+        """Build deterministic locality indexes used by hot execution paths."""
+        self.microzones_by_locality = {
+            locality_id: tuple(
+                self.microzones[zone_id]
+                for zone_id in zone_ids
+                if zone_id in self.microzones
+            )
+            for locality_id, zone_ids in self.microzone_ids_by_locality.items()
+        }
+        self.formation_ids_by_locality = {}
+        for formation_id, formation in self.formations.items():
+            self.formation_ids_by_locality.setdefault(
+                formation.locality_id, []
+            ).append(formation_id)
+        for formation_ids in self.formation_ids_by_locality.values():
+            formation_ids.sort()
+        self.patrol_ids_by_locality = {}
+        for patrol_id, patrol in self.patrols.items():
+            self.patrol_ids_by_locality.setdefault(
+                patrol.locality_id, []
+            ).append(patrol_id)
+        for patrol_ids in self.patrol_ids_by_locality.values():
+            patrol_ids.sort()
+        self.security_posts_by_locality = {
+            locality_id: tuple(
+                self.security_posts[post_id]
+                for post_id in post_ids
+                if post_id in self.security_posts
+            )
+            for locality_id, post_ids in self.security_post_ids_by_locality.items()
+        }
+
+    def register_formation(self, formation: ArmedFormation) -> None:
+        """Register a newly created formation in the locality execution index."""
+        self.formations[formation.formation_id] = formation
+        self.formation_ids_by_locality.setdefault(
+            formation.locality_id, []
+        ).append(formation.formation_id)
+
+    def relocate_formation(self, formation: ArmedFormation, locality_id: str) -> None:
+        """Move a formation while keeping the locality index exact."""
+        old_locality = formation.locality_id
+        if old_locality == locality_id:
+            return
+        old_ids = self.formation_ids_by_locality.get(old_locality, [])
+        if formation.formation_id in old_ids:
+            old_ids.remove(formation.formation_id)
+        self.formation_ids_by_locality.setdefault(locality_id, []).append(
+            formation.formation_id
+        )
+        self.formation_ids_by_locality[locality_id].sort()
+        formation.locality_id = locality_id
+
+    def register_patrol(self, patrol: Patrol) -> None:
+        """Register a newly created patrol in the locality execution index."""
+        self.patrols[patrol.patrol_id] = patrol
+        self.patrol_ids_by_locality.setdefault(
+            patrol.locality_id, []
+        ).append(patrol.patrol_id)
+
+    def relocate_patrol(self, patrol: Patrol, locality_id: str) -> None:
+        """Move a patrol while keeping the locality index exact."""
+        old_locality = patrol.locality_id
+        if old_locality == locality_id:
+            return
+        old_ids = self.patrol_ids_by_locality.get(old_locality, [])
+        if patrol.patrol_id in old_ids:
+            old_ids.remove(patrol.patrol_id)
+        self.patrol_ids_by_locality.setdefault(locality_id, []).append(
+            patrol.patrol_id
+        )
+        self.patrol_ids_by_locality[locality_id].sort()
+        patrol.locality_id = locality_id
 
     def record_state_based_event(
         self,
@@ -249,18 +347,67 @@ class WorldState:
         """Append the typed compact event stream and legacy projections."""
         locality = str(locality_id)
         actors = tuple(dict.fromkeys(str(actor) for actor in actor_organization_ids))
-        self.state_based_events.append(
-            StateBasedEvent(
-                float(time),
-                locality,
-                actors,
-                None if initiating_organization_id is None else str(initiating_organization_id),
-                None if target_organization_id is None else str(target_organization_id),
-                str(construct),
+        if self.execution_profile != "particle":
+            self.state_based_events.append(
+                StateBasedEvent(
+                    float(time),
+                    locality,
+                    actors,
+                    None if initiating_organization_id is None else str(initiating_organization_id),
+                    None if target_organization_id is None else str(target_organization_id),
+                    str(construct),
+                )
             )
-        )
-        self.state_based_event_times.append(float(time))
-        self.state_based_event_localities.append(locality)
+            self.state_based_event_times.append(float(time))
+            self.state_based_event_localities.append(locality)
+        if locality in self.localities:
+            self.state_based_event_localities_by_week.setdefault(
+                int(float(time) // 7), set()
+            ).add(locality)
+
+    def clear_particle_archives(self) -> None:
+        """Drop output-only histories while retaining future-decision state.
+
+        The compact locality-period index is intentionally retained because it
+        is the filtering estimand's sufficient target surface.
+        """
+        from .reproducibility import PARTICLE_ARCHIVE_WORLD_FIELDS
+
+        for name in PARTICLE_ARCHIVE_WORLD_FIELDS:
+            value = getattr(self, name, None)
+            if isinstance(value, (dict, list, set)):
+                value.clear()
+            elif isinstance(value, (int, float)):
+                setattr(self, name, type(value)())
+
+    def detach_particle_archives(self) -> dict[str, Any]:
+        """Temporarily replace particle archives with empty containers.
+
+        This lets a fork deepcopy only decision state.  The original archive
+        objects are restored by ``restore_particle_archives`` after cloning.
+        """
+        from .reproducibility import PARTICLE_ARCHIVE_WORLD_FIELDS
+
+        detached: dict[str, Any] = {}
+        for item in fields(self):
+            name = item.name
+            if name not in PARTICLE_ARCHIVE_WORLD_FIELDS:
+                continue
+            value = getattr(self, name)
+            detached[name] = value
+            if isinstance(value, dict):
+                setattr(self, name, {})
+            elif isinstance(value, list):
+                setattr(self, name, [])
+            elif isinstance(value, set):
+                setattr(self, name, set())
+            elif isinstance(value, (int, float)):
+                setattr(self, name, type(value)())
+        return detached
+
+    def restore_particle_archives(self, detached: dict[str, Any]) -> None:
+        for name, value in detached.items():
+            setattr(self, name, value)
 
     @property
     def reports(self) -> list[Observation]:
@@ -315,6 +462,8 @@ class WorldState:
 
     def record_contact_funnel(self, record: dict[str, Any]) -> None:
         """Persist one contact-pipeline trace and update additive counters."""
+        if self.execution_profile == "particle":
+            return
         self.contact_funnel_records.append(record)
         self.contact_funnel_counts["scheduler_executions"] = (
             self.contact_funnel_counts.get("scheduler_executions", 0) + 1
@@ -362,6 +511,12 @@ class WorldState:
 
     def initialize_stock_ledger(self) -> None:
         self.initial_tracked_stocks = self.tracked_stock_totals()
+        self.stock_ledger_deltas.clear()
+        self.stock_ledger_by_class.clear()
+        self.stock_ledger_by_boundary.clear()
+        self.stock_ledger_by_flow_kind.clear()
+        self.stock_ledger_event_ids.clear()
+        self.stock_ledger_transaction_count = 0
 
     def record_stock_transactions(self, event_id: str, event_type: str,
                                   before: dict[str, float], after: dict[str, float]) -> None:
@@ -403,11 +558,35 @@ class WorldState:
                 flow_kind, boundary = "consumption", "internal"
             else:
                 flow_kind, boundary = "internal_transfer", "internal"
-            self.stock_transactions.append(StockTransaction(
-                f"ST{len(self.stock_transactions) + 1:012d}", self.time, event_id,
+            transaction = StockTransaction(
+                f"ST{self.stock_ledger_transaction_count + 1:012d}", self.time, event_id,
                 event_type, stock_class, stock_name, old, new, delta,
                 boundary, flow_kind,
-            ))
+            )
+            if self.execution_profile != "particle":
+                self.stock_transactions.append(transaction)
+            self.stock_ledger_deltas[stock_name] = (
+                self.stock_ledger_deltas.get(stock_name, 0.0) + delta
+            )
+            class_totals = self.stock_ledger_by_class.setdefault(
+                stock_class, {"positive": 0.0, "negative": 0.0, "net": 0.0}
+            )
+            class_totals["positive" if delta >= 0 else "negative"] += abs(delta)
+            class_totals["net"] += delta
+            self.stock_ledger_by_boundary[boundary] = (
+                self.stock_ledger_by_boundary.get(boundary, 0.0) + delta
+            )
+            flow_totals = self.stock_ledger_by_flow_kind.setdefault(
+                flow_kind,
+                {"net": 0.0, "gross_positive": 0.0,
+                 "gross_negative": 0.0, "transactions": 0},
+            )
+            flow_totals["net"] += delta
+            flow_totals["gross_positive"] += max(0.0, delta)
+            flow_totals["gross_negative"] += max(0.0, -delta)
+            flow_totals["transactions"] += 1
+            self.stock_ledger_event_ids.add(str(event_id))
+            self.stock_ledger_transaction_count += 1
 
     def stock_ledger_residual(self, stock_name: str | None = None) -> float:
         current = self.tracked_stock_totals()
@@ -415,22 +594,20 @@ class WorldState:
         residual = 0.0
         for name in names:
             initial = self.initial_tracked_stocks.get(name, current.get(name, 0.0))
-            delta = sum(item.delta for item in self.stock_transactions if item.stock_name == name)
+            delta = self.stock_ledger_deltas.get(name, 0.0)
             residual += current.get(name, 0.0) - initial - delta
         return residual
 
     def stock_ledger_diagnostics(self) -> dict[str, Any]:
         """Return cross-domain ledger coverage and conversion diagnostics."""
-        by_class: dict[str, dict[str, float]] = {}
-        by_boundary: dict[str, float] = {}
-        by_flow_kind: dict[str, float] = {}
-        for item in self.stock_transactions:
-            by_class.setdefault(item.stock_class, {"positive": 0.0, "negative": 0.0, "net": 0.0})
-            bucket = by_class[item.stock_class]
-            bucket["positive" if item.delta >= 0 else "negative"] += abs(item.delta)
-            bucket["net"] += item.delta
-            by_boundary[item.boundary] = by_boundary.get(item.boundary, 0.0) + item.delta
-            by_flow_kind[item.flow_kind] = by_flow_kind.get(item.flow_kind, 0.0) + item.delta
+        by_class = {
+            name: dict(values) for name, values in self.stock_ledger_by_class.items()
+        }
+        by_boundary = dict(self.stock_ledger_by_boundary)
+        by_flow_kind = {
+            name: values["net"]
+            for name, values in self.stock_ledger_by_flow_kind.items()
+        }
         return {
             "initial": dict(self.initial_tracked_stocks),
             "current": self.tracked_stock_totals(),
@@ -439,11 +616,12 @@ class WorldState:
             "by_boundary_net": by_boundary,
             "by_flow_kind_net": by_flow_kind,
             "resource_to_supply_conversion": self.cumulative_resource_to_supply,
-            "transaction_count": len(self.stock_transactions),
-            "event_coverage": len({item.event_id for item in self.stock_transactions}),
+            "transaction_count": self.stock_ledger_transaction_count,
+            "event_coverage": len(self.stock_ledger_event_ids),
             "warning": ("cross-domain totals are a diagnostic ledger, not a claim that "
                         "every exogenous economic flow is observed"
-                        if any(item.boundary == "boundary" for item in self.stock_transactions) else None),
+                        if any(value != 0.0 for boundary, value in by_boundary.items()
+                               if boundary == "boundary") else None),
         }
 
     def global_accounting_diagnostics(self) -> dict[str, Any]:
@@ -460,8 +638,7 @@ class WorldState:
                                 self.initial_tracked_stocks.get("military_supply", self.initial_supply_stock)) > 1e-6
         for stock_name, value in current.items():
             initial = self.initial_tracked_stocks.get(stock_name, value)
-            delta = sum(item.delta for item in self.stock_transactions
-                        if item.stock_name == stock_name)
+            delta = self.stock_ledger_deltas.get(stock_name, 0.0)
             residuals[stock_name] = value - initial - delta
         if baseline_mismatch:
             # Some low-level tests intentionally reset the supply baseline
@@ -472,16 +649,20 @@ class WorldState:
         flow_kind_summary = {}
         for kind in ("internal_transfer", "production", "consumption", "destruction",
                      "external_inflow", "external_outflow"):
-            items = [item for item in self.stock_transactions if item.flow_kind == kind]
+            totals = self.stock_ledger_by_flow_kind.get(
+                kind,
+                {"net": 0.0, "gross_positive": 0.0,
+                 "gross_negative": 0.0, "transactions": 0},
+            )
             flow_kind_summary[kind] = {
-                "net": sum(item.delta for item in items),
-                "gross_positive": sum(item.delta for item in items if item.delta > 0),
-                "gross_negative": -sum(item.delta for item in items if item.delta < 0),
-                "transactions": len(items),
+                "net": totals["net"],
+                "gross_positive": totals["gross_positive"],
+                "gross_negative": totals["gross_negative"],
+                "transactions": int(totals["transactions"]),
             }
         total_initial = sum(self.initial_tracked_stocks.values())
         total_current = sum(current.values())
-        classified_delta = sum(item.delta for item in self.stock_transactions)
+        classified_delta = sum(self.stock_ledger_deltas.values())
         reconciliation = {
             "initial_total": total_initial,
             "current_total": total_current,
@@ -517,10 +698,12 @@ class WorldState:
                 "per_stock_residual": residuals,
                 "max_abs_stock_residual": max((abs(value) for value in residuals.values()), default=0.0),
                 "population_residual": self.weighted_population() - population_expected,
-                "flow_kinds": {kind: sum(item.delta for item in self.stock_transactions
-                                         if item.flow_kind == kind)
-                               for kind in ("internal_transfer", "production", "consumption",
-                "destruction", "external_inflow", "external_outflow")},
+                "flow_kinds": {kind: self.stock_ledger_by_flow_kind.get(
+                    kind, {"net": 0.0}
+                )["net"] for kind in (
+                    "internal_transfer", "production", "consumption",
+                    "destruction", "external_inflow", "external_outflow"
+                )},
                 "flow_kind_summary": flow_kind_summary,
                 "reconciliation": reconciliation,
                 "domain_totals": domain_totals,
@@ -915,7 +1098,7 @@ class WorldState:
             ),
             "cumulative_resource_to_supply": self.cumulative_resource_to_supply,
             "supply_conservation_residual": self.supply_conservation_residual(),
-            "stock_ledger_transactions": len(self.stock_transactions),
+            "stock_ledger_transactions": self.stock_ledger_transaction_count,
             "stock_ledger_residual": self.stock_ledger_residual(),
             "state_delta_records": len(self.state_deltas),
             "mean_government_effective_control": sum(government_control) / len(government_control),
@@ -1190,10 +1373,25 @@ class WorldState:
             encoding="utf-8",
         )
 
-    def clone(self) -> "WorldState":
+    def clone(self, *, share_static: bool = False) -> "WorldState":
         import copy
 
-        return copy.deepcopy(self)
+        if not share_static:
+            return copy.deepcopy(self)
+        # These tables are constructed during world generation and are not
+        # mutated by simulation processes. Sharing them removes the largest
+        # avoidable part of a particle fork while all mutable state remains
+        # isolated below.
+        shared_fields = {
+            "districts", "geographic_containers", "district_hierarchy",
+            "social_edges", "social_neighbors", "adjacency",
+        }
+        cloned = copy.copy(self)
+        for item in fields(self):
+            if item.name in shared_fields:
+                continue
+            setattr(cloned, item.name, copy.deepcopy(getattr(self, item.name)))
+        return cloned
 
 
 def seeded_rng(config: SimulationConfig, stream: str) -> random.Random:

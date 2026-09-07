@@ -15,6 +15,7 @@ from .state_estimation import (
     AssimilationObservation,
     FilterUpdateDiagnostics,
     Particle,
+    PersistentParticlePool,
     PosteriorSupportExhausted,
     SequentialParticleFilter,
 )
@@ -45,6 +46,7 @@ __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "Exter
            "SimulationParticle", "SimulationResult", "generate_pineland"]
 __all__ += [
     "AssimilationObservation", "FilterUpdateDiagnostics", "Particle",
+    "PersistentParticlePool",
     "PosteriorSupportExhausted", "SequentialParticleFilter",
 ]
 __all__ += ["AgreementProvision", "Negotiation", "PeaceAgreement", "PeaceProcessConfig",

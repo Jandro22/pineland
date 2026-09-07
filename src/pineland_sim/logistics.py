@@ -1042,7 +1042,7 @@ def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | f
             departed += 1
         if order.status == "moving" and order.arrives_at is not None and order.arrives_at <= time:
             formation.moving = False
-            formation.locality_id = order.destination_locality_id
+            world.relocate_formation(formation, order.destination_locality_id)
             formation.fatigue = clamp(formation.fatigue + .015 * order.travel_time_hours / 24)
             formation.readiness = clamp(formation.readiness - .01 * order.travel_time_hours / 24)
             formation.availability = clamp(formation.availability - .05)
@@ -1053,7 +1053,7 @@ def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | f
             patrol = next((item for item in world.patrols.values()
                            if item.formation_id == formation.formation_id), None)
             if patrol:
-                patrol.locality_id = formation.locality_id
+                world.relocate_patrol(patrol, formation.locality_id)
                 patrol.current_microzone_id = destination_zone.microzone_id
                 patrol.route_history.append(destination_zone.microzone_id)
                 patrol.available_at = time

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -251,6 +252,7 @@ def score(
             "holdout reveal before calling score()"
         )
     candidate = json.loads(forecast_path.read_text(encoding="utf-8"))
+    empty_diff_sha256 = hashlib.sha256(b"").hexdigest()
     if (
         candidate.get("holdout_outcomes_read") is not False
         or candidate.get("holdout_outcomes_used") is not False
@@ -258,6 +260,10 @@ def score(
         or candidate.get("predictive_estimand")
         != "target_compatible_province_week_event_incidence"
         or candidate.get("quantitative_measurement_operator_applied") is not False
+        or candidate.get("tracked_diff_sha256") != empty_diff_sha256
+        or not candidate.get("source_commit_at_run")
+        or not candidate.get("model_sha256")
+        or not candidate.get("runner_sha256")
     ):
         raise ValueError("candidate forecast is not marked holdout-clean")
     target_field = candidate.get("posterior_target_probability_field")
@@ -352,6 +358,11 @@ def score(
         "schema_version": "pineland.afghanistan.information_matched_competition.v1",
         "candidate_schema_version": candidate.get("schema_version"),
         "candidate_forecast": str(forecast_path),
+        "candidate_source_commit": candidate.get("source_commit_at_run"),
+        "candidate_model_sha256": candidate.get("model_sha256"),
+        "candidate_runner_sha256": candidate.get("runner_sha256"),
+        "candidate_tracked_diff_sha256": candidate.get("tracked_diff_sha256"),
+        "scorer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "target": "target-compatible province-week Taliban-state-security incidence",
         "training_period": TRAINING_YEAR,
         "holdout_period": HOLDOUT_YEAR,

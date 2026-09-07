@@ -1,6 +1,7 @@
 import json
 import math
 import random
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -15,7 +16,9 @@ from pineland_sim import (
 )
 from pineland_sim.entities import OrganizationKind
 from pineland_sim.state_estimation import (
+    bounded_process_map,
     Particle,
+    PersistentParticlePool,
     effective_sample_size,
     measurement_update,
     normalize_log_weights,
@@ -23,6 +26,37 @@ from pineland_sim.state_estimation import (
     resample_if_degenerate,
     systematic_resample_indices,
 )
+
+
+def _resident_test_propagate(state, time, observation):
+    return state + observation, 0.0, {"time": time}
+
+
+def _resident_test_fork(state, child_index):
+    return state + 1000 * child_index
+
+
+def test_bounded_process_map_preserves_order_with_a_small_submission_window():
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        values = list(bounded_process_map(
+            executor,
+            lambda value: value * value,
+            range(8),
+            max_in_flight=2,
+        ))
+    assert values == [value * value for value in range(8)]
+
+
+def test_persistent_particle_pool_keeps_parent_forks_on_their_worker():
+    with PersistentParticlePool(
+        [0, 1, 2, 3],
+        propagate=_resident_test_propagate,
+        fork_state=_resident_test_fork,
+        workers=2,
+    ) as pool:
+        assert [result[0] for result in pool.propagate(7.0, 10)] == list(range(4))
+        pool.resample([3, 3, 0, 1])
+        assert pool.snapshot() == [13, 1013, 2010, 3011]
 
 
 def test_log_weight_normalization_and_ess_are_numerically_stable():
@@ -141,6 +175,36 @@ def test_training_only_filter_rejects_holdout_before_advancing_particles():
             AssimilationObservation(14.0, "A", split="holdout", observation_id="w2")
         )
     assert len(advanced) == count_before
+    assert filter_.last_time == 7.0
+
+
+def test_precomputed_propagation_uses_normal_weight_and_resampling_path():
+    particles = [Particle({"value": value}) for value in (0, 1, 2, 3)]
+    filter_ = SequentialParticleFilter(
+        particles,
+        transition=lambda state, time: None,
+        log_likelihood=lambda state, observed: 0.0,
+        rng=random.Random(17),
+        ess_fraction=0.1,
+    )
+    propagated = [
+        ({"value": 10}, math.log(.1)),
+        ({"value": 11}, math.log(.2)),
+        ({"value": 12}, math.log(.3)),
+        ({"value": 13}, math.log(.4)),
+    ]
+    diagnostics = filter_.assimilate_precomputed(
+        AssimilationObservation(
+            7.0, "unused", split="training", observation_id="precomputed"
+        ),
+        propagated,
+    )
+    assert [particle.state["value"] for particle in filter_.particles] == [
+        10, 11, 12, 13
+    ]
+    assert particle_weights(filter_.particles) == pytest.approx([.1, .2, .3, .4])
+    assert diagnostics.resampled is False
+    assert diagnostics.observation_id == "precomputed"
     assert filter_.last_time == 7.0
 
 

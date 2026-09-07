@@ -447,7 +447,7 @@ def _create_local_recruitment_formation(world, organization: Organization,
     zones = [z for z in world.microzones.values() if z.locality_id == locality_id]
     if zones:
         formation.current_microzone_id = max(zones, key=lambda z: z.population_share).microzone_id
-    world.formations[formation.formation_id] = formation
+    world.register_formation(formation)
     _add_command_edge(
         world, f"CMD:{organization.organization_id}", formation.formation_id,
         organization.organization_id,
@@ -1005,7 +1005,7 @@ def mature_proto(world, proto: ProtoOrganization, time: float, rng: random.Rando
     local_zones = [z for z in world.microzones.values() if z.locality_id == proto.locality_id]
     if local_zones:
         formation.current_microzone_id = max(local_zones, key=lambda z: z.population_share).microzone_id
-    world.formations[fid] = formation
+    world.register_formation(formation)
     _add_command_edge(world, f"CMD:{oid}", fid, oid, .45, 8.0)
     proto.status = "matured"
     _transition(world, time, "birth", (proto.proto_id,), (oid,), {oid: member_ids},

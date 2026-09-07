@@ -11,8 +11,10 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import argparse
 import csv
+import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import random
 import sys
@@ -38,14 +40,21 @@ from historical_case import (  # noqa: E402
 from pineland_sim import (  # noqa: E402
     AssimilationObservation,
     Particle,
+    PersistentParticlePool,
     SequentialParticleFilter,
     Simulation,
     SimulationConfig,
     SimulationParticle,
     generate_pineland,
 )
-from pineland_sim.state_estimation import particle_weights  # noqa: E402
-from pineland_sim.relations import STATE_SECURITY_KINDS  # noqa: E402
+from pineland_sim.state_estimation import (  # noqa: E402
+    particle_weights,
+)
+from pineland_sim.reproducibility import (  # noqa: E402
+    file_sha256,
+    model_sha256,
+    repository_state,
+)
 
 
 TRAINING_YEAR = "2004"
@@ -167,11 +176,11 @@ def _conditioned_branch_index(
 class NestedOperationalPropagator:
     """Nested predictive likelihood plus observation-conditioned descendant."""
 
-    def __init__(self, *, branches: int, rng: random.Random) -> None:
+    def __init__(self, *, branches: int, selection_seed: int) -> None:
         if branches < 1:
             raise ValueError("likelihood branches must be at least one")
         self.branches = branches
-        self.rng = rng
+        self.selection_seed = int(selection_seed)
         self.calls = 0
         self.exact_match_calls = 0
         self.minimum_mismatch_sum = 0
@@ -209,7 +218,13 @@ class NestedOperationalPropagator:
         selected, minimum_mismatch, exact = _conditioned_branch_index(
             branch_active,
             observation.active_provinces,
-            self.rng,
+            random.Random(
+                _nested_selection_seed(
+                    self.selection_seed,
+                    state.lineage_id,
+                    observation.week_index,
+                )
+            ),
         )
         self.calls += 1
         self.exact_match_calls += int(exact)
@@ -233,6 +248,15 @@ class NestedOperationalPropagator:
                 self.maximum_minimum_mismatch
             ),
         }
+
+
+def _nested_selection_seed(
+    filter_seed: int,
+    lineage_id: str,
+    week_index: int,
+) -> int:
+    material = f"{int(filter_seed)}|{lineage_id}|{int(week_index)}".encode("utf-8")
+    return int.from_bytes(hashlib.sha256(material).digest()[:8], "big")
 
 
 def _load_case() -> dict:
@@ -321,10 +345,15 @@ def build_initial_particle(
     horizon: float,
     case: dict,
     inputs: dict,
+    base_world=None,
 ) -> Particle[SimulationParticle]:
     """Create one prior particle with an independent latent spatial draw."""
     config = _config(seed, horizon)
-    world = generate_pineland(config, empirical_geography=case)
+    world = (
+        base_world.clone(share_static=True)
+        if base_world is not None
+        else generate_pineland(config, empirical_geography=case)
+    )
     prior_rng = random.Random(
         seed * 1_000_003 + particle_index * 97_409 + int(taliban_strength)
     )
@@ -354,6 +383,11 @@ def build_initial_particle(
         policy_hook=schedule,
         stream_namespace=f"particle:{seed}:prior:{particle_index}",
     )
+    simulation.configure_execution(
+        validate_invariants=False,
+        checkpointing=False,
+        retain_output_archives=False,
+    )
     return Particle(
         SimulationParticle(
             simulation,
@@ -373,26 +407,57 @@ def _active_provinces(
 ) -> set[str]:
     world = state.world
     return {
-        _province_for_locality(world, event.locality_id)
-        for event in world.state_based_events
-        if observation.start_day <= float(event.time) < observation.end_day
-        and event.locality_id in world.localities
-        and "insurgent" in event.actor_organization_ids
-        and any(
-            world.organizations.get(actor) is not None
-            and world.organizations[actor].kind in STATE_SECURITY_KINDS
-            for actor in event.actor_organization_ids
-            if actor != "insurgent"
+        _province_for_locality(world, locality_id)
+        for locality_id in world.state_based_event_localities_by_week.get(
+            observation.week_index, ()
         )
     }
+
+
+def _nested_particle_job(
+    job: tuple[
+        SimulationParticle,
+        float,
+        ProvinceWeekObservation,
+        int,
+        int,
+    ],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    state, time, observation, branches, filter_seed = job
+    propagator = NestedOperationalPropagator(
+        branches=branches,
+        selection_seed=filter_seed,
+    )
+    new_state, likelihood = propagator(state, time, observation)
+    return new_state, likelihood, propagator.diagnostics()
+
+
+def _fork_particle_state(state: SimulationParticle, child_index: int) -> SimulationParticle:
+    """Pickle-safe fork callback for the generic resident particle pool."""
+    return state.fork(child_index)
+
+
+def _nested_persistent_job(
+    state: SimulationParticle,
+    time: float,
+    payload: tuple[ProvinceWeekObservation, int, int],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    """Resident-worker adapter for the nested forecast propagator."""
+    observation, branches, filter_seed = payload
+    return _nested_particle_job(
+        (state, time, observation, branches, filter_seed)
+    )
 
 
 def make_nested_propagator(
     *,
     branches: int,
-    rng: random.Random,
+    selection_seed: int,
 ):
-    return NestedOperationalPropagator(branches=branches, rng=rng)
+    return NestedOperationalPropagator(
+        branches=branches,
+        selection_seed=selection_seed,
+    )
 
 
 def run_training_filter(
@@ -402,30 +467,122 @@ def run_training_filter(
     filter_seed: int,
     ess_fraction: float = 0.5,
     likelihood_branches: int = 3,
+    workers: int = 1,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
-    propagator = make_nested_propagator(
-        branches=likelihood_branches,
-        rng=random.Random(filter_seed + 7919),
-    )
+    if workers < 1:
+        raise ValueError("workers must be positive")
     filter_ = SequentialParticleFilter(
         particles,
-        propagate_and_score=propagator,
+        transition=lambda state, time: None,
+        log_likelihood=lambda state, observation: 0.0,
         rng=random.Random(filter_seed),
         ess_fraction=ess_fraction,
         allowed_split="training",
         fork_state=lambda state, child_index: state.fork(child_index),
     )
-    for observation in observations:
-        filter_.assimilate(
-            AssimilationObservation(
-                time=observation.end_day,
-                value=observation,
-                split="training",
-                observation_id=f"province-week-{observation.week_index}",
+    nested_calls = 0
+    exact_calls = 0
+    mismatch_sum = 0.0
+    max_mismatch = 0
+
+    def assimilate_one(
+        observation: ProvinceWeekObservation,
+        executor: object | None,
+    ) -> None:
+        nonlocal nested_calls, exact_calls, mismatch_sum, max_mismatch
+        if executor is None:
+            jobs = [
+                (
+                    particle.state,
+                    observation.end_day,
+                    observation,
+                    likelihood_branches,
+                    filter_seed,
+                )
+                for particle in filter_.particles
+            ]
+            completed = list(map(_nested_particle_job, jobs))
+        else:
+            completed = executor.propagate(
+                observation.end_day,
+                (observation, likelihood_branches, filter_seed),
             )
+        if executor is not None:
+            completed = [
+                (None, likelihood, diagnostics)
+                for _, likelihood, diagnostics in completed
+            ]
+        propagated = [(state, likelihood) for state, likelihood, _ in completed]
+        for _, _, diagnostics in completed:
+            calls = int(diagnostics["nested_propagation_calls"])
+            nested_calls += calls
+            exact_calls += int(diagnostics["exact_descendant_match_calls"])
+            mismatch_sum += (
+                float(diagnostics["mean_minimum_descendant_hamming_mismatch"])
+                * calls
+            )
+            max_mismatch = max(
+                max_mismatch,
+                int(
+                    diagnostics[
+                        "maximum_minimum_descendant_hamming_mismatch"
+                    ]
+                ),
+            )
+        assimilation = AssimilationObservation(
+            time=observation.end_day,
+            value=observation,
+            split="training",
+            observation_id=f"province-week-{observation.week_index}",
         )
+        if executor is None:
+            filter_.assimilate_precomputed(assimilation, propagated)
+        else:
+            diagnostics, parent_indices = filter_.assimilate_scores(
+                assimilation,
+                [likelihood for _, likelihood, _ in completed],
+            )
+            if diagnostics.resampled:
+                executor.resample(parent_indices)
+
+    ordered_observations = list(observations)
+    if workers == 1:
+        for observation in ordered_observations:
+            assimilate_one(observation, None)
+    else:
+        initial_states = [particle.state for particle in filter_.particles]
+        with PersistentParticlePool(
+            initial_states,
+            propagate=_nested_persistent_job,
+            fork_state=_fork_particle_state,
+            workers=workers,
+        ) as executor:
+            # The coordinator retains only weights/ancestry metadata while
+            # workers own the mutable simulation objects.
+            filter_.particles = [
+                Particle(None, particle.log_weight)
+                for particle in filter_.particles
+            ]
+            del initial_states
+            particles = []
+            for observation in ordered_observations:
+                assimilate_one(observation, executor)
+            filter_.particles = [
+                Particle(state, 0.0) for state in executor.snapshot()
+            ]
     filter_.freeze()
-    filter_.nested_propagator_diagnostics = propagator.diagnostics()
+    filter_.nested_propagator_diagnostics = {
+        "nested_propagation_calls": nested_calls,
+        "exact_descendant_match_calls": exact_calls,
+        "exact_descendant_match_fraction": (
+            exact_calls / nested_calls if nested_calls else 0.0
+        ),
+        "mean_minimum_descendant_hamming_mismatch": (
+            mismatch_sum / nested_calls if nested_calls else 0.0
+        ),
+        "maximum_minimum_descendant_hamming_mismatch": max_mismatch,
+        "workers": workers,
+    }
     return filter_
 
 
@@ -436,19 +593,40 @@ def _forecast_cells(
     end_day: float,
 ) -> set[tuple[str, int]]:
     world = state.world
+    first_week = int(start_day // 7)
+    last_week = int(math.ceil(end_day / 7.0))
     return {
-        (_province_for_locality(world, event.locality_id), int(float(event.time) // 7))
-        for event in world.state_based_events
-        if start_day <= float(event.time) < end_day
-        and event.locality_id in world.localities
-        and "insurgent" in event.actor_organization_ids
-        and any(
-            world.organizations.get(actor) is not None
-            and world.organizations[actor].kind in STATE_SECURITY_KINDS
-            for actor in event.actor_organization_ids
-            if actor != "insurgent"
-        )
+        (province, week)
+        for week in range(first_week, last_week)
+        for locality_id in world.state_based_event_localities_by_week.get(week, ())
+        for province in (_province_for_locality(world, locality_id),)
     }
+
+
+def _forecast_particle_job(
+    job: tuple[SimulationParticle, float, float, int],
+) -> list[set[tuple[str, int]]]:
+    state, start_day, end_day, forecast_branches = job
+    branch_cell_sets = []
+    for branch_index in range(forecast_branches):
+        branch = state.fork(branch_index)
+        branch.advance_to(end_day)
+        branch_cell_sets.append(
+            _forecast_cells(branch, start_day=start_day, end_day=end_day)
+        )
+    return branch_cell_sets
+
+
+def _forecast_persistent_job(
+    state: SimulationParticle,
+    time: float,
+    payload: tuple[float, float, int],
+) -> tuple[SimulationParticle, float, list[set[tuple[str, int]]]]:
+    """Run forecast branches in a resident worker and return only cells."""
+    start_day, end_day, forecast_branches = payload
+    return state, 0.0, _forecast_particle_job(
+        (state, start_day, end_day, forecast_branches)
+    )
 
 
 def forecast_weighted_field(
@@ -457,10 +635,13 @@ def forecast_weighted_field(
     start_day: float = FORECAST_START_DAY,
     end_day: float = FORECAST_END_DAY,
     forecast_branches: int = 3,
+    workers: int = 1,
 ) -> dict[str, object]:
     """Freeze the posterior and return target-compatible event probabilities."""
     if forecast_branches < 1:
         raise ValueError("forecast branches must be at least one")
+    if workers < 1:
+        raise ValueError("workers must be positive")
     filter_.freeze()
     weights = particle_weights(filter_.particles)
     provinces = sorted({
@@ -477,14 +658,40 @@ def forecast_weighted_field(
     }
     member_cells: list[list[dict[str, int | str]]] = []
     forecast_branch_cells: list[list[list[dict[str, int | str]]]] = []
-    for particle, weight in zip(filter_.particles, weights):
-        branch_cell_sets = []
-        for branch_index in range(forecast_branches):
-            branch = particle.state.fork(branch_index)
-            branch.advance_to(end_day)
-            branch_cell_sets.append(
-                _forecast_cells(branch, start_day=start_day, end_day=end_day)
+    if workers == 1:
+        jobs = [
+            (particle.state, start_day, end_day, forecast_branches)
+            for particle in filter_.particles
+        ]
+        completed = list(map(_forecast_particle_job, jobs))
+    else:
+        initial_states = [particle.state for particle in filter_.particles]
+        with PersistentParticlePool(
+            initial_states,
+            propagate=_forecast_persistent_job,
+            fork_state=_fork_particle_state,
+            workers=workers,
+        ) as executor:
+            filter_.particles = [
+                Particle(None, particle.log_weight)
+                for particle in filter_.particles
+            ]
+            del initial_states
+            completed = [
+                diagnostics
+                for _, _, diagnostics in executor.propagate(
+                    end_day, (start_day, end_day, forecast_branches)
+                )
+            ]
+            forecast_states = executor.snapshot()
+        filter_.particles = [
+            Particle(
+                state,
+                math.log(weight) if weight > 0 else -float("inf"),
             )
+            for state, weight in zip(forecast_states, weights)
+        ]
+    for branch_cell_sets, weight in zip(completed, weights):
         cells = set().union(*branch_cell_sets) if branch_cell_sets else set()
         member_cells.append([
             {"province_id": province, "week_index": week}
@@ -534,9 +741,18 @@ def run(
     strengths: tuple[float, ...] = DEFAULT_STRENGTHS,
     likelihood_branches: int = 3,
     forecast_branches: int = 3,
+    workers: int = 1,
 ) -> dict:
+    repo = repository_state(ROOT)
+    empty_diff_sha256 = hashlib.sha256(b"").hexdigest()
+    if repo["tracked_diff_sha256"] != empty_diff_sha256:
+        raise RuntimeError(
+            "filtered empirical forecast requires an empty tracked diff"
+        )
     if particles < 2:
         raise ValueError("at least two particles are required")
+    if workers < 1:
+        raise ValueError("workers must be positive")
     if horizon < FORECAST_END_DAY:
         raise ValueError("filtered 2005 runner requires the full forecast boundary")
     if taliban_strength is not None:
@@ -552,6 +768,25 @@ def run(
     case = _load_case()
     inputs = load_historical_inputs()
     observations = load_training_observations()
+    training_observation_sha256 = hashlib.sha256(
+        json.dumps(
+            [
+                {
+                    "week_index": observation.week_index,
+                    "start_day": observation.start_day,
+                    "end_day": observation.end_day,
+                    "active_provinces": sorted(observation.active_provinces),
+                    "provinces": list(observation.provinces),
+                }
+                for observation in observations
+            ],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    base_world = generate_pineland(
+        _config(seed, horizon), empirical_geography=case
+    )
     initial_particles = [
         build_initial_particle(
             seed=seed,
@@ -561,19 +796,23 @@ def run(
             horizon=horizon,
             case=case,
             inputs=inputs,
+            base_world=base_world,
         )
         for index in range(particles)
     ]
+    del base_world
     filter_ = run_training_filter(
         initial_particles,
         observations,
         filter_seed=seed + 17_003,
         likelihood_branches=likelihood_branches,
+        workers=workers,
     )
     posterior_boundary = max(observation.end_day for observation in observations)
     forecast = forecast_weighted_field(
         filter_,
         forecast_branches=forecast_branches,
+        workers=workers,
     )
     filter_diagnostics = [asdict(item) for item in filter_.history]
     smc_diagnostics = {
@@ -609,6 +848,13 @@ def run(
     }
     payload = {
         "schema_version": "pineland.afghanistan.filtered_prospective_2005.v2",
+        "source_commit_at_run": repo["commit_hash"],
+        "model_sha256": model_sha256(ROOT),
+        "tracked_diff_sha256": repo["tracked_diff_sha256"],
+        "runner_sha256": file_sha256(Path(__file__)),
+        "case_sha256": file_sha256(CASE),
+        "historical_inputs_sha256": file_sha256(INPUTS),
+        "training_observation_sha256": training_observation_sha256,
         "seed": seed,
         "taliban_initial_strength": (
             float(taliban_strength) if taliban_strength is not None else None
@@ -643,6 +889,8 @@ def run(
         "competitor_information_contract": COMPETITOR_INFORMATION_CONTRACT,
         "likelihood_branches": likelihood_branches,
         "forecast_branches": forecast_branches,
+        "parallel_workers": workers,
+        "parallel_backend": "processes" if workers > 1 else "sequential",
         "filter_updates": filter_diagnostics,
         "nested_propagator_diagnostics": getattr(
             filter_, "nested_propagator_diagnostics", {}
@@ -682,17 +930,24 @@ def main() -> None:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--strength", type=float, choices=DEFAULT_STRENGTHS)
     parser.add_argument("--particles", type=int, default=DEFAULT_PARTICLE_COUNT)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=max(1, min(10, os.cpu_count() or 1)),
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     payload = run(
         seed=args.seed,
         taliban_strength=args.strength,
         particles=args.particles,
+        workers=args.workers,
         output=args.output,
     )
     print(json.dumps({
         "output": str(args.output),
         "particle_count": payload["particle_count"],
+        "parallel_workers": payload["parallel_workers"],
         "training_boundary_day": payload["training_boundary_day"],
         "forecast_probability_cells": len(payload["posterior_probability_field"]),
     }))
