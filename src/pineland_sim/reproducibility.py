@@ -84,6 +84,7 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "compact_control_state", "compact_presence_state",
     "compact_node_presence_state", "compact_zone_state",
     "compact_observation_state", "compact_relay_state",
+    "numeric_information_runtime", "information_relay_due_heap",
     "deferred_presence_fusions", "defer_presence_fusions",
     "engagements", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
@@ -158,6 +159,12 @@ def _normalized(value: Any) -> Any:
             return {"__float__": "nan"}
         if math.isinf(value):
             return {"__float__": "inf" if value > 0 else "-inf"}
+        # State can cross the rich/numeric boundary with the same scalar
+        # represented once as ``0`` and once as ``0.0`` (for example, an
+        # initial timestamp).  Those values are identical to every latent
+        # transition and must have one canonical scientific representation.
+        if value.is_integer():
+            return int(value)
         return value
     if isinstance(value, (str, int, bool)) or value is None:
         return value
@@ -375,38 +382,152 @@ def scientific_config_sha256(config: SimulationConfig) -> str:
     return canonical_sha256(scientific_config_payload(config))
 
 
+def _numeric_active_information_payloads(
+    world: Any,
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Expose numeric in-flight information in the rich state schema.
+
+    The ensemble backend deliberately does not populate ``Observation`` or
+    ``InformationRelay`` maps.  Those maps are nevertheless part of the
+    future-decision state when a report is still in transit, so hashes and
+    checkpoint comparisons need a representation-independent view.  This
+    adapter decodes only active fixed-width rows; it does not mutate the
+    numeric runtime or construct rich model objects.
+    """
+    runtime = getattr(world, "numeric_information_runtime", None)
+    if runtime is None:
+        return None
+    relay_buffer = getattr(runtime, "relay_buffer", None)
+    event_rows = getattr(runtime, "event_rows", None)
+    engine = getattr(runtime, "engine", None)
+    plan = getattr(engine, "plan", None)
+    codes = getattr(plan, "codes", None)
+    if relay_buffer is None or event_rows is None or codes is None:
+        return None
+
+    from .information import _decay_rate
+
+    def value(code: Any) -> str | None:
+        return codes.value(int(code)) if int(code) else None
+
+    active_relays: dict[str, Any] = {}
+    active_observations: dict[str, Any] = {}
+    control_dimensions = (
+        "formal", "physical", "administrative", "legal",
+        "fiscal", "social", "expected",
+    )
+    for index in range(len(relay_buffer)):
+        if int(relay_buffer.status[index]) != 0:
+            continue
+        sequence = int(relay_buffer.observation_sequence[index])
+        row = event_rows.get(sequence)
+        if row is None:
+            continue
+
+        observation_id = f"OBS{sequence:010d}"
+        relay_id = f"IR{int(relay_buffer.ids[index]):010d}"
+        observation_type = (
+            "detection" if int(row[12]) == 1 else "physical_control"
+        )
+        target_actor_id = value(row[7])
+        target_formation_id = value(row[8]) if observation_type == "detection" else None
+        if observation_type == "detection":
+            target_id = target_formation_id
+            estimated_value = {
+                "presence": float(row[14]),
+                "personnel": float(row[15]),
+                "detection_probability": float(row[16]),
+                "detected": bool(row[17]),
+                "attribution_confidence": float(row[18]),
+            }
+        else:
+            target_id = target_actor_id
+            estimated_value = {
+                "control": {
+                    name: float(observed)
+                    for name, observed in zip(control_dimensions, row[13])
+                },
+                "physical_control": float(row[19]),
+                "violence": float(row[20]),
+            }
+        active_observations[observation_id] = {
+            "observation_id": observation_id,
+            "target_id": target_id,
+            "locality_id": value(row[5]),
+            "timestamp": float(row[9]),
+            "source_id": value(row[3]),
+            "source_type": value(row[4]),
+            "observation_type": observation_type,
+            "estimated_value": estimated_value,
+            "confidence": float(row[10]),
+            "observer_actor_id": value(row[1]),
+            "microzone_id": value(row[6]),
+            "observer_node_id": value(row[2]),
+            "quality": float(row[11]),
+            "decay_rate": _decay_rate(
+                world, observation_type, target_formation_id
+            ),
+            "target_actor_id": target_actor_id,
+            "target_formation_id": target_formation_id,
+            "received_at": float(row[9]),
+        }
+        active_relays[relay_id] = {
+            "relay_id": relay_id,
+            "observation_id": observation_id,
+            "organization_id": value(relay_buffer.organization[index]),
+            "source_node_id": value(relay_buffer.source[index]),
+            "destination_node_id": value(relay_buffer.destination[index]),
+            "route": [
+                value(code) for code in relay_buffer.route_codes_for(index)
+            ],
+            "sent_at": float(relay_buffer.sent_at[index]),
+            "arrives_at": float(relay_buffer.arrives_at[index]),
+            "reliability": float(relay_buffer.reliability[index]),
+            "latency_hours": float(relay_buffer.latency_hours[index]),
+            "status": "in_transit",
+            "delivered_at": None,
+        }
+    return active_relays, active_observations
+
+
 def decision_state_payload(world: Any) -> dict[str, Any]:
     """Canonical future-decision state, excluding output-only archives."""
     materialize = getattr(world, "materialize_compact_information_confidences", None)
     if materialize is not None:
         materialize()
-    active_relay_ids = set(getattr(world, "active_information_relays", set()))
-    active_relays = {
-        relay_id: (
-            world.information_relays[relay_id].to_payload()
-            if hasattr(world.information_relays[relay_id], "to_payload")
-            else world.information_relays[relay_id]
-        )
-        for relay_id in sorted(active_relay_ids)
-        if relay_id in world.information_relays
-    }
+    numeric_payloads = _numeric_active_information_payloads(world)
+    if numeric_payloads is not None:
+        active_relays, active_observations = numeric_payloads
+        active_relay_ids = set(active_relays)
+    else:
+        active_relay_ids = set(getattr(world, "active_information_relays", set()))
+        active_relays = {
+            relay_id: (
+                world.information_relays[relay_id].to_payload()
+                if hasattr(world.information_relays[relay_id], "to_payload")
+                else world.information_relays[relay_id]
+            )
+            for relay_id in sorted(active_relay_ids)
+            if relay_id in world.information_relays
+        }
+        active_observations = {}
     pending_observation_ids = {
         relay["observation_id"] if isinstance(relay, dict) else relay.observation_id
         for relay in active_relays.values()
     }
-    active_observations = {}
-    for observation_id in sorted(pending_observation_ids):
-        observation = world.observations.get(observation_id)
-        if observation is None:
-            continue
-        observation_payload = (
-            observation.to_payload()
-            if hasattr(observation, "to_payload") else asdict(observation)
-        )
-        # Provenance is archival metadata. Future fusion consumes the typed
-        # observation fields directly and never reads this dictionary.
-        observation_payload.pop("provenance", None)
-        active_observations[observation_id] = observation_payload
+    if numeric_payloads is None:
+        for observation_id in sorted(pending_observation_ids):
+            observation = world.observations.get(observation_id)
+            if observation is None:
+                continue
+            observation_payload = (
+                observation.to_payload()
+                if hasattr(observation, "to_payload") else asdict(observation)
+            )
+            # Provenance is archival metadata. Future fusion consumes the typed
+            # observation fields directly and never reads this dictionary.
+            observation_payload.pop("provenance", None)
+            active_observations[observation_id] = observation_payload
     # Corroboration has an explicit three-day memory.  Dormant index entries
     # older than that can remain in a full forensic archive, but _store_observation
     # discards them before the next fusion operation, so they are not part of
@@ -424,6 +545,8 @@ def decision_state_payload(world: Any) -> dict[str, Any]:
             continue
         if name == "config":
             payload[name] = scientific_config_payload(world.config)
+        elif name == "active_information_relays":
+            payload[name] = active_relay_ids
         elif name == "observations":
             payload[name] = active_observations
         elif name == "information_relays":
