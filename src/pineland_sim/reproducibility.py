@@ -79,6 +79,7 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "execution_profile", "execution_backend", "performance_counters",
     "compact_control_state", "compact_presence_state",
     "compact_node_presence_state", "compact_zone_state",
+    "compact_observation_state", "compact_relay_state",
     "deferred_presence_fusions", "defer_presence_fusions",
     "engagements", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
@@ -356,19 +357,27 @@ def decision_state_payload(world: Any) -> dict[str, Any]:
         materialize()
     active_relay_ids = set(getattr(world, "active_information_relays", set()))
     active_relays = {
-        relay_id: world.information_relays[relay_id]
+        relay_id: (
+            world.information_relays[relay_id].to_payload()
+            if hasattr(world.information_relays[relay_id], "to_payload")
+            else world.information_relays[relay_id]
+        )
         for relay_id in sorted(active_relay_ids)
         if relay_id in world.information_relays
     }
     pending_observation_ids = {
-        relay.observation_id for relay in active_relays.values()
+        relay["observation_id"] if isinstance(relay, dict) else relay.observation_id
+        for relay in active_relays.values()
     }
     active_observations = {}
     for observation_id in sorted(pending_observation_ids):
         observation = world.observations.get(observation_id)
         if observation is None:
             continue
-        observation_payload = asdict(observation)
+        observation_payload = (
+            observation.to_payload()
+            if hasattr(observation, "to_payload") else asdict(observation)
+        )
         # Provenance is archival metadata. Future fusion consumes the typed
         # observation fields directly and never reads this dictionary.
         observation_payload.pop("provenance", None)

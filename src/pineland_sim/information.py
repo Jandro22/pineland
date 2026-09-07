@@ -582,7 +582,12 @@ def _new_observation(world: WorldState, *, observer_actor_id: str, observer_node
         target_formation_id=target_formation_id,
         received_at=timestamp,
     )
-    world.observations[observation_id] = observation
+    from .compact_information_records import CompactObservationStore
+
+    if isinstance(world.observations, CompactObservationStore):
+        observation = world.observations.add(observation)
+    else:
+        world.observations[observation_id] = observation
     index_key = (observation.target_actor_id or "*", observation.locality_id,
                  observation.observation_type)
     if world.execution_profile != "particle":
@@ -1638,7 +1643,12 @@ def _queue_relay(world: WorldState, observation: Observation, time: float) -> In
         route, time, time + max(0.0, latency) / 24, clamp(reliability),
         max(0.0, latency),
     )
-    world.information_relays[relay_id] = relay
+    from .compact_information_records import CompactRelayStore
+
+    if isinstance(world.information_relays, CompactRelayStore):
+        relay = world.information_relays.add(relay)
+    else:
+        world.information_relays[relay_id] = relay
     world.active_information_relays.add(relay_id)
     heapq.heappush(
         world.information_relay_due_heap,
@@ -2201,6 +2211,7 @@ def process_information(world: WorldState, time: float,
     """Age beliefs, generate reports, and deliver due command-network relays."""
     rng = rng or seeded_rng(world.config, f"information-process:{time:.6f}")
     if world.execution_profile == "particle":
+        world.enable_compact_particle_information_storage()
         world.refresh_operational_indexes()
     world.information_execution_cache.clear()
     world.information_cache_active = True

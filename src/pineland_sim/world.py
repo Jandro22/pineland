@@ -336,6 +336,12 @@ class WorldState:
     compact_presence_state: Any = None
     compact_node_presence_state: Any = None
     compact_zone_state: Any = None
+    # Particle-mode observations and relays use compact SoA stores.  The
+    # explicit aliases make the representation visible to profiling and
+    # cloning code while ``observations``/``information_relays`` retain their
+    # mapping API for the scientific/reference layer.
+    compact_observation_state: Any = None
+    compact_relay_state: Any = None
     # Optional profiling counters. None on normal execution so hot paths pay
     # only a single identity check when instrumentation is explicitly enabled.
     performance_counters: dict[str, int] | None = None
@@ -494,6 +500,23 @@ class WorldState:
             self.config.information.formation_decay_rate
         )
         self.compact_zone_state.set_decay_clock(self.last_information_decay_at)
+
+    def enable_compact_particle_information_storage(self) -> None:
+        """Promote live particle observations/relays to persistent SoA rows."""
+        from .compact_information_records import CompactObservationStore, CompactRelayStore
+
+        if not isinstance(self.observations, CompactObservationStore):
+            observation_store = CompactObservationStore()
+            for observation in self.observations.values():
+                observation_store.add(observation)
+            self.observations = observation_store
+        if not isinstance(self.information_relays, CompactRelayStore):
+            relay_store = CompactRelayStore()
+            for relay in self.information_relays.values():
+                relay_store.add(relay)
+            self.information_relays = relay_store
+        self.compact_observation_state = self.observations
+        self.compact_relay_state = self.information_relays
 
     def materialize_compact_confidence(self, belief: Any) -> float:
         """Return a logical confidence value at ``world.time``.
@@ -939,20 +962,36 @@ class WorldState:
         """
         if self.execution_profile != "particle":
             return
+        from .compact_information_records import CompactObservationStore, CompactRelayStore
+
         active = self.active_information_relays
-        self.information_relays = {
-            relay_id: relay
+        keep_relays = {
+            relay_id
             for relay_id, relay in self.information_relays.items()
             if relay_id in active and relay.status == "in_transit"
         }
+        active.intersection_update(keep_relays)
+        if isinstance(self.information_relays, CompactRelayStore):
+            self.information_relays.retain(keep_relays)
+        else:
+            self.information_relays = {
+                relay_id: relay
+                for relay_id, relay in self.information_relays.items()
+                if relay_id in keep_relays
+            }
         pending_observations = {
             relay.observation_id for relay in self.information_relays.values()
         }
-        self.observations = {
-            observation_id: observation
-            for observation_id, observation in self.observations.items()
-            if observation_id in pending_observations
-        }
+        if isinstance(self.observations, CompactObservationStore):
+            self.observations.retain(pending_observations)
+        else:
+            self.observations = {
+                observation_id: observation
+                for observation_id, observation in self.observations.items()
+                if observation_id in pending_observations
+            }
+        self.compact_observation_state = self.observations
+        self.compact_relay_state = self.information_relays
         # This index is publication/diagnostic history only; live
         # corroboration is maintained independently in observation_source_index.
         self.observation_index.clear()
@@ -1940,12 +1979,18 @@ class WorldState:
                     for engagement in self.engagements.values()), encoding="utf-8"
         )
         (output / "observations.jsonl").write_text(
-            "".join(json.dumps(asdict(observation)) + "\n"
+            "".join(json.dumps(
+                observation.to_payload()
+                if hasattr(observation, "to_payload") else asdict(observation)
+            ) + "\n"
                     for observation in self.observations.values()),
             encoding="utf-8",
         )
         (output / "information_relays.jsonl").write_text(
-            "".join(json.dumps(asdict(relay)) + "\n"
+            "".join(json.dumps(
+                relay.to_payload()
+                if hasattr(relay, "to_payload") else asdict(relay)
+            ) + "\n"
                     for relay in self.information_relays.values()),
             encoding="utf-8",
         )
@@ -2003,7 +2048,10 @@ class WorldState:
             "security_post_ids_by_locality",
             "security_posts_by_locality",
             "social_community_ids_by_locality",
+            "compact_observation_state",
+            "compact_relay_state",
         }
+        from .compact_information_records import CompactObservationStore, CompactRelayStore
         cloned = copy.copy(self)
         for item in fields(self):
             if item.name in shared_fields or item.name in rebuilt_fields:
@@ -2044,17 +2092,25 @@ class WorldState:
                 # after construction. Only the wrapper's received_at field
                 # changes when a relay arrives, so shallow-copy each wrapper
                 # while sharing those read-only nested payloads.
-                value = {
-                    key: copy.copy(observation)
-                    for key, observation in value.items()
-                }
+                value = (
+                    value.clone()
+                    if isinstance(value, CompactObservationStore)
+                    else {
+                        key: copy.copy(observation)
+                        for key, observation in value.items()
+                    }
+                )
             elif item.name == "information_relays":
                 # Relay routes are immutable after creation; status and
                 # delivered_at are scalar per-particle fields.
-                value = {
-                    key: copy.copy(relay)
-                    for key, relay in value.items()
-                }
+                value = (
+                    value.clone()
+                    if isinstance(value, CompactRelayStore)
+                    else {
+                        key: copy.copy(relay)
+                        for key, relay in value.items()
+                    }
+                )
             elif item.name == "observation_source_index":
                 value = {
                     key: deque(history)
@@ -2068,6 +2124,10 @@ class WorldState:
             else:
                 value = copy.deepcopy(value)
             setattr(cloned, item.name, value)
+        if isinstance(cloned.observations, CompactObservationStore):
+            cloned.compact_observation_state = cloned.observations
+        if isinstance(cloned.information_relays, CompactRelayStore):
+            cloned.compact_relay_state = cloned.information_relays
         cloned.rebuild_runtime_entity_indexes()
         cloned.command_path_cache = {}
         return cloned
