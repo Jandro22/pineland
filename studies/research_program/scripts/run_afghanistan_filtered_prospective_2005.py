@@ -55,6 +55,50 @@ FORECAST_END_DAY = 731.0
 DEFAULT_PARTICLE_COUNT = 128
 DEFAULT_STRENGTHS = (5000.0, 7500.0, 10000.0)
 PRIOR_FAMILY_STRATA = tuple(sorted(TALIBAN_PRIOR_FAMILIES))
+COMPETITOR_INFORMATION_CONTRACT = {
+    "schema_version": "pineland.afghanistan.information_matched_competitors.v1",
+    "evaluation_surface": "observed province-week Taliban-state-security incidence",
+    "shared_observed_information": [
+        "2003 high-precision district occupancy evidence",
+        "2003 lower-precision province/background evidence",
+        "complete 2004 province-week training incidence",
+        "fixed 401-district adjacency topology",
+        "source-era population and WorldPop settlement covariates",
+        "province and humanitarian-region hierarchy",
+    ],
+    "candidate_internal_latent_uncertainty": [
+        "stratified initial Taliban strength prior",
+        "stratified occupancy/force prior family",
+        "outcome-free ANA/ANP deployment prior",
+        "latent process state and aleatory forecast branches",
+    ],
+    "competitor_feature_families": [
+        "global prevalence",
+        "province empirical Bayes",
+        "region empirical Bayes",
+        "local persistence",
+        "temporal self-excitation",
+        "spatial-neighbor self-excitation",
+        "topology-aware diffusion",
+        "preperiod geography plus causal 2004 training history",
+        "static source-grounded geography",
+    ],
+    "competitor_fit_scope": "2004 training rows only",
+    "holdout_target_updates": False,
+    "holdout_refit": False,
+    "candidate_holdout_refit": False,
+    "unmatched_candidate_state_not_exposed_as_features": [
+        "latent particle states",
+        "simulated security deployment draws",
+        "simulated event realizations",
+    ],
+    "unresolved_exogenous_geography": [
+        "independent terrain/elevation/ruggedness data",
+        "preperiod road/travel-time data",
+        "independent district language composition",
+        "independent preperiod facility/deployment records",
+    ],
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -384,7 +428,6 @@ def forecast_weighted_field(
     end_day: float = FORECAST_END_DAY,
     observation_model: BernoulliEventObservationModel | None = None,
     forecast_branches: int = 3,
-    forecast_seed: int = 0,
 ) -> dict[str, object]:
     """Freeze the posterior and return latent and observed incidence fields."""
     if forecast_branches < 1:
@@ -500,17 +543,19 @@ def run(
         )
         for index in range(particles)
     ]
+    observation_model = BernoulliEventObservationModel()
     filter_ = run_training_filter(
         initial_particles,
         observations,
         filter_seed=seed + 17_003,
+        observation_model=observation_model,
         likelihood_branches=likelihood_branches,
     )
     posterior_boundary = max(observation.end_day for observation in observations)
     forecast = forecast_weighted_field(
         filter_,
+        observation_model=observation_model,
         forecast_branches=forecast_branches,
-        forecast_seed=seed + 29_011,
     )
     filter_diagnostics = [asdict(item) for item in filter_.history]
     smc_diagnostics = {
@@ -525,6 +570,21 @@ def run(
                 for item in filter_diagnostics
             ),
             default=1.0,
+        ),
+        "minimum_distinct_root_ancestors": min(
+            (item["distinct_root_ancestors"] for item in filter_diagnostics),
+            default=particles,
+        ),
+        "minimum_lineage_entropy": min(
+            (item["lineage_entropy"] for item in filter_diagnostics),
+            default=0.0,
+        ),
+        "maximum_ancestry_concentration": max(
+            (
+                item["maximum_ancestry_concentration"]
+                for item in filter_diagnostics
+            ),
+            default=1.0 / max(1, particles),
         ),
         "support_exhausted": False,
         "all_update_likelihoods_finite": True,
@@ -553,7 +613,8 @@ def run(
         # CSV.  The explicit ``used`` field removes that ambiguity.
         "holdout_outcomes_read": False,
         "holdout_outcomes_used": False,
-        "observation_model": asdict(BernoulliEventObservationModel()),
+        "observation_model": asdict(observation_model),
+        "competitor_information_contract": COMPETITOR_INFORMATION_CONTRACT,
         "likelihood_branches": likelihood_branches,
         "forecast_branches": forecast_branches,
         "filter_updates": filter_diagnostics,
