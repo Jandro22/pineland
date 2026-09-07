@@ -2,8 +2,9 @@
 
 This scorer is intentionally dormant during architecture work. It requires
 ``--reveal-holdout`` before reading the 2005 target and fits every simple model
-on 2004 rows only. The candidate is scored from the frozen runner's observed
-predictive field, not its latent field. The script is separate from the old
+on 2004 rows only. The candidate is scored from the frozen runner's
+target-compatible province-week event field. No quantitative historical
+measurement-error transform is applied. The script is separate from the old
 frozen-core scorer so that its provenance and information contract cannot be
 confused with the consumed historical artifact.
 """
@@ -255,12 +256,13 @@ def score(
         or candidate.get("holdout_outcomes_used") is not False
         or candidate.get("posterior_frozen") is not True
         or candidate.get("predictive_estimand")
-        != "observed_province_week_conflict_incidence"
+        != "target_compatible_province_week_event_incidence"
+        or candidate.get("quantitative_measurement_operator_applied") is not False
     ):
         raise ValueError("candidate forecast is not marked holdout-clean")
-    observed_field = candidate.get("posterior_observed_probability_field")
-    if not observed_field:
-        raise ValueError("candidate has no observed predictive probability field")
+    target_field = candidate.get("posterior_target_probability_field")
+    if not target_field:
+        raise ValueError("candidate has no target-compatible probability field")
 
     raw = pd.read_csv(panel_path)
     years = raw["week_start"].astype(str).str[:4]
@@ -323,7 +325,7 @@ def score(
     holdout = predictions[predictions["split"] == "holdout"]
     field = {
         (str(row["province_id"]), int(row["week_index"])): float(row["probability"])
-        for row in observed_field
+        for row in target_field
     }
     candidate_probabilities = np.asarray([
         field[(str(row["province_id"]), int(row["week_index"]))]
@@ -335,7 +337,7 @@ def score(
     )
     candidate_row = {
         "split": "holdout",
-        "model": "pineland_observed_forecast",
+        "model": "pineland_target_compatible_forecast",
         "n": len(holdout),
         **candidate_metrics,
     }
@@ -350,7 +352,7 @@ def score(
         "schema_version": "pineland.afghanistan.information_matched_competition.v1",
         "candidate_schema_version": candidate.get("schema_version"),
         "candidate_forecast": str(forecast_path),
-        "target": "observed province-week Taliban-state-security incidence",
+        "target": "target-compatible province-week Taliban-state-security incidence",
         "training_period": TRAINING_YEAR,
         "holdout_period": HOLDOUT_YEAR,
         "fit_scope": "2004 training rows only",
@@ -381,8 +383,9 @@ def score(
             "static_covariate_logit",
         ],
         "covariate_columns": feature_columns,
-        "candidate_probability_field": "posterior_observed_probability_field",
-        "candidate_latent_field_not_scored": True,
+        "candidate_probability_field": "posterior_target_probability_field",
+        "quantitative_measurement_operator_applied": False,
+        "candidate_mechanistic_field_equals_target_field": True,
         "reveal_guard": "--reveal-holdout is required",
         "simple_competitor_metadata": metadata,
     }

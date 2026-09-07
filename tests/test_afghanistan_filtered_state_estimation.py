@@ -33,7 +33,42 @@ def test_filtered_runner_uses_only_complete_preboundary_training_weeks():
     assert all(len(observation.provinces) == 34 for observation in observations)
 
 
-def test_filtered_observation_operator_has_explicit_nondegenerate_emissions():
-    model = MODULE.BernoulliEventObservationModel()
-    assert model.log_probability(True, True) > model.log_probability(True, False)
-    assert model.log_probability(False, False) > model.log_probability(False, True)
+def test_filtered_likelihood_uses_direct_target_probability_not_measurement_rates():
+    assert not hasattr(MODULE, "BernoulliEventObservationModel")
+    assert MODULE._jeffreys_branch_probability(0, 3) == 0.125
+    assert MODULE._jeffreys_branch_probability(3, 3) == 0.875
+    assert MODULE._bernoulli_log_probability(0.75, True) > (
+        MODULE._bernoulli_log_probability(0.25, True)
+    )
+
+
+def test_nested_descendant_selection_conditions_on_observed_surface():
+    branches = [
+        {"AF01", "AF02"},
+        {"AF03"},
+        {"AF03", "AF04"},
+    ]
+    selected, mismatch, exact = MODULE._conditioned_branch_index(
+        branches,
+        frozenset({"AF03"}),
+        __import__("random").Random(10),
+    )
+    assert selected == 1
+    assert mismatch == 0
+    assert exact is True
+
+
+def test_nested_descendant_selection_reports_finite_branch_approximation():
+    branches = [
+        {"AF01", "AF02"},
+        {"AF03"},
+        {"AF03", "AF04"},
+    ]
+    selected, mismatch, exact = MODULE._conditioned_branch_index(
+        branches,
+        frozenset({"AF03", "AF05"}),
+        __import__("random").Random(10),
+    )
+    assert selected in {1, 2}
+    assert mismatch == 1
+    assert exact is False
