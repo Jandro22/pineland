@@ -117,6 +117,13 @@ class WorldState:
     primary_microzone_by_locality: dict[str, str] = field(default_factory=dict)
     physical_edges: dict[tuple[str, str], PhysicalEdge] = field(default_factory=dict)
     physical_neighbors: dict[str, dict[str, tuple[str, str]]] = field(default_factory=dict)
+    # Static all-pairs microzone travel times used by the physical response
+    # operator.  The topology and edge weights are case inputs; response
+    # sources are the only values that change between refreshes.  Keeping the
+    # matrix as an execution cache turns each response query into a set of
+    # minima instead of another heap search.
+    physical_distance_cache: dict[str, dict[str, float]] = field(default_factory=dict)
+    physical_distance_signature: tuple[Any, ...] = field(default_factory=tuple)
     security_posts: dict[str, SecurityPost] = field(default_factory=dict)
     security_post_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
     patrols: dict[str, Patrol] = field(default_factory=dict)
@@ -195,6 +202,7 @@ class WorldState:
         default_factory=dict
     )
     active_operational_locality_ids: set[str] = field(default_factory=set)
+    active_physical_locality_ids: set[str] = field(default_factory=set)
     organization_relations: dict[tuple[str, str], OrganizationRelation] = field(default_factory=dict)
     formations: dict[str, ArmedFormation] = field(default_factory=dict)
     formation_ids_by_organization: dict[str, tuple[str, ...]] = field(
@@ -460,6 +468,11 @@ class WorldState:
             ).append(patrol_id)
         for patrol_ids in self.patrol_ids_by_formation.values():
             patrol_ids.sort()
+        # The physical graph is generated before the final runtime-index
+        # rebuild.  Building this cache here makes optimized simulations pay
+        # the graph cost once per immutable topology rather than once per
+        # locality and refresh clock.
+        self.rebuild_physical_distance_index()
         self.refresh_operational_indexes()
 
     def rebuild_compact_information_state(self) -> None:
@@ -621,6 +634,80 @@ class WorldState:
             for organization_id in self.active_organization_ids
             for locality_id in operational.get(organization_id, ())
         }
+        active_physical: set[str] = set()
+        active_physical.update(
+            locality_id
+            for locality_id, post_ids in self.security_post_ids_by_locality.items()
+            if post_ids
+        )
+        active_physical.update(
+            locality_id
+            for locality_id, formation_ids in self.formation_ids_by_locality.items()
+            if any(
+                self.formations[formation_id].personnel > 0
+                and not self.formations[formation_id].outside_pineland
+                for formation_id in formation_ids
+                if formation_id in self.formations
+            )
+        )
+        active_physical.update(
+            locality_id
+            for locality_id, patrol_ids in self.patrol_ids_by_locality.items()
+            if patrol_ids
+        )
+        for zone in self.microzones.values():
+            if any(value > 0.0 for value in zone.presence_memory.values()):
+                active_physical.add(zone.locality_id)
+            if any(value > 0.0 for value in zone.physical_control.values()):
+                active_physical.add(zone.locality_id)
+        self.active_physical_locality_ids = active_physical
+
+    def rebuild_physical_distance_index(self, *, force: bool = False) -> None:
+        """Precompute all-pairs shortest travel times for the physical graph.
+
+        Edge disruption is intentionally included in the signature.  The
+        current model does not mutate ``PhysicalEdge.disruption`` during a
+        trajectory, so normal execution reuses this index forever.  If a
+        policy/test mutates an edge, the next query detects the changed
+        signature and rebuilds the cache automatically, preserving reference
+        semantics without requiring mutation hooks on the dataclass.
+        """
+        import heapq
+
+        signature = tuple(
+            sorted(
+                (
+                    key,
+                    float(edge.travel_time_hours),
+                    float(edge.disruption),
+                )
+                for key, edge in self.physical_edges.items()
+            )
+        )
+        if not force and signature == self.physical_distance_signature:
+            return
+        distances_by_source: dict[str, dict[str, float]] = {}
+        for source_id in sorted(self.microzones):
+            distances = {zone_id: float("inf") for zone_id in self.microzones}
+            distances[source_id] = 0.0
+            queue: list[tuple[float, str]] = [(0.0, source_id)]
+            while queue:
+                distance, zone_id = heapq.heappop(queue)
+                if distance != distances[zone_id]:
+                    continue
+                for neighbor_id, edge_key in self.physical_neighbors.get(
+                    zone_id, {}
+                ).items():
+                    edge = self.physical_edges[edge_key]
+                    candidate = distance + edge.travel_time_hours * (
+                        1.0 + edge.disruption
+                    )
+                    if candidate < distances[neighbor_id]:
+                        distances[neighbor_id] = candidate
+                        heapq.heappush(queue, (candidate, neighbor_id))
+            distances_by_source[source_id] = distances
+        self.physical_distance_cache = distances_by_source
+        self.physical_distance_signature = signature
 
     def active_locality_sets(self) -> dict[str, set[str]]:
         """Derived locality work sets for sparse execution/profiling.
@@ -2034,8 +2121,9 @@ class WorldState:
             # each cache key.  Sharing these execution-only caches across
             # sibling particles avoids both a deep copy and repeated Dijkstra
             # work without exposing mutable latent state.
-            "locality_path_cache", "locality_travel_time_cache",
-            "locality_route_metrics_cache",
+             "locality_path_cache", "locality_travel_time_cache",
+             "locality_route_metrics_cache",
+             "physical_distance_cache", "physical_distance_signature",
             # The primary-zone identity depends only on fixed microzone
             # population shares.  The Microzone objects themselves remain
             # particle-local because their control/presence fields are mutable.
@@ -2062,8 +2150,9 @@ class WorldState:
             "patrol_ids_by_formation",
             "security_post_ids_by_locality",
             "security_posts_by_locality",
-            "social_community_ids_by_locality",
-            "compact_observation_state",
+             "social_community_ids_by_locality",
+             "active_physical_locality_ids",
+             "compact_observation_state",
             "compact_relay_state",
         }
         from .compact_information_records import CompactObservationStore, CompactRelayStore

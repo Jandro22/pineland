@@ -96,6 +96,11 @@ def _add_physical_edge(world: WorldState, first_id: str, second_id: str,
     world.physical_edges[key] = edge
     world.physical_neighbors[first_id][second_id] = key
     world.physical_neighbors[second_id][first_id] = key
+    # The distance matrix is derived from this graph.  In normal generated
+    # worlds all edges are installed before the final index build; explicit
+    # topology-editing callers invalidate it eagerly as well.
+    world.physical_distance_signature = ()
+    world.physical_distance_cache = {}
 
 
 def zones_in_locality(world: WorldState, locality_id: str) -> list[Microzone]:
@@ -156,6 +161,8 @@ def generate_physical_world(world: WorldState) -> None:
     world.microzone_ids_by_locality.clear()
     world.microzones_by_locality.clear()
     world.physical_edges.clear()
+    world.physical_distance_signature = ()
+    world.physical_distance_cache.clear()
     world.physical_neighbors.clear()
     world.security_posts.clear()
     world.security_post_ids_by_locality.clear()
@@ -383,6 +390,11 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float,
     zone_ids = [zone.microzone_id for zone in zones_in_locality(world, locality_id)]
     distances = {zone_id: inf for zone_id in zone_ids}
     queue: list[tuple[float, str]] = []
+    # Keep the dynamic source delays separate from topology.  The latter is
+    # precomputed once by ``WorldState.rebuild_physical_distance_index``;
+    # response availability/readiness remains particle-local and is evaluated
+    # on every call.
+    source_delays: dict[str, float] = {}
     for post in posts_in_locality(world, locality_id):
         organization = world.organizations[post.organization_id]
         available_fraction = post.available_fraction
@@ -397,6 +409,9 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float,
         if (_actor_matches_organization(world, post.organization_id, actor) and
                 available_fraction > 0):
             mobilization_delay = (1 - available_fraction) * world.config.physical.response_decay_hours
+            source_delays[post.microzone_id] = min(
+                mobilization_delay, source_delays.get(post.microzone_id, inf)
+            )
             if mobilization_delay < distances[post.microzone_id]:
                 distances[post.microzone_id] = mobilization_delay
                 heapq.heappush(queue, (mobilization_delay, post.microzone_id))
@@ -419,6 +434,9 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float,
                 _actor_matches_organization(world, patrol.organization_id, actor) and
                 patrol.available_at <= time and not formation.moving and effective_fraction > 0):
             dispatch_delay = (1 - effective_fraction) * world.config.physical.response_decay_hours
+            source_delays[patrol.current_microzone_id] = min(
+                dispatch_delay, source_delays.get(patrol.current_microzone_id, inf)
+            )
             if dispatch_delay < distances[patrol.current_microzone_id]:
                 distances[patrol.current_microzone_id] = dispatch_delay
                 heapq.heappush(queue, (dispatch_delay, patrol.current_microzone_id))
@@ -444,9 +462,31 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float,
         effective_fraction = .30 * formation.availability * formation.effective_readiness()
         if effective_fraction > 0:
             dispatch_delay = (1 - effective_fraction) * world.config.physical.response_decay_hours
+            source_delays[formation.current_microzone_id] = min(
+                dispatch_delay, source_delays.get(formation.current_microzone_id, inf)
+            )
             if dispatch_delay < distances[formation.current_microzone_id]:
                 distances[formation.current_microzone_id] = dispatch_delay
                 heapq.heappush(queue, (dispatch_delay, formation.current_microzone_id))
+
+    # ``PhysicalEdge.disruption`` is a fixed case input in the current model.
+    # If a caller mutates it (for a policy experiment or a legacy fixture),
+    # the signature check rebuilds the matrix before it is used.  The fallback
+    # Dijkstra below remains available for malformed/partially constructed
+    # worlds and is also useful as an exact oracle in tests.
+    world.rebuild_physical_distance_index()
+    if world.physical_distance_cache and source_delays:
+        for target_id in zone_ids:
+            best = inf
+            for source_id, dispatch_delay in source_delays.items():
+                topology_distance = world.physical_distance_cache.get(
+                    source_id, {}
+                ).get(target_id, inf)
+                candidate = dispatch_delay + topology_distance
+                if candidate < best:
+                    best = candidate
+            distances[target_id] = best
+        return distances
     while queue:
         distance, zone_id = heapq.heappop(queue)
         if distance != distances[zone_id]:
@@ -458,6 +498,11 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float,
                 distances[neighbor_id] = candidate
                 heapq.heappush(queue, (candidate, neighbor_id))
     return distances
+
+
+def precompute_physical_distance_index(world: WorldState, *, force: bool = False) -> None:
+    """Public execution hook for building the static response-time matrix."""
+    world.rebuild_physical_distance_index(force=force)
 
 
 def recompute_microzone_control(world: WorldState, locality_id: str,

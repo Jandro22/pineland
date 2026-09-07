@@ -679,7 +679,32 @@ class ProcessEngine:
         advance_patrol_presence_memory(self.world, self.world.time)
         changed = 0
         total = 0.0
+        active_physical_localities = getattr(
+            self.world, "active_physical_locality_ids", set(self.world.localities)
+        )
         for locality_id in sorted(self.world.localities):
+            if (
+                self.world.execution_profile == "particle"
+                and self.world.execution_backend == "optimized"
+                and locality_id not in active_physical_localities
+            ):
+                # A locality with no post, formation, patrol, presence memory,
+                # or prior nonzero physical state has an exact zero result.
+                # Clear the scalar mirrors without invoking a response search.
+                locality = self.world.localities[locality_id]
+                for vector in locality.control.values():
+                    if vector.physical != 0.0:
+                        changed += 1
+                        vector.physical = 0.0
+                for zone_id in self.world.microzone_ids_by_locality.get(
+                    locality_id, ()
+                ):
+                    zone = self.world.microzones.get(zone_id)
+                    if zone is None:
+                        continue
+                    for actor in tuple(zone.physical_control):
+                        zone.physical_control[actor] = 0.0
+                continue
             aggregates = recompute_contested_controls(
                 self.world, locality_id, self.world.time, advance_memory=False,
                 use_runtime_indexes=True,
