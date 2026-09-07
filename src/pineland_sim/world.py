@@ -136,6 +136,14 @@ class WorldState:
     # boundary so this never becomes part of a particle's latent state.
     information_execution_cache: dict[tuple[Any, ...], Any] = field(default_factory=dict)
     information_cache_active: bool = False
+    # Execution-only queue used by the optimized information backend. Control
+    # beliefs are not read by information generation within the same tick, so
+    # their numerically identical updates may be applied in one ordered batch
+    # at the information-event boundary.
+    deferred_control_fusions: list[tuple[Any, str, float, float]] = field(
+        default_factory=list
+    )
+    defer_control_fusions: bool = False
     presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     node_presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     control_beliefs: dict[tuple[str, str, str], ActorBelief] = field(default_factory=dict)

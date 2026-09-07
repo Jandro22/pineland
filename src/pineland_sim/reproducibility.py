@@ -96,7 +96,8 @@ PARTICLE_ARCHIVE_WORLD_FIELDS = frozenset({
     "state_based_event_localities", "state_based_events",
     "civilian_harm_events", "resource_flows",
     "information_execution_cache",
-    "information_cache_active", "performance_counters", "engagements",
+    "information_cache_active", "deferred_control_fusions",
+    "defer_control_fusions", "performance_counters", "engagements",
 })
 
 OUTPUT_ONLY_SUMMARY_FIELDS = frozenset({

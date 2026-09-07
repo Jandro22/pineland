@@ -1235,11 +1235,19 @@ def _forecast_particle_job(
         int,
         dict[str, int],
     ],
+    *,
+    consume_parent_branch: bool = False,
 ) -> list[dict[int, int]]:
     state, start_day, end_day, forecast_branches, province_bits = job
     branch_week_masks = []
     for branch_index in range(forecast_branches):
-        branch = state.fork(branch_index)
+        if (
+            consume_parent_branch
+            and branch_index == forecast_branches - 1
+        ):
+            branch = state.consume_fork(branch_index)
+        else:
+            branch = state.fork(branch_index)
         branch.advance_to(end_day)
         branch_week_masks.append(
             _forecast_week_masks(
@@ -1256,12 +1264,17 @@ def _forecast_persistent_job(
     state: SimulationParticle,
     time: float,
     payload: tuple[float, float, int, dict[str, int]],
-) -> tuple[SimulationParticle, float, list[dict[int, int]]]:
-    """Run forecast branches in a resident worker and return only cells."""
+) -> tuple[SimulationParticle, float, dict[str, object]]:
+    """Run forecast branches and return compact forecast/output diagnostics."""
     start_day, end_day, forecast_branches, province_bits = payload
-    return state, 0.0, _forecast_particle_job(
-        (state, start_day, end_day, forecast_branches, province_bits)
-    )
+    posterior_summary = state.world.summary()
+    return state, 0.0, {
+        "branch_week_masks": _forecast_particle_job(
+            (state, start_day, end_day, forecast_branches, province_bits),
+            consume_parent_branch=True,
+        ),
+        "posterior_summary": posterior_summary,
+    }
 
 
 def forecast_weighted_field(
@@ -1296,6 +1309,7 @@ def forecast_weighted_field(
     }
     member_cells: list[list[dict[str, int | str]]] = []
     forecast_branch_cells: list[list[list[dict[str, int | str]]]] = []
+    posterior_particle_summaries: list[dict[str, object]]
     if workers == 1:
         jobs = [
             (
@@ -1308,6 +1322,10 @@ def forecast_weighted_field(
             for particle in filter_.particles
         ]
         completed = list(map(_forecast_particle_job, jobs))
+        posterior_particle_summaries = [
+            particle.state.world.summary()
+            for particle in filter_.particles
+        ]
     else:
         initial_states = [particle.state for particle in filter_.particles]
         with PersistentParticlePool(
@@ -1321,20 +1339,18 @@ def forecast_weighted_field(
                 for particle in filter_.particles
             ]
             del initial_states
-            completed = [
+            worker_payloads = [
                 diagnostics
                 for _, _, diagnostics in executor.propagate(
                     end_day,
                     (start_day, end_day, forecast_branches, province_bits),
                 )
             ]
-            forecast_states = executor.snapshot()
-        filter_.particles = [
-            Particle(
-                state,
-                math.log(weight) if weight > 0 else -float("inf"),
-            )
-            for state, weight in zip(forecast_states, weights)
+        completed = [
+            payload["branch_week_masks"] for payload in worker_payloads
+        ]
+        posterior_particle_summaries = [
+            payload["posterior_summary"] for payload in worker_payloads
         ]
     for branch_week_masks, weight in zip(completed, weights):
         combined_masks: dict[int, int] = {}
@@ -1382,6 +1398,7 @@ def forecast_weighted_field(
         "member_active_cells": member_cells,
         "forecast_branch_cells": forecast_branch_cells,
         "forecast_branches": forecast_branches,
+        "posterior_particle_summaries": posterior_particle_summaries,
     }
 
 
@@ -1738,8 +1755,8 @@ def run(
             "cell; no unlicensed quantitative historical measurement "
             "operator is applied"
         ),
-        "posterior_particle_summaries": [
-            particle.state.world.summary() for particle in filter_.particles
+        "posterior_particle_summaries": forecast[
+            "posterior_particle_summaries"
         ],
     }
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -1755,7 +1772,7 @@ def main() -> None:
     parser.add_argument(
         "--workers",
         type=int,
-        default=max(1, min(10, os.cpu_count() or 1)),
+        default=max(1, os.cpu_count() or 1),
     )
     parser.add_argument(
         "--posterior-cache-dir",
