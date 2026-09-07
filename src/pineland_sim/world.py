@@ -965,6 +965,21 @@ class WorldState:
         from .compact_information_records import CompactObservationStore, CompactRelayStore
 
         active = self.active_information_relays
+        if isinstance(self.information_relays, CompactRelayStore):
+            # The particle information loop releases delivered/dropped rows at
+            # the exact delivery boundary.  Avoid rescanning the live SoA on
+            # every information tick; this fallback handles only stale active
+            # IDs left by older callers.
+            stale_active = {
+                relay_id for relay_id in active
+                if relay_id not in self.information_relays
+            }
+            active.difference_update(stale_active)
+            if not stale_active:
+                self.observation_index.clear()
+                self.compact_observation_state = self.observations
+                self.compact_relay_state = self.information_relays
+                return
         keep_relays = {
             relay_id
             for relay_id, relay in self.information_relays.items()

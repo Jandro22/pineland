@@ -585,7 +585,11 @@ def _new_observation(world: WorldState, *, observer_actor_id: str, observer_node
     from .compact_information_records import CompactObservationStore
 
     if isinstance(world.observations, CompactObservationStore):
-        observation = world.observations.add(observation)
+        # Keep the freshly-created dataclass in the current event's local
+        # pipeline. The compact row is authoritative for persistence; forcing
+        # this already-materialized object through a compatibility view would
+        # add property/array overhead to every local fusion.
+        world.observations.add(observation)
     else:
         world.observations[observation_id] = observation
     index_key = (observation.target_actor_id or "*", observation.locality_id,
@@ -1544,6 +1548,8 @@ def fuse_observation(world: WorldState, observation: Observation, recipient_id: 
     straightforward to unit test with hand-built contradictory reports.
     """
     time = observation.timestamp if time is None else time
+    estimated_value = observation.estimated_value
+    observation_type = observation.observation_type
     recipient_actor = (recipient_id if recipient_id in world.organizations else
                        world.formations[recipient_id].organization_id
                        if recipient_id in world.formations else observation.observer_actor_id)
@@ -1603,13 +1609,12 @@ def fuse_observation(world: WorldState, observation: Observation, recipient_id: 
     weight = clamp(observation.confidence * observation.quality * trust *
                    (language ** world.config.information.language_fusion_weight) * age_quality *
                    (1 + world.config.information.corroboration_bonus * min(3, corroboration)))
-    if observation.observation_type in {"presence", "detection"}:
+    if observation_type in {"presence", "detection"}:
         _fuse_presence(world, observation, recipient_id, time, weight, node=node)
     # Detection/presence reports do not carry a control vector.  Avoid the
     # control-belief path entirely for those high-volume reports; this is a
     # pure dispatch optimization and leaves all reported values untouched.
-    if ("control" in observation.estimated_value or
-            "physical_control" in observation.estimated_value):
+    if ("control" in estimated_value or "physical_control" in estimated_value):
         _fuse_control(world, observation, recipient_id, time, weight)
     return weight
 
@@ -1646,7 +1651,9 @@ def _queue_relay(world: WorldState, observation: Observation, time: float) -> In
     from .compact_information_records import CompactRelayStore
 
     if isinstance(world.information_relays, CompactRelayStore):
-        relay = world.information_relays.add(relay)
+        # The relay object is still needed for this event's heap insertion;
+        # retain the rich local value while compact storage owns the row.
+        world.information_relays.add(relay)
     else:
         world.information_relays[relay_id] = relay
     world.active_information_relays.add(relay_id)
@@ -1697,7 +1704,13 @@ def ingest_observation(world: WorldState, observation: Observation,
             trust_override=local_trust,
             language_override=local_language,
         )
-    _queue_relay(world, observation, time)
+    relay = _queue_relay(world, observation, time)
+    if relay is None and hasattr(world.observations, "discard"):
+        # Local fusion is complete and no future event references this report.
+        # Particle storage can release it immediately instead of waiting for a
+        # whole-store compaction pass.
+        if hasattr(world.observations, "discard"):
+            world.observations.discard(observation.observation_id)
     return local_weight
 
 
@@ -1919,16 +1932,25 @@ def _report_probability(world: WorldState, observer_actor_id: str, locality_id: 
                 world.performance_counters.get("information_report_cache_miss", 0) + 1
             )
     config = world.config.information
-    rates = {
-        "civilian": config.civilian_report_rate,
-        "social_network": config.social_report_rate,
-        "administrative": config.administrative_report_rate,
-        "political_elite": config.elite_report_rate,
-        "organization_member": config.member_report_rate,
-        "fixed_post": config.fixed_post_report_rate,
-        "interpreter": config.interpreter_report_rate,
-    }
-    probability = rates.get(source_type, .2)
+    # Avoid allocating the same seven-entry rate dictionary for every source
+    # call. This is a representation-only dispatch; the configuration values
+    # and unknown-source fallback are unchanged.
+    if source_type == "civilian":
+        probability = config.civilian_report_rate
+    elif source_type == "social_network":
+        probability = config.social_report_rate
+    elif source_type == "administrative":
+        probability = config.administrative_report_rate
+    elif source_type == "political_elite":
+        probability = config.elite_report_rate
+    elif source_type == "organization_member":
+        probability = config.member_report_rate
+    elif source_type == "fixed_post":
+        probability = config.fixed_post_report_rate
+    elif source_type == "interpreter":
+        probability = config.interpreter_report_rate
+    else:
+        probability = .2
     locality = world.localities[locality_id]
     if source_type == "administrative":
         probability *= .35 + .95 * clamp(locality.administrative_capacity)
@@ -1992,7 +2014,10 @@ def _observe_from_source(world: WorldState, observer_actor_id: str, observer_nod
     observations: list[Observation] = []
     for target_actor in target_actors:
         targets = (
-            list(formation_index.get((target_actor, locality_id), ()))
+            # The index is immutable during one information event; retaining
+            # its existing row avoids a list allocation for every source and
+            # target-actor combination.
+            formation_index.get((target_actor, locality_id), ())
             if formation_index is not None
             else [
                 formation for formation in world.formations.values()
@@ -2017,7 +2042,10 @@ def _observe_from_source(world: WorldState, observer_actor_id: str, observer_nod
         locality_id, observer_actor_id if observer_actor_id in world.localities[locality_id].control
         else "government", time, rng, microzone,
     ))
-    return [observation for observation in observations if observation is not None]
+    # Background collection always requests negative records, so every target
+    # branch above returns an observation. Reuse the list instead of allocating
+    # a second filtered copy for each source call.
+    return observations
 
 
 def generate_background_observations(world: WorldState, time: float,
@@ -2211,8 +2239,19 @@ def process_information(world: WorldState, time: float,
     """Age beliefs, generate reports, and deliver due command-network relays."""
     rng = rng or seeded_rng(world.config, f"information-process:{time:.6f}")
     if world.execution_profile == "particle":
-        world.enable_compact_particle_information_storage()
         world.refresh_operational_indexes()
+    from .compact_information_records import CompactObservationStore, CompactRelayStore
+    observation_store = (
+        world.observations if isinstance(world.observations, CompactObservationStore) else None
+    )
+    relay_store = (
+        world.information_relays
+        if isinstance(world.information_relays, CompactRelayStore) else None
+    )
+    if observation_store is not None:
+        observation_store.begin_batch()
+    if relay_store is not None:
+        relay_store.begin_batch()
     world.information_execution_cache.clear()
     world.information_cache_active = True
     batch_control = (
@@ -2232,12 +2271,21 @@ def process_information(world: WorldState, time: float,
     try:
         decay_information(world, time)
         generated = generate_background_observations(world, time, rng)
+        if observation_store is not None:
+            observation_store.end_batch()
+        if relay_store is not None:
+            relay_store.end_batch()
+        # Compact particle rows may be released during delivery below; retain
+        # the stable result identifiers before their row indexes can move.
+        generated_ids = tuple(item.observation_id for item in generated)
         delivered = dropped = 0
         delivered_ids: list[str] = []
         for relay_id in _due_information_relay_ids(world, time):
             relay = world.information_relays.get(relay_id)
             if relay is None or relay.status != "in_transit":
                 world.active_information_relays.discard(relay_id)
+                if hasattr(world.information_relays, "discard"):
+                    world.information_relays.discard(relay_id)
                 continue
             if relay.arrives_at > time:
                 continue
@@ -2245,8 +2293,11 @@ def process_information(world: WorldState, time: float,
             if observation is None:
                 relay.status = "dropped"
                 world.active_information_relays.discard(relay_id)
+                if hasattr(world.information_relays, "discard"):
+                    world.information_relays.discard(relay_id)
                 dropped += 1
                 continue
+            observation_id = observation.observation_id
             if rng.random() <= relay.reliability:
                 relay.status = "delivered"
                 world.active_information_relays.discard(relay_id)
@@ -2261,11 +2312,14 @@ def process_information(world: WorldState, time: float,
                     # through the command relay; it does not read the hidden state.
                     fuse_observation(world, observation, "government", time)
                 delivered += 1
-                delivered_ids.append(observation.observation_id)
+                delivered_ids.append(observation_id)
             else:
                 relay.status = "dropped"
                 world.active_information_relays.discard(relay_id)
                 dropped += 1
+            if hasattr(world.information_relays, "discard"):
+                world.information_relays.discard(relay_id)
+                world.observations.discard(observation_id)
         # Generated local fusions precede this loop, so the single queue still
         # preserves generated-before-relayed recurrence order while allowing
         # one native/compact batch for the whole information event.
@@ -2273,7 +2327,7 @@ def process_information(world: WorldState, time: float,
         flushed_control_fusions = _flush_control_fusions(world)
         _prune_information_history(world, time)
         return {"generated": len(generated),
-                "observation_ids": tuple(item.observation_id for item in generated),
+                "observation_ids": generated_ids,
                 "relays_delivered": delivered,
                 "delivered_observation_ids": tuple(delivered_ids),
                 "relays_dropped": dropped,
@@ -2281,6 +2335,10 @@ def process_information(world: WorldState, time: float,
                 "control_fusions": flushed_control_fusions,
                 "presence_fusions": flushed_presence_fusions}
     finally:
+        if observation_store is not None and observation_store.batch_pending is not None:
+            observation_store.end_batch()
+        if relay_store is not None and relay_store.batch_pending is not None:
+            relay_store.end_batch()
         world.defer_control_fusions = False
         world.deferred_control_fusions.clear()
         world.defer_presence_fusions = False
