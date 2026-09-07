@@ -37,6 +37,15 @@ filter raises a hard support-exhaustion diagnostic instead of silently
 uniformizing an impossible posterior, and reports ESS plus distinct root
 ancestors, lineage entropy, resampling count, and maximum ancestry
 concentration.
+An information-matched comparator scorer is prepared at
+`studies/research_program/scripts/score_afghanistan_information_matched_competition.py`.
+It exposes global, province/region-shrunk, persistence, temporal, spatial,
+topology, and preperiod-plus-training-history baselines with the same
+preperiod evidence and source-grounded geography. It requires an explicit
+holdout-reveal flag and was not run during this architecture pass.
+Independent terrain, transport, language, and preperiod facility/deployment
+layers remain explicitly unidentified; no later-outcome proxy was substituted
+for them.
 Representative-agent convergence is outcome-blind and can be run with
 `studies/research_program/scripts/run_afghanistan_resolution_convergence.py`.
 It keeps the 401-district geography fixed while comparing probability-field

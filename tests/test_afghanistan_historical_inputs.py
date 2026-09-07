@@ -132,7 +132,8 @@ def test_afghanistan_sanctuary_maps_to_the_spatial_sponsor_relation(generated_wo
     condition_world(world, inputs, 7500)
     organization = world.organizations["insurgent"]
     assert organization.external_sanctuary == 1.0
-    assert organization.sponsor_dependence == {"pakistan": 1.0}
+    assert organization.sponsor_links == {"pakistan": 1.0}
+    assert organization.sponsor_dependence == {}
     from pineland_sim.logistics import _sanctuary_access
     border = next(iter(world.border_segments.values()))
     assert _sanctuary_access(
