@@ -165,6 +165,34 @@ def test_compact_information_rows_are_independent_across_particle_clones():
     assert clone.compact_zone_state.row(key) != optimized.compact_zone_state.row(key)
 
 
+def test_explicit_compact_particle_information_backend_is_exact():
+    config = SimulationConfig(
+        agent_count=50, locality_count=17, horizon_days=2, seed=2305
+    )
+    reference = generate_pineland(config)
+    compact = reference.clone()
+    reference_simulation = Simulation(reference)
+    compact_simulation = Simulation(compact)
+    for simulation in (reference_simulation, compact_simulation):
+        simulation.configure_execution(
+            execution_backend="optimized",
+            validate_invariants=False,
+            checkpointing=False,
+            retain_output_archives=False,
+        )
+    compact.enable_compact_particle_information_storage()
+    reference_simulation.run(until=1.0)
+    compact_simulation.run(until=1.0)
+
+    assert decision_state_sha256(reference) == decision_state_sha256(compact)
+    from pineland_sim.reproducibility import simulation_execution_sha256
+    assert simulation_execution_sha256(reference_simulation) == simulation_execution_sha256(
+        compact_simulation
+    )
+    assert compact.compact_observation_state is compact.observations
+    assert compact.compact_relay_state is compact.information_relays
+
+
 def test_lazy_information_decay_replays_exact_steps_only_when_row_is_touched():
     keys = (
         ("observer", "actor", "L:L-Z", "*"),
