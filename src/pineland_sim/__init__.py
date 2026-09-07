@@ -40,6 +40,7 @@ from .ensemble import (
     advance_batch,
     process_information_numeric,
 )
+from .native_ensemble import NativeEnsembleRunner, PackedHotState
 from .state_estimation import (
     AssimilationObservation,
     FilterUpdateDiagnostics,
@@ -56,6 +57,7 @@ from .state_estimation import (
     aggregate_hazard_probability,
     at_least_one_event_probability,
     binary_mcse,
+    binary_mcse_upper_bound,
     GuidedProposalPropagator,
     GuidedSMCPropagator,
     guided_importance_log_weight,
@@ -100,7 +102,8 @@ __all__ = ["BorderSegment", "CombatConfig", "DiasporaLink", "Engagement", "Exter
            "NumericInformationEventBuffer", "PackedFilterUpdate", "PackedParticleFilter",
            "NumericRelayBuffer",
            "ParticleBatchState", "RelayBuffer", "StaticWorldTopology",
-           "advance_batch", "process_information_numeric"]
+           "advance_batch", "process_information_numeric",
+           "NativeEnsembleRunner", "PackedHotState"]
 __all__ += [
     "AssimilationObservation", "FilterUpdateDiagnostics", "Particle",
     "PersistentParticlePool",
@@ -109,7 +112,8 @@ __all__ += [
     "RaoBlackwellizedHazardLikelihood", "adaptive_monte_carlo",
     "adaptive_posterior_predictive", "aggregate_hazard",
     "aggregate_hazard_probability", "at_least_one_event_probability",
-    "binary_mcse", "guided_importance_log_weight", "guided_log_weights",
+    "binary_mcse", "binary_mcse_upper_bound",
+    "guided_importance_log_weight", "guided_log_weights",
     "GuidedProposalPropagator", "GuidedSMCPropagator",
     "hazard_to_probability", "monte_carlo_standard_error",
     "probability_at_least_one", "probability_to_hazard",

@@ -1572,6 +1572,47 @@ def binary_mcse(
     return sqrt(probability * (1.0 - probability) / len(values))
 
 
+def binary_mcse_upper_bound(
+    values: Sequence[float],
+    *,
+    z_value: float = 1.959963984540054,
+) -> float:
+    """Coverage-aware upper bound for a Bernoulli probability's MCSE.
+
+    Plug-in Bernoulli MCSE is zero after an all-zero or all-one prefix, which
+    makes it unsafe as a sequential stopping rule. We first construct the
+    Wilson score interval for the unknown probability, then maximize
+    sqrt(p(1-p)/n) over that interval. The result converges to the usual
+    plug-in MCSE but cannot claim spurious zero uncertainty at a boundary.
+    """
+    numeric = [float(value) for value in values]
+    if not numeric or any(value not in (0.0, 1.0) for value in numeric):
+        raise ValueError("binary draws must be a nonempty 0/1 sequence")
+    z_value = float(z_value)
+    if z_value <= 0.0:
+        raise ValueError("z_value must be positive")
+    count = len(numeric)
+    probability = sum(numeric) / count
+    z2 = z_value * z_value
+    denominator = 1.0 + z2 / count
+    center = (probability + z2 / (2.0 * count)) / denominator
+    half_width = (
+        z_value
+        * sqrt(
+            probability * (1.0 - probability) / count
+            + z2 / (4.0 * count * count)
+        )
+        / denominator
+    )
+    lower = max(0.0, center - half_width)
+    upper = min(1.0, center + half_width)
+    candidates = [lower, upper]
+    if lower <= 0.5 <= upper:
+        candidates.append(0.5)
+    variance = max(value * (1.0 - value) for value in candidates)
+    return sqrt(variance / count)
+
+
 def required_trajectories_for_mcse(
     probability: float | None,
     tolerance: float,
