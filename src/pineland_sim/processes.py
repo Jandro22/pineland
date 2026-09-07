@@ -666,8 +666,13 @@ class ProcessEngine:
         # Public hooks may move formations by assigning locality_id directly;
         # refresh the dynamic locality indexes once at the event boundary so
         # the sparse paths remain exact without rebuilding per locality.
-        if self.world.execution_profile != "particle":
+        if not (
+            self.world.execution_profile == "particle"
+            and self.world.execution_backend == "optimized"
+        ):
             self.world.rebuild_runtime_entity_indexes()
+        else:
+            self.world.refresh_operational_indexes()
         from .physical import advance_patrol_presence_memory
 
         advance_patrol_presence_memory(self.world, self.world.time)
@@ -1390,7 +1395,10 @@ class ProcessEngine:
             # coalition aggregate; franchise-specific writes below own the
             # concrete state.  Only materialize the legacy side key after the
             # literal organization has ceased to be active.
-            if insurgent_available and "insurgent" not in active_insurgent_ids(self.world):
+            if (
+                insurgent_available
+                and "insurgent" not in active_insurgent_org_ids
+            ):
                 self._control(event_id, locality_id, "insurgent", "social_network_influence", social=insurgent_delta)
         for (locality_id, organization_id), represented_shift in locality_franchise_shift.items():
             population = max(1, self.world.localities[locality_id].population)

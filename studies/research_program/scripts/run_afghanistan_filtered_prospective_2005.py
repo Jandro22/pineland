@@ -52,6 +52,7 @@ from pineland_sim.state_estimation import (  # noqa: E402
     particle_weights,
 )
 from pineland_sim.reproducibility import (  # noqa: E402
+    decision_state_sha256,
     file_sha256,
     model_sha256,
     repository_state,
@@ -67,6 +68,8 @@ DEFAULT_STRENGTHS = (5000.0, 7500.0, 10000.0)
 PRIOR_FAMILY_STRATA = tuple(sorted(TALIBAN_PRIOR_FAMILIES))
 POSTERIOR_CACHE_SCHEMA = "pineland.afghanistan.posterior_cache.v1"
 TRAINING_RESTART_SCHEMA = "pineland.afghanistan.training_restart.v1"
+INITIAL_PARTICLE_CACHE_SCHEMA = "pineland.afghanistan.initial_particle_cache.v1"
+FORECAST_CACHE_SCHEMA = "pineland.afghanistan.forecast_cache.v1"
 COMPETITOR_INFORMATION_CONTRACT = {
     "schema_version": "pineland.afghanistan.information_matched_competitors.v1",
     "evaluation_surface": "observed province-week Taliban-state-security incidence",
@@ -312,6 +315,85 @@ def _posterior_cache_paths(
     )
 
 
+def _initial_particle_cache_key(
+    cache_key: dict[str, object],
+    *,
+    particle_index: int,
+    taliban_strength: float,
+    prior_family: str,
+) -> dict[str, object]:
+    return {
+        "schema_version": INITIAL_PARTICLE_CACHE_SCHEMA,
+        "source_commit": cache_key["source_commit"],
+        "model_sha256": cache_key["model_sha256"],
+        "runner_sha256": cache_key["runner_sha256"],
+        "case_sha256": cache_key["case_sha256"],
+        "historical_inputs_sha256": cache_key["historical_inputs_sha256"],
+        "seed": cache_key["seed"],
+        "horizon": cache_key["horizon"],
+        "particle_index": int(particle_index),
+        "taliban_initial_strength": float(taliban_strength),
+        "prior_family": str(prior_family),
+        "python_cache_tag": cache_key["python_cache_tag"],
+    }
+
+
+def _initial_particle_cache_paths(
+    cache_dir: Path, key: dict[str, object]
+) -> tuple[Path, Path]:
+    digest = _posterior_cache_digest(key)
+    return (
+        cache_dir / f"initial-{digest}.json",
+        cache_dir / f"initial-{digest}.pkl",
+    )
+
+
+def _save_initial_particle_cache(
+    cache_dir: Path,
+    key: dict[str, object],
+    particle: Particle[SimulationParticle],
+) -> tuple[Path, Path]:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path, payload_path = _initial_particle_cache_paths(cache_dir, key)
+    payload = pickle.dumps(particle, protocol=pickle.HIGHEST_PROTOCOL)
+    payload_sha256 = hashlib.sha256(payload).hexdigest()
+    payload_tmp = payload_path.with_suffix(payload_path.suffix + ".tmp")
+    manifest_tmp = manifest_path.with_suffix(manifest_path.suffix + ".tmp")
+    payload_tmp.write_bytes(payload)
+    os.replace(payload_tmp, payload_path)
+    manifest = {
+        "schema_version": INITIAL_PARTICLE_CACHE_SCHEMA,
+        "cache_key": key,
+        "payload_sha256": payload_sha256,
+        "payload_bytes": len(payload),
+        "format": "trusted-local-python-pickle",
+        "canonical_scientific_artifact": False,
+    }
+    manifest_tmp.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(manifest_tmp, manifest_path)
+    return manifest_path, payload_path
+
+
+def _load_initial_particle_cache(
+    cache_dir: Path, key: dict[str, object]
+) -> Particle[SimulationParticle] | None:
+    manifest_path, payload_path = _initial_particle_cache_paths(cache_dir, key)
+    if not manifest_path.exists() or not payload_path.exists():
+        return None
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != INITIAL_PARTICLE_CACHE_SCHEMA:
+        raise ValueError("initial particle cache schema mismatch")
+    if manifest.get("cache_key") != key:
+        raise ValueError("initial particle cache provenance mismatch")
+    payload = payload_path.read_bytes()
+    if hashlib.sha256(payload).hexdigest() != manifest.get("payload_sha256"):
+        raise ValueError("initial particle cache payload hash mismatch")
+    return pickle.loads(payload)
+
+
 def _snapshot_filter(
     filter_: SequentialParticleFilter[
         SimulationParticle, ProvinceWeekObservation
@@ -535,6 +617,96 @@ def _load_posterior_cache(
     )
 
 
+def _forecast_cache_key(
+    cache_key: dict[str, object],
+    filter_: SequentialParticleFilter[
+        SimulationParticle, ProvinceWeekObservation
+    ],
+    *,
+    start_day: float,
+    end_day: float,
+    forecast_branches: int,
+) -> dict[str, object]:
+    """Bind forecast reuse to the exact frozen posterior and forecast contract."""
+    return {
+        "schema_version": FORECAST_CACHE_SCHEMA,
+        "posterior_cache_key_sha256": _posterior_cache_digest(cache_key),
+        "posterior_last_time": float(filter_.last_time),
+        "posterior_weights": particle_weights(filter_.particles),
+        "posterior_lineages": [
+            particle.state.lineage_id for particle in filter_.particles
+        ],
+        "posterior_decision_state_sha256": [
+            decision_state_sha256(particle.state.world)
+            for particle in filter_.particles
+        ],
+        "forecast_start_day": float(start_day),
+        "forecast_end_day": float(end_day),
+        "forecast_branches": int(forecast_branches),
+        "python_cache_tag": sys.implementation.cache_tag,
+    }
+
+
+def _forecast_cache_paths(
+    cache_dir: Path,
+    key: dict[str, object],
+) -> tuple[Path, Path]:
+    digest = _posterior_cache_digest(key)
+    return (
+        cache_dir / f"forecast-{digest}.manifest.json",
+        cache_dir / f"forecast-{digest}.json",
+    )
+
+
+def _save_forecast_cache(
+    cache_dir: Path,
+    key: dict[str, object],
+    forecast: dict[str, object],
+) -> tuple[Path, Path]:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path, payload_path = _forecast_cache_paths(cache_dir, key)
+    payload = (
+        json.dumps(forecast, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+    payload_sha256 = hashlib.sha256(payload).hexdigest()
+    payload_tmp = payload_path.with_suffix(payload_path.suffix + ".tmp")
+    manifest_tmp = manifest_path.with_suffix(manifest_path.suffix + ".tmp")
+    payload_tmp.write_bytes(payload)
+    os.replace(payload_tmp, payload_path)
+    manifest = {
+        "schema_version": FORECAST_CACHE_SCHEMA,
+        "cache_key": key,
+        "payload_sha256": payload_sha256,
+        "payload_bytes": len(payload),
+        "format": "json-compute-cache",
+        "canonical_scientific_artifact": False,
+    }
+    manifest_tmp.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(manifest_tmp, manifest_path)
+    return manifest_path, payload_path
+
+
+def _load_forecast_cache(
+    cache_dir: Path,
+    key: dict[str, object],
+) -> tuple[dict[str, object], Path] | None:
+    manifest_path, payload_path = _forecast_cache_paths(cache_dir, key)
+    if not manifest_path.exists() or not payload_path.exists():
+        return None
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != FORECAST_CACHE_SCHEMA:
+        raise ValueError("forecast cache schema mismatch")
+    if manifest.get("cache_key") != key:
+        raise ValueError("forecast cache provenance mismatch")
+    payload = payload_path.read_bytes()
+    if hashlib.sha256(payload).hexdigest() != manifest.get("payload_sha256"):
+        raise ValueError("forecast cache payload hash mismatch")
+    return json.loads(payload.decode("utf-8")), manifest_path
+
+
 def _load_case() -> dict:
     return json.loads(CASE.read_text(encoding="utf-8"))
 
@@ -673,8 +845,22 @@ def build_initial_particle(
 
 
 def _province_for_locality(world, locality_id: str) -> str:
+    cached = world.evaluation_region_by_locality.get(locality_id)
+    if cached is not None:
+        return cached
     district_id = world.localities[locality_id].district_id
-    return world.district_hierarchy[district_id]["province"]
+    province = world.district_hierarchy[district_id]["province"]
+    world.evaluation_region_by_locality[locality_id] = province
+    return province
+
+
+def _precompute_province_lookup(world) -> None:
+    world.evaluation_region_by_locality = {
+        locality_id: world.district_hierarchy[
+            world.localities[locality_id].district_id
+        ]["province"]
+        for locality_id in world.localities
+    }
 
 
 def _active_provinces(
@@ -1147,6 +1333,8 @@ def run(
     posterior_cache_dir: Path | None = None,
     training_restart_dir: Path | None = None,
     restart_every_weeks: int = 13,
+    initial_cache_dir: Path | None = None,
+    forecast_cache_dir: Path | None = None,
 ) -> dict:
     repo = repository_state(ROOT)
     empty_diff_sha256 = hashlib.sha256(b"").hexdigest()
@@ -1217,6 +1405,10 @@ def run(
     training_restart_hit = False
     training_restart_manifest: Path | None = None
     training_restart_week: int | None = None
+    initial_particle_cache_hits = 0
+    initial_particle_cache_attempts = 0
+    forecast_cache_hit = False
+    forecast_cache_manifest: Path | None = None
     if posterior_cache_dir is not None:
         manifest_path, payload_path = _posterior_cache_paths(
             posterior_cache_dir, cache_key
@@ -1247,24 +1439,48 @@ def run(
             )
             training_restart_hit = resume_filter is not None
         if resume_filter is None:
-            base_world = generate_pineland(
-                _config(seed, horizon), empirical_geography=case
-            )
-            initial_particles = [
-                build_initial_particle(
+            initial_particles = []
+            base_world = None
+            for index in range(particles):
+                prior_family = PRIOR_FAMILY_STRATA[
+                    index % len(PRIOR_FAMILY_STRATA)
+                ]
+                initial_key = _initial_particle_cache_key(
+                    cache_key,
+                    particle_index=index,
+                    taliban_strength=particle_strengths[index],
+                    prior_family=prior_family,
+                )
+                cached_particle = (
+                    _load_initial_particle_cache(initial_cache_dir, initial_key)
+                    if initial_cache_dir is not None else None
+                )
+                if initial_cache_dir is not None:
+                    initial_particle_cache_attempts += 1
+                if cached_particle is not None:
+                    initial_particle_cache_hits += 1
+                    initial_particles.append(cached_particle)
+                    continue
+                if base_world is None:
+                    base_world = generate_pineland(
+                        _config(seed, horizon), empirical_geography=case
+                    )
+                    _precompute_province_lookup(base_world)
+                particle = build_initial_particle(
                     seed=seed,
                     particle_index=index,
                     taliban_strength=particle_strengths[index],
-                    prior_family=PRIOR_FAMILY_STRATA[
-                        index % len(PRIOR_FAMILY_STRATA)
-                    ],
+                    prior_family=prior_family,
                     horizon=horizon,
                     case=case,
                     inputs=inputs,
                     base_world=base_world,
                 )
-                for index in range(particles)
-            ]
+                if initial_cache_dir is not None:
+                    _save_initial_particle_cache(
+                        initial_cache_dir, initial_key, particle
+                    )
+                initial_particles.append(particle)
             del base_world
         else:
             initial_particles = []
@@ -1288,11 +1504,30 @@ def run(
         raise ValueError(
             "posterior cache/training state does not end at the declared boundary"
         )
-    forecast = forecast_weighted_field(
+    forecast_key = _forecast_cache_key(
+        cache_key,
         filter_,
+        start_day=FORECAST_START_DAY,
+        end_day=FORECAST_END_DAY,
         forecast_branches=forecast_branches,
-        workers=workers,
     )
+    cached_forecast = (
+        _load_forecast_cache(forecast_cache_dir, forecast_key)
+        if forecast_cache_dir is not None else None
+    )
+    if cached_forecast is None:
+        forecast = forecast_weighted_field(
+            filter_,
+            forecast_branches=forecast_branches,
+            workers=workers,
+        )
+        if forecast_cache_dir is not None:
+            forecast_cache_manifest, _ = _save_forecast_cache(
+                forecast_cache_dir, forecast_key, forecast
+            )
+    else:
+        forecast, forecast_cache_manifest = cached_forecast
+        forecast_cache_hit = True
     filter_diagnostics = [asdict(item) for item in filter_.history]
     smc_diagnostics = {
         **filter_.ancestry_diagnostics(),
@@ -1391,6 +1626,27 @@ def run(
             "restart_every_weeks": restart_every_weeks,
             "canonical_scientific_artifact": False,
         },
+        "initial_particle_cache": {
+            "enabled": initial_cache_dir is not None,
+            "hits": initial_particle_cache_hits,
+            "attempts": initial_particle_cache_attempts,
+            "misses": max(
+                0,
+                initial_particle_cache_attempts
+                - initial_particle_cache_hits,
+            ),
+            "canonical_scientific_artifact": False,
+        },
+        "forecast_cache": {
+            "enabled": forecast_cache_dir is not None,
+            "hit": forecast_cache_hit,
+            "cache_key_sha256": _posterior_cache_digest(forecast_key),
+            "manifest": (
+                str(forecast_cache_manifest)
+                if forecast_cache_manifest is not None else None
+            ),
+            "canonical_scientific_artifact": False,
+        },
         "filter_updates": filter_diagnostics,
         "nested_propagator_diagnostics": getattr(
             filter_, "nested_propagator_diagnostics", {}
@@ -1452,6 +1708,22 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--initial-cache-dir",
+        type=Path,
+        help=(
+            "optional content-addressed trusted-local cache for conditioned "
+            "initial simulation particles"
+        ),
+    )
+    parser.add_argument(
+        "--forecast-cache-dir",
+        type=Path,
+        help=(
+            "optional content-addressed cache for the frozen-posterior "
+            "forecast compute result"
+        ),
+    )
+    parser.add_argument(
         "--restart-every-weeks",
         type=int,
         default=13,
@@ -1467,6 +1739,8 @@ def main() -> None:
         posterior_cache_dir=args.posterior_cache_dir,
         training_restart_dir=args.training_restart_dir,
         restart_every_weeks=args.restart_every_weeks,
+        initial_cache_dir=args.initial_cache_dir,
+        forecast_cache_dir=args.forecast_cache_dir,
         output=args.output,
     )
     print(json.dumps({

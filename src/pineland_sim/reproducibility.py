@@ -59,13 +59,23 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "active_shipment_ids", "active_movement_order_ids",
     "person_ids_by_residence_locality",
     "person_ids_by_organization", "unassigned_person_ids",
+    "represented_weight_by_locality", "represented_weight_by_community",
     "primary_language_by_locality", "multilingual_locality_ids",
+    "ordered_district_ids", "ordered_locality_ids", "ordered_person_ids",
+    "ordered_social_community_ids", "person_ids_by_community",
+    "ordered_microzone_ids", "ordered_organization_ids",
+    "active_organization_ids", "active_insurgent_organization_ids",
+    "operational_locality_ids_by_organization",
+    "active_operational_locality_ids",
+    "evaluation_region_by_locality",
     "microzones_by_locality", "formation_ids_by_locality",
+    "formation_ids_by_organization",
     "patrol_ids_by_locality", "patrol_ids_by_formation",
     "security_posts_by_locality", "social_community_ids_by_locality",
     "information_execution_cache",
     "information_cache_active",
-    "execution_profile", "performance_counters", "engagements", "state_based_event_times",
+    "execution_profile", "execution_backend", "performance_counters",
+    "engagements", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
 })
 
@@ -389,6 +399,47 @@ def decision_state_component_hashes(world: Any) -> dict[str, str]:
     """Per-component hashes used to localize determinism failures."""
     payload = decision_state_payload(world)
     return {key: canonical_sha256(value) for key, value in sorted(payload.items())}
+
+
+def simulation_execution_payload(
+    simulation: Any, *, lineage_id: str | None = None
+) -> dict[str, Any]:
+    """Future stochastic execution state beyond the WorldState snapshot."""
+    scheduler = simulation.scheduler
+    pending = (
+        scheduler.pending_events()
+        if hasattr(scheduler, "pending_events") else ()
+    )
+    process_rngs = {
+        name: rng.getstate()
+        for name, rng in sorted(
+            simulation.processes._process_rngs.items()
+        )
+    }
+    return {
+        "world_decision_state_sha256": decision_state_sha256(
+            simulation.world
+        ),
+        "scheduler_next_sequence": scheduler._next_sequence,
+        "scheduler_pending": pending,
+        "simulation_rng_state": simulation.rng.getstate(),
+        "process_rng_states": process_rngs,
+        "process_default_rng_state": simulation.processes.rng.getstate(),
+        "process_event_counter": simulation.processes.event_counter,
+        "stream_namespace": simulation.stream_namespace,
+        "process_stream_namespace": simulation.processes.stream_namespace,
+        "lineage_id": lineage_id,
+    }
+
+
+def simulation_execution_sha256(
+    simulation: Any, *, lineage_id: str | None = None
+) -> str:
+    return canonical_sha256(
+        simulation_execution_payload(
+            simulation, lineage_id=lineage_id
+        )
+    )
 
 
 def trajectory_payload(world: Any) -> list[dict[str, Any]]:

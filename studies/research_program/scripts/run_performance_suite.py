@@ -44,6 +44,16 @@ def main() -> None:
 
     jobs: list[tuple[str, list[str]]] = [
         (
+            "benchmark_core_execution.py",
+            [
+                "--agents", "120",
+                "--days", "30",
+                "--forks", "100",
+                "--serializations", "25",
+                "--output", str(args.output_dir / "core_120x30d.json"),
+            ],
+        ),
+        (
             "profile_afghanistan_execution.py",
             [
                 "--days", "30",
@@ -68,9 +78,35 @@ def main() -> None:
                 "--output", str(args.output_dir / "particle_growth.json"),
             ],
         ),
+        (
+            "benchmark_afghanistan_filter_scaling.py",
+            [
+                "--particles", "8",
+                "--weeks", "8",
+                "--branches", "1",
+                "--workers", "4",
+                "--output", str(args.output_dir / "filter_8x8w.json"),
+            ],
+        ),
+        (
+            "probe_execution_backends.py",
+            [
+                "--output", str(args.output_dir / "backend_probe.json"),
+            ],
+        ),
     ]
     if args.full:
         jobs.extend([
+            (
+                "benchmark_core_execution.py",
+                [
+                    "--agents", "120",
+                    "--days", "365",
+                    "--forks", "1000",
+                    "--serializations", "100",
+                    "--output", str(args.output_dir / "core_120x365d.json"),
+                ],
+            ),
             (
                 "profile_afghanistan_execution.py",
                 [
@@ -84,6 +120,16 @@ def main() -> None:
                 [
                     "--weeks", "0", "13", "26", "39", "52",
                     "--output", str(args.output_dir / "particle_growth_52w.json"),
+                ],
+            ),
+            (
+                "benchmark_afghanistan_filter_scaling.py",
+                [
+                    "--particles", "32",
+                    "--weeks", "52",
+                    "--branches", "1",
+                    "--workers", "8",
+                    "--output", str(args.output_dir / "filter_32x52w.json"),
                 ],
             ),
         ])

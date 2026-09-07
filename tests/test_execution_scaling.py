@@ -7,7 +7,7 @@ from pineland_sim.entities import ArmedFormation
 from pineland_sim.information import _corroboration_weight
 from pineland_sim.logistics import advance_movement_orders, choose_reallocation_orders, update_logistics
 from pineland_sim.physical import response_times
-from pineland_sim.world import seeded_rng
+from pineland_sim.world import WorldState, seeded_rng
 from pineland_sim.reproducibility import decision_state_sha256
 
 
@@ -95,17 +95,19 @@ def test_particle_information_compacts_only_at_delivery_boundary():
     simulation.initialize()
     # Information delivery is the only process that can complete/drop active
     # relays. Patrol/contact events only add new active relay work.
-    from unittest.mock import patch
-    with patch.object(
-        world, "compact_particle_information_state",
-        wraps=world.compact_particle_information_state,
-    ) as compact:
+    calls = []
+    original = WorldState.compact_particle_information_state
+
+    def counted(instance):
+        calls.append(instance.time)
+        return original(instance)
+
+    with patch.object(WorldState, "compact_particle_information_state", counted):
         simulation.run(until=0.25)
-    information_events = world.event_counts.get("information", 0)
     # event_counts is intentionally suppressed in particle mode; use the
     # scheduled information cadence for this short window instead.
-    assert compact.call_count >= 1
-    assert compact.call_count <= 2
+    assert len(calls) >= 1
+    assert len(calls) <= 2
 
 
 def test_particle_execution_does_not_accumulate_resource_flow_archive():
@@ -275,3 +277,81 @@ def test_language_metadata_indexes_match_district_patterns():
         assert (
             locality_id in world.multilingual_locality_ids
         ) == ("/" in pattern)
+
+
+def test_ordered_and_operational_indexes_match_world_state():
+    world = generate_pineland(
+        SimulationConfig(agent_count=80, locality_count=17, seed=931)
+    )
+    world.execution_profile = "particle"
+    world.refresh_operational_indexes()
+    assert world.ordered_locality_ids == tuple(sorted(world.localities))
+    assert world.ordered_person_ids == tuple(sorted(world.persons))
+    assert world.active_insurgent_organization_ids == tuple(
+        sorted(
+            organization.organization_id
+            for organization in world.organizations.values()
+            if (
+                organization.kind.value == "insurgent"
+                and organization.status == "active"
+            )
+        )
+    )
+    expected = set()
+    for organization_id in world.active_organization_ids:
+        expected.update(
+            world.operational_locality_ids_by_organization.get(
+                organization_id, ()
+            )
+        )
+    assert world.active_operational_locality_ids == expected
+    for organization_id, formation_ids in (
+        world.formation_ids_by_organization.items()
+    ):
+        assert formation_ids == tuple(sorted(
+            formation.formation_id
+            for formation in world.formations.values()
+            if formation.organization_id == organization_id
+        ))
+    active_sets = world.active_locality_sets()
+    assert active_sets["recruitment_capable"] <= active_sets["operational"]
+    assert active_sets["insurgent_presence"] <= active_sets["formation"]
+    for community_id, person_ids in world.person_ids_by_community.items():
+        assert person_ids == tuple(
+            sorted(world.social_communities[community_id].member_ids)
+        )
+
+
+def test_incremental_population_aggregates_follow_weight_and_relocation():
+    world = generate_pineland(
+        SimulationConfig(agent_count=80, locality_count=17, seed=932)
+    )
+    person = next(
+        person for person in world.persons.values()
+        if person.community_id is not None
+    )
+    origin = person.residence_locality_id
+    community = person.community_id
+    before_locality = world.represented_weight_by_locality[origin]
+    before_community = world.represented_weight_by_community[community]
+    delta = -0.25 * person.weight
+    world.set_person_weight(person, person.weight + delta)
+    assert world.represented_weight_by_locality[origin] == (
+        before_locality + delta
+    )
+    assert world.represented_weight_by_community[community] == (
+        before_community + delta
+    )
+    destination = next(
+        locality_id for locality_id in world.localities
+        if locality_id != origin
+    )
+    weight = person.weight
+    destination_before = world.represented_weight_by_locality[destination]
+    world.relocate_person(person, destination)
+    assert world.represented_weight_by_locality[origin] == (
+        before_locality + delta - weight
+    )
+    assert world.represented_weight_by_locality[destination] == (
+        destination_before + weight
+    )

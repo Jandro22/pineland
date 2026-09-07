@@ -82,6 +82,7 @@ def main() -> None:
     base_world = runner.generate_pineland(
         runner._config(args.seed, horizon), empirical_geography=case
     )
+    runner._precompute_province_lookup(base_world)
     state = runner.build_initial_particle(
         seed=args.seed,
         particle_index=0,

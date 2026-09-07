@@ -68,14 +68,28 @@ def initialize_information_world(world: WorldState) -> None:
     }
     world.information_detection_by_source.clear()
     world.last_information_decay_at = world.time
-    for observer_id in sorted(world.organizations):
+    for observer_id in (
+        world.ordered_organization_ids or tuple(sorted(world.organizations))
+    ):
         target_ids = {"government"}
-        target_ids.update(organization.organization_id for organization in world.organizations.values()
-                          if organization.kind is OrganizationKind.INSURGENT and organization.status == "active")
-        if any(organization.kind is OrganizationKind.INSURGENT and organization.status == "active"
-               for organization in world.organizations.values()):
+        active_insurgents = (
+            world.active_insurgent_organization_ids
+            if world.active_insurgent_organization_ids
+            else tuple(
+                organization.organization_id
+                for organization in world.organizations.values()
+                if (
+                    organization.kind is OrganizationKind.INSURGENT
+                    and organization.status == "active"
+                )
+            )
+        )
+        target_ids.update(active_insurgents)
+        if active_insurgents:
             target_ids.add("insurgent")
-        for locality_id, locality in world.localities.items():
+        for locality_id in (
+            world.ordered_locality_ids or tuple(sorted(world.localities))
+        ):
             for target_id in sorted(target_ids):
                 belief = ActorBelief(
                     observer_id, locality_id, ControlVector(*([.5] * 7)),
@@ -1178,14 +1192,18 @@ def generate_background_observations(world: WorldState, time: float,
     observations: list[Observation] = []
     formation_index = _information_formation_index(world)
     target_actor_cache: dict[str, tuple[str, ...]] = {}
-    active_insurgent_ids = tuple(sorted(
-        organization.organization_id
-        for organization in world.organizations.values()
-        if (
-            organization.kind is OrganizationKind.INSURGENT
-            and organization.status == "active"
-        )
-    ))
+    active_insurgent_ids = (
+        world.active_insurgent_organization_ids
+        if world.execution_profile == "particle"
+        else tuple(sorted(
+            organization.organization_id
+            for organization in world.organizations.values()
+            if (
+                organization.kind is OrganizationKind.INSURGENT
+                and organization.status == "active"
+            )
+        ))
+    )
     for post in sorted(world.security_posts.values(), key=lambda item: item.post_id):
         if post.available_fraction <= 0:
             continue
@@ -1199,7 +1217,9 @@ def generate_background_observations(world: WorldState, time: float,
             formation_index, target_actor_cache,
         ))
 
-    for locality_id in sorted(world.localities):
+    for locality_id in (
+        world.ordered_locality_ids or tuple(sorted(world.localities))
+    ):
         community_ids = world.social_community_ids_by_locality.get(locality_id)
         communities = (
             [world.social_communities[community_id] for community_id in community_ids]
@@ -1248,7 +1268,13 @@ def generate_background_observations(world: WorldState, time: float,
                 weights=[
                     max(
                         1.0,
-                        sum(world.persons[pid].weight for pid in item.member_ids),
+                        world.represented_weight_by_community.get(
+                            item.community_id,
+                            sum(
+                                world.persons[pid].weight
+                                for pid in item.member_ids
+                            ),
+                        ),
                     )
                     for item in communities
                 ],
@@ -1340,6 +1366,8 @@ def process_information(world: WorldState, time: float,
                         rng: random.Random | None = None) -> dict[str, Any]:
     """Age beliefs, generate reports, and deliver due command-network relays."""
     rng = rng or seeded_rng(world.config, f"information-process:{time:.6f}")
+    if world.execution_profile == "particle":
+        world.refresh_operational_indexes()
     world.information_execution_cache.clear()
     world.information_cache_active = True
     try:

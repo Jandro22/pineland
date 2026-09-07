@@ -5,6 +5,7 @@ from pineland_sim.performance import (
     profile_simulation_events,
 )
 from pineland_sim.events import CalendarEventScheduler, EventScheduler
+from pineland_sim.reproducibility import decision_state_sha256
 
 
 def test_event_timing_reports_exact_p95():
@@ -63,6 +64,24 @@ def test_calendar_scheduler_exactly_matches_heap_ordering():
     assert calendar_rows == heap_rows
 
 
+def test_scheduler_batch_cancel_and_generation_tokens_match_backends():
+    for scheduler_type in (EventScheduler, CalendarEventScheduler):
+        scheduler = scheduler_type()
+        scheduler.schedule(1.0, "first", priority=20)
+        obsolete = scheduler.schedule_replacing(
+            "movement:A", 2.0, "move", {"target": "old"}, priority=10
+        )
+        current = scheduler.schedule_replacing(
+            "movement:A", 1.0, "move", {"target": "new"}, priority=10
+        )
+        assert obsolete.sequence != current.sequence
+        assert scheduler.cancel(obsolete) is False
+        batch = scheduler.pop_time_batch()
+        assert [event.event_type for event in batch] == ["move", "first"]
+        assert batch[0].payload["target"] == "new"
+        assert scheduler.peek_time() is None
+
+
 def test_calendar_scheduler_survives_burn_in_reinitialization():
     config = SimulationConfig(
         agent_count=30,
@@ -89,3 +108,18 @@ def test_reference_and_optimized_execution_dual_run_agree():
     result = compare_reference_optimized(world, until=0.5)
     assert result["exact_decision_state_equivalence"] is True
     assert result["differing_components"] == []
+
+
+def test_execution_backend_is_not_scientific_state():
+    world = generate_pineland(
+        SimulationConfig(
+            agent_count=30,
+            locality_count=17,
+            horizon_days=1,
+            seed=994,
+        )
+    )
+    before = decision_state_sha256(world)
+    simulation = Simulation(world)
+    simulation.configure_execution(execution_backend="optimized")
+    assert decision_state_sha256(world) == before
