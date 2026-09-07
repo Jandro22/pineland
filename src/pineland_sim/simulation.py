@@ -119,8 +119,6 @@ class Simulation:
             self.world.execution_profile = (
                 "particle" if not self._retain_output_archives else "standard"
             )
-            if self.world.execution_profile == "particle":
-                self.world.enable_compact_particle_information_storage()
 
     def clone(
         self,

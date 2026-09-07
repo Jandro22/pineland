@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from array import array
 from collections.abc import Iterator, MutableMapping
+from copy import copy as shallow_copy
 from typing import Any
 
 from .entities import CONTROL_DIMENSIONS, InformationRelay, Observation
@@ -58,12 +59,27 @@ class _StringTable:
 class CompactObservationView:
     """Mutable compatibility view over one compact observation row."""
 
-    __slots__ = ("_store", "_index", "_estimated_cache")
+    __slots__ = (
+        "_store", "_index", "_estimated_cache", "_target_id", "_locality_id",
+        "_source_id", "_source_type", "_observation_type", "_observer_actor_id",
+        "_microzone_id", "_observer_node_id", "_target_actor_id",
+        "_target_formation_id",
+    )
 
     def __init__(self, store: "CompactObservationStore", index: int) -> None:
         self._store = store
         self._index = index
         self._estimated_cache: dict[str, Any] | None = None
+        self._target_id = store._string(store.target_codes[index])
+        self._locality_id = store._string(store.locality_codes[index])
+        self._source_id = store._string(store.source_codes[index])
+        self._source_type = store._string(store.source_type_codes[index])
+        self._observation_type = store._string(store.observation_type_codes[index])
+        self._observer_actor_id = store._string(store.observer_actor_codes[index])
+        self._microzone_id = store._string(store.microzone_codes[index])
+        self._observer_node_id = store._string(store.observer_node_codes[index])
+        self._target_actor_id = store._string(store.target_actor_codes[index])
+        self._target_formation_id = store._string(store.target_formation_codes[index])
 
     @property
     def observation_id(self) -> str:
@@ -71,11 +87,11 @@ class CompactObservationView:
 
     @property
     def target_id(self) -> str | None:
-        return self._store._string(self._store.target_codes[self._index])
+        return self._target_id
 
     @property
     def locality_id(self) -> str:
-        return self._store._string(self._store.locality_codes[self._index])  # type: ignore[return-value]
+        return self._locality_id  # type: ignore[return-value]
 
     @property
     def timestamp(self) -> float:
@@ -83,15 +99,15 @@ class CompactObservationView:
 
     @property
     def source_id(self) -> str:
-        return self._store._string(self._store.source_codes[self._index])  # type: ignore[return-value]
+        return self._source_id  # type: ignore[return-value]
 
     @property
     def source_type(self) -> str:
-        return self._store._string(self._store.source_type_codes[self._index])  # type: ignore[return-value]
+        return self._source_type  # type: ignore[return-value]
 
     @property
     def observation_type(self) -> str:
-        return self._store._string(self._store.observation_type_codes[self._index])  # type: ignore[return-value]
+        return self._observation_type  # type: ignore[return-value]
 
     @property
     def estimated_value(self) -> dict[str, Any]:
@@ -109,15 +125,15 @@ class CompactObservationView:
 
     @property
     def observer_actor_id(self) -> str:
-        return self._store._string(self._store.observer_actor_codes[self._index])  # type: ignore[return-value]
+        return self._observer_actor_id  # type: ignore[return-value]
 
     @property
     def microzone_id(self) -> str | None:
-        return self._store._string(self._store.microzone_codes[self._index])
+        return self._microzone_id
 
     @property
     def observer_node_id(self) -> str | None:
-        return self._store._string(self._store.observer_node_codes[self._index])
+        return self._observer_node_id
 
     @property
     def quality(self) -> float:
@@ -129,11 +145,11 @@ class CompactObservationView:
 
     @property
     def target_actor_id(self) -> str | None:
-        return self._store._string(self._store.target_actor_codes[self._index])
+        return self._target_actor_id
 
     @property
     def target_formation_id(self) -> str | None:
-        return self._store._string(self._store.target_formation_codes[self._index])
+        return self._target_formation_id
 
     @property
     def received_at(self) -> float | None:
@@ -223,7 +239,8 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
         "confidences", "qualities", "decay_rates", "received_at", "kinds",
         "presence", "personnel", "detection_probability", "detected",
         "attribution_confidence", "control", "physical_control", "violence",
-        "provenance", "opaque_values", "estimated_value_cache",
+        "provenance", "opaque_values", "estimated_value_cache", "live_values",
+        "batch_pending",
     )
 
     def __init__(self) -> None:
@@ -260,6 +277,11 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
         # columns remain authoritative; this cache preserves the old view
         # identity contract without rebuilding dictionaries on every access.
         self.estimated_value_cache: list[dict[str, Any] | None] = []
+        # A bounded rich-object cache is the execution compatibility boundary:
+        # only in-flight rows are present, and completed rows are discarded at
+        # delivery. The SoA columns remain the persistent compact state.
+        self.live_values: dict[str, Observation] = {}
+        self.batch_pending: list[Observation] | None = None
 
     def __len__(self) -> int:
         return len(self.ids)
@@ -267,8 +289,11 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
     def __iter__(self) -> Iterator[str]:
         return iter(self.ids)
 
-    def __getitem__(self, key: str) -> CompactObservationView:
-        return CompactObservationView(self, self.id_to_index[key])
+    def __contains__(self, key: object) -> bool:
+        return key in self.id_to_index
+
+    def __getitem__(self, key: str) -> Observation:
+        return self.live_values[key]
 
     def __setitem__(self, key: str, value: CompactObservationView | Observation) -> None:
         if isinstance(value, CompactObservationView):
@@ -286,22 +311,31 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
         index = self.id_to_index[key]
         self._remove_index(index)
 
+    def discard(self, key: str) -> None:
+        """Remove a row without constructing a compatibility view."""
+        index = self.id_to_index.get(key)
+        if index is not None:
+            self._remove_index(index)
+
     def values(self):
-        for index in range(len(self.ids)):
-            yield CompactObservationView(self, index)
+        for key in self.ids:
+            yield self.live_values[key]
 
     def items(self):
-        for index, key in enumerate(self.ids):
-            yield key, CompactObservationView(self, index)
+        for key in self.ids:
+            yield key, self.live_values[key]
 
     def get(self, key: str, default: Any = None):
-        index = self.id_to_index.get(key)
-        return default if index is None else CompactObservationView(self, index)
+        return self.live_values.get(key, default)
 
     def add(self, observation: Observation) -> CompactObservationView:
+        if self.batch_pending is not None:
+            self.batch_pending.append(observation)
+            return CompactObservationView(self, -1)
         index = len(self.ids)
         self.ids.append(observation.observation_id)
         self.id_to_index[observation.observation_id] = index
+        self.live_values[observation.observation_id] = observation
         self.target_codes.append(self.strings.code(observation.target_id))
         self.locality_codes.append(self.strings.code(observation.locality_id))
         self.source_codes.append(self.strings.code(observation.source_id))
@@ -348,6 +382,119 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
                 observation.estimated_value, observation.provenance
             )
         return CompactObservationView(self, index)
+
+    def begin_batch(self) -> None:
+        if self.batch_pending is not None:
+            raise RuntimeError("compact observation batch already active")
+        self.batch_pending = []
+
+    def end_batch(self) -> None:
+        pending = self.batch_pending
+        self.batch_pending = None
+        if pending:
+            self.add_many(pending)
+
+    def add_many(self, observations: list[Observation] | tuple[Observation, ...]) -> None:
+        """Append a generated information-event batch with bulk column writes."""
+        if not observations:
+            return
+        start = len(self.ids)
+        ids: list[str] = []
+        target_codes: list[int] = []
+        locality_codes: list[int] = []
+        source_codes: list[int] = []
+        source_type_codes: list[int] = []
+        observation_type_codes: list[int] = []
+        observer_actor_codes: list[int] = []
+        microzone_codes: list[int] = []
+        observer_node_codes: list[int] = []
+        target_actor_codes: list[int] = []
+        target_formation_codes: list[int] = []
+        timestamps: list[float] = []
+        confidences: list[float] = []
+        qualities: list[float] = []
+        decay_rates: list[float] = []
+        received_at: list[float] = []
+        kinds: list[int] = []
+        presence: list[float] = []
+        personnel: list[float] = []
+        detection_probability: list[float] = []
+        detected: list[int] = []
+        attribution_confidence: list[float] = []
+        control: list[float] = []
+        physical_control: list[float] = []
+        violence: list[float] = []
+        provenance: list[dict[str, Any]] = []
+        opaque: dict[int, tuple[dict[str, Any], dict[str, Any]]] = {}
+        for offset, observation in enumerate(observations):
+            value = observation.estimated_value
+            kind = self._payload_kind(value)
+            observation_id = observation.observation_id
+            ids.append(observation_id)
+            target_codes.append(self.strings.code(observation.target_id))
+            locality_codes.append(self.strings.code(observation.locality_id))
+            source_codes.append(self.strings.code(observation.source_id))
+            source_type_codes.append(self.strings.code(observation.source_type))
+            observation_type_codes.append(self.strings.code(observation.observation_type))
+            observer_actor_codes.append(self.strings.code(observation.observer_actor_id))
+            microzone_codes.append(self.strings.code(observation.microzone_id))
+            observer_node_codes.append(self.strings.code(observation.observer_node_id))
+            target_actor_codes.append(self.strings.code(observation.target_actor_id))
+            target_formation_codes.append(self.strings.code(observation.target_formation_id))
+            timestamps.append(float(observation.timestamp))
+            confidences.append(float(observation.confidence))
+            qualities.append(float(observation.quality))
+            decay_rates.append(float(observation.decay_rate))
+            received_at.append(-1.0 if observation.received_at is None else float(observation.received_at))
+            kinds.append(kind)
+            if kind == _DETECTION:
+                presence.append(float(value.get("presence", 0.0)))
+                personnel.append(float(value.get("personnel", 0.0)))
+                detection_probability.append(float(value.get("detection_probability", 0.0)))
+                detected.append(1 if bool(value.get("detected", False)) else 0)
+                attribution_confidence.append(float(value.get("attribution_confidence", 0.0)))
+            else:
+                presence.append(0.0)
+                personnel.append(0.0)
+                detection_probability.append(0.0)
+                detected.append(0)
+                attribution_confidence.append(0.0)
+            if kind == _CONTROL:
+                values = value["control"]
+                control.extend(float(values[dimension]) for dimension in CONTROL_DIMENSIONS)
+                physical_control.append(float(value["physical_control"]))
+                violence.append(float(value["violence"]))
+            else:
+                control.extend((0.0,) * len(CONTROL_DIMENSIONS))
+                physical_control.append(0.0)
+                violence.append(0.0)
+            provenance.append(observation.provenance)
+            self.live_values[observation_id] = observation
+            if kind == 0:
+                opaque[start + offset] = (value, observation.provenance)
+        self.ids.extend(ids)
+        self.id_to_index.update({key: start + offset for offset, key in enumerate(ids)})
+        for column, values in (
+            (self.target_codes, target_codes), (self.locality_codes, locality_codes),
+            (self.source_codes, source_codes), (self.source_type_codes, source_type_codes),
+            (self.observation_type_codes, observation_type_codes),
+            (self.observer_actor_codes, observer_actor_codes),
+            (self.microzone_codes, microzone_codes), (self.observer_node_codes, observer_node_codes),
+            (self.target_actor_codes, target_actor_codes),
+            (self.target_formation_codes, target_formation_codes),
+            (self.timestamps, timestamps), (self.confidences, confidences),
+            (self.qualities, qualities), (self.decay_rates, decay_rates),
+            (self.received_at, received_at), (self.kinds, kinds),
+            (self.presence, presence), (self.personnel, personnel),
+            (self.detection_probability, detection_probability), (self.detected, detected),
+            (self.attribution_confidence, attribution_confidence),
+            (self.physical_control, physical_control), (self.violence, violence),
+        ):
+            column.extend(values)
+        self.control.extend(control)
+        self.provenance.extend(provenance)
+        self.estimated_value_cache.extend([None] * len(observations))
+        self.opaque_values.update(opaque)
 
     @staticmethod
     def _payload_kind(value: dict[str, Any]) -> int:
@@ -419,6 +566,7 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
 
     def _copy_row(self, source: int, destination: int) -> None:
         self.ids[destination] = self.ids[source]
+        self.id_to_index[self.ids[destination]] = destination
         for column in (
             self.target_codes, self.locality_codes, self.source_codes,
             self.source_type_codes, self.observation_type_codes,
@@ -445,7 +593,10 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
     def _pop_last(self) -> None:
         index = len(self.ids) - 1
         key = self.ids.pop()
+        mapped_index = self.id_to_index.get(key)
         self.id_to_index.pop(key, None)
+        if mapped_index == index:
+            self.live_values.pop(key, None)
         for column in (
             self.target_codes, self.locality_codes, self.source_codes,
             self.source_type_codes, self.observation_type_codes,
@@ -465,10 +616,14 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
 
     def _remove_index(self, index: int) -> None:
         last = len(self.ids) - 1
+        removed_key = self.ids[index]
+        moved_key = self.ids[last] if index != last else None
         if index != last:
             self._copy_row(last, index)
         self._pop_last()
-        self.id_to_index = {key: position for position, key in enumerate(self.ids)}
+        if moved_key is not None:
+            self.id_to_index.pop(removed_key, None)
+            self.id_to_index[moved_key] = index
 
     def clear(self) -> None:
         self.__init__()
@@ -484,9 +639,11 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
             elif name in {"ids", "provenance"}:
                 value = list(value)
             elif name == "estimated_value_cache":
-                # This is a read-only compatibility cache and can be shared
-                # safely by sibling particle stores.
-                value = value
+                value = list(value)
+            elif name == "live_values":
+                value = {key: shallow_copy(item) for key, item in value.items()}
+            elif name == "batch_pending":
+                value = None
             elif name == "opaque_values":
                 value = dict(value)
             elif isinstance(value, array):
@@ -498,11 +655,17 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
 class CompactRelayView:
     """Mutable compatibility view over one compact relay row."""
 
-    __slots__ = ("_store", "_index")
+    __slots__ = (
+        "_store", "_index", "_organization_id", "_source_node_id",
+        "_destination_node_id",
+    )
 
     def __init__(self, store: "CompactRelayStore", index: int) -> None:
         self._store = store
         self._index = index
+        self._organization_id = store._string(store.organization_codes[index])
+        self._source_node_id = store._string(store.source_codes[index])
+        self._destination_node_id = store._string(store.destination_codes[index])
 
     @property
     def relay_id(self) -> str:
@@ -514,15 +677,15 @@ class CompactRelayView:
 
     @property
     def organization_id(self) -> str:
-        return self._store._string(self._store.organization_codes[self._index])  # type: ignore[return-value]
+        return self._organization_id  # type: ignore[return-value]
 
     @property
     def source_node_id(self) -> str:
-        return self._store._string(self._store.source_codes[self._index])  # type: ignore[return-value]
+        return self._source_node_id  # type: ignore[return-value]
 
     @property
     def destination_node_id(self) -> str:
-        return self._store._string(self._store.destination_codes[self._index])  # type: ignore[return-value]
+        return self._destination_node_id  # type: ignore[return-value]
 
     @property
     def route(self) -> list[str]:
@@ -585,6 +748,8 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
         "ids", "id_to_index", "observation_ids", "strings", "organization_codes",
         "source_codes", "destination_codes", "routes", "sent_at", "arrives_at",
         "reliability", "latency_hours", "status_codes", "delivered_at",
+        "live_values",
+        "batch_pending",
     )
 
     def __init__(self) -> None:
@@ -602,6 +767,8 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
         self.latency_hours = array("d")
         self.status_codes = array("B")
         self.delivered_at = array("d")
+        self.live_values: dict[str, InformationRelay] = {}
+        self.batch_pending: list[InformationRelay] | None = None
 
     def __len__(self) -> int:
         return len(self.ids)
@@ -609,8 +776,11 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
     def __iter__(self) -> Iterator[str]:
         return iter(self.ids)
 
-    def __getitem__(self, key: str) -> CompactRelayView:
-        return CompactRelayView(self, self.id_to_index[key])
+    def __contains__(self, key: object) -> bool:
+        return key in self.id_to_index
+
+    def __getitem__(self, key: str) -> InformationRelay:
+        return self.live_values[key]
 
     def __setitem__(self, key: str, value: CompactRelayView | InformationRelay) -> None:
         if isinstance(value, CompactRelayView):
@@ -626,22 +796,31 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
     def __delitem__(self, key: str) -> None:
         self._remove_index(self.id_to_index[key])
 
+    def discard(self, key: str) -> None:
+        """Remove a row without constructing a compatibility view."""
+        index = self.id_to_index.get(key)
+        if index is not None:
+            self._remove_index(index)
+
     def values(self):
-        for index in range(len(self.ids)):
-            yield CompactRelayView(self, index)
+        for key in self.ids:
+            yield self.live_values[key]
 
     def items(self):
-        for index, key in enumerate(self.ids):
-            yield key, CompactRelayView(self, index)
+        for key in self.ids:
+            yield key, self.live_values[key]
 
     def get(self, key: str, default: Any = None):
-        index = self.id_to_index.get(key)
-        return default if index is None else CompactRelayView(self, index)
+        return self.live_values.get(key, default)
 
     def add(self, relay: InformationRelay) -> CompactRelayView:
+        if self.batch_pending is not None:
+            self.batch_pending.append(relay)
+            return CompactRelayView(self, -1)
         index = len(self.ids)
         self.ids.append(relay.relay_id)
         self.id_to_index[relay.relay_id] = index
+        self.live_values[relay.relay_id] = relay
         self.observation_ids.append(relay.observation_id)
         self.organization_codes.append(self.strings.code(relay.organization_id))
         self.source_codes.append(self.strings.code(relay.source_node_id))
@@ -654,6 +833,41 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
         self.status_codes.append(self._status_code(relay.status))
         self.delivered_at.append(-1.0 if relay.delivered_at is None else float(relay.delivered_at))
         return CompactRelayView(self, index)
+
+    def begin_batch(self) -> None:
+        if self.batch_pending is not None:
+            raise RuntimeError("compact relay batch already active")
+        self.batch_pending = []
+
+    def end_batch(self) -> None:
+        pending = self.batch_pending
+        self.batch_pending = None
+        if pending:
+            self.add_many(pending)
+
+    def add_many(self, relays: list[InformationRelay] | tuple[InformationRelay, ...]) -> None:
+        """Append relays with bulk numeric-column writes."""
+        if not relays:
+            return
+        start = len(self.ids)
+        ids = [relay.relay_id for relay in relays]
+        self.ids.extend(ids)
+        self.id_to_index.update({key: start + offset for offset, key in enumerate(ids)})
+        self.observation_ids.extend(relay.observation_id for relay in relays)
+        self.organization_codes.extend(self.strings.code(relay.organization_id) for relay in relays)
+        self.source_codes.extend(self.strings.code(relay.source_node_id) for relay in relays)
+        self.destination_codes.extend(self.strings.code(relay.destination_node_id) for relay in relays)
+        self.routes.extend(tuple(relay.route) for relay in relays)
+        self.sent_at.extend(float(relay.sent_at) for relay in relays)
+        self.arrives_at.extend(float(relay.arrives_at) for relay in relays)
+        self.reliability.extend(float(relay.reliability) for relay in relays)
+        self.latency_hours.extend(float(relay.latency_hours) for relay in relays)
+        self.status_codes.extend(self._status_code(relay.status) for relay in relays)
+        self.delivered_at.extend(
+            -1.0 if relay.delivered_at is None else float(relay.delivered_at)
+            for relay in relays
+        )
+        self.live_values.update({relay.relay_id: relay for relay in relays})
 
     @staticmethod
     def _status_code(status: str) -> int:
@@ -685,6 +899,7 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
 
     def _copy_row(self, source: int, destination: int) -> None:
         self.ids[destination] = self.ids[source]
+        self.id_to_index[self.ids[destination]] = destination
         self.observation_ids[destination] = self.observation_ids[source]
         self.routes[destination] = self.routes[source]
         for column in (
@@ -697,7 +912,10 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
     def _pop_last(self) -> None:
         index = len(self.ids) - 1
         key = self.ids.pop()
+        mapped_index = self.id_to_index.get(key)
         self.id_to_index.pop(key, None)
+        if mapped_index == index:
+            self.live_values.pop(key, None)
         self.observation_ids.pop()
         self.routes.pop()
         for column in (
@@ -709,10 +927,14 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
 
     def _remove_index(self, index: int) -> None:
         last = len(self.ids) - 1
+        removed_key = self.ids[index]
+        moved_key = self.ids[last] if index != last else None
         if index != last:
             self._copy_row(last, index)
         self._pop_last()
-        self.id_to_index = {key: position for position, key in enumerate(self.ids)}
+        if moved_key is not None:
+            self.id_to_index.pop(removed_key, None)
+            self.id_to_index[moved_key] = index
 
     def clear(self) -> None:
         self.__init__()
@@ -727,6 +949,10 @@ class CompactRelayStore(MutableMapping[str, CompactRelayView]):
                 value = dict(value)
             elif name in {"ids", "observation_ids", "routes"}:
                 value = list(value)
+            elif name == "live_values":
+                value = {key: shallow_copy(item) for key, item in value.items()}
+            elif name == "batch_pending":
+                value = None
             elif isinstance(value, array):
                 value = array(value.typecode, value)
             setattr(result, name, value)
