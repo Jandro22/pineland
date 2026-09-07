@@ -13,6 +13,7 @@ is calculated in :func:`information_diagnostics`.
 """
 
 from collections import deque
+from array import array
 from dataclasses import asdict
 from math import exp, log
 import random
@@ -40,6 +41,11 @@ from .relations import (
     organizations_hostile,
 )
 from .organizational_state import local_organizational_embeddedness
+from .native_kernels import (
+    available as native_kernels_available,
+    control_batch_enabled as native_control_batch_enabled,
+    fuse_control7_batch as native_fuse_control7_batch,
+)
 
 
 OBSERVATION_SOURCE_TYPES = (
@@ -576,8 +582,13 @@ def _ensure_control_belief(world: WorldState, observer_id: str, target_actor_id:
     return belief
 
 
-def _fuse_control(world: WorldState, observation: Observation, recipient_id: str,
-                  time: float, weight: float) -> None:
+def _fuse_control_immediate(
+    world: WorldState,
+    observation: Observation,
+    recipient_id: str,
+    time: float,
+    weight: float,
+) -> None:
     target_actor_id = observation.target_actor_id
     if target_actor_id is None:
         return
@@ -586,7 +597,9 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
     physical_value = value.get("physical_control")
     if not isinstance(control_values, dict) and physical_value is None:
         return
-    belief = _ensure_control_belief(world, recipient_id, target_actor_id, observation.locality_id)
+    belief = _ensure_control_belief(
+        world, recipient_id, target_actor_id, observation.locality_id
+    )
     if isinstance(control_values, dict):
         values = control_values
     else:
@@ -723,6 +736,29 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
     belief.evidence_count += 1
     if weight >= .12:
         belief.last_reliable_observation_at = time
+    _apply_control_auxiliary(
+        world,
+        observation,
+        recipient_id,
+        time,
+        weight,
+        values,
+        belief,
+    )
+
+
+def _apply_control_auxiliary(
+    world: WorldState,
+    observation: Observation,
+    recipient_id: str,
+    time: float,
+    weight: float,
+    values: dict[str, Any],
+    belief: ActorBelief,
+) -> None:
+    target_actor_id = observation.target_actor_id
+    if target_actor_id is None:
+        return
     if observation.microzone_id and "physical" in values:
         zone_actor = (world.formations[recipient_id].organization_id
                       if recipient_id in world.formations else recipient_id)
@@ -761,6 +797,192 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
             legacy.last_reliable_observation_at = belief.last_reliable_observation_at
             legacy.evidence_count = belief.evidence_count
             legacy.contradiction_index = belief.contradiction_index
+
+
+def _canonical_control_tuple(
+    observation: Observation,
+) -> tuple[float, ...] | None:
+    values = observation.estimated_value.get("control")
+    if (
+        not isinstance(values, dict)
+        or len(values) != 7
+        or tuple(values) != CONTROL_DIMENSIONS
+    ):
+        return None
+    return (
+        float(values["formal"]),
+        float(values["physical"]),
+        float(values["administrative"]),
+        float(values["legal"]),
+        float(values["fiscal"]),
+        float(values["social"]),
+        float(values["expected"]),
+    )
+
+
+def _flush_native_control_chunk(
+    world: WorldState,
+    chunk: list[tuple[Observation, str, float, float]],
+) -> bool:
+    if not chunk or not native_kernels_available():
+        return False
+    belief_by_key: dict[tuple[str, str, str], ActorBelief] = {}
+    state_index_by_key: dict[tuple[str, str, str], int] = {}
+    state_keys: list[tuple[str, str, str]] = []
+    state_payload = array("d")
+    update_indices = array("I")
+    times = array("d")
+    weights = array("d")
+    observed = array("d")
+
+    for observation, recipient_id, time, weight in chunk:
+        target_actor_id = observation.target_actor_id
+        canonical = _canonical_control_tuple(observation)
+        if target_actor_id is None or canonical is None:
+            return False
+        key = (
+            recipient_id,
+            target_actor_id,
+            observation.locality_id,
+        )
+        index = state_index_by_key.get(key)
+        if index is None:
+            belief = _ensure_control_belief(
+                world,
+                recipient_id,
+                target_actor_id,
+                observation.locality_id,
+            )
+            index = len(state_keys)
+            state_index_by_key[key] = index
+            state_keys.append(key)
+            belief_by_key[key] = belief
+            estimate = belief.control_estimate
+            state_payload.extend((
+                estimate.formal,
+                estimate.physical,
+                estimate.administrative,
+                estimate.legal,
+                estimate.fiscal,
+                estimate.social,
+                estimate.expected,
+                belief.confidence,
+                belief.updated_at,
+                belief.last_reliable_observation_at,
+                float(belief.evidence_count),
+                belief.contradiction_index,
+            ))
+        update_indices.append(index)
+        times.append(float(time))
+        weights.append(float(weight))
+        observed.extend(canonical)
+
+    if not native_fuse_control7_batch(
+        state_payload,
+        len(state_keys),
+        update_indices,
+        times,
+        weights,
+        observed,
+        contradiction_memory_days=(
+            world.config.information.contradiction_memory_days
+        ),
+        contradiction_penalty=(
+            world.config.information.contradiction_penalty
+        ),
+    ):
+        return False
+
+    for index, key in enumerate(state_keys):
+        offset = index * 12
+        belief = belief_by_key[key]
+        estimate = belief.control_estimate
+        estimate.formal = state_payload[offset]
+        estimate.physical = state_payload[offset + 1]
+        estimate.administrative = state_payload[offset + 2]
+        estimate.legal = state_payload[offset + 3]
+        estimate.fiscal = state_payload[offset + 4]
+        estimate.social = state_payload[offset + 5]
+        estimate.expected = state_payload[offset + 6]
+        belief.confidence = state_payload[offset + 7]
+        belief.updated_at = state_payload[offset + 8]
+        belief.last_reliable_observation_at = state_payload[offset + 9]
+        belief.evidence_count = int(state_payload[offset + 10])
+        belief.contradiction_index = state_payload[offset + 11]
+
+    # Zone beliefs are independent scalar recurrences. Legacy beliefs are
+    # mirrors of the actor belief. Apply these in original observation order.
+    for observation, recipient_id, time, weight in chunk:
+        target_actor_id = observation.target_actor_id
+        key = (
+            recipient_id,
+            target_actor_id,
+            observation.locality_id,
+        )
+        values = observation.estimated_value["control"]
+        _apply_control_auxiliary(
+            world,
+            observation,
+            recipient_id,
+            time,
+            weight,
+            values,
+            belief_by_key[key],
+        )
+    return True
+
+
+def _fuse_control(world: WorldState, observation: Observation, recipient_id: str,
+                  time: float, weight: float) -> None:
+    if world.defer_control_fusions:
+        world.deferred_control_fusions.append(
+            (observation, recipient_id, float(time), float(weight))
+        )
+        return
+    _fuse_control_immediate(
+        world, observation, recipient_id, time, weight
+    )
+
+
+def _flush_control_fusions(world: WorldState) -> int:
+    pending = world.deferred_control_fusions
+    if not pending:
+        return 0
+    world.deferred_control_fusions = []
+    prior = world.defer_control_fusions
+    world.defer_control_fusions = False
+    try:
+        native_enabled = (
+            world.execution_backend == "optimized"
+            and native_control_batch_enabled()
+        )
+        if not native_enabled:
+            for observation, recipient_id, time, weight in pending:
+                _fuse_control_immediate(
+                    world, observation, recipient_id, time, weight
+                )
+            return len(pending)
+
+        chunk: list[tuple[Observation, str, float, float]] = []
+        for item in pending:
+            observation, recipient_id, time, weight = item
+            if _canonical_control_tuple(observation) is not None:
+                chunk.append(item)
+                continue
+            if chunk:
+                if not _flush_native_control_chunk(world, chunk):
+                    for queued in chunk:
+                        _fuse_control_immediate(world, *queued)
+                chunk = []
+            _fuse_control_immediate(
+                world, observation, recipient_id, time, weight
+            )
+        if chunk and not _flush_native_control_chunk(world, chunk):
+            for queued in chunk:
+                _fuse_control_immediate(world, *queued)
+    finally:
+        world.defer_control_fusions = prior
+    return len(pending)
 
 
 def _ensure_presence_belief(world: WorldState, observer_id: str, target_actor_id: str,
@@ -1496,6 +1718,13 @@ def process_information(world: WorldState, time: float,
         world.refresh_operational_indexes()
     world.information_execution_cache.clear()
     world.information_cache_active = True
+    batch_control = (
+        world.execution_backend == "optimized"
+        and world.execution_profile == "particle"
+        and native_control_batch_enabled()
+    )
+    world.defer_control_fusions = batch_control
+    world.deferred_control_fusions.clear()
     try:
         decay_information(world, time)
         generated = generate_background_observations(world, time, rng)
@@ -1533,14 +1762,18 @@ def process_information(world: WorldState, time: float,
                 relay.status = "dropped"
                 world.active_information_relays.discard(relay_id)
                 dropped += 1
+        flushed_control_fusions = _flush_control_fusions(world)
         _prune_information_history(world, time)
         return {"generated": len(generated),
                 "observation_ids": tuple(item.observation_id for item in generated),
                 "relays_delivered": delivered,
                 "delivered_observation_ids": tuple(delivered_ids),
                 "relays_dropped": dropped,
-                "active_relays": len(world.active_information_relays)}
+                "active_relays": len(world.active_information_relays),
+                "control_fusions": flushed_control_fusions}
     finally:
+        world.defer_control_fusions = False
+        world.deferred_control_fusions.clear()
         world.information_execution_cache.clear()
         world.information_cache_active = False
 
