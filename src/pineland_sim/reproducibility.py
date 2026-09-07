@@ -44,6 +44,7 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "contact_event_localities", "contact_funnel_records",
     "contact_funnel_counts", "recruitment_total", "behavior_change_total",
     "action_funnel_counts", "action_funnel_by_actor_locality",
+    "activity_hazard_ledger",
     "behavior_change_represented_population",
     "causal_ledger", "synthetic_records", "checkpoints", "state_deltas",
     "stock_transactions", "organization_eligibility_log",

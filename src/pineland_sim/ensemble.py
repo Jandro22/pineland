@@ -18,9 +18,10 @@ native fusion kernels without constructing ``Observation`` or
 from __future__ import annotations
 
 from array import array
+from collections import deque
 from dataclasses import dataclass, field
 import hashlib
-from math import exp, inf
+from math import exp, inf, isfinite, log
 from typing import Any, Iterable, Sequence
 
 from .compact_information_state import (
@@ -28,7 +29,7 @@ from .compact_information_state import (
     PRESENCE_STATE_STRIDE,
     ZONE_STATE_STRIDE,
 )
-from .entities import CONTROL_DIMENSIONS, ControlVector, Observation, InformationRelay
+from .entities import CONTROL_DIMENSIONS, ControlVector, Observation, OrganizationKind
 
 
 _NONE = 0
@@ -158,6 +159,137 @@ class InformationEventBuffer:
         self.kind.append(int(kind))
         return index
 
+    def _append_common_codes(
+        self,
+        sequence: int,
+        *,
+        observer: int,
+        node: int,
+        source: int,
+        source_type: int,
+        locality: int,
+        microzone: int,
+        target_actor: int,
+        target_formation: int,
+        timestamp: float,
+        confidence: float,
+        quality: float,
+        kind: int,
+    ) -> int:
+        """Append a row from already-interned numeric codes."""
+        sequence = int(sequence)
+        if sequence in self.id_to_index:
+            raise ValueError(f"duplicate numeric observation sequence: {sequence}")
+        index = len(self.ids)
+        self.ids.append(sequence)
+        self.id_to_index[sequence] = index
+        self.observer.append(int(observer))
+        self.node.append(int(node))
+        self.source.append(int(source))
+        self.source_type.append(int(source_type))
+        self.locality.append(int(locality))
+        self.microzone.append(int(microzone))
+        self.target_actor.append(int(target_actor))
+        self.target_formation.append(int(target_formation))
+        self.timestamp.append(float(timestamp))
+        self.confidence.append(float(confidence))
+        self.quality.append(float(quality))
+        self.kind.append(int(kind))
+        return index
+
+    def append_detection_codes(
+        self,
+        sequence: int,
+        *,
+        observer: int,
+        node: int,
+        source: int,
+        source_type: int,
+        locality: int,
+        microzone: int,
+        target_actor: int,
+        target_formation: int,
+        timestamp: float,
+        confidence: float,
+        quality: float,
+        presence: float,
+        personnel: float,
+        detection_probability: float,
+        detected: bool,
+        attribution_confidence: float,
+    ) -> int:
+        """Numeric-only detection append used by the compiled event path."""
+        index = self._append_common_codes(
+            sequence,
+            observer=observer,
+            node=node,
+            source=source,
+            source_type=source_type,
+            locality=locality,
+            microzone=microzone,
+            target_actor=target_actor,
+            target_formation=target_formation,
+            timestamp=timestamp,
+            confidence=confidence,
+            quality=quality,
+            kind=_DETECTION,
+        )
+        self.presence.append(float(presence))
+        self.personnel.append(float(personnel))
+        self.detection_probability.append(float(detection_probability))
+        self.detected.append(1 if detected else 0)
+        self.attribution_confidence.append(float(attribution_confidence))
+        self.control.extend((0.0,) * len(CONTROL_DIMENSIONS))
+        self.physical_control.append(0.0)
+        self.violence.append(0.0)
+        return index
+
+    def append_control_codes(
+        self,
+        sequence: int,
+        *,
+        observer: int,
+        node: int,
+        source: int,
+        source_type: int,
+        locality: int,
+        microzone: int,
+        target_actor: int,
+        timestamp: float,
+        confidence: float,
+        quality: float,
+        control: Sequence[float],
+        physical_control: float,
+        violence: float,
+    ) -> int:
+        """Numeric-only control append used by the compiled event path."""
+        if len(control) != len(CONTROL_DIMENSIONS):
+            raise ValueError("control payload must contain seven numeric dimensions")
+        index = self._append_common_codes(
+            sequence,
+            observer=observer,
+            node=node,
+            source=source,
+            source_type=source_type,
+            locality=locality,
+            microzone=microzone,
+            target_actor=target_actor,
+            target_formation=0,
+            timestamp=timestamp,
+            confidence=confidence,
+            quality=quality,
+            kind=_CONTROL,
+        )
+        self.presence.append(0.0)
+        self.personnel.append(0.0)
+        self.detection_probability.append(0.0)
+        self.detected.append(0)
+        self.attribution_confidence.append(0.0)
+        self.control.extend(float(value) for value in control)
+        self.physical_control.append(float(physical_control))
+        self.violence.append(float(violence))
+        return index
+
     def append_detection(
         self,
         sequence: int,
@@ -257,12 +389,21 @@ class InformationEventBuffer:
         object-to-SoA comparisons; it is never used by the native engine.
         """
         value = observation.estimated_value
+        # Scientific fixtures sometimes use human-readable IDs rather than
+        # the production ``OBS0000000001`` namespace.  The packed engine only
+        # needs a stable per-buffer sequence, so retain the production number
+        # when present and otherwise allocate the next unused integer.
+        raw_sequence = observation.observation_id.removeprefix("OBS")
+        try:
+            sequence = int(raw_sequence)
+        except ValueError:
+            sequence = max(self.id_to_index, default=0) + 1
         if set(value) == {
             "presence", "personnel", "detection_probability", "detected",
             "attribution_confidence",
         }:
             return self.append_detection(
-                int(observation.observation_id.removeprefix("OBS")),
+                sequence,
                 observer_id=observation.observer_actor_id,
                 observer_node_id=observation.observer_node_id,
                 source_id=observation.source_id,
@@ -284,7 +425,7 @@ class InformationEventBuffer:
         if isinstance(control, dict):
             ordered = tuple(float(control[name]) for name in CONTROL_DIMENSIONS)
             return self.append_control(
-                int(observation.observation_id.removeprefix("OBS")),
+                sequence,
                 observer_id=observation.observer_actor_id,
                 observer_node_id=observation.observer_node_id,
                 source_id=observation.source_id,
@@ -391,10 +532,109 @@ class RelayBuffer:
         self.delivered_at.append(-1.0 if delivered_at is None else float(delivered_at))
         return index
 
+    def append_codes(
+        self,
+        sequence: int,
+        *,
+        observation_sequence: int,
+        organization: int,
+        source: int,
+        destination: int,
+        route: Sequence[int],
+        sent_at: float,
+        arrives_at: float,
+        reliability: float,
+        latency_hours: float,
+        status: int = 0,
+        delivered_at: float | None = None,
+    ) -> int:
+        """Append a relay whose identities and route are already numeric."""
+        sequence = int(sequence)
+        if sequence in self.id_to_index:
+            raise ValueError(f"duplicate numeric relay sequence: {sequence}")
+        index = len(self.ids)
+        self.ids.append(sequence)
+        self.id_to_index[sequence] = index
+        self.observation_sequence.append(int(observation_sequence))
+        self.organization.append(int(organization))
+        self.source.append(int(source))
+        self.destination.append(int(destination))
+        self.route_codes.extend(int(item) for item in route)
+        self.route_offsets.append(len(self.route_codes))
+        self.sent_at.append(float(sent_at))
+        self.arrives_at.append(float(arrives_at))
+        self.reliability.append(float(reliability))
+        self.latency_hours.append(float(latency_hours))
+        self.status.append(int(status))
+        self.delivered_at.append(-1.0 if delivered_at is None else float(delivered_at))
+        return index
+
     def route_codes_for(self, index: int) -> tuple[int, ...]:
         start = self.route_offsets[index]
         end = self.route_offsets[index + 1]
         return tuple(self.route_codes[start:end])
+
+    def retain_active(self) -> None:
+        """Drop delivered/dropped rows while preserving in-flight relays.
+
+        Relay status is the only mutable per-row field after enqueue. Compacting
+        at an information boundary keeps delivery scans proportional to the
+        number of live relays rather than to the full run history.
+        """
+        keep = tuple(
+            index for index, status in enumerate(self.status)
+            if int(status) == 0
+        )
+        if len(keep) == len(self.ids):
+            return
+        old = {
+            "ids": self.ids,
+            "observation_sequence": self.observation_sequence,
+            "organization": self.organization,
+            "source": self.source,
+            "destination": self.destination,
+            "route_offsets": self.route_offsets,
+            "route_codes": self.route_codes,
+            "sent_at": self.sent_at,
+            "arrives_at": self.arrives_at,
+            "reliability": self.reliability,
+            "latency_hours": self.latency_hours,
+            "status": self.status,
+            "delivered_at": self.delivered_at,
+        }
+        self.ids = array("Q")
+        self.id_to_index = {}
+        self.observation_sequence = array("Q")
+        self.organization = array("I")
+        self.source = array("I")
+        self.destination = array("I")
+        self.route_offsets = array("Q", [0])
+        self.route_codes = array("I")
+        self.sent_at = array("d")
+        self.arrives_at = array("d")
+        self.reliability = array("d")
+        self.latency_hours = array("d")
+        self.status = array("B")
+        self.delivered_at = array("d")
+        for index in keep:
+            new_index = len(self.ids)
+            relay_id = int(old["ids"][index])
+            self.ids.append(relay_id)
+            self.id_to_index[relay_id] = new_index
+            self.observation_sequence.append(old["observation_sequence"][index])
+            self.organization.append(old["organization"][index])
+            self.source.append(old["source"][index])
+            self.destination.append(old["destination"][index])
+            start = int(old["route_offsets"][index])
+            end = int(old["route_offsets"][index + 1])
+            self.route_codes.extend(old["route_codes"][start:end])
+            self.route_offsets.append(len(self.route_codes))
+            self.sent_at.append(old["sent_at"][index])
+            self.arrives_at.append(old["arrives_at"][index])
+            self.reliability.append(old["reliability"][index])
+            self.latency_hours.append(old["latency_hours"][index])
+            self.status.append(old["status"][index])
+            self.delivered_at.append(old["delivered_at"][index])
 
     def iter_rows(self):
         for index in range(len(self.ids)):
@@ -420,15 +660,35 @@ class InformationSourcePlan:
     locality: array
     target_offsets: array
     target_actor: array
+    locality_ids: tuple[str, ...]
+    locality_source_groups: tuple[tuple[tuple[int, ...], ...], ...]
+    locality_fallback_sources: tuple[tuple[int, ...], ...]
+    locality_community_ids: tuple[tuple[int, ...], ...]
+    locality_cumulative_weights: tuple[tuple[float, ...], ...]
+    always_sources: tuple[int, ...]
     fingerprint: tuple[Any, ...]
+    # Optional per-target/per-source overrides used by patrol/contact-sized
+    # compiled events.  Background plans leave these empty and retain the
+    # reference defaults.
+    target_formation: array = field(default_factory=lambda: array("I"))
+    source_microzone: array = field(default_factory=lambda: array("I"))
+    source_zone_actor: array = field(default_factory=lambda: array("I"))
 
     @classmethod
-    def from_world(cls, world: Any) -> "InformationSourcePlan":
+    def from_world(
+        cls,
+        world: Any,
+        *,
+        codebook: NumericIdTable | None = None,
+    ) -> "InformationSourcePlan":
         # Importing lazily avoids the information/world import cycle.
         from .information import _target_actors_for_observer
 
         world.refresh_operational_indexes()
-        codes = NumericIdTable()
+        # A runtime may recompile its active source plan while reports from an
+        # older plan are still in flight. Reusing the codebook keeps those
+        # numeric relay rows decodable without retaining the old source graph.
+        codes = codebook if codebook is not None else NumericIdTable()
         observer = array("I")
         node = array("I")
         source = array("I")
@@ -443,9 +703,14 @@ class InformationSourcePlan:
             source_id: str,
             source_kind: str,
             locality_id: str,
-        ) -> None:
+        ) -> int:
+            index = len(observer)
             observer.append(codes.code(observer_id))
-            node.append(codes.code(node_id))
+            # ``_observe_from_source`` uses the explicit formation/post node
+            # when present and otherwise falls back to the source identity.
+            # Store that effective local recipient in the numeric plan so
+            # locality channels retain the same actor-local belief topology.
+            node.append(codes.code(node_id or source_id))
             source.append(codes.code(source_id))
             source_type.append(codes.code(source_kind))
             locality.append(codes.code(locality_id))
@@ -454,6 +719,16 @@ class InformationSourcePlan:
                 for item in _target_actors_for_observer(world, observer_id)
             )
             target_offsets.append(len(target_actor))
+            return index
+
+        always_sources: list[int] = []
+        locality_ids = tuple(
+            world.ordered_locality_ids or tuple(sorted(world.localities))
+        )
+        locality_source_groups: list[tuple[tuple[int, ...], ...]] = []
+        locality_fallback_sources: list[tuple[int, ...]] = []
+        locality_community_ids: list[tuple[int, ...]] = []
+        locality_cumulative_weights: list[tuple[float, ...]] = []
 
         # This order intentionally mirrors generate_background_observations.
         for post in sorted(world.security_posts.values(), key=lambda item: item.post_id):
@@ -462,54 +737,113 @@ class InformationSourcePlan:
             formation = world.formations.get(post.formation_id) if post.formation_id else None
             if formation is not None and (formation.moving or formation.available_personnel() <= 0):
                 continue
-            add(post.organization_id, post.formation_id or post.post_id, post.post_id,
-                "fixed_post", post.locality_id)
+            always_sources.append(add(
+                post.organization_id, post.formation_id or post.post_id,
+                post.post_id, "fixed_post", post.locality_id,
+            ))
 
-        for locality_id in world.ordered_locality_ids or tuple(sorted(world.localities)):
-            community_ids, _ = world.community_selection_weights(locality_id)
+        for locality_id in locality_ids:
+            community_ids, cumulative_weights = world.community_selection_weights(locality_id)
+            locality_community_ids.append(tuple(codes.code(item) for item in community_ids))
+            locality_cumulative_weights.append(tuple(float(item) for item in cumulative_weights))
             if not community_ids:
+                fallback: list[int] = []
                 if "government" in world.organizations:
-                    add("government", None, f"ADMIN:{locality_id}", "administrative", locality_id)
+                    fallback.append(add(
+                        "government", None, f"ADMIN:{locality_id}",
+                        "administrative", locality_id,
+                    ))
                     capacity = world.localities[locality_id].governance.get(
                         "elite_access_capacity",
                         1.0 if world.localities[locality_id].population > 0 else 0.0,
                     )
                     if max(0.0, min(1.0, float(capacity))):
-                        add("government", None, f"ELITE-CAP:{locality_id}", "political_elite", locality_id)
+                        fallback.append(add(
+                            "government", None, f"ELITE-CAP:{locality_id}",
+                            "political_elite", locality_id,
+                        ))
                     if locality_id in world.multilingual_locality_ids and world.localities[locality_id].population > 0:
-                        add("government", None, f"INTERPRETER-CAP:{locality_id}", "interpreter", locality_id)
+                        fallback.append(add(
+                            "government", None, f"INTERPRETER-CAP:{locality_id}",
+                            "interpreter", locality_id,
+                        ))
+                locality_source_groups.append(())
+                locality_fallback_sources.append(tuple(fallback))
                 continue
-            community_id = community_ids[0]
-            # The selected community is random at execution time; the plan
-            # contains every possible source row and the caller selects the
-            # relevant row using the same RNG stream.
+            groups: list[tuple[int, ...]] = []
+            # The selected community is random at execution time. Compile one
+            # numeric group per possible community so the runtime executes only
+            # the selected group and consumes exactly the reference RNG draws.
             for community_id in community_ids:
+                group: list[int] = []
                 for source_kind in ("civilian", "social_network"):
                     if "government" in world.organizations:
-                        add("government", None, community_id, source_kind, locality_id)
+                        group.append(add(
+                            "government", None, community_id, source_kind,
+                            locality_id,
+                        ))
                 if "government" in world.organizations:
-                    add("government", None, f"ADMIN:{locality_id}", "administrative", locality_id)
-                    add("government", None, f"ELITE:{community_id}", "political_elite", locality_id)
-                for insurgent_id in world.active_insurgent_organization_ids:
-                    add(insurgent_id, None, community_id, "civilian", locality_id)
+                    group.append(add(
+                        "government", None, f"ADMIN:{locality_id}",
+                        "administrative", locality_id,
+                    ))
+                    group.append(add(
+                        "government", None, f"ELITE:{community_id}",
+                        "political_elite", locality_id,
+                    ))
+                active_insurgent_ids = (
+                    world.active_insurgent_organization_ids
+                    if world.execution_profile == "particle"
+                    else tuple(sorted(
+                        organization.organization_id
+                        for organization in world.organizations.values()
+                        if organization.kind is OrganizationKind.INSURGENT
+                        and organization.status == "active"
+                    ))
+                )
+                for insurgent_id in active_insurgent_ids:
+                    group.append(add(
+                        insurgent_id, None, community_id, "civilian", locality_id,
+                    ))
                 if locality_id in world.multilingual_locality_ids and "government" in world.organizations:
-                    add("government", None, community_id, "interpreter", locality_id)
+                    group.append(add(
+                        "government", None, community_id, "interpreter", locality_id,
+                    ))
+                groups.append(tuple(group))
+            locality_source_groups.append(tuple(groups))
+            locality_fallback_sources.append(())
 
         for formation in sorted(world.formations.values(), key=lambda item: item.formation_id):
             if formation.moving or formation.available_personnel() <= 0:
                 continue
-            add(formation.organization_id, formation.formation_id, formation.formation_id,
-                "organization_member", formation.locality_id)
+            always_sources.append(add(
+                formation.organization_id, formation.formation_id,
+                formation.formation_id, "organization_member", formation.locality_id,
+            ))
 
         fingerprint = (
             tuple(world.ordered_locality_ids or sorted(world.localities)),
             tuple(sorted(world.security_posts)),
             tuple(sorted(world.formations)),
-            tuple(world.active_insurgent_organization_ids),
+            tuple(
+                world.active_insurgent_organization_ids
+                if world.execution_profile == "particle"
+                else sorted(
+                    organization.organization_id
+                    for organization in world.organizations.values()
+                    if organization.kind is OrganizationKind.INSURGENT
+                    and organization.status == "active"
+                )
+            ),
             tuple(sorted(world.social_communities)),
         )
-        return cls(codes, observer, node, source, source_type, locality,
-                   target_offsets, target_actor, fingerprint)
+        return cls(
+            codes, observer, node, source, source_type, locality,
+            target_offsets, target_actor, locality_ids,
+            tuple(locality_source_groups), tuple(locality_fallback_sources),
+            tuple(locality_community_ids), tuple(locality_cumulative_weights),
+            tuple(always_sources), fingerprint,
+        )
 
     def __len__(self) -> int:
         return len(self.observer)
@@ -519,15 +853,813 @@ class InformationSourcePlan:
         end = self.target_offsets[index + 1]
         return tuple(self.target_actor[start:end])
 
+    def selected_source_indices(self, rng: Any) -> tuple[int, ...]:
+        """Select exact background source rows using the reference draw order.
+
+        This materialized convenience API is useful for diagnostics.  The
+        event engine uses :meth:`iter_selected_source_indices` so each
+        locality choice occurs at the same point as the reference source's
+        report/detection draws.
+        """
+        return tuple(self.iter_selected_source_indices(rng))
+
+    def iter_selected_source_indices(self, rng: Any):
+        """Yield sources while preserving the reference interleaving.
+
+        Community selection is deliberately lazy.  In the reference engine,
+        fixed-post reports run before the first locality is sampled, and each
+        subsequent locality is sampled only after the preceding locality's
+        report work has consumed its RNG draws.
+        """
+        selected = self.always_sources
+        for item in selected:
+            source_kind = self.codes.value(self.source_type[item])
+            if source_kind == "fixed_post" or (
+                source_kind != "organization_member"
+                and not any(self.locality_source_groups)
+            ):
+                yield item
+        for index, groups in enumerate(self.locality_source_groups):
+            if groups:
+                if len(groups) == 1:
+                    # random.choices over a singleton consumes one draw in the
+                    # reference implementation and must do so here as well.
+                    rng.random()
+                    yield from groups[0]
+                else:
+                    weights = self.locality_cumulative_weights[index]
+                    choice = rng.choices(
+                        range(len(groups)), cum_weights=weights, k=1
+                    )[0]
+                    yield from groups[int(choice)]
+            else:
+                yield from self.locality_fallback_sources[index]
+        for item in selected:
+            if self.codes.value(self.source_type[item]) == "organization_member":
+                yield item
+
     def is_current_for(self, world: Any) -> bool:
         current = (
             tuple(world.ordered_locality_ids or sorted(world.localities)),
             tuple(sorted(world.security_posts)),
             tuple(sorted(world.formations)),
-            tuple(world.active_insurgent_organization_ids),
+            tuple(
+                world.active_insurgent_organization_ids
+                if world.execution_profile == "particle"
+                else sorted(
+                    organization.organization_id
+                    for organization in world.organizations.values()
+                    if organization.kind is OrganizationKind.INSURGENT
+                    and organization.status == "active"
+                )
+            ),
             tuple(sorted(world.social_communities)),
         )
         return current == self.fingerprint
+
+
+def _numeric_event_weight(
+    world: Any | None,
+    *,
+    codes: NumericIdTable,
+    observer_code: int,
+    recipient_code: int,
+    source_code: int,
+    source_type_code: int,
+    locality_code: int,
+    target_actor_code: int,
+    target_formation_code: int,
+    timestamp: float,
+    observation_type: str,
+    confidence: float,
+    quality: float,
+    fallback: float,
+    current_time: float | None = None,
+) -> float:
+    """Return the object-free equivalent of local ``fuse_observation`` weight."""
+    if world is None:
+        return fallback
+    from .information import (
+        _corroboration_weight,
+        _decay_rate,
+        language_comprehension,
+        source_trust,
+    )
+
+    recipient_id = codes.value(recipient_code)
+    source_id = codes.value(source_code) or ""
+    source_type = codes.value(source_type_code) or ""
+    locality_id = codes.value(locality_code)
+    target_actor_id = codes.value(target_actor_code) or "*"
+    if recipient_id is None or locality_id is None:
+        return fallback
+    observer_id = codes.value(observer_code)
+    recipient_actor = (
+        recipient_id
+        if recipient_id in world.organizations
+        else world.formations[recipient_id].organization_id
+        if recipient_id in world.formations
+        else observer_id or recipient_id
+    )
+    history_key = (target_actor_id, locality_id, observation_type)
+    history = world.observation_source_index.get(history_key, ())
+    correlation = world.config.information.source_correlation.get(source_type, 0.5)
+    corroboration = _corroboration_weight(
+        history, timestamp, source_id, correlation
+    )
+    age_quality = exp(
+        -_decay_rate(
+            world,
+            observation_type,
+            codes.value(target_formation_code) if target_formation_code else None,
+        ) * max(
+            0.0,
+            float(timestamp if current_time is None else current_time) - float(timestamp),
+        )
+    )
+    trust = source_trust(
+        world, recipient_actor, source_type, locality_id, source_id
+    )
+    language = language_comprehension(
+        world, recipient_actor, locality_id, source_type, source_id
+    )
+    return max(
+        0.0,
+        min(
+            1.0,
+            float(confidence) * float(quality) * trust
+            * (language ** world.config.information.language_fusion_weight)
+            * age_quality
+            * (1.0 + world.config.information.corroboration_bonus
+               * min(3.0, corroboration)),
+        ),
+    )
+
+
+def _record_numeric_history(
+    world: Any | None,
+    *,
+    codes: NumericIdTable,
+    source_code: int,
+    source_type_code: int,
+    locality_code: int,
+    target_actor_code: int,
+    timestamp: float,
+    observation_type: str,
+) -> None:
+    """Append one bounded source-history row without creating an observation."""
+    if world is None:
+        return
+    source_id = codes.value(source_code) or ""
+    locality_id = codes.value(locality_code)
+    target_actor_id = codes.value(target_actor_code) or "*"
+    if locality_id is None:
+        return
+    key = (target_actor_id, locality_id, observation_type)
+    history = world.observation_source_index.setdefault(key, deque())
+    entry = (float(timestamp), source_id)
+    # Repeated same-source rows at one event boundary do not change the
+    # distinct-source corroboration statistic; avoid retaining duplicate rows.
+    if not history or history[-1] != entry:
+        history.append(entry)
+    cutoff = float(timestamp) - 3.0
+    while history and history[0][0] < cutoff:
+        history.popleft()
+
+
+@dataclass(slots=True)
+class NumericInformationEventEngine:
+    """Execute a compiled information event without report objects.
+
+    The source/target arrays are a dynamic numeric snapshot of one world. The
+    static source order and community selection live in
+    :class:`InformationSourcePlan`; this class performs report gates, noisy
+    payload generation, numeric event appends, and optional packed-state
+    fusions. It is also the ABI used by a future native event kernel: all
+    per-row inputs are fixed-width arrays and the returned buffer is already
+    numeric.
+    """
+
+    plan: InformationSourcePlan
+    report_probability: array
+    source_quality_base: array
+    source_trust: array
+    language: array
+    source_microzone: array
+    source_control_target: array
+    source_zone_actor: array
+    source_control: array
+    source_violence: array
+    target_present: array
+    target_personnel: array
+    target_detection_probability: array
+    target_formation: array
+    target_alternate_actor: array
+    relay_route_offsets: array
+    relay_route_codes: array
+    relay_source: array
+    relay_destination: array
+    relay_reliability: array
+    relay_latency: array
+    observation_noise: float = 0.08
+    positive_report_confidence: float = 0.9
+    negative_report_confidence: float = 0.52
+    attribution_error_rate: float = 0.08
+    language_fusion_weight: float = 1.0
+    contradiction_memory_days: float = 30.0
+    contradiction_penalty: float = 0.45
+    next_sequence: int = 1
+    next_relay_sequence: int = 1
+
+    def __post_init__(self) -> None:
+        source_count = len(self.plan)
+        for name in (
+            "report_probability", "source_quality_base", "source_trust",
+            "language", "source_microzone", "source_control_target",
+            "source_zone_actor", "source_violence",
+        ):
+            if len(getattr(self, name)) != source_count:
+                raise ValueError(f"{name} must contain one value per source")
+        for name in (
+            "target_present", "target_personnel", "target_detection_probability",
+            "target_formation", "target_alternate_actor",
+        ):
+            if len(getattr(self, name)) != len(self.plan.target_actor):
+                raise ValueError(f"{name} must contain one value per target row")
+        if len(self.source_control) != source_count * len(CONTROL_DIMENSIONS):
+            raise ValueError("source_control must contain seven values per source")
+        if len(self.relay_route_offsets) != source_count + 1:
+            raise ValueError("relay_route_offsets must contain one interval per source")
+        for name in (
+            "relay_source", "relay_destination", "relay_reliability", "relay_latency",
+        ):
+            if len(getattr(self, name)) != source_count:
+                raise ValueError(f"{name} must contain one value per source")
+        if float(self.contradiction_memory_days) <= 0.0:
+            raise ValueError("contradiction_memory_days must be positive")
+
+    @classmethod
+    def from_world(
+        cls,
+        world: Any,
+        *,
+        plan: InformationSourcePlan | None = None,
+    ) -> "NumericInformationEventEngine":
+        """Compile current world inputs while consuming no stochastic draws."""
+        from .information import (
+            _actual_target_presence,
+            _information_formation_index,
+            _is_insurgent_actor,
+            _report_probability,
+            detection_probability,
+            false_positive_probability,
+            language_comprehension,
+            source_quality,
+            source_trust,
+        )
+        from .logistics import command_path
+
+        plan = plan or InformationSourcePlan.from_world(world)
+        codes = plan.codes
+        source_count = len(plan)
+        report_probability = array("d")
+        source_quality_base = array("d")
+        source_trust_values = array("d")
+        language = array("d")
+        source_microzone = array("I")
+        source_control_target = array("I")
+        source_zone_actor = array("I")
+        source_control = array("d")
+        source_violence = array("d")
+        target_present = array("B")
+        target_personnel = array("d")
+        target_detection_probability = array("d")
+        target_formation = array("I")
+        target_alternate_actor = array("I")
+        relay_route_offsets = array("Q", [0])
+        relay_route_codes = array("I")
+        relay_source = array("I")
+        relay_destination = array("I")
+        relay_reliability = array("d")
+        relay_latency = array("d")
+        formation_index = _information_formation_index(world)
+
+        for source_index in range(source_count):
+            observer_id = codes.value(plan.observer[source_index])
+            source_id = codes.value(plan.source[source_index])
+            source_type = codes.value(plan.source_type[source_index])
+            locality_id = codes.value(plan.locality[source_index])
+            if observer_id is None or source_id is None or source_type is None or locality_id is None:
+                raise ValueError("compiled source plan contains a missing identity")
+            report_probability.append(float(_report_probability(
+                world, observer_id, locality_id, source_type, source_id,
+            )))
+            source_quality_base.append(float(source_quality(
+                world, observer_id, source_type, locality_id, source_id, None,
+            )))
+            source_trust_values.append(float(source_trust(
+                world, observer_id, source_type, locality_id, source_id,
+            )))
+            language.append(float(language_comprehension(
+                world, observer_id, locality_id, source_type, source_id,
+            )))
+            # ``_primary_zone`` is the reference resolver.  The cache is
+            # normally populated by generation, but compiled callers must
+            # also work with hand-built worlds and freshly-mutated worlds.
+            from .information import _primary_zone
+            primary_microzone = _primary_zone(world, locality_id)
+            if len(plan.source_microzone) == source_count:
+                source_microzone.append(int(plan.source_microzone[source_index]))
+            else:
+                source_microzone.append(codes.code(primary_microzone))
+            control_target = (
+                observer_id
+                if observer_id in world.localities[locality_id].control
+                else "government"
+            )
+            source_control_target.append(codes.code(control_target))
+            node_id = codes.value(plan.node[source_index])
+            zone_actor = (
+                world.formations[node_id].organization_id
+                if node_id in world.formations
+                else node_id or observer_id
+            )
+            if len(plan.source_zone_actor) == source_count:
+                source_zone_actor.append(int(plan.source_zone_actor[source_index]))
+            else:
+                source_zone_actor.append(codes.code(zone_actor))
+            vector = world.localities[locality_id].control.get(control_target, ControlVector())
+            source_control.extend(float(getattr(vector, dimension)) for dimension in CONTROL_DIMENSIONS)
+            source_violence.append(float(world.localities[locality_id].violence))
+
+            destination_id = f"CMD:{observer_id}"
+            relay_source_id = codes.value(plan.node[source_index]) or source_id
+            route, reliability, latency = command_path(
+                world, observer_id, relay_source_id, destination_id
+            )
+            if not route:
+                route = [relay_source_id, destination_id]
+                reliability = float(world.config.information.relay_base_reliability)
+                organization = world.organizations.get(observer_id)
+                if organization is not None:
+                    reliability *= 0.7 + 0.3 * organization.institutional_quality
+                latency = 0.0
+            latency += float(
+                world.config.information.source_latency_hours.get(source_type, 0.0)
+            )
+            if len(route) - 1 > world.config.information.relay_max_hops:
+                route = route[:world.config.information.relay_max_hops + 1]
+                reliability = max(0.01, reliability)
+            relay_route_codes.extend(codes.code(item) for item in route)
+            relay_route_offsets.append(len(relay_route_codes))
+            relay_source.append(codes.code(relay_source_id))
+            relay_destination.append(codes.code(destination_id))
+            relay_reliability.append(max(0.0, min(1.0, float(reliability))))
+            relay_latency.append(max(0.0, float(latency)))
+
+            start = plan.target_offsets[source_index]
+            end = plan.target_offsets[source_index + 1]
+            for target_index in range(start, end):
+                target_actor = codes.value(plan.target_actor[target_index])
+                if target_actor is None:
+                    raise ValueError("compiled target plan contains a missing actor")
+                formation_id: str | None = None
+                if len(plan.target_formation) == len(plan.target_actor):
+                    formation_id = codes.value(plan.target_formation[target_index])
+                if formation_id is None and source_type in {"organization_member", "interpreter"}:
+                    formations = formation_index.get((target_actor, locality_id), ())
+                    if formations:
+                        formation_id = formations[0].formation_id
+                microzone_id = primary_microzone
+                present, personnel, actual_id = _actual_target_presence(
+                    world, target_actor, locality_id, formation_id, microzone_id,
+                    formation_index,
+                )
+                if present:
+                    probability = detection_probability(
+                        world,
+                        codes.value(plan.node[source_index]) or observer_id,
+                        actual_id or formation_id,
+                        locality_id,
+                        source_type,
+                        microzone_id,
+                    )
+                else:
+                    probability = false_positive_probability(
+                        world,
+                        codes.value(plan.node[source_index]) or observer_id,
+                        locality_id,
+                        source_type,
+                        microzone_id,
+                    )
+                target_present.append(1 if present else 0)
+                target_personnel.append(float(personnel))
+                target_detection_probability.append(float(probability))
+                target_formation.append(codes.code(formation_id))
+                alternate = None
+                if _is_insurgent_actor(world, target_actor):
+                    if "government" in world.organizations:
+                        alternate = "government"
+                elif "insurgent" in world.organizations:
+                    alternate = "insurgent"
+                target_alternate_actor.append(codes.code(alternate))
+
+        return cls(
+            plan,
+            report_probability,
+            source_quality_base,
+            source_trust_values,
+            language,
+            source_microzone,
+            source_control_target,
+            source_zone_actor,
+            source_control,
+            source_violence,
+            target_present,
+            target_personnel,
+            target_detection_probability,
+            target_formation,
+            target_alternate_actor,
+            relay_route_offsets,
+            relay_route_codes,
+            relay_source,
+            relay_destination,
+            relay_reliability,
+            relay_latency,
+            observation_noise=float(world.config.observation_noise),
+            positive_report_confidence=float(world.config.information.positive_report_confidence),
+            negative_report_confidence=float(world.config.information.negative_report_confidence),
+            attribution_error_rate=float(world.config.information.attribution_error_rate),
+            language_fusion_weight=float(world.config.information.language_fusion_weight),
+            contradiction_memory_days=float(world.config.information.contradiction_memory_days),
+            contradiction_penalty=float(world.config.information.contradiction_penalty),
+            next_sequence=int(world.next_observation_sequence),
+            next_relay_sequence=int(world.next_information_relay_sequence),
+        )
+
+    def process(
+        self,
+        rng: Any,
+        time: float,
+        *,
+        event_buffer: InformationEventBuffer | None = None,
+        control_state: EnsembleBeliefState | None = None,
+        presence_state: EnsembleBeliefState | None = None,
+        node_presence_state: EnsembleBeliefState | None = None,
+        zone_state: EnsembleBeliefState | None = None,
+        relay_buffer: RelayBuffer | None = None,
+        record_negative: bool = True,
+        world: Any | None = None,
+    ) -> dict[str, int | float | InformationEventBuffer | RelayBuffer]:
+        """Run one event using CPython ``random.Random`` draw order."""
+        buffer = (
+            event_buffer
+            if event_buffer is not None
+            else InformationEventBuffer(codebook=self.plan.codes)
+        )
+        if buffer.codes is not self.plan.codes:
+            raise ValueError("event buffer must use the compiled source codebook")
+        control_updates: list[tuple[int, tuple[str, ...], float, float, Sequence[float]]] = []
+        presence_updates: list[tuple[int, tuple[str, ...], float, float, float, float]] = []
+        node_updates: list[tuple[int, tuple[str, ...], float, float, float, float]] = []
+        zone_updates: list[tuple[int, tuple[str, ...], float, float, float]] = []
+        prior_confidence = (
+            float(world.config.information.prior_confidence)
+            if world is not None else 0.35
+        )
+        source_attempts = 0
+        reported_sources = 0
+        detection_rows = 0
+        control_rows = 0
+        detected_rows = 0
+        relay_rows = 0
+
+        def append_relay(source_index: int, observation_sequence: int) -> None:
+            nonlocal relay_rows
+            if relay_buffer is None:
+                return
+            source_code = int(self.relay_source[source_index])
+            destination_code = int(self.relay_destination[source_index])
+            if source_code == destination_code:
+                return
+            start = int(self.relay_route_offsets[source_index])
+            end = int(self.relay_route_offsets[source_index + 1])
+            latency = float(self.relay_latency[source_index])
+            relay_buffer.append_codes(
+                self.next_relay_sequence,
+                observation_sequence=observation_sequence,
+                organization=int(self.plan.observer[source_index]),
+                source=source_code,
+                destination=destination_code,
+                route=self.relay_route_codes[start:end],
+                sent_at=float(time),
+                arrives_at=float(time) + latency / 24.0,
+                reliability=float(self.relay_reliability[source_index]),
+                latency_hours=latency,
+            )
+            self.next_relay_sequence += 1
+            relay_rows += 1
+        for source_index in self.plan.iter_selected_source_indices(rng):
+            source_attempts += 1
+            if rng.random() >= self.report_probability[source_index]:
+                continue
+            reported_sources += 1
+            observer_code = int(self.plan.observer[source_index])
+            node_code = int(self.plan.node[source_index])
+            source_code = int(self.plan.source[source_index])
+            source_type_code = int(self.plan.source_type[source_index])
+            locality_code = int(self.plan.locality[source_index])
+            microzone_code = int(self.source_microzone[source_index])
+            source_type = self.plan.codes.value(source_type_code)
+            quality_base = float(self.source_quality_base[source_index])
+            trust = float(self.source_trust[source_index])
+            language = float(self.language[source_index])
+            recipient_code = node_code or observer_code
+            start = self.plan.target_offsets[source_index]
+            end = self.plan.target_offsets[source_index + 1]
+            for target_index in range(start, end):
+                present = bool(self.target_present[target_index])
+                probability = float(self.target_detection_probability[target_index])
+                detected = bool(rng.random() < probability)
+                if not detected and not record_negative:
+                    continue
+                quality = max(0.0, min(1.0, quality_base * (0.85 + 0.3 * rng.random())))
+                personnel = float(self.target_personnel[target_index])
+                if detected:
+                    estimate = personnel * (0.65 + 0.7 * rng.random())
+                    if not present:
+                        estimate = max(1.0, rng.uniform(20.0, 250.0))
+                else:
+                    estimate = 0.0
+                attribution_mistake = bool(
+                    present and detected
+                    and rng.random() < self.attribution_error_rate
+                )
+                reported_actor = (
+                    int(self.target_alternate_actor[target_index])
+                    if attribution_mistake and self.target_alternate_actor[target_index]
+                    else int(self.plan.target_actor[target_index])
+                )
+                formation = int(self.target_formation[target_index])
+                reported_formation = 0 if attribution_mistake else formation
+                confidence = (
+                    self.positive_report_confidence
+                    if detected else self.negative_report_confidence
+                )
+                observation_sequence = self.next_sequence
+                buffer.append_detection_codes(
+                    self.next_sequence,
+                    observer=observer_code,
+                    node=node_code,
+                    source=source_code,
+                    source_type=source_type_code,
+                    locality=locality_code,
+                    microzone=microzone_code,
+                    target_actor=reported_actor,
+                    target_formation=reported_formation,
+                    timestamp=time,
+                    confidence=confidence,
+                    quality=quality,
+                    presence=1.0 if detected else 0.0,
+                    personnel=estimate,
+                    detection_probability=probability,
+                    detected=detected,
+                    attribution_confidence=0.25 if attribution_mistake else 0.9,
+                )
+                append_relay(source_index, observation_sequence)
+                self.next_sequence += 1
+                detection_rows += 1
+                detected_rows += int(detected)
+                weight = _numeric_event_weight(
+                    world,
+                    codes=self.plan.codes,
+                    observer_code=observer_code,
+                    recipient_code=recipient_code,
+                    source_code=source_code,
+                    source_type_code=source_type_code,
+                    locality_code=locality_code,
+                    target_actor_code=reported_actor,
+                    target_formation_code=reported_formation,
+                    timestamp=float(time),
+                    observation_type="detection",
+                    confidence=confidence,
+                    quality=quality,
+                    fallback=max(
+                        0.0,
+                        min(
+                            1.0,
+                            confidence * quality * trust
+                            * (language ** self.language_fusion_weight),
+                        ),
+                    ),
+                )
+                _record_numeric_history(
+                    world,
+                    codes=self.plan.codes,
+                    source_code=source_code,
+                    source_type_code=source_type_code,
+                    locality_code=locality_code,
+                    target_actor_code=reported_actor,
+                    timestamp=float(time),
+                    observation_type="detection",
+                )
+                if world is not None and world.execution_profile != "particle":
+                    outcome = (
+                        "true_positive" if present and detected else
+                        "false_negative" if present else
+                        "false_positive" if detected else "true_negative"
+                    )
+                    world.information_detections[outcome] = (
+                        world.information_detections.get(outcome, 0) + 1
+                    )
+                    by_source = world.information_detection_by_source.setdefault(
+                        source_type or "unknown",
+                        {"true_positive": 0, "false_positive": 0,
+                         "false_negative": 0, "true_negative": 0},
+                    )
+                    by_source[outcome] += 1
+                if presence_state is not None or node_presence_state is not None:
+                    observer_id = self.plan.codes.value(recipient_code)
+                    target_actor_id = self.plan.codes.value(reported_actor)
+                    locality_id = self.plan.codes.value(locality_code)
+                    location_id = self.plan.codes.value(microzone_code) or "*"
+                    target_id = self.plan.codes.value(reported_formation) or "*"
+                    if observer_id is not None and target_actor_id is not None and locality_id is not None:
+                        update = (
+                            0,
+                            (observer_id, target_actor_id, f"{locality_id}:{location_id}", target_id),
+                            float(time), weight, 1.0 if detected else 0.0, estimate,
+                        )
+                        if reported_formation:
+                            update_key = update[1]
+                            wildcard = (
+                                update_key[0], update_key[1], update_key[2], "*"
+                            )
+                            if presence_state is not None:
+                                presence_state.ensure_key(
+                                    wildcard, prior_confidence=prior_confidence
+                                )
+                            if node_code and node_presence_state is not None:
+                                node_presence_state.ensure_key(
+                                    wildcard, prior_confidence=prior_confidence
+                                )
+                            if presence_state is not None:
+                                presence_state.ensure_key(
+                                    update_key, prior_confidence=prior_confidence
+                                )
+                            if node_code and node_presence_state is not None:
+                                node_presence_state.ensure_key(
+                                    update_key, prior_confidence=prior_confidence
+                                )
+                        else:
+                            if presence_state is not None:
+                                presence_state.ensure_key(
+                                    update[1], prior_confidence=prior_confidence
+                                )
+                            if node_code and node_presence_state is not None:
+                                node_presence_state.ensure_key(update[1], prior_confidence=prior_confidence)
+                        if node_code:
+                            if node_presence_state is not None:
+                                node_updates.append(update)
+                                if reported_formation:
+                                    node_updates.append((0, wildcard, float(time), weight, 1.0 if detected else 0.0, estimate))
+                        elif presence_state is not None:
+                            presence_updates.append(update)
+                            if reported_formation:
+                                presence_updates.append((0, wildcard, float(time), weight, 1.0 if detected else 0.0, estimate))
+            control_quality = max(0.0, min(1.0, quality_base * (0.85 + 0.3 * rng.random())))
+            # The reference observes source quality once per emitted control
+            # report and derives its noise from that realized quality.  Keep
+            # this draw-dependent value separate from the static compiled
+            # quality baseline so the CPython RNG stream remains identical.
+            noise = float(self.observation_noise) * (
+                1.35 - 0.55 * control_quality * language
+            )
+            control_offset = source_index * len(CONTROL_DIMENSIONS)
+            estimated_control = tuple(
+                max(0.0, min(1.0, float(self.source_control[control_offset + dimension])
+                              + rng.uniform(-noise, noise)))
+                for dimension in range(len(CONTROL_DIMENSIONS))
+            )
+            violence = max(0.0, min(1.0, float(self.source_violence[source_index])
+                                    + rng.uniform(-noise, noise)))
+            control_confidence = max(0.0, min(1.0, 0.45 + 0.45 * trust))
+            control_target = int(self.source_control_target[source_index])
+            observation_sequence = self.next_sequence
+            buffer.append_control_codes(
+                self.next_sequence,
+                observer=observer_code,
+                node=node_code,
+                source=source_code,
+                source_type=source_type_code,
+                locality=locality_code,
+                microzone=microzone_code,
+                target_actor=control_target,
+                timestamp=time,
+                confidence=control_confidence,
+                quality=control_quality,
+                control=estimated_control,
+                physical_control=estimated_control[1],
+                violence=violence,
+            )
+            append_relay(source_index, observation_sequence)
+            self.next_sequence += 1
+            control_rows += 1
+            weight = _numeric_event_weight(
+                world,
+                codes=self.plan.codes,
+                observer_code=observer_code,
+                recipient_code=recipient_code,
+                source_code=source_code,
+                source_type_code=source_type_code,
+                locality_code=locality_code,
+                target_actor_code=control_target,
+                target_formation_code=0,
+                timestamp=float(time),
+                observation_type="physical_control",
+                confidence=control_confidence,
+                quality=control_quality,
+                fallback=max(
+                    0.0,
+                    min(
+                        1.0,
+                        control_confidence * control_quality * trust
+                        * (language ** self.language_fusion_weight),
+                    ),
+                ),
+            )
+            _record_numeric_history(
+                world,
+                codes=self.plan.codes,
+                source_code=source_code,
+                source_type_code=source_type_code,
+                locality_code=locality_code,
+                target_actor_code=control_target,
+                timestamp=float(time),
+                observation_type="physical_control",
+            )
+            if control_state is not None:
+                observer_id = self.plan.codes.value(recipient_code)
+                target_id = self.plan.codes.value(control_target)
+                locality_id = self.plan.codes.value(locality_code)
+                if observer_id is not None and target_id is not None and locality_id is not None:
+                    key = (observer_id, target_id, locality_id)
+                    control_state.ensure_key(
+                        key, prior_confidence=prior_confidence
+                    )
+                    control_updates.append((0, key, float(time), weight, estimated_control))
+            if zone_state is not None and microzone_code:
+                recipient_id = self.plan.codes.value(
+                    self.source_zone_actor[source_index]
+                ) or self.plan.codes.value(recipient_code)
+                microzone_id = self.plan.codes.value(microzone_code)
+                if recipient_id is not None and microzone_id is not None:
+                    # A control report updates the actor-local microzone
+                    # physical-control recurrence.  Detection rows do not:
+                    # their payload is presence/personnel only.
+                    zone_key = (recipient_id, microzone_id)
+                    zone_state.ensure_key(
+                        zone_key, prior_confidence=prior_confidence
+                    )
+                    zone_updates.append((
+                        0, zone_key, float(time), weight, estimated_control[1],
+                    ))
+
+        if control_state is not None:
+            control_state.fuse_control(
+                control_updates,
+                contradiction_memory_days=self.contradiction_memory_days,
+                contradiction_penalty=self.contradiction_penalty,
+            )
+        if presence_state is not None:
+            presence_state.fuse_presence(
+                presence_updates,
+                contradiction_memory_days=self.contradiction_memory_days,
+                contradiction_penalty=self.contradiction_penalty,
+            )
+        if node_presence_state is not None:
+            node_presence_state.fuse_presence(
+                node_updates,
+                contradiction_memory_days=self.contradiction_memory_days,
+                contradiction_penalty=self.contradiction_penalty,
+            )
+        if zone_state is not None:
+            zone_state.fuse_zone(
+                zone_updates,
+                contradiction_memory_days=self.contradiction_memory_days,
+                contradiction_penalty=self.contradiction_penalty,
+            )
+        return {
+            "source_attempts": source_attempts,
+            "reported_sources": reported_sources,
+            "detection_rows": detection_rows,
+            "detected_rows": detected_rows,
+            "control_rows": control_rows,
+            "relay_rows": relay_rows,
+            "event_rows": len(buffer),
+            "event_buffer": buffer,
+            **({"relay_buffer": relay_buffer} if relay_buffer is not None else {}),
+        }
 
 
 @dataclass(slots=True)
@@ -746,12 +1878,15 @@ class EnsembleBeliefState:
             times.append(float(time))
             weights.append(float(weight))
             observed.extend(float(value) for value in values)
-        from .native_kernels import fuse_control7_batch
-        native = fuse_control7_batch(
-            self.state, self.state_count, indices, times, weights, observed,
-            contradiction_memory_days=contradiction_memory_days,
-            contradiction_penalty=contradiction_penalty,
-            state_stride=self.stride,
+        from .native_kernels import control_batch_enabled, fuse_control7_batch
+        native = (
+            control_batch_enabled()
+            and fuse_control7_batch(
+                self.state, self.state_count, indices, times, weights, observed,
+                contradiction_memory_days=contradiction_memory_days,
+                contradiction_penalty=contradiction_penalty,
+                state_stride=self.stride,
+            )
         )
         if native:
             return len(updates)
@@ -801,8 +1936,8 @@ class EnsembleBeliefState:
             indices.append(particle * self.entity_count + self.key_to_index[tuple(key)])
             times.append(float(time)); weights.append(float(weight))
             presence.append(float(observed_presence)); personnel.append(float(observed_personnel))
-        from .native_kernels import fuse_presence_batch
-        if fuse_presence_batch(
+        from .native_kernels import fuse_presence_batch, information_batch_enabled
+        if information_batch_enabled() and fuse_presence_batch(
             self.state, self.state_count, indices, times, weights, presence, personnel,
             contradiction_memory_days=contradiction_memory_days,
             contradiction_penalty=contradiction_penalty,
@@ -851,8 +1986,8 @@ class EnsembleBeliefState:
         for particle, key, time, weight, value in updates:
             indices.append(particle * self.entity_count + self.key_to_index[tuple(key)])
             times.append(float(time)); weights.append(float(weight)); observed.append(float(value))
-        from .native_kernels import fuse_zone_batch
-        if fuse_zone_batch(
+        from .native_kernels import fuse_zone_batch, information_batch_enabled
+        if information_batch_enabled() and fuse_zone_batch(
             self.state, self.state_count, indices, times, weights, observed,
             contradiction_memory_days=contradiction_memory_days,
             contradiction_penalty=contradiction_penalty,
@@ -886,6 +2021,619 @@ def _compact_rows(world: Any, attribute: str, fallback: Any, stride: int) -> dic
     if compact is not None:
         return {tuple(key): tuple(compact.row(key)) for key in compact.keys}
     return {tuple(key): tuple(fallback._belief_row(value)) for key, value in fallback.items()}
+
+
+def _numeric_world_belief_state(
+    world: Any,
+    *,
+    compact_attribute: str,
+    belief_attribute: str,
+    stride: int,
+) -> EnsembleBeliefState:
+    """Load one world into a leading-dimension numeric belief state."""
+    from .compact_information_state import (
+        CompactControlBeliefState,
+        CompactPresenceBeliefState,
+        CompactZoneBeliefState,
+    )
+
+    compact = getattr(world, compact_attribute, None)
+    beliefs = getattr(world, belief_attribute)
+    keys = tuple(sorted(set(compact.keys if compact is not None else ()) | set(beliefs)))
+    if stride == CONTROL_STATE_STRIDE:
+        row_factory = CompactControlBeliefState._belief_row
+    elif stride == PRESENCE_STATE_STRIDE:
+        row_factory = CompactPresenceBeliefState._belief_row
+    else:
+        row_factory = CompactZoneBeliefState._belief_row
+    rows = []
+    for key in keys:
+        if compact is not None and key in compact.key_to_index:
+            rows.append(compact.row(key))
+        elif key in beliefs:
+            rows.append(row_factory(beliefs[key]))
+        else:
+            rows.append(_default_row(
+                stride,
+                prior_confidence=world.config.information.prior_confidence,
+            ))
+    return EnsembleBeliefState.from_rows(keys, [rows], stride)
+
+
+def _sync_numeric_world_state(
+    world: Any,
+    state: EnsembleBeliefState,
+    *,
+    compact_attribute: str,
+    belief_attribute: str,
+) -> None:
+    """Mirror one packed lane to the object model at an explicit boundary."""
+    from .compact_information_state import (
+        CompactControlBeliefState,
+        CompactPresenceBeliefState,
+        CompactZoneBeliefState,
+    )
+    from .entities import ActorBelief, ActorZoneBelief, PresenceBelief
+
+    if state.particle_count != 1:
+        raise ValueError("world synchronization requires exactly one packed lane")
+    if state.stride == CONTROL_STATE_STRIDE:
+        compact = CompactControlBeliefState(
+            state.keys,
+            array("d", (
+                value for key in state.keys for value in state.row(0, key)
+            )),
+        )
+        beliefs = getattr(world, belief_attribute)
+        for key in state.keys:
+            if key not in beliefs:
+                beliefs[key] = ActorBelief(
+                    key[0], key[2], ControlVector(*([0.5] * 7)),
+                    world.config.information.prior_confidence, 0.0,
+                )
+            compact.write_to_belief(key, beliefs[key])
+            # Keep the historical same-side movement signal synchronized.  It
+            # is a read-only view of actor-resolved control evidence, not a
+            # second estimator.
+            legacy = getattr(world, "beliefs", {}).get((key[0], key[2]))
+            if legacy is not None:
+                legacy.control_estimate = ControlVector(
+                    *[getattr(beliefs[key].control_estimate, dimension)
+                      for dimension in CONTROL_DIMENSIONS]
+                )
+                legacy.confidence = beliefs[key].confidence
+                legacy.updated_at = beliefs[key].updated_at
+                legacy.last_reliable_observation_at = (
+                    beliefs[key].last_reliable_observation_at
+                )
+                legacy.evidence_count = beliefs[key].evidence_count
+                legacy.contradiction_index = beliefs[key].contradiction_index
+        setattr(world, compact_attribute, compact)
+        return
+
+    if state.stride == PRESENCE_STATE_STRIDE:
+        compact = CompactPresenceBeliefState(
+            state.keys,
+            array("d", (
+                value for key in state.keys for value in state.row(0, key)
+            )),
+        )
+        beliefs = getattr(world, belief_attribute)
+        for key in state.keys:
+            if key not in beliefs:
+                location = key[2].split(":", 1)
+                locality_id = location[0]
+                microzone_id = (
+                    None if len(location) == 1 or location[1] == "*"
+                    else location[1]
+                )
+                beliefs[key] = PresenceBelief(
+                    key[0], key[1], locality_id,
+                    target_id=None if key[3] == "*" else key[3],
+                    microzone_id=microzone_id,
+                    confidence=world.config.information.prior_confidence,
+                )
+            compact.write_to_belief(key, beliefs[key])
+        compact.configure_decay(
+            world.config.information.default_decay_rate,
+            world.config.information.formation_decay_rate,
+        )
+        compact.set_decay_clock(world.last_information_decay_at)
+        setattr(world, compact_attribute, compact)
+        return
+
+    compact = CompactZoneBeliefState(
+        state.keys,
+        array("d", (
+            value for key in state.keys for value in state.row(0, key)
+        )),
+    )
+    beliefs = getattr(world, belief_attribute)
+    for key in state.keys:
+        if key not in beliefs:
+            beliefs[key] = ActorZoneBelief(
+                key[0], key[1], 0.5,
+                world.config.information.prior_confidence, 0.0,
+            )
+        compact.write_to_belief(key, beliefs[key])
+    compact.configure_decay(world.config.information.formation_decay_rate)
+    compact.set_decay_clock(world.last_information_decay_at)
+    setattr(world, compact_attribute, compact)
+
+
+def _numeric_relay_weight(
+    world: Any,
+    row: tuple[Any, ...],
+    recipient_id: str,
+    time: float,
+) -> float:
+    """Compute the object-free equivalent of ``fuse_observation`` weight."""
+    from .information import (
+        _corroboration_weight,
+        _decay_rate,
+        language_comprehension,
+        source_trust,
+    )
+
+    codes = world.numeric_information_runtime.engine.plan.codes
+    source_id = codes.value(row[3]) or ""
+    source_type = codes.value(row[4]) or ""
+    locality_id = codes.value(row[5])
+    target_actor_id = codes.value(row[7]) or "*"
+    if locality_id is None:
+        return 0.0
+    observation_type = "detection" if int(row[12]) == _DETECTION else "physical_control"
+    history_key = (target_actor_id, locality_id, observation_type)
+    history = world.observation_source_index.get(history_key, ())
+    correlation = world.config.information.source_correlation.get(source_type, 0.5)
+    corroboration = _corroboration_weight(
+        history, float(row[9]), source_id, correlation
+    )
+    age_quality = exp(-_decay_rate(
+        world, observation_type,
+        codes.value(row[8]) if int(row[8]) else None,
+    ) * max(0.0, float(time) - float(row[9])))
+    trust = source_trust(
+        world, recipient_id, source_type, locality_id, source_id
+    )
+    language = language_comprehension(
+        world, recipient_id, locality_id, source_type, source_id
+    )
+    weight = (
+        float(row[10]) * float(row[11]) * trust
+        * (language ** world.config.information.language_fusion_weight)
+        * age_quality
+        * (1.0 + world.config.information.corroboration_bonus
+           * min(3.0, corroboration))
+    )
+    return max(0.0, min(1.0, weight))
+
+
+@dataclass(slots=True)
+class NumericInformationRuntime:
+    """Object-free information clock for a single packed world lane.
+
+    The runtime keeps only fixed-width report rows and flattened relay rows.
+    Legacy ``Observation`` and ``InformationRelay`` objects are created only
+    if a caller explicitly synchronizes through the reference backend.
+    """
+
+    engine: NumericInformationEventEngine
+    event_buffer: InformationEventBuffer
+    relay_buffer: RelayBuffer
+    event_rows: dict[int, tuple[Any, ...]]
+    control_state: EnsembleBeliefState
+    presence_state: EnsembleBeliefState
+    node_presence_state: EnsembleBeliefState
+    zone_state: EnsembleBeliefState
+    last_time: float = 0.0
+
+    @classmethod
+    def from_world(cls, world: Any) -> "NumericInformationRuntime":
+        engine = NumericInformationEventEngine.from_world(world)
+        return cls(
+            engine,
+            InformationEventBuffer(codebook=engine.plan.codes),
+            RelayBuffer(codebook=engine.plan.codes),
+            {},
+            _numeric_world_belief_state(
+                world, compact_attribute="compact_control_state",
+                belief_attribute="control_beliefs", stride=CONTROL_STATE_STRIDE,
+            ),
+            _numeric_world_belief_state(
+                world, compact_attribute="compact_presence_state",
+                belief_attribute="presence_beliefs", stride=PRESENCE_STATE_STRIDE,
+            ),
+            _numeric_world_belief_state(
+                world, compact_attribute="compact_node_presence_state",
+                belief_attribute="node_presence_beliefs", stride=PRESENCE_STATE_STRIDE,
+            ),
+            _numeric_world_belief_state(
+                world, compact_attribute="compact_zone_state",
+                belief_attribute="zone_beliefs", stride=ZONE_STATE_STRIDE,
+            ),
+            float(world.time),
+        )
+
+    def _refresh(self, world: Any) -> None:
+        if not self.engine.plan.is_current_for(world):
+            # Source opportunities can change when formations move, become
+            # ineffective, or an insurgent organization activates. Relays
+            # generated under the previous plan remain scientifically live;
+            # retain their numeric buffers and extend the shared codebook for
+            # the new plan instead of forcing a rich-object fallback.
+            plan = InformationSourcePlan.from_world(
+                world, codebook=self.engine.plan.codes
+            )
+            self.engine = NumericInformationEventEngine.from_world(
+                world, plan=plan
+            )
+        else:
+            self.engine = NumericInformationEventEngine.from_world(
+                world, plan=self.engine.plan
+            )
+        self.engine.next_sequence = int(world.next_observation_sequence)
+        self.engine.next_relay_sequence = int(world.next_information_relay_sequence)
+        self.control_state = _numeric_world_belief_state(
+            world, compact_attribute="compact_control_state",
+            belief_attribute="control_beliefs", stride=CONTROL_STATE_STRIDE,
+        )
+        self.presence_state = _numeric_world_belief_state(
+            world, compact_attribute="compact_presence_state",
+            belief_attribute="presence_beliefs", stride=PRESENCE_STATE_STRIDE,
+        )
+        self.node_presence_state = _numeric_world_belief_state(
+            world, compact_attribute="compact_node_presence_state",
+            belief_attribute="node_presence_beliefs", stride=PRESENCE_STATE_STRIDE,
+        )
+        self.zone_state = _numeric_world_belief_state(
+            world, compact_attribute="compact_zone_state",
+            belief_attribute="zone_beliefs", stride=ZONE_STATE_STRIDE,
+        )
+
+    def _record_rows(self, world: Any, *, append_history: bool = True) -> None:
+        rows_by_sequence = {
+            int(row[0]): row for row in self.event_buffer.iter_rows()
+        }
+        for index in range(len(self.relay_buffer)):
+            sequence = int(self.relay_buffer.observation_sequence[index])
+            row = rows_by_sequence.get(sequence)
+            if row is not None:
+                self.event_rows[sequence] = row
+        if not append_history:
+            return
+        # The bounded source-history index is the only information memory
+        # needed for corroboration; it stores codes/strings, never reports.
+        for row in rows_by_sequence.values():
+            actor = self.engine.plan.codes.value(row[7]) or "*"
+            locality = self.engine.plan.codes.value(row[5])
+            source = self.engine.plan.codes.value(row[3]) or ""
+            if locality is None:
+                continue
+            kind = "detection" if int(row[12]) == _DETECTION else "physical_control"
+            key = (actor, locality, kind)
+            history = world.observation_source_index.setdefault(key, deque())
+            entry = (float(row[9]), source)
+            if not history or history[-1] != entry:
+                history.append(entry)
+            cutoff = float(row[9]) - 3.0
+            while history and history[0][0] < cutoff:
+                history.popleft()
+
+    def _patrol_plan(self, world: Any, patrol_id: str) -> InformationSourcePlan:
+        """Compile the one-source plan used by a patrol report clock."""
+        from .information import (
+            _formation_matches_target_actor,
+            _target_actors_for_observer,
+        )
+
+        patrol = world.patrols[patrol_id]
+        formation = world.formations[patrol.formation_id]
+        codes = self.engine.plan.codes
+        observer_id = formation.organization_id
+        locality_id = formation.locality_id
+        observer = array("I", [codes.code(observer_id)])
+        node = array("I", [codes.code(formation.formation_id)])
+        source = array("I", [codes.code(patrol_id)])
+        source_type = array("I", [codes.code("patrol")])
+        locality = array("I", [codes.code(locality_id)])
+        target_offsets = array("Q", [0])
+        target_actor = array("I")
+        target_formation = array("I")
+        for actor in _target_actors_for_observer(world, observer_id):
+            targets = [
+                item for item in world.formations.values()
+                if _formation_matches_target_actor(world, item, actor)
+                and item.personnel > 0
+                and item.locality_id == locality_id
+                and not item.moving
+            ]
+            if targets:
+                for target in targets:
+                    target_actor.append(codes.code(actor))
+                    target_formation.append(codes.code(target.formation_id))
+            else:
+                target_actor.append(codes.code(actor))
+                target_formation.append(0)
+            target_offsets.append(len(target_actor))
+        current_zone = codes.code(patrol.current_microzone_id)
+        return InformationSourcePlan(
+            codes,
+            observer,
+            node,
+            source,
+            source_type,
+            locality,
+            target_offsets,
+            target_actor,
+            (locality_id,),
+            ((),),
+            ((),),
+            ((),),
+            ((),),
+            (0,),
+            ("patrol", patrol_id, formation.formation_id, locality_id),
+            target_formation=target_formation,
+            source_microzone=array("I", [current_zone]),
+            source_zone_actor=array("I", [codes.code(observer_id)]),
+        )
+
+    def process_patrol(self, world: Any, patrol_id: str, time: float, rng: Any) -> dict[str, Any]:
+        """Generate patrol detections/control rows without rich observations."""
+        world.numeric_information_runtime = self
+        self.control_state = _numeric_world_belief_state(
+            world, compact_attribute="compact_control_state",
+            belief_attribute="control_beliefs", stride=CONTROL_STATE_STRIDE,
+        )
+        self.presence_state = _numeric_world_belief_state(
+            world, compact_attribute="compact_presence_state",
+            belief_attribute="presence_beliefs", stride=PRESENCE_STATE_STRIDE,
+        )
+        self.node_presence_state = _numeric_world_belief_state(
+            world, compact_attribute="compact_node_presence_state",
+            belief_attribute="node_presence_beliefs", stride=PRESENCE_STATE_STRIDE,
+        )
+        self.zone_state = _numeric_world_belief_state(
+            world, compact_attribute="compact_zone_state",
+            belief_attribute="zone_beliefs", stride=ZONE_STATE_STRIDE,
+        )
+        plan = self._patrol_plan(world, patrol_id)
+        patrol_engine = NumericInformationEventEngine.from_world(world, plan=plan)
+        patrol_engine.report_probability[0] = float(
+            world.config.information.patrol_report_rate
+        )
+        patrol_engine.next_sequence = int(world.next_observation_sequence)
+        patrol_engine.next_relay_sequence = int(world.next_information_relay_sequence)
+        self.event_buffer.clear()
+        result = patrol_engine.process(
+            rng,
+            float(time),
+            event_buffer=self.event_buffer,
+            control_state=self.control_state,
+            presence_state=self.presence_state,
+            node_presence_state=self.node_presence_state,
+            zone_state=self.zone_state,
+            relay_buffer=self.relay_buffer,
+            record_negative=True,
+            world=world,
+        )
+        self._record_rows(world, append_history=False)
+        self.relay_buffer.retain_active()
+        _sync_numeric_world_state(
+            world, self.control_state,
+            compact_attribute="compact_control_state",
+            belief_attribute="control_beliefs",
+        )
+        _sync_numeric_world_state(
+            world, self.presence_state,
+            compact_attribute="compact_presence_state",
+            belief_attribute="presence_beliefs",
+        )
+        _sync_numeric_world_state(
+            world, self.node_presence_state,
+            compact_attribute="compact_node_presence_state",
+            belief_attribute="node_presence_beliefs",
+        )
+        _sync_numeric_world_state(
+            world, self.zone_state,
+            compact_attribute="compact_zone_state",
+            belief_attribute="zone_beliefs",
+        )
+        world.next_observation_sequence = int(patrol_engine.next_sequence)
+        world.next_information_relay_sequence = int(patrol_engine.next_relay_sequence)
+        return {
+            "generated": int(result["event_rows"]),
+            "observation_ids": tuple(int(item) for item in self.event_buffer.ids),
+            "relays_delivered": 0,
+            "relays_dropped": 0,
+            "active_relays": sum(
+                int(status == 0) for status in self.relay_buffer.status
+            ),
+            "numeric": True,
+            "event_buffer": self.event_buffer,
+            "relay_buffer": self.relay_buffer,
+        }
+
+    def _apply_row(
+        self,
+        world: Any,
+        row: tuple[Any, ...],
+        recipient_id: str,
+        *,
+        node: bool,
+        time: float,
+    ) -> None:
+        codes = self.engine.plan.codes
+        actor = codes.value(row[7])
+        locality = codes.value(row[5])
+        microzone = codes.value(row[6])
+        if actor is None or locality is None:
+            return
+        weight = _numeric_relay_weight(world, row, recipient_id, time)
+        if int(row[12]) == _DETECTION:
+            target_id = codes.value(row[8])
+            state = self.node_presence_state if node else self.presence_state
+            keys = (target_id, None) if target_id is not None else (None,)
+            for target in keys:
+                key = (
+                    recipient_id, actor, f"{locality}:{microzone or '*'}",
+                    target or "*",
+                )
+                state.ensure_key(
+                    key,
+                    prior_confidence=world.config.information.prior_confidence,
+                )
+                # Presence rows use the same recurrence for positive and
+                # negative detection claims.
+                if node:
+                    updates = [(0, key, time, weight, float(row[14]), float(row[15]))]
+                    self.node_presence_state.fuse_presence(
+                        updates,
+                        contradiction_memory_days=world.config.information.contradiction_memory_days,
+                        contradiction_penalty=world.config.information.contradiction_penalty,
+                    )
+                else:
+                    updates = [(0, key, time, weight, float(row[14]), float(row[15]))]
+                    self.presence_state.fuse_presence(
+                        updates,
+                        contradiction_memory_days=world.config.information.contradiction_memory_days,
+                        contradiction_penalty=world.config.information.contradiction_penalty,
+                    )
+            return
+        key = (recipient_id, actor, locality)
+        self.control_state.ensure_key(
+            key, prior_confidence=world.config.information.prior_confidence
+        )
+        self.control_state.fuse_control(
+            [(0, key, time, weight, row[13])],
+            contradiction_memory_days=world.config.information.contradiction_memory_days,
+            contradiction_penalty=world.config.information.contradiction_penalty,
+        )
+        if microzone is not None:
+            zone_key = (recipient_id, microzone)
+            self.zone_state.ensure_key(
+                zone_key, prior_confidence=world.config.information.prior_confidence
+            )
+            self.zone_state.fuse_zone(
+                [(0, zone_key, time, weight, float(row[19]))],
+                contradiction_memory_days=world.config.information.contradiction_memory_days,
+                contradiction_penalty=world.config.information.contradiction_penalty,
+            )
+
+    def _deliver(self, world: Any, time: float, rng: Any) -> tuple[int, int, tuple[int, ...]]:
+        delivered = 0
+        dropped = 0
+        delivered_sequences: list[int] = []
+        for index in range(len(self.relay_buffer)):
+            if int(self.relay_buffer.status[index]) != 0:
+                continue
+            if float(self.relay_buffer.arrives_at[index]) > float(time) + 1e-12:
+                continue
+            sequence = int(self.relay_buffer.observation_sequence[index])
+            row = self.event_rows.get(sequence)
+            reliability = float(self.relay_buffer.reliability[index])
+            if row is None or not (rng.random() <= reliability):
+                self.relay_buffer.status[index] = 2
+                dropped += 1
+                self.event_rows.pop(sequence, None)
+                continue
+            organization = self.engine.plan.codes.value(
+                self.relay_buffer.organization[index]
+            )
+            destination = self.engine.plan.codes.value(
+                self.relay_buffer.destination[index]
+            )
+            if organization is not None:
+                self._apply_row(world, row, organization, node=False, time=time)
+            if destination is not None:
+                self._apply_row(world, row, destination, node=True, time=time)
+            self.relay_buffer.status[index] = 1
+            self.relay_buffer.delivered_at[index] = float(time)
+            delivered += 1
+            delivered_sequences.append(sequence)
+            self.event_rows.pop(sequence, None)
+        return delivered, dropped, tuple(delivered_sequences)
+
+    def process(self, world: Any, time: float, rng: Any) -> dict[str, Any]:
+        from .information import decay_information
+
+        decay_information(world, float(time))
+        world.numeric_information_runtime = self
+        self._refresh(world)
+        self.event_buffer.clear()
+        result = self.engine.process(
+            rng,
+            float(time),
+            event_buffer=self.event_buffer,
+            control_state=self.control_state,
+            presence_state=self.presence_state,
+            node_presence_state=self.node_presence_state,
+            zone_state=self.zone_state,
+            relay_buffer=self.relay_buffer,
+            record_negative=True,
+            world=world,
+        )
+        self._record_rows(world, append_history=False)
+        delivered, dropped, delivered_sequences = self._deliver(world, time, rng)
+        self.relay_buffer.retain_active()
+        _sync_numeric_world_state(
+            world, self.control_state,
+            compact_attribute="compact_control_state",
+            belief_attribute="control_beliefs",
+        )
+        _sync_numeric_world_state(
+            world, self.presence_state,
+            compact_attribute="compact_presence_state",
+            belief_attribute="presence_beliefs",
+        )
+        _sync_numeric_world_state(
+            world, self.node_presence_state,
+            compact_attribute="compact_node_presence_state",
+            belief_attribute="node_presence_beliefs",
+        )
+        _sync_numeric_world_state(
+            world, self.zone_state,
+            compact_attribute="compact_zone_state",
+            belief_attribute="zone_beliefs",
+        )
+        world.next_observation_sequence = int(self.engine.next_sequence)
+        world.next_information_relay_sequence = int(self.engine.next_relay_sequence)
+        world.last_information_decay_at = float(time)
+        self.last_time = float(time)
+        active = tuple(
+            int(self.relay_buffer.observation_sequence[index])
+            for index in range(len(self.relay_buffer))
+            if int(self.relay_buffer.status[index]) == 0
+        )
+        return {
+            "generated": int(result["event_rows"]),
+            "observation_ids": tuple(int(item) for item in self.event_buffer.ids),
+            "relays_delivered": delivered,
+            "delivered_observation_ids": delivered_sequences,
+            "relays_dropped": dropped,
+            "active_relays": len(active),
+            "control_fusions": 0,
+            "presence_fusions": 0,
+            "numeric": True,
+            "event_buffer": self.event_buffer,
+            "relay_buffer": self.relay_buffer,
+        }
+
+
+def process_information_numeric(
+    world: Any,
+    time: float,
+    rng: Any,
+    *,
+    runtime: NumericInformationRuntime | None = None,
+) -> dict[str, Any]:
+    """Run one numeric information event and retain only in-flight rows."""
+    if runtime is None:
+        runtime = getattr(world, "numeric_information_runtime", None)
+    if runtime is None:
+        runtime = NumericInformationRuntime.from_world(world)
+        world.numeric_information_runtime = runtime
+    return runtime.process(world, time, rng)
 
 
 @dataclass(slots=True)
@@ -933,12 +2681,17 @@ class ParticleBatchState:
         presence_keys = tuple(sorted({key for world in worlds for key in world.presence_beliefs}))
         node_keys = tuple(sorted({key for world in worlds for key in world.node_presence_beliefs}))
         zone_keys = tuple(sorted({key for world in worlds for key in world.zone_beliefs}))
+        from .compact_information_state import (
+            CompactControlBeliefState,
+            CompactPresenceBeliefState,
+            CompactZoneBeliefState,
+        )
         rows = []
         for world in worlds:
             compact = getattr(world, "compact_control_state", None)
             rows.append([
                 tuple(compact.row(key)) if compact is not None and key in compact.key_to_index
-                else tuple(world.compact_control_state._belief_row(world.control_beliefs[key])) if key in world.control_beliefs and compact is not None
+                else CompactControlBeliefState._belief_row(world.control_beliefs[key]) if key in world.control_beliefs
                 else _default_row(CONTROL_STATE_STRIDE, prior_confidence=world.config.information.prior_confidence)
                 for key in control_keys
             ])
@@ -950,9 +2703,14 @@ class ParticleBatchState:
                 compact = getattr(world, attribute, None)
                 fallback = getattr(world, fallback_name)
                 keys = {key for key in (presence_keys if fallback_name == "presence_beliefs" else node_keys if fallback_name == "node_presence_beliefs" else zone_keys)}
+                row_factory = (
+                    CompactPresenceBeliefState._belief_row
+                    if stride == PRESENCE_STATE_STRIDE
+                    else CompactZoneBeliefState._belief_row
+                )
                 result.append([
                     tuple(compact.row(key)) if compact is not None and key in compact.key_to_index
-                    else tuple(compact._belief_row(fallback[key])) if compact is not None and key in fallback
+                    else row_factory(fallback[key]) if key in fallback
                     else _default_row(stride, prior_confidence=world.config.information.prior_confidence)
                     for key in sorted(keys)
                 ])
@@ -992,7 +2750,10 @@ class ParticleBatchState:
         old_weights = self.weights
         old_lineages = self.lineage_ids
         self.times = array("d", (old_times[index] for index in parents))
-        self.weights = array("d", (old_weights[index] for index in parents))
+        # A resampled ensemble has equal posterior mass. Keeping the selected
+        # parents' old log weights would double-count the previous likelihood
+        # at the next update.
+        self.weights = array("d", [0.0] * len(parents))
         self.lineage_ids = tuple(f"{old_lineages[index]}.{child}" for child, index in enumerate(parents))
         if self.particles:
             if clone_reference_states:
@@ -1015,9 +2776,15 @@ class ParticleBatchState:
         for particle_index, particle in enumerate(self.particles):
             world = particle.world
             # Controls
-            compact = CompactControlBeliefState(self.control_state.keys, array("d"))
+            compact = CompactControlBeliefState(
+                self.control_state.keys,
+                array("d", (
+                    value
+                    for key in self.control_state.keys
+                    for value in self.control_state.row(particle_index, key)
+                )),
+            )
             for key in self.control_state.keys:
-                compact.state.extend(self.control_state.row(particle_index, key))
                 if key not in world.control_beliefs:
                     world.control_beliefs[key] = ActorBelief(
                         key[0], key[2], ControlVector(*([0.5] * 7)),
@@ -1028,10 +2795,16 @@ class ParticleBatchState:
                 compact.write_to_belief(key, world.control_beliefs[key])
 
             def sync_presence(state: EnsembleBeliefState, attribute: str, cls_type: Any, node: bool = False):
-                compact = CompactPresenceBeliefState(state.keys, array("d"))
+                compact = CompactPresenceBeliefState(
+                    state.keys,
+                    array("d", (
+                        value
+                        for key in state.keys
+                        for value in state.row(particle_index, key)
+                    )),
+                )
                 target = getattr(world, attribute)
                 for key in state.keys:
-                    compact.state.extend(state.row(particle_index, key))
                     if key not in target:
                         location = key[2].split(":", 1)
                         locality_id = location[0]
@@ -1047,9 +2820,15 @@ class ParticleBatchState:
 
             sync_presence(self.presence_state, "presence_beliefs", PresenceBelief)
             sync_presence(self.node_presence_state, "node_presence_beliefs", PresenceBelief, node=True)
-            compact_zone = CompactZoneBeliefState(self.zone_state.keys, array("d"))
+            compact_zone = CompactZoneBeliefState(
+                self.zone_state.keys,
+                array("d", (
+                    value
+                    for key in self.zone_state.keys
+                    for value in self.zone_state.row(particle_index, key)
+                )),
+            )
             for key in self.zone_state.keys:
-                compact_zone.state.extend(self.zone_state.row(particle_index, key))
                 if key not in world.zone_beliefs:
                     world.zone_beliefs[key] = ActorZoneBelief(key[0], key[1], 0.5, world.config.information.prior_confidence, 0.0)
                 compact_zone.write_to_belief(key, world.zone_beliefs[key])
@@ -1097,6 +2876,171 @@ def advance_batch(
     return batch
 
 
+@dataclass(frozen=True, slots=True)
+class PackedFilterUpdate:
+    """Compact diagnostics for one packed SMC boundary."""
+
+    time: float
+    prior_ess: float
+    posterior_ess: float
+    maximum_posterior_weight: float
+    resampled: bool
+    unique_parent_particles: int
+    parent_indices: tuple[int, ...]
+    resampling_events: int
+
+
+@dataclass(slots=True)
+class PackedParticleFilter:
+    """Sequential Monte Carlo over one leading particle dimension.
+
+    The transition callback owns model propagation and receives the packed
+    :class:`ParticleBatchState`. A likelihood callback receives
+    ``(batch, particle_index, observation)`` and returns a log likelihood.
+    Optional transition/proposal log densities are added as the standard
+    guided-SMC importance correction ``log p + log L - log q``.
+    """
+
+    batch: ParticleBatchState
+    rng: Any
+    ess_fraction: float = 0.5
+    strict_support: bool = True
+    resampling_events: int = 0
+    history: list[PackedFilterUpdate] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not 0.0 < float(self.ess_fraction) <= 1.0:
+            raise ValueError("ess_fraction must be in (0, 1]")
+
+    @classmethod
+    def from_particles(
+        cls,
+        particles: Sequence[Any],
+        *,
+        rng: Any,
+        ess_fraction: float = 0.5,
+        topology: StaticWorldTopology | None = None,
+    ) -> "PackedParticleFilter":
+        return cls(
+            ParticleBatchState.from_particles(particles, topology=topology),
+            rng,
+            ess_fraction=ess_fraction,
+        )
+
+    @property
+    def particle_count(self) -> int:
+        return self.batch.particle_count
+
+    def normalized_weights(self) -> tuple[float, ...]:
+        from .state_estimation import normalize_log_weights
+
+        return tuple(normalize_log_weights(
+            self.batch.weights, strict=self.strict_support
+        ))
+
+    @staticmethod
+    def _per_particle(
+        value: Sequence[float] | float | Callable[[int], float] | None,
+        count: int,
+        *,
+        name: str,
+    ) -> list[float]:
+        if value is None:
+            return [0.0] * count
+        if callable(value):
+            return [float(value(index)) for index in range(count)]
+        if isinstance(value, (int, float)):
+            return [float(value)] * count
+        if len(value) != count:
+            raise ValueError(f"{name} must contain one value per particle")
+        return [float(item) for item in value]
+
+    def update(
+        self,
+        until: float,
+        observation: Any = None,
+        *,
+        runner: Callable[[ParticleBatchState, float], Any] | None = None,
+        log_likelihood: Callable[[ParticleBatchState, int, Any], float]
+        | Sequence[float] | None = None,
+        log_transition_density: Sequence[float] | float | Callable[[int], float]
+        | None = None,
+        log_proposal_density: Sequence[float] | float | Callable[[int], float]
+        | None = None,
+    ) -> PackedFilterUpdate:
+        """Propagate, score, and ESS-resample one packed boundary."""
+        from .state_estimation import (
+            effective_sample_size,
+            normalize_log_weights,
+            systematic_resample_indices,
+        )
+
+        if runner is not None:
+            self.batch.advance_to(float(until), runner=runner)
+        else:
+            if float(until) < min(self.batch.times):
+                raise ValueError("packed filter boundary cannot move backward")
+            self.batch.advance_to(float(until))
+        count = self.particle_count
+        prior = list(normalize_log_weights(
+            self.batch.weights, strict=self.strict_support
+        ))
+        if log_likelihood is None:
+            likelihoods = [0.0] * count
+        elif callable(log_likelihood):
+            likelihoods = [
+                float(log_likelihood(self.batch, index, observation))
+                for index in range(count)
+            ]
+        else:
+            if len(log_likelihood) != count:
+                raise ValueError("log_likelihood must contain one value per particle")
+            likelihoods = [float(item) for item in log_likelihood]
+        transitions = self._per_particle(
+            log_transition_density, count, name="log_transition_density"
+        )
+        proposals = self._per_particle(
+            log_proposal_density, count, name="log_proposal_density"
+        )
+        raw_weights = []
+        for prior_weight, transition, likelihood, proposal in zip(
+            prior, transitions, likelihoods, proposals
+        ):
+            raw_weights.append(
+                log(prior_weight) + transition + likelihood - proposal
+                if prior_weight > 0.0 and all(isfinite(item) for item in (
+                    transition, likelihood, proposal
+                )) else -inf
+            )
+        posterior = normalize_log_weights(
+            raw_weights, strict=self.strict_support
+        )
+        self.batch.weights = array(
+            "d", (log(weight) if weight > 0.0 else -inf for weight in posterior)
+        )
+        prior_ess = effective_sample_size(prior)
+        posterior_ess = effective_sample_size(posterior)
+        threshold = float(self.ess_fraction) * count
+        resampled = posterior_ess < threshold
+        parents = tuple(range(count))
+        unique = count
+        if resampled:
+            parents = tuple(systematic_resample_indices(posterior, self.rng))
+            unique = len(set(parents))
+            self.batch.gather(parents)
+            self.resampling_events += 1
+        result = PackedFilterUpdate(
+            float(until), prior_ess, posterior_ess, max(posterior),
+            resampled, unique, parents, self.resampling_events,
+        )
+        self.history.append(result)
+        return result
+
+
+# Naming aliases for callers that use either the execution or filtering term.
+EnsembleParticleFilter = PackedParticleFilter
+
+
 # Explicit aliases used by callers that prefer the handoff terminology.
 NumericInformationEventBuffer = InformationEventBuffer
 NumericRelayBuffer = RelayBuffer
@@ -1104,8 +3048,11 @@ EnsembleState = ParticleBatchState
 
 
 __all__ = [
-    "EnsembleBeliefState", "EnsembleState", "InformationEventBuffer",
+    "EnsembleBeliefState", "EnsembleParticleFilter", "EnsembleState",
+    "InformationEventBuffer",
     "InformationSourcePlan", "NumericIdTable", "NumericInformationEventBuffer",
-    "NumericRelayBuffer", "ParticleBatchState", "RelayBuffer",
-    "StaticWorldTopology", "advance_batch",
+    "NumericInformationEventEngine", "NumericInformationRuntime",
+    "NumericRelayBuffer", "PackedFilterUpdate", "PackedParticleFilter",
+    "ParticleBatchState", "RelayBuffer",
+    "StaticWorldTopology", "advance_batch", "process_information_numeric",
 ]

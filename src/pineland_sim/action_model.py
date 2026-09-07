@@ -8,7 +8,7 @@ personnel exactly once.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import exp
+from math import exp, expm1
 import random
 
 from .entities import OrganizationKind, clamp
@@ -407,11 +407,14 @@ def consume_local_action_supply(
     return consumed, max(0.0, demanded - consumed)
 
 
-def action_attempt_probability(world, organization_id: str, locality_id: str,
-                               interval_days: float) -> float:
-    """Continuous-time common action opportunity using the existing rate scale."""
-    if interval_days <= 0:
-        return 0.0
+def action_attempt_hazard(world, organization_id: str, locality_id: str) -> float:
+    """Return the organized-action opportunity hazard per day.
+
+    This is the intensity already implied by ``organized_action_rate`` and the
+    local equipped fighter-equivalent stock.  Keeping the intensity available
+    separately lets a filter marginalize multiple opportunities instead of
+    estimating their aggregate with a small number of full descendants.
+    """
     rate = max(0.0, float(world.config.organized_action_rate))
     # organized_action_rate is an opportunity rate for one minimally viable action
     # unit. Saturation discounts tiny/unformed stocks; committed equivalents
@@ -425,8 +428,44 @@ def action_attempt_probability(world, organization_id: str, locality_id: str,
     active_units = committed_fighter_equivalents(
         world, organization_id, locality_id
     ) / minimum_unit
-    intensity = rate * active_units
-    return clamp(1.0 - exp(-intensity * interval_days))
+    return max(0.0, rate * active_units)
+
+
+def action_attempt_probability(world, organization_id: str, locality_id: str,
+                               interval_days: float) -> float:
+    """Continuous-time action opportunity over ``interval_days``.
+
+    The public probability API remains unchanged; its rate form is exposed by
+    :func:`action_attempt_hazard` for Rao--Blackwellized filters.
+    """
+    if interval_days <= 0:
+        return 0.0
+    return clamp(-expm1(
+        -action_attempt_hazard(world, organization_id, locality_id)
+        * float(interval_days)
+    ))
+
+
+def action_execution_hazard(
+    world,
+    organization_id: str,
+    locality_id: str,
+    interval_days: float,
+    *,
+    execution_probability: float = 1.0,
+) -> float:
+    """Expected realized-action hazard after an execution gate.
+
+    ``execution_probability`` is conditional on an opportunity and therefore
+    multiplies the opportunity intensity exactly once.  Callers that have not
+    yet selected a target should use the opportunity hazard and apply the
+    target/execution gate later.
+    """
+    if interval_days <= 0:
+        return 0.0
+    return action_attempt_hazard(world, organization_id, locality_id) * clamp(
+        float(execution_probability)
+    )
 
 
 def _opponent_side(organization_kind: OrganizationKind) -> str:

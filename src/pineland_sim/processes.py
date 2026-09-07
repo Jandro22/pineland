@@ -34,10 +34,12 @@ from .information import (
     observe_target,
     process_information,
 )
+from .ensemble import process_information_numeric
 from .world import WorldState, seeded_rng
 from .combat import formation_microzone, resolve_engagement
 from .action_model import (
     ACTION_ORGANIZATION_KINDS,
+    action_attempt_hazard,
     action_attempt_probability,
     apply_nonfielded_target_losses,
     asset_targets,
@@ -577,7 +579,20 @@ class ProcessEngine:
         presence = advance_patrol_presence_memory(
             self.world, self.world.time, patrol_id=patrol_id
         )
-        observations = observe_patrol(self.world, patrol.patrol_id, self.world.time, self.rng)
+        numeric_patrol_result = None
+        if self.world.execution_backend == "ensemble":
+            numeric_runtime = getattr(self.world, "numeric_information_runtime", None)
+            if numeric_runtime is None:
+                from .ensemble import NumericInformationRuntime
+
+                numeric_runtime = NumericInformationRuntime.from_world(self.world)
+                self.world.numeric_information_runtime = numeric_runtime
+            numeric_patrol_result = numeric_runtime.process_patrol(
+                self.world, patrol.patrol_id, self.world.time, self.rng
+            )
+            observations = ()
+        else:
+            observations = observe_patrol(self.world, patrol.patrol_id, self.world.time, self.rng)
         belief = ensure_zone_belief(
             self.world, formation.organization_id,
             current_zone.microzone_id, self.world.time,
@@ -623,10 +638,14 @@ class ProcessEngine:
                 "affected_entity_ids": (patrol_id, formation.formation_id), "presence": presence,
                 "sustainment": -supply_use, "from_microzone": current_zone.microzone_id,
                 "to_microzone": moved_to, "travel_time_hours": travel_hours, "severity": presence,
-                "observation_ids": tuple(item.observation_id for item in observations),
-                "observations_by_actor": {
+                "observation_ids": (
+                    numeric_patrol_result["observation_ids"]
+                    if numeric_patrol_result is not None
+                    else tuple(item.observation_id for item in observations)
+                ),
+                "observations_by_actor": ({
                     formation.organization_id: tuple(item.observation_id for item in observations)
-                }}
+                } if numeric_patrol_result is None else {})}
 
     def on_command(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         elapsed_days = float(event.payload.get(
@@ -669,7 +688,7 @@ class ProcessEngine:
         # the sparse paths remain exact without rebuilding per locality.
         if not (
             self.world.execution_profile == "particle"
-            and self.world.execution_backend == "optimized"
+            and self.world.execution_backend in {"optimized", "ensemble"}
         ):
             self.world.rebuild_runtime_entity_indexes()
         else:
@@ -685,7 +704,7 @@ class ProcessEngine:
         for locality_id in sorted(self.world.localities):
             if (
                 self.world.execution_profile == "particle"
-                and self.world.execution_backend == "optimized"
+                and self.world.execution_backend in {"optimized", "ensemble"}
                 and locality_id not in active_physical_localities
             ):
                 # A locality with no post, formation, patrol, presence memory,
@@ -1197,12 +1216,18 @@ class ProcessEngine:
                 "relays_dropped": 0}
 
     def on_information(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
-        result = process_information(self.world, self.world.time, self.rng)
+        if self.world.execution_backend == "ensemble":
+            result = process_information_numeric(
+                self.world, self.world.time, self.rng,
+            )
+        else:
+            result = process_information(self.world, self.world.time, self.rng)
         observations_by_actor: dict[str, tuple[str, ...]] = {}
-        for observation_id in result["observation_ids"]:
-            observation = self.world.observations[observation_id]
-            observations_by_actor.setdefault(observation.observer_actor_id, tuple())
-            observations_by_actor[observation.observer_actor_id] += (observation_id,)
+        if not result.get("numeric", False):
+            for observation_id in result["observation_ids"]:
+                observation = self.world.observations[observation_id]
+                observations_by_actor.setdefault(observation.observer_actor_id, tuple())
+                observations_by_actor[observation.observer_actor_id] += (observation_id,)
         return {"information_generated": result["generated"],
                 "observation_ids": result["observation_ids"],
                 "relays_delivered": result["relays_delivered"],
@@ -1956,8 +1981,23 @@ class ProcessEngine:
             return {**base, "action_channel": "wait", "failure_reason": "inactive_organization"}
 
         support = local_action_support(self.world, organization_id, locality_id)
+        attempt_hazard_per_day = action_attempt_hazard(
+            self.world, organization_id, locality_id
+        )
+        hazard_exposure = self.world.record_activity_hazard(
+            time=self.world.time,
+            locality_id=locality_id,
+            hazard_per_day=attempt_hazard_per_day,
+            interval_days=interval_days,
+        )
         if support.total_fighter_equivalents <= 0:
-            return {**base, "action_channel": "wait", "failure_reason": "no_local_fighter_capacity"}
+            return {
+                **base,
+                "action_channel": "wait",
+                "failure_reason": "no_local_fighter_capacity",
+                "attempt_hazard_per_day": attempt_hazard_per_day,
+                "hazard_exposure": hazard_exposure,
+            }
 
         attempt_probability = action_attempt_probability(
             self.world, organization_id, locality_id, interval_days
@@ -1970,6 +2010,8 @@ class ProcessEngine:
                 "failure_reason": "no_action_opportunity",
                 "attempt_probability": attempt_probability,
                 "attempt_draw": attempt_draw,
+                "attempt_hazard_per_day": attempt_hazard_per_day,
+                "hazard_exposure": hazard_exposure,
             }
 
         channel, choice_weights = choose_action(
@@ -1981,6 +2023,8 @@ class ProcessEngine:
             "failure_reason": None,
             "attempt_probability": attempt_probability,
             "attempt_draw": attempt_draw,
+            "attempt_hazard_per_day": attempt_hazard_per_day,
+            "hazard_exposure": hazard_exposure,
             "choice_weights": choice_weights,
             "committed_fighter_equivalents": committed_fighter_equivalents(
                 self.world, organization_id, locality_id

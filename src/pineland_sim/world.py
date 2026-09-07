@@ -293,6 +293,11 @@ class WorldState:
     contact_funnel_counts: dict[str, int] = field(default_factory=dict)
     action_funnel_counts: dict[str, int] = field(default_factory=dict)
     action_funnel_by_actor_locality: dict[str, dict[str, int]] = field(default_factory=dict)
+    # Integrated organized-action opportunity hazards. This is an execution
+    # diagnostic/sufficient statistic for Rao--Blackwellized filters; it is not
+    # consulted by transition rules and is therefore excluded from scientific
+    # state hashes.
+    activity_hazard_ledger: dict[tuple[int, str, str], float] = field(default_factory=dict)
     recruitment_total: float = 0.0
     behavior_change_total: int = 0
     behavior_change_represented_population: float = 0.0
@@ -350,6 +355,10 @@ class WorldState:
     # mapping API for the scientific/reference layer.
     compact_observation_state: Any = None
     compact_relay_state: Any = None
+    # Optional compiled numeric information runtime.  It owns only packed
+    # event/relay rows and is populated when the ensemble backend is selected;
+    # the reference/optimized backends leave it as ``None``.
+    numeric_information_runtime: Any = None
     # Optional profiling counters. None on normal execution so hot paths pay
     # only a single identity check when instrumentation is explicitly enabled.
     performance_counters: dict[str, int] | None = None
@@ -538,7 +547,7 @@ class WorldState:
         are views, so direct policy/diagnostic readers call this boundary
         method before using a confidence value.
         """
-        if self.execution_backend != "optimized":
+        if self.execution_backend not in {"optimized", "ensemble"}:
             return float(belief.confidence)
         if hasattr(belief, "presence_estimate"):
             key = (
@@ -572,7 +581,7 @@ class WorldState:
 
     def materialize_compact_information_confidences(self) -> None:
         """Materialize all lazy information confidence views at the boundary."""
-        if self.execution_backend != "optimized":
+        if self.execution_backend not in {"optimized", "ensemble"}:
             return
         for compact, beliefs in (
             (self.compact_presence_state, self.presence_beliefs),
@@ -764,6 +773,24 @@ class WorldState:
             observation = self.observations.get(relay.observation_id)
             if observation is not None:
                 information.add(observation.locality_id)
+        # The ensemble backend keeps in-flight reports as numeric rows rather
+        # than populating the rich observation/relay maps. Decode only the
+        # locality code needed for this derived profiling set.
+        numeric_runtime = getattr(self, "numeric_information_runtime", None)
+        if numeric_runtime is not None:
+            engine = getattr(numeric_runtime, "engine", None)
+            relay_buffer = getattr(numeric_runtime, "relay_buffer", None)
+            event_rows = getattr(numeric_runtime, "event_rows", {})
+            codes = getattr(getattr(engine, "plan", None), "codes", None)
+            if relay_buffer is not None and codes is not None:
+                for index in range(len(relay_buffer)):
+                    if int(relay_buffer.status[index]) != 0:
+                        continue
+                    row = event_rows.get(int(relay_buffer.observation_sequence[index]))
+                    if row is not None:
+                        locality_id = codes.value(row[5])
+                        if locality_id is not None:
+                            information.add(locality_id)
         contested = set()
         for locality_id, locality in self.localities.items():
             government = locality.control.get("government")
@@ -883,7 +910,7 @@ class WorldState:
         """Return resident representatives, using the exact particle index."""
         if (
             self.execution_profile == "particle"
-            or self.execution_backend == "optimized"
+            or self.execution_backend in {"optimized", "ensemble"}
         ):
             return (
                 self.persons[person_id]
@@ -925,7 +952,7 @@ class WorldState:
         """Iterate unassigned representatives using the particle index."""
         if (
             self.execution_profile == "particle"
-            or self.execution_backend == "optimized"
+            or self.execution_backend in {"optimized", "ensemble"}
         ):
             return (
                 self.persons[person_id]
@@ -1021,6 +1048,29 @@ class WorldState:
             self.state_based_event_localities_by_week.setdefault(
                 int(float(time) // 7), set()
             ).add(locality)
+
+    def record_activity_hazard(
+        self,
+        *,
+        time: float,
+        locality_id: str,
+        hazard_per_day: float,
+        interval_days: float = 1.0,
+        channel: str = "organized_action",
+    ) -> float:
+        """Accumulate a nonnegative integrated opportunity hazard.
+
+        The ledger records ``hazard_per_day * interval_days`` once per
+        opportunity window. It is separate from realized event counts: a
+        Rao--Blackwellized likelihood can integrate these hazards, while the
+        ordinary stochastic path still draws the realized event.
+        """
+        exposure = max(0.0, float(hazard_per_day)) * max(0.0, float(interval_days))
+        key = (int(float(time) // 7), str(locality_id), str(channel))
+        self.activity_hazard_ledger[key] = (
+            self.activity_hazard_ledger.get(key, 0.0) + exposure
+        )
+        return exposure
 
     def clear_particle_archives(self) -> None:
         """Drop output-only histories while retaining future-decision state.
@@ -1805,6 +1855,11 @@ class WorldState:
                 "counts": dict(self.contact_funnel_counts),
             },
             "action_funnel": dict(self.action_funnel_counts),
+            "activity_hazard_ledger": {
+                f"{week}|{locality}|{channel}": value
+                for (week, locality, channel), value
+                in sorted(self.activity_hazard_ledger.items())
+            },
             "civilian_harm": self.cumulative_civilian_harm,
             "civilian_deaths": self.cumulative_deaths,
             "civilian_injuries": self.cumulative_civilian_injuries,
