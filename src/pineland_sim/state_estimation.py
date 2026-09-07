@@ -25,9 +25,44 @@ JobT = TypeVar("JobT")
 ResultT = TypeVar("ResultT")
 
 
+def _share_resident_static_route_caches(states: dict[int, object]):
+    """Share pure locality-routing memoization across resident simulations."""
+    worlds = [
+        getattr(state, "world", None)
+        for state in states.values()
+        if getattr(state, "world", None) is not None
+    ]
+    if not worlds:
+        return None
+    template = worlds[0]
+    caches = (
+        template.locality_path_cache,
+        template.locality_travel_time_cache,
+        template.locality_route_metrics_cache,
+    )
+    for world in worlds[1:]:
+        world.locality_path_cache = caches[0]
+        world.locality_travel_time_cache = caches[1]
+        world.locality_route_metrics_cache = caches[2]
+    return caches
+
+
+def _attach_resident_static_route_caches(state, caches) -> None:
+    if caches is None:
+        return
+    world = getattr(state, "world", None)
+    if world is None:
+        return
+    world.locality_path_cache = caches[0]
+    world.locality_travel_time_cache = caches[1]
+    world.locality_route_metrics_cache = caches[2]
+
+
 def _resident_particle_worker(
+    worker_index,
     command_queue,
     result_queue,
+    peer_command_queues,
     initial_states,
     propagate,
     fork_state,
@@ -39,6 +74,8 @@ def _resident_particle_worker(
     forked locally after the coordinator sends parent indices.
     """
     states = dict(initial_states)
+    shared_route_caches = _share_resident_static_route_caches(states)
+    pending_imports: dict[int, dict[int, StateT]] = {}
     try:
         while True:
             command, payload = command_queue.get()
@@ -86,6 +123,114 @@ def _resident_particle_worker(
                 }
                 result_queue.put(("resample", None))
                 continue
+            if command == "import_resampled":
+                generation, child, state = payload
+                _attach_resident_static_route_caches(
+                    state, shared_route_caches
+                )
+                pending_imports.setdefault(int(generation), {})[
+                    int(child)
+                ] = state
+                continue
+            if command == "import_parent_bundle":
+                generation, parent_state, children = payload
+                _attach_resident_static_route_caches(
+                    parent_state, shared_route_caches
+                )
+                generation = int(generation)
+                target = pending_imports.setdefault(generation, {})
+                for child in children:
+                    child = int(child)
+                    target[child] = fork_state(parent_state, child)
+                continue
+            if command == "resample_balanced":
+                generation, child_plan, expected_state_count = payload
+                generation = int(generation)
+                old_states = states
+                next_states: dict[int, StateT] = {}
+                exported = 0
+                export_bundles = 0
+                remote_groups: dict[
+                    tuple[int, int], list[int]
+                ] = {}
+                for child, parent, target_worker in child_plan:
+                    child = int(child)
+                    parent = int(parent)
+                    target_worker = int(target_worker)
+                    if target_worker == worker_index:
+                        next_states[child] = fork_state(
+                            old_states[parent], child
+                        )
+                    else:
+                        remote_groups.setdefault(
+                            (parent, target_worker), []
+                        ).append(child)
+                        exported += 1
+                for (parent, target_worker), children in sorted(
+                    remote_groups.items()
+                ):
+                    peer_command_queues[target_worker].put((
+                        "import_parent_bundle",
+                        (generation, old_states[parent], tuple(children)),
+                    ))
+                    export_bundles += 1
+                imported = pending_imports.pop(generation, {})
+                next_states.update(imported)
+                while len(next_states) < int(expected_state_count):
+                    import_command, import_payload = command_queue.get()
+                    if import_command == "import_parent_bundle":
+                        import_generation, parent_state, children = (
+                            import_payload
+                        )
+                        import_generation = int(import_generation)
+                        _attach_resident_static_route_caches(
+                            parent_state, shared_route_caches
+                        )
+                        target = (
+                            next_states
+                            if import_generation == generation
+                            else pending_imports.setdefault(
+                                import_generation, {}
+                            )
+                        )
+                        for child in children:
+                            child = int(child)
+                            target[child] = fork_state(
+                                parent_state, child
+                            )
+                        continue
+                    if import_command != "import_resampled":
+                        raise RuntimeError(
+                            "balanced resampling received a non-import "
+                            f"command before its barrier: {import_command!r}"
+                        )
+                    import_generation, child, state = import_payload
+                    import_generation = int(import_generation)
+                    _attach_resident_static_route_caches(
+                        state, shared_route_caches
+                    )
+                    if import_generation != generation:
+                        pending_imports.setdefault(
+                            import_generation, {}
+                        )[int(child)] = state
+                        continue
+                    next_states[int(child)] = state
+                states = next_states
+                result_queue.put((
+                    "resample_balanced",
+                    {
+                        "state_count": len(states),
+                        "exported": exported,
+                        "export_bundles": export_bundles,
+                        "imported": len(states)
+                        - sum(
+                            1
+                            for _, _, target_worker in child_plan
+                            if int(target_worker) == worker_index
+                        ),
+                    },
+                ))
+                continue
             if command == "snapshot":
                 result_queue.put(("snapshot", list(states.items())))
                 continue
@@ -126,20 +271,29 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
         self._fork_state = fork_state
         self._workers = []
         self._assignment: dict[int, int] = {}
+        self._resample_generation = 0
         worker_count = min(int(workers), len(states))
         partitions = [[] for _ in range(worker_count)]
         for slot, state in enumerate(states):
             worker_index = slot % worker_count
             partitions[worker_index].append((slot, state))
             self._assignment[slot] = worker_index
-        for initial_states in partitions:
-            command_queue = self._context.Queue()
-            result_queue = self._context.Queue()
+        command_queues = [
+            self._context.Queue() for _ in range(worker_count)
+        ]
+        result_queues = [
+            self._context.Queue() for _ in range(worker_count)
+        ]
+        for worker_index, initial_states in enumerate(partitions):
+            command_queue = command_queues[worker_index]
+            result_queue = result_queues[worker_index]
             process = self._context.Process(
                 target=_resident_particle_worker,
                 args=(
+                    worker_index,
                     command_queue,
                     result_queue,
+                    command_queues,
                     initial_states,
                     self._propagate,
                     self._fork_state,
@@ -239,6 +393,107 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
         for _, _, result_queue in self._workers:
             self._receive(result_queue, "resample")
         self._assignment = new_assignment
+
+    def resample_balanced(
+        self, parent_indices: Sequence[int]
+    ) -> dict[str, int | list[int]]:
+        """Resample exactly while restoring an even resident-worker layout.
+
+        Children are forked on the worker holding their selected parent so
+        ancestry and RNG namespace semantics remain unchanged. Only the
+        minimum number of children required to fill worker capacity deficits
+        are migrated, directly from source worker to destination worker.
+        """
+        if len(parent_indices) != len(self._assignment):
+            raise ValueError(
+                "resampling must return one parent per particle"
+            )
+        worker_count = len(self._workers)
+        particle_count = len(parent_indices)
+        capacities = [
+            particle_count // worker_count
+            + (1 if worker_index < particle_count % worker_count else 0)
+            for worker_index in range(worker_count)
+        ]
+        remaining = list(capacities)
+        origins = []
+        for child, raw_parent in enumerate(parent_indices):
+            parent = int(raw_parent)
+            source_worker = self._assignment.get(parent)
+            if source_worker is None:
+                raise ValueError(
+                    f"resampling referenced unknown parent {parent}"
+                )
+            origins.append((child, parent, source_worker))
+
+        target_by_child: dict[int, int] = {}
+        # Keep as many children as possible with the worker that owns the
+        # selected parent. This minimizes serialized state migration.
+        for child, _, source_worker in origins:
+            if remaining[source_worker] > 0:
+                target_by_child[child] = source_worker
+                remaining[source_worker] -= 1
+        target_cursor = 0
+        for child, _, _ in origins:
+            if child in target_by_child:
+                continue
+            while (
+                target_cursor < worker_count
+                and remaining[target_cursor] == 0
+            ):
+                target_cursor += 1
+            if target_cursor >= worker_count:
+                raise RuntimeError(
+                    "balanced resampling capacity accounting failed"
+                )
+            target_by_child[child] = target_cursor
+            remaining[target_cursor] -= 1
+
+        by_source: list[list[tuple[int, int, int]]] = [
+            [] for _ in self._workers
+        ]
+        new_assignment: dict[int, int] = {}
+        migrated = 0
+        for child, parent, source_worker in origins:
+            target_worker = target_by_child[child]
+            by_source[source_worker].append(
+                (child, parent, target_worker)
+            )
+            new_assignment[child] = target_worker
+            if target_worker != source_worker:
+                migrated += 1
+
+        self._resample_generation += 1
+        generation = self._resample_generation
+        for worker_index, (_, command_queue, _) in enumerate(
+            self._workers
+        ):
+            command_queue.put((
+                "resample_balanced",
+                (
+                    generation,
+                    by_source[worker_index],
+                    capacities[worker_index],
+                ),
+            ))
+        exported = 0
+        export_bundles = 0
+        imported = 0
+        for _, _, result_queue in self._workers:
+            payload = self._receive(
+                result_queue, "resample_balanced"
+            )
+            exported += int(payload["exported"])
+            export_bundles += int(payload["export_bundles"])
+            imported += int(payload["imported"])
+        self._assignment = new_assignment
+        return {
+            "migrated_particles": migrated,
+            "exported_particles": exported,
+            "export_bundles": export_bundles,
+            "imported_particles": imported,
+            "assignment_counts": self.assignment_counts(),
+        }
 
     def snapshot(self) -> list[StateT]:
         """Return the current ordered states, paying the IPC cost once."""

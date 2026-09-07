@@ -2,8 +2,14 @@ from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor
 import json
+import pickle
 
-from pineland_sim import Simulation, SimulationConfig, generate_pineland
+from pineland_sim import (
+    Simulation,
+    SimulationConfig,
+    SimulationParticle,
+    generate_pineland,
+)
 from pineland_sim.reproducibility import (
     audit_run_manifest,
     build_run_manifest,
@@ -98,6 +104,53 @@ def test_simulation_execution_hash_covers_scheduler_and_rng_future():
     clone.set_stream_namespace("different-lineage")
     assert simulation_execution_sha256(clone) != (
         simulation_execution_sha256(simulation)
+    )
+
+
+def test_consumed_particle_fork_matches_copied_particle_fork():
+    config = _config(days=2, mode="ensemble")
+    first = SimulationParticle(
+        Simulation(generate_pineland(config)), "root"
+    )
+    second = SimulationParticle(
+        Simulation(generate_pineland(config)), "root"
+    )
+    for particle in (first, second):
+        particle.simulation.configure_execution(
+            validate_invariants=False,
+            checkpointing=False,
+            retain_output_archives=False,
+        )
+    copied = first.fork(7)
+    consumed = second.consume_fork(7)
+    assert copied.lineage_id == consumed.lineage_id
+    assert copied.generation == consumed.generation
+    assert simulation_execution_sha256(
+        copied.simulation, lineage_id=copied.lineage_id
+    ) == simulation_execution_sha256(
+        consumed.simulation, lineage_id=consumed.lineage_id
+    )
+
+
+def test_particle_pickle_elides_execution_caches_but_preserves_future_state():
+    particle = SimulationParticle(
+        Simulation(generate_pineland(_config(days=2, mode="ensemble"))),
+        "root",
+    )
+    particle.simulation.configure_execution(
+        validate_invariants=False,
+        checkpointing=False,
+        retain_output_archives=False,
+    )
+    # Populate an execution-only cache with data that should not cross IPC.
+    particle.world.locality_path_cache[("A", "B", 1.0)] = ("A", "B")
+    payload = pickle.dumps(particle, protocol=pickle.HIGHEST_PROTOCOL)
+    restored = pickle.loads(payload)
+    assert restored.world.locality_path_cache == {}
+    assert simulation_execution_sha256(
+        particle.simulation, lineage_id=particle.lineage_id
+    ) == simulation_execution_sha256(
+        restored.simulation, lineage_id=restored.lineage_id
     )
 
 

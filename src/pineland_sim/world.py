@@ -1884,6 +1884,28 @@ class WorldState:
         cloned.command_path_cache = {}
         return cloned
 
+    def __getstate__(self):
+        """Elide reconstructable execution caches from pickle/IPC payloads.
+
+        Keep the default slots pickle shape ``(None, slot_state)`` so older
+        restart/posterior pickles remain loadable by Python's normal slot-state
+        restoration.  Only memoization tables that are already excluded from
+        scientific hashes are cleared in the serialized representation.
+        """
+        state = {
+            item.name: getattr(self, item.name)
+            for item in fields(self)
+        }
+        for field_name in (
+            "locality_path_cache",
+            "locality_travel_time_cache",
+            "locality_route_metrics_cache",
+            "command_path_cache",
+            "information_execution_cache",
+        ):
+            state[field_name] = {}
+        return None, state
+
 
 def seeded_rng(config: SimulationConfig, stream: str) -> random.Random:
     # Stable across Python processes, unlike hash().
