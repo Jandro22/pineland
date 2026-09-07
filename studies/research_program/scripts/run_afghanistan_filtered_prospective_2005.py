@@ -49,6 +49,11 @@ from pineland_sim import (  # noqa: E402
 )
 from pineland_sim.state_estimation import particle_weights  # noqa: E402
 from pineland_sim.relations import STATE_SECURITY_KINDS  # noqa: E402
+from pineland_sim.reproducibility import (  # noqa: E402
+    file_sha256,
+    model_sha256,
+    repository_state,
+)
 
 
 TRAINING_YEAR = "2004"
@@ -657,6 +662,12 @@ def run(
     forecast_branches: int = 3,
     workers: int = 1,
 ) -> dict:
+    repo = repository_state(ROOT)
+    empty_diff_sha256 = hashlib.sha256(b"").hexdigest()
+    if repo["tracked_diff_sha256"] != empty_diff_sha256:
+        raise RuntimeError(
+            "filtered empirical forecast requires an empty tracked diff"
+        )
     if particles < 2:
         raise ValueError("at least two particles are required")
     if workers < 1:
@@ -676,6 +687,22 @@ def run(
     case = _load_case()
     inputs = load_historical_inputs()
     observations = load_training_observations()
+    training_observation_sha256 = hashlib.sha256(
+        json.dumps(
+            [
+                {
+                    "week_index": observation.week_index,
+                    "start_day": observation.start_day,
+                    "end_day": observation.end_day,
+                    "active_provinces": sorted(observation.active_provinces),
+                    "provinces": list(observation.provinces),
+                }
+                for observation in observations
+            ],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
     initial_particles = [
         build_initial_particle(
             seed=seed,
@@ -735,6 +762,13 @@ def run(
     }
     payload = {
         "schema_version": "pineland.afghanistan.filtered_prospective_2005.v2",
+        "source_commit_at_run": repo["commit_hash"],
+        "model_sha256": model_sha256(ROOT),
+        "tracked_diff_sha256": repo["tracked_diff_sha256"],
+        "runner_sha256": file_sha256(Path(__file__)),
+        "case_sha256": file_sha256(CASE),
+        "historical_inputs_sha256": file_sha256(INPUTS),
+        "training_observation_sha256": training_observation_sha256,
         "seed": seed,
         "taliban_initial_strength": (
             float(taliban_strength) if taliban_strength is not None else None
