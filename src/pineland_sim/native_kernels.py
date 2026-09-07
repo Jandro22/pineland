@@ -80,19 +80,24 @@ def available() -> bool:
 
 
 def control_batch_enabled() -> bool:
-    """Return whether the experimental control-fusion batch is requested."""
+    """Return whether native control fusion is enabled.
+
+    Persistent compact rows make the native path safe to use by default when
+    the optional library is installed. ``PINELAND_NATIVE_CONTROL_BATCH=0`` is
+    retained as a deterministic fallback switch for diagnostics.
+    """
     return (
-        os.environ.get("PINELAND_NATIVE_CONTROL_BATCH", "").strip()
-        in {"1", "true", "TRUE", "yes", "YES"}
+        os.environ.get("PINELAND_NATIVE_CONTROL_BATCH", "1").strip()
+        not in {"0", "false", "FALSE", "no", "NO"}
         and available()
     )
 
 
 def information_batch_enabled() -> bool:
-    """Return whether native presence/zone fusion is requested."""
+    """Return whether native presence/zone fusion is enabled."""
     return (
-        os.environ.get("PINELAND_NATIVE_INFORMATION_BATCH", "").strip()
-        in {"1", "true", "TRUE", "yes", "YES"}
+        os.environ.get("PINELAND_NATIVE_INFORMATION_BATCH", "1").strip()
+        not in {"0", "false", "FALSE", "no", "NO"}
         and available()
     )
 

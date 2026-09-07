@@ -53,7 +53,11 @@ def _state_sha256(tag: bytes, keys: tuple[tuple[str, ...], ...],
 class _CompactBeliefState:
     """Shared append-only keyed storage for compact numeric belief rows."""
 
-    __slots__ = ("keys", "key_to_index", "state")
+    __slots__ = (
+        "keys", "key_to_index", "state", "decay_event_positions",
+        "decay_events", "logical_time", "default_decay_rate",
+        "target_decay_rate",
+    )
     STRIDE = 0
     HASH_TAG = b"pineland.compact.belief.v1\0"
 
@@ -61,6 +65,11 @@ class _CompactBeliefState:
         self,
         keys: Iterable[tuple[str, ...]] = (),
         state: array | None = None,
+        decay_event_positions: array | None = None,
+        decay_events: Iterable[tuple[float, float, float]] = (),
+        logical_time: float = 0.0,
+        default_decay_rate: float = 0.0,
+        target_decay_rate: float = 0.0,
     ) -> None:
         normalized_keys = tuple(keys)
         if len(set(normalized_keys)) != len(normalized_keys):
@@ -74,6 +83,21 @@ class _CompactBeliefState:
             raise TypeError("compact belief state must be array('d')")
         if len(self.state) != len(self.keys) * self.STRIDE:
             raise ValueError("compact belief state has an invalid row stride")
+        self.decay_event_positions = (
+            array("I", [0] * len(self.keys))
+            if decay_event_positions is None else decay_event_positions
+        )
+        if len(self.decay_event_positions) != len(self.keys):
+            raise ValueError("compact belief decay positions have invalid length")
+        if self.decay_event_positions.typecode != "I":
+            raise TypeError("compact belief decay positions must be array('I')")
+        self.decay_events = tuple(
+            (float(elapsed), float(default_rate), float(target_rate))
+            for elapsed, default_rate, target_rate in decay_events
+        )
+        self.logical_time = float(logical_time)
+        self.default_decay_rate = float(default_decay_rate)
+        self.target_decay_rate = float(target_decay_rate)
 
     @classmethod
     def from_beliefs(cls, beliefs: Mapping[tuple[str, ...], Any]):
@@ -98,17 +122,63 @@ class _CompactBeliefState:
         self.keys = (*self.keys, key)
         self.key_to_index[key] = index
         self.state.extend(self._belief_row(belief))
+        self.decay_event_positions.append(len(self.decay_events))
         return index
 
     def row(self, key: tuple[str, ...]) -> tuple[float, ...]:
+        self.materialize(key)
         offset = self.index(key) * self.STRIDE
         return tuple(self.state[offset:offset + self.STRIDE])
 
-    def sync_confidence_to_beliefs(self, beliefs: Mapping[tuple[str, ...], Any]) -> None:
+    def _decay_rate(self, key: tuple[str, ...]) -> float:
+        return self.default_decay_rate
+
+    def _event_decay_rate(
+        self, key: tuple[str, ...], default_rate: float, target_rate: float
+    ) -> float:
+        return default_rate
+
+    def configure_decay(self, default_rate: float, target_rate: float = 0.0) -> None:
+        self.default_decay_rate = float(default_rate)
+        self.target_decay_rate = float(target_rate)
+
+    def set_decay_clock(self, time: float) -> None:
+        """Set the initial lazy-decay reference for all existing rows."""
+        self.logical_time = float(time)
+        self.decay_events = ()
+        self.decay_event_positions = array("I", [0] * len(self.keys))
+
+    def advance_decay(self, time: float) -> None:
+        """Record an exact decay step without walking the belief population."""
+        target_time = float(time)
+        elapsed = target_time - self.logical_time
+        if elapsed <= 0.0:
+            return
+        self.decay_events = (*self.decay_events, (
+            elapsed, self.default_decay_rate, self.target_decay_rate
+        ))
+        self.logical_time = target_time
+
+    def materialize(self, key: tuple[str, ...], time: float | None = None) -> None:
+        """Apply pending decay steps to one row, preserving eager arithmetic."""
+        index = self.index(key)
+        event_index = self.decay_event_positions[index]
+        if event_index < len(self.decay_events):
+            offset = index * self.STRIDE + self.CONFIDENCE_OFFSET
+            confidence = self.state[offset]
+            for elapsed, default_rate, target_rate in self.decay_events[event_index:]:
+                rate = self._event_decay_rate(key, default_rate, target_rate)
+                confidence = clamp(confidence * exp(-rate * elapsed))
+            self.state[offset] = confidence
+            self.decay_event_positions[index] = len(self.decay_events)
+
+    def sync_confidence_to_beliefs(self, beliefs: Mapping[tuple[str, ...], Any],
+                                   time: float | None = None) -> None:
         """Mirror confidence after decay while preserving all other fields."""
         for key, index in self.key_to_index.items():
             belief = beliefs.get(key)
             if belief is not None:
+                self.materialize(key, time)
                 belief.confidence = self.state[index * self.STRIDE + self.CONFIDENCE_OFFSET]
 
     def sync_from_beliefs(self, beliefs: Mapping[tuple[str, ...], Any]) -> None:
@@ -118,17 +188,31 @@ class _CompactBeliefState:
             self.keys = replacement.keys
             self.key_to_index = replacement.key_to_index
             self.state = replacement.state
+            self.decay_event_positions = array(
+                "I", [len(self.decay_events)] * len(self.keys)
+            )
             return
         for key in self.keys:
             offset = self.key_to_index[key] * self.STRIDE
             self.state[offset:offset + self.STRIDE] = array(
                 "d", self._belief_row(beliefs[key])
             )
+            self.decay_event_positions[self.key_to_index[key]] = len(self.decay_events)
 
     def clone(self):
-        return type(self)(self.keys, array("d", self.state))
+        return type(self)(
+            self.keys,
+            array("d", self.state),
+            array("I", self.decay_event_positions),
+            self.decay_events,
+            self.logical_time,
+            self.default_decay_rate,
+            self.target_decay_rate,
+        )
 
     def state_sha256(self) -> str:
+        for key in self.keys:
+            self.materialize(key)
         return _state_sha256(
             self.HASH_TAG, self.keys, self.key_to_index, self.state,
             self.STRIDE,
@@ -170,13 +254,18 @@ class CompactPresenceBeliefState(_CompactBeliefState):
             if belief is not None:
                 self.write_to_belief(key, belief)
 
+    def _decay_rate(self, key: tuple[str, ...]) -> float:
+        return self.target_decay_rate if key[-1] != "*" else self.default_decay_rate
+
+    def _event_decay_rate(
+        self, key: tuple[str, ...], default_rate: float, target_rate: float
+    ) -> float:
+        return target_rate if key[-1] != "*" else default_rate
+
     def decay(self, elapsed: float, default_rate: float, target_rate: float) -> None:
-        if elapsed <= 0.0:
-            return
-        for index, key in enumerate(self.keys):
-            rate = target_rate if key[-1] != "*" else default_rate
-            offset = index * self.STRIDE + self.CONFIDENCE_OFFSET
-            self.state[offset] = clamp(self.state[offset] * exp(-rate * elapsed))
+        """Compatibility entry point; advance a lazy confidence clock."""
+        self.configure_decay(default_rate, target_rate)
+        self.advance_decay(self.logical_time + max(0.0, float(elapsed)))
 
     def fuse(
         self,
@@ -188,6 +277,10 @@ class CompactPresenceBeliefState(_CompactBeliefState):
         contradiction_memory_days: float,
         contradiction_penalty: float,
     ) -> None:
+        # A fusion itself does not advance the reference model's confidence
+        # clock. ``decay_information`` advances ``logical_time`` explicitly;
+        # use that clock here so direct/API fusions retain oracle semantics.
+        self.materialize(key)
         offset = self.index(key) * self.STRIDE
         old_confidence = self.state[offset + 1]
         prior = max(.02, old_confidence)
@@ -256,11 +349,9 @@ class CompactZoneBeliefState(_CompactBeliefState):
                 self.write_to_belief(key, belief)
 
     def decay(self, elapsed: float, rate: float) -> None:
-        if elapsed <= 0.0:
-            return
-        factor = exp(-rate * elapsed)
-        for offset in range(self.CONFIDENCE_OFFSET, len(self.state), self.STRIDE):
-            self.state[offset] = clamp(self.state[offset] * factor)
+        """Compatibility entry point; advance a lazy confidence clock."""
+        self.configure_decay(rate)
+        self.advance_decay(self.logical_time + max(0.0, float(elapsed)))
 
     def fuse(
         self,
@@ -271,6 +362,9 @@ class CompactZoneBeliefState(_CompactBeliefState):
         contradiction_memory_days: float,
         contradiction_penalty: float,
     ) -> None:
+        # Confidence decay is advanced explicitly by ``decay_information``;
+        # an observation timestamp alone is not a decay event.
+        self.materialize(key)
         offset = self.index(key) * self.STRIDE
         old_confidence = self.state[offset + 1]
         prior = max(.02, old_confidence)

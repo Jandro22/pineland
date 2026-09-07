@@ -470,12 +470,81 @@ class WorldState:
         self.compact_presence_state = CompactPresenceBeliefState.from_beliefs(
             self.presence_beliefs
         )
+        self.compact_presence_state.configure_decay(
+            self.config.information.default_decay_rate,
+            self.config.information.formation_decay_rate,
+        )
+        self.compact_presence_state.set_decay_clock(
+            self.last_information_decay_at
+        )
         self.compact_node_presence_state = CompactPresenceBeliefState.from_beliefs(
             self.node_presence_beliefs
+        )
+        self.compact_node_presence_state.configure_decay(
+            self.config.information.default_decay_rate,
+            self.config.information.formation_decay_rate,
+        )
+        self.compact_node_presence_state.set_decay_clock(
+            self.last_information_decay_at
         )
         self.compact_zone_state = CompactZoneBeliefState.from_beliefs(
             self.zone_beliefs
         )
+        self.compact_zone_state.configure_decay(
+            self.config.information.formation_decay_rate
+        )
+        self.compact_zone_state.set_decay_clock(self.last_information_decay_at)
+
+    def materialize_compact_confidence(self, belief: Any) -> float:
+        """Return a logical confidence value at ``world.time``.
+
+        Optimized information rows own lazy confidence decay. Object beliefs
+        are views, so direct policy/diagnostic readers call this boundary
+        method before using a confidence value.
+        """
+        if self.execution_backend != "optimized":
+            return float(belief.confidence)
+        if hasattr(belief, "presence_estimate"):
+            key = (
+                belief.observer_id,
+                belief.target_actor_id,
+                f"{belief.locality_id}:{belief.microzone_id or '*'}",
+                belief.target_id or "*",
+            )
+            for container_name, compact_name in (
+                ("presence_beliefs", "compact_presence_state"),
+                ("node_presence_beliefs", "compact_node_presence_state"),
+            ):
+                if getattr(self, container_name).get(key) is belief:
+                    compact = getattr(self, compact_name)
+                    compact.materialize(key, self.time)
+                    belief.confidence = compact.state[
+                        compact.index(key) * compact.STRIDE + compact.CONFIDENCE_OFFSET
+                    ]
+                    return float(belief.confidence)
+        elif hasattr(belief, "physical_control_estimate"):
+            key = (belief.actor_id, belief.microzone_id)
+            if self.zone_beliefs.get(key) is belief:
+                compact = self.compact_zone_state
+                if compact is not None:
+                    compact.materialize(key, self.time)
+                    belief.confidence = compact.state[
+                        compact.index(key) * compact.STRIDE + compact.CONFIDENCE_OFFSET
+                    ]
+                    return float(belief.confidence)
+        return float(belief.confidence)
+
+    def materialize_compact_information_confidences(self) -> None:
+        """Materialize all lazy information confidence views at the boundary."""
+        if self.execution_backend != "optimized":
+            return
+        for compact, beliefs in (
+            (self.compact_presence_state, self.presence_beliefs),
+            (self.compact_node_presence_state, self.node_presence_beliefs),
+            (self.compact_zone_state, self.zone_beliefs),
+        ):
+            if compact is not None:
+                compact.sync_confidence_to_beliefs(beliefs, self.time)
 
     def rebuild_compact_control_state(self) -> None:
         """Backward-compatible alias that rebuilds the information rows."""
@@ -1266,6 +1335,10 @@ class WorldState:
         ))
 
     def assert_invariants(self, tolerance: float = 1e-6) -> None:
+        # Compact information rows are authoritative in optimized runs;
+        # expose exact logical confidence before invariant checks read the
+        # compatibility object views.
+        self.materialize_compact_information_confidences()
         resident = self.weighted_population()
         expected = self.initial_population - self.cumulative_deaths + self.cumulative_external_inflow
         if abs(resident - expected) > max(tolerance, expected * 1e-10):

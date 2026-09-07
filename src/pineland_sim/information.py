@@ -887,7 +887,12 @@ def _flush_compact_native_zone_fusions(
         belief = world.zone_beliefs.get(key)
         if belief is None:
             continue
-        state_indices.append(compact.ensure(key, belief))
+        compact.ensure(key, belief)
+        # Native kernels operate on materialized rows. This is the only
+        # touched-row boundary needed for lazy decay; untouched rows remain
+        # compressed behind their reference clocks.
+        compact.materialize(key)
+        state_indices.append(compact.index(key))
         times.append(float(time))
         weights.append(float(weight))
         observed.append(clamp(float(physical)))
@@ -1421,6 +1426,10 @@ def _flush_compact_presence_fusions(
             if not indices:
                 continue
             compact = compact_by_node[node]
+            # Native recurrence must see logical confidence at each update
+            # time; materialize only rows in this event.
+            for index in indices:
+                compact.materialize(compact.keys[index])
             if not native_fuse_presence_batch(
                 compact.state,
                 len(compact),
@@ -2118,27 +2127,27 @@ def decay_information(world: WorldState, time: float) -> None:
             belief.confidence = clamp(belief.confidence * default_factor)
     compact_zone = getattr(world, "compact_zone_state", None)
     if world.execution_backend == "optimized" and compact_zone is not None:
-        compact_zone.decay(elapsed, config.formation_decay_rate)
-        compact_zone.sync_confidence_to_beliefs(world.zone_beliefs)
+        compact_zone.configure_decay(config.formation_decay_rate)
+        compact_zone.advance_decay(time)
     else:
         for belief in world.zone_beliefs.values():
             belief.confidence = clamp(belief.confidence * formation_factor)
     compact_presence = getattr(world, "compact_presence_state", None)
     if world.execution_backend == "optimized" and compact_presence is not None:
-        compact_presence.decay(
-            elapsed, config.default_decay_rate, config.formation_decay_rate
+        compact_presence.configure_decay(
+            config.default_decay_rate, config.formation_decay_rate
         )
-        compact_presence.sync_confidence_to_beliefs(world.presence_beliefs)
+        compact_presence.advance_decay(time)
     else:
         for belief in world.presence_beliefs.values():
             factor = formation_factor if belief.target_id else default_factor
             belief.confidence = clamp(belief.confidence * factor)
     compact_node_presence = getattr(world, "compact_node_presence_state", None)
     if world.execution_backend == "optimized" and compact_node_presence is not None:
-        compact_node_presence.decay(
-            elapsed, config.default_decay_rate, config.formation_decay_rate
+        compact_node_presence.configure_decay(
+            config.default_decay_rate, config.formation_decay_rate
         )
-        compact_node_presence.sync_confidence_to_beliefs(world.node_presence_beliefs)
+        compact_node_presence.advance_decay(time)
     else:
         for belief in world.node_presence_beliefs.values():
             factor = formation_factor if belief.target_id else default_factor
@@ -2171,11 +2180,6 @@ def process_information(world: WorldState, time: float,
     try:
         decay_information(world, time)
         generated = generate_background_observations(world, time, rng)
-        flushed_presence_fusions = _flush_presence_fusions(world)
-        # Generated reports have now been applied in their original order;
-        # relay deliveries must remain immediate so they follow the same
-        # generated-before-relayed ordering as the reference backend.
-        world.defer_presence_fusions = False
         delivered = dropped = 0
         delivered_ids: list[str] = []
         for relay_id in _due_information_relay_ids(world, time):
@@ -2210,6 +2214,10 @@ def process_information(world: WorldState, time: float,
                 relay.status = "dropped"
                 world.active_information_relays.discard(relay_id)
                 dropped += 1
+        # Generated local fusions precede this loop, so the single queue still
+        # preserves generated-before-relayed recurrence order while allowing
+        # one native/compact batch for the whole information event.
+        flushed_presence_fusions = _flush_presence_fusions(world)
         flushed_control_fusions = _flush_control_fusions(world)
         _prune_information_history(world, time)
         return {"generated": len(generated),
@@ -2343,6 +2351,7 @@ def _belief_record(belief: Any, time: float) -> dict[str, Any]:
 
 def information_diagnostics(world: WorldState) -> dict[str, Any]:
     """Return analyst-facing information age, error, source, and relay measures."""
+    world.materialize_compact_information_confidences()
     by_type: dict[str, int] = {}
     by_source: dict[str, int] = {}
     for observation in world.observations.values():

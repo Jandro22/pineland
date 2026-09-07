@@ -592,6 +592,7 @@ class ProcessEngine:
                 zone_belief = ensure_zone_belief(
                     self.world, formation.organization_id, candidate, self.world.time
                 )
+                self.world.materialize_compact_confidence(zone_belief)
                 edge = self.world.physical_edges[self.world.physical_neighbors[current_zone.microzone_id][candidate]]
                 perceived_need = (((1 - zone_belief.physical_control_estimate) *
                                    (.55 + .45 * zone_belief.confidence) +

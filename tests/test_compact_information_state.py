@@ -1,5 +1,8 @@
 from array import array
 
+from array import array
+from math import exp
+
 import pytest
 
 from pineland_sim import Simulation, SimulationConfig, generate_pineland
@@ -160,6 +163,38 @@ def test_compact_information_rows_are_independent_across_particle_clones():
     key = next(iter(optimized.compact_zone_state.keys))
     clone.compact_zone_state.state[0] += 0.1
     assert clone.compact_zone_state.row(key) != optimized.compact_zone_state.row(key)
+
+
+def test_lazy_information_decay_replays_exact_steps_only_when_row_is_touched():
+    keys = (
+        ("observer", "actor", "L:L-Z", "*"),
+        ("observer", "actor", "L:L-Z", "formation"),
+    )
+    initial = array("d", [
+        0.4, 0.35, 0.0, -1.0e9, 0.0, 0.0, 10.0,
+        0.4, 0.35, 0.0, -1.0e9, 0.0, 0.0, 10.0,
+    ])
+    compact = CompactPresenceBeliefState(keys, array("d", initial))
+    compact.configure_decay(default_rate=0.2, target_rate=0.4)
+    compact.set_decay_clock(0.0)
+    compact.advance_decay(0.25)
+    compact.advance_decay(0.5)
+
+    assert compact.decay_event_positions.tolist() == [0, 0]
+    assert compact.state == initial
+
+    compact.materialize(keys[0])
+    expected_default = .35 * exp(-.2 * .25)
+    expected_default = expected_default * exp(-.2 * .25)
+    assert compact.state[1] == expected_default
+    assert compact.decay_event_positions.tolist() == [2, 0]
+    assert compact.state[8] == .35
+
+    compact.materialize(keys[1])
+    expected_target = .35 * exp(-.4 * .25)
+    expected_target = expected_target * exp(-.4 * .25)
+    assert compact.state[8] == expected_target
+    assert compact.decay_event_positions.tolist() == [2, 2]
 
 
 @pytest.mark.skipif(not native_available(), reason="native kernel is optional")

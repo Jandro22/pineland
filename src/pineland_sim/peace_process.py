@@ -39,6 +39,7 @@ def _belief_target_matches(world, belief_target_id: str, target_side: str) -> bo
 def _perceived_opponent_personnel(world, observer_id: str,
                                   target_side: str) -> float:
     """Fuse actor-held presence estimates without consulting target truth."""
+    world.materialize_compact_information_confidences()
     beliefs = [
         belief for belief in world.presence_beliefs.values()
         if belief.observer_id == observer_id and belief.evidence_count > 0 and

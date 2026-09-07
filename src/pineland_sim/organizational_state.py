@@ -149,6 +149,7 @@ def local_operational_information(
     target_organization_id: str | None = None,
 ) -> float:
     """Actor-held local target information; hidden opponent truth is excluded."""
+    world.materialize_compact_information_confidences()
     observer_ids = {organization_id}
     observer_ids.update(
         formation.formation_id

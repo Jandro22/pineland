@@ -351,6 +351,9 @@ def scientific_config_sha256(config: SimulationConfig) -> str:
 
 def decision_state_payload(world: Any) -> dict[str, Any]:
     """Canonical future-decision state, excluding output-only archives."""
+    materialize = getattr(world, "materialize_compact_information_confidences", None)
+    if materialize is not None:
+        materialize()
     active_relay_ids = set(getattr(world, "active_information_relays", set()))
     active_relays = {
         relay_id: world.information_relays[relay_id]

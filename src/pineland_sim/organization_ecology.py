@@ -1377,6 +1377,7 @@ def recruit_and_retain(world, time: float, rng: random.Random,
 
 def _observable_peer_profile(world, observer_id: str, peer_id: str):
     """Infer peer practice only from beliefs produced by the observation layer."""
+    world.materialize_compact_information_confidences()
     presence_by_locality = {}
     for belief in world.presence_beliefs.values():
         if (belief.observer_id != observer_id or belief.target_actor_id != peer_id or
