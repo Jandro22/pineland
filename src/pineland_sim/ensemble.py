@@ -1286,7 +1286,16 @@ class NumericInformationEventEngine:
                     formations = formation_index.get((target_actor, locality_id), ())
                     if formations:
                         formation_id = formations[0].formation_id
-                microzone_id = primary_microzone
+                # Background channels use the locality's primary zone, while
+                # a patrol/contact-sized plan carries the observer's actual
+                # current zone. The reference resolver uses that observation
+                # microzone for presence, detection, and conditional
+                # attribution draws; collapsing every source to the primary
+                # zone changes both the payload and the RNG stream.
+                microzone_id = (
+                    codes.value(source_microzone[source_index])
+                    or primary_microzone
+                )
                 present, personnel, actual_id = _actual_target_presence(
                     world, target_actor, locality_id, formation_id, microzone_id,
                     formation_index,
@@ -1370,8 +1379,9 @@ class NumericInformationEventEngine:
         """Run one event using CPython ``random.Random`` draw order.
 
         The normal path is a fixed-width Python numeric fallback.  When the
-        optional DLL exposes the event ABI, contiguous source groups are sent
-        to native in a small number of calls.  Group boundaries are deliberate:
+        optional DLL exposes the compiled-plan ABI, the complete source
+        selection/report-draw pass crosses the Python/native boundary once.
+        The grouped ABI remains available as an exact compatibility fallback:
         each locality choice is made immediately before its selected sources,
         exactly where the reference generator makes it, so native report draws
         cannot perturb later community selection draws.
@@ -1536,22 +1546,29 @@ class NumericInformationEventEngine:
                 float(time), weight, float(presence), float(personnel),
             )
             wildcard = None
-            if target_formation_code:
-                update_key = update[1]
-                wildcard = (update_key[0], update_key[1], update_key[2], "*")
-                if presence_state is not None:
-                    presence_state.ensure_key(wildcard, prior_confidence=prior_confidence)
-                if node_code and node_presence_state is not None:
-                    node_presence_state.ensure_key(wildcard, prior_confidence=prior_confidence)
-                if presence_state is not None:
-                    presence_state.ensure_key(update_key, prior_confidence=prior_confidence)
-                if node_code and node_presence_state is not None:
-                    node_presence_state.ensure_key(update_key, prior_confidence=prior_confidence)
-            else:
-                if presence_state is not None:
-                    presence_state.ensure_key(update[1], prior_confidence=prior_confidence)
-                if node_code and node_presence_state is not None:
-                    node_presence_state.ensure_key(update[1], prior_confidence=prior_confidence)
+            # A report is fused into exactly one local belief namespace: the
+            # field node when it exists, otherwise the observer actor.  Do
+            # not provision the unused namespace merely because a numeric row
+            # carries a formation target; doing so creates inert default rows
+            # that the reference pipeline never creates and bloats every
+            # packed lane.
+            target_state = (
+                node_presence_state if node_code else presence_state
+            )
+            if target_state is not None:
+                if target_formation_code:
+                    update_key = update[1]
+                    wildcard = (update_key[0], update_key[1], update_key[2], "*")
+                    target_state.ensure_key(
+                        wildcard, prior_confidence=prior_confidence
+                    )
+                    target_state.ensure_key(
+                        update_key, prior_confidence=prior_confidence
+                    )
+                else:
+                    target_state.ensure_key(
+                        update[1], prior_confidence=prior_confidence
+                    )
             if node_code:
                 if node_presence_state is not None:
                     node_updates.append(update)
@@ -1649,8 +1666,16 @@ class NumericInformationEventEngine:
                 microzone_id = self.plan.codes.value(microzone_code)
                 if recipient_id is not None and microzone_id is not None:
                     zone_key = (recipient_id, microzone_id)
-                    zone_state.ensure_key(zone_key, prior_confidence=prior_confidence)
-                    zone_updates.append((0, zone_key, float(time), weight, float(estimated_control[1])))
+                    # The reference auxiliary zone recurrence only updates an
+                    # already represented actor/zone state; it does not
+                    # invent a zone row for every administrative/community
+                    # report. Preserve that sparse topology in the numeric
+                    # runtime as well.
+                    if zone_key in zone_state.key_to_index:
+                        zone_updates.append(
+                            (0, zone_key, float(time), weight,
+                             float(estimated_control[1]))
+                        )
 
         def consume_native_rows(native_result: Any) -> int:
             reported = set()
@@ -2020,7 +2045,7 @@ class StaticWorldTopology:
 
 def _default_row(stride: int, *, prior_confidence: float = 0.35) -> tuple[float, ...]:
     if stride == CONTROL_STATE_STRIDE:
-        return (*([0.5] * 7), float(prior_confidence), 0.0, -1.0e9, 0.0, 0.0, 0.0)
+        return (*([0.5] * 7), float(prior_confidence), 0.0, -1.0e9, 0.0, 0.0, 0.2)
     if stride == PRESENCE_STATE_STRIDE:
         return (0.0, float(prior_confidence), 0.0, -1.0e9, 0.0, 0.0, 0.0)
     if stride == ZONE_STATE_STRIDE:
@@ -2499,11 +2524,24 @@ def _numeric_relay_weight(
         world, observation_type,
         codes.value(row[8]) if int(row[8]) else None,
     ) * max(0.0, float(time) - float(row[9])))
+    # ``fuse_observation`` evaluates trust and language for the organization
+    # represented by a formation endpoint, while retaining the endpoint ID as
+    # the belief-state recipient key.  A numeric relay row must resolve that
+    # same actor before calling the scalar helper; otherwise command-node
+    # deliveries silently receive the unknown-recipient fallback (0.25
+    # language / unadjusted trust) and diverge from the object path.
+    recipient_actor = recipient_id
+    if recipient_id not in world.organizations:
+        formation = world.formations.get(recipient_id)
+        if formation is not None:
+            recipient_actor = formation.organization_id
+        else:
+            recipient_actor = codes.value(row[1]) or recipient_id
     trust = source_trust(
-        world, recipient_id, source_type, locality_id, source_id
+        world, recipient_actor, source_type, locality_id, source_id
     )
     language = language_comprehension(
-        world, recipient_id, locality_id, source_type, source_id
+        world, recipient_actor, locality_id, source_type, source_id
     )
     weight = (
         float(row[10]) * float(row[11]) * trust
@@ -2826,14 +2864,12 @@ class NumericInformationRuntime:
         )
         if microzone is not None:
             zone_key = (recipient_id, microzone)
-            self.zone_state.ensure_key(
-                zone_key, prior_confidence=world.config.information.prior_confidence
-            )
-            self.zone_state.fuse_zone(
-                [(0, zone_key, time, weight, float(row[19]))],
-                contradiction_memory_days=world.config.information.contradiction_memory_days,
-                contradiction_penalty=world.config.information.contradiction_penalty,
-            )
+            if zone_key in self.zone_state.key_to_index:
+                self.zone_state.fuse_zone(
+                    [(0, zone_key, time, weight, float(row[19]))],
+                    contradiction_memory_days=world.config.information.contradiction_memory_days,
+                    contradiction_penalty=world.config.information.contradiction_penalty,
+                )
 
     def _deliver(self, world: Any, time: float, rng: Any) -> tuple[int, int, tuple[int, ...]]:
         delivered = 0
@@ -2855,13 +2891,26 @@ class NumericInformationRuntime:
             organization = self.engine.plan.codes.value(
                 self.relay_buffer.organization[index]
             )
+            if organization is not None:
+                self._apply_row(world, row, organization, node=False, time=time)
             destination = self.engine.plan.codes.value(
                 self.relay_buffer.destination[index]
             )
-            if organization is not None:
-                self._apply_row(world, row, organization, node=False, time=time)
             if destination is not None:
+                # The command endpoint is a field-node namespace in the
+                # reference delivery contract, so it receives a second
+                # (node=True) fusion rather than a second actor-level fusion.
                 self._apply_row(world, row, destination, node=True, time=time)
+            source_actor = self.engine.plan.codes.value(row[1])
+            source_org = world.organizations.get(source_actor) if source_actor else None
+            if (
+                source_org is not None
+                and source_org.kind is not OrganizationKind.INSURGENT
+                and "government" in world.organizations
+            ):
+                # Government headquarters also receives subordinate
+                # non-insurgent reports, exactly as ``process_information``.
+                self._apply_row(world, row, "government", node=False, time=time)
             self.relay_buffer.status[index] = 1
             self.relay_buffer.delivered_at[index] = float(time)
             delivered += 1
