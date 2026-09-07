@@ -259,26 +259,45 @@ def generate_pineland(config: SimulationConfig | None = None,
             ),
         )]
         remaining_ids = [lid for lid in locality_ids if lid not in connected]
-        while remaining_ids:
-            candidate = min(
-                (
-                    (
-                        hypot(
-                            world.localities[left].x_km - world.localities[right].x_km,
-                            world.localities[left].y_km - world.localities[right].y_km,
-                        ),
-                        left,
-                        right,
-                    )
-                    for right in remaining_ids
-                    for left in connected
+        root = connected[0]
+        best_edge_by_right: dict[str, tuple[float, str, str]] = {}
+        root_locality = world.localities[root]
+        for right in remaining_ids:
+            right_locality = world.localities[right]
+            best_edge_by_right[right] = (
+                hypot(
+                    root_locality.x_km - right_locality.x_km,
+                    root_locality.y_km - right_locality.y_km,
                 ),
+                root,
+                right,
+            )
+        while remaining_ids:
+            # Prim's algorithm with the exact historical tie-breaking, but
+            # maintain each unconnected locality's best edge incrementally
+            # instead of rescanning every connected/unconnected pair.
+            candidate = min(
+                best_edge_by_right.values(),
                 key=lambda item: (item[0], item[1], item[2]),
             )
             _, left, right = candidate
             connect(left, right)
             connected.append(right)
             remaining_ids.remove(right)
+            best_edge_by_right.pop(right, None)
+            left_locality = world.localities[right]
+            for other in remaining_ids:
+                other_locality = world.localities[other]
+                new_candidate = (
+                    hypot(
+                        left_locality.x_km - other_locality.x_km,
+                        left_locality.y_km - other_locality.y_km,
+                    ),
+                    right,
+                    other,
+                )
+                if new_candidate < best_edge_by_right[other]:
+                    best_edge_by_right[other] = new_candidate
 
     # Add local nearest-neighbour roads and optional district hub roads.
     k = config.geography.nearest_neighbors
