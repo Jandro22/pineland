@@ -149,7 +149,6 @@ def local_operational_information(
     target_organization_id: str | None = None,
 ) -> float:
     """Actor-held local target information; hidden opponent truth is excluded."""
-    world.materialize_compact_information_confidences()
     observer_ids = {organization_id}
     observer_ids.update(
         formation.formation_id
@@ -188,6 +187,7 @@ def local_operational_information(
             and belief.target_actor_id in targets
             and belief.evidence_count > 0
         ):
+            world.materialize_compact_confidence(belief)
             evidence.append(
                 clamp(belief.confidence) * clamp(belief.presence_estimate)
             )

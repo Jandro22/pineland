@@ -402,6 +402,14 @@ def _actual_target_presence(world: WorldState, target_actor_id: str,
                             microzone_id: str | None = None,
                             formation_index: dict[tuple[str, str], list[ArmedFormation]] | None = None,
                             ) -> tuple[bool, float, str | None]:
+    cache_key = (
+        "actual_presence", target_actor_id, locality_id,
+        target_formation_id, microzone_id,
+    )
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return cached
     candidates = (
         formation_index.get((target_actor_id, locality_id), ())
         if formation_index is not None else
@@ -428,7 +436,10 @@ def _actual_target_presence(world: WorldState, target_actor_id: str,
         personnel += formation.personnel
         if chosen is None or formation.personnel > chosen.personnel:
             chosen = formation
-    return chosen is not None, personnel, chosen.formation_id if chosen else None
+    result = (chosen is not None, personnel, chosen.formation_id if chosen else None)
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def detection_probability(world: WorldState, observer_id: str,
@@ -440,6 +451,14 @@ def detection_probability(world: WorldState, observer_id: str,
     enter the logit.  This is a detection model, not a combat model.
     """
     config = world.config.information
+    cache_key = (
+        "detection_probability", observer_id, target_formation_id,
+        locality_id, source_type, microzone_id,
+    )
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return float(cached)
     observer_formation = _observer_formation(world, observer_id)
     observer_actor_id = (observer_formation.organization_id if observer_formation
                          else observer_id if observer_id in world.organizations else "government")
@@ -472,8 +491,12 @@ def detection_probability(world: WorldState, observer_id: str,
     terrain_penalty = clamp(locality.terrain_friction / 2.5)
     base = config.contact_true_positive_rate if source_type == "contact" else config.true_positive_rate
     if base <= 0:
+        if world.information_cache_active:
+            world.information_execution_cache[cache_key] = 0.0
         return 0.0
     if base >= 1:
+        if world.information_cache_active:
+            world.information_execution_cache[cache_key] = 1.0
         return 1.0
     score = (_logit(base) + config.detection_pressure_bonus * pressure +
              config.detection_exposure_bonus * exposure +
@@ -487,21 +510,36 @@ def detection_probability(world: WorldState, observer_id: str,
             concealment = config.insurgent_concealment * (
                 .5 + .5 * organization.phenotype.get("dispersion", .5))
             score -= .9 * concealment
-    return clamp(logistic(score))
+    result = clamp(logistic(score))
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def false_positive_probability(world: WorldState, observer_id: str, locality_id: str,
                                source_type: str = "patrol",
                                microzone_id: str | None = None) -> float:
     config = world.config.information
+    cache_key = (
+        "false_positive_probability", observer_id, locality_id,
+        source_type, microzone_id,
+    )
+    if world.information_cache_active:
+        cached = world.information_execution_cache.get(cache_key)
+        if cached is not None:
+            return float(cached)
     locality = world.localities[locality_id]
     observability = locality.observability
     if microzone_id and microzone_id in world.microzones:
         observability = world.microzones[microzone_id].observability
     base = config.contact_false_positive_rate if source_type == "contact" else config.false_positive_rate
     if base <= 0:
+        if world.information_cache_active:
+            world.information_execution_cache[cache_key] = 0.0
         return 0.0
     if base >= 1:
+        if world.information_cache_active:
+            world.information_execution_cache[cache_key] = 1.0
         return 1.0
     # Difficult terrain and poor comprehension make ambiguous reports more likely.
     language = language_comprehension(world,
@@ -509,7 +547,10 @@ def false_positive_probability(world: WorldState, observer_id: str, locality_id:
                                       if _observer_formation(world, observer_id) else observer_id,
                                       locality_id, source_type, observer_id)
     score = _logit(base) + .3 * (1 - observability) + .25 * (1 - language)
-    return clamp(logistic(score))
+    result = clamp(logistic(score))
+    if world.information_cache_active:
+        world.information_execution_cache[cache_key] = result
+    return result
 
 
 def _new_observation(world: WorldState, *, observer_actor_id: str, observer_node_id: str | None,
