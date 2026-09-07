@@ -84,6 +84,7 @@ class WorldState:
     social_communities: dict[str, SocialCommunity] = field(default_factory=dict)
     social_edges: dict[tuple[str, str], SocialEdge] = field(default_factory=dict)
     social_neighbors: dict[str, list[str]] = field(default_factory=dict)
+    social_community_ids_by_locality: dict[str, tuple[str, ...]] = field(default_factory=dict)
     microzones: dict[str, Microzone] = field(default_factory=dict)
     microzone_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
     microzones_by_locality: dict[str, tuple[Microzone, ...]] = field(default_factory=dict)
@@ -95,6 +96,7 @@ class WorldState:
     patrols: dict[str, Patrol] = field(default_factory=dict)
     formation_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
     patrol_ids_by_locality: dict[str, list[str]] = field(default_factory=dict)
+    patrol_ids_by_formation: dict[str, list[str]] = field(default_factory=dict)
     security_posts_by_locality: dict[str, tuple[SecurityPost, ...]] = field(default_factory=dict)
     zone_beliefs: dict[tuple[str, str], ActorZoneBelief] = field(default_factory=dict)
     observations: dict[str, Observation] = field(default_factory=dict)
@@ -191,6 +193,14 @@ class WorldState:
     ] = field(default_factory=dict)
     locality_travel_time_cache: dict[
         tuple[str, float], dict[str, float]
+    ] = field(default_factory=dict)
+    # Complete single-source shortest-path trees.  Routes are stored as
+    # immutable tuples so the memo can be safely shared by particle siblings.
+    # Like the narrower path/time caches, this is derived execution state and
+    # never participates in scientific hashes.
+    locality_route_metrics_cache: dict[
+        tuple[str, float],
+        dict[str, tuple[tuple[str, ...], float, float]],
     ] = field(default_factory=dict)
     event_log: list[EventLogEntry] = field(default_factory=list)
     # Compact counters used by ensemble/calibration output modes.  They are
@@ -291,6 +301,22 @@ class WorldState:
             )
             for locality_id, post_ids in self.security_post_ids_by_locality.items()
         }
+        communities_by_locality: dict[str, list[str]] = {}
+        for community_id, community in self.social_communities.items():
+            communities_by_locality.setdefault(community.locality_id, []).append(
+                community_id
+            )
+        self.social_community_ids_by_locality = {
+            locality_id: tuple(sorted(community_ids))
+            for locality_id, community_ids in communities_by_locality.items()
+        }
+        self.patrol_ids_by_formation = {}
+        for patrol_id, patrol in self.patrols.items():
+            self.patrol_ids_by_formation.setdefault(
+                patrol.formation_id, []
+            ).append(patrol_id)
+        for patrol_ids in self.patrol_ids_by_formation.values():
+            patrol_ids.sort()
 
     def register_formation(self, formation: ArmedFormation) -> None:
         """Register a newly created formation in the locality execution index."""
@@ -318,6 +344,9 @@ class WorldState:
         self.patrols[patrol.patrol_id] = patrol
         self.patrol_ids_by_locality.setdefault(
             patrol.locality_id, []
+        ).append(patrol.patrol_id)
+        self.patrol_ids_by_formation.setdefault(
+            patrol.formation_id, []
         ).append(patrol.patrol_id)
 
     def relocate_patrol(self, patrol: Patrol, locality_id: str) -> None:
@@ -1383,14 +1412,67 @@ class WorldState:
         # avoidable part of a particle fork while all mutable state remains
         # isolated below.
         shared_fields = {
-            "districts", "geographic_containers", "district_hierarchy",
-            "social_edges", "social_neighbors", "adjacency",
+            "config", "districts", "geographic_containers", "district_hierarchy",
+            "social_edges", "social_neighbors", "social_community_ids_by_locality",
+            "adjacency",
+            # Route memoization is a pure function of the fixed locality graph,
+            # fixed locality infrastructure, and the mobility value included in
+            # each cache key.  Sharing these execution-only caches across
+            # sibling particles avoids both a deep copy and repeated Dijkstra
+            # work without exposing mutable latent state.
+            "locality_path_cache", "locality_travel_time_cache",
+            "locality_route_metrics_cache",
+            # The primary-zone identity depends only on fixed microzone
+            # population shares.  The Microzone objects themselves remain
+            # particle-local because their control/presence fields are mutable.
+            "primary_microzone_by_locality",
+        }
+        # These are derived indexes. Rebuilding them from the cloned primary
+        # entities is both cheaper and, critically, preserves object identity:
+        # microzones_by_locality must reference the same cloned Microzone
+        # objects held in the primary microzones table.
+        rebuilt_fields = {
+            "microzones_by_locality",
+            "formation_ids_by_locality",
+            "patrol_ids_by_locality",
+            "patrol_ids_by_formation",
+            "security_posts_by_locality",
+            "social_community_ids_by_locality",
         }
         cloned = copy.copy(self)
         for item in fields(self):
-            if item.name in shared_fields:
+            if item.name in shared_fields or item.name in rebuilt_fields:
                 continue
-            setattr(cloned, item.name, copy.deepcopy(getattr(self, item.name)))
+            value = getattr(self, item.name)
+            if item.name in {"beliefs", "control_beliefs"}:
+                value = {
+                    key: ActorBelief(
+                        belief.actor_id,
+                        belief.locality_id,
+                        copy.copy(belief.control_estimate),
+                        belief.confidence,
+                        belief.updated_at,
+                        belief.last_reliable_observation_at,
+                        belief.evidence_count,
+                        belief.contradiction_index,
+                        belief.violence_estimate,
+                    )
+                    for key, belief in value.items()
+                }
+            elif item.name == "zone_beliefs":
+                value = {
+                    key: copy.copy(belief)
+                    for key, belief in value.items()
+                }
+            elif item.name in {"presence_beliefs", "node_presence_beliefs"}:
+                value = {
+                    key: copy.copy(belief)
+                    for key, belief in value.items()
+                }
+            else:
+                value = copy.deepcopy(value)
+            setattr(cloned, item.name, value)
+        cloned.rebuild_runtime_entity_indexes()
         return cloned
 
 

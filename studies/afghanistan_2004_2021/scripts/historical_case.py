@@ -860,6 +860,26 @@ class HistoricalCoalitionSchedule:
         self.control_snapshot: dict[str, dict[str, dict[str, float]]] | None = None
         self.control_snapshot_time: float | None = None
 
+    def clone(self) -> "HistoricalCoalitionSchedule":
+        """Clone only mutable schedule progress for particle branching.
+
+        Source-date schedules are immutable case inputs after construction, so
+        sibling particles can share them.  Cursor/provenance/snapshot state is
+        copied per lineage.
+        """
+        import copy
+
+        cloned = object.__new__(type(self))
+        cloned.schedule = self.schedule
+        cloned.cursor = self.cursor
+        cloned.police_schedule = self.police_schedule
+        cloned.police_cursor = self.police_cursor
+        cloned.applied = [dict(item) for item in self.applied]
+        cloned.control_validation_day = self.control_validation_day
+        cloned.control_snapshot = copy.deepcopy(self.control_snapshot)
+        cloned.control_snapshot_time = self.control_snapshot_time
+        return cloned
+
     def _apply_stock(self, world, target: float, row: dict[str, Any]) -> None:
         formations = sorted(
             (

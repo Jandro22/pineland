@@ -672,7 +672,8 @@ class ProcessEngine:
         total = 0.0
         for locality_id in sorted(self.world.localities):
             aggregates = recompute_contested_controls(
-                self.world, locality_id, self.world.time, advance_memory=False
+                self.world, locality_id, self.world.time, advance_memory=False,
+                use_runtime_indexes=True,
             )
             for actor, aggregate in aggregates.items():
                 before = self.world.localities[locality_id].control.setdefault(

@@ -5,6 +5,7 @@ from pineland_sim.analytics import locality_control_change
 from pineland_sim.events import ScheduledEvent
 from pineland_sim.experiments import governance_surge, run_paired_experiment
 from pineland_sim.processes import ProcessEngine
+from pineland_sim.reproducibility import decision_state_sha256
 
 
 def small_config(**overrides):
@@ -33,6 +34,13 @@ class SimulationTests(unittest.TestCase):
             locality_id=locality_id,
             actor_organization_ids=("insurgent", "government"),
         )
+        reference = generate_pineland(config)
+        reference.record_state_based_event(
+            time=1.0,
+            locality_id=locality_id,
+            actor_organization_ids=("insurgent", "government"),
+        )
+        reference = Simulation(reference).run().world
         simulation = Simulation(world)
         simulation.configure_execution(
             validate_invariants=False,
@@ -44,6 +52,7 @@ class SimulationTests(unittest.TestCase):
         self.assertFalse(world.event_log)
         self.assertFalse(world.stock_transactions)
         self.assertIn(locality_id, world.state_based_event_localities_by_week[0])
+        self.assertEqual(decision_state_sha256(reference), decision_state_sha256(world))
 
     def test_particle_fork_does_not_deepcopy_output_archives(self):
         config = small_config(horizon_days=2, output_mode="ensemble")

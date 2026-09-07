@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import math
 from pathlib import Path
+import random
 import sys
 
 
@@ -72,3 +74,88 @@ def test_nested_descendant_selection_reports_finite_branch_approximation():
     assert selected in {1, 2}
     assert mismatch == 1
     assert exact is False
+
+
+def test_compact_mask_descendant_selection_is_exactly_set_equivalent():
+    provinces = ("AF01", "AF02", "AF03", "AF04", "AF05")
+    bits = {province: 1 << index for index, province in enumerate(provinces)}
+    branches = [
+        {"AF01", "AF02"},
+        {"AF03"},
+        {"AF03", "AF04"},
+    ]
+    observed = frozenset({"AF03", "AF05"})
+    masks = [sum(bits[item] for item in branch) for branch in branches]
+    observed_mask = sum(bits[item] for item in observed)
+    random_module = __import__("random")
+    set_result = MODULE._conditioned_branch_index(
+        branches, observed, random_module.Random(10)
+    )
+    mask_result = MODULE._conditioned_branch_mask_index(
+        masks, observed_mask, random_module.Random(10)
+    )
+    assert mask_result == set_result
+
+
+def test_training_observation_precomputes_compact_province_surface():
+    observation = MODULE.load_training_observations()[0]
+    assert len(observation.province_bits) == 34
+    assert observation.active_mask.bit_count() == len(observation.active_provinces)
+
+
+def test_compact_forecast_masks_round_trip_to_cell_surface():
+    provinces = ("AF01", "AF02", "AF03")
+    bits = {province: 1 << index for index, province in enumerate(provinces)}
+    masks = {
+        53: bits["AF01"] | bits["AF03"],
+        54: bits["AF02"],
+    }
+    assert MODULE._mask_cells(masks, provinces, bits) == {
+        ("AF01", 53),
+        ("AF03", 53),
+        ("AF02", 54),
+    }
+
+
+def test_worker_state_reattachment_preserves_posterior_weights():
+    filter_ = MODULE.SequentialParticleFilter(
+        [MODULE.Particle("old-a", math.log(0.8)), MODULE.Particle("old-b", math.log(0.2))],
+        transition=lambda state, time: None,
+        log_likelihood=lambda state, observation: 0.0,
+        rng=random.Random(2),
+        allowed_split="training",
+    )
+    MODULE._reattach_particle_states(filter_, ["new-a", "new-b"])
+    assert [particle.state for particle in filter_.particles] == ["new-a", "new-b"]
+    weights = MODULE.particle_weights(filter_.particles)
+    assert weights == [0.8, 0.2]
+
+
+def test_posterior_cache_round_trip_preserves_filter_state(tmp_path):
+    filter_ = MODULE.SequentialParticleFilter(
+        [MODULE.Particle("a", math.log(0.7)), MODULE.Particle("b", math.log(0.3))],
+        transition=lambda state, time: None,
+        log_likelihood=lambda state, observation: 0.0,
+        rng=random.Random(9),
+        allowed_split="training",
+    )
+    filter_.last_time = 364.0
+    filter_.frozen = True
+    filter_._root_ancestors = [0, 1]
+    filter_.nested_propagator_diagnostics = {"nested_propagation_calls": 4}
+    cache_key = {"schema_version": MODULE.POSTERIOR_CACHE_SCHEMA, "test": "roundtrip"}
+    manifest_path, payload_path = MODULE._save_posterior_cache(
+        tmp_path, cache_key, filter_
+    )
+    assert manifest_path.exists()
+    assert payload_path.exists()
+    restored, restored_manifest = MODULE._load_posterior_cache(
+        tmp_path, cache_key, filter_seed=26
+    )
+    assert restored_manifest == manifest_path
+    assert restored.last_time == 364.0
+    assert restored.frozen is True
+    assert MODULE.particle_weights(restored.particles) == [0.7, 0.3]
+    assert restored.nested_propagator_diagnostics == {
+        "nested_propagation_calls": 4
+    }

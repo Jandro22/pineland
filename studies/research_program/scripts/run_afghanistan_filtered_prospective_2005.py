@@ -8,7 +8,7 @@ No 2005 outcome row is used by the runner.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import argparse
 import csv
 import hashlib
@@ -16,6 +16,7 @@ import json
 import math
 import os
 from pathlib import Path
+import pickle
 import random
 import sys
 from typing import Iterable
@@ -64,6 +65,7 @@ FORECAST_END_DAY = 731.0
 DEFAULT_PARTICLE_COUNT = 128
 DEFAULT_STRENGTHS = (5000.0, 7500.0, 10000.0)
 PRIOR_FAMILY_STRATA = tuple(sorted(TALIBAN_PRIOR_FAMILIES))
+POSTERIOR_CACHE_SCHEMA = "pineland.afghanistan.posterior_cache.v1"
 COMPETITOR_INFORMATION_CONTRACT = {
     "schema_version": "pineland.afghanistan.information_matched_competitors.v1",
     "evaluation_surface": "observed province-week Taliban-state-security incidence",
@@ -117,6 +119,17 @@ class ProvinceWeekObservation:
     week_index: int
     active_provinces: frozenset[str]
     provinces: tuple[str, ...]
+    province_bits: dict[str, int] = field(init=False, repr=False, compare=False)
+    active_mask: int = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        bits = {province: 1 << index for index, province in enumerate(self.provinces)}
+        object.__setattr__(self, "province_bits", bits)
+        object.__setattr__(
+            self,
+            "active_mask",
+            sum(bits[province] for province in self.active_provinces),
+        )
 
 
 def _jeffreys_branch_probability(active_count: int, branches: int) -> float:
@@ -173,6 +186,27 @@ def _conditioned_branch_index(
     return selected, minimum, minimum == 0
 
 
+def _conditioned_branch_mask_index(
+    branch_masks: list[int],
+    observed_mask: int,
+    rng: random.Random,
+) -> tuple[int, int, bool]:
+    """Bitset-equivalent descendant selection for compact province surfaces."""
+    if not branch_masks:
+        raise ValueError("at least one branch is required")
+    mismatches = [
+        (int(mask) ^ int(observed_mask)).bit_count()
+        for mask in branch_masks
+    ]
+    minimum = min(mismatches)
+    candidates = [
+        index for index, mismatch in enumerate(mismatches)
+        if mismatch == minimum
+    ]
+    selected = candidates[rng.randrange(len(candidates))]
+    return selected, minimum, minimum == 0
+
+
 class NestedOperationalPropagator:
     """Nested predictive likelihood plus observation-conditioned descendant."""
 
@@ -193,31 +227,30 @@ class NestedOperationalPropagator:
         observation: ProvinceWeekObservation,
     ) -> tuple[SimulationParticle, float]:
         branch_states: list[SimulationParticle] = []
-        branch_active: list[set[str]] = []
-        active_counts = {province: 0 for province in observation.provinces}
+        branch_masks: list[int] = []
+        active_counts = [0] * len(observation.provinces)
         for branch_index in range(self.branches):
             branch = state.fork(branch_index)
             branch.advance_to(time)
-            active = _active_provinces(branch, observation)
+            active_mask = _active_province_mask(branch, observation)
             branch_states.append(branch)
-            branch_active.append(active)
-            for province in active:
-                if province in active_counts:
-                    active_counts[province] += 1
+            branch_masks.append(active_mask)
+            for index in range(len(active_counts)):
+                active_counts[index] += int(bool(active_mask & (1 << index)))
 
         log_likelihood = 0.0
-        for province in observation.provinces:
+        for index, province in enumerate(observation.provinces):
             probability = _jeffreys_branch_probability(
-                active_counts[province], self.branches
+                active_counts[index], self.branches
             )
             log_likelihood += _bernoulli_log_probability(
                 probability,
-                province in observation.active_provinces,
+                bool(observation.active_mask & observation.province_bits[province]),
             )
 
-        selected, minimum_mismatch, exact = _conditioned_branch_index(
-            branch_active,
-            observation.active_provinces,
+        selected, minimum_mismatch, exact = _conditioned_branch_mask_index(
+            branch_masks,
+            observation.active_mask,
             random.Random(
                 _nested_selection_seed(
                     self.selection_seed,
@@ -257,6 +290,144 @@ def _nested_selection_seed(
 ) -> int:
     material = f"{int(filter_seed)}|{lineage_id}|{int(week_index)}".encode("utf-8")
     return int.from_bytes(hashlib.sha256(material).digest()[:8], "big")
+
+
+def _posterior_cache_digest(cache_key: dict[str, object]) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            cache_key, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _posterior_cache_paths(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+) -> tuple[Path, Path]:
+    digest = _posterior_cache_digest(cache_key)
+    return (
+        cache_dir / f"posterior-{digest}.json",
+        cache_dir / f"posterior-{digest}.pkl",
+    )
+
+
+def _snapshot_filter(
+    filter_: SequentialParticleFilter[
+        SimulationParticle, ProvinceWeekObservation
+    ],
+) -> dict[str, object]:
+    return {
+        "particles": filter_.particles,
+        "history": filter_.history,
+        "root_ancestors": list(filter_._root_ancestors),
+        "resampling_events": int(filter_._resampling_events),
+        "last_time": float(filter_.last_time),
+        "frozen": bool(filter_.frozen),
+        "rng_state": filter_.rng.getstate(),
+        "nested_propagator_diagnostics": getattr(
+            filter_, "nested_propagator_diagnostics", {}
+        ),
+    }
+
+
+def _restore_filter(
+    snapshot: dict[str, object],
+    *,
+    filter_seed: int,
+    ess_fraction: float = 0.5,
+) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
+    filter_ = SequentialParticleFilter(
+        list(snapshot["particles"]),
+        transition=lambda state, time: None,
+        log_likelihood=lambda state, observation: 0.0,
+        rng=random.Random(filter_seed),
+        ess_fraction=ess_fraction,
+        allowed_split="training",
+        fork_state=lambda state, child_index: state.fork(child_index),
+    )
+    filter_.history = list(snapshot["history"])
+    filter_._root_ancestors = list(snapshot["root_ancestors"])
+    filter_._resampling_events = int(snapshot["resampling_events"])
+    filter_.last_time = float(snapshot["last_time"])
+    filter_.rng.setstate(snapshot["rng_state"])
+    filter_.frozen = bool(snapshot["frozen"])
+    filter_.nested_propagator_diagnostics = dict(
+        snapshot.get("nested_propagator_diagnostics", {})
+    )
+    return filter_
+
+
+def _reattach_particle_states(
+    filter_: SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation],
+    states: list[SimulationParticle],
+) -> None:
+    """Attach resident-worker states without altering coordinator weights."""
+    if len(states) != len(filter_.particles):
+        raise ValueError("worker snapshot size does not match the filter")
+    log_weights = [particle.log_weight for particle in filter_.particles]
+    filter_.particles = [
+        Particle(state, log_weight)
+        for state, log_weight in zip(states, log_weights)
+    ]
+
+
+def _save_posterior_cache(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+    filter_: SequentialParticleFilter[
+        SimulationParticle, ProvinceWeekObservation
+    ],
+) -> tuple[Path, Path]:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path, payload_path = _posterior_cache_paths(cache_dir, cache_key)
+    payload = pickle.dumps(_snapshot_filter(filter_), protocol=pickle.HIGHEST_PROTOCOL)
+    payload_sha256 = hashlib.sha256(payload).hexdigest()
+    payload_tmp = payload_path.with_suffix(payload_path.suffix + ".tmp")
+    manifest_tmp = manifest_path.with_suffix(manifest_path.suffix + ".tmp")
+    payload_tmp.write_bytes(payload)
+    os.replace(payload_tmp, payload_path)
+    manifest = {
+        "schema_version": POSTERIOR_CACHE_SCHEMA,
+        "cache_key": cache_key,
+        "payload_sha256": payload_sha256,
+        "payload_bytes": len(payload),
+        "format": "trusted-local-python-pickle",
+        "canonical_scientific_artifact": False,
+    }
+    manifest_tmp.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(manifest_tmp, manifest_path)
+    return manifest_path, payload_path
+
+
+def _load_posterior_cache(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+    *,
+    filter_seed: int,
+) -> tuple[
+    SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation],
+    Path,
+]:
+    manifest_path, payload_path = _posterior_cache_paths(cache_dir, cache_key)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != POSTERIOR_CACHE_SCHEMA:
+        raise ValueError("posterior cache schema mismatch")
+    if manifest.get("cache_key") != cache_key:
+        raise ValueError("posterior cache provenance mismatch")
+    payload = payload_path.read_bytes()
+    if hashlib.sha256(payload).hexdigest() != manifest.get("payload_sha256"):
+        raise ValueError("posterior cache payload hash mismatch")
+    # This cache is intentionally a local execution accelerator rather than a
+    # publication artifact.  Only content-addressed files created by this
+    # runner should ever be loaded.
+    snapshot = pickle.loads(payload)
+    return (
+        _restore_filter(snapshot, filter_seed=filter_seed),
+        manifest_path,
+    )
 
 
 def _load_case() -> dict:
@@ -414,6 +585,22 @@ def _active_provinces(
     }
 
 
+def _active_province_mask(
+    state: SimulationParticle,
+    observation: ProvinceWeekObservation,
+) -> int:
+    world = state.world
+    mask = 0
+    bits = observation.province_bits
+    for locality_id in world.state_based_event_localities_by_week.get(
+        observation.week_index, ()
+    ):
+        bit = bits.get(_province_for_locality(world, locality_id))
+        if bit is not None:
+            mask |= bit
+    return mask
+
+
 def _nested_particle_job(
     job: tuple[
         SimulationParticle,
@@ -567,9 +754,7 @@ def run_training_filter(
             particles = []
             for observation in ordered_observations:
                 assimilate_one(observation, executor)
-            filter_.particles = [
-                Particle(state, 0.0) for state in executor.snapshot()
-            ]
+            _reattach_particle_states(filter_, executor.snapshot())
     filter_.freeze()
     filter_.nested_propagator_diagnostics = {
         "nested_propagation_calls": nested_calls,
@@ -603,29 +788,77 @@ def _forecast_cells(
     }
 
 
+def _forecast_week_masks(
+    state: SimulationParticle,
+    *,
+    start_day: float,
+    end_day: float,
+    province_bits: dict[str, int],
+) -> dict[int, int]:
+    """Compact forecast event surface as one integer bitset per week."""
+    world = state.world
+    first_week = int(start_day // 7)
+    last_week = int(math.ceil(end_day / 7.0))
+    masks: dict[int, int] = {}
+    for week in range(first_week, last_week):
+        mask = 0
+        for locality_id in world.state_based_event_localities_by_week.get(week, ()):
+            bit = province_bits.get(_province_for_locality(world, locality_id))
+            if bit is not None:
+                mask |= bit
+        if mask:
+            masks[week] = mask
+    return masks
+
+
+def _mask_cells(
+    week_masks: dict[int, int],
+    provinces: tuple[str, ...],
+    province_bits: dict[str, int],
+) -> set[tuple[str, int]]:
+    """Convert compact masks to the historical external cell representation."""
+    return {
+        (province, week)
+        for week, mask in week_masks.items()
+        for province in provinces
+        if mask & province_bits[province]
+    }
+
+
 def _forecast_particle_job(
-    job: tuple[SimulationParticle, float, float, int],
-) -> list[set[tuple[str, int]]]:
-    state, start_day, end_day, forecast_branches = job
-    branch_cell_sets = []
+    job: tuple[
+        SimulationParticle,
+        float,
+        float,
+        int,
+        dict[str, int],
+    ],
+) -> list[dict[int, int]]:
+    state, start_day, end_day, forecast_branches, province_bits = job
+    branch_week_masks = []
     for branch_index in range(forecast_branches):
         branch = state.fork(branch_index)
         branch.advance_to(end_day)
-        branch_cell_sets.append(
-            _forecast_cells(branch, start_day=start_day, end_day=end_day)
+        branch_week_masks.append(
+            _forecast_week_masks(
+                branch,
+                start_day=start_day,
+                end_day=end_day,
+                province_bits=province_bits,
+            )
         )
-    return branch_cell_sets
+    return branch_week_masks
 
 
 def _forecast_persistent_job(
     state: SimulationParticle,
     time: float,
-    payload: tuple[float, float, int],
-) -> tuple[SimulationParticle, float, list[set[tuple[str, int]]]]:
+    payload: tuple[float, float, int, dict[str, int]],
+) -> tuple[SimulationParticle, float, list[dict[int, int]]]:
     """Run forecast branches in a resident worker and return only cells."""
-    start_day, end_day, forecast_branches = payload
+    start_day, end_day, forecast_branches, province_bits = payload
     return state, 0.0, _forecast_particle_job(
-        (state, start_day, end_day, forecast_branches)
+        (state, start_day, end_day, forecast_branches, province_bits)
     )
 
 
@@ -644,11 +877,14 @@ def forecast_weighted_field(
         raise ValueError("workers must be positive")
     filter_.freeze()
     weights = particle_weights(filter_.particles)
-    provinces = sorted({
+    provinces = tuple(sorted({
         _province_for_locality(particle.state.world, locality_id)
         for particle in filter_.particles
         for locality_id in particle.state.world.localities
-    })
+    }))
+    province_bits = {
+        province: 1 << index for index, province in enumerate(provinces)
+    }
     first_week = int(start_day // 7)
     last_week = int(math.ceil(end_day / 7.0))
     latent_probability: dict[tuple[str, int], float] = {
@@ -660,7 +896,13 @@ def forecast_weighted_field(
     forecast_branch_cells: list[list[list[dict[str, int | str]]]] = []
     if workers == 1:
         jobs = [
-            (particle.state, start_day, end_day, forecast_branches)
+            (
+                particle.state,
+                start_day,
+                end_day,
+                forecast_branches,
+                province_bits,
+            )
             for particle in filter_.particles
         ]
         completed = list(map(_forecast_particle_job, jobs))
@@ -680,7 +922,8 @@ def forecast_weighted_field(
             completed = [
                 diagnostics
                 for _, _, diagnostics in executor.propagate(
-                    end_day, (start_day, end_day, forecast_branches)
+                    end_day,
+                    (start_day, end_day, forecast_branches, province_bits),
                 )
             ]
             forecast_states = executor.snapshot()
@@ -691,8 +934,12 @@ def forecast_weighted_field(
             )
             for state, weight in zip(forecast_states, weights)
         ]
-    for branch_cell_sets, weight in zip(completed, weights):
-        cells = set().union(*branch_cell_sets) if branch_cell_sets else set()
+    for branch_week_masks, weight in zip(completed, weights):
+        combined_masks: dict[int, int] = {}
+        for week_masks in branch_week_masks:
+            for week, mask in week_masks.items():
+                combined_masks[week] = combined_masks.get(week, 0) | mask
+        cells = _mask_cells(combined_masks, provinces, province_bits)
         member_cells.append([
             {"province_id": province, "week_index": week}
             for province, week in sorted(cells)
@@ -700,16 +947,21 @@ def forecast_weighted_field(
         forecast_branch_cells.append([
             [
                 {"province_id": province, "week_index": week}
-                for province, week in sorted(branch_cells)
-            ]
-            for branch_cells in branch_cell_sets
-        ])
-        for branch_cells in branch_cell_sets:
-            for cell in branch_cells:
-                latent_probability[cell] = (
-                    latent_probability.get(cell, 0.0)
-                    + weight / forecast_branches
+                for province, week in sorted(
+                    _mask_cells(week_masks, provinces, province_bits)
                 )
+            ]
+            for week_masks in branch_week_masks
+        ])
+        increment = weight / forecast_branches
+        for week_masks in branch_week_masks:
+            for week, mask in week_masks.items():
+                for province in provinces:
+                    if mask & province_bits[province]:
+                        cell = (province, week)
+                        latent_probability[cell] = (
+                            latent_probability.get(cell, 0.0) + increment
+                        )
     def field_rows(values: dict[tuple[str, int], float]) -> list[dict[str, object]]:
         return [
             {
@@ -742,6 +994,7 @@ def run(
     likelihood_branches: int = 3,
     forecast_branches: int = 3,
     workers: int = 1,
+    posterior_cache_dir: Path | None = None,
 ) -> dict:
     repo = repository_state(ROOT)
     empty_diff_sha256 = hashlib.sha256(b"").hexdigest()
@@ -784,31 +1037,81 @@ def run(
             separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()
-    base_world = generate_pineland(
-        _config(seed, horizon), empirical_geography=case
-    )
-    initial_particles = [
-        build_initial_particle(
-            seed=seed,
-            particle_index=index,
-            taliban_strength=particle_strengths[index],
-            prior_family=PRIOR_FAMILY_STRATA[index % len(PRIOR_FAMILY_STRATA)],
-            horizon=horizon,
-            case=case,
-            inputs=inputs,
-            base_world=base_world,
+    filter_seed = seed + 17_003
+    runner_sha256 = file_sha256(Path(__file__))
+    model_hash = model_sha256(ROOT)
+    cache_key = {
+        "schema_version": POSTERIOR_CACHE_SCHEMA,
+        "source_commit": repo["commit_hash"],
+        "model_sha256": model_hash,
+        "runner_sha256": runner_sha256,
+        "case_sha256": file_sha256(CASE),
+        "historical_inputs_sha256": file_sha256(INPUTS),
+        "training_observation_sha256": training_observation_sha256,
+        "seed": int(seed),
+        "filter_seed": int(filter_seed),
+        "particle_count": int(particles),
+        "particle_initial_strengths": list(particle_strengths),
+        "particle_prior_families": [
+            PRIOR_FAMILY_STRATA[index % len(PRIOR_FAMILY_STRATA)]
+            for index in range(particles)
+        ],
+        "likelihood_branches": int(likelihood_branches),
+        "horizon": float(horizon),
+        "python_cache_tag": sys.implementation.cache_tag,
+    }
+    posterior_cache_hit = False
+    posterior_cache_manifest: Path | None = None
+    if posterior_cache_dir is not None:
+        manifest_path, payload_path = _posterior_cache_paths(
+            posterior_cache_dir, cache_key
         )
-        for index in range(particles)
-    ]
-    del base_world
-    filter_ = run_training_filter(
-        initial_particles,
-        observations,
-        filter_seed=seed + 17_003,
-        likelihood_branches=likelihood_branches,
-        workers=workers,
-    )
+        if manifest_path.exists() and payload_path.exists():
+            filter_, posterior_cache_manifest = _load_posterior_cache(
+                posterior_cache_dir,
+                cache_key,
+                filter_seed=filter_seed,
+            )
+            posterior_cache_hit = True
+        else:
+            filter_ = None
+    else:
+        filter_ = None
+
+    if filter_ is None:
+        base_world = generate_pineland(
+            _config(seed, horizon), empirical_geography=case
+        )
+        initial_particles = [
+            build_initial_particle(
+                seed=seed,
+                particle_index=index,
+                taliban_strength=particle_strengths[index],
+                prior_family=PRIOR_FAMILY_STRATA[index % len(PRIOR_FAMILY_STRATA)],
+                horizon=horizon,
+                case=case,
+                inputs=inputs,
+                base_world=base_world,
+            )
+            for index in range(particles)
+        ]
+        del base_world
+        filter_ = run_training_filter(
+            initial_particles,
+            observations,
+            filter_seed=filter_seed,
+            likelihood_branches=likelihood_branches,
+            workers=workers,
+        )
+        if posterior_cache_dir is not None:
+            posterior_cache_manifest, _ = _save_posterior_cache(
+                posterior_cache_dir, cache_key, filter_
+            )
     posterior_boundary = max(observation.end_day for observation in observations)
+    if abs(filter_.last_time - posterior_boundary) > 1e-9:
+        raise ValueError(
+            "posterior cache/training state does not end at the declared boundary"
+        )
     forecast = forecast_weighted_field(
         filter_,
         forecast_branches=forecast_branches,
@@ -849,9 +1152,9 @@ def run(
     payload = {
         "schema_version": "pineland.afghanistan.filtered_prospective_2005.v2",
         "source_commit_at_run": repo["commit_hash"],
-        "model_sha256": model_sha256(ROOT),
+        "model_sha256": model_hash,
         "tracked_diff_sha256": repo["tracked_diff_sha256"],
-        "runner_sha256": file_sha256(Path(__file__)),
+        "runner_sha256": runner_sha256,
         "case_sha256": file_sha256(CASE),
         "historical_inputs_sha256": file_sha256(INPUTS),
         "training_observation_sha256": training_observation_sha256,
@@ -891,6 +1194,16 @@ def run(
         "forecast_branches": forecast_branches,
         "parallel_workers": workers,
         "parallel_backend": "processes" if workers > 1 else "sequential",
+        "posterior_cache": {
+            "enabled": posterior_cache_dir is not None,
+            "hit": posterior_cache_hit,
+            "cache_key_sha256": _posterior_cache_digest(cache_key),
+            "manifest": (
+                str(posterior_cache_manifest)
+                if posterior_cache_manifest is not None else None
+            ),
+            "canonical_scientific_artifact": False,
+        },
         "filter_updates": filter_diagnostics,
         "nested_propagator_diagnostics": getattr(
             filter_, "nested_propagator_diagnostics", {}
@@ -935,6 +1248,14 @@ def main() -> None:
         type=int,
         default=max(1, min(10, os.cpu_count() or 1)),
     )
+    parser.add_argument(
+        "--posterior-cache-dir",
+        type=Path,
+        help=(
+            "optional content-addressed local cache for the frozen training "
+            "posterior; skips repeated 2004 assimilation when provenance matches"
+        ),
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     payload = run(
@@ -942,6 +1263,7 @@ def main() -> None:
         taliban_strength=args.strength,
         particles=args.particles,
         workers=args.workers,
+        posterior_cache_dir=args.posterior_cache_dir,
         output=args.output,
     )
     print(json.dumps({

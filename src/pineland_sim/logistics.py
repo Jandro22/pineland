@@ -115,7 +115,7 @@ def shortest_locality_travel_times(world: WorldState, origin_id: str,
 
 def _shortest_locality_route_metrics(
     world: WorldState, origin_id: str, mobility: float
-) -> dict[str, tuple[list[str], float, float]]:
+) -> dict[str, tuple[tuple[str, ...], float, float]]:
     """Return all fastest routes from one origin with distance and travel time.
 
     Reallocation needs route identity for believed corridor risk and route
@@ -124,6 +124,11 @@ def _shortest_locality_route_metrics(
     previous travel-time-only selector rather than rerunning Dijkstra for every
     candidate.
     """
+    cache_key = (origin_id, float(mobility))
+    cached = world.locality_route_metrics_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     travel_times = {origin_id: 0.0}
     distances_km = {origin_id: 0.0}
     previous: dict[str, str] = {}
@@ -143,7 +148,7 @@ def _shortest_locality_route_metrics(
                 previous[neighbor_id] = locality_id
                 heapq.heappush(queue, (candidate, neighbor_id))
 
-    routes: dict[str, tuple[list[str], float, float]] = {}
+    cached_routes: dict[str, tuple[tuple[str, ...], float, float]] = {}
     for destination_id in travel_times:
         if destination_id == origin_id:
             route = [origin_id]
@@ -152,15 +157,17 @@ def _shortest_locality_route_metrics(
             while route[-1] != origin_id:
                 route.append(previous[route[-1]])
             route.reverse()
-        routes[destination_id] = (
-            route, distances_km[destination_id], travel_times[destination_id]
+        route_tuple = tuple(route)
+        cached_routes[destination_id] = (
+            route_tuple, distances_km[destination_id], travel_times[destination_id]
         )
         if destination_id != origin_id:
             world.locality_path_cache[
                 (origin_id, destination_id, float(mobility))
-            ] = (tuple(route), distances_km[destination_id], travel_times[destination_id])
+            ] = (route_tuple, distances_km[destination_id], travel_times[destination_id])
     world.locality_travel_time_cache[(origin_id, float(mobility))] = dict(travel_times)
-    return routes
+    world.locality_route_metrics_cache[cache_key] = cached_routes
+    return cached_routes
 
 
 def reallocation_decision_probability(
@@ -1069,13 +1076,13 @@ def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | f
 
 def _nearest_source(world: WorldState, formation) -> tuple[SupplySource | None, list[str], float]:
     best: tuple[float, SupplySource, list[str]] | None = None
+    mobility = formation.mobility * world.config.logistics.convoy_speed_factor
     for source in world.supply_sources.values():
         if source.organization_id != formation.organization_id or not source.operational or source.stock <= 0:
             continue
-        route, _, hours = shortest_locality_path(
-            world, source.locality_id, formation.locality_id,
-            formation.mobility * world.config.logistics.convoy_speed_factor,
-        )
+        route, _, hours = _shortest_locality_route_metrics(
+            world, source.locality_id, mobility,
+        )[formation.locality_id]
         if best is None or hours < best[0]:
             best = (hours, source, route)
     return (None, [], inf) if best is None else (best[1], best[2], best[0])

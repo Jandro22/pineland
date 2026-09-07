@@ -385,7 +385,8 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
         tuple(reinforcement_ids), signal, initiator_organization_id, contact_cause,
         tuple(withdrawal_ids),
     )
-    world.engagements[engagement_id] = engagement
+    if world.execution_profile != "particle":
+        world.engagements[engagement_id] = engagement
     return engagement, observations
 
 

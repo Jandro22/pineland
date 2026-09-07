@@ -43,6 +43,29 @@ VIOLENT_CHANNELS = {
 }
 
 
+def _local_formations(world, locality_id: str):
+    """Iterate one locality's formations using the maintained runtime index."""
+    # Particle/core execution routes all relocations through WorldState helpers
+    # and can trust the maintained index.  Standard/test worlds intentionally
+    # permit direct entity mutation by policy/test hooks; preserve that public
+    # fallback semantics by scanning there.
+    formation_ids = (
+        world.formation_ids_by_locality.get(locality_id)
+        if world.execution_profile == "particle"
+        else None
+    )
+    if formation_ids is None:
+        return (
+            formation for formation in world.formations.values()
+            if formation.locality_id == locality_id
+        )
+    return (
+        world.formations[formation_id]
+        for formation_id in formation_ids
+        if formation_id in world.formations
+    )
+
+
 def operational_reach_candidates(
     world, organization_id: str, source_locality_id: str
 ) -> list[tuple[str, float]]:
@@ -274,9 +297,8 @@ def local_fighter_equivalents(world, organization_id: str, locality_id: str) -> 
     unfielded = min(pooled_manpower, reserve / supply_per_fighter)
     fielded = sum(
         max(0.0, float(formation.personnel))
-        for formation in world.formations.values()
+        for formation in _local_formations(world, locality_id)
         if formation.organization_id == organization_id
-        and formation.locality_id == locality_id
         and not formation.outside_pineland
         and not formation.moving
     )
@@ -321,9 +343,8 @@ def local_action_supply_available(world, organization_id: str, locality_id: str)
     """Return material stock physically available to this organization locally."""
     formation_stock = sum(
         max(0.0, float(formation.supply_stock))
-        for formation in world.formations.values()
+        for formation in _local_formations(world, locality_id)
         if formation.organization_id == organization_id
-        and formation.locality_id == locality_id
         and not formation.outside_pineland
         and not formation.moving
     )
@@ -347,11 +368,10 @@ def consume_local_action_supply(
     remaining = max(0.0, float(demand))
     demanded = remaining
     consumed = 0.0
-    for formation in sorted(world.formations.values(), key=lambda item: item.formation_id):
+    for formation in sorted(_local_formations(world, locality_id), key=lambda item: item.formation_id):
         if (
             remaining <= 0
             or formation.organization_id != organization_id
-            or formation.locality_id != locality_id
             or formation.outside_pineland
             or formation.moving
         ):
@@ -591,19 +611,18 @@ def choose_action(world, organization_id: str, locality_id: str,
 
 
 def available_battle_pairs(world, organization_id: str, locality_id: str):
+    local_formations = list(_local_formations(world, locality_id))
     own = [
-        formation for formation in world.formations.values()
+        formation for formation in local_formations
         if formation.organization_id == organization_id
-        and formation.locality_id == locality_id
         and formation.personnel > 0
         and not formation.moving
         and not formation.outside_pineland
         and formation.operational_status == "effective"
     ]
     opponents = [
-        formation for formation in world.formations.values()
-        if formation.locality_id == locality_id
-        and formation.personnel > 0
+        formation for formation in local_formations
+        if formation.personnel > 0
         and not formation.moving
         and not formation.outside_pineland
         and formation.operational_status == "effective"
