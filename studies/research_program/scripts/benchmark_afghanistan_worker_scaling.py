@@ -18,7 +18,10 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from pineland_sim.reproducibility import decision_state_sha256
+from pineland_sim.reproducibility import (
+    decision_state_component_hashes,
+    decision_state_sha256,
+)
 from pineland_sim.state_estimation import PersistentParticlePool
 from pineland_sim.performance import runtime_manifest
 
@@ -97,6 +100,9 @@ def _run_one(runner, initial_states, observation, *, workers: int, branches: int
             pool.close()
     total_seconds = perf_counter() - started
     hashes = [decision_state_sha256(state.world) for state in snapshots]
+    component_hashes = [
+        decision_state_component_hashes(state.world) for state in snapshots
+    ]
     return {
         "workers": int(workers),
         "startup_seconds": startup_seconds,
@@ -104,6 +110,7 @@ def _run_one(runner, initial_states, observation, *, workers: int, branches: int
         "snapshot_seconds": snapshot_seconds,
         "total_seconds": total_seconds,
         "decision_state_sha256": hashes,
+        "decision_state_component_hashes": component_hashes,
         "scores": scores,
         "worker_compute": worker_rows,
         "estimated_worker_idle_seconds": (
@@ -176,8 +183,23 @@ def main() -> None:
             row["decision_state_sha256"] == reference["decision_state_sha256"]
         )
         row["exact_score_equivalence"] = row["scores"] == reference["scores"]
+        row["differing_components_by_particle"] = [
+            sorted(
+                component
+                for component in set(reference_components) | set(candidate_components)
+                if reference_components.get(component)
+                != candidate_components.get(component)
+            )
+            for reference_components, candidate_components in zip(
+                reference["decision_state_component_hashes"],
+                row["decision_state_component_hashes"],
+            )
+        ]
     reference["exact_state_equivalence"] = True
     reference["exact_score_equivalence"] = True
+    reference["differing_components_by_particle"] = [
+        [] for _ in reference["decision_state_component_hashes"]
+    ]
     best = min(rows, key=lambda row: row["propagation_seconds"])
     payload = {
         "schema_version": "pineland.performance.worker_scaling.v1",
