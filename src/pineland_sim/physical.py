@@ -621,17 +621,31 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
             for zone in zones_in_locality(world, locality_id)
         }
     if active_insurgents:
-        recompute_microzone_control(
-            world, locality_id, _INSURGENT_SIDE_ACTOR, time,
-            apply_contestation=False, advance_memory=False,
-            use_runtime_indexes=use_runtime_indexes,
-        )
-        raw_zones[_INSURGENT_SIDE_ACTOR] = {
-            zone.microzone_id: zone.physical_control.get(
-                _INSURGENT_SIDE_ACTOR, 0.0
+        if len(active_insurgents) == 1:
+            # With exactly one active insurgent franchise the side-level raw
+            # presence/response operator is algebraically identical to that
+            # franchise's operator.  Reuse the already-computed values instead
+            # of running the same microzone response search a second time.
+            # Write the aggregate key as well so downstream consumers see the
+            # same state as the explicit recomputation path.
+            only = active_insurgents[0]
+            raw_zones[_INSURGENT_SIDE_ACTOR] = dict(raw_zones[only])
+            for zone in zones_in_locality(world, locality_id):
+                zone.physical_control[_INSURGENT_SIDE_ACTOR] = raw_zones[only][
+                    zone.microzone_id
+                ]
+        else:
+            recompute_microzone_control(
+                world, locality_id, _INSURGENT_SIDE_ACTOR, time,
+                apply_contestation=False, advance_memory=False,
+                use_runtime_indexes=use_runtime_indexes,
             )
-            for zone in zones_in_locality(world, locality_id)
-        }
+            raw_zones[_INSURGENT_SIDE_ACTOR] = {
+                zone.microzone_id: zone.physical_control.get(
+                    _INSURGENT_SIDE_ACTOR, 0.0
+                )
+                for zone in zones_in_locality(world, locality_id)
+            }
     adjusted: dict[str, float] = {}
     zones = zones_in_locality(world, locality_id)
     for actor in actors:

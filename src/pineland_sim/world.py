@@ -194,6 +194,14 @@ class WorldState:
     locality_travel_time_cache: dict[
         tuple[str, float], dict[str, float]
     ] = field(default_factory=dict)
+    # Complete single-source shortest-path trees.  Routes are stored as
+    # immutable tuples so the memo can be safely shared by particle siblings.
+    # Like the narrower path/time caches, this is derived execution state and
+    # never participates in scientific hashes.
+    locality_route_metrics_cache: dict[
+        tuple[str, float],
+        dict[str, tuple[tuple[str, ...], float, float]],
+    ] = field(default_factory=dict)
     event_log: list[EventLogEntry] = field(default_factory=list)
     # Compact counters used by ensemble/calibration output modes.  They are
     # updated at the same event boundary as the forensic log and therefore do
@@ -1404,15 +1412,67 @@ class WorldState:
         # avoidable part of a particle fork while all mutable state remains
         # isolated below.
         shared_fields = {
-            "districts", "geographic_containers", "district_hierarchy",
+            "config", "districts", "geographic_containers", "district_hierarchy",
             "social_edges", "social_neighbors", "social_community_ids_by_locality",
             "adjacency",
+            # Route memoization is a pure function of the fixed locality graph,
+            # fixed locality infrastructure, and the mobility value included in
+            # each cache key.  Sharing these execution-only caches across
+            # sibling particles avoids both a deep copy and repeated Dijkstra
+            # work without exposing mutable latent state.
+            "locality_path_cache", "locality_travel_time_cache",
+            "locality_route_metrics_cache",
+            # The primary-zone identity depends only on fixed microzone
+            # population shares.  The Microzone objects themselves remain
+            # particle-local because their control/presence fields are mutable.
+            "primary_microzone_by_locality",
+        }
+        # These are derived indexes. Rebuilding them from the cloned primary
+        # entities is both cheaper and, critically, preserves object identity:
+        # microzones_by_locality must reference the same cloned Microzone
+        # objects held in the primary microzones table.
+        rebuilt_fields = {
+            "microzones_by_locality",
+            "formation_ids_by_locality",
+            "patrol_ids_by_locality",
+            "patrol_ids_by_formation",
+            "security_posts_by_locality",
+            "social_community_ids_by_locality",
         }
         cloned = copy.copy(self)
         for item in fields(self):
-            if item.name in shared_fields:
+            if item.name in shared_fields or item.name in rebuilt_fields:
                 continue
-            setattr(cloned, item.name, copy.deepcopy(getattr(self, item.name)))
+            value = getattr(self, item.name)
+            if item.name in {"beliefs", "control_beliefs"}:
+                value = {
+                    key: ActorBelief(
+                        belief.actor_id,
+                        belief.locality_id,
+                        copy.copy(belief.control_estimate),
+                        belief.confidence,
+                        belief.updated_at,
+                        belief.last_reliable_observation_at,
+                        belief.evidence_count,
+                        belief.contradiction_index,
+                        belief.violence_estimate,
+                    )
+                    for key, belief in value.items()
+                }
+            elif item.name == "zone_beliefs":
+                value = {
+                    key: copy.copy(belief)
+                    for key, belief in value.items()
+                }
+            elif item.name in {"presence_beliefs", "node_presence_beliefs"}:
+                value = {
+                    key: copy.copy(belief)
+                    for key, belief in value.items()
+                }
+            else:
+                value = copy.deepcopy(value)
+            setattr(cloned, item.name, value)
+        cloned.rebuild_runtime_entity_indexes()
         return cloned
 
 

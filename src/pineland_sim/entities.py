@@ -11,7 +11,18 @@ CONTROL_DIMENSIONS = ("formal", "physical", "administrative", "legal", "fiscal",
 
 
 def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
-    return min(high, max(low, value))
+    # Equivalent to min(high, max(low, value)) for finite values and its
+    # established NaN/reversed-bound behavior, but avoids two Python builtin
+    # calls in one of the simulator's hottest scalar helpers.
+    if low >= high:
+        return high
+    if value != value:  # preserve max(low, nan) -> low semantics
+        return low
+    if value < low:
+        return low
+    if value > high:
+        return high
+    return value
 
 
 def logistic(value: float) -> float:

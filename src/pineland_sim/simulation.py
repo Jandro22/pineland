@@ -413,6 +413,24 @@ class Simulation:
             else max(0.0, float(interval_days))
         )
         action_time = current_time if realization_time is None else realization_time
+        operational_localities: dict[str, set[str]] = {}
+        for (organization_id, locality_id), quantity in (
+            self.world.organization_manpower_pools.items()
+        ):
+            if quantity > 0:
+                operational_localities.setdefault(organization_id, set()).add(
+                    locality_id
+                )
+        for formation in self.world.formations.values():
+            if (
+                formation.personnel > 0
+                and not formation.moving
+                and not formation.outside_pineland
+            ):
+                operational_localities.setdefault(
+                    formation.organization_id, set()
+                ).add(formation.locality_id)
+
         for organization in sorted(
             (
                 item for item in self.world.organizations.values()
@@ -420,7 +438,9 @@ class Simulation:
             ),
             key=lambda item: item.organization_id,
         ):
-            for locality_id in sorted(self.world.localities):
+            for locality_id in sorted(
+                operational_localities.get(organization.organization_id, ())
+            ):
                 unfielded, fielded = local_fighter_equivalents(
                     self.world, organization.organization_id, locality_id
                 )
@@ -555,7 +575,12 @@ class SimulationParticle:
 
     def fork(self, child_index: int) -> "SimulationParticle":
         child_lineage = f"{self.lineage_id}.{child_index}"
-        hook = copy.deepcopy(self.simulation.policy_hook)
+        parent_hook = self.simulation.policy_hook
+        hook = (
+            parent_hook.clone()
+            if parent_hook is not None and callable(getattr(parent_hook, "clone", None))
+            else copy.deepcopy(parent_hook)
+        )
         cloned = self.simulation.clone(
             policy_hook=hook,
             stream_namespace=f"particle:{child_lineage}",

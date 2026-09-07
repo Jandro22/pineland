@@ -1,10 +1,17 @@
 import math
 import unittest
 
-from pineland_sim.entities import ControlVector, logistic
+from pineland_sim.entities import ControlVector, clamp, logistic
 
 
 class EntityTests(unittest.TestCase):
+    def test_clamp_preserves_boundary_and_nan_semantics(self):
+        self.assertEqual(clamp(-1.0), 0.0)
+        self.assertEqual(clamp(0.25), 0.25)
+        self.assertEqual(clamp(2.0), 1.0)
+        self.assertEqual(clamp(float("nan")), 0.0)
+        self.assertEqual(clamp(5.0, 2.0, 1.0), 1.0)
+
     def test_control_is_bounded_and_geometric(self):
         control = ControlVector(*([0.5] * 7))
         control.update({"physical": 2, "social": -2})

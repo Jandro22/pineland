@@ -554,14 +554,31 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
     else:
         values = {"physical": physical_value}
     prior_confidence = belief.confidence
+    contradiction_decay = exp(
+        -max(0.0, time - belief.updated_at)
+        / world.config.information.contradiction_memory_days
+    )
+    penalty = world.config.information.contradiction_penalty
+    prior = max(.02, prior_confidence)
     for dimension, observed in values.items():
         if dimension not in CONTROL_DIMENSIONS:
             continue
         old = getattr(belief.control_estimate, dimension)
-        new, confidence, contradiction = _fuse_scalar(
-            old, prior_confidence, clamp(float(observed)), weight,
-            _decayed_contradiction(world, belief.contradiction_index, belief.updated_at, time),
-            world.config.information.contradiction_penalty,
+        observed_value = clamp(float(observed))
+        # Inline the scalar update in this seven-dimensional hot loop.  The
+        # arithmetic and update order are intentionally identical to
+        # _fuse_scalar; avoiding ~1.6M Python calls matters at national scale.
+        denominator = prior + weight
+        new = clamp(
+            (prior * old + weight * observed_value) / denominator
+        )
+        contradiction = (
+            belief.contradiction_index * contradiction_decay
+            + weight * abs(observed_value - old)
+        )
+        confidence = clamp(
+            denominator / (1.0 + denominator)
+            * exp(-penalty * contradiction)
         )
         setattr(belief.control_estimate, dimension, new)
         belief.confidence = confidence
@@ -732,10 +749,25 @@ def fuse_observation(world: WorldState, observation: Observation, recipient_id: 
     # treated as independent evidence.
     source_correlation = world.config.information.source_correlation.get(
         observation.source_type, .5)
-    corroboration = _corroboration_weight(
-        world.observation_source_index.get(index_key, ()), observation.timestamp,
-        observation.source_id, source_correlation,
+    history = world.observation_source_index.get(index_key, ())
+    corroboration_key = (
+        "corroboration",
+        observation.observation_id,
+        world.next_observation_sequence,
     )
+    corroboration = (
+        world.information_execution_cache.get(corroboration_key)
+        if world.information_cache_active else None
+    )
+    if corroboration is None:
+        corroboration = _corroboration_weight(
+            history,
+            observation.timestamp,
+            observation.source_id,
+            source_correlation,
+        )
+        if world.information_cache_active:
+            world.information_execution_cache[corroboration_key] = corroboration
     weight = clamp(observation.confidence * observation.quality * trust *
                    (language ** world.config.information.language_fusion_weight) * age_quality *
                    (1 + world.config.information.corroboration_bonus * min(3, corroboration)))
@@ -1207,18 +1239,20 @@ def decay_information(world: WorldState, time: float) -> None:
     if elapsed <= 0:
         return
     config = world.config.information
+    default_factor = exp(-config.default_decay_rate * elapsed)
+    formation_factor = exp(-config.formation_decay_rate * elapsed)
     for belief in world.beliefs.values():
-        belief.confidence = clamp(belief.confidence * exp(-config.default_decay_rate * elapsed))
+        belief.confidence = clamp(belief.confidence * default_factor)
     for belief in getattr(world, "control_beliefs", {}).values():
-        belief.confidence = clamp(belief.confidence * exp(-config.default_decay_rate * elapsed))
+        belief.confidence = clamp(belief.confidence * default_factor)
     for belief in world.zone_beliefs.values():
-        belief.confidence = clamp(belief.confidence * exp(-config.formation_decay_rate * elapsed))
+        belief.confidence = clamp(belief.confidence * formation_factor)
     for belief in world.presence_beliefs.values():
-        rate = config.formation_decay_rate if belief.target_id else config.default_decay_rate
-        belief.confidence = clamp(belief.confidence * exp(-rate * elapsed))
+        factor = formation_factor if belief.target_id else default_factor
+        belief.confidence = clamp(belief.confidence * factor)
     for belief in world.node_presence_beliefs.values():
-        rate = config.formation_decay_rate if belief.target_id else config.default_decay_rate
-        belief.confidence = clamp(belief.confidence * exp(-rate * elapsed))
+        factor = formation_factor if belief.target_id else default_factor
+        belief.confidence = clamp(belief.confidence * factor)
     world.last_information_decay_at = time
 
 
