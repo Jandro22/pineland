@@ -65,7 +65,7 @@ def initialize_foreign_system(world) -> None:
     # border/locality-level and is computed below from represented language
     # and social overlap, so absence of a sampled resident does not erase it.
     for border in world.border_segments.values():
-        candidates = [p for p in world.persons.values() if p.residence_locality_id == border.locality_id]
+        candidates = list(world.persons_in_locality(border.locality_id))
         candidates.sort(key=lambda p: (-len(world.social_neighbors.get(p.person_id, ())), p.person_id))
         if not candidates:
             continue

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections import deque
 from collections.abc import Mapping
-from dataclasses import fields, is_dataclass
+from dataclasses import asdict, fields, is_dataclass
 from enum import Enum
 import hashlib
 from importlib import metadata
@@ -48,19 +48,24 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "causal_ledger", "synthetic_records", "checkpoints", "state_deltas",
     "stock_transactions", "organization_eligibility_log",
     "organization_onset_log", "observation_index",
-    "civilian_harm_events",
+    "information_detections", "information_detection_by_source",
+    "civilian_harm_events", "resource_flows",
+    "information_detections", "information_detection_by_source",
     "stock_ledger_deltas", "stock_ledger_by_class",
     "stock_ledger_by_boundary", "stock_ledger_by_flow_kind",
     "stock_ledger_event_ids", "stock_ledger_transaction_count",
     "locality_path_cache", "locality_travel_time_cache",
-    "locality_route_metrics_cache", "in_transit_supply_total",
+    "locality_route_metrics_cache", "command_path_cache", "in_transit_supply_total",
     "active_shipment_ids", "active_movement_order_ids",
+    "person_ids_by_residence_locality",
+    "person_ids_by_organization", "unassigned_person_ids",
+    "primary_language_by_locality", "multilingual_locality_ids",
     "microzones_by_locality", "formation_ids_by_locality",
     "patrol_ids_by_locality", "patrol_ids_by_formation",
     "security_posts_by_locality", "social_community_ids_by_locality",
     "information_execution_cache",
     "information_cache_active",
-    "execution_profile", "engagements", "state_based_event_times",
+    "execution_profile", "performance_counters", "engagements", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
 })
 
@@ -78,9 +83,9 @@ PARTICLE_ARCHIVE_WORLD_FIELDS = frozenset({
     "stock_transactions", "organization_eligibility_log",
     "organization_onset_log", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
-    "civilian_harm_events",
+    "civilian_harm_events", "resource_flows",
     "information_execution_cache",
-    "information_cache_active", "engagements",
+    "information_cache_active", "performance_counters", "engagements",
 })
 
 OUTPUT_ONLY_SUMMARY_FIELDS = frozenset({
@@ -338,11 +343,16 @@ def decision_state_payload(world: Any) -> dict[str, Any]:
     pending_observation_ids = {
         relay.observation_id for relay in active_relays.values()
     }
-    active_observations = {
-        observation_id: world.observations[observation_id]
-        for observation_id in sorted(pending_observation_ids)
-        if observation_id in world.observations
-    }
+    active_observations = {}
+    for observation_id in sorted(pending_observation_ids):
+        observation = world.observations.get(observation_id)
+        if observation is None:
+            continue
+        observation_payload = asdict(observation)
+        # Provenance is archival metadata. Future fusion consumes the typed
+        # observation fields directly and never reads this dictionary.
+        observation_payload.pop("provenance", None)
+        active_observations[observation_id] = observation_payload
     # Corroboration has an explicit three-day memory.  Dormant index entries
     # older than that can remain in a full forensic archive, but _store_observation
     # discards them before the next fusion operation, so they are not part of

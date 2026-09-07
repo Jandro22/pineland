@@ -4,7 +4,7 @@ import copy
 from dataclasses import dataclass
 from typing import Callable
 
-from .events import EventScheduler
+from .events import CalendarEventScheduler, EventScheduler
 from .processes import ProcessEngine
 from .world import WorldState, seeded_rng
 from .action_model import ACTION_ORGANIZATION_KINDS, local_fighter_equivalents
@@ -73,16 +73,36 @@ class Simulation:
         validate_invariants: bool | None = None,
         checkpointing: bool | None = None,
         retain_output_archives: bool | None = None,
+        scheduler_backend: str | None = None,
     ) -> None:
         """Configure a simulation's bookkeeping policy before initialization."""
         if self._initialized and checkpointing is not None and bool(checkpointing) != self._checkpointing:
             raise RuntimeError("checkpointing cannot change after simulation initialization")
+        if scheduler_backend is not None:
+            if self._initialized:
+                raise RuntimeError(
+                    "scheduler backend cannot change after simulation initialization"
+                )
+            if scheduler_backend == "heap":
+                self.scheduler = EventScheduler()
+            elif scheduler_backend == "calendar":
+                self.scheduler = CalendarEventScheduler()
+            else:
+                raise ValueError(
+                    "scheduler_backend must be 'heap' or 'calendar'"
+                )
         if validate_invariants is not None:
             self._validate_invariants = bool(validate_invariants)
         if checkpointing is not None:
             self._checkpointing = bool(checkpointing)
         if retain_output_archives is not None:
             self._retain_output_archives = bool(retain_output_archives)
+            if not self._retain_output_archives:
+                # Case conditioning and scientific fixtures may legitimately
+                # mutate entities directly while the world is still in
+                # standard mode. Rebuild all derived execution indexes once
+                # before any particle hot path begins trusting them.
+                self.world.rebuild_runtime_entity_indexes()
             self.world.execution_profile = (
                 "particle" if not self._retain_output_archives else "standard"
             )
@@ -204,7 +224,8 @@ class Simulation:
     def _run_burn_in(self) -> None:
         """Run an unrecorded stabilization phase before analytical time zero."""
         burn_in = self.world.config.burn_in_days
-        self.scheduler = EventScheduler(allow_negative=True)
+        scheduler_type = type(self.scheduler)
+        self.scheduler = scheduler_type(allow_negative=True)
         self.world.time = -burn_in
         self.world.in_burn_in = True
         self._recruitment_clock_started = False
@@ -342,7 +363,7 @@ class Simulation:
             formation.cumulative_losses = 0.0
         self.world.initialize_stock_ledger()
         self.processes.event_counter = 0
-        self.scheduler = EventScheduler(allow_negative=True)
+        self.scheduler = scheduler_type(allow_negative=True)
         self._recruitment_clock_started = False
         self._populate_scheduler(0.0, include_checkpoints=self._checkpointing)
 

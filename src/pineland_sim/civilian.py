@@ -7,9 +7,8 @@ from .entities import CivilianHarmEvent
 def _resident_people(world, locality_id: str):
     return [
         person
-        for person in world.persons.values()
+        for person in world.persons_in_locality(locality_id)
         if person.external_state_id is None
-        and person.residence_locality_id == locality_id
         and person.weight > 0
     ]
 

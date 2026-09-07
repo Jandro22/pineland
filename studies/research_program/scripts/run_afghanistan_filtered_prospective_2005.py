@@ -66,6 +66,7 @@ DEFAULT_PARTICLE_COUNT = 128
 DEFAULT_STRENGTHS = (5000.0, 7500.0, 10000.0)
 PRIOR_FAMILY_STRATA = tuple(sorted(TALIBAN_PRIOR_FAMILIES))
 POSTERIOR_CACHE_SCHEMA = "pineland.afghanistan.posterior_cache.v1"
+TRAINING_RESTART_SCHEMA = "pineland.afghanistan.training_restart.v1"
 COMPETITOR_INFORMATION_CONTRACT = {
     "schema_version": "pineland.afghanistan.information_matched_competitors.v1",
     "evaluation_surface": "observed province-week Taliban-state-security incidence",
@@ -315,9 +316,19 @@ def _snapshot_filter(
     filter_: SequentialParticleFilter[
         SimulationParticle, ProvinceWeekObservation
     ],
+    *,
+    states: list[SimulationParticle] | None = None,
 ) -> dict[str, object]:
+    particles = filter_.particles
+    if states is not None:
+        if len(states) != len(particles):
+            raise ValueError("restart snapshot state count does not match filter")
+        particles = [
+            Particle(state, particle.log_weight)
+            for state, particle in zip(states, particles)
+        ]
     return {
-        "particles": filter_.particles,
+        "particles": particles,
         "history": filter_.history,
         "root_ancestors": list(filter_._root_ancestors),
         "resampling_events": int(filter_._resampling_events),
@@ -328,6 +339,100 @@ def _snapshot_filter(
             filter_, "nested_propagator_diagnostics", {}
         ),
     }
+
+
+def _training_restart_paths(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+    completed_week_index: int,
+) -> tuple[Path, Path]:
+    digest = _posterior_cache_digest(cache_key)
+    stem = f"training-{digest}-week-{int(completed_week_index):03d}"
+    return cache_dir / f"{stem}.json", cache_dir / f"{stem}.pkl"
+
+
+def _save_training_restart(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+    filter_: SequentialParticleFilter[
+        SimulationParticle, ProvinceWeekObservation
+    ],
+    *,
+    completed_week_index: int,
+    states: list[SimulationParticle] | None = None,
+) -> tuple[Path, Path]:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path, payload_path = _training_restart_paths(
+        cache_dir, cache_key, completed_week_index
+    )
+    payload = pickle.dumps(
+        _snapshot_filter(filter_, states=states),
+        protocol=pickle.HIGHEST_PROTOCOL,
+    )
+    payload_sha256 = hashlib.sha256(payload).hexdigest()
+    payload_tmp = payload_path.with_suffix(payload_path.suffix + ".tmp")
+    manifest_tmp = manifest_path.with_suffix(manifest_path.suffix + ".tmp")
+    payload_tmp.write_bytes(payload)
+    os.replace(payload_tmp, payload_path)
+    manifest = {
+        "schema_version": TRAINING_RESTART_SCHEMA,
+        "cache_key": cache_key,
+        "completed_week_index": int(completed_week_index),
+        "last_time": float(filter_.last_time),
+        "payload_sha256": payload_sha256,
+        "payload_bytes": len(payload),
+        "format": "trusted-local-python-pickle",
+        "canonical_scientific_artifact": False,
+    }
+    manifest_tmp.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(manifest_tmp, manifest_path)
+    return manifest_path, payload_path
+
+
+def _load_latest_training_restart(
+    cache_dir: Path,
+    cache_key: dict[str, object],
+    *,
+    filter_seed: int,
+) -> tuple[
+    SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation] | None,
+    Path | None,
+    int | None,
+]:
+    digest = _posterior_cache_digest(cache_key)
+    candidates = sorted(
+        cache_dir.glob(f"training-{digest}-week-*.json"),
+        reverse=True,
+    ) if cache_dir.exists() else []
+    for manifest_path in candidates:
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if manifest.get("schema_version") != TRAINING_RESTART_SCHEMA:
+                continue
+            if manifest.get("cache_key") != cache_key:
+                continue
+            completed_week = int(manifest["completed_week_index"])
+            expected_manifest, payload_path = _training_restart_paths(
+                cache_dir, cache_key, completed_week
+            )
+            if expected_manifest != manifest_path or not payload_path.exists():
+                continue
+            payload = payload_path.read_bytes()
+            if hashlib.sha256(payload).hexdigest() != manifest.get(
+                "payload_sha256"
+            ):
+                continue
+            filter_ = _restore_filter(
+                pickle.loads(payload), filter_seed=filter_seed
+            )
+            filter_.frozen = False
+            return filter_, manifest_path, completed_week
+        except (KeyError, TypeError, ValueError, OSError, pickle.PickleError):
+            continue
+    return None, None, None
 
 
 def _restore_filter(
@@ -655,10 +760,20 @@ def run_training_filter(
     ess_fraction: float = 0.5,
     likelihood_branches: int = 3,
     workers: int = 1,
+    resume_filter: SequentialParticleFilter[
+        SimulationParticle, ProvinceWeekObservation
+    ] | None = None,
+    restart_cache_dir: Path | None = None,
+    restart_cache_key: dict[str, object] | None = None,
+    restart_every_weeks: int = 13,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
     if workers < 1:
         raise ValueError("workers must be positive")
-    filter_ = SequentialParticleFilter(
+    if restart_cache_dir is not None and restart_cache_key is None:
+        raise ValueError("restart cache key is required when restart caching is enabled")
+    if restart_every_weeks < 1:
+        raise ValueError("restart_every_weeks must be positive")
+    filter_ = resume_filter or SequentialParticleFilter(
         particles,
         transition=lambda state, time: None,
         log_likelihood=lambda state, observation: 0.0,
@@ -667,10 +782,50 @@ def run_training_filter(
         allowed_split="training",
         fork_state=lambda state, child_index: state.fork(child_index),
     )
-    nested_calls = 0
-    exact_calls = 0
-    mismatch_sum = 0.0
-    max_mismatch = 0
+    prior_nested = getattr(filter_, "nested_propagator_diagnostics", {})
+    nested_calls = int(prior_nested.get("nested_propagation_calls", 0))
+    exact_calls = int(prior_nested.get("exact_descendant_match_calls", 0))
+    mismatch_sum = (
+        float(prior_nested.get("mean_minimum_descendant_hamming_mismatch", 0.0))
+        * nested_calls
+    )
+    max_mismatch = int(
+        prior_nested.get("maximum_minimum_descendant_hamming_mismatch", 0)
+    )
+
+    def refresh_nested_diagnostics() -> None:
+        filter_.nested_propagator_diagnostics = {
+            "nested_propagation_calls": nested_calls,
+            "exact_descendant_match_calls": exact_calls,
+            "exact_descendant_match_fraction": (
+                exact_calls / nested_calls if nested_calls else 0.0
+            ),
+            "mean_minimum_descendant_hamming_mismatch": (
+                mismatch_sum / nested_calls if nested_calls else 0.0
+            ),
+            "maximum_minimum_descendant_hamming_mismatch": max_mismatch,
+            "workers": workers,
+        }
+
+    def maybe_save_restart(
+        observation: ProvinceWeekObservation,
+        executor: object | None,
+    ) -> None:
+        if (
+            restart_cache_dir is None
+            or restart_cache_key is None
+            or (observation.week_index + 1) % restart_every_weeks != 0
+        ):
+            return
+        refresh_nested_diagnostics()
+        states = executor.snapshot() if executor is not None else None
+        _save_training_restart(
+            restart_cache_dir,
+            restart_cache_key,
+            filter_,
+            completed_week_index=observation.week_index,
+            states=states,
+        )
 
     def assimilate_one(
         observation: ProvinceWeekObservation,
@@ -732,10 +887,15 @@ def run_training_filter(
             if diagnostics.resampled:
                 executor.resample(parent_indices)
 
-    ordered_observations = list(observations)
+    ordered_observations = [
+        observation
+        for observation in observations
+        if observation.end_day > filter_.last_time + 1e-12
+    ]
     if workers == 1:
         for observation in ordered_observations:
             assimilate_one(observation, None)
+            maybe_save_restart(observation, None)
     else:
         initial_states = [particle.state for particle in filter_.particles]
         with PersistentParticlePool(
@@ -754,20 +914,10 @@ def run_training_filter(
             particles = []
             for observation in ordered_observations:
                 assimilate_one(observation, executor)
+                maybe_save_restart(observation, executor)
             _reattach_particle_states(filter_, executor.snapshot())
     filter_.freeze()
-    filter_.nested_propagator_diagnostics = {
-        "nested_propagation_calls": nested_calls,
-        "exact_descendant_match_calls": exact_calls,
-        "exact_descendant_match_fraction": (
-            exact_calls / nested_calls if nested_calls else 0.0
-        ),
-        "mean_minimum_descendant_hamming_mismatch": (
-            mismatch_sum / nested_calls if nested_calls else 0.0
-        ),
-        "maximum_minimum_descendant_hamming_mismatch": max_mismatch,
-        "workers": workers,
-    }
+    refresh_nested_diagnostics()
     return filter_
 
 
@@ -995,6 +1145,8 @@ def run(
     forecast_branches: int = 3,
     workers: int = 1,
     posterior_cache_dir: Path | None = None,
+    training_restart_dir: Path | None = None,
+    restart_every_weeks: int = 13,
 ) -> dict:
     repo = repository_state(ROOT)
     empty_diff_sha256 = hashlib.sha256(b"").hexdigest()
@@ -1062,6 +1214,9 @@ def run(
     }
     posterior_cache_hit = False
     posterior_cache_manifest: Path | None = None
+    training_restart_hit = False
+    training_restart_manifest: Path | None = None
+    training_restart_week: int | None = None
     if posterior_cache_dir is not None:
         manifest_path, payload_path = _posterior_cache_paths(
             posterior_cache_dir, cache_key
@@ -1079,29 +1234,50 @@ def run(
         filter_ = None
 
     if filter_ is None:
-        base_world = generate_pineland(
-            _config(seed, horizon), empirical_geography=case
-        )
-        initial_particles = [
-            build_initial_particle(
-                seed=seed,
-                particle_index=index,
-                taliban_strength=particle_strengths[index],
-                prior_family=PRIOR_FAMILY_STRATA[index % len(PRIOR_FAMILY_STRATA)],
-                horizon=horizon,
-                case=case,
-                inputs=inputs,
-                base_world=base_world,
+        resume_filter = None
+        if training_restart_dir is not None:
+            (
+                resume_filter,
+                training_restart_manifest,
+                training_restart_week,
+            ) = _load_latest_training_restart(
+                training_restart_dir,
+                cache_key,
+                filter_seed=filter_seed,
             )
-            for index in range(particles)
-        ]
-        del base_world
+            training_restart_hit = resume_filter is not None
+        if resume_filter is None:
+            base_world = generate_pineland(
+                _config(seed, horizon), empirical_geography=case
+            )
+            initial_particles = [
+                build_initial_particle(
+                    seed=seed,
+                    particle_index=index,
+                    taliban_strength=particle_strengths[index],
+                    prior_family=PRIOR_FAMILY_STRATA[
+                        index % len(PRIOR_FAMILY_STRATA)
+                    ],
+                    horizon=horizon,
+                    case=case,
+                    inputs=inputs,
+                    base_world=base_world,
+                )
+                for index in range(particles)
+            ]
+            del base_world
+        else:
+            initial_particles = []
         filter_ = run_training_filter(
             initial_particles,
             observations,
             filter_seed=filter_seed,
             likelihood_branches=likelihood_branches,
             workers=workers,
+            resume_filter=resume_filter,
+            restart_cache_dir=training_restart_dir,
+            restart_cache_key=cache_key if training_restart_dir is not None else None,
+            restart_every_weeks=restart_every_weeks,
         )
         if posterior_cache_dir is not None:
             posterior_cache_manifest, _ = _save_posterior_cache(
@@ -1204,6 +1380,17 @@ def run(
             ),
             "canonical_scientific_artifact": False,
         },
+        "training_restart_cache": {
+            "enabled": training_restart_dir is not None,
+            "resumed": training_restart_hit,
+            "resumed_completed_week_index": training_restart_week,
+            "manifest": (
+                str(training_restart_manifest)
+                if training_restart_manifest is not None else None
+            ),
+            "restart_every_weeks": restart_every_weeks,
+            "canonical_scientific_artifact": False,
+        },
         "filter_updates": filter_diagnostics,
         "nested_propagator_diagnostics": getattr(
             filter_, "nested_propagator_diagnostics", {}
@@ -1256,6 +1443,20 @@ def main() -> None:
             "posterior; skips repeated 2004 assimilation when provenance matches"
         ),
     )
+    parser.add_argument(
+        "--training-restart-dir",
+        type=Path,
+        help=(
+            "optional content-addressed observation-boundary restart cache "
+            "for interrupted training assimilation"
+        ),
+    )
+    parser.add_argument(
+        "--restart-every-weeks",
+        type=int,
+        default=13,
+        help="training restart snapshot cadence in completed weeks",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     payload = run(
@@ -1264,6 +1465,8 @@ def main() -> None:
         particles=args.particles,
         workers=args.workers,
         posterior_cache_dir=args.posterior_cache_dir,
+        training_restart_dir=args.training_restart_dir,
+        restart_every_weeks=args.restart_every_weeks,
         output=args.output,
     )
     print(json.dumps({

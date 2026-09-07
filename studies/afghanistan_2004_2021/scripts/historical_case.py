@@ -619,7 +619,9 @@ def _install_clandestine_state(world, allocations: dict[str, float]) -> None:
                         person.armed_fraction,
                     ) + fraction
                     assigned_fraction[person.person_id] = cumulative_fraction
-                    _set_armed_membership(person, organization, cumulative_fraction)
+                    _set_armed_membership(
+                        world, person, organization, cumulative_fraction
+                    )
                     organization.member_ids.add(person.person_id)
                     allocated_this_round += represented
                 if represented + 1e-9 < share:

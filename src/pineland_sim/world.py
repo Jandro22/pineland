@@ -79,8 +79,15 @@ class WorldState:
     geographic_containers: dict[str, dict[str, Any]] = field(default_factory=dict)
     district_hierarchy: dict[str, dict[str, str]] = field(default_factory=dict)
     localities: dict[str, Locality] = field(default_factory=dict)
+    primary_language_by_locality: dict[str, str] = field(default_factory=dict)
+    multilingual_locality_ids: set[str] = field(default_factory=set)
     households: dict[str, Household] = field(default_factory=dict)
     persons: dict[str, Person] = field(default_factory=dict)
+    person_ids_by_residence_locality: dict[str, list[str]] = field(
+        default_factory=dict
+    )
+    person_ids_by_organization: dict[str, list[str]] = field(default_factory=dict)
+    unassigned_person_ids: set[str] = field(default_factory=set)
     social_communities: dict[str, SocialCommunity] = field(default_factory=dict)
     social_edges: dict[tuple[str, str], SocialEdge] = field(default_factory=dict)
     social_neighbors: dict[str, list[str]] = field(default_factory=dict)
@@ -129,6 +136,9 @@ class WorldState:
     information_detection_by_source: dict[str, dict[str, int]] = field(default_factory=dict)
     last_information_decay_at: float = 0.0
     command_edges: dict[tuple[str, str], CommandEdge] = field(default_factory=dict)
+    command_path_cache: dict[
+        tuple[str, str, str], tuple[tuple[str, ...], float, float]
+    ] = field(default_factory=dict)
     supply_sources: dict[str, SupplySource] = field(default_factory=dict)
     supply_shipments: dict[str, SupplyShipment] = field(default_factory=dict)
     movement_orders: dict[str, FormationMovementOrder] = field(default_factory=dict)
@@ -263,6 +273,9 @@ class WorldState:
     # Runtime bookkeeping profile. This is deliberately excluded from
     # scientific state hashes and never changes transition equations.
     execution_profile: str = "standard"
+    # Optional profiling counters. None on normal execution so hot paths pay
+    # only a single identity check when instrumentation is explicitly enabled.
+    performance_counters: dict[str, int] | None = None
 
     @property
     def observation_records(self) -> list[Observation]:
@@ -271,6 +284,32 @@ class WorldState:
 
     def rebuild_runtime_entity_indexes(self) -> None:
         """Build deterministic locality indexes used by hot execution paths."""
+        self.primary_language_by_locality = {}
+        self.multilingual_locality_ids = set()
+        for locality_id, locality in self.localities.items():
+            pattern = self.districts[locality.district_id].language_pattern
+            self.primary_language_by_locality[locality_id] = pattern.split(
+                "/", 1
+            )[0]
+            if "/" in pattern:
+                self.multilingual_locality_ids.add(locality_id)
+        self.person_ids_by_residence_locality = {}
+        self.person_ids_by_organization = {}
+        self.unassigned_person_ids = set()
+        for person_id, person in self.persons.items():
+            self.person_ids_by_residence_locality.setdefault(
+                person.residence_locality_id, []
+            ).append(person_id)
+            if person.organization_id is None:
+                self.unassigned_person_ids.add(person_id)
+            else:
+                self.person_ids_by_organization.setdefault(
+                    person.organization_id, []
+                ).append(person_id)
+        for person_ids in self.person_ids_by_residence_locality.values():
+            person_ids.sort()
+        for person_ids in self.person_ids_by_organization.values():
+            person_ids.sort()
         self.microzones_by_locality = {
             locality_id: tuple(
                 self.microzones[zone_id]
@@ -293,11 +332,16 @@ class WorldState:
             ).append(patrol_id)
         for patrol_ids in self.patrol_ids_by_locality.values():
             patrol_ids.sort()
+        self.security_post_ids_by_locality = {}
+        for post_id, post in self.security_posts.items():
+            self.security_post_ids_by_locality.setdefault(
+                post.locality_id, []
+            ).append(post_id)
+        for post_ids in self.security_post_ids_by_locality.values():
+            post_ids.sort()
         self.security_posts_by_locality = {
             locality_id: tuple(
-                self.security_posts[post_id]
-                for post_id in post_ids
-                if post_id in self.security_posts
+                self.security_posts[post_id] for post_id in post_ids
             )
             for locality_id, post_ids in self.security_post_ids_by_locality.items()
         }
@@ -317,6 +361,72 @@ class WorldState:
             ).append(patrol_id)
         for patrol_ids in self.patrol_ids_by_formation.values():
             patrol_ids.sort()
+
+    def relocate_person(self, person: Person, locality_id: str) -> None:
+        """Move one representative while keeping the residence index exact."""
+        old_locality = person.residence_locality_id
+        if old_locality == locality_id:
+            return
+        old_ids = self.person_ids_by_residence_locality.get(old_locality, [])
+        if person.person_id in old_ids:
+            old_ids.remove(person.person_id)
+        self.person_ids_by_residence_locality.setdefault(
+            locality_id, []
+        ).append(person.person_id)
+        self.person_ids_by_residence_locality[locality_id].sort()
+        person.residence_locality_id = locality_id
+
+    def persons_in_locality(self, locality_id: str):
+        """Return resident representatives, using the exact particle index."""
+        if self.execution_profile == "particle":
+            return (
+                self.persons[person_id]
+                for person_id in self.person_ids_by_residence_locality.get(
+                    locality_id, ()
+                )
+                if person_id in self.persons
+            )
+        return (
+            person for person in self.persons.values()
+            if person.residence_locality_id == locality_id
+        )
+
+    def set_person_organization(
+        self, person: Person, organization_id: str | None
+    ) -> None:
+        """Update armed affiliation while keeping membership indexes exact."""
+        prior = person.organization_id
+        if prior == organization_id:
+            return
+        if prior is None:
+            self.unassigned_person_ids.discard(person.person_id)
+        else:
+            prior_ids = self.person_ids_by_organization.get(prior, [])
+            if person.person_id in prior_ids:
+                prior_ids.remove(person.person_id)
+        person.organization_id = organization_id
+        if organization_id is None:
+            self.unassigned_person_ids.add(person.person_id)
+        else:
+            ids = self.person_ids_by_organization.setdefault(
+                organization_id, []
+            )
+            if person.person_id not in ids:
+                ids.append(person.person_id)
+                ids.sort()
+
+    def unassigned_people(self):
+        """Iterate unassigned representatives using the particle index."""
+        if self.execution_profile == "particle":
+            return (
+                self.persons[person_id]
+                for person_id in sorted(self.unassigned_person_ids)
+                if person_id in self.persons
+            )
+        return (
+            person for person in self.persons.values()
+            if person.organization_id is None
+        )
 
     def register_formation(self, formation: ArmedFormation) -> None:
         """Register a newly created formation in the locality execution index."""
@@ -408,6 +518,36 @@ class WorldState:
                 value.clear()
             elif isinstance(value, (int, float)):
                 setattr(self, name, type(value)())
+
+    def compact_particle_information_state(self) -> None:
+        """Retain only raw information objects that can affect future decisions.
+
+        Beliefs already contain fused evidence, while corroboration uses the
+        separate bounded observation_source_index. A raw Observation is needed
+        after its local fusion only while an in-transit relay references it.
+        Likewise, completed relay objects are forensic history. This method
+        therefore reduces particle information storage to the same sufficient
+        working set used by decision_state_payload.
+        """
+        if self.execution_profile != "particle":
+            return
+        active = self.active_information_relays
+        self.information_relays = {
+            relay_id: relay
+            for relay_id, relay in self.information_relays.items()
+            if relay_id in active and relay.status == "in_transit"
+        }
+        pending_observations = {
+            relay.observation_id for relay in self.information_relays.values()
+        }
+        self.observations = {
+            observation_id: observation
+            for observation_id, observation in self.observations.items()
+            if observation_id in pending_observations
+        }
+        # This index is publication/diagnostic history only; live
+        # corroboration is maintained independently in observation_source_index.
+        self.observation_index.clear()
 
     def detach_particle_archives(self) -> dict[str, Any]:
         """Temporarily replace particle archives with empty containers.
@@ -1414,7 +1554,8 @@ class WorldState:
         shared_fields = {
             "config", "districts", "geographic_containers", "district_hierarchy",
             "social_edges", "social_neighbors", "social_community_ids_by_locality",
-            "adjacency",
+            "adjacency", "microzone_ids_by_locality", "physical_neighbors",
+            "primary_language_by_locality", "multilingual_locality_ids",
             # Route memoization is a pure function of the fixed locality graph,
             # fixed locality infrastructure, and the mobility value included in
             # each cache key.  Sharing these execution-only caches across
@@ -1432,10 +1573,16 @@ class WorldState:
         # microzones_by_locality must reference the same cloned Microzone
         # objects held in the primary microzones table.
         rebuilt_fields = {
+            "primary_language_by_locality",
+            "multilingual_locality_ids",
+            "person_ids_by_residence_locality",
+            "person_ids_by_organization",
+            "unassigned_person_ids",
             "microzones_by_locality",
             "formation_ids_by_locality",
             "patrol_ids_by_locality",
             "patrol_ids_by_formation",
+            "security_post_ids_by_locality",
             "security_posts_by_locality",
             "social_community_ids_by_locality",
         }
@@ -1469,10 +1616,37 @@ class WorldState:
                     key: copy.copy(belief)
                     for key, belief in value.items()
                 }
+            elif item.name == "observations":
+                # Observation payload/provenance dictionaries are immutable
+                # after construction. Only the wrapper's received_at field
+                # changes when a relay arrives, so shallow-copy each wrapper
+                # while sharing those read-only nested payloads.
+                value = {
+                    key: copy.copy(observation)
+                    for key, observation in value.items()
+                }
+            elif item.name == "information_relays":
+                # Relay routes are immutable after creation; status and
+                # delivered_at are scalar per-particle fields.
+                value = {
+                    key: copy.copy(relay)
+                    for key, relay in value.items()
+                }
+            elif item.name == "observation_source_index":
+                value = {
+                    key: deque(history)
+                    for key, history in value.items()
+                }
+            elif item.name == "physical_edges":
+                value = {
+                    key: copy.copy(edge)
+                    for key, edge in value.items()
+                }
             else:
                 value = copy.deepcopy(value)
             setattr(cloned, item.name, value)
         cloned.rebuild_runtime_entity_indexes()
+        cloned.command_path_cache = {}
         return cloned
 
 
