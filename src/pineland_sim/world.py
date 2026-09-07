@@ -1302,7 +1302,6 @@ class WorldState:
         shared_fields = {
             "districts", "geographic_containers", "district_hierarchy",
             "social_edges", "social_neighbors", "adjacency",
-            "physical_neighbors", "microzone_ids_by_locality",
         }
         cloned = copy.copy(self)
         for item in fields(self):

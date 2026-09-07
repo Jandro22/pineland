@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import argparse
-import copy
 import csv
 import hashlib
 import json
@@ -351,7 +350,7 @@ def build_initial_particle(
     """Create one prior particle with an independent latent spatial draw."""
     config = _config(seed, horizon)
     world = (
-        copy.deepcopy(base_world)
+        base_world.clone(share_static=True)
         if base_world is not None
         else generate_pineland(config, empirical_geography=case)
     )
@@ -551,12 +550,21 @@ def run_training_filter(
         for observation in ordered_observations:
             assimilate_one(observation, None)
     else:
+        initial_states = [particle.state for particle in filter_.particles]
         with PersistentParticlePool(
-            [particle.state for particle in filter_.particles],
+            initial_states,
             propagate=_nested_persistent_job,
             fork_state=_fork_particle_state,
             workers=workers,
         ) as executor:
+            # The coordinator retains only weights/ancestry metadata while
+            # workers own the mutable simulation objects.
+            filter_.particles = [
+                Particle(None, particle.log_weight)
+                for particle in filter_.particles
+            ]
+            del initial_states
+            particles = []
             for observation in ordered_observations:
                 assimilate_one(observation, executor)
             filter_.particles = [
@@ -650,25 +658,39 @@ def forecast_weighted_field(
     }
     member_cells: list[list[dict[str, int | str]]] = []
     forecast_branch_cells: list[list[list[dict[str, int | str]]]] = []
-    jobs = [
-        (particle.state, start_day, end_day, forecast_branches)
-        for particle in filter_.particles
-    ]
     if workers == 1:
+        jobs = [
+            (particle.state, start_day, end_day, forecast_branches)
+            for particle in filter_.particles
+        ]
         completed = list(map(_forecast_particle_job, jobs))
     else:
+        initial_states = [particle.state for particle in filter_.particles]
         with PersistentParticlePool(
-            [particle.state for particle in filter_.particles],
+            initial_states,
             propagate=_forecast_persistent_job,
             fork_state=_fork_particle_state,
             workers=workers,
         ) as executor:
+            filter_.particles = [
+                Particle(None, particle.log_weight)
+                for particle in filter_.particles
+            ]
+            del initial_states
             completed = [
                 diagnostics
                 for _, _, diagnostics in executor.propagate(
                     end_day, (start_day, end_day, forecast_branches)
                 )
             ]
+            forecast_states = executor.snapshot()
+        filter_.particles = [
+            Particle(
+                state,
+                math.log(weight) if weight > 0 else -float("inf"),
+            )
+            for state, weight in zip(forecast_states, weights)
+        ]
     for branch_cell_sets, weight in zip(completed, weights):
         cells = set().union(*branch_cell_sets) if branch_cell_sets else set()
         member_cells.append([
