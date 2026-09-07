@@ -81,7 +81,7 @@ def initialize_political_order(world) -> None:
             world.party_branches[f"BR-{party.organization_id}-{person.residence_locality_id}"].member_ids.add(person.person_id)
             party.member_ids.add(person.person_id)
     for locality in world.localities.values():
-        candidates = sorted((p for p in world.persons.values() if p.residence_locality_id == locality.locality_id),
+        candidates = sorted(world.persons_in_locality(locality.locality_id),
                             key=lambda p: (-len(world.social_neighbors.get(p.person_id, ())), p.person_id))
         # One sampled resident may anchor the aggregate brokerage capability.
         # Do not instantiate up to three pseudo-elites merely because a finer

@@ -395,6 +395,8 @@ class ProcessEngine:
                                                  self.world.tracked_stock_totals())
         if forensic:
             self.world.record_state_delta(event_id, event.event_type, before_controls, before_formations, actors)
+        if particle_mode and event.event_type == "information":
+            self.world.compact_particle_information_state()
         self.world.active_event_id = None
         return event_id
 
@@ -664,7 +666,8 @@ class ProcessEngine:
         # Public hooks may move formations by assigning locality_id directly;
         # refresh the dynamic locality indexes once at the event boundary so
         # the sparse paths remain exact without rebuilding per locality.
-        self.world.rebuild_runtime_entity_indexes()
+        if self.world.execution_profile != "particle":
+            self.world.rebuild_runtime_entity_indexes()
         from .physical import advance_patrol_presence_memory
 
         advance_patrol_presence_memory(self.world, self.world.time)
@@ -946,7 +949,7 @@ class ProcessEngine:
                         )
                         if len(route) > 1:
                             destination = route[1]
-                            person.residence_locality_id = destination
+                            self.world.relocate_person(person, destination)
                             moved += person.weight
                             returned += person.weight
                             if destination == person.home_locality_id:
@@ -1007,7 +1010,7 @@ class ProcessEngine:
                 )
                 utilities.append(exp(max(-10, min(10, utility))))
             destination = self.rng.choices(candidates, weights=utilities, k=1)[0]
-            person.residence_locality_id = destination
+            self.world.relocate_person(person, destination)
             moved += person.weight
             if forced and destination != person.home_locality_id:
                 if not person.displaced:

@@ -236,7 +236,15 @@ def language_comprehension(world: WorldState, observer_actor_id: str,
     if world.information_cache_active:
         cached = world.information_execution_cache.get(cache_key)
         if cached is not None:
+            if world.performance_counters is not None:
+                world.performance_counters["information_language_cache_hit"] = (
+                    world.performance_counters.get("information_language_cache_hit", 0) + 1
+                )
             return float(cached)
+        if world.performance_counters is not None:
+            world.performance_counters["information_language_cache_miss"] = (
+                world.performance_counters.get("information_language_cache_miss", 0) + 1
+            )
     embeddedness_key = ("embeddedness", observer_actor_id, locality_id)
     local_embeddedness = (
         world.information_execution_cache.get(embeddedness_key)
@@ -248,13 +256,18 @@ def language_comprehension(world: WorldState, observer_actor_id: str,
         )
         if world.information_cache_active:
             world.information_execution_cache[embeddedness_key] = local_embeddedness
-    district = world.districts[world.localities[locality_id].district_id]
-    primary = district.language_pattern.split("/")[0]
+    primary = world.primary_language_by_locality.get(locality_id)
+    if primary is None:
+        district = world.districts[world.localities[locality_id].district_id]
+        primary = district.language_pattern.split("/", 1)[0]
+        multilingual = "/" in district.language_pattern
+    else:
+        multilingual = locality_id in world.multilingual_locality_ids
     if source_type in {"civilian", "social_network", "political_elite", "interpreter"}:
         base = 0.28 + 0.48 * local_embeddedness
         if primary != "FS":
             base -= 0.18
-        if "/" in district.language_pattern:
+        if multilingual:
             base += 0.07
         if source_type == "interpreter":
             base += 0.2
@@ -283,7 +296,15 @@ def source_trust(world: WorldState, observer_actor_id: str, source_type: str,
     if world.information_cache_active:
         cached = world.information_execution_cache.get(cache_key)
         if cached is not None:
+            if world.performance_counters is not None:
+                world.performance_counters["information_trust_cache_hit"] = (
+                    world.performance_counters.get("information_trust_cache_hit", 0) + 1
+                )
             return float(cached)
+        if world.performance_counters is not None:
+            world.performance_counters["information_trust_cache_miss"] = (
+                world.performance_counters.get("information_trust_cache_miss", 0) + 1
+            )
     config = world.config.information
     trust = config.source_trust.get(source_type, .5)
     organization = world.organizations.get(observer_actor_id)
@@ -488,7 +509,10 @@ def _new_observation(world: WorldState, *, observer_actor_id: str, observer_node
     world.observations[observation_id] = observation
     index_key = (observation.target_actor_id or "*", observation.locality_id,
                  observation.observation_type)
-    world.observation_index.setdefault(index_key, []).append(observation.timestamp)
+    if world.execution_profile != "particle":
+        world.observation_index.setdefault(index_key, []).append(
+            observation.timestamp
+        )
     source_history = world.observation_source_index.setdefault(index_key, deque())
     source_history.append((observation.timestamp, observation.source_id))
     # Corroboration has a finite three-day memory.  Evicting stale entries at
@@ -867,12 +891,13 @@ def observe_target(world: WorldState, observer_actor_id: str, observer_node_id: 
     detected = force_detection if force_detection is not None else rng.random() < probability
     outcome = (("true_positive" if detected else "false_negative") if present else
                ("false_positive" if detected else "true_negative"))
-    world.information_detections[outcome] += 1
-    by_source = world.information_detection_by_source.setdefault(
-        source_type, {"true_positive": 0, "false_positive": 0,
-                      "false_negative": 0, "true_negative": 0}
-    )
-    by_source[outcome] += 1
+    if world.execution_profile != "particle":
+        world.information_detections[outcome] += 1
+        by_source = world.information_detection_by_source.setdefault(
+            source_type, {"true_positive": 0, "false_positive": 0,
+                          "false_negative": 0, "true_negative": 0}
+        )
+        by_source[outcome] += 1
     if not detected and not record_negative:
         return None
     quality = source_quality(world, observer_actor_id, source_type, locality_id, source_id, rng)
@@ -903,15 +928,22 @@ def observe_target(world: WorldState, observer_actor_id: str, observer_node_id: 
         "detected": detected,
         "attribution_confidence": .25 if attribution_mistake else .9,
     }
-    provenance = {
-        "source_type": source_type,
-        "source_trust": trust,
-        "language_comprehension": language_comprehension(
-            world, observer_actor_id, locality_id, source_type, source_id
-        ),
-        "conditioned_probability": probability,
-        "collection_context": "formation_detection" if target_formation_id else "area_report",
-    }
+    provenance = (
+        {}
+        if world.execution_profile == "particle"
+        else {
+            "source_type": source_type,
+            "source_trust": trust,
+            "language_comprehension": language_comprehension(
+                world, observer_actor_id, locality_id, source_type, source_id
+            ),
+            "conditioned_probability": probability,
+            "collection_context": (
+                "formation_detection"
+                if target_formation_id else "area_report"
+            ),
+        }
+    )
     observation = _new_observation(
         world, observer_actor_id=observer_actor_id,
         observer_node_id=observer_node_id, target_id=target_id,
@@ -934,9 +966,18 @@ def observe_control(world: WorldState, observer_actor_id: str, observer_node_id:
     trust = source_trust(world, observer_actor_id, source_type, locality_id, source_id)
     language = language_comprehension(world, observer_actor_id, locality_id, source_type, source_id)
     noise = world.config.observation_noise * (1.35 - .55 * quality * language)
+    # Preserve the historical dimension/RNG order without allocating an
+    # intermediate ControlVector dictionary.
     estimated_control = {
-        dimension: clamp(value + rng.uniform(-noise, noise))
-        for dimension, value in vector.to_dict().items()
+        "formal": clamp(vector.formal + rng.uniform(-noise, noise)),
+        "physical": clamp(vector.physical + rng.uniform(-noise, noise)),
+        "administrative": clamp(
+            vector.administrative + rng.uniform(-noise, noise)
+        ),
+        "legal": clamp(vector.legal + rng.uniform(-noise, noise)),
+        "fiscal": clamp(vector.fiscal + rng.uniform(-noise, noise)),
+        "social": clamp(vector.social + rng.uniform(-noise, noise)),
+        "expected": clamp(vector.expected + rng.uniform(-noise, noise)),
     }
     observation = _new_observation(
         world, observer_actor_id=observer_actor_id,
@@ -952,9 +993,16 @@ def observe_control(world: WorldState, observer_actor_id: str, observer_node_id:
                          "violence": clamp(world.localities[locality_id].violence +
                                             rng.uniform(-noise, noise))},
         quality=quality, confidence=clamp(.45 + .45 * trust),
-        provenance={"source_type": source_type, "source_trust": trust,
-                    "language_comprehension": language,
-                    "estimated_from": "locality_or_microzone_field"},
+        provenance=(
+            {}
+            if world.execution_profile == "particle"
+            else {
+                "source_type": source_type,
+                "source_trust": trust,
+                "language_comprehension": language,
+                "estimated_from": "locality_or_microzone_field",
+            }
+        ),
     )
     ingest_observation(world, observation, time, rng)
     return observation
@@ -1012,7 +1060,15 @@ def _report_probability(world: WorldState, observer_actor_id: str, locality_id: 
     if world.information_cache_active:
         cached = world.information_execution_cache.get(cache_key)
         if cached is not None:
+            if world.performance_counters is not None:
+                world.performance_counters["information_report_cache_hit"] = (
+                    world.performance_counters.get("information_report_cache_hit", 0) + 1
+                )
             return float(cached)
+        if world.performance_counters is not None:
+            world.performance_counters["information_report_cache_miss"] = (
+                world.performance_counters.get("information_report_cache_miss", 0) + 1
+            )
     config = world.config.information
     rates = {
         "civilian": config.civilian_report_rate,
@@ -1122,6 +1178,14 @@ def generate_background_observations(world: WorldState, time: float,
     observations: list[Observation] = []
     formation_index = _information_formation_index(world)
     target_actor_cache: dict[str, tuple[str, ...]] = {}
+    active_insurgent_ids = tuple(sorted(
+        organization.organization_id
+        for organization in world.organizations.values()
+        if (
+            organization.kind is OrganizationKind.INSURGENT
+            and organization.status == "active"
+        )
+    ))
     for post in sorted(world.security_posts.values(), key=lambda item: item.post_id):
         if post.available_fraction <= 0:
             continue
@@ -1162,19 +1226,34 @@ def generate_background_observations(world: WorldState, time: float,
                         "political_elite", locality_id, time, rng,
                         formation_index, target_actor_cache,
                     ))
-                district = world.districts[world.localities[locality_id].district_id]
-                if "/" in district.language_pattern and world.localities[locality_id].population > 0:
+                if (
+                    locality_id in world.multilingual_locality_ids
+                    and world.localities[locality_id].population > 0
+                ):
                     observations.extend(_observe_from_source(
                         world, "government", None, f"INTERPRETER-CAP:{locality_id}",
                         "interpreter", locality_id, time, rng,
                         formation_index, target_actor_cache,
                     ))
             continue
-        community = rng.choices(
-            communities,
-            weights=[max(1.0, sum(world.persons[pid].weight for pid in item.member_ids))
-                     for item in communities], k=1
-        )[0]
+        if len(communities) == 1:
+            # random.choices on a one-element population still consumes one
+            # RNG draw even though the result cannot vary. Preserve that draw
+            # exactly while avoiding a pointless represented-weight reduction.
+            rng.random()
+            community = communities[0]
+        else:
+            community = rng.choices(
+                communities,
+                weights=[
+                    max(
+                        1.0,
+                        sum(world.persons[pid].weight for pid in item.member_ids),
+                    )
+                    for item in communities
+                ],
+                k=1,
+            )[0]
         # Civilian and social channels are deliberately independent: cooperation
         # improves source access, but neither channel creates physical presence.
         for source_type in ("civilian", "social_network"):
@@ -1194,8 +1273,7 @@ def generate_background_observations(world: WorldState, time: float,
                     locality_id, time, rng,
                     formation_index, target_actor_cache,
                 ))
-        for insurgent_id in sorted(organization.organization_id for organization in world.organizations.values()
-                                   if organization.kind is OrganizationKind.INSURGENT and organization.status == "active"):
+        for insurgent_id in active_insurgent_ids:
             observations.extend(_observe_from_source(
                 world, insurgent_id, None, community.community_id, "civilian",
                 locality_id, time, rng,
@@ -1203,8 +1281,10 @@ def generate_background_observations(world: WorldState, time: float,
             ))
         # A bridge/interpreter channel is only sampled where language diversity
         # makes it meaningful; it degrades less than an untranslated report.
-        district = world.districts[world.localities[locality_id].district_id]
-        if "/" in district.language_pattern and "government" in world.organizations:
+        if (
+            locality_id in world.multilingual_locality_ids
+            and "government" in world.organizations
+        ):
             observations.extend(_observe_from_source(
                 world, "government", None, community.community_id, "interpreter",
                 locality_id, time, rng,

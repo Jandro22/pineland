@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
+from dataclasses import dataclass
 import math
 from pathlib import Path
 import random
 import sys
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +22,18 @@ MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
+
+
+@dataclass
+class DummyParticleState:
+    value: int
+    lineage_id: str
+
+    def fork(self, child_index: int):
+        return DummyParticleState(
+            self.value,
+            f"{self.lineage_id}.{child_index}",
+        )
 
 
 def test_filtered_runner_uses_only_complete_preboundary_training_weeks():
@@ -159,3 +173,136 @@ def test_posterior_cache_round_trip_preserves_filter_state(tmp_path):
     assert restored.nested_propagator_diagnostics == {
         "nested_propagation_calls": 4
     }
+
+
+def test_training_restart_round_trip_selects_latest_valid_boundary(tmp_path):
+    filter_ = MODULE.SequentialParticleFilter(
+        [MODULE.Particle("a", math.log(0.6)), MODULE.Particle("b", math.log(0.4))],
+        transition=lambda state, time: None,
+        log_likelihood=lambda state, observation: 0.0,
+        rng=random.Random(11),
+        allowed_split="training",
+    )
+    filter_._root_ancestors = [0, 1]
+    filter_.nested_propagator_diagnostics = {
+        "nested_propagation_calls": 8,
+        "exact_descendant_match_calls": 2,
+        "mean_minimum_descendant_hamming_mismatch": 1.25,
+        "maximum_minimum_descendant_hamming_mismatch": 3,
+    }
+    cache_key = {
+        "schema_version": MODULE.POSTERIOR_CACHE_SCHEMA,
+        "test": "restart-roundtrip",
+    }
+    filter_.last_time = 28.0
+    MODULE._save_training_restart(
+        tmp_path,
+        cache_key,
+        filter_,
+        completed_week_index=3,
+    )
+    filter_.last_time = 91.0
+    latest_manifest, _ = MODULE._save_training_restart(
+        tmp_path,
+        cache_key,
+        filter_,
+        completed_week_index=12,
+    )
+    restored, manifest, completed_week = MODULE._load_latest_training_restart(
+        tmp_path,
+        cache_key,
+        filter_seed=27,
+    )
+    assert manifest == latest_manifest
+    assert completed_week == 12
+    assert restored is not None
+    assert restored.last_time == 91.0
+    assert restored.frozen is False
+    assert MODULE.particle_weights(restored.particles) == [0.6, 0.4]
+    assert restored.nested_propagator_diagnostics[
+        "nested_propagation_calls"
+    ] == 8
+
+
+def test_training_restart_resume_matches_uninterrupted_filter(tmp_path):
+    observations = [
+        MODULE.ProvinceWeekObservation(
+            start_day=float(index),
+            end_day=float(index + 1),
+            week_index=index,
+            active_provinces=frozenset(),
+            provinces=("P1",),
+        )
+        for index in range(3)
+    ]
+
+    def fake_nested_job(job):
+        state, _, observation, _, _ = job
+        next_state = DummyParticleState(
+            state.value + observation.week_index + 1,
+            state.lineage_id,
+        )
+        likelihood = -abs(next_state.value - 3) * 0.1
+        return next_state, likelihood, {
+            "nested_propagation_calls": 1,
+            "exact_descendant_match_calls": 1,
+            "mean_minimum_descendant_hamming_mismatch": 0.0,
+            "maximum_minimum_descendant_hamming_mismatch": 0,
+        }
+
+    def initial_particles():
+        return [
+            MODULE.Particle(DummyParticleState(0, "a")),
+            MODULE.Particle(DummyParticleState(1, "b")),
+        ]
+
+    cache_key = {
+        "schema_version": MODULE.POSTERIOR_CACHE_SCHEMA,
+        "test": "resume-equivalence",
+    }
+    with patch.object(MODULE, "_nested_particle_job", side_effect=fake_nested_job):
+        uninterrupted = MODULE.run_training_filter(
+            initial_particles(),
+            observations,
+            filter_seed=77,
+            likelihood_branches=1,
+            workers=1,
+        )
+        MODULE.run_training_filter(
+            initial_particles(),
+            observations[:1],
+            filter_seed=77,
+            likelihood_branches=1,
+            workers=1,
+            restart_cache_dir=tmp_path,
+            restart_cache_key=cache_key,
+            restart_every_weeks=1,
+        )
+        resumed_filter, _, completed_week = MODULE._load_latest_training_restart(
+            tmp_path,
+            cache_key,
+            filter_seed=77,
+        )
+        assert completed_week == 0
+        resumed = MODULE.run_training_filter(
+            [],
+            observations,
+            filter_seed=77,
+            likelihood_branches=1,
+            workers=1,
+            resume_filter=resumed_filter,
+        )
+
+    assert [
+        (particle.state.value, particle.state.lineage_id, particle.log_weight)
+        for particle in resumed.particles
+    ] == [
+        (particle.state.value, particle.state.lineage_id, particle.log_weight)
+        for particle in uninterrupted.particles
+    ]
+    assert resumed.history == uninterrupted.history
+    assert resumed._root_ancestors == uninterrupted._root_ancestors
+    assert resumed._resampling_events == uninterrupted._resampling_events
+    assert resumed.nested_propagator_diagnostics == (
+        uninterrupted.nested_propagator_diagnostics
+    )

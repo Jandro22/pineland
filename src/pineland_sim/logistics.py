@@ -33,6 +33,7 @@ def _add_command_edge(world: WorldState, first_id: str, second_id: str,
     world.command_edges[key] = CommandEdge(
         key[0], key[1], organization_id, clamp(reliability), max(0.0, latency_hours)
     )
+    world.command_path_cache.clear()
 
 
 def locality_leg(world: WorldState, first_id: str, second_id: str,
@@ -53,8 +54,16 @@ def shortest_locality_path(world: WorldState, origin_id: str, destination_id: st
     cache_key = (origin_id, destination_id, float(mobility))
     cached = world.locality_path_cache.get(cache_key)
     if cached is not None:
+        if world.performance_counters is not None:
+            world.performance_counters["locality_path_cache_hit"] = (
+                world.performance_counters.get("locality_path_cache_hit", 0) + 1
+            )
         route, distance_km, travel_hours = cached
         return list(route), distance_km, travel_hours
+    if world.performance_counters is not None:
+        world.performance_counters["locality_path_cache_miss"] = (
+            world.performance_counters.get("locality_path_cache_miss", 0) + 1
+        )
     distances = {origin_id: 0.0}
     previous: dict[str, str] = {}
     queue = [(0.0, origin_id)]
@@ -96,7 +105,15 @@ def shortest_locality_travel_times(world: WorldState, origin_id: str,
     cache_key = (origin_id, float(mobility))
     cached = world.locality_travel_time_cache.get(cache_key)
     if cached is not None:
+        if world.performance_counters is not None:
+            world.performance_counters["locality_travel_time_cache_hit"] = (
+                world.performance_counters.get("locality_travel_time_cache_hit", 0) + 1
+            )
         return cached
+    if world.performance_counters is not None:
+        world.performance_counters["locality_travel_time_cache_miss"] = (
+            world.performance_counters.get("locality_travel_time_cache_miss", 0) + 1
+        )
     distances = {origin_id: 0.0}
     queue = [(0.0, origin_id)]
     while queue:
@@ -127,7 +144,15 @@ def _shortest_locality_route_metrics(
     cache_key = (origin_id, float(mobility))
     cached = world.locality_route_metrics_cache.get(cache_key)
     if cached is not None:
+        if world.performance_counters is not None:
+            world.performance_counters["locality_route_metrics_cache_hit"] = (
+                world.performance_counters.get("locality_route_metrics_cache_hit", 0) + 1
+            )
         return cached
+    if world.performance_counters is not None:
+        world.performance_counters["locality_route_metrics_cache_miss"] = (
+            world.performance_counters.get("locality_route_metrics_cache_miss", 0) + 1
+        )
 
     travel_times = {origin_id: 0.0}
     distances_km = {origin_id: 0.0}
@@ -206,6 +231,19 @@ def command_path(world: WorldState, organization_id: str, source_node_id: str,
     """
     if source_node_id == destination_node_id:
         return [source_node_id], 1.0, 0.0
+    cache_key = (organization_id, source_node_id, destination_node_id)
+    cached = world.command_path_cache.get(cache_key)
+    if cached is not None:
+        if world.performance_counters is not None:
+            world.performance_counters["command_path_cache_hit"] = (
+                world.performance_counters.get("command_path_cache_hit", 0) + 1
+            )
+        route, reliability, latency = cached
+        return list(route), reliability, latency
+    if world.performance_counters is not None:
+        world.performance_counters["command_path_cache_miss"] = (
+            world.performance_counters.get("command_path_cache_miss", 0) + 1
+        )
     adjacency: dict[str, list[tuple[str, CommandEdge]]] = {}
     for edge in world.command_edges.values():
         if edge.organization_id != organization_id:
@@ -225,19 +263,24 @@ def command_path(world: WorldState, organization_id: str, source_node_id: str,
             while route[-1] != source_node_id:
                 route.append(previous[route[-1]])
             route.reverse()
-            return route, exp(-risk), latency
+            result = (tuple(route), exp(-risk), latency)
+            world.command_path_cache[cache_key] = result
+            return list(result[0]), result[1], result[2]
         for neighbor, edge in adjacency.get(node, ()):
             candidate = (risk - log(max(1e-12, edge.reliability)), latency + edge.latency_hours)
             if candidate < scores.get(neighbor, (inf, inf)):
                 scores[neighbor] = candidate
                 previous[neighbor] = node
                 heapq.heappush(queue, (*candidate, neighbor))
+    world.command_path_cache[cache_key] = ((), 0.0, inf)
     return [], 0.0, inf
 
 
 def _record_flow(world: WorldState, time: float, flow_type: str, organization_id: str,
                  locality_id: str, quantity: float, source_id: str | None = None,
                  formation_id: str | None = None) -> None:
+    if world.execution_profile == "particle":
+        return
     world.resource_flows.append(ResourceFlow(
         f"RF{len(world.resource_flows) + 1:010d}", time, flow_type, organization_id,
         locality_id, quantity, source_id, formation_id,
@@ -248,6 +291,7 @@ def generate_logistics_world(world: WorldState) -> None:
     config = world.config.logistics
     rng = seeded_initialization_rng(world.config, "logistics-world-generation")
     world.command_edges.clear()
+    world.command_path_cache.clear()
     world.supply_sources.clear()
     world.supply_shipments.clear()
     world.active_shipment_ids.clear()

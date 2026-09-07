@@ -63,13 +63,31 @@ def _proto_capital_mean(proto: ProtoOrganization) -> float:
     return sum(proto.capital.get(key, 0.0) for key in _PROTO_CAPITAL_KEYS) / len(_PROTO_CAPITAL_KEYS)
 
 
-def _set_armed_membership(person, organization: Organization | None, fraction: float) -> None:
+def _set_armed_membership(
+    world_or_person,
+    person_or_organization,
+    organization_or_fraction,
+    fraction: float | None = None,
+) -> None:
+    """Set armed affiliation with indexed core and legacy fixture support."""
+    if fraction is None:
+        world = None
+        person = world_or_person
+        organization = person_or_organization
+        fraction = organization_or_fraction
+    else:
+        world = world_or_person
+        person = person_or_organization
+        organization = organization_or_fraction
     prior_organization_id = person.organization_id
     prior_fraction = person.armed_fraction
     fraction = clamp(fraction)
     person.armed_fraction = fraction
     if organization is None or fraction <= 0:
-        person.organization_id = None
+        if world is None:
+            person.organization_id = None
+        else:
+            world.set_person_organization(person, None)
         if prior_organization_id and prior_fraction > 0:
             person.insurgent_affinity[prior_organization_id] = max(
                 person.insurgent_affinity.get(prior_organization_id, 0.0),
@@ -78,7 +96,10 @@ def _set_armed_membership(person, organization: Organization | None, fraction: f
         if person.public_behavior == "armed_participation":
             person.public_behavior = "insurgent_sympathy"
         return
-    person.organization_id = organization.organization_id
+    if world is None:
+        person.organization_id = organization.organization_id
+    else:
+        world.set_person_organization(person, organization.organization_id)
     # Active membership identifies the currently supported franchise. Keep the
     # affinity state exclusive while armed so stale pre-split affiliations do
     # not make one mobilized cohort broadcast support for rival organizations.
@@ -593,7 +614,7 @@ def _transfer_defecting_membership(
             transferable_fighters,
         )
     source.member_ids.discard(person.person_id)
-    _set_armed_membership(person, destination, person.armed_fraction)
+    _set_armed_membership(world, person, destination, person.armed_fraction)
     destination.member_ids.add(person.person_id)
     return represented_delta, transferable_fighters
 
@@ -649,14 +670,16 @@ def initialize_organization_ecology(world) -> None:
                         by_locality.get(formation.locality_id, 0.0) + formation.personnel / conversion
                     )
             for locality_id, target_weight in sorted(by_locality.items()):
-                candidates = [p for p in world.persons.values()
-                              if p.residence_locality_id == locality_id and p.organization_id is None]
+                candidates = [
+                    p for p in world.persons_in_locality(locality_id)
+                    if p.organization_id is None
+                ]
                 remaining = target_weight
                 for person in sorted(candidates, key=lambda p: (-p.grievance, p.person_id)):
                     if remaining <= 1e-9:
                         break
                     fraction = min(1.0, remaining / max(1e-9, person.weight))
-                    _set_armed_membership(person, organization, fraction)
+                    _set_armed_membership(world, person, organization, fraction)
                     organization.member_ids.add(person.person_id)
                     remaining -= person.weight * fraction
             # Coarse weighted runs can have zero sampled civilians in a
@@ -671,12 +694,12 @@ def initialize_organization_ecology(world) -> None:
                     locality = world.localities[person.residence_locality_id]
                     return min(hypot(locality.x_km - target.x_km, locality.y_km - target.y_km)
                                for target in formation_points)
-                fallback = [p for p in world.persons.values() if p.organization_id is None]
+                fallback = list(world.unassigned_people())
                 for person in sorted(fallback, key=lambda p: (distance_to_force(p), -p.grievance, p.person_id)):
                     if remaining_total <= 1e-9:
                         break
                     fraction = min(1.0, remaining_total / max(1e-9, person.weight))
-                    _set_armed_membership(person, organization, fraction)
+                    _set_armed_membership(world, person, organization, fraction)
                     organization.member_ids.add(person.person_id)
                     remaining_total -= person.weight * fraction
         organization.capital = {
@@ -963,7 +986,7 @@ def mature_proto(world, proto: ProtoOrganization, time: float, rng: random.Rando
         contribution = world.persons[pid].resources * cfg.onset_resource_fraction * fraction
         contributed += contribution
         world.adjust_person_resources(pid, -contribution)
-        _set_armed_membership(world.persons[pid], None, 0.0)
+        _set_armed_membership(world, world.persons[pid], None, 0.0)
     member_ids = set(founder_fractions)
     organization = Organization(
         oid, f"Emergent Organization {oid[-3:]}", OrganizationKind.INSURGENT,
@@ -984,7 +1007,7 @@ def mature_proto(world, proto: ProtoOrganization, time: float, rng: random.Rando
         if other_id != oid:
             ensure_relation(world, oid, other_id, time)
     for pid, fraction in founder_fractions.items():
-        _set_armed_membership(world.persons[pid], organization, fraction)
+        _set_armed_membership(world, world.persons[pid], organization, fraction)
     for locality in world.localities.values():
         locality.control.setdefault(oid, ControlVector(0, .005, 0, .005, .005, .015, .03))
         locality.control.setdefault("insurgent", ControlVector())
@@ -1182,7 +1205,7 @@ def recruit_and_retain(world, time: float, rng: random.Random,
                         current_fraction + delta_fraction
                         if person.organization_id == winner.organization_id else delta_fraction
                     )
-                    _set_armed_membership(person, winner, winner_fraction)
+                    _set_armed_membership(world, person, winner, winner_fraction)
                     winner.member_ids.add(person.person_id)
                     represented_delta = person.weight * delta_fraction
                     recruits += represented_delta
@@ -1330,7 +1353,7 @@ def recruit_and_retain(world, time: float, rng: random.Random,
                 if remaining <= 1e-12:
                     current_org.member_ids.discard(person.person_id)
                     exited_org_id = current_org.organization_id
-                    _set_armed_membership(person, None, 0.0)
+                    _set_armed_membership(world, person, None, 0.0)
                     if (cfg.exit_sympathy_retention < 1.0 and
                             rng.random() >= cfg.exit_sympathy_retention):
                         person.public_behavior = "neutral"
@@ -1338,7 +1361,7 @@ def recruit_and_retain(world, time: float, rng: random.Random,
                         person.social_exposure.pop(exited_org_id, None)
                         person.social_exposure.pop("insurgent", None)
                 else:
-                    _set_armed_membership(person, current_org, remaining)
+                    _set_armed_membership(world, person, current_org, remaining)
 
     repairs = synchronize_memberships(world)
     return {"recruits": recruits, "exits": exits,
@@ -1520,7 +1543,7 @@ def split_organization(world, organization_id: str, time: float, rng: random.Ran
         _create_leader(world, child, rng, parent_leader)
         for pid in faction:
             person = world.persons[pid]
-            _set_armed_membership(person, child, person.armed_fraction)
+            _set_armed_membership(world, person, child, person.armed_fraction)
         children.append(child)
     formations = [f for f in world.formations.values() if f.organization_id == organization_id]
     assignments = {c.organization_id: [] for c in children}
@@ -1586,7 +1609,7 @@ def merge_organizations(world, first_id: str, second_id: str, time: float, rng: 
     _transfer_manpower_pools(world, {first_id, second_id}, [child])
     for pid in child.member_ids:
         person = world.persons[pid]
-        _set_armed_membership(person, child, person.armed_fraction)
+        _set_armed_membership(world, person, child, person.armed_fraction)
     for parent in (first, second):
         parent.resources = 0.0
         parent.member_ids.clear()
@@ -1610,7 +1633,7 @@ def collapse_organization(world, organization_id: str, time: float, reason: str)
         # sufficient for the collapsing organization and preserves reciprocal
         # membership invariants.
         if world.persons[pid].organization_id == organization_id:
-            _set_armed_membership(world.persons[pid], None, 0.0)
+            _set_armed_membership(world, world.persons[pid], None, 0.0)
     organization.member_ids.clear()
     organization.status = "collapsed"
     pooled_demobilized = 0.0

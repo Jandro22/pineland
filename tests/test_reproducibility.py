@@ -54,6 +54,22 @@ def test_ninety_day_information_retention_matches_full_retention():
     assert observation_counts[1] < observation_counts[0]
 
 
+def test_active_observation_provenance_is_not_decision_state():
+    world = Simulation(generate_pineland(_config(days=1, mode="ensemble"))).run(
+        until=0.25
+    ).world
+    active = [
+        world.observations[world.information_relays[relay_id].observation_id]
+        for relay_id in world.active_information_relays
+        if relay_id in world.information_relays
+        and world.information_relays[relay_id].observation_id in world.observations
+    ]
+    if active:
+        before = decision_state_sha256(world)
+        active[0].provenance["forensic_only_probe"] = "changed"
+        assert decision_state_sha256(world) == before
+
+
 def test_process_isolated_parallel_execution_is_deterministic():
     configs = [_config(seed=91001 + offset, days=4, mode="ensemble").to_dict()
                for offset in range(3)]
