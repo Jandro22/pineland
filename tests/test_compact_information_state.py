@@ -14,6 +14,8 @@ from pineland_sim.information import fuse_observation
 from pineland_sim.native_kernels import (
     available as native_available,
     fuse_control7_batch,
+    fuse_presence_batch,
+    fuse_zone_batch,
 )
 from pineland_sim.reproducibility import decision_state_sha256
 
@@ -158,6 +160,47 @@ def test_compact_information_rows_are_independent_across_particle_clones():
     key = next(iter(optimized.compact_zone_state.keys))
     clone.compact_zone_state.state[0] += 0.1
     assert clone.compact_zone_state.row(key) != optimized.compact_zone_state.row(key)
+
+
+@pytest.mark.skipif(not native_available(), reason="native kernel is optional")
+def test_native_presence_and_zone_kernels_match_python_rows():
+    presence = array("d", [.2, .35, 0.0, -1.0e9, 0.0, 0.0, 10.0])
+    presence_native = array("d", presence)
+    indices = array("I", [0, 0])
+    times = array("d", [1.0, 2.0])
+    weights = array("d", [.4, .3])
+    observed_presence = array("d", [.8, .1])
+    observed_personnel = array("d", [17.0, 2.0])
+    python_presence = CompactPresenceBeliefState(
+        (("o", "a", "L:L-Z", "T"),), presence
+    )
+    for observed, personnel, time, weight in zip(
+        observed_presence, observed_personnel, times, weights
+    ):
+        python_presence.fuse(
+            ("o", "a", "L:L-Z", "T"), observed, personnel, time, weight,
+            10.0, .2,
+        )
+    assert fuse_presence_batch(
+        presence_native, 1, indices, times, weights,
+        observed_presence, observed_personnel,
+        contradiction_memory_days=10.0, contradiction_penalty=.2,
+    )
+    assert presence_native == python_presence.state
+
+    zone = array("d", [.2, .35, 0.0, -1.0e9, 0.0, 0.0])
+    zone_native = array("d", zone)
+    zone_state = CompactZoneBeliefState((("a", "z"),), zone)
+    for observed, time, weight in zip(
+        (0.8, 0.1), times, weights
+    ):
+        zone_state.fuse(("a", "z"), observed, time, weight, 10.0, .2)
+    assert fuse_zone_batch(
+        zone_native, 1, indices, times, weights,
+        array("d", [.8, .1]),
+        contradiction_memory_days=10.0, contradiction_penalty=.2,
+    )
+    assert zone_native == zone_state.state
 
 
 @pytest.mark.skipif(not native_available(), reason="native kernel is optional")

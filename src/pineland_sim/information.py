@@ -45,7 +45,10 @@ from .organizational_state import local_organizational_embeddedness
 from .native_kernels import (
     available as native_kernels_available,
     control_batch_enabled as native_control_batch_enabled,
+    information_batch_enabled as native_information_batch_enabled,
     fuse_control7_batch as native_fuse_control7_batch,
+    fuse_presence_batch as native_fuse_presence_batch,
+    fuse_zone_batch as native_fuse_zone_batch,
 )
 
 
@@ -792,11 +795,13 @@ def _apply_control_auxiliary(
     weight: float,
     values: dict[str, Any],
     belief: ActorBelief,
+    *,
+    apply_zone: bool = True,
 ) -> None:
     target_actor_id = observation.target_actor_id
     if target_actor_id is None:
         return
-    if observation.microzone_id and "physical" in values:
+    if apply_zone and observation.microzone_id and "physical" in values:
         zone_actor = (world.formations[recipient_id].organization_id
                       if recipient_id in world.formations else recipient_id)
         zone_belief = world.zone_beliefs.get((zone_actor, observation.microzone_id))
@@ -848,6 +853,62 @@ def _apply_control_auxiliary(
             legacy.last_reliable_observation_at = belief.last_reliable_observation_at
             legacy.evidence_count = belief.evidence_count
             legacy.contradiction_index = belief.contradiction_index
+
+
+def _flush_compact_native_zone_fusions(
+    world: WorldState,
+    pending: list[tuple[Observation, str, float, float]],
+) -> bool:
+    """Fuse zone rows directly in the persistent compact state."""
+    compact = getattr(world, "compact_zone_state", None)
+    if compact is None:
+        return False
+    state_indices = array("I")
+    times = array("d")
+    weights = array("d")
+    observed = array("d")
+    touched: dict[tuple[str, str], ActorZoneBelief] = {}
+    for observation, recipient_id, time, weight in pending:
+        if observation.microzone_id is None:
+            continue
+        values = observation.estimated_value.get("control")
+        physical_value = observation.estimated_value.get("physical_control")
+        if isinstance(values, dict):
+            if "physical" not in values:
+                continue
+            physical = values["physical"]
+        elif physical_value is not None:
+            physical = physical_value
+        else:
+            continue
+        zone_actor = (world.formations[recipient_id].organization_id
+                      if recipient_id in world.formations else recipient_id)
+        key = (zone_actor, observation.microzone_id)
+        belief = world.zone_beliefs.get(key)
+        if belief is None:
+            continue
+        state_indices.append(compact.ensure(key, belief))
+        times.append(float(time))
+        weights.append(float(weight))
+        observed.append(clamp(float(physical)))
+        touched[key] = belief
+    if not state_indices:
+        return True
+    if not native_fuse_zone_batch(
+        compact.state,
+        len(compact),
+        state_indices,
+        times,
+        weights,
+        observed,
+        contradiction_memory_days=world.config.information.contradiction_memory_days,
+        contradiction_penalty=world.config.information.contradiction_penalty,
+        state_stride=6,
+    ):
+        return False
+    for key, belief in touched.items():
+        compact.write_to_belief(key, belief)
+    return True
 
 
 def _canonical_control_tuple(
@@ -920,6 +981,13 @@ def _flush_compact_native_control_chunk(
         belief = world.control_beliefs[key]
         compact.write_to_belief(key, belief)
 
+    zone_batched = False
+    if (
+        world.execution_backend == "optimized"
+        and native_information_batch_enabled()
+    ):
+        zone_batched = _flush_compact_native_zone_fusions(world, chunk)
+
     # Zone beliefs and legacy own-side mirrors are still object-model state;
     # apply them in original observation order after the numeric batch.
     for observation, recipient_id, time, weight in chunk:
@@ -933,6 +1001,7 @@ def _flush_compact_native_control_chunk(
             weight,
             observation.estimated_value["control"],
             world.control_beliefs[key],
+            apply_zone=not zone_batched,
         )
     return True
 
@@ -1100,6 +1169,13 @@ def _flush_compact_control_fusions(
     for key, belief in touched.items():
         compact.write_to_belief(key, belief)
 
+    zone_batched = False
+    if (
+        world.execution_backend == "optimized"
+        and native_information_batch_enabled()
+    ):
+        zone_batched = _flush_compact_native_zone_fusions(world, pending)
+
     # Auxiliary zone recurrences and legacy own-side mirrors remain in their
     # original observation order. They do not read control state between
     # updates, so one object-model mirror per touched row is exact.
@@ -1123,6 +1199,7 @@ def _flush_compact_control_fusions(
             weight,
             values,
             touched[key],
+            apply_zone=not zone_batched,
         )
     return len(pending)
 
@@ -1296,6 +1373,11 @@ def _flush_compact_presence_fusions(
         True: world.compact_node_presence_state,
     }
     touched: dict[tuple[bool, tuple[str, str, str, str]], PresenceBelief] = {}
+    use_native = native_information_batch_enabled()
+    native_payloads = {
+        False: [array("I"), array("d"), array("d"), array("d"), array("d")],
+        True: [array("I"), array("d"), array("d"), array("d"), array("d")],
+    }
     for observation, recipient_id, time, node, weight in pending:
         target_actor_id = observation.target_actor_id
         if target_actor_id is None or "presence" not in observation.estimated_value:
@@ -1313,16 +1395,45 @@ def _flush_compact_presence_fusions(
                 recipient_id, target_actor_id, observation.locality_id,
                 key_target, observation.microzone_id,
             )
-            compact.fuse(
-                key,
-                presence,
-                personnel,
-                float(time),
-                float(weight),
-                world.config.information.contradiction_memory_days,
-                world.config.information.contradiction_penalty,
-            )
+            if use_native:
+                indices, times, weights, observed_presence, observed_personnel = (
+                    native_payloads[node]
+                )
+                indices.append(compact.index(key))
+                times.append(float(time))
+                weights.append(float(weight))
+                observed_presence.append(presence)
+                observed_personnel.append(personnel)
+            else:
+                compact.fuse(
+                    key,
+                    presence,
+                    personnel,
+                    float(time),
+                    float(weight),
+                    world.config.information.contradiction_memory_days,
+                    world.config.information.contradiction_penalty,
+                )
             touched[(node, key)] = belief
+    if use_native:
+        for node, payload in native_payloads.items():
+            indices, times, weights, observed_presence, observed_personnel = payload
+            if not indices:
+                continue
+            compact = compact_by_node[node]
+            if not native_fuse_presence_batch(
+                compact.state,
+                len(compact),
+                indices,
+                times,
+                weights,
+                observed_presence,
+                observed_personnel,
+                contradiction_memory_days=world.config.information.contradiction_memory_days,
+                contradiction_penalty=world.config.information.contradiction_penalty,
+                state_stride=7,
+            ):
+                raise RuntimeError("native presence fusion was requested but unavailable")
     for (node, key), belief in touched.items():
         compact_by_node[node].write_to_belief(key, belief)
     return len(pending)
