@@ -673,6 +673,18 @@ class InformationSourcePlan:
     target_formation: array = field(default_factory=lambda: array("I"))
     source_microzone: array = field(default_factory=lambda: array("I"))
     source_zone_actor: array = field(default_factory=lambda: array("I"))
+    # Flattened selection metadata for the optional one-call native event
+    # ABI. These arrays are compiled once with the source plan; no source
+    # objects or Python selection lists are created at each information tick.
+    native_initial_sources: array = field(default_factory=lambda: array("I"))
+    native_member_sources: array = field(default_factory=lambda: array("I"))
+    native_locality_group_offsets: array = field(default_factory=lambda: array("Q", [0]))
+    native_group_source_offsets: array = field(default_factory=lambda: array("Q", [0]))
+    native_group_sources: array = field(default_factory=lambda: array("I"))
+    native_locality_cumulative_offsets: array = field(default_factory=lambda: array("Q", [0]))
+    native_cumulative_weights: array = field(default_factory=lambda: array("d"))
+    native_locality_fallback_offsets: array = field(default_factory=lambda: array("Q", [0]))
+    native_fallback_sources: array = field(default_factory=lambda: array("I"))
 
     @classmethod
     def from_world(
@@ -821,6 +833,42 @@ class InformationSourcePlan:
                 formation.formation_id, "organization_member", formation.locality_id,
             ))
 
+        # Compile the nested locality selection graph into flat numeric
+        # buffers. The native event kernel uses these ranges to reproduce the
+        # reference source order without materializing a selected-source list
+        # in Python. ``always_sources`` is split at the same boundary as
+        # ``iter_selected_source_indices``: fixed posts first, members last.
+        initial_sources = array("I")
+        member_sources = array("I")
+        has_locality_groups = any(locality_source_groups)
+        for source_index in always_sources:
+            source_kind = codes.value(source_type[source_index])
+            if source_kind == "organization_member":
+                member_sources.append(source_index)
+            elif source_kind == "fixed_post" or not has_locality_groups:
+                initial_sources.append(source_index)
+
+        locality_group_offsets = array("Q", [0])
+        group_source_offsets = array("Q", [0])
+        group_sources = array("I")
+        locality_cumulative_offsets = array("Q", [0])
+        cumulative_weights = array("d")
+        locality_fallback_offsets = array("Q", [0])
+        fallback_sources = array("I")
+        for locality_index, groups in enumerate(locality_source_groups):
+            for group in groups:
+                group_sources.extend(int(item) for item in group)
+                group_source_offsets.append(len(group_sources))
+            locality_group_offsets.append(len(group_source_offsets) - 1)
+            cumulative_weights.extend(
+                float(item) for item in locality_cumulative_weights[locality_index]
+            )
+            locality_cumulative_offsets.append(len(cumulative_weights))
+            fallback_sources.extend(
+                int(item) for item in locality_fallback_sources[locality_index]
+            )
+            locality_fallback_offsets.append(len(fallback_sources))
+
         fingerprint = (
             tuple(world.ordered_locality_ids or sorted(world.localities)),
             tuple(sorted(world.security_posts)),
@@ -843,6 +891,15 @@ class InformationSourcePlan:
             tuple(locality_source_groups), tuple(locality_fallback_sources),
             tuple(locality_community_ids), tuple(locality_cumulative_weights),
             tuple(always_sources), fingerprint,
+            native_initial_sources=initial_sources,
+            native_member_sources=member_sources,
+            native_locality_group_offsets=locality_group_offsets,
+            native_group_source_offsets=group_source_offsets,
+            native_group_sources=group_sources,
+            native_locality_cumulative_offsets=locality_cumulative_offsets,
+            native_cumulative_weights=cumulative_weights,
+            native_locality_fallback_offsets=locality_fallback_offsets,
+            native_fallback_sources=fallback_sources,
         )
 
     def __len__(self) -> int:
@@ -1595,8 +1652,7 @@ class NumericInformationEventEngine:
                     zone_state.ensure_key(zone_key, prior_confidence=prior_confidence)
                     zone_updates.append((0, zone_key, float(time), weight, float(estimated_control[1])))
 
-        def consume_native_rows(native_result: Any) -> None:
-            nonlocal reported_sources
+        def consume_native_rows(native_result: Any) -> int:
             reported = set()
             for row_index in range(native_result.row_count):
                 source_index = int(native_result.source_index[row_index])
@@ -1624,7 +1680,7 @@ class NumericInformationEventEngine:
                         confidence=float(native_result.confidence[row_index]),
                         violence=float(native_result.violence[row_index]),
                     )
-            reported_sources += len(reported)
+            return len(reported)
 
         def native_rng_compatible() -> bool:
             if not hasattr(rng, "getstate") or not hasattr(rng, "setstate"):
@@ -1637,10 +1693,24 @@ class NumericInformationEventEngine:
             )
 
         native_enabled = False
+        native_plan_enabled = False
         if native_rng_compatible():
-            from .native_kernels import information_event_enabled
+            from .native_kernels import (
+                information_event_enabled,
+                information_event_plan_enabled,
+            )
 
             native_enabled = information_event_enabled()
+            native_plan_enabled = (
+                native_enabled
+                and information_event_plan_enabled()
+                and len(self.plan.native_locality_group_offsets)
+                == len(self.plan.locality_ids) + 1
+                and len(self.plan.native_locality_cumulative_offsets)
+                == len(self.plan.locality_ids) + 1
+                and len(self.plan.native_locality_fallback_offsets)
+                == len(self.plan.locality_ids) + 1
+            )
 
         if native_enabled:
             from .native_kernels import native_information_event_batch
@@ -1658,7 +1728,7 @@ class NumericInformationEventEngine:
                 if self.plan.codes.value(self.plan.source_type[index]) == "organization_member"
             )
             def process_native_batch(batch: Sequence[int]) -> None:
-                nonlocal source_attempts
+                nonlocal source_attempts, reported_sources
                 source_attempts += len(batch)
                 native_result = native_information_event_batch(
                     rng,
@@ -1693,34 +1763,87 @@ class NumericInformationEventEngine:
                 )
                 if native_result is None:
                     raise RuntimeError("native information event lost RNG compatibility")
-                consume_native_rows(native_result)
+                reported_sources += consume_native_rows(native_result)
                 if native_result.next_sequence != self.next_sequence:
                     raise RuntimeError("native information sequence disagrees with emitted rows")
 
-            # Do not construct the complete batch list first: locality
-            # selection draws must occur after fixed-post report draws and
-            # before the selected locality's report draws.
-            if initial_sources:
-                process_native_batch(initial_sources)
-            for locality_index, groups in enumerate(self.plan.locality_source_groups):
-                if groups:
-                    if len(groups) == 1:
-                        # random.choices over one item still consumes one draw.
-                        rng.random()
-                        batch = groups[0]
+            if native_plan_enabled:
+                from .native_kernels import native_information_event_plan
+
+                native_result = native_information_event_plan(
+                    rng,
+                    initial_sources=self.plan.native_initial_sources,
+                    member_sources=self.plan.native_member_sources,
+                    locality_group_offsets=self.plan.native_locality_group_offsets,
+                    group_source_offsets=self.plan.native_group_source_offsets,
+                    group_sources=self.plan.native_group_sources,
+                    locality_cumulative_offsets=(
+                        self.plan.native_locality_cumulative_offsets
+                    ),
+                    cumulative_weights=self.plan.native_cumulative_weights,
+                    locality_fallback_offsets=(
+                        self.plan.native_locality_fallback_offsets
+                    ),
+                    fallback_sources=self.plan.native_fallback_sources,
+                    source_observer=self.plan.observer,
+                    source_node=self.plan.node,
+                    source=self.plan.source,
+                    source_type=self.plan.source_type,
+                    source_locality=self.plan.locality,
+                    source_microzone=self.source_microzone,
+                    source_control_target=self.source_control_target,
+                    source_control=self.source_control,
+                    source_violence=self.source_violence,
+                    report_probability=self.report_probability,
+                    source_quality_base=self.source_quality_base,
+                    source_trust=self.source_trust,
+                    language=self.language,
+                    target_offsets=self.plan.target_offsets,
+                    target_actor=self.plan.target_actor,
+                    target_present=self.target_present,
+                    target_personnel=self.target_personnel,
+                    target_detection_probability=self.target_detection_probability,
+                    target_formation=self.target_formation,
+                    target_alternate_actor=self.target_alternate_actor,
+                    time=float(time),
+                    observation_noise=self.observation_noise,
+                    positive_report_confidence=self.positive_report_confidence,
+                    negative_report_confidence=self.negative_report_confidence,
+                    attribution_error_rate=self.attribution_error_rate,
+                    record_negative=record_negative,
+                    next_sequence=self.next_sequence,
+                )
+                if native_result is None:
+                    raise RuntimeError("native information plan lost RNG compatibility")
+                source_attempts += int(native_result.source_attempts)
+                reported_sources += consume_native_rows(native_result)
+                if native_result.next_sequence != self.next_sequence:
+                    raise RuntimeError("native information sequence disagrees with emitted rows")
+            else:
+                # Do not construct the complete batch list first: locality
+                # selection draws must occur after fixed-post report draws and
+                # before the selected locality's report draws.
+                if initial_sources:
+                    process_native_batch(initial_sources)
+                for locality_index, groups in enumerate(self.plan.locality_source_groups):
+                    if groups:
+                        if len(groups) == 1:
+                            # random.choices over one item still consumes one draw.
+                            rng.random()
+                            batch = groups[0]
+                        else:
+                            choice = rng.choices(
+                                range(len(groups)),
+                                cum_weights=self.plan.locality_cumulative_weights[locality_index],
+                                k=1,
+                            )[0]
+                            batch = groups[int(choice)]
                     else:
-                        choice = rng.choices(
-                            range(len(groups)),
-                            cum_weights=self.plan.locality_cumulative_weights[locality_index],
-                            k=1,
-                        )[0]
-                        batch = groups[int(choice)]
-                else:
-                    batch = self.plan.locality_fallback_sources[locality_index]
-                if batch:
-                    process_native_batch(batch)
-            if member_sources:
-                process_native_batch(member_sources)
+                        batch = self.plan.locality_fallback_sources[locality_index]
+                    if batch:
+                        process_native_batch(batch)
+                if member_sources:
+                    process_native_batch(member_sources)
         else:
             for source_index in self.plan.iter_selected_source_indices(rng):
                 source_attempts += 1
@@ -2559,6 +2682,15 @@ class NumericInformationRuntime:
             target_formation=target_formation,
             source_microzone=array("I", [current_zone]),
             source_zone_actor=array("I", [codes.code(observer_id)]),
+            native_initial_sources=array("I", [0]),
+            native_member_sources=array("I"),
+            native_locality_group_offsets=array("Q", [0, 0]),
+            native_group_source_offsets=array("Q", [0]),
+            native_group_sources=array("I"),
+            native_locality_cumulative_offsets=array("Q", [0, 0]),
+            native_cumulative_weights=array("d"),
+            native_locality_fallback_offsets=array("Q", [0, 0]),
+            native_fallback_sources=array("I"),
         )
 
     def process_patrol(self, world: Any, patrol_id: str, time: float, rng: Any) -> dict[str, Any]:

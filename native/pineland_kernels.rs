@@ -532,3 +532,315 @@ pub unsafe extern "C" fn pineland_information_event_batch(
     let _ = time;
     0
 }
+
+// Execute the complete source plan through one foreign-function boundary.
+// The plan ranges mirror ``InformationSourcePlan.iter_selected_source_indices``:
+// fixed-post/non-community sources, one lazily selected community group per
+// locality, then organization-member sources.  The CPython MT state is
+// updated after every native report batch and around every native community
+// selection, so the resulting stream is identical to the Python reference
+// while the caller avoids building a per-tick selected-source list.
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub unsafe extern "C" fn pineland_information_event_plan(
+    mt_state: *mut u32,
+    source_observer: *const u32,
+    source_node: *const u32,
+    source: *const u32,
+    source_type: *const u32,
+    source_locality: *const u32,
+    source_microzone: *const u32,
+    source_control_target: *const u32,
+    source_control: *const f64,
+    source_violence: *const f64,
+    report_probability: *const f64,
+    source_quality_base: *const f64,
+    source_trust: *const f64,
+    language: *const f64,
+    source_count: usize,
+    target_offsets: *const u64,
+    target_actor: *const u32,
+    target_present: *const u8,
+    target_personnel: *const f64,
+    target_detection_probability: *const f64,
+    target_formation: *const u32,
+    target_alternate_actor: *const u32,
+    target_count: usize,
+    time: f64,
+    observation_noise: f64,
+    positive_report_confidence: f64,
+    negative_report_confidence: f64,
+    attribution_error_rate: f64,
+    record_negative: i32,
+    next_sequence: u64,
+    output_capacity: usize,
+    out_count: *mut usize,
+    out_next_sequence: *mut u64,
+    out_source_index: *mut u32,
+    out_kind: *mut u8,
+    out_target_present: *mut u8,
+    out_target_actor: *mut u32,
+    out_target_formation: *mut u32,
+    out_detection_probability: *mut f64,
+    out_detected: *mut u8,
+    out_presence: *mut f64,
+    out_personnel: *mut f64,
+    out_attribution_confidence: *mut f64,
+    out_confidence: *mut f64,
+    out_quality: *mut f64,
+    out_control: *mut f64,
+    out_physical_control: *mut f64,
+    out_violence: *mut f64,
+    initial_sources: *const u32,
+    initial_count: usize,
+    member_sources: *const u32,
+    member_count: usize,
+    locality_group_offsets: *const u64,
+    locality_count: usize,
+    group_source_offsets: *const u64,
+    group_count: usize,
+    group_sources: *const u32,
+    group_source_count: usize,
+    locality_cumulative_offsets: *const u64,
+    cumulative_weights: *const f64,
+    cumulative_weight_count: usize,
+    locality_fallback_offsets: *const u64,
+    fallback_sources: *const u32,
+    fallback_source_count: usize,
+    out_source_attempts: *mut usize,
+) -> i32 {
+    if mt_state.is_null()
+        || source_observer.is_null()
+        || source_node.is_null()
+        || source.is_null()
+        || source_type.is_null()
+        || source_locality.is_null()
+        || source_microzone.is_null()
+        || source_control_target.is_null()
+        || source_control.is_null()
+        || source_violence.is_null()
+        || report_probability.is_null()
+        || source_quality_base.is_null()
+        || source_trust.is_null()
+        || language.is_null()
+        || target_offsets.is_null()
+        || (target_count > 0
+            && (target_actor.is_null()
+                || target_present.is_null()
+                || target_personnel.is_null()
+                || target_detection_probability.is_null()
+                || target_formation.is_null()
+                || target_alternate_actor.is_null()))
+        || out_count.is_null()
+        || out_next_sequence.is_null()
+        || out_source_index.is_null()
+        || out_kind.is_null()
+        || out_target_present.is_null()
+        || out_target_actor.is_null()
+        || out_target_formation.is_null()
+        || out_detection_probability.is_null()
+        || out_detected.is_null()
+        || out_presence.is_null()
+        || out_personnel.is_null()
+        || out_attribution_confidence.is_null()
+        || out_confidence.is_null()
+        || out_quality.is_null()
+        || out_control.is_null()
+        || out_physical_control.is_null()
+        || out_violence.is_null()
+        || out_source_attempts.is_null()
+        || source_count == 0
+        || locality_group_offsets.is_null()
+        || group_source_offsets.is_null()
+        || locality_cumulative_offsets.is_null()
+        || locality_fallback_offsets.is_null()
+        || (initial_count > 0 && initial_sources.is_null())
+        || (member_count > 0 && member_sources.is_null())
+        || (group_source_count > 0 && group_sources.is_null())
+        || (cumulative_weight_count > 0 && cumulative_weights.is_null())
+        || (fallback_source_count > 0 && fallback_sources.is_null())
+    {
+        return -1;
+    }
+
+    if *locality_group_offsets.add(0) != 0
+        || *group_source_offsets.add(0) != 0
+        || *locality_cumulative_offsets.add(0) != 0
+        || *locality_fallback_offsets.add(0) != 0
+        || *group_source_offsets.add(group_count) as usize > group_source_count
+        || *locality_cumulative_offsets.add(locality_count) as usize > cumulative_weight_count
+        || *locality_fallback_offsets.add(locality_count) as usize > fallback_source_count
+        || *locality_group_offsets.add(locality_count) as usize > group_count
+    {
+        return -2;
+    }
+
+    let mut output_cursor = 0usize;
+    let mut sequence = next_sequence;
+    let mut source_attempts = 0usize;
+
+    // The closure keeps one copy of the wide event ABI while each selected
+    // range still receives its own output slice and sequence continuation.
+    let mut run_batch = |selected: *const u32, selected_count: usize| -> i32 {
+        if selected_count == 0 {
+            return 0;
+        }
+        if selected.is_null() || output_cursor > output_capacity {
+            return -3;
+        }
+        let remaining = output_capacity - output_cursor;
+        let mut batch_count = 0usize;
+        let mut batch_next_sequence = sequence;
+        let status = pineland_information_event_batch(
+            mt_state,
+            selected,
+            selected_count,
+            source_observer,
+            source_node,
+            source,
+            source_type,
+            source_locality,
+            source_microzone,
+            source_control_target,
+            source_control,
+            source_violence,
+            report_probability,
+            source_quality_base,
+            source_trust,
+            language,
+            source_count,
+            target_offsets,
+            target_actor,
+            target_present,
+            target_personnel,
+            target_detection_probability,
+            target_formation,
+            target_alternate_actor,
+            target_count,
+            time,
+            observation_noise,
+            positive_report_confidence,
+            negative_report_confidence,
+            attribution_error_rate,
+            record_negative,
+            sequence,
+            remaining,
+            &mut batch_count,
+            &mut batch_next_sequence,
+            out_source_index.add(output_cursor),
+            out_kind.add(output_cursor),
+            out_target_present.add(output_cursor),
+            out_target_actor.add(output_cursor),
+            out_target_formation.add(output_cursor),
+            out_detection_probability.add(output_cursor),
+            out_detected.add(output_cursor),
+            out_presence.add(output_cursor),
+            out_personnel.add(output_cursor),
+            out_attribution_confidence.add(output_cursor),
+            out_confidence.add(output_cursor),
+            out_quality.add(output_cursor),
+            out_control.add(output_cursor * 7),
+            out_physical_control.add(output_cursor),
+            out_violence.add(output_cursor),
+        );
+        if status == 0 {
+            output_cursor += batch_count;
+            sequence = batch_next_sequence;
+            source_attempts += selected_count;
+        }
+        status
+    };
+
+    let status = run_batch(initial_sources, initial_count);
+    if status != 0 {
+        return status;
+    }
+
+    for locality_index in 0..locality_count {
+        let group_start = *locality_group_offsets.add(locality_index) as usize;
+        let group_end = *locality_group_offsets.add(locality_index + 1) as usize;
+        if group_start > group_end || group_end > group_count {
+            return -4;
+        }
+        if group_start < group_end {
+            let group_len = group_end - group_start;
+            let selected_group = if group_len == 1 {
+                // CPython random.choices(..., k=1) consumes a draw even for a
+                // singleton population. The current Python plan iterator has
+                // this explicit fast path, so preserve it here.
+                let mut rng = PythonRandom::from_ptr(mt_state);
+                let _ = rng.random();
+                rng.write_ptr(mt_state);
+                group_start
+            } else {
+                let cumulative_start =
+                    *locality_cumulative_offsets.add(locality_index) as usize;
+                let cumulative_end =
+                    *locality_cumulative_offsets.add(locality_index + 1) as usize;
+                if cumulative_end - cumulative_start != group_len
+                    || cumulative_end > cumulative_weight_count
+                {
+                    return -5;
+                }
+                let total = *cumulative_weights.add(cumulative_end - 1) + 0.0;
+                if total <= 0.0 || !total.is_finite() {
+                    return -6;
+                }
+                let mut rng = PythonRandom::from_ptr(mt_state);
+                let target = rng.random() * total;
+                rng.write_ptr(mt_state);
+                // ``bisect_right`` is the operation used by
+                // random.choices for cumulative weights.
+                let mut lower = cumulative_start;
+                let mut upper = cumulative_end;
+                while lower < upper {
+                    let middle = (lower + upper) / 2;
+                    if *cumulative_weights.add(middle) <= target {
+                        lower = middle + 1;
+                    } else {
+                        upper = middle;
+                    }
+                }
+                let selected_offset = lower - cumulative_start;
+                if selected_offset >= group_len {
+                    return -7;
+                }
+                group_start + selected_offset
+            };
+            let source_start = *group_source_offsets.add(selected_group) as usize;
+            let source_end = *group_source_offsets.add(selected_group + 1) as usize;
+            if source_start > source_end || source_end > group_source_count {
+                return -8;
+            }
+            let status = run_batch(
+                group_sources.add(source_start),
+                source_end - source_start,
+            );
+            if status != 0 {
+                return status;
+            }
+        } else {
+            let source_start = *locality_fallback_offsets.add(locality_index) as usize;
+            let source_end = *locality_fallback_offsets.add(locality_index + 1) as usize;
+            if source_start > source_end || source_end > fallback_source_count {
+                return -9;
+            }
+            let status = run_batch(
+                fallback_sources.add(source_start),
+                source_end - source_start,
+            );
+            if status != 0 {
+                return status;
+            }
+        }
+    }
+
+    let status = run_batch(member_sources, member_count);
+    if status != 0 {
+        return status;
+    }
+    *out_count = output_cursor;
+    *out_next_sequence = sequence;
+    *out_source_attempts = source_attempts;
+    0
+}

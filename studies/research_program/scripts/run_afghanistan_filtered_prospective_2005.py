@@ -434,6 +434,7 @@ def _initial_particle_cache_key(
         "historical_inputs_sha256": cache_key["historical_inputs_sha256"],
         "seed": cache_key["seed"],
         "horizon": cache_key["horizon"],
+        "execution_backend": cache_key.get("execution_backend", "optimized"),
         "particle_index": int(particle_index),
         "taliban_initial_strength": float(taliban_strength),
         "prior_family": str(prior_family),
@@ -523,6 +524,8 @@ def _snapshot_filter(
         "nested_propagator_diagnostics": getattr(
             filter_, "nested_propagator_diagnostics", {}
         ),
+        "method_diagnostics": getattr(filter_, "method_diagnostics", {}),
+        "likelihood_method": getattr(filter_, "likelihood_method", "nested"),
     }
 
 
@@ -643,6 +646,10 @@ def _restore_filter(
     filter_.frozen = bool(snapshot["frozen"])
     filter_.nested_propagator_diagnostics = dict(
         snapshot.get("nested_propagator_diagnostics", {})
+    )
+    filter_.method_diagnostics = dict(snapshot.get("method_diagnostics", {}))
+    filter_.likelihood_method = str(
+        snapshot.get("likelihood_method", "nested")
     )
     return filter_
 
@@ -1998,6 +2005,8 @@ def run(
     min_forecast_trajectories: int = 32,
     max_forecast_trajectories: int | None = None,
     forecast_seed: int | None = None,
+    rb_likelihood: RaoBlackwellizedActivityLikelihood | None = None,
+    guided_propagator: GuidedProposalPropagator | None = None,
     method_gate: ExperimentalMethodGate | None = None,
     workers: int = 1,
     posterior_cache_dir: Path | None = None,
@@ -2023,6 +2032,36 @@ def run(
         raise ValueError("at least two particles are required")
     if workers < 1:
         raise ValueError("workers must be positive")
+    if execution_backend not in {"optimized", "ensemble"}:
+        raise ValueError("execution_backend must be 'optimized' or 'ensemble'")
+    if likelihood_method not in {"nested", "rao_blackwellized", "guided"}:
+        raise ValueError(
+            "likelihood_method must be 'nested', 'rao_blackwellized', or 'guided'"
+        )
+    if guided_propagator is not None and likelihood_method not in {
+        "nested", "guided"
+    }:
+        raise ValueError(
+            "guided_propagator conflicts with the selected likelihood method"
+        )
+    if guided_propagator is not None:
+        likelihood_method = "guided"
+    if likelihood_method == "guided" and guided_propagator is None:
+        raise ValueError("guided likelihood mode requires guided_propagator")
+    effective_min_forecast_trajectories = int(min_forecast_trajectories)
+    effective_max_forecast_trajectories = (
+        4096 if max_forecast_trajectories is None
+        else int(max_forecast_trajectories)
+    )
+    effective_forecast_seed = 0 if forecast_seed is None else int(forecast_seed)
+    if effective_min_forecast_trajectories < 1:
+        raise ValueError("min_forecast_trajectories must be positive")
+    if effective_max_forecast_trajectories < effective_min_forecast_trajectories:
+        raise ValueError(
+            "max_forecast_trajectories must be at least min_forecast_trajectories"
+        )
+    if forecast_mcse_tolerance is not None and float(forecast_mcse_tolerance) <= 0:
+        raise ValueError("forecast_mcse_tolerance must be positive")
     if horizon < FORECAST_END_DAY:
         raise ValueError("filtered 2005 runner requires the full forecast boundary")
     if taliban_strength is not None:
@@ -2076,17 +2115,26 @@ def run(
         "likelihood_branches": int(likelihood_branches),
         "likelihood_method": str(likelihood_method),
         "execution_backend": str(execution_backend),
+        "method_gate": (
+            None if method_gate is None else asdict(method_gate)
+        ),
+        "rb_likelihood_epsilon": (
+            None if rb_likelihood is None else float(rb_likelihood.epsilon)
+        ),
+        # A guided proposal is an explicitly user-supplied callable. Its
+        # preregistration/validation binding is the stable cache identity;
+        # the gate is required for every non-default empirical method.
+        "guided_proposal_validation_sha256": (
+            None if method_gate is None else method_gate.validation_sha256
+        ),
         "horizon": float(horizon),
         "forecast_mcse_tolerance": (
             None if forecast_mcse_tolerance is None
             else float(forecast_mcse_tolerance)
         ),
         "min_forecast_trajectories": int(min_forecast_trajectories),
-        "max_forecast_trajectories": (
-            None if max_forecast_trajectories is None
-            else int(max_forecast_trajectories)
-        ),
-        "forecast_seed": None if forecast_seed is None else int(forecast_seed),
+        "max_forecast_trajectories": effective_max_forecast_trajectories,
+        "forecast_seed": effective_forecast_seed,
         "python_cache_tag": sys.implementation.cache_tag,
     }
     posterior_cache_hit = False
@@ -2186,7 +2234,12 @@ def run(
                     continue
                 if base_world is None:
                     base_world = generate_pineland(
-                        _config(seed, horizon), empirical_geography=case
+                        _config(
+                            seed,
+                            horizon,
+                            execution_backend=execution_backend,
+                        ),
+                        empirical_geography=case,
                     )
                     _precompute_province_lookup(base_world)
                 particle = build_initial_particle(
@@ -2236,6 +2289,8 @@ def run(
             filter_seed=filter_seed,
             likelihood_branches=likelihood_branches,
             likelihood_method=likelihood_method,
+            rb_likelihood=rb_likelihood,
+            guided_propagator=guided_propagator,
             method_gate=method_gate,
             workers=workers,
             resume_filter=resume_filter,
@@ -2299,8 +2354,8 @@ def run(
         particle_metadata=resident_metadata,
         mcse_tolerance=forecast_mcse_tolerance,
         min_forecast_trajectories=min_forecast_trajectories,
-        max_forecast_trajectories=max_forecast_trajectories,
-        forecast_seed=forecast_seed,
+        max_forecast_trajectories=effective_max_forecast_trajectories,
+        forecast_seed=effective_forecast_seed,
     )
     forecast_started = perf_counter()
     forecast_cpu_started = process_time()
@@ -2318,11 +2373,8 @@ def run(
                 resident_particle_metadata=resident_metadata,
                 mcse_tolerance=forecast_mcse_tolerance,
                 min_forecast_trajectories=min_forecast_trajectories,
-                max_forecast_trajectories=(
-                    4096 if max_forecast_trajectories is None
-                    else max_forecast_trajectories
-                ),
-                forecast_seed=0 if forecast_seed is None else forecast_seed,
+                max_forecast_trajectories=effective_max_forecast_trajectories,
+                forecast_seed=effective_forecast_seed,
             )
             if forecast_cache_dir is not None:
                 forecast_cache_manifest, _ = _save_forecast_cache(
@@ -2406,13 +2458,33 @@ def run(
             "not quantitatively identified; no sensitivity or false-positive "
             "transform is applied in this benchmark"
         ),
+        "likelihood_method": likelihood_method,
+        "execution_backend": execution_backend,
+        "experimental_method_gate": (
+            None if method_gate is None else asdict(method_gate)
+        ),
         "assimilation_probability_estimator": (
             "Jeffreys-regularized nested Monte-Carlo probability of the "
             "target-compatible event surface"
+            if likelihood_method == "nested" else
+            "Rao-Blackwellized conditional probability from integrated "
+            "organized-action opportunity hazards"
+            if likelihood_method == "rao_blackwellized" else
+            "guided-SMC importance-corrected target-compatible event likelihood"
         ),
         "competitor_information_contract": COMPETITOR_INFORMATION_CONTRACT,
         "likelihood_branches": likelihood_branches,
         "forecast_branches": forecast_branches,
+        "forecast_trajectories": forecast.get("forecast_trajectories"),
+        "forecast_mcse_tolerance": forecast.get("forecast_mcse_tolerance"),
+        "forecast_maximum_mcse": forecast.get("maximum_mcse"),
+        "forecast_mcse_converged": forecast.get("mcse_converged"),
+        "forecast_estimator": (
+            "MCSE-controlled posterior-predictive trajectory sampling"
+            if forecast_mcse_tolerance is not None else
+            "fixed-branch posterior-predictive trajectory sampling"
+        ),
+        "method_diagnostics": getattr(filter_, "method_diagnostics", {}),
         "parallel_workers": workers,
         "parallel_backend": "processes" if workers > 1 else "sequential",
         "posterior_cache": {
@@ -2513,7 +2585,30 @@ def main() -> None:
     parser.add_argument("--strength", type=float, choices=DEFAULT_STRENGTHS)
     parser.add_argument("--particles", type=int, default=DEFAULT_PARTICLE_COUNT)
     parser.add_argument("--likelihood-branches", type=int, default=3)
+    parser.add_argument(
+        "--likelihood-method",
+        choices=["nested", "rao_blackwellized", "guided"],
+        default="nested",
+        help=(
+            "experimental synthetic-validated likelihood method; the "
+            "default nested method is the empirical contract"
+        ),
+    )
+    parser.add_argument(
+        "--execution-backend",
+        choices=["optimized", "ensemble"],
+        default="optimized",
+        help="numeric execution representation for particle propagation",
+    )
     parser.add_argument("--forecast-branches", type=int, default=3)
+    parser.add_argument(
+        "--forecast-mcse-tolerance",
+        type=float,
+        help="optional binary-field MCSE stopping tolerance",
+    )
+    parser.add_argument("--min-forecast-trajectories", type=int, default=32)
+    parser.add_argument("--max-forecast-trajectories", type=int)
+    parser.add_argument("--forecast-seed", type=int)
     parser.add_argument("--horizon", type=float, default=FORECAST_END_DAY)
     parser.add_argument(
         "--workers",
@@ -2566,7 +2661,13 @@ def main() -> None:
         particles=args.particles,
         workers=args.workers,
         likelihood_branches=args.likelihood_branches,
+        likelihood_method=args.likelihood_method,
+        execution_backend=args.execution_backend,
         forecast_branches=args.forecast_branches,
+        forecast_mcse_tolerance=args.forecast_mcse_tolerance,
+        min_forecast_trajectories=args.min_forecast_trajectories,
+        max_forecast_trajectories=args.max_forecast_trajectories,
+        forecast_seed=args.forecast_seed,
         horizon=args.horizon,
         posterior_cache_dir=args.posterior_cache_dir,
         training_restart_dir=args.training_restart_dir,
