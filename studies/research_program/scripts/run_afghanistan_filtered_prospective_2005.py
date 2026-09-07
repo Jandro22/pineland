@@ -10,9 +10,12 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import argparse
+from concurrent.futures import ProcessPoolExecutor
 import csv
+import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import random
 import sys
@@ -167,11 +170,11 @@ def _conditioned_branch_index(
 class NestedOperationalPropagator:
     """Nested predictive likelihood plus observation-conditioned descendant."""
 
-    def __init__(self, *, branches: int, rng: random.Random) -> None:
+    def __init__(self, *, branches: int, selection_seed: int) -> None:
         if branches < 1:
             raise ValueError("likelihood branches must be at least one")
         self.branches = branches
-        self.rng = rng
+        self.selection_seed = int(selection_seed)
         self.calls = 0
         self.exact_match_calls = 0
         self.minimum_mismatch_sum = 0
@@ -209,7 +212,13 @@ class NestedOperationalPropagator:
         selected, minimum_mismatch, exact = _conditioned_branch_index(
             branch_active,
             observation.active_provinces,
-            self.rng,
+            random.Random(
+                _nested_selection_seed(
+                    self.selection_seed,
+                    state.lineage_id,
+                    observation.week_index,
+                )
+            ),
         )
         self.calls += 1
         self.exact_match_calls += int(exact)
@@ -233,6 +242,15 @@ class NestedOperationalPropagator:
                 self.maximum_minimum_mismatch
             ),
         }
+
+
+def _nested_selection_seed(
+    filter_seed: int,
+    lineage_id: str,
+    week_index: int,
+) -> int:
+    material = f"{int(filter_seed)}|{lineage_id}|{int(week_index)}".encode("utf-8")
+    return int.from_bytes(hashlib.sha256(material).digest()[:8], "big")
 
 
 def _load_case() -> dict:
@@ -387,12 +405,33 @@ def _active_provinces(
     }
 
 
+def _nested_particle_job(
+    job: tuple[
+        SimulationParticle,
+        float,
+        ProvinceWeekObservation,
+        int,
+        int,
+    ],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    state, time, observation, branches, filter_seed = job
+    propagator = NestedOperationalPropagator(
+        branches=branches,
+        selection_seed=filter_seed,
+    )
+    new_state, likelihood = propagator(state, time, observation)
+    return new_state, likelihood, propagator.diagnostics()
+
+
 def make_nested_propagator(
     *,
     branches: int,
-    rng: random.Random,
+    selection_seed: int,
 ):
-    return NestedOperationalPropagator(branches=branches, rng=rng)
+    return NestedOperationalPropagator(
+        branches=branches,
+        selection_seed=selection_seed,
+    )
 
 
 def run_training_filter(
@@ -402,30 +441,91 @@ def run_training_filter(
     filter_seed: int,
     ess_fraction: float = 0.5,
     likelihood_branches: int = 3,
+    workers: int = 1,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
-    propagator = make_nested_propagator(
-        branches=likelihood_branches,
-        rng=random.Random(filter_seed + 7919),
-    )
+    if workers < 1:
+        raise ValueError("workers must be positive")
     filter_ = SequentialParticleFilter(
         particles,
-        propagate_and_score=propagator,
+        transition=lambda state, time: None,
+        log_likelihood=lambda state, observation: 0.0,
         rng=random.Random(filter_seed),
         ess_fraction=ess_fraction,
         allowed_split="training",
         fork_state=lambda state, child_index: state.fork(child_index),
     )
-    for observation in observations:
-        filter_.assimilate(
+    nested_calls = 0
+    exact_calls = 0
+    mismatch_sum = 0.0
+    max_mismatch = 0
+
+    def assimilate_one(
+        observation: ProvinceWeekObservation,
+        executor: ProcessPoolExecutor | None,
+    ) -> None:
+        nonlocal nested_calls, exact_calls, mismatch_sum, max_mismatch
+        jobs = [
+            (
+                particle.state,
+                observation.end_day,
+                observation,
+                likelihood_branches,
+                filter_seed,
+            )
+            for particle in filter_.particles
+        ]
+        if executor is None:
+            completed = list(map(_nested_particle_job, jobs))
+        else:
+            completed = list(executor.map(_nested_particle_job, jobs, chunksize=1))
+        propagated = [(state, likelihood) for state, likelihood, _ in completed]
+        for _, _, diagnostics in completed:
+            calls = int(diagnostics["nested_propagation_calls"])
+            nested_calls += calls
+            exact_calls += int(diagnostics["exact_descendant_match_calls"])
+            mismatch_sum += (
+                float(diagnostics["mean_minimum_descendant_hamming_mismatch"])
+                * calls
+            )
+            max_mismatch = max(
+                max_mismatch,
+                int(
+                    diagnostics[
+                        "maximum_minimum_descendant_hamming_mismatch"
+                    ]
+                ),
+            )
+        filter_.assimilate_precomputed(
             AssimilationObservation(
                 time=observation.end_day,
                 value=observation,
                 split="training",
                 observation_id=f"province-week-{observation.week_index}",
-            )
+            ),
+            propagated,
         )
+
+    ordered_observations = list(observations)
+    if workers == 1:
+        for observation in ordered_observations:
+            assimilate_one(observation, None)
+    else:
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            for observation in ordered_observations:
+                assimilate_one(observation, executor)
     filter_.freeze()
-    filter_.nested_propagator_diagnostics = propagator.diagnostics()
+    filter_.nested_propagator_diagnostics = {
+        "nested_propagation_calls": nested_calls,
+        "exact_descendant_match_calls": exact_calls,
+        "exact_descendant_match_fraction": (
+            exact_calls / nested_calls if nested_calls else 0.0
+        ),
+        "mean_minimum_descendant_hamming_mismatch": (
+            mismatch_sum / nested_calls if nested_calls else 0.0
+        ),
+        "maximum_minimum_descendant_hamming_mismatch": max_mismatch,
+        "workers": workers,
+    }
     return filter_
 
 
@@ -451,16 +551,33 @@ def _forecast_cells(
     }
 
 
+def _forecast_particle_job(
+    job: tuple[SimulationParticle, float, float, int],
+) -> list[set[tuple[str, int]]]:
+    state, start_day, end_day, forecast_branches = job
+    branch_cell_sets = []
+    for branch_index in range(forecast_branches):
+        branch = state.fork(branch_index)
+        branch.advance_to(end_day)
+        branch_cell_sets.append(
+            _forecast_cells(branch, start_day=start_day, end_day=end_day)
+        )
+    return branch_cell_sets
+
+
 def forecast_weighted_field(
     filter_: SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation],
     *,
     start_day: float = FORECAST_START_DAY,
     end_day: float = FORECAST_END_DAY,
     forecast_branches: int = 3,
+    workers: int = 1,
 ) -> dict[str, object]:
     """Freeze the posterior and return target-compatible event probabilities."""
     if forecast_branches < 1:
         raise ValueError("forecast branches must be at least one")
+    if workers < 1:
+        raise ValueError("workers must be positive")
     filter_.freeze()
     weights = particle_weights(filter_.particles)
     provinces = sorted({
@@ -477,14 +594,18 @@ def forecast_weighted_field(
     }
     member_cells: list[list[dict[str, int | str]]] = []
     forecast_branch_cells: list[list[list[dict[str, int | str]]]] = []
-    for particle, weight in zip(filter_.particles, weights):
-        branch_cell_sets = []
-        for branch_index in range(forecast_branches):
-            branch = particle.state.fork(branch_index)
-            branch.advance_to(end_day)
-            branch_cell_sets.append(
-                _forecast_cells(branch, start_day=start_day, end_day=end_day)
+    jobs = [
+        (particle.state, start_day, end_day, forecast_branches)
+        for particle in filter_.particles
+    ]
+    if workers == 1:
+        completed = list(map(_forecast_particle_job, jobs))
+    else:
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            completed = list(
+                executor.map(_forecast_particle_job, jobs, chunksize=1)
             )
+    for branch_cell_sets, weight in zip(completed, weights):
         cells = set().union(*branch_cell_sets) if branch_cell_sets else set()
         member_cells.append([
             {"province_id": province, "week_index": week}
@@ -534,9 +655,12 @@ def run(
     strengths: tuple[float, ...] = DEFAULT_STRENGTHS,
     likelihood_branches: int = 3,
     forecast_branches: int = 3,
+    workers: int = 1,
 ) -> dict:
     if particles < 2:
         raise ValueError("at least two particles are required")
+    if workers < 1:
+        raise ValueError("workers must be positive")
     if horizon < FORECAST_END_DAY:
         raise ValueError("filtered 2005 runner requires the full forecast boundary")
     if taliban_strength is not None:
@@ -569,11 +693,13 @@ def run(
         observations,
         filter_seed=seed + 17_003,
         likelihood_branches=likelihood_branches,
+        workers=workers,
     )
     posterior_boundary = max(observation.end_day for observation in observations)
     forecast = forecast_weighted_field(
         filter_,
         forecast_branches=forecast_branches,
+        workers=workers,
     )
     filter_diagnostics = [asdict(item) for item in filter_.history]
     smc_diagnostics = {
@@ -643,6 +769,8 @@ def run(
         "competitor_information_contract": COMPETITOR_INFORMATION_CONTRACT,
         "likelihood_branches": likelihood_branches,
         "forecast_branches": forecast_branches,
+        "parallel_workers": workers,
+        "parallel_backend": "processes" if workers > 1 else "sequential",
         "filter_updates": filter_diagnostics,
         "nested_propagator_diagnostics": getattr(
             filter_, "nested_propagator_diagnostics", {}
@@ -682,17 +810,24 @@ def main() -> None:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--strength", type=float, choices=DEFAULT_STRENGTHS)
     parser.add_argument("--particles", type=int, default=DEFAULT_PARTICLE_COUNT)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=max(1, min(10, os.cpu_count() or 1)),
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     payload = run(
         seed=args.seed,
         taliban_strength=args.strength,
         particles=args.particles,
+        workers=args.workers,
         output=args.output,
     )
     print(json.dumps({
         "output": str(args.output),
         "particle_count": payload["particle_count"],
+        "parallel_workers": payload["parallel_workers"],
         "training_boundary_day": payload["training_boundary_day"],
         "forecast_probability_cells": len(payload["posterior_probability_field"]),
     }))

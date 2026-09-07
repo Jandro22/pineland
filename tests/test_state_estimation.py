@@ -144,6 +144,36 @@ def test_training_only_filter_rejects_holdout_before_advancing_particles():
     assert filter_.last_time == 7.0
 
 
+def test_precomputed_propagation_uses_normal_weight_and_resampling_path():
+    particles = [Particle({"value": value}) for value in (0, 1, 2, 3)]
+    filter_ = SequentialParticleFilter(
+        particles,
+        transition=lambda state, time: None,
+        log_likelihood=lambda state, observed: 0.0,
+        rng=random.Random(17),
+        ess_fraction=0.1,
+    )
+    propagated = [
+        ({"value": 10}, math.log(.1)),
+        ({"value": 11}, math.log(.2)),
+        ({"value": 12}, math.log(.3)),
+        ({"value": 13}, math.log(.4)),
+    ]
+    diagnostics = filter_.assimilate_precomputed(
+        AssimilationObservation(
+            7.0, "unused", split="training", observation_id="precomputed"
+        ),
+        propagated,
+    )
+    assert [particle.state["value"] for particle in filter_.particles] == [
+        10, 11, 12, 13
+    ]
+    assert particle_weights(filter_.particles) == pytest.approx([.1, .2, .3, .4])
+    assert diagnostics.resampled is False
+    assert diagnostics.observation_id == "precomputed"
+    assert filter_.last_time == 7.0
+
+
 def test_synthetic_planted_hotspot_is_recovered_and_improves_forecast_weight():
     """A partial observation must localize a latent hotspot before forecasting."""
     locations = ("A", "B", "C", "D")

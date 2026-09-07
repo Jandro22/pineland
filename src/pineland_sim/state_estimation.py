@@ -317,11 +317,10 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         """
         self.frozen = True
 
-    def assimilate(
+    def _validate_observation(
         self,
         observation: AssimilationObservation[ObservationT],
-    ) -> FilterUpdateDiagnostics:
-        """Advance to and assimilate one predeclared observation boundary."""
+    ) -> None:
         if self.frozen:
             raise RuntimeError(
                 "particle filter is frozen at the forecast boundary and cannot "
@@ -335,6 +334,95 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         if observation.time < self.last_time - 1e-12:
             raise ValueError("observations must arrive in nondecreasing time order")
 
+    def _commit_propagated_update(
+        self,
+        observation: AssimilationObservation[ObservationT],
+        propagated: Sequence[tuple[StateT, float]],
+    ) -> FilterUpdateDiagnostics:
+        if len(propagated) != len(self.particles):
+            raise ValueError(
+                "precomputed propagation must return exactly one result per particle"
+            )
+        prior = particle_weights(self.particles, strict=True)
+        for particle, prior_weight, (new_state, likelihood) in zip(
+            self.particles, prior, propagated
+        ):
+            particle.state = new_state
+            likelihood = float(likelihood)
+            particle.log_weight = (
+                -float("inf")
+                if prior_weight <= 0 or not isfinite(likelihood)
+                else log(prior_weight) + likelihood
+            )
+        posterior = particle_weights(self.particles, strict=True)
+        for particle, weight in zip(self.particles, posterior):
+            particle.log_weight = log(weight) if weight > 0 else -float("inf")
+        update = {
+            "prior_ess": effective_sample_size(prior),
+            "posterior_ess": effective_sample_size(posterior),
+            "maximum_posterior_weight": max(posterior),
+        }
+        previous_roots = list(self._root_ancestors)
+        resampled, resampling = resample_if_degenerate(
+            self.particles,
+            self.rng,
+            ess_fraction=self.ess_fraction,
+            clone_state=self.clone_state,
+            fork_state=self.fork_state,
+        )
+        self.particles = resampled
+        parent_indices = list(
+            resampling.get("parent_indices", range(len(self.particles)))
+        )
+        if bool(resampling["resampled"]):
+            self._root_ancestors = [
+                previous_roots[index] for index in parent_indices
+            ]
+            self._resampling_events += 1
+        ancestry = self.ancestry_diagnostics()
+        diagnostics = FilterUpdateDiagnostics(
+            time=float(observation.time),
+            observation_id=observation.observation_id,
+            split=observation.split,
+            prior_ess=float(update["prior_ess"]),
+            posterior_ess=float(update["posterior_ess"]),
+            maximum_posterior_weight=float(update["maximum_posterior_weight"]),
+            resampled=bool(resampling["resampled"]),
+            unique_parent_particles=int(
+                resampling.get("unique_parent_particles", len(self.particles))
+            ),
+            distinct_root_ancestors=int(ancestry["distinct_root_ancestors"]),
+            lineage_entropy=float(ancestry["lineage_entropy"]),
+            maximum_ancestry_concentration=float(
+                ancestry["maximum_ancestry_concentration"]
+            ),
+            resampling_events=int(ancestry["resampling_events"]),
+        )
+        self.history.append(diagnostics)
+        self.last_time = float(observation.time)
+        return diagnostics
+
+    def assimilate_precomputed(
+        self,
+        observation: AssimilationObservation[ObservationT],
+        propagated: Sequence[tuple[StateT, float]],
+    ) -> FilterUpdateDiagnostics:
+        """Commit externally propagated particles through the normal SMC update.
+
+        This is an execution hook for process-isolated propagation. It does not
+        bypass split/freeze guards, weighting, ESS, resampling, or ancestry
+        accounting.
+        """
+        self._validate_observation(observation)
+        return self._commit_propagated_update(observation, propagated)
+
+    def assimilate(
+        self,
+        observation: AssimilationObservation[ObservationT],
+    ) -> FilterUpdateDiagnostics:
+        """Advance to and assimilate one predeclared observation boundary."""
+        self._validate_observation(observation)
+
         if self.propagate_and_score is None:
             assert self.transition is not None
             assert self.log_likelihood is not None
@@ -347,28 +435,15 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
                 strict=True,
             )
         else:
-            prior = particle_weights(self.particles, strict=True)
-            for particle, prior_weight in zip(self.particles, prior):
-                new_state, likelihood = self.propagate_and_score(
+            propagated = [
+                self.propagate_and_score(
                     particle.state,
                     observation.time,
                     observation.value,
                 )
-                particle.state = new_state
-                likelihood = float(likelihood)
-                particle.log_weight = (
-                    -float("inf")
-                    if prior_weight <= 0 or not isfinite(likelihood)
-                    else log(prior_weight) + likelihood
-                )
-            posterior = particle_weights(self.particles, strict=True)
-            for particle, weight in zip(self.particles, posterior):
-                particle.log_weight = log(weight) if weight > 0 else -float("inf")
-            update = {
-                "prior_ess": effective_sample_size(prior),
-                "posterior_ess": effective_sample_size(posterior),
-                "maximum_posterior_weight": max(posterior),
-            }
+                for particle in self.particles
+            ]
+            return self._commit_propagated_update(observation, propagated)
         previous_roots = list(self._root_ancestors)
         resampled, resampling = resample_if_degenerate(
             self.particles,
