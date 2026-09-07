@@ -22,7 +22,7 @@ from array import array
 import hashlib
 import struct
 from math import exp
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Sequence
 
 from .entities import ActorBelief, CONTROL_DIMENSIONS, clamp
 
@@ -34,7 +34,7 @@ _CONTROL_FIELD_COUNT = len(CONTROL_DIMENSIONS)
 _NUMERIC_FIELD_COUNT = CONTROL_STATE_STRIDE
 
 
-def _state_sha256(tag: bytes, keys: tuple[tuple[str, ...], ...],
+def _state_sha256(tag: bytes, keys: Sequence[tuple[str, ...]],
                   key_to_index: Mapping[tuple[str, ...], int], state: array,
                   stride: int) -> str:
     """Hash a keyed numeric store in canonical key order."""
@@ -71,7 +71,7 @@ class _CompactBeliefState:
         default_decay_rate: float = 0.0,
         target_decay_rate: float = 0.0,
     ) -> None:
-        normalized_keys = tuple(keys)
+        normalized_keys = list(keys)
         if len(set(normalized_keys)) != len(normalized_keys):
             raise ValueError("compact belief keys must be unique")
         self.keys = normalized_keys
@@ -101,7 +101,7 @@ class _CompactBeliefState:
 
     @classmethod
     def from_beliefs(cls, beliefs: Mapping[tuple[str, ...], Any]):
-        keys = tuple(sorted(beliefs))
+        keys = sorted(beliefs)
         state = array("d")
         for key in keys:
             state.extend(cls._belief_row(beliefs[key]))
@@ -119,7 +119,7 @@ class _CompactBeliefState:
         if index is not None:
             return index
         index = len(self.keys)
-        self.keys = (*self.keys, key)
+        self.keys.append(key)
         self.key_to_index[key] = index
         self.state.extend(self._belief_row(belief))
         self.decay_event_positions.append(len(self.decay_events))
@@ -185,7 +185,7 @@ class _CompactBeliefState:
         """Reconcile rows after an intentional external object-model edit."""
         if tuple(sorted(beliefs)) != tuple(sorted(self.keys)):
             replacement = type(self).from_beliefs(beliefs)
-            self.keys = replacement.keys
+            self.keys = list(replacement.keys)
             self.key_to_index = replacement.key_to_index
             self.state = replacement.state
             self.decay_event_positions = array(
@@ -410,7 +410,7 @@ class CompactControlBeliefState:
         keys: Iterable[tuple[str, str, str]] = (),
         state: array | None = None,
     ) -> None:
-        normalized_keys = tuple(keys)
+        normalized_keys = list(keys)
         if len(set(normalized_keys)) != len(normalized_keys):
             raise ValueError("compact control-belief keys must be unique")
         self.keys = normalized_keys
@@ -429,7 +429,7 @@ class CompactControlBeliefState:
     def from_beliefs(
         cls, beliefs: Mapping[tuple[str, str, str], ActorBelief]
     ) -> "CompactControlBeliefState":
-        keys = tuple(sorted(beliefs))
+        keys = sorted(beliefs)
         state = array("d")
         for key in keys:
             state.extend(cls._belief_row(beliefs[key]))
@@ -474,7 +474,7 @@ class CompactControlBeliefState:
         if index is not None:
             return index
         index = len(self.keys)
-        self.keys = (*self.keys, key)
+        self.keys.append(key)
         self.key_to_index[key] = index
         self.state.extend(self._belief_row(belief))
         return index
@@ -539,7 +539,7 @@ class CompactControlBeliefState:
         """
         if tuple(sorted(beliefs)) != tuple(sorted(self.keys)):
             replacement = type(self).from_beliefs(beliefs)
-            self.keys = replacement.keys
+            self.keys = list(replacement.keys)
             self.key_to_index = replacement.key_to_index
             self.state = replacement.state
             return

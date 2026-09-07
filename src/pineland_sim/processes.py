@@ -696,6 +696,11 @@ class ProcessEngine:
         from .physical import advance_patrol_presence_memory
 
         advance_patrol_presence_memory(self.world, self.world.time)
+        # Validate the static response matrix once per refresh.  All
+        # ``response_times(..., use_runtime_indexes=True)`` calls below can
+        # then reuse it without rebuilding/sorting the edge signature for each
+        # actor in each locality.
+        self.world.rebuild_physical_distance_index()
         changed = 0
         total = 0.0
         active_physical_localities = getattr(

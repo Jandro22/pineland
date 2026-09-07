@@ -40,6 +40,13 @@ def _resident_test_summary(state):
     return {"value": state}
 
 
+def _resident_test_nonmutating(state, time, observation):
+    # Return a derived result while deliberately preserving the resident
+    # integer state.  This mirrors forecast sampling, where the worker forks a
+    # temporary child but the posterior parent remains resident.
+    return state, 0.0, {"value": state + observation, "time": time}
+
+
 def test_bounded_process_map_preserves_order_with_a_small_submission_window():
     with ThreadPoolExecutor(max_workers=2) as executor:
         values = list(bounded_process_map(
@@ -61,6 +68,25 @@ def test_persistent_particle_pool_keeps_parent_forks_on_their_worker():
         assert [result[0] for result in pool.propagate(7.0, 10)] == list(range(4))
         pool.resample([3, 3, 0, 1])
         assert pool.snapshot() == [13, 1013, 2010, 3011]
+
+
+def test_persistent_particle_pool_nonmutating_evaluation_preserves_parents():
+    with PersistentParticlePool(
+        [10, 20, 30, 40],
+        propagate=_resident_test_nonmutating,
+        fork_state=_resident_test_fork,
+        workers=2,
+    ) as pool:
+        before = pool.snapshot()
+        results = pool.evaluate_nonmutating([
+            (3, 7.0, 5),
+            (0, 8.0, 6),
+            (3, 9.0, 7),
+        ])
+        assert [row[0] for row in results] == [0, 1, 2]
+        assert [row[1] for row in results] == [3, 0, 3]
+        assert [row[3]["value"] for row in results] == [45, 16, 47]
+        assert pool.snapshot() == before
 
 
 def test_persistent_particle_pool_persists_and_reloads_worker_side(tmp_path):

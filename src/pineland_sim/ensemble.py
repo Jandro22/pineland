@@ -744,11 +744,8 @@ class InformationSourcePlan:
 
         # This order intentionally mirrors generate_background_observations.
         for post in sorted(world.security_posts.values(), key=lambda item: item.post_id):
-            if post.available_fraction <= 0:
-                continue
-            formation = world.formations.get(post.formation_id) if post.formation_id else None
-            if formation is not None and (formation.moving or formation.available_personnel() <= 0):
-                continue
+            # Compile source identity/order once. Availability is dynamic and
+            # is filtered immediately before the RNG boundary.
             always_sources.append(add(
                 post.organization_id, post.formation_id or post.post_id,
                 post.post_id, "fixed_post", post.locality_id,
@@ -826,8 +823,9 @@ class InformationSourcePlan:
             locality_fallback_sources.append(())
 
         for formation in sorted(world.formations.values(), key=lambda item: item.formation_id):
-            if formation.moving or formation.available_personnel() <= 0:
-                continue
+            # Moving/personnel eligibility is also dynamic. Keeping every
+            # formation in the compiled plan avoids rebuilding source topology
+            # merely because a unit moves between information ticks.
             always_sources.append(add(
                 formation.organization_id, formation.formation_id,
                 formation.formation_id, "organization_member", formation.locality_id,
@@ -910,7 +908,58 @@ class InformationSourcePlan:
         end = self.target_offsets[index + 1]
         return tuple(self.target_actor[start:end])
 
-    def selected_source_indices(self, rng: Any) -> tuple[int, ...]:
+    def source_enabled(self, world: Any, source_index: int) -> bool:
+        """Return dynamic source eligibility without consuming randomness."""
+        source_index = int(source_index)
+        kind = self.codes.value(self.source_type[source_index])
+        source_id = self.codes.value(self.source[source_index])
+        if source_id is None:
+            return False
+        if kind == "fixed_post":
+            post = world.security_posts.get(source_id)
+            if post is None or post.available_fraction <= 0:
+                return False
+            formation = (
+                world.formations.get(post.formation_id)
+                if post.formation_id else None
+            )
+            return not (
+                formation is not None
+                and (formation.moving or formation.available_personnel() <= 0)
+            )
+        if kind == "organization_member":
+            formation = world.formations.get(source_id)
+            return bool(
+                formation is not None
+                and not formation.moving
+                and formation.available_personnel() > 0
+            )
+        return True
+
+    def dynamic_boundary_sources(
+        self, world: Any
+    ) -> tuple[array, array]:
+        """Filter posts/members before any report-gate RNG draw."""
+        return (
+            array(
+                "I",
+                (
+                    int(index) for index in self.native_initial_sources
+                    if self.source_enabled(world, int(index))
+                ),
+            ),
+            array(
+                "I",
+                (
+                    int(index) for index in self.native_member_sources
+                    if self.source_enabled(world, int(index))
+                ),
+            ),
+        )
+
+    def selected_source_indices(
+        self, rng: Any, world: Any | None = None
+    ) -> tuple[int, ...]:
         """Select exact background source rows using the reference draw order.
 
         This materialized convenience API is useful for diagnostics.  The
@@ -918,9 +967,11 @@ class InformationSourcePlan:
         locality choice occurs at the same point as the reference source's
         report/detection draws.
         """
-        return tuple(self.iter_selected_source_indices(rng))
+        return tuple(self.iter_selected_source_indices(rng, world=world))
 
-    def iter_selected_source_indices(self, rng: Any):
+    def iter_selected_source_indices(
+        self, rng: Any, world: Any | None = None
+    ):
         """Yield sources while preserving the reference interleaving.
 
         Community selection is deliberately lazy.  In the reference engine,
@@ -935,7 +986,8 @@ class InformationSourcePlan:
                 source_kind != "organization_member"
                 and not any(self.locality_source_groups)
             ):
-                yield item
+                if world is None or self.source_enabled(world, item):
+                    yield item
         for index, groups in enumerate(self.locality_source_groups):
             if groups:
                 if len(groups) == 1:
@@ -953,7 +1005,8 @@ class InformationSourcePlan:
                 yield from self.locality_fallback_sources[index]
         for item in selected:
             if self.codes.value(self.source_type[item]) == "organization_member":
-                yield item
+                if world is None or self.source_enabled(world, item):
+                    yield item
 
     def is_current_for(self, world: Any) -> bool:
         current = (
@@ -1741,18 +1794,15 @@ class NumericInformationEventEngine:
         if native_enabled:
             from .native_kernels import native_information_event_batch
 
-            initial_sources = tuple(
-                index for index in self.plan.always_sources
-                if self.plan.codes.value(self.plan.source_type[index]) == "fixed_post"
-                or (
-                    self.plan.codes.value(self.plan.source_type[index]) != "organization_member"
-                    and not any(self.plan.locality_source_groups)
+            if world is not None:
+                dynamic_initial, dynamic_members = (
+                    self.plan.dynamic_boundary_sources(world)
                 )
-            )
-            member_sources = tuple(
-                index for index in self.plan.always_sources
-                if self.plan.codes.value(self.plan.source_type[index]) == "organization_member"
-            )
+                initial_sources = tuple(int(item) for item in dynamic_initial)
+                member_sources = tuple(int(item) for item in dynamic_members)
+            else:
+                initial_sources = tuple(int(item) for item in self.plan.native_initial_sources)
+                member_sources = tuple(int(item) for item in self.plan.native_member_sources)
             def process_native_batch(batch: Sequence[int]) -> None:
                 nonlocal source_attempts, reported_sources
                 source_attempts += len(batch)
@@ -1798,8 +1848,8 @@ class NumericInformationEventEngine:
 
                 native_result = native_information_event_plan(
                     rng,
-                    initial_sources=self.plan.native_initial_sources,
-                    member_sources=self.plan.native_member_sources,
+                    initial_sources=array("I", initial_sources),
+                    member_sources=array("I", member_sources),
                     locality_group_offsets=self.plan.native_locality_group_offsets,
                     group_source_offsets=self.plan.native_group_source_offsets,
                     group_sources=self.plan.native_group_sources,
@@ -1871,7 +1921,9 @@ class NumericInformationEventEngine:
                 if member_sources:
                     process_native_batch(member_sources)
         else:
-            for source_index in self.plan.iter_selected_source_indices(rng):
+            for source_index in self.plan.iter_selected_source_indices(
+                rng, world=world
+            ):
                 source_attempts += 1
                 if rng.random() >= self.report_probability[source_index]:
                     continue
@@ -2063,6 +2115,18 @@ class EnsembleBeliefState:
     stride: int
     state: array
     key_to_index: dict[tuple[str, ...], int] = field(init=False)
+    # A one-lane runtime can borrow the authoritative compact world's numeric
+    # array instead of copying it into a second SoA and then mirroring every
+    # row back after each information/patrol clock.  Multi-particle packed
+    # ensembles deliberately leave this unset and own their storage outright.
+    compact_backing: Any | None = field(default=None, repr=False)
+    # Dirty keys are an execution boundary, not scientific state.  They let a
+    # one-lane numeric runtime update only oracle objects that were actually
+    # touched by fusion, rather than rewriting tens of thousands of beliefs on
+    # every patrol report.
+    dirty_keys: set[tuple[int, tuple[str, ...]]] = field(
+        default_factory=set, repr=False
+    )
 
     def __post_init__(self) -> None:
         self.keys = tuple(tuple(str(item) for item in key) for key in self.keys)
@@ -2133,6 +2197,13 @@ class EnsembleBeliefState:
         return (particle * self.entity_count + entity) * self.stride
 
     def row(self, particle: int, key_or_index: tuple[str, ...] | int) -> tuple[float, ...]:
+        if self.compact_backing is not None and particle == 0:
+            if isinstance(key_or_index, int):
+                key = self.keys[int(key_or_index)]
+            else:
+                key = tuple(key_or_index)
+            if hasattr(self.compact_backing, "materialize"):
+                self.compact_backing.materialize(key)
         start = self.offset(particle, key_or_index)
         return tuple(self.state[start:start + self.stride])
 
@@ -2152,6 +2223,28 @@ class EnsembleBeliefState:
             rows = [default] * self.particle_count
         if len(rows) != self.particle_count:
             raise ValueError("dynamic ensemble key needs one row per particle")
+        if self.compact_backing is not None:
+            if self.particle_count != 1:
+                raise RuntimeError(
+                    "a compact-backed ensemble state must contain one lane"
+                )
+            # Append the raw row directly to the backing store.  This mirrors
+            # Compact*State.ensure without requiring a rich belief object to be
+            # constructed merely to allocate numeric storage.
+            backing = self.compact_backing
+            index = len(backing.keys)
+            backing.keys.append(key)
+            backing.key_to_index[key] = index
+            backing.state.extend(float(value) for value in rows[0])
+            if hasattr(backing, "decay_event_positions"):
+                backing.decay_event_positions.append(
+                    len(getattr(backing, "decay_events", ()))
+                )
+            self.keys = tuple(backing.keys)
+            self.key_to_index = dict(backing.key_to_index)
+            self.state = backing.state
+            self.dirty_keys.add((0, key))
+            return index
         old_entities = self.entity_count
         old_state = self.state
         self.keys = (*self.keys, key)
@@ -2161,7 +2254,35 @@ class EnsembleBeliefState:
             start = particle * old_entities * self.stride
             self.state.extend(old_state[start:start + old_entities * self.stride])
             self.state.extend(float(value) for value in rows[particle])
+            self.dirty_keys.add((particle, key))
         return old_entities
+
+    def _materialize_keys(self, updates: Sequence[tuple[Any, ...]]) -> None:
+        """Materialize lazy compact confidence only for rows being fused."""
+        backing = self.compact_backing
+        if backing is None or not hasattr(backing, "materialize"):
+            return
+        seen: set[tuple[str, ...]] = set()
+        for update in updates:
+            key = tuple(update[1])
+            if key not in seen and key in backing.key_to_index:
+                backing.materialize(key)
+                seen.add(key)
+
+    def mark_dirty(self, updates: Sequence[tuple[Any, ...]]) -> None:
+        for update in updates:
+            self.dirty_keys.add((int(update[0]), tuple(update[1])))
+
+    def consume_dirty(self, particle: int = 0) -> tuple[tuple[str, ...], ...]:
+        """Return and clear dirty keys for one packed lane in key order."""
+        particle = int(particle)
+        keys = sorted(
+            key for lane, key in self.dirty_keys if lane == particle
+        )
+        self.dirty_keys = {
+            item for item in self.dirty_keys if item[0] != particle
+        }
+        return tuple(keys)
 
     def gather(self, parent_indices: Sequence[int]) -> None:
         """Resample rows with an indexed native-style gather."""
@@ -2175,11 +2296,23 @@ class EnsembleBeliefState:
             start = parent * block
             self.state.extend(old[start:start + block])
         self.particle_count = len(parents)
+        # Gather changes lane identity; stale dirty-lane metadata cannot be
+        # meaningfully remapped and is unnecessary because packed filters do
+        # not synchronize through one-lane oracle boundaries here.
+        self.dirty_keys.clear()
 
     def clone(self) -> "EnsembleBeliefState":
-        return type(self)(self.keys, self.particle_count, self.stride, array("d", self.state))
+        return type(self)(
+            self.keys, self.particle_count, self.stride,
+            array("d", self.state), None, set(self.dirty_keys)
+        )
 
     def sha256(self) -> str:
+        if self.compact_backing is not None and hasattr(
+            self.compact_backing, "materialize"
+        ):
+            for key in self.keys:
+                self.compact_backing.materialize(key)
         digest = hashlib.sha256()
         digest.update(f"pineland.ensemble.belief.v1:{self.stride}".encode())
         for key in self.keys:
@@ -2199,6 +2332,8 @@ class EnsembleBeliefState:
             raise ValueError("control fusions require control rows")
         if not updates:
             return 0
+        self._materialize_keys(updates)
+        self.mark_dirty(updates)
         indices = array("I")
         times = array("d")
         weights = array("d")
@@ -2259,6 +2394,8 @@ class EnsembleBeliefState:
             raise ValueError("presence fusions require presence rows")
         if not updates:
             return 0
+        self._materialize_keys(updates)
+        self.mark_dirty(updates)
         indices = array("I")
         times = array("d")
         weights = array("d")
@@ -2314,6 +2451,8 @@ class EnsembleBeliefState:
             raise ValueError("zone fusions require zone rows")
         if not updates:
             return 0
+        self._materialize_keys(updates)
+        self.mark_dirty(updates)
         indices = array("I"); times = array("d"); weights = array("d"); observed = array("d")
         for particle, key, time, weight, value in updates:
             indices.append(particle * self.entity_count + self.key_to_index[tuple(key)])
@@ -2371,6 +2510,17 @@ def _numeric_world_belief_state(
 
     compact = getattr(world, compact_attribute, None)
     beliefs = getattr(world, belief_attribute)
+    # The optimized/ensemble world already owns a persistent compact numeric
+    # representation.  Borrow that array directly whenever its key universe is
+    # coherent with the oracle mapping.  This removes the former
+    # compact->tuple->EnsembleBeliefState copy on every patrol/information
+    # event.  Lazy presence/zone confidence is materialized per touched key by
+    # ``EnsembleBeliefState`` before fusion.
+    if compact is not None and set(compact.keys) == set(beliefs):
+        return EnsembleBeliefState(
+            tuple(compact.keys), 1, stride, compact.state,
+            compact_backing=compact,
+        )
     keys = tuple(sorted(set(compact.keys if compact is not None else ()) | set(beliefs)))
     if stride == CONTROL_STATE_STRIDE:
         row_factory = CompactControlBeliefState._belief_row
@@ -2398,6 +2548,7 @@ def _sync_numeric_world_state(
     *,
     compact_attribute: str,
     belief_attribute: str,
+    keys: Sequence[tuple[str, ...]] | None = None,
 ) -> None:
     """Mirror one packed lane to the object model at an explicit boundary."""
     from .compact_information_state import (
@@ -2410,6 +2561,79 @@ def _sync_numeric_world_state(
 
     if state.particle_count != 1:
         raise ValueError("world synchronization requires exactly one packed lane")
+    selected_keys = tuple(state.keys if keys is None else keys)
+    backing = state.compact_backing
+    if backing is not None and backing is getattr(world, compact_attribute, None):
+        beliefs = getattr(world, belief_attribute)
+
+        def ensure_control(key: tuple[str, ...]):
+            if key not in beliefs:
+                beliefs[key] = ActorBelief(
+                    key[0], key[2], ControlVector(*([0.5] * 7)),
+                    world.config.information.prior_confidence, 0.0,
+                )
+
+        def ensure_presence(key: tuple[str, ...]):
+            if key not in beliefs:
+                location = key[2].split(":", 1)
+                locality_id = location[0]
+                microzone_id = (
+                    None if len(location) == 1 or location[1] == "*"
+                    else location[1]
+                )
+                beliefs[key] = PresenceBelief(
+                    key[0], key[1], locality_id,
+                    target_id=None if key[3] == "*" else key[3],
+                    microzone_id=microzone_id,
+                    confidence=world.config.information.prior_confidence,
+                )
+
+        def ensure_zone(key: tuple[str, ...]):
+            if key not in beliefs:
+                beliefs[key] = ActorZoneBelief(
+                    key[0], key[1], 0.5,
+                    world.config.information.prior_confidence, 0.0,
+                )
+
+        for raw_key in selected_keys:
+            key = tuple(raw_key)
+            if key not in backing.key_to_index:
+                continue
+            if hasattr(backing, "materialize"):
+                backing.materialize(key)
+            if state.stride == CONTROL_STATE_STRIDE:
+                ensure_control(key)
+            elif state.stride == PRESENCE_STATE_STRIDE:
+                ensure_presence(key)
+            else:
+                ensure_zone(key)
+            backing.write_to_belief(key, beliefs[key])
+            if state.stride == CONTROL_STATE_STRIDE:
+                # Preserve the legacy same-side projection used by logistics.
+                legacy = getattr(world, "beliefs", {}).get((key[0], key[2]))
+                mirrors_legacy = (
+                    _is_insurgent_actor(world, key[1])
+                    and _is_insurgent_actor(world, key[0])
+                ) or (
+                    key[1] == "government"
+                    and not _is_insurgent_actor(world, key[0])
+                )
+                if legacy is not None and mirrors_legacy:
+                    belief = beliefs[key]
+                    legacy.control_estimate = ControlVector(
+                        *[
+                            getattr(belief.control_estimate, dimension)
+                            for dimension in CONTROL_DIMENSIONS
+                        ]
+                    )
+                    legacy.confidence = belief.confidence
+                    legacy.updated_at = belief.updated_at
+                    legacy.last_reliable_observation_at = (
+                        belief.last_reliable_observation_at
+                    )
+                    legacy.evidence_count = belief.evidence_count
+                    legacy.contradiction_index = belief.contradiction_index
+        return
     if state.stride == CONTROL_STATE_STRIDE:
         compact = CompactControlBeliefState(
             state.keys,
@@ -2615,6 +2839,37 @@ class NumericInformationRuntime:
             float(world.time),
         )
 
+    def _refresh_belief_aliases(self, world: Any) -> None:
+        """Rebind only when an external process replaced/extended compact rows."""
+        specifications = (
+            ("control_state", "compact_control_state", "control_beliefs", CONTROL_STATE_STRIDE),
+            ("presence_state", "compact_presence_state", "presence_beliefs", PRESENCE_STATE_STRIDE),
+            ("node_presence_state", "compact_node_presence_state", "node_presence_beliefs", PRESENCE_STATE_STRIDE),
+            ("zone_state", "compact_zone_state", "zone_beliefs", ZONE_STATE_STRIDE),
+        )
+        for runtime_name, compact_name, belief_name, stride in specifications:
+            current = getattr(self, runtime_name)
+            compact = getattr(world, compact_name, None)
+            beliefs = getattr(world, belief_name)
+            keys = tuple(compact.keys) if compact is not None else tuple(sorted(beliefs))
+            if (
+                current.compact_backing is compact
+                and current.state is getattr(compact, "state", None)
+                and tuple(current.keys) == keys
+                and set(keys) == set(beliefs)
+            ):
+                continue
+            setattr(
+                self,
+                runtime_name,
+                _numeric_world_belief_state(
+                    world,
+                    compact_attribute=compact_name,
+                    belief_attribute=belief_name,
+                    stride=stride,
+                ),
+            )
+
     def _refresh(self, world: Any) -> None:
         if not self.engine.plan.is_current_for(world):
             # Source opportunities can change when formations move, become
@@ -2634,22 +2889,7 @@ class NumericInformationRuntime:
             )
         self.engine.next_sequence = int(world.next_observation_sequence)
         self.engine.next_relay_sequence = int(world.next_information_relay_sequence)
-        self.control_state = _numeric_world_belief_state(
-            world, compact_attribute="compact_control_state",
-            belief_attribute="control_beliefs", stride=CONTROL_STATE_STRIDE,
-        )
-        self.presence_state = _numeric_world_belief_state(
-            world, compact_attribute="compact_presence_state",
-            belief_attribute="presence_beliefs", stride=PRESENCE_STATE_STRIDE,
-        )
-        self.node_presence_state = _numeric_world_belief_state(
-            world, compact_attribute="compact_node_presence_state",
-            belief_attribute="node_presence_beliefs", stride=PRESENCE_STATE_STRIDE,
-        )
-        self.zone_state = _numeric_world_belief_state(
-            world, compact_attribute="compact_zone_state",
-            belief_attribute="zone_beliefs", stride=ZONE_STATE_STRIDE,
-        )
+        self._refresh_belief_aliases(world)
 
     def _record_rows(self, world: Any, *, append_history: bool = True) -> None:
         rows_by_sequence = {
@@ -2718,7 +2958,15 @@ class NumericInformationRuntime:
             else:
                 target_actor.append(codes.code(actor))
                 target_formation.append(0)
-            target_offsets.append(len(target_actor))
+        # ``InformationSourcePlan.target_offsets`` is CSR-style: one interval
+        # per *source*, not one interval per target actor.  A patrol plan has
+        # exactly one source, so even a no-target patrol must terminate that
+        # source with a second offset.  The previous implementation appended
+        # inside the actor loop, which produced an empty offsets interval when
+        # no opposing actor existed and multiple intervals when several actors
+        # existed.  Both cases are incompatible with ``from_world``'s
+        # source-indexed traversal.
+        target_offsets.append(len(target_actor))
         current_zone = codes.code(patrol.current_microzone_id)
         return InformationSourcePlan(
             codes,
@@ -2753,64 +3001,49 @@ class NumericInformationRuntime:
     def process_patrol(self, world: Any, patrol_id: str, time: float, rng: Any) -> dict[str, Any]:
         """Generate patrol detections/control rows without rich observations."""
         world.numeric_information_runtime = self
-        self.control_state = _numeric_world_belief_state(
-            world, compact_attribute="compact_control_state",
-            belief_attribute="control_beliefs", stride=CONTROL_STATE_STRIDE,
-        )
-        self.presence_state = _numeric_world_belief_state(
-            world, compact_attribute="compact_presence_state",
-            belief_attribute="presence_beliefs", stride=PRESENCE_STATE_STRIDE,
-        )
-        self.node_presence_state = _numeric_world_belief_state(
-            world, compact_attribute="compact_node_presence_state",
-            belief_attribute="node_presence_beliefs", stride=PRESENCE_STATE_STRIDE,
-        )
-        self.zone_state = _numeric_world_belief_state(
-            world, compact_attribute="compact_zone_state",
-            belief_attribute="zone_beliefs", stride=ZONE_STATE_STRIDE,
-        )
+        self._refresh_belief_aliases(world)
         plan = self._patrol_plan(world, patrol_id)
-        patrol_engine = NumericInformationEventEngine.from_world(world, plan=plan)
-        patrol_engine.report_probability[0] = float(
-            world.config.information.patrol_report_rate
-        )
-        patrol_engine.next_sequence = int(world.next_observation_sequence)
-        patrol_engine.next_relay_sequence = int(world.next_information_relay_sequence)
-        self.event_buffer.clear()
-        result = patrol_engine.process(
-            rng,
-            float(time),
-            event_buffer=self.event_buffer,
-            control_state=self.control_state,
-            presence_state=self.presence_state,
-            node_presence_state=self.node_presence_state,
-            zone_state=self.zone_state,
-            relay_buffer=self.relay_buffer,
-            record_negative=True,
-            world=world,
-        )
-        self._record_rows(world, append_history=False)
+        world.information_execution_cache.clear()
+        world.information_cache_active = True
+        try:
+            patrol_engine = NumericInformationEventEngine.from_world(world, plan=plan)
+            patrol_engine.report_probability[0] = float(
+                world.config.information.patrol_report_rate
+            )
+            patrol_engine.next_sequence = int(world.next_observation_sequence)
+            patrol_engine.next_relay_sequence = int(world.next_information_relay_sequence)
+            self.event_buffer.clear()
+            result = patrol_engine.process(
+                rng,
+                float(time),
+                event_buffer=self.event_buffer,
+                control_state=self.control_state,
+                presence_state=self.presence_state,
+                node_presence_state=self.node_presence_state,
+                zone_state=self.zone_state,
+                relay_buffer=self.relay_buffer,
+                record_negative=True,
+                world=world,
+            )
+            self._record_rows(world, append_history=False)
+        finally:
+            world.information_execution_cache.clear()
+            world.information_cache_active = False
         self.relay_buffer.retain_active()
-        _sync_numeric_world_state(
-            world, self.control_state,
-            compact_attribute="compact_control_state",
-            belief_attribute="control_beliefs",
-        )
-        _sync_numeric_world_state(
-            world, self.presence_state,
-            compact_attribute="compact_presence_state",
-            belief_attribute="presence_beliefs",
-        )
-        _sync_numeric_world_state(
-            world, self.node_presence_state,
-            compact_attribute="compact_node_presence_state",
-            belief_attribute="node_presence_beliefs",
-        )
-        _sync_numeric_world_state(
-            world, self.zone_state,
-            compact_attribute="compact_zone_state",
-            belief_attribute="zone_beliefs",
-        )
+        for state, compact_name, belief_name in (
+            (self.control_state, "compact_control_state", "control_beliefs"),
+            (self.presence_state, "compact_presence_state", "presence_beliefs"),
+            (self.node_presence_state, "compact_node_presence_state", "node_presence_beliefs"),
+            (self.zone_state, "compact_zone_state", "zone_beliefs"),
+        ):
+            dirty = state.consume_dirty(0)
+            if dirty:
+                _sync_numeric_world_state(
+                    world, state,
+                    compact_attribute=compact_name,
+                    belief_attribute=belief_name,
+                    keys=dirty,
+                )
         world.next_observation_sequence = int(patrol_engine.next_sequence)
         world.next_information_relay_sequence = int(patrol_engine.next_relay_sequence)
         return {
@@ -2942,43 +3175,45 @@ class NumericInformationRuntime:
 
         decay_information(world, float(time))
         world.numeric_information_runtime = self
-        self._refresh(world)
-        self.event_buffer.clear()
-        result = self.engine.process(
-            rng,
-            float(time),
-            event_buffer=self.event_buffer,
-            control_state=self.control_state,
-            presence_state=self.presence_state,
-            node_presence_state=self.node_presence_state,
-            zone_state=self.zone_state,
-            relay_buffer=self.relay_buffer,
-            record_negative=True,
-            world=world,
-        )
-        self._record_rows(world, append_history=False)
-        delivered, dropped, delivered_sequences = self._deliver(world, time, rng)
+        world.information_execution_cache.clear()
+        world.information_cache_active = True
+        try:
+            self._refresh(world)
+            self.event_buffer.clear()
+            result = self.engine.process(
+                rng,
+                float(time),
+                event_buffer=self.event_buffer,
+                control_state=self.control_state,
+                presence_state=self.presence_state,
+                node_presence_state=self.node_presence_state,
+                zone_state=self.zone_state,
+                relay_buffer=self.relay_buffer,
+                record_negative=True,
+                world=world,
+            )
+            self._record_rows(world, append_history=False)
+            delivered, dropped, delivered_sequences = self._deliver(
+                world, time, rng
+            )
+        finally:
+            world.information_execution_cache.clear()
+            world.information_cache_active = False
         self.relay_buffer.retain_active()
-        _sync_numeric_world_state(
-            world, self.control_state,
-            compact_attribute="compact_control_state",
-            belief_attribute="control_beliefs",
-        )
-        _sync_numeric_world_state(
-            world, self.presence_state,
-            compact_attribute="compact_presence_state",
-            belief_attribute="presence_beliefs",
-        )
-        _sync_numeric_world_state(
-            world, self.node_presence_state,
-            compact_attribute="compact_node_presence_state",
-            belief_attribute="node_presence_beliefs",
-        )
-        _sync_numeric_world_state(
-            world, self.zone_state,
-            compact_attribute="compact_zone_state",
-            belief_attribute="zone_beliefs",
-        )
+        for state, compact_name, belief_name in (
+            (self.control_state, "compact_control_state", "control_beliefs"),
+            (self.presence_state, "compact_presence_state", "presence_beliefs"),
+            (self.node_presence_state, "compact_node_presence_state", "node_presence_beliefs"),
+            (self.zone_state, "compact_zone_state", "zone_beliefs"),
+        ):
+            dirty = state.consume_dirty(0)
+            if dirty:
+                _sync_numeric_world_state(
+                    world, state,
+                    compact_attribute=compact_name,
+                    belief_attribute=belief_name,
+                    keys=dirty,
+                )
         world.next_observation_sequence = int(self.engine.next_sequence)
         world.next_information_relay_sequence = int(self.engine.next_relay_sequence)
         world.last_information_decay_at = float(time)
