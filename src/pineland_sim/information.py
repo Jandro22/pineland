@@ -1045,6 +1045,69 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
     )
 
 
+def _flush_compact_control_fusions(
+    world: WorldState,
+    compact: Any,
+    pending: list[tuple[Observation, str, float, float]],
+) -> int:
+    """Apply deferred control updates and mirror touched rows once."""
+    touched: dict[tuple[str, str, str], ActorBelief] = {}
+    for observation, recipient_id, time, weight in pending:
+        target_actor_id = observation.target_actor_id
+        if target_actor_id is None:
+            continue
+        values = observation.estimated_value.get("control")
+        physical_value = observation.estimated_value.get("physical_control")
+        if not isinstance(values, dict) and physical_value is None:
+            continue
+        values = values if isinstance(values, dict) else {
+            "physical": physical_value
+        }
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        belief = _ensure_control_belief(
+            world, recipient_id, target_actor_id, observation.locality_id
+        )
+        compact.ensure(key, belief)
+        compact.fuse(
+            key,
+            values,
+            float(time),
+            float(weight),
+            world.config.information.contradiction_memory_days,
+            world.config.information.contradiction_penalty,
+        )
+        touched[key] = belief
+
+    for key, belief in touched.items():
+        compact.write_to_belief(key, belief)
+
+    # Auxiliary zone recurrences and legacy own-side mirrors remain in their
+    # original observation order. They do not read control state between
+    # updates, so one object-model mirror per touched row is exact.
+    for observation, recipient_id, time, weight in pending:
+        target_actor_id = observation.target_actor_id
+        if target_actor_id is None:
+            continue
+        values = observation.estimated_value.get("control")
+        physical_value = observation.estimated_value.get("physical_control")
+        if not isinstance(values, dict) and physical_value is None:
+            continue
+        values = values if isinstance(values, dict) else {
+            "physical": physical_value
+        }
+        key = (recipient_id, target_actor_id, observation.locality_id)
+        _apply_control_auxiliary(
+            world,
+            observation,
+            recipient_id,
+            time,
+            weight,
+            values,
+            touched[key],
+        )
+    return len(pending)
+
+
 def _flush_control_fusions(world: WorldState) -> int:
     pending = world.deferred_control_fusions
     if not pending:
@@ -1057,6 +1120,9 @@ def _flush_control_fusions(world: WorldState) -> int:
             world.execution_backend == "optimized"
             and native_control_batch_enabled()
         )
+        compact = getattr(world, "compact_control_state", None)
+        if world.execution_backend == "optimized" and compact is not None and not native_enabled:
+            return _flush_compact_control_fusions(world, compact, pending)
         if not native_enabled:
             for observation, recipient_id, time, weight in pending:
                 _fuse_control_immediate(
@@ -1833,7 +1899,7 @@ def process_information(world: WorldState, time: float,
     batch_control = (
         world.execution_backend == "optimized"
         and world.execution_profile == "particle"
-        and native_control_batch_enabled()
+        and world.compact_control_state is not None
     )
     world.defer_control_fusions = batch_control
     world.deferred_control_fusions.clear()
