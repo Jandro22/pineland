@@ -952,6 +952,7 @@ def run_training_filter(
     restart_cache_dir: Path | None = None,
     restart_cache_key: dict[str, object] | None = None,
     restart_every_weeks: int = 13,
+    collect_worker_diagnostics: bool = False,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
     if workers < 1:
         raise ValueError("workers must be positive")
@@ -977,6 +978,9 @@ def run_training_filter(
     )
     max_mismatch = int(
         prior_nested.get("maximum_minimum_descendant_hamming_mismatch", 0)
+    )
+    worker_balance_history = list(
+        getattr(filter_, "worker_balance_history", [])
     )
 
     def refresh_nested_diagnostics() -> None:
@@ -1031,10 +1035,21 @@ def run_training_filter(
             ]
             completed = list(map(_nested_particle_job, jobs))
         else:
-            completed = executor.propagate(
-                observation.end_day,
-                (observation, likelihood_branches, filter_seed),
+            assignment_before = (
+                executor.assignment_counts()
+                if collect_worker_diagnostics else None
             )
+            if collect_worker_diagnostics:
+                completed, worker_rows = executor.propagate_profiled(
+                    observation.end_day,
+                    (observation, likelihood_branches, filter_seed),
+                )
+            else:
+                completed = executor.propagate(
+                    observation.end_day,
+                    (observation, likelihood_branches, filter_seed),
+                )
+                worker_rows = None
         if executor is not None:
             completed = [
                 (None, likelihood, diagnostics)
@@ -1072,6 +1087,22 @@ def run_training_filter(
             )
             if diagnostics.resampled:
                 executor.resample(parent_indices)
+            if collect_worker_diagnostics:
+                worker_balance_history.append({
+                    "week_index": int(observation.week_index),
+                    "end_day": float(observation.end_day),
+                    "posterior_ess": float(diagnostics.posterior_ess),
+                    "maximum_posterior_weight": float(
+                        diagnostics.maximum_posterior_weight
+                    ),
+                    "resampled": bool(diagnostics.resampled),
+                    "unique_parent_particles": int(
+                        diagnostics.unique_parent_particles
+                    ),
+                    "assignment_before": list(assignment_before or ()),
+                    "assignment_after": executor.assignment_counts(),
+                    "worker_compute": list(worker_rows or ()),
+                })
 
     ordered_observations = [
         observation
@@ -1104,6 +1135,8 @@ def run_training_filter(
             _reattach_particle_states(filter_, executor.snapshot())
     filter_.freeze()
     refresh_nested_diagnostics()
+    if collect_worker_diagnostics:
+        filter_.worker_balance_history = worker_balance_history
     return filter_
 
 

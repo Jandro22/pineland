@@ -107,6 +107,7 @@ def test_reference_and_optimized_execution_dual_run_agree():
     )
     result = compare_reference_optimized(world, until=0.5)
     assert result["exact_decision_state_equivalence"] is True
+    assert result["exact_execution_state_equivalence"] is True
     assert result["differing_components"] == []
 
 

@@ -204,5 +204,6 @@ class PhysicalModelTests(unittest.TestCase):
         self.assertEqual(config.physical.patrol_memory_gain, .2)
 
 
+
 if __name__ == "__main__":
     unittest.main()

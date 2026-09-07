@@ -73,6 +73,18 @@ def test_persistent_particle_pool_profiled_propagation_reports_workers():
         assert all(item["wall_seconds"] >= 0 for item in workers)
 
 
+def test_persistent_particle_pool_reports_assignment_imbalance_after_resampling():
+    with PersistentParticlePool(
+        [0, 1, 2, 3],
+        propagate=_resident_test_propagate,
+        fork_state=_resident_test_fork,
+        workers=2,
+    ) as pool:
+        assert pool.assignment_counts() == [2, 2]
+        pool.resample([3, 3, 0, 1])
+        assert pool.assignment_counts() == [1, 3]
+
+
 def test_log_weight_normalization_and_ess_are_numerically_stable():
     weights = normalize_log_weights([-10000.0, -10001.0, -10002.0])
     assert sum(weights) == pytest.approx(1.0)

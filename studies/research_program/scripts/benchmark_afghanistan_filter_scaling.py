@@ -70,6 +70,7 @@ def main() -> None:
         filter_seed=args.seed + 17_003,
         likelihood_branches=args.branches,
         workers=args.workers,
+        collect_worker_diagnostics=True,
     )
     elapsed = perf_counter() - started
     payload = {
@@ -84,6 +85,9 @@ def main() -> None:
         "updates": len(filter_.history),
         "nested_propagator_diagnostics": getattr(
             filter_, "nested_propagator_diagnostics", {}
+        ),
+        "worker_balance_history": getattr(
+            filter_, "worker_balance_history", []
         ),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
