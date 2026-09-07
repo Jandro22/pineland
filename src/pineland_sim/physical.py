@@ -474,7 +474,14 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float,
     # the signature check rebuilds the matrix before it is used.  The fallback
     # Dijkstra below remains available for malformed/partially constructed
     # worlds and is also useful as an exact oracle in tests.
-    world.rebuild_physical_distance_index()
+    # Scheduled optimized/ensemble refreshes validate the immutable topology
+    # once at the event boundary.  Recomputing the full edge signature here
+    # for every actor/locality response query turned a cached all-pairs lookup
+    # back into an O(edges * queries) operation.  Direct/reference callers keep
+    # the defensive signature check so tests or policy hooks that mutate a
+    # PhysicalEdge without an explicit invalidation remain exact.
+    if not use_runtime_indexes or not world.physical_distance_cache:
+        world.rebuild_physical_distance_index()
     if world.physical_distance_cache and source_delays:
         for target_id in zone_ids:
             best = inf

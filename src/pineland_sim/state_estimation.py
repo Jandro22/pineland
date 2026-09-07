@@ -127,6 +127,29 @@ def _resident_particle_worker(
                     },
                 ))
                 continue
+            if command == "evaluate_nonmutating":
+                # Execute an arbitrary set of slot-local jobs without
+                # replacing the resident parent states.  The supplied
+                # propagation callback is responsible for treating these
+                # payloads as non-mutating (forecast sampling forks a temporary
+                # child).  Job IDs allow the same posterior parent to be
+                # sampled repeatedly in one batch while preserving caller
+                # order.
+                results = []
+                for job_id, slot, time, observation in payload:
+                    slot = int(slot)
+                    if slot not in states:
+                        raise KeyError(
+                            f"worker {worker_index} does not own slot {slot}"
+                        )
+                    _, score, diagnostics = propagate(
+                        states[slot], float(time), observation
+                    )
+                    results.append(
+                        (int(job_id), slot, score, diagnostics)
+                    )
+                result_queue.put(("evaluate_nonmutating", results))
+                continue
             if command == "resample":
                 # The mapping is child slot -> locally resident parent slot.
                 # All children are assigned to the worker that owns their
@@ -455,6 +478,46 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
                 "resident particle worker returned an incomplete particle set"
             )
         return results, worker_rows
+
+    def evaluate_nonmutating(
+        self,
+        jobs: Sequence[tuple[int, float, ObservationT]],
+    ) -> list[tuple[int, int, float, ResultT]]:
+        """Evaluate selected resident slots without replacing parent state.
+
+        Each input is ``(slot, time, payload)``. Multiple jobs may reference
+        the same slot. The propagation callback must implement the payload as
+        a temporary/non-mutating evaluation; this method deliberately does not
+        attempt to infer or copy state itself.
+        """
+        by_worker: list[list[tuple[int, int, float, ObservationT]]] = [
+            [] for _ in self._workers
+        ]
+        for job_id, (raw_slot, raw_time, payload) in enumerate(jobs):
+            slot = int(raw_slot)
+            worker_index = self._assignment.get(slot)
+            if worker_index is None:
+                raise ValueError(
+                    f"resident evaluation referenced unknown slot {slot}"
+                )
+            by_worker[worker_index].append(
+                (job_id, slot, float(raw_time), payload)
+            )
+        for worker_index, (_, command_queue, _) in enumerate(self._workers):
+            command_queue.put((
+                "evaluate_nonmutating", by_worker[worker_index]
+            ))
+        results: list[tuple[int, int, float, ResultT]] = []
+        for _, _, result_queue in self._workers:
+            results.extend(self._receive(
+                result_queue, "evaluate_nonmutating"
+            ))
+        results.sort(key=lambda item: item[0])
+        if [item[0] for item in results] != list(range(len(jobs))):
+            raise RuntimeError(
+                "resident non-mutating evaluation returned an incomplete job set"
+            )
+        return results
 
     def assignment_counts(self) -> list[int]:
         """Return the current number of resident particle slots per worker."""

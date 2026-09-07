@@ -1248,6 +1248,21 @@ def _nested_persistent_job(
     )
 
 
+def _rao_blackwellized_persistent_job(
+    state: SimulationParticle,
+    time: float,
+    payload: tuple[
+        ProvinceWeekObservation,
+        RaoBlackwellizedActivityLikelihood | None,
+    ],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    """Resident-worker adapter for the one-trajectory RB propagator."""
+    observation, likelihood = payload
+    return _rao_blackwellized_particle_job(
+        (state, time, observation, likelihood)
+    )
+
+
 def _resident_particle_job(
     state: SimulationParticle,
     time: float,
@@ -1260,6 +1275,33 @@ def _resident_particle_job(
         and payload[0] == "forecast"
     ):
         return _forecast_persistent_job(state, time, payload[1])
+    if (
+        isinstance(payload, tuple)
+        and len(payload) == 3
+        and payload[0] == "rao_blackwellized"
+    ):
+        return _rao_blackwellized_persistent_job(
+            state,
+            time,
+            (payload[1], payload[2]),
+        )
+    if (
+        isinstance(payload, tuple)
+        and len(payload) == 6
+        and payload[0] == "forecast_sample"
+    ):
+        _, start_day, end_day, branch_index, province_bits, _sample_id = payload
+        branch = state.fork(int(branch_index))
+        branch.advance_to(float(end_day))
+        return state, 0.0, {
+            "week_masks": _forecast_week_masks(
+                branch,
+                start_day=float(start_day),
+                end_day=float(end_day),
+                province_bits=province_bits,
+            ),
+            "sample_id": int(_sample_id),
+        }
     return _nested_persistent_job(state, time, payload)
 
 
@@ -1279,6 +1321,7 @@ def _resident_particle_identity(state: SimulationParticle) -> dict[str, object]:
         "lineage_id": state.lineage_id,
         "decision_state_sha256": decision_state_sha256(world),
         "province_ids": provinces,
+        "posterior_summary": world.summary(),
     }
 
 
@@ -1339,9 +1382,12 @@ def run_training_filter(
                 f"{likelihood_method} requires a provenance-bound method gate"
             )
         method_gate.require_synthetic_validation()
-        if workers != 1 or resident_pool is not None:
+        if (
+            likelihood_method == "guided"
+            and (workers != 1 or resident_pool is not None)
+        ):
             raise ValueError(
-                "research likelihood methods currently require the in-process executor"
+                "guided proposals currently require the in-process executor"
             )
         if likelihood_method == "guided" and guided_propagator is None:
             raise ValueError("guided likelihood mode requires guided_propagator")
@@ -1466,15 +1512,20 @@ def run_training_filter(
                 executor.assignment_counts()
                 if collect_worker_diagnostics else None
             )
+            resident_payload = (
+                ("rao_blackwellized", observation, rb_likelihood)
+                if likelihood_method == "rao_blackwellized"
+                else (observation, likelihood_branches, filter_seed)
+            )
             if collect_worker_diagnostics:
                 completed, worker_rows = executor.propagate_profiled(
                     observation.end_day,
-                    (observation, likelihood_branches, filter_seed),
+                    resident_payload,
                 )
             else:
                 completed = executor.propagate(
                     observation.end_day,
-                    (observation, likelihood_branches, filter_seed),
+                    resident_payload,
                 )
                 worker_rows = None
         if executor is not None:
@@ -1697,6 +1748,8 @@ def forecast_mcse_controlled_field(
     min_trajectories: int = 32,
     max_trajectories: int = 4096,
     seed: int = 0,
+    resident_pool: PersistentParticlePool | None = None,
+    resident_particle_metadata: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     """Sample posterior-predictive trajectories until the field MCSE converges.
 
@@ -1714,17 +1767,40 @@ def forecast_mcse_controlled_field(
         raise ValueError("forecast MCSE tolerance must be positive")
     if min_trajectories < 1 or max_trajectories < min_trajectories:
         raise ValueError("invalid forecast trajectory budget")
-    if not filter_.particles or any(
+    if not filter_.particles:
+        raise ValueError("MCSE-controlled forecast requires posterior particles")
+    if resident_pool is None and any(
         particle.state is None for particle in filter_.particles
     ):
-        raise ValueError("MCSE-controlled forecast requires resident particle states")
+        raise ValueError(
+            "MCSE-controlled forecast requires in-process or resident particle states"
+        )
     filter_.freeze()
     weights = particle_weights(filter_.particles)
-    provinces = tuple(sorted({
-        _province_for_locality(particle.state.world, locality_id)
-        for particle in filter_.particles
-        for locality_id in particle.state.world.localities
-    }))
+    if resident_pool is None:
+        provinces = tuple(sorted({
+            _province_for_locality(particle.state.world, locality_id)
+            for particle in filter_.particles
+            for locality_id in particle.state.world.localities
+        }))
+        posterior_summaries = [
+            particle.state.world.summary() for particle in filter_.particles
+        ]
+    else:
+        metadata = (
+            resident_particle_metadata
+            if resident_particle_metadata is not None
+            else [item for _, item in resident_pool.summarize()]
+        )
+        provinces = tuple(sorted({
+            province
+            for particle_metadata in metadata
+            for province in particle_metadata["province_ids"]
+        }))
+        posterior_summaries = [
+            dict(particle_metadata.get("posterior_summary", {}))
+            for particle_metadata in metadata
+        ]
     province_bits = {
         province: 1 << index for index, province in enumerate(provinces)
     }
@@ -1744,18 +1820,8 @@ def forecast_mcse_controlled_field(
     trajectory_count = 0
     converged = False
     maximum_mcse = float("inf")
-    while trajectory_count < max_trajectories:
-        particle_index = rng.choices(
-            range(len(filter_.particles)), weights=weights, k=1
-        )[0]
-        branch = filter_.particles[particle_index].state.fork(trajectory_count)
-        branch.advance_to(end_day)
-        masks = _forecast_week_masks(
-            branch,
-            start_day=start_day,
-            end_day=end_day,
-            province_bits=province_bits,
-        )
+    def record_masks(masks: dict[int, int]) -> None:
+        nonlocal trajectory_count, converged, maximum_mcse
         active_cells = _mask_cells(masks, provinces, province_bits)
         member_cells.append([
             {"province_id": province, "week_index": week}
@@ -1772,15 +1838,59 @@ def forecast_mcse_controlled_field(
         trajectory_count += 1
         if trajectory_count >= min_trajectories:
             maximum_mcse = max(
-                (
-                    binary_mcse(values)
-                    for values in values_by_cell.values()
-                ),
+                (binary_mcse(values) for values in values_by_cell.values()),
                 default=0.0,
             )
             if maximum_mcse <= tolerance:
                 converged = True
+
+    while trajectory_count < max_trajectories and not converged:
+        if resident_pool is None:
+            particle_index = rng.choices(
+                range(len(filter_.particles)), weights=weights, k=1
+            )[0]
+            branch = filter_.particles[particle_index].state.fork(
+                trajectory_count
+            )
+            branch.advance_to(end_day)
+            record_masks(_forecast_week_masks(
+                branch,
+                start_day=start_day,
+                end_day=end_day,
+                province_bits=province_bits,
+            ))
+            continue
+
+        # Generate a deterministic prefix of posterior-parent selections and
+        # evaluate it concurrently. Results are consumed in that same prefix
+        # order; if the MCSE rule would have stopped in the middle of the
+        # batch, later completed jobs are ignored, reproducing the serial
+        # estimator exactly while allowing the expensive futures to overlap.
+        batch_width = max(1, len(resident_pool.assignment_counts()) * 2)
+        remaining = max_trajectories - trajectory_count
+        batch_count = min(batch_width, remaining)
+        jobs = []
+        for offset in range(batch_count):
+            sample_id = trajectory_count + offset
+            particle_index = rng.choices(
+                range(len(filter_.particles)), weights=weights, k=1
+            )[0]
+            jobs.append((
+                int(particle_index),
+                float(end_day),
+                (
+                    "forecast_sample",
+                    float(start_day),
+                    float(end_day),
+                    int(sample_id),
+                    province_bits,
+                    int(sample_id),
+                ),
+            ))
+        for _, _, _, diagnostics in resident_pool.evaluate_nonmutating(jobs):
+            if converged:
                 break
+            record_masks(dict(diagnostics["week_masks"]))
     if not converged:
         maximum_mcse = max(
             (
@@ -1816,9 +1926,7 @@ def forecast_mcse_controlled_field(
         "forecast_mcse_tolerance": tolerance,
         "maximum_mcse": maximum_mcse,
         "mcse_converged": converged,
-        "posterior_particle_summaries": [
-            particle.state.world.summary() for particle in filter_.particles
-        ],
+        "posterior_particle_summaries": posterior_summaries,
     }
 
 
@@ -1838,10 +1946,6 @@ def forecast_weighted_field(
 ) -> dict[str, object]:
     """Freeze the posterior and return target-compatible event probabilities."""
     if mcse_tolerance is not None:
-        if workers != 1 or resident_pool is not None:
-            raise ValueError(
-                "MCSE-controlled forecasts currently require in-process states"
-            )
         return forecast_mcse_controlled_field(
             filter_,
             start_day=start_day,
@@ -1850,6 +1954,8 @@ def forecast_weighted_field(
             min_trajectories=min_forecast_trajectories,
             max_trajectories=max_forecast_trajectories,
             seed=forecast_seed,
+            resident_pool=resident_pool,
+            resident_particle_metadata=resident_particle_metadata,
         )
     if forecast_branches < 1:
         raise ValueError("forecast branches must be at least one")
