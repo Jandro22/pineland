@@ -609,3 +609,18 @@ class SimulationParticle:
             copy_output_archives=self.simulation._retain_output_archives,
         )
         return type(self)(cloned, child_lineage, self.generation + 1)
+
+    def consume_fork(self, child_index: int) -> "SimulationParticle":
+        """Turn this disposable parent into one exact child in place.
+
+        This is valid only when the caller will never use the parent lineage
+        again. It performs the same future-stream rekey as fork without
+        copying the world and scheduler first.
+        """
+        child_lineage = f"{self.lineage_id}.{child_index}"
+        self.simulation.set_stream_namespace(
+            f"particle:{child_lineage}"
+        )
+        self.lineage_id = child_lineage
+        self.generation += 1
+        return self

@@ -214,11 +214,18 @@ def _conditioned_branch_mask_index(
 class NestedOperationalPropagator:
     """Nested predictive likelihood plus observation-conditioned descendant."""
 
-    def __init__(self, *, branches: int, selection_seed: int) -> None:
+    def __init__(
+        self,
+        *,
+        branches: int,
+        selection_seed: int,
+        consume_parent_branch: bool = True,
+    ) -> None:
         if branches < 1:
             raise ValueError("likelihood branches must be at least one")
         self.branches = branches
         self.selection_seed = int(selection_seed)
+        self.consume_parent_branch = bool(consume_parent_branch)
         self.calls = 0
         self.exact_match_calls = 0
         self.minimum_mismatch_sum = 0
@@ -230,15 +237,31 @@ class NestedOperationalPropagator:
         time: float,
         observation: ProvinceWeekObservation,
     ) -> tuple[SimulationParticle, float]:
-        branch_states: list[SimulationParticle] = []
-        branch_masks: list[int] = []
+        parent_lineage = state.lineage_id
+        candidate_states: list[SimulationParticle] = []
+        minimum_mismatch: int | None = None
         active_counts = [0] * len(observation.provinces)
         for branch_index in range(self.branches):
-            branch = state.fork(branch_index)
+            if (
+                self.consume_parent_branch
+                and branch_index == self.branches - 1
+            ):
+                branch = state.consume_fork(branch_index)
+            else:
+                branch = state.fork(branch_index)
             branch.advance_to(time)
             active_mask = _active_province_mask(branch, observation)
-            branch_states.append(branch)
-            branch_masks.append(active_mask)
+            mismatch = (
+                int(active_mask) ^ int(observation.active_mask)
+            ).bit_count()
+            if (
+                minimum_mismatch is None
+                or mismatch < minimum_mismatch
+            ):
+                minimum_mismatch = mismatch
+                candidate_states = [branch]
+            elif mismatch == minimum_mismatch:
+                candidate_states.append(branch)
             for index in range(len(active_counts)):
                 active_counts[index] += int(bool(active_mask & (1 << index)))
 
@@ -252,24 +275,26 @@ class NestedOperationalPropagator:
                 bool(observation.active_mask & observation.province_bits[province]),
             )
 
-        selected, minimum_mismatch, exact = _conditioned_branch_mask_index(
-            branch_masks,
-            observation.active_mask,
-            random.Random(
-                _nested_selection_seed(
-                    self.selection_seed,
-                    state.lineage_id,
-                    observation.week_index,
-                )
-            ),
+        if minimum_mismatch is None or not candidate_states:
+            raise RuntimeError("nested propagation produced no descendants")
+        selection_rng = random.Random(
+            _nested_selection_seed(
+                self.selection_seed,
+                parent_lineage,
+                observation.week_index,
+            )
         )
+        selected_state = candidate_states[
+            selection_rng.randrange(len(candidate_states))
+        ]
+        exact = minimum_mismatch == 0
         self.calls += 1
         self.exact_match_calls += int(exact)
         self.minimum_mismatch_sum += minimum_mismatch
         self.maximum_minimum_mismatch = max(
             self.maximum_minimum_mismatch, minimum_mismatch
         )
-        return branch_states[selected], log_likelihood
+        return selected_state, log_likelihood
 
     def diagnostics(self) -> dict[str, float | int]:
         return {
@@ -953,6 +978,7 @@ def run_training_filter(
     restart_cache_key: dict[str, object] | None = None,
     restart_every_weeks: int = 13,
     collect_worker_diagnostics: bool = False,
+    balance_resampling: bool = True,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
     if workers < 1:
         raise ValueError("workers must be positive")
@@ -1085,8 +1111,14 @@ def run_training_filter(
                 assimilation,
                 [likelihood for _, likelihood, _ in completed],
             )
+            resample_transport = None
             if diagnostics.resampled:
-                executor.resample(parent_indices)
+                if balance_resampling:
+                    resample_transport = executor.resample_balanced(
+                        parent_indices
+                    )
+                else:
+                    executor.resample(parent_indices)
             if collect_worker_diagnostics:
                 worker_balance_history.append({
                     "week_index": int(observation.week_index),
@@ -1102,6 +1134,7 @@ def run_training_filter(
                     "assignment_before": list(assignment_before or ()),
                     "assignment_after": executor.assignment_counts(),
                     "worker_compute": list(worker_rows or ()),
+                    "resample_transport": resample_transport,
                 })
 
     ordered_observations = [

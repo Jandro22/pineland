@@ -85,6 +85,21 @@ def test_persistent_particle_pool_reports_assignment_imbalance_after_resampling(
         assert pool.assignment_counts() == [1, 3]
 
 
+def test_persistent_particle_pool_balanced_resampling_preserves_children():
+    with PersistentParticlePool(
+        [0, 1, 2, 3],
+        propagate=_resident_test_propagate,
+        fork_state=_resident_test_fork,
+        workers=2,
+    ) as pool:
+        transport = pool.resample_balanced([3, 3, 3, 3])
+        assert pool.assignment_counts() == [2, 2]
+        assert transport["migrated_particles"] == 2
+        # Every child is still forked from parent value 3 using the child's
+        # global slot index, independent of where the child is resident.
+        assert pool.snapshot() == [3, 1003, 2003, 3003]
+
+
 def test_log_weight_normalization_and_ess_are_numerically_stable():
     weights = normalize_log_weights([-10000.0, -10001.0, -10002.0])
     assert sum(weights) == pytest.approx(1.0)
