@@ -496,7 +496,9 @@ def _sanctuary_access(world: WorldState, organization_id: str,
     enters this calculation.
     """
     organization = world.organizations[organization_id]
-    if organization.external_sanctuary <= 0 or not organization.sponsor_dependence:
+    if organization.external_sanctuary <= 0 or not (
+        organization.sponsor_links or organization.sponsor_dependence
+    ):
         return 0.0
     if mobility is None:
         mobilities = [
@@ -507,8 +509,12 @@ def _sanctuary_access(world: WorldState, organization_id: str,
     mobility = max(.05, mobility)
     best = 0.0
     for border in world.border_segments.values():
-        dependence = organization.sponsor_dependence.get(border.foreign_state_id, 0.0)
-        if dependence <= 0:
+        # New case mappings use an explicit spatial link. The dependence
+        # fallback keeps older synthetic worlds loadable.
+        link = organization.sponsor_links.get(border.foreign_state_id)
+        if link is None:
+            link = organization.sponsor_dependence.get(border.foreign_state_id, 0.0)
+        if link <= 0:
             continue
         permeability = clamp(
             0.35 * border.social_permeability +
@@ -517,7 +523,7 @@ def _sanctuary_access(world: WorldState, organization_id: str,
             0.15 * border.legal_permeability
         )
         border_quality = clamp(
-            permeability * max(.1, border.infrastructure) *
+            link * permeability * max(.1, border.infrastructure) *
             (1.0 - clamp(border.state_monitoring)) /
             max(.5, border.terrain_friction)
         )
@@ -529,7 +535,7 @@ def _sanctuary_access(world: WorldState, organization_id: str,
         distance_access = exp(
             -world.config.logistics.reallocation_travel_time_weight * travel_hours
         )
-        best = max(best, dependence * border_quality * distance_access)
+        best = max(best, border_quality * distance_access)
     return clamp(organization.external_sanctuary * best)
 
 

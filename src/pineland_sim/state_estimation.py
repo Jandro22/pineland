@@ -8,6 +8,7 @@ predeclared observation likelihood before historical assimilation is allowed.
 from __future__ import annotations
 
 from copy import deepcopy
+from collections import Counter
 from dataclasses import dataclass
 from math import exp, isfinite, log
 import random
@@ -24,24 +25,47 @@ class Particle(Generic[StateT]):
     log_weight: float = 0.0
 
 
-def normalize_log_weights(log_weights: Sequence[float]) -> list[float]:
+class PosteriorSupportExhausted(RuntimeError):
+    """Raised when an observation assigns zero support to every particle."""
+
+
+def normalize_log_weights(
+    log_weights: Sequence[float],
+    *,
+    strict: bool = False,
+) -> list[float]:
     """Normalize arbitrary log weights without numerical underflow."""
     if not log_weights:
         raise ValueError("cannot normalize an empty particle set")
     finite = [value for value in log_weights if isfinite(value)]
     if not finite:
+        if strict:
+            raise PosteriorSupportExhausted(
+                "posterior support exhausted: all particle log weights are non-finite"
+            )
         return [1.0 / len(log_weights)] * len(log_weights)
     maximum = max(finite)
     scaled = [exp(value - maximum) if isfinite(value) else 0.0
               for value in log_weights]
     total = sum(scaled)
     if total <= 0:
+        if strict:
+            raise PosteriorSupportExhausted(
+                "posterior support exhausted: normalized particle mass is zero"
+            )
         return [1.0 / len(log_weights)] * len(log_weights)
     return [value / total for value in scaled]
 
 
-def particle_weights(particles: Sequence[Particle[StateT]]) -> list[float]:
-    return normalize_log_weights([particle.log_weight for particle in particles])
+def particle_weights(
+    particles: Sequence[Particle[StateT]],
+    *,
+    strict: bool = False,
+) -> list[float]:
+    return normalize_log_weights(
+        [particle.log_weight for particle in particles],
+        strict=strict,
+    )
 
 
 def effective_sample_size(weights: Sequence[float]) -> float:
@@ -59,6 +83,8 @@ def measurement_update(
     particles: Sequence[Particle[StateT]],
     observation: ObservationT,
     log_likelihood: Callable[[StateT, ObservationT], float],
+    *,
+    strict: bool = False,
 ) -> dict[str, float]:
     """Condition particle state weights on one observation.
 
@@ -67,14 +93,14 @@ def measurement_update(
     """
     if not particles:
         raise ValueError("measurement update needs at least one particle")
-    prior = particle_weights(particles)
+    prior = particle_weights(particles, strict=strict)
     for particle, prior_weight in zip(particles, prior):
         likelihood = float(log_likelihood(particle.state, observation))
         particle.log_weight = (
             -float("inf") if prior_weight <= 0 or not isfinite(likelihood)
             else log(prior_weight) + likelihood
         )
-    posterior = particle_weights(particles)
+    posterior = particle_weights(particles, strict=strict)
     for particle, weight in zip(particles, posterior):
         particle.log_weight = log(weight) if weight > 0 else -float("inf")
     return {
@@ -201,6 +227,10 @@ class FilterUpdateDiagnostics:
     maximum_posterior_weight: float
     resampled: bool
     unique_parent_particles: int
+    distinct_root_ancestors: int
+    lineage_entropy: float
+    maximum_ancestry_concentration: float
+    resampling_events: int
 
 
 class SequentialParticleFilter(Generic[StateT, ObservationT]):
@@ -217,8 +247,11 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         self,
         particles: Sequence[Particle[StateT]],
         *,
-        transition: Callable[[StateT, float], None],
-        log_likelihood: Callable[[StateT, ObservationT], float],
+        transition: Callable[[StateT, float], None] | None = None,
+        log_likelihood: Callable[[StateT, ObservationT], float] | None = None,
+        propagate_and_score: Callable[
+            [StateT, float, ObservationT], tuple[StateT, float]
+        ] | None = None,
         rng: random.Random,
         ess_fraction: float = 0.5,
         allowed_split: str = "training",
@@ -232,6 +265,17 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         self.particles = list(particles)
         self.transition = transition
         self.log_likelihood = log_likelihood
+        self.propagate_and_score = propagate_and_score
+        if propagate_and_score is None and (transition is None or log_likelihood is None):
+            raise ValueError(
+                "particle filter needs transition/log_likelihood or "
+                "propagate_and_score"
+            )
+        if propagate_and_score is not None and transition is not None:
+            raise ValueError(
+                "provide either transition/log_likelihood or propagate_and_score, "
+                "not both transition paths"
+            )
         self.rng = rng
         self.ess_fraction = ess_fraction
         self.allowed_split = allowed_split
@@ -240,6 +284,27 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         self.last_time = float("-inf")
         self.frozen = False
         self.history: list[FilterUpdateDiagnostics] = []
+        self._root_ancestors = list(range(len(self.particles)))
+        self._resampling_events = 0
+
+    def ancestry_diagnostics(self) -> dict[str, float | int]:
+        """Return lineage support diagnostics for the current particle set."""
+        counts = Counter(self._root_ancestors)
+        particle_count = max(1, len(self._root_ancestors))
+        probabilities = [
+            count / particle_count for count in counts.values()
+        ]
+        entropy = -sum(
+            probability * log(probability)
+            for probability in probabilities
+            if probability > 0
+        )
+        return {
+            "distinct_root_ancestors": len(counts),
+            "lineage_entropy": entropy,
+            "maximum_ancestry_concentration": max(probabilities, default=1.0),
+            "resampling_events": self._resampling_events,
+        }
 
     def freeze(self) -> None:
         """Close the historical-assimilation phase at the forecast boundary.
@@ -270,14 +335,41 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
         if observation.time < self.last_time - 1e-12:
             raise ValueError("observations must arrive in nondecreasing time order")
 
-        for particle in self.particles:
-            self.transition(particle.state, observation.time)
-
-        update = measurement_update(
-            self.particles,
-            observation.value,
-            self.log_likelihood,
-        )
+        if self.propagate_and_score is None:
+            assert self.transition is not None
+            assert self.log_likelihood is not None
+            for particle in self.particles:
+                self.transition(particle.state, observation.time)
+            update = measurement_update(
+                self.particles,
+                observation.value,
+                self.log_likelihood,
+                strict=True,
+            )
+        else:
+            prior = particle_weights(self.particles, strict=True)
+            for particle, prior_weight in zip(self.particles, prior):
+                new_state, likelihood = self.propagate_and_score(
+                    particle.state,
+                    observation.time,
+                    observation.value,
+                )
+                particle.state = new_state
+                likelihood = float(likelihood)
+                particle.log_weight = (
+                    -float("inf")
+                    if prior_weight <= 0 or not isfinite(likelihood)
+                    else log(prior_weight) + likelihood
+                )
+            posterior = particle_weights(self.particles, strict=True)
+            for particle, weight in zip(self.particles, posterior):
+                particle.log_weight = log(weight) if weight > 0 else -float("inf")
+            update = {
+                "prior_ess": effective_sample_size(prior),
+                "posterior_ess": effective_sample_size(posterior),
+                "maximum_posterior_weight": max(posterior),
+            }
+        previous_roots = list(self._root_ancestors)
         resampled, resampling = resample_if_degenerate(
             self.particles,
             self.rng,
@@ -286,6 +378,13 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
             fork_state=self.fork_state,
         )
         self.particles = resampled
+        parent_indices = list(resampling.get("parent_indices", range(len(self.particles))))
+        if bool(resampling["resampled"]):
+            self._root_ancestors = [
+                previous_roots[index] for index in parent_indices
+            ]
+            self._resampling_events += 1
+        ancestry = self.ancestry_diagnostics()
         diagnostics = FilterUpdateDiagnostics(
             time=float(observation.time),
             observation_id=observation.observation_id,
@@ -297,6 +396,12 @@ class SequentialParticleFilter(Generic[StateT, ObservationT]):
             unique_parent_particles=int(
                 resampling.get("unique_parent_particles", len(self.particles))
             ),
+            distinct_root_ancestors=int(ancestry["distinct_root_ancestors"]),
+            lineage_entropy=float(ancestry["lineage_entropy"]),
+            maximum_ancestry_concentration=float(
+                ancestry["maximum_ancestry_concentration"]
+            ),
+            resampling_events=int(ancestry["resampling_events"]),
         )
         self.history.append(diagnostics)
         self.last_time = float(observation.time)

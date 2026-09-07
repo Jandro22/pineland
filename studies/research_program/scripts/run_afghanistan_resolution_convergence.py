@@ -28,9 +28,11 @@ from historical_case import (  # noqa: E402
     condition_world,
     load_historical_inputs,
     sample_taliban_spatial_prior,
+    sample_security_deployment_prior,
 )
 from pineland_sim import Simulation, SimulationConfig, generate_pineland  # noqa: E402
 from pineland_sim.organizational_state import local_organizational_embeddedness  # noqa: E402
+from pineland_sim.relations import STATE_SECURITY_KINDS  # noqa: E402
 
 
 DEFAULT_RESOLUTIONS = (401, 802, 1604, 3208)
@@ -128,24 +130,38 @@ def run_one(
     case: dict,
     inputs: dict,
     prior: dict,
+    security_prior: dict | None = None,
 ) -> dict:
     config = _configuration(seed, agent_count, horizon)
     world = generate_pineland(config, empirical_geography=case)
-    condition_world(world, inputs, 7500.0, taliban_prior=prior)
+    condition_world(
+        world,
+        inputs,
+        7500.0,
+        taliban_prior=prior,
+        security_prior=security_prior,
+    )
     initial_formations = set(world.formations)
     schedule = HistoricalCoalitionSchedule(inputs)
     result = Simulation(world, policy_hook=schedule).run()
 
     locality_event_counts: Counter[str] = Counter()
     province_week_counts: Counter[tuple[str, int]] = Counter()
-    for event_time, locality_id in zip(
-        world.state_based_event_times,
-        world.state_based_event_localities,
-    ):
-        if locality_id not in world.localities or not 0 <= event_time < horizon:
+    for event in world.state_based_events:
+        if event.locality_id not in world.localities or not 0 <= event.time < horizon:
             continue
-        locality_event_counts[locality_id] += 1
-        province_week_counts[(_province(world, locality_id), int(event_time // 7))] += 1
+        if (
+            "insurgent" not in event.actor_organization_ids
+            or not any(
+                world.organizations.get(actor) is not None
+                and world.organizations[actor].kind in STATE_SECURITY_KINDS
+                for actor in event.actor_organization_ids
+                if actor != "insurgent"
+            )
+        ):
+            continue
+        locality_event_counts[event.locality_id] += 1
+        province_week_counts[(_province(world, event.locality_id), int(event.time // 7))] += 1
 
     recruitment_mass = Counter()
     for person in world.persons.values():
@@ -177,6 +193,7 @@ def run_one(
         "seed": seed,
         "horizon_days": horizon,
         "events_processed": result.events_processed,
+        "state_based_event_rate": sum(locality_event_counts.values()) / max(1.0, horizon),
         "province_week_counts": {
             f"{province}|{week}": count
             for (province, week), count in sorted(province_week_counts.items())
@@ -238,24 +255,120 @@ def compare_probability_fields(first: dict[str, float], second: dict[str, float]
     }
 
 
+MECHANISM_METRIC_PATHS = (
+    ("state_based_event_rate", 0.10),
+    ("recruitment_geography", "total_represented_armed_membership", 0.10),
+    ("movement_destinations", "locality_hhi", 0.05),
+    ("organization_local_embeddedness", "mean", 0.05),
+    ("organization_local_embeddedness", "maximum", 0.05),
+)
+
+
+def _metric_value(run: dict, path: tuple[str, ...] | tuple[str, float]) -> float:
+    value: object = run
+    for key in path:
+        if isinstance(key, float):
+            break
+        value = value[key]
+    return float(value)
+
+
+def compare_mechanism_metrics(
+    first_runs: list[dict],
+    second_runs: list[dict],
+) -> dict[str, dict[str, float | bool]]:
+    """Compare outcome-free hazard/recruitment/movement/embeddedness channels."""
+    comparisons: dict[str, dict[str, float | bool]] = {}
+    for path in MECHANISM_METRIC_PATHS:
+        threshold = float(path[-1]) if isinstance(path[-1], float) else 0.05
+        keys = path[:-1] if isinstance(path[-1], float) else path
+        first_value = sum(_metric_value(item, keys) for item in first_runs) / max(1, len(first_runs))
+        second_value = sum(_metric_value(item, keys) for item in second_runs) / max(1, len(second_runs))
+        difference = abs(first_value - second_value)
+        scale = max(1.0, abs(first_value), abs(second_value))
+        relative_difference = difference / scale
+        comparisons[".".join(keys)] = {
+            "first": first_value,
+            "second": second_value,
+            "absolute_difference": difference,
+            "relative_difference": relative_difference,
+            "converged": relative_difference <= threshold,
+        }
+    return comparisons
+
+
 def run_ladder(
     *,
     resolutions: tuple[int, ...] = DEFAULT_RESOLUTIONS,
     seeds: tuple[int, ...] = DEFAULT_SEEDS,
     horizon: float = 30.0,
     output: Path | None = None,
+    assessment_horizons: tuple[float, ...] | None = None,
 ) -> dict:
     if not resolutions or any(count < 401 for count in resolutions):
         raise ValueError("every resolution must be at least the 401-locality geography")
     if not seeds:
         raise ValueError("at least one stochastic seed is required")
+    if assessment_horizons is not None:
+        horizons = tuple(sorted({float(value) for value in assessment_horizons}))
+        if not horizons or any(value <= 0 for value in horizons):
+            raise ValueError("assessment horizons must be positive")
+        if len(horizons) > 1:
+            horizon_results = {
+                str(check_horizon): run_ladder(
+                    resolutions=resolutions,
+                    seeds=seeds,
+                    horizon=check_horizon,
+                    output=None,
+                    assessment_horizons=None,
+                )
+                for check_horizon in horizons
+            }
+            primary_key = (
+                str(float(horizon))
+                if str(float(horizon)) in horizon_results
+                else str(horizons[0])
+            )
+            primary = dict(horizon_results[primary_key])
+            primary["assessment_horizons"] = list(horizons)
+            primary["multi_horizon_convergence"] = {
+                key: {
+                    "lowest_converged_resolution": value[
+                        "lowest_converged_resolution"
+                    ],
+                    "resolution_convergence_by_candidate": value[
+                        "resolution_convergence_by_candidate"
+                    ],
+                }
+                for key, value in horizon_results.items()
+            }
+            if output is not None:
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(
+                    json.dumps(primary, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+            return primary
     case = json.loads(CASE.read_text(encoding="utf-8"))
     inputs = load_historical_inputs()
+    deployment_world = generate_pineland(
+        _configuration(2026090614, 401, horizon),
+        empirical_geography=case,
+    )
+    security_prior = sample_security_deployment_prior(
+        deployment_world,
+        random.Random(2026090615),
+    )
     prior = sample_taliban_spatial_prior(
         inputs,
         random.Random(2026090614),
         total_strength=7500.0,
         preperiod_counts=case["preperiod_taliban_state_conflict_counts_2003"],
+        preperiod_province_counts=case.get(
+            "preperiod_taliban_state_conflict_province_background_counts_2003",
+            {},
+        ),
+        locality_ids=deployment_world.localities,
     )
     provinces = sorted({row["container_ids"]["province"] for row in case["districts"]})
     surface_keys = [
@@ -272,6 +385,7 @@ def run_ladder(
                 case=case,
                 inputs=inputs,
                 prior=prior,
+                security_prior=security_prior,
             )
             for seed in seeds
         ]
@@ -283,32 +397,83 @@ def run_ladder(
     }
     sorted_resolutions = sorted(int(value) for value in runs)
     comparisons = []
-    for previous, current in zip(sorted_resolutions, sorted_resolutions[1:]):
-        comparison = compare_probability_fields(fields[str(previous)], fields[str(current)])
-        comparison.update({"from_agent_count": previous, "to_agent_count": current})
-        comparison["converged"] = bool(
-            comparison["spearman"] is not None
-            and comparison["spearman"] >= 0.95
-            and comparison["mean_absolute_difference"] <= 0.05
-        )
-        comparisons.append(comparison)
+    mechanism_comparisons = []
+    for index, previous in enumerate(sorted_resolutions):
+        for current in sorted_resolutions[index + 1:]:
+            comparison = compare_probability_fields(
+                fields[str(previous)],
+                fields[str(current)],
+            )
+            comparison.update({"from_agent_count": previous, "to_agent_count": current})
+            comparison["converged"] = bool(
+                comparison["mean_absolute_difference"] <= 0.05
+                and (
+                    (
+                        comparison["spearman"] is not None
+                        and comparison["spearman"] >= 0.95
+                    )
+                    or (
+                        comparison["spearman"] is None
+                        and comparison["max_absolute_difference"] == 0.0
+                    )
+                )
+            )
+            comparisons.append(comparison)
+            mechanism = compare_mechanism_metrics(
+                runs[str(previous)],
+                runs[str(current)],
+            )
+            mechanism_comparisons.append({
+                "from_agent_count": previous,
+                "to_agent_count": current,
+                "metrics": mechanism,
+                "converged": all(
+                    bool(item["converged"]) for item in mechanism.values()
+                ),
+            })
+    convergence_by_candidate = []
     lowest_converged = None
-    for comparison in comparisons:
-        if comparison["converged"]:
-            lowest_converged = comparison["to_agent_count"]
-            break
+    for candidate in sorted_resolutions[:-1]:
+        higher = [
+            comparison for comparison in comparisons
+            if comparison["from_agent_count"] == candidate
+        ]
+        higher_mechanisms = [
+            comparison for comparison in mechanism_comparisons
+            if comparison["from_agent_count"] == candidate
+        ]
+        stable = bool(higher) and bool(higher_mechanisms) and all(
+            item["converged"] for item in higher
+        ) and all(
+            item["converged"] for item in higher_mechanisms
+        )
+        convergence_by_candidate.append({
+            "candidate_agent_count": candidate,
+            "stable_vs_all_higher": stable,
+            "comparisons": higher,
+            "mechanism_comparisons": higher_mechanisms,
+        })
+        if stable and lowest_converged is None:
+            lowest_converged = candidate
     payload = {
-        "schema_version": "pineland.afghanistan.resolution_convergence.v1",
+        "schema_version": "pineland.afghanistan.resolution_convergence.v2",
         "outcome_blind": True,
         "outcome_panel_read": False,
         "fixed_geography_localities": 401,
         "horizon_days": horizon,
+        "assessment_horizons": [horizon],
         "resolutions": sorted_resolutions,
         "seeds": list(seeds),
         "prior_mode": prior["mode"],
         "prior_hyperparameters": prior["hyperparameters"],
         "runs": runs,
         "probability_field_stability": comparisons,
+        "mechanism_stability": mechanism_comparisons,
+        "resolution_convergence_by_candidate": convergence_by_candidate,
+        "convergence_rule": (
+            "candidate must meet Spearman >= .95 and mean absolute difference <= .05 "
+            "against every sufficiently higher resolution in the ladder"
+        ),
         "lowest_converged_resolution": lowest_converged,
     }
     if output is not None:
@@ -322,6 +487,12 @@ def main() -> None:
     parser.add_argument("--agent-counts", type=int, nargs="+", default=list(DEFAULT_RESOLUTIONS))
     parser.add_argument("--seeds", type=int, nargs="+", default=list(DEFAULT_SEEDS))
     parser.add_argument("--horizon-days", type=float, default=30.0)
+    parser.add_argument(
+        "--assessment-horizons",
+        type=float,
+        nargs="+",
+        help="optional outcome-blind horizons to assess jointly",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     payload = run_ladder(
@@ -329,6 +500,10 @@ def main() -> None:
         seeds=tuple(args.seeds),
         horizon=args.horizon_days,
         output=args.output,
+        assessment_horizons=(
+            tuple(args.assessment_horizons)
+            if args.assessment_horizons is not None else None
+        ),
     )
     print(json.dumps({
         "output": str(args.output),

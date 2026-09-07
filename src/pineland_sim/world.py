@@ -60,6 +60,7 @@ from .entities import (
     SupplySource,
     SyntheticRecord,
     StockTransaction,
+    StateBasedEvent,
     StateDelta,
     CivilianHarmEvent,
 )
@@ -194,6 +195,7 @@ class WorldState:
     # includes all event channels that meet the explicit state-based mark.
     state_based_event_times: list[float] = field(default_factory=list)
     state_based_event_localities: list[str] = field(default_factory=list)
+    state_based_events: list[StateBasedEvent] = field(default_factory=list)
     # Contact-forensic traces are emitted at every scheduled contact event.
     # They are diagnostic observations of the pipeline, not additional random
     # draws or state transitions.
@@ -233,6 +235,32 @@ class WorldState:
     def observation_records(self) -> list[Observation]:
         """Stable list view for analysis code that prefers event-log semantics."""
         return list(self.observations.values())
+
+    def record_state_based_event(
+        self,
+        *,
+        time: float,
+        locality_id: str,
+        actor_organization_ids: tuple[str, ...] | list[str],
+        initiating_organization_id: str | None = None,
+        target_organization_id: str | None = None,
+        construct: str = "state_based_violence",
+    ) -> None:
+        """Append the typed compact event stream and legacy projections."""
+        locality = str(locality_id)
+        actors = tuple(dict.fromkeys(str(actor) for actor in actor_organization_ids))
+        self.state_based_events.append(
+            StateBasedEvent(
+                float(time),
+                locality,
+                actors,
+                None if initiating_organization_id is None else str(initiating_organization_id),
+                None if target_organization_id is None else str(target_organization_id),
+                str(construct),
+            )
+        )
+        self.state_based_event_times.append(float(time))
+        self.state_based_event_localities.append(locality)
 
     @property
     def reports(self) -> list[Observation]:
@@ -866,7 +894,7 @@ class WorldState:
             "conflict_recurrences": sum(t.transition_type == "recurrence" for t in self.peace_transitions),
             "formations": len(self.formations),
             "engagements": len(self.engagements),
-            "state_based_events": len(self.state_based_event_times),
+            "state_based_events": len(self.state_based_events),
             "contact_funnel": {
                 "scheduled_attempts": len(self.contact_funnel_records),
                 "counts": dict(self.contact_funnel_counts),
