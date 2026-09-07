@@ -157,6 +157,13 @@ class WorldState:
         default_factory=list
     )
     defer_control_fusions: bool = False
+    # Presence updates generated during one information event can be applied
+    # in order to compact rows and mirrored once per touched row before relay
+    # delivery. This is execution-only and never enters scientific hashes.
+    deferred_presence_fusions: list[tuple[Any, str, float, bool, float]] = field(
+        default_factory=list
+    )
+    defer_presence_fusions: bool = False
     presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     node_presence_beliefs: dict[tuple[str, str, str, str], PresenceBelief] = field(default_factory=dict)
     control_beliefs: dict[tuple[str, str, str], ActorBelief] = field(default_factory=dict)

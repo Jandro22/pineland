@@ -79,6 +79,7 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "execution_profile", "execution_backend", "performance_counters",
     "compact_control_state", "compact_presence_state",
     "compact_node_presence_state", "compact_zone_state",
+    "deferred_presence_fusions", "defer_presence_fusions",
     "engagements", "state_based_event_times",
     "state_based_event_localities", "state_based_events",
 })
@@ -100,7 +101,8 @@ PARTICLE_ARCHIVE_WORLD_FIELDS = frozenset({
     "civilian_harm_events", "resource_flows",
     "information_execution_cache",
     "information_cache_active", "deferred_control_fusions",
-    "defer_control_fusions", "performance_counters", "engagements",
+    "defer_control_fusions", "deferred_presence_fusions", "defer_presence_fusions",
+    "performance_counters", "engagements",
 })
 
 OUTPUT_ONLY_SUMMARY_FIELDS = frozenset({

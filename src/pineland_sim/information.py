@@ -81,6 +81,8 @@ def initialize_information_world(world: WorldState) -> None:
         "true_negative": 0,
     }
     world.information_detection_by_source.clear()
+    world.deferred_presence_fusions.clear()
+    world.defer_presence_fusions = False
     world.last_information_decay_at = world.time
     for observer_id in (
         world.ordered_organization_ids or tuple(sorted(world.organizations))
@@ -1206,6 +1208,22 @@ presence_belief = get_presence_belief
 
 def _fuse_presence(world: WorldState, observation: Observation, recipient_id: str,
                    time: float, weight: float, node: bool = False) -> None:
+    if (
+        world.execution_backend == "optimized"
+        and world.execution_profile == "particle"
+        and getattr(world, "compact_presence_state", None) is not None
+        and getattr(world, "defer_presence_fusions", False)
+    ):
+        world.deferred_presence_fusions.append(
+            (observation, recipient_id, float(time), bool(node), float(weight))
+        )
+        return
+    _fuse_presence_immediate(world, observation, recipient_id, time, weight, node)
+
+
+def _fuse_presence_immediate(world: WorldState, observation: Observation,
+                             recipient_id: str, time: float, weight: float,
+                             node: bool = False) -> None:
     target_actor_id = observation.target_actor_id
     if target_actor_id is None or "presence" not in observation.estimated_value:
         return
@@ -1266,6 +1284,71 @@ def _fuse_presence(world: WorldState, observation: Observation, recipient_id: st
             (prior * belief.violence_estimate + weight * observed_violence) /
             (prior + weight)
         )
+
+
+def _flush_compact_presence_fusions(
+    world: WorldState,
+    pending: list[tuple[Observation, str, float, bool, float]],
+) -> int:
+    """Apply one event's presence rows, mirroring each touched row once."""
+    compact_by_node = {
+        False: world.compact_presence_state,
+        True: world.compact_node_presence_state,
+    }
+    touched: dict[tuple[bool, tuple[str, str, str, str]], PresenceBelief] = {}
+    for observation, recipient_id, time, node, weight in pending:
+        target_actor_id = observation.target_actor_id
+        if target_actor_id is None or "presence" not in observation.estimated_value:
+            continue
+        target_id = observation.target_id or observation.target_formation_id
+        presence = clamp(float(observation.estimated_value.get("presence", 0.0)))
+        personnel = max(0.0, float(observation.estimated_value.get("personnel", 0.0)))
+        compact = compact_by_node[node]
+        for key_target in (target_id, None) if target_id is not None else (None,):
+            belief = _ensure_presence_belief(
+                world, recipient_id, target_actor_id, observation.locality_id,
+                key_target, observation.microzone_id, node,
+            )
+            key = _presence_key(
+                recipient_id, target_actor_id, observation.locality_id,
+                key_target, observation.microzone_id,
+            )
+            compact.fuse(
+                key,
+                presence,
+                personnel,
+                float(time),
+                float(weight),
+                world.config.information.contradiction_memory_days,
+                world.config.information.contradiction_penalty,
+            )
+            touched[(node, key)] = belief
+    for (node, key), belief in touched.items():
+        compact_by_node[node].write_to_belief(key, belief)
+    return len(pending)
+
+
+def _flush_presence_fusions(world: WorldState) -> int:
+    pending = world.deferred_presence_fusions
+    if not pending:
+        return 0
+    world.deferred_presence_fusions = []
+    prior = world.defer_presence_fusions
+    world.defer_presence_fusions = False
+    try:
+        # PresenceBelief currently has a compatibility violence side-channel
+        # that is not part of its declared slots. Preserve the legacy path if
+        # such a payload is ever supplied rather than batching around it.
+        if any("violence" in item[0].estimated_value for item in pending):
+            for observation, recipient_id, time, node, weight in pending:
+                _fuse_presence_immediate(
+                    world, observation, recipient_id, time, weight, node
+                )
+        else:
+            _flush_compact_presence_fusions(world, pending)
+    finally:
+        world.defer_presence_fusions = prior
+    return len(pending)
 
 
 def _corroboration_weight(history, timestamp: float, source_id: str,
@@ -1965,11 +2048,23 @@ def process_information(world: WorldState, time: float,
         and world.execution_profile == "particle"
         and world.compact_control_state is not None
     )
+    batch_presence = (
+        world.execution_backend == "optimized"
+        and world.execution_profile == "particle"
+        and world.compact_presence_state is not None
+    )
     world.defer_control_fusions = batch_control
     world.deferred_control_fusions.clear()
+    world.defer_presence_fusions = batch_presence
+    world.deferred_presence_fusions.clear()
     try:
         decay_information(world, time)
         generated = generate_background_observations(world, time, rng)
+        flushed_presence_fusions = _flush_presence_fusions(world)
+        # Generated reports have now been applied in their original order;
+        # relay deliveries must remain immediate so they follow the same
+        # generated-before-relayed ordering as the reference backend.
+        world.defer_presence_fusions = False
         delivered = dropped = 0
         delivered_ids: list[str] = []
         for relay_id in _due_information_relay_ids(world, time):
@@ -2012,10 +2107,13 @@ def process_information(world: WorldState, time: float,
                 "delivered_observation_ids": tuple(delivered_ids),
                 "relays_dropped": dropped,
                 "active_relays": len(world.active_information_relays),
-                "control_fusions": flushed_control_fusions}
+                "control_fusions": flushed_control_fusions,
+                "presence_fusions": flushed_presence_fusions}
     finally:
         world.defer_control_fusions = False
         world.deferred_control_fusions.clear()
+        world.defer_presence_fusions = False
+        world.deferred_presence_fusions.clear()
         world.information_execution_cache.clear()
         world.information_cache_active = False
 
