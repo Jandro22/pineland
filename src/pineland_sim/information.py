@@ -601,6 +601,8 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
     contradiction = belief.contradiction_index
     estimate = belief.control_estimate
     confidence = belief.confidence
+    denominator = prior + weight
+    confidence_scale = denominator / (1.0 + denominator)
     for dimension, observed in values.items():
         if dimension not in CONTROL_DIMENSIONS:
             continue
@@ -609,7 +611,6 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
         # Inline the scalar update in this seven-dimensional hot loop.  The
         # arithmetic and update order are intentionally identical to
         # _fuse_scalar; avoiding ~1.6M Python calls matters at national scale.
-        denominator = prior + weight
         new = clamp(
             (prior * old + weight * observed_value) / denominator
         )
@@ -618,8 +619,7 @@ def _fuse_control(world: WorldState, observation: Observation, recipient_id: str
             + weight * abs(observed_value - old)
         )
         confidence = clamp(
-            denominator / (1.0 + denominator)
-            * exp(-penalty * contradiction)
+            confidence_scale * exp(-penalty * contradiction)
         )
         setattr(estimate, dimension, new)
     belief.confidence = confidence

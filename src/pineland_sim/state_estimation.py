@@ -211,6 +211,14 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
             )
         return results, worker_rows
 
+    def assignment_counts(self) -> list[int]:
+        """Return the current number of resident particle slots per worker."""
+        counts = Counter(self._assignment.values())
+        return [
+            int(counts.get(worker_index, 0))
+            for worker_index in range(len(self._workers))
+        ]
+
     def resample(self, parent_indices: Sequence[int]) -> None:
         """Fork resampled children on the workers holding their parents."""
         if len(parent_indices) != len(self._assignment):
