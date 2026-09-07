@@ -1075,10 +1075,11 @@ def _record_numeric_history(
     key = (target_actor_id, locality_id, observation_type)
     history = world.observation_source_index.setdefault(key, deque())
     entry = (float(timestamp), source_id)
-    # Repeated same-source rows at one event boundary do not change the
-    # distinct-source corroboration statistic; avoid retaining duplicate rows.
-    if not history or history[-1] != entry:
-        history.append(entry)
+    # Keep one history entry per emitted report.  Corroboration itself counts
+    # distinct source identities, so duplicates do not change the estimator,
+    # but retaining them preserves the reference archive's observable order
+    # (two channels may intentionally share a source ID at one timestamp).
+    history.append(entry)
     cutoff = float(timestamp) - 3.0
     while history and history[0][0] < cutoff:
         history.popleft()
@@ -2405,6 +2406,7 @@ def _sync_numeric_world_state(
         CompactZoneBeliefState,
     )
     from .entities import ActorBelief, ActorZoneBelief, PresenceBelief
+    from .information import _is_insurgent_actor
 
     if state.particle_count != 1:
         raise ValueError("world synchronization requires exactly one packed lane")
@@ -2426,8 +2428,22 @@ def _sync_numeric_world_state(
             # Keep the historical same-side movement signal synchronized.  It
             # is a read-only view of actor-resolved control evidence, not a
             # second estimator.
+            # ``world.beliefs`` is the historical same-side projection, not a
+            # second copy of every actor-resolved row.  The object fusion path
+            # updates it only for insurgent-side reports received by an
+            # insurgent observer or government-side reports received by a
+            # non-insurgent observer.  Applying that predicate here prevents
+            # a later default/insurgent row from overwriting the government
+            # mirror for the same observer/locality.
             legacy = getattr(world, "beliefs", {}).get((key[0], key[2]))
-            if legacy is not None:
+            mirrors_legacy = (
+                _is_insurgent_actor(world, key[1])
+                and _is_insurgent_actor(world, key[0])
+            ) or (
+                key[1] == "government"
+                and not _is_insurgent_actor(world, key[0])
+            )
+            if legacy is not None and mirrors_legacy:
                 legacy.control_estimate = ControlVector(
                     *[getattr(beliefs[key].control_estimate, dimension)
                       for dimension in CONTROL_DIMENSIONS]
@@ -2658,8 +2674,11 @@ class NumericInformationRuntime:
             key = (actor, locality, kind)
             history = world.observation_source_index.setdefault(key, deque())
             entry = (float(row[9]), source)
-            if not history or history[-1] != entry:
-                history.append(entry)
+            # Preserve one source-history record for each report.  Distinct
+            # channel rows can share an identity and timestamp; the
+            # corroboration helper de-duplicates identities only while
+            # evaluating evidence.
+            history.append(entry)
             cutoff = float(row[9]) - 3.0
             while history and history[0][0] < cutoff:
                 history.popleft()
