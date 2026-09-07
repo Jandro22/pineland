@@ -127,8 +127,17 @@ def settlement_spatial_covariates(
     return result
 
 
-def preperiod_taliban_anchors(count: int = 8) -> tuple[list[str], dict[str, int]]:
-    """Return top 2003 Taliban-conflict COD districts without using study outcomes."""
+def preperiod_taliban_anchors(
+    count: int = 8,
+    *,
+    include_background: bool = False,
+) -> tuple[list[str], dict[str, int]] | tuple[list[str], dict[str, int], dict[str, int]]:
+    """Return high-precision 2003 Taliban-conflict COD districts.
+
+    The GED where_prec spatial-precision code is used. Codes 1-2 support a
+    district-level assignment; lower-precision rows are deliberately excluded
+    from exact district occupancy evidence rather than being over-localized.
+    """
     with zipfile.ZipFile(COD) as archive:
         features = json.load(archive.open("afg_admin2.geojson"))["features"]
     polygons = [shape(feature["geometry"]) for feature in features]
@@ -138,12 +147,15 @@ def preperiod_taliban_anchors(count: int = 8) -> tuple[list[str], dict[str, int]
     with zipfile.ZipFile(GED) as archive:
         member = next(name for name in archive.namelist() if name.lower().endswith(".csv"))
         frame = pd.read_csv(io.TextIOWrapper(archive.open(member), encoding="utf-8"), low_memory=False)
-    subset = frame[
+    eligible = frame[
         (frame["country"] == "Afghanistan") &
         (frame["year"] == 2003) &
         (frame["dyad_name"] == "Government of Afghanistan - Taleban") &
         (frame["type_of_violence"] == 1) &
         frame["longitude"].notna() & frame["latitude"].notna()
+    ].reset_index(drop=True)
+    subset = eligible[
+        eligible["where_prec"].fillna(99).astype(float).le(2)
     ].reset_index(drop=True)
     point_array = points(subset["longitude"].to_numpy(dtype=float),
                          subset["latitude"].to_numpy(dtype=float))
@@ -158,7 +170,32 @@ def preperiod_taliban_anchors(count: int = 8) -> tuple[list[str], dict[str, int]
         pcode = mapping[index]
         counts[pcode] = counts.get(pcode, 0) + 1
     ordered = sorted(counts, key=lambda pcode: (-counts[pcode], pcode))
-    return ordered[:count], dict(sorted(counts.items()))
+    if not include_background:
+        return ordered[:count], dict(sorted(counts.items()))
+
+    all_points = points(
+        eligible["longitude"].to_numpy(dtype=float),
+        eligible["latitude"].to_numpy(dtype=float),
+    )
+    all_pairs = tree.query(all_points, predicate="within")
+    all_mapping = {
+        int(point_index): pcodes[int(polygon_index)]
+        for point_index, polygon_index in zip(all_pairs[0], all_pairs[1])
+    }
+    if len(all_mapping) != len(eligible):
+        missing = len(eligible) - len(all_mapping)
+        raise RuntimeError(f"unmapped eligible 2003 Taliban events: {missing}/{len(eligible)}")
+    province_by_pcode = {
+        feature["properties"]["adm2_pcode"]: feature["properties"]["adm1_pcode"]
+        for feature in features
+    }
+    background: dict[str, int] = {}
+    for index, row in eligible.iterrows():
+        precision = float(row["where_prec"]) if pd.notna(row["where_prec"]) else 99.0
+        if precision > 2:
+            province_id = province_by_pcode[all_mapping[int(index)]]
+            background[province_id] = background.get(province_id, 0) + 1
+    return ordered[:count], dict(sorted(counts.items())), dict(sorted(background.items()))
 
 
 def main() -> None:
@@ -254,7 +291,10 @@ def main() -> None:
         f"{district_id}-HQ": [f"{neighbor}-HQ" for neighbor in neighbors]
         for district_id, neighbors in adjacency["neighbors"].items()
     }
-    anchors, preperiod_counts = preperiod_taliban_anchors(8)
+    anchors, preperiod_counts, preperiod_background = preperiod_taliban_anchors(
+        8,
+        include_background=True,
+    )
     payload = {
         "schema_version": "3.0.0",
         "case_id": "afghanistan_2004_2021_untuned_v1",
@@ -272,9 +312,19 @@ def main() -> None:
         "initial_insurgent_locality_ids": [f"{district_id}-HQ" for district_id in anchors],
         "initial_condition_rule": (
             "eight highest-count COD districts for Government of Afghanistan-Taleban "
-            "state-conflict events in calendar year 2003; benchmark period begins 2004-01-01"
+            "state-conflict events in calendar year 2003 with GED where_prec <= 2; "
+            "benchmark period begins 2004-01-01"
         ),
+        "preperiod_location_precision_rule": {
+            "source_field": "GED where_prec",
+            "district_assignment": "codes 1-2 only",
+            "lower_precision_handling": "excluded from exact district counts; "
+            "available only for future province/background aggregation",
+        },
         "preperiod_taliban_state_conflict_counts_2003": preperiod_counts,
+        "preperiod_taliban_state_conflict_province_background_counts_2003": (
+            preperiod_background
+        ),
         "actor_semantics": {
             "government": "Islamic Republic of Afghanistan state institutions",
             "fdf": "Afghan national security forces aggregate",

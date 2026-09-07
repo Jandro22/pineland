@@ -218,6 +218,7 @@ class Simulation:
         self.world.contact_event_localities.clear()
         self.world.state_based_event_times.clear()
         self.world.state_based_event_localities.clear()
+        self.world.state_based_events.clear()
         self.world.contact_funnel_records.clear()
         self.world.contact_funnel_counts.clear()
         self.world.action_funnel_counts.clear()
@@ -266,6 +267,7 @@ class Simulation:
         self.world.initial_supply_stock = (
             sum(source.stock for source in self.world.supply_sources.values()) +
             sum(formation.supply_stock for formation in self.world.formations.values()) +
+            sum(self.world.organization_manpower_supply_reserves.values()) +
             self.world.demobilized_arms +
             sum(shipment.quantity_deliverable for shipment in self.world.supply_shipments.values()
                 if shipment.status == "in_transit")

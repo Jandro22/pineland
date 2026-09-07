@@ -519,6 +519,10 @@ class Organization:
     adaptation_rate: float = .12
     succession_count: int = 0
     external_sanctuary: float = 0.0
+    # A sponsor relationship has two distinct dimensions. sponsor_links
+    # records whether a spatial sanctuary connection exists; dependence is a
+    # separate political/resource intensity.
+    sponsor_links: dict[str, float] = field(default_factory=dict)
     sponsor_dependence: dict[str, float] = field(default_factory=dict)
 
 
@@ -998,6 +1002,18 @@ class EventLogEntry:
     synthetic_record: SyntheticRecord | None
     random_stream_id: str
     parameter_snapshot_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class StateBasedEvent:
+    """Compact actor-resolved record for a realized state-based event."""
+
+    time: float
+    locality_id: str
+    actor_organization_ids: tuple[str, ...]
+    initiating_organization_id: str | None = None
+    target_organization_id: str | None = None
+    construct: str = "state_based_violence"
 
 
 @dataclass(slots=True)

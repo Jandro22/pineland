@@ -254,16 +254,39 @@ class ProcessEngine:
             locality = raw_result.get("locality_id", event.payload.get("locality_id"))
             if locality is not None:
                 self.world.contact_event_localities.append(str(locality))
-                self.world.state_based_event_times.append(self.world.time)
-                self.world.state_based_event_localities.append(str(locality))
+                self.world.record_state_based_event(
+                    time=self.world.time,
+                    locality_id=str(locality),
+                    actor_organization_ids=tuple(
+                        str(actor) for actor in raw_result.get("actor_ids", ())
+                    ),
+                    initiating_organization_id=raw_result.get(
+                        "initiator_organization_id"
+                    ),
+                    target_organization_id=raw_result.get(
+                        "target_organization_id"
+                    ),
+                )
         if (
             event.event_type == "organized_action"
             and float(raw_result.get("state_based_violence_event", 0.0)) > 0
         ):
             locality = raw_result.get("locality_id", event.payload.get("locality_id"))
             if locality is not None:
-                self.world.state_based_event_times.append(self.world.time)
-                self.world.state_based_event_localities.append(str(locality))
+                self.world.record_state_based_event(
+                    time=self.world.time,
+                    locality_id=str(locality),
+                    actor_organization_ids=tuple(
+                        str(actor) for actor in raw_result.get("actor_ids", ())
+                    ),
+                    initiating_organization_id=raw_result.get(
+                        "initiator_organization_id",
+                        event.payload.get("organization_id"),
+                    ),
+                    target_organization_id=raw_result.get(
+                        "target_organization_id"
+                    ),
+                )
         if event.event_type == "recruitment":
             self.world.recruitment_total += float(raw_result.get("recruits", 0.0))
         if event.event_type == "social_influence":
@@ -1822,6 +1845,13 @@ class ProcessEngine:
                 "detected_by": detected_by, "contact_hazard": contact_hazard,
                 "contact_hazard_rate_per_day": contact_hazard_rate,
                 "initiator_organization_id": initiator_organization_id,
+                "target_organization_id": (
+                    i.organization_id
+                    if initiator_organization_id == g.organization_id
+                    else g.organization_id
+                    if initiator_organization_id == i.organization_id
+                    else None
+                ),
                 "contact_cause": contact_cause,
                 "proximity": proximity, "detection_factor": detection_factor,
                 "surprise_information_asymmetry": float(len(detected_by) == 1),
@@ -1983,6 +2013,8 @@ class ProcessEngine:
                 "latent_event": 1.0,
                 "state_based_violence_event": 1.0,
                 "record_event_type": "state_based_violence",
+                "initiator_organization_id": organization_id,
+                "target_organization_id": target_formation.organization_id,
                 "target_type": "fielded_armed_formation",
                 "target_id": target_formation.formation_id,
                 "engagement_id": engagement.engagement_id,
@@ -2109,6 +2141,8 @@ class ProcessEngine:
                 "latent_event": 1.0,
                 "state_based_violence_event": 1.0,
                 "record_event_type": "state_based_violence",
+                "initiator_organization_id": organization_id,
+                "target_organization_id": target.organization_id,
                 "target_type": target.target_type,
                 "target_id": target.target_id,
                 "execution_probability": probability,

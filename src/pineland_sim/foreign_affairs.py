@@ -296,6 +296,8 @@ def deliver_support(world, state: ForeignState, recipient_id: str, time: float,
                 max(1, total) * .002 * (person.trust.get("government", .5) - .35))
     if recipient.kind is OrganizationKind.INSURGENT:
         recipient.external_sanctuary = clamp(recipient.external_sanctuary + components["sanctuary"] / max(1, total))
+        if components["sanctuary"] > 0:
+            recipient.sponsor_links[state.state_id] = 1.0
         recipient.capital["organizational"] = clamp(recipient.capital["organizational"] + components["organizational"] / max(1, total) * .08)
         recipient.phenotype["resource_dependence"] = clamp(recipient.phenotype["resource_dependence"] + .04)
         recipient.sponsor_dependence[state.state_id] = clamp(
