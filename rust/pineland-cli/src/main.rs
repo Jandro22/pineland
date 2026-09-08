@@ -19,6 +19,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 mod certification;
+mod initialization_certification;
 mod scheduler_certification;
 
 const VERSION: &str = "1.0.0";
@@ -58,6 +59,9 @@ fn dispatch() -> Result<(), String> {
         "hash-state" => hash_state(&arguments),
         "benchmark" => benchmark(&arguments),
         "certify-rng" => certification::certify_rng(&arguments),
+        "certify-initialization" => {
+            initialization_certification::certify_initialization(&arguments)
+        }
         "certify-scheduler" => scheduler_certification::certify_scheduler(&arguments),
         other => Err(format!(
             "unknown command '{other}'. Run `pineland help` for usage."
@@ -1016,6 +1020,7 @@ fn print_help() {
     println!("  hash-state [config.json|CHECKPOINT_DIR]");
     println!("  benchmark [config.json] --particles N --days N --threads N");
     println!("  certify-rng [--state-file FILE --operation OP --draws N]");
+    println!("  certify-initialization [config.json]");
     println!("  certify-scheduler");
     println!("  version");
     println!();
