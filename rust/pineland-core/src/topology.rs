@@ -428,6 +428,11 @@ impl StaticTopology {
                     clamp(connectivity + world_rng.uniform(-0.15, 0.15), 0.08, 0.98);
                 let observability =
                     clamp(0.35 + urban * 0.5 + world_rng.uniform(-0.1, 0.1), 0.1, 0.95);
+                // The Python Locality constructor draws governance leakage
+                // during world generation.  The dense native state does not
+                // yet expose that field, but the draw is still part of the
+                // frozen world-generation stream and must be consumed here.
+                let _governance_leakage = world_rng.uniform(0.05, 0.28);
                 locality_seeds.push(LocalitySeed {
                     id: locality_id,
                     district: district_index,
