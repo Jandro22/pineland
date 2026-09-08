@@ -1,0 +1,917 @@
+{
+  "accounted_fraction": 1.0,
+  "dominant_domain": "packed_state_and_synchronization",
+  "generated_at_utc": "2026-09-08T02:26:10.223751+00:00",
+  "median": {
+    "profile_cpu_seconds": 32.3534896,
+    "wall_seconds": 34.34881640016101
+  },
+  "median_domain_self_seconds": {
+    "information": 0.36313220000000007,
+    "logistics": 0.02859550000000001,
+    "organization_ecology": 0.0076850000000000035,
+    "organized_action": 0.12414780000000002,
+    "other": 12.722190300000005,
+    "packed_execution": 5.957544600000001,
+    "packed_state_and_synchronization": 12.986054699999997,
+    "physical": 0.017885,
+    "scheduler": 0.0134687,
+    "sparse_reference_processes": 0.0837102
+  },
+  "passed": true,
+  "protocol": {
+    "accounting_rule": "Every cProfile self-time record is assigned to exactly one domain; no migration is selected from intuition alone.",
+    "horizon_days": 7.0,
+    "particles": 4,
+    "repeats": 3
+  },
+  "provenance": {
+    "command": "python studies/research_program/scripts/profile_phase_a_execution.py",
+    "commit": "4375598f02fc621aab988bb1c61b5fb851f6dd30",
+    "model_sha256": "39eeb41240823ee35a10fce2718f1abbd5aa7b6a6c85a63403729c50e480dff0",
+    "tracked_diff_sha256": "067e0744d37a9ab08f6b7339dfaa7bb723c8512b5d4ce4f92a3716a810a08d52"
+  },
+  "repeats": [
+    {
+      "accounted_fraction_of_profile_cpu": 1.0,
+      "domain_self_seconds": {
+        "information": 0.36313220000000007,
+        "logistics": 0.02858360000000001,
+        "organization_ecology": 0.007909700000000002,
+        "organized_action": 0.1265667,
+        "other": 12.726040499999998,
+        "packed_execution": 5.957544600000001,
+        "packed_state_and_synchronization": 13.029458000000009,
+        "physical": 0.017885,
+        "scheduler": 0.0134687,
+        "sparse_reference_processes": 0.08452370000000003
+      },
+      "horizon_days": 7.0,
+      "particles": 4,
+      "profile_cpu_seconds": 32.35511270000001,
+      "runner_diagnostics": {
+        "action_opportunities": 440,
+        "authoritative": "packed_hot_state",
+        "dijkstra_calls": 0,
+        "engine": "NativeEnsembleRunner",
+        "event_counts": {
+          "beliefs": 32,
+          "command": 32,
+          "contact_scan": 32,
+          "economy": 4,
+          "force_movement": 116,
+          "foreign_affairs": 4,
+          "governance": 4,
+          "information": 116,
+          "logistics": 32,
+          "mobility": 32,
+          "organization_ecology": 8,
+          "organized_action": 440,
+          "patrol": 812,
+          "peace_process": 4,
+          "physical_refresh": 116,
+          "political_order": 4,
+          "recruitment": 8,
+          "social_influence": 32
+        },
+        "information_boundaries": 116,
+        "particle_advance_to_calls": 0,
+        "particles": 4,
+        "physical_refreshes": 116,
+        "sparse_boundaries": 1448
+      },
+      "seed": 2026090821,
+      "top_functions": [
+        {
+          "calls": 6264,
+          "cumulative_seconds": 5.7171693,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "write_rows",
+          "line": 3489,
+          "self_seconds": 2.7164039
+        },
+        {
+          "calls": 1454,
+          "cumulative_seconds": 15.1789632,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "synchronize_lane_to_world",
+          "line": 3552,
+          "self_seconds": 1.9497814000000002
+        },
+        {
+          "calls": 5108411,
+          "cumulative_seconds": 2.5860108,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "materialize",
+          "line": 162,
+          "self_seconds": 1.7285823
+        },
+        {
+          "calls": 26758142,
+          "cumulative_seconds": 1.6802497,
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "line": 0,
+          "self_seconds": 1.6793381
+        },
+        {
+          "calls": 3186572,
+          "cumulative_seconds": 3.1553247,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "offset",
+          "line": 2190,
+          "self_seconds": 1.6498349
+        },
+        {
+          "calls": 13934263,
+          "cumulative_seconds": 1.4849758000000002,
+          "file": "~",
+          "function": "<method 'get' of 'dict' objects>",
+          "line": 0,
+          "self_seconds": 1.4849758000000002
+        },
+        {
+          "calls": 2908,
+          "cumulative_seconds": 4.8924919000000004,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "sync_presence",
+          "line": 3605,
+          "self_seconds": 1.4375442
+        },
+        {
+          "calls": 1570,
+          "cumulative_seconds": 4.5694087,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "export_lane_to_world",
+          "line": 1284,
+          "self_seconds": 1.4166404000000001
+        },
+        {
+          "calls": 9873771,
+          "cumulative_seconds": 1.9605404000000002,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "entity_count",
+          "line": 2148,
+          "self_seconds": 1.3385146
+        },
+        {
+          "calls": 14197825,
+          "cumulative_seconds": 1.3271932000000002,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "<genexpr>",
+          "line": 3416,
+          "self_seconds": 1.3271932000000002
+        },
+        {
+          "calls": 1458,
+          "cumulative_seconds": 2.1828764,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_import_zone_state",
+          "line": 538,
+          "self_seconds": 1.0392515
+        },
+        {
+          "calls": 10007903,
+          "cumulative_seconds": 0.8808266,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "index",
+          "line": 113,
+          "self_seconds": 0.8808266
+        },
+        {
+          "calls": 142141,
+          "cumulative_seconds": 0.9158488,
+          "file": "~",
+          "function": "<built-in method builtins.sorted>",
+          "line": 0,
+          "self_seconds": 0.8016219
+        },
+        {
+          "calls": 6264,
+          "cumulative_seconds": 5.052434000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "ensure_keys",
+          "line": 3409,
+          "self_seconds": 0.7962674000000001
+        },
+        {
+          "calls": 1465443,
+          "cumulative_seconds": 0.8112118,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 241,
+          "self_seconds": 0.6924791
+        },
+        {
+          "calls": 5245868,
+          "cumulative_seconds": 0.9893012000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "organization_count",
+          "line": 197,
+          "self_seconds": 0.6811192
+        },
+        {
+          "calls": 2067264,
+          "cumulative_seconds": 1.3398354000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_zo",
+          "line": 230,
+          "self_seconds": 0.5592497000000001
+        },
+        {
+          "calls": 759405,
+          "cumulative_seconds": 0.5936197000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 486,
+          "self_seconds": 0.5300875
+        },
+        {
+          "calls": 993056,
+          "cumulative_seconds": 0.5361839,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 336,
+          "self_seconds": 0.4467973
+        },
+        {
+          "calls": 3317452,
+          "cumulative_seconds": 0.6345231,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "microzone_count",
+          "line": 205,
+          "self_seconds": 0.43886060000000005
+        },
+        {
+          "calls": 2441733,
+          "cumulative_seconds": 0.7206339,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "ensure",
+          "line": 116,
+          "self_seconds": 0.42846500000000004
+        },
+        {
+          "calls": 2804166,
+          "cumulative_seconds": 0.9316718,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_oo",
+          "line": 212,
+          "self_seconds": 0.4030599
+        },
+        {
+          "calls": 4454261,
+          "cumulative_seconds": 0.37859940000000003,
+          "file": "~",
+          "function": "<built-in method builtins.getattr>",
+          "line": 0,
+          "self_seconds": 0.3785759
+        },
+        {
+          "calls": 921,
+          "cumulative_seconds": 1.0839100000000002,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "from_world",
+          "line": 1211,
+          "self_seconds": 0.3150216
+        },
+        {
+          "calls": 1458,
+          "cumulative_seconds": 2.9984332,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "import_lane",
+          "line": 367,
+          "self_seconds": 0.28348280000000003
+        },
+        {
+          "calls": 4173742,
+          "cumulative_seconds": 0.2759808,
+          "file": "~",
+          "function": "<built-in method builtins.callable>",
+          "line": 0,
+          "self_seconds": 0.2759808
+        },
+        {
+          "calls": 3245055,
+          "cumulative_seconds": 0.2655081,
+          "file": "~",
+          "function": "<built-in method builtins.isinstance>",
+          "line": 0,
+          "self_seconds": 0.2650693
+        },
+        {
+          "calls": 1570,
+          "cumulative_seconds": 0.9252747,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\world.py",
+          "function": "rebuild_runtime_entity_indexes",
+          "line": 371,
+          "self_seconds": 0.26073240000000003
+        },
+        {
+          "calls": 1577,
+          "cumulative_seconds": 0.3441943,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\world.py",
+          "function": "refresh_operational_indexes",
+          "line": 598,
+          "self_seconds": 0.20957420000000002
+        },
+        {
+          "calls": 865495,
+          "cumulative_seconds": 0.30164280000000004,
+          "file": "~",
+          "function": "<method 'extend' of 'array.array' objects>",
+          "line": 0,
+          "self_seconds": 0.1953331
+        }
+      ],
+      "wall_seconds": 34.384240499930456
+    },
+    {
+      "accounted_fraction_of_profile_cpu": 1.0,
+      "domain_self_seconds": {
+        "information": 0.373147,
+        "logistics": 0.029871699999999998,
+        "organization_ecology": 0.0076850000000000035,
+        "organized_action": 0.12225979999999999,
+        "other": 12.722190300000005,
+        "packed_execution": 5.9966869,
+        "packed_state_and_synchronization": 12.986054699999997,
+        "physical": 0.0180584,
+        "scheduler": 0.013825600000000002,
+        "sparse_reference_processes": 0.0837102
+      },
+      "horizon_days": 7.0,
+      "particles": 4,
+      "profile_cpu_seconds": 32.3534896,
+      "runner_diagnostics": {
+        "action_opportunities": 433,
+        "authoritative": "packed_hot_state",
+        "dijkstra_calls": 0,
+        "engine": "NativeEnsembleRunner",
+        "event_counts": {
+          "beliefs": 32,
+          "command": 32,
+          "contact_scan": 32,
+          "economy": 4,
+          "force_movement": 116,
+          "foreign_affairs": 4,
+          "governance": 4,
+          "information": 116,
+          "logistics": 32,
+          "mobility": 32,
+          "organization_ecology": 8,
+          "organized_action": 433,
+          "patrol": 812,
+          "peace_process": 4,
+          "physical_refresh": 116,
+          "political_order": 4,
+          "recruitment": 8,
+          "social_influence": 32
+        },
+        "information_boundaries": 116,
+        "particle_advance_to_calls": 0,
+        "particles": 4,
+        "physical_refreshes": 116,
+        "sparse_boundaries": 1439
+      },
+      "seed": 2026090822,
+      "top_functions": [
+        {
+          "calls": 6228,
+          "cumulative_seconds": 5.6695357,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "write_rows",
+          "line": 3489,
+          "self_seconds": 2.6994572000000003
+        },
+        {
+          "calls": 1445,
+          "cumulative_seconds": 15.1838256,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "synchronize_lane_to_world",
+          "line": 3552,
+          "self_seconds": 1.9905107000000002
+        },
+        {
+          "calls": 4995536,
+          "cumulative_seconds": 2.5471744000000003,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "materialize",
+          "line": 162,
+          "self_seconds": 1.7023233000000002
+        },
+        {
+          "calls": 26336009,
+          "cumulative_seconds": 1.6637362,
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "line": 0,
+          "self_seconds": 1.6627841
+        },
+        {
+          "calls": 3113035,
+          "cumulative_seconds": 3.0968209,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "offset",
+          "line": 2190,
+          "self_seconds": 1.6222349
+        },
+        {
+          "calls": 13732152,
+          "cumulative_seconds": 1.5058609,
+          "file": "~",
+          "function": "<method 'get' of 'dict' objects>",
+          "line": 0,
+          "self_seconds": 1.5058609
+        },
+        {
+          "calls": 1561,
+          "cumulative_seconds": 4.613723800000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "export_lane_to_world",
+          "line": 1284,
+          "self_seconds": 1.4384383
+        },
+        {
+          "calls": 2890,
+          "cumulative_seconds": 4.8072546,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "sync_presence",
+          "line": 3605,
+          "self_seconds": 1.4228333000000002
+        },
+        {
+          "calls": 9649323,
+          "cumulative_seconds": 1.9238463000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "entity_count",
+          "line": 2148,
+          "self_seconds": 1.3124435
+        },
+        {
+          "calls": 13842334,
+          "cumulative_seconds": 1.3091701,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "<genexpr>",
+          "line": 3416,
+          "self_seconds": 1.3091701
+        },
+        {
+          "calls": 1449,
+          "cumulative_seconds": 2.1921706000000003,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_import_zone_state",
+          "line": 538,
+          "self_seconds": 1.0427028
+        },
+        {
+          "calls": 9784964,
+          "cumulative_seconds": 0.8702159,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "index",
+          "line": 113,
+          "self_seconds": 0.8702159
+        },
+        {
+          "calls": 142014,
+          "cumulative_seconds": 0.9174143,
+          "file": "~",
+          "function": "<built-in method builtins.sorted>",
+          "line": 0,
+          "self_seconds": 0.7977837000000001
+        },
+        {
+          "calls": 6228,
+          "cumulative_seconds": 4.9746916,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "ensure_keys",
+          "line": 3409,
+          "self_seconds": 0.7843004
+        },
+        {
+          "calls": 1416546,
+          "cumulative_seconds": 0.8027424000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 241,
+          "self_seconds": 0.6856624
+        },
+        {
+          "calls": 5215954,
+          "cumulative_seconds": 0.9924242000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "organization_count",
+          "line": 197,
+          "self_seconds": 0.6831593
+        },
+        {
+          "calls": 2055042,
+          "cumulative_seconds": 1.3420436,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_zo",
+          "line": 230,
+          "self_seconds": 0.5604538
+        },
+        {
+          "calls": 740918,
+          "cumulative_seconds": 0.6099370000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 486,
+          "self_seconds": 0.5469174
+        },
+        {
+          "calls": 986922,
+          "cumulative_seconds": 0.5500075,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 336,
+          "self_seconds": 0.46041950000000004
+        },
+        {
+          "calls": 3298246,
+          "cumulative_seconds": 0.635414,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "microzone_count",
+          "line": 205,
+          "self_seconds": 0.43972570000000005
+        },
+        {
+          "calls": 2386710,
+          "cumulative_seconds": 0.7248441,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "ensure",
+          "line": 116,
+          "self_seconds": 0.4291051
+        },
+        {
+          "calls": 2788638,
+          "cumulative_seconds": 0.9342354,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_oo",
+          "line": 212,
+          "self_seconds": 0.403413
+        },
+        {
+          "calls": 4361362,
+          "cumulative_seconds": 0.37181820000000004,
+          "file": "~",
+          "function": "<built-in method builtins.getattr>",
+          "line": 0,
+          "self_seconds": 0.3718014
+        },
+        {
+          "calls": 924,
+          "cumulative_seconds": 1.1222521,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "from_world",
+          "line": 1211,
+          "self_seconds": 0.3256431
+        },
+        {
+          "calls": 1449,
+          "cumulative_seconds": 3.0114429,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "import_lane",
+          "line": 367,
+          "self_seconds": 0.2856117
+        },
+        {
+          "calls": 4077851,
+          "cumulative_seconds": 0.2712153,
+          "file": "~",
+          "function": "<built-in method builtins.callable>",
+          "line": 0,
+          "self_seconds": 0.2712153
+        },
+        {
+          "calls": 1561,
+          "cumulative_seconds": 0.9408021000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\world.py",
+          "function": "rebuild_runtime_entity_indexes",
+          "line": 371,
+          "self_seconds": 0.2655197
+        },
+        {
+          "calls": 3171362,
+          "cumulative_seconds": 0.2610904,
+          "file": "~",
+          "function": "<built-in method builtins.isinstance>",
+          "line": 0,
+          "self_seconds": 0.260645
+        },
+        {
+          "calls": 1568,
+          "cumulative_seconds": 0.3466803,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\world.py",
+          "function": "refresh_operational_indexes",
+          "line": 598,
+          "self_seconds": 0.21001430000000001
+        },
+        {
+          "calls": 838405,
+          "cumulative_seconds": 0.2952806,
+          "file": "~",
+          "function": "<method 'extend' of 'array.array' objects>",
+          "line": 0,
+          "self_seconds": 0.1863504
+        }
+      ],
+      "wall_seconds": 34.34881640016101
+    },
+    {
+      "accounted_fraction_of_profile_cpu": 1.0,
+      "domain_self_seconds": {
+        "information": 0.3592072,
+        "logistics": 0.02859550000000001,
+        "organization_ecology": 0.0075920000000000015,
+        "organized_action": 0.12414780000000002,
+        "other": 12.304409999999994,
+        "packed_execution": 5.9126152,
+        "packed_state_and_synchronization": 12.652295799999997,
+        "physical": 0.017416300000000003,
+        "scheduler": 0.011628000000000001,
+        "sparse_reference_processes": 0.08005910000000001
+      },
+      "horizon_days": 7.0,
+      "particles": 4,
+      "profile_cpu_seconds": 31.49796689999999,
+      "runner_diagnostics": {
+        "action_opportunities": 431,
+        "authoritative": "packed_hot_state",
+        "dijkstra_calls": 0,
+        "engine": "NativeEnsembleRunner",
+        "event_counts": {
+          "beliefs": 32,
+          "command": 32,
+          "contact_scan": 32,
+          "economy": 4,
+          "force_movement": 116,
+          "foreign_affairs": 4,
+          "governance": 4,
+          "information": 116,
+          "logistics": 32,
+          "mobility": 32,
+          "organization_ecology": 8,
+          "organized_action": 431,
+          "patrol": 812,
+          "peace_process": 4,
+          "physical_refresh": 116,
+          "political_order": 4,
+          "recruitment": 8,
+          "social_influence": 32
+        },
+        "information_boundaries": 116,
+        "particle_advance_to_calls": 0,
+        "particles": 4,
+        "physical_refreshes": 116,
+        "sparse_boundaries": 1451
+      },
+      "seed": 2026090823,
+      "top_functions": [
+        {
+          "calls": 6276,
+          "cumulative_seconds": 5.5208444000000005,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "write_rows",
+          "line": 3489,
+          "self_seconds": 2.6193375000000003
+        },
+        {
+          "calls": 1457,
+          "cumulative_seconds": 14.837788600000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "synchronize_lane_to_world",
+          "line": 3552,
+          "self_seconds": 1.9603187000000002
+        },
+        {
+          "calls": 5007495,
+          "cumulative_seconds": 2.5043402,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "materialize",
+          "line": 162,
+          "self_seconds": 1.671369
+        },
+        {
+          "calls": 26437487,
+          "cumulative_seconds": 1.6487800000000001,
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "line": 0,
+          "self_seconds": 1.6478553
+        },
+        {
+          "calls": 3131591,
+          "cumulative_seconds": 3.0777239,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "offset",
+          "line": 2190,
+          "self_seconds": 1.6068942000000002
+        },
+        {
+          "calls": 13773018,
+          "cumulative_seconds": 1.4388251,
+          "file": "~",
+          "function": "<method 'get' of 'dict' objects>",
+          "line": 0,
+          "self_seconds": 1.4388251
+        },
+        {
+          "calls": 1573,
+          "cumulative_seconds": 4.5308723,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "export_lane_to_world",
+          "line": 1284,
+          "self_seconds": 1.4113504000000001
+        },
+        {
+          "calls": 2914,
+          "cumulative_seconds": 4.6457630000000005,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "sync_presence",
+          "line": 3605,
+          "self_seconds": 1.3831988000000002
+        },
+        {
+          "calls": 9704384,
+          "cumulative_seconds": 1.9145297000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "entity_count",
+          "line": 2148,
+          "self_seconds": 1.3059872000000001
+        },
+        {
+          "calls": 13902974,
+          "cumulative_seconds": 1.2633448,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "<genexpr>",
+          "line": 3416,
+          "self_seconds": 1.2633448
+        },
+        {
+          "calls": 1461,
+          "cumulative_seconds": 2.1624869,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_import_zone_state",
+          "line": 538,
+          "self_seconds": 1.024852
+        },
+        {
+          "calls": 9809928,
+          "cumulative_seconds": 0.8579655,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "index",
+          "line": 113,
+          "self_seconds": 0.8579655
+        },
+        {
+          "calls": 143876,
+          "cumulative_seconds": 0.8983011000000001,
+          "file": "~",
+          "function": "<built-in method builtins.sorted>",
+          "line": 0,
+          "self_seconds": 0.7834462000000001
+        },
+        {
+          "calls": 6276,
+          "cumulative_seconds": 4.8243672,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "ensure_keys",
+          "line": 3409,
+          "self_seconds": 0.7464171000000001
+        },
+        {
+          "calls": 5255764,
+          "cumulative_seconds": 0.9840371000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "organization_count",
+          "line": 197,
+          "self_seconds": 0.6765534000000001
+        },
+        {
+          "calls": 1414885,
+          "cumulative_seconds": 0.7381102,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 241,
+          "self_seconds": 0.6240163000000001
+        },
+        {
+          "calls": 2071338,
+          "cumulative_seconds": 1.3331617,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_zo",
+          "line": 230,
+          "self_seconds": 0.5583758000000001
+        },
+        {
+          "calls": 752964,
+          "cumulative_seconds": 0.5506898,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 486,
+          "self_seconds": 0.48849630000000005
+        },
+        {
+          "calls": 995094,
+          "cumulative_seconds": 0.5382060000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "write_to_belief",
+          "line": 336,
+          "self_seconds": 0.44958030000000004
+        },
+        {
+          "calls": 3323854,
+          "cumulative_seconds": 0.6285037,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "microzone_count",
+          "line": 205,
+          "self_seconds": 0.4346643
+        },
+        {
+          "calls": 2393184,
+          "cumulative_seconds": 0.6960946,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\compact_information_state.py",
+          "function": "ensure",
+          "line": 116,
+          "self_seconds": 0.4147596
+        },
+        {
+          "calls": 2809301,
+          "cumulative_seconds": 0.9249319,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "_oo",
+          "line": 212,
+          "self_seconds": 0.39953330000000004
+        },
+        {
+          "calls": 4390053,
+          "cumulative_seconds": 0.3649023,
+          "file": "~",
+          "function": "<built-in method builtins.getattr>",
+          "line": 0,
+          "self_seconds": 0.3648871
+        },
+        {
+          "calls": 926,
+          "cumulative_seconds": 1.0740204,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\ensemble.py",
+          "function": "from_world",
+          "line": 1211,
+          "self_seconds": 0.31010350000000003
+        },
+        {
+          "calls": 1461,
+          "cumulative_seconds": 2.9707660000000002,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\native_ensemble.py",
+          "function": "import_lane",
+          "line": 367,
+          "self_seconds": 0.28050970000000003
+        },
+        {
+          "calls": 4107784,
+          "cumulative_seconds": 0.26904680000000003,
+          "file": "~",
+          "function": "<built-in method builtins.callable>",
+          "line": 0,
+          "self_seconds": 0.26904680000000003
+        },
+        {
+          "calls": 3190231,
+          "cumulative_seconds": 0.2598615,
+          "file": "~",
+          "function": "<built-in method builtins.isinstance>",
+          "line": 0,
+          "self_seconds": 0.2594205
+        },
+        {
+          "calls": 1573,
+          "cumulative_seconds": 0.9066253000000001,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\world.py",
+          "function": "rebuild_runtime_entity_indexes",
+          "line": 371,
+          "self_seconds": 0.2532878
+        },
+        {
+          "calls": 1581,
+          "cumulative_seconds": 0.34127650000000004,
+          "file": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\src\\pineland_sim\\world.py",
+          "function": "refresh_operational_indexes",
+          "line": 598,
+          "self_seconds": 0.2081948
+        },
+        {
+          "calls": 798652,
+          "cumulative_seconds": 0.2857077,
+          "file": "~",
+          "function": "<method 'extend' of 'array.array' objects>",
+          "line": 0,
+          "self_seconds": 0.1806754
+        }
+      ],
+      "wall_seconds": 33.44731470011175
+    }
+  ],
+  "schema_version": "1.0.0",
+  "study_id": "phase_a_execution_profile_v1"
+}
