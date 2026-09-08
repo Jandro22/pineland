@@ -35,6 +35,7 @@ def run(
     profile_path: Path | None = None,
     migration_path: Path | None = None,
     phase_b_path: Path | None = None,
+    benchmark_path: Path | None = None,
 ) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite certificate: {output}")
@@ -47,7 +48,7 @@ def run(
         "A6_migration_decision": migration_path or program / "phase_a_migration_decision_v1.json",
         "B_inference": phase_b_path or program / "phase_b_inference_validation_v2.json",
     }
-    benchmark_path = program / "phase_a_fixed_work_benchmark_v1.json"
+    benchmark_path = benchmark_path or program / "phase_a_fixed_work_benchmark_v1.json"
     loaded = {name: _load(path) for name, path in artifacts.items()}
     benchmark = _load(benchmark_path) if benchmark_path.exists() else {
         "status": "missing_complete_fixed_work_artifact",
@@ -130,6 +131,7 @@ def main() -> None:
     parser.add_argument("--profile", type=Path)
     parser.add_argument("--migration", type=Path)
     parser.add_argument("--phase-b", type=Path)
+    parser.add_argument("--benchmark", type=Path)
     args = parser.parse_args()
     result = run(
         args.output.resolve(),
@@ -137,6 +139,7 @@ def main() -> None:
         profile_path=args.profile.resolve() if args.profile else None,
         migration_path=args.migration.resolve() if args.migration else None,
         phase_b_path=args.phase_b.resolve() if args.phase_b else None,
+        benchmark_path=args.benchmark.resolve() if args.benchmark else None,
     )
     print(json.dumps({"output": str(args.output.resolve()), "passed": result["passed"]}))
 
