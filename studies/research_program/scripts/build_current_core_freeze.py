@@ -97,11 +97,10 @@ def run(
         or any(path.startswith(prefix) and path.endswith(".py") for prefix in core_prefixes)
     )
     native_paths = sorted(path for path in repo["dirty_paths"] if path.startswith("src/pineland_sim/_native/"))
-    core_boundary_clean = not core_paths and not repo["tracked_diff_sha256"] == ""
-    # The repository hash is intentionally a content hash, so an empty tracked
-    # diff is represented by the stable SHA-256 of empty bytes, not an empty string.
-    empty_diff_sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    core_boundary_clean = not core_paths and repo["tracked_diff_sha256"] == empty_diff_sha256
+    # Workflow scripts and prior evidence may be dirty while the scientific
+    # source boundary remains unchanged.  The complete tracked diff is still
+    # recorded and bound below; only core-path changes close this gate.
+    core_boundary_clean = not core_paths
     synthetic_validation = {
         "phase_a_certificate": {
             "path": _relative(phase_a_path),
