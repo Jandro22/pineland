@@ -460,6 +460,10 @@ def main() -> None:
         "--output-dir", type=Path,
         help="Optional stage-specific output directory; preserves legacy runs when revalidating a new frozen core.",
     )
+    parser.add_argument(
+        "--core-freeze", type=Path,
+        help="Optional content-addressed current core freeze for an authorized rerun.",
+    )
     args = parser.parse_args()
     horizon, defaults = stage_spec(args.stage)
     strengths = args.strengths or defaults
@@ -471,9 +475,19 @@ def main() -> None:
                       for strength in strengths]
     pending = [path for path in expected_paths if not path.exists() or args.force]
     if pending:
-        from pineland_sim.reproducibility import require_certified_core
+        from pineland_sim.reproducibility import model_sha256, require_certified_core
         try:
-            require_certified_core(ROOT)
+            if args.core_freeze is None:
+                require_certified_core(ROOT)
+            else:
+                freeze = json.loads(args.core_freeze.resolve().read_text(encoding="utf-8"))
+                identity = freeze.get("software_identity", freeze)
+                live = model_sha256(ROOT)
+                if identity.get("model_sha256") != live:
+                    raise RuntimeError(
+                        "live core does not match the requested current freeze "
+                        f"(expected={identity.get('model_sha256')}, live={live})"
+                    )
         except RuntimeError as exc:
             raise SystemExit(str(exc)) from exc
     for strength in strengths:

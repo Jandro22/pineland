@@ -31,22 +31,30 @@ def sha256(path: Path) -> str:
 
 
 def frozen_core(execution_contract: Path | None = None) -> tuple[str, str]:
-    freeze = json.loads((ROOT / "studies/research_program/core_freeze.json").read_text())
+    freeze_path = ROOT / "studies/research_program/core_freeze.json"
+    freeze = json.loads(freeze_path.read_text())
     if execution_contract is not None:
-        from pineland_sim.reproducibility import require_certified_core
-        require_certified_core(ROOT)
         contract = json.loads(execution_contract.read_text())
-        if contract["model_sha256"] != freeze["model_sha256"]:
+        if contract.get("core_freeze_path"):
+            freeze_path = (ROOT / contract["core_freeze_path"]).resolve()
+            freeze = json.loads(freeze_path.read_text())
+        from pineland_sim.reproducibility import require_certified_core
+        require_certified_core(ROOT, freeze_path=freeze_path)
+        identity = freeze.get("software_identity", freeze)
+        if contract["model_sha256"] != identity["model_sha256"]:
             raise ValueError("execution contract does not match frozen core")
-        if contract["certificate_payload_sha256"] != freeze["certificate_payload_sha256"]:
-            raise ValueError("execution contract does not match certificate")
+        if contract.get("core_freeze_sha256") and sha256(freeze_path) != contract["core_freeze_sha256"]:
+            raise ValueError("execution contract does not match current core freeze")
+        if contract.get("certificate_payload_sha256") and contract["certificate_payload_sha256"] != freeze.get("certificate_payload_sha256"):
+            raise ValueError("execution contract does not match legacy certificate")
         if not contract.get("input_sha256"):
             raise ValueError("execution contract must pin study inputs")
         for name, expected in contract["input_sha256"].items():
             if sha256(ROOT / name) != expected:
                 raise ValueError(f"execution input drift: {name}")
         return contract["model_sha256"], contract["tracked_diff_sha256"]
-    return freeze["model_sha256"], freeze["tracked_diff_sha256"]
+    identity = freeze.get("software_identity", freeze)
+    return identity["model_sha256"], identity["tracked_diff_sha256"]
 
 
 def validate_member(path: Path, model_hash: str, diff_hash: str) -> dict:
