@@ -1,0 +1,19 @@
+[package]
+name = "pineland-cli"
+version = "1.0.0"
+edition = "2021"
+
+[features]
+default = []
+mpi = ["pineland-hpc/mpi"]
+
+[dependencies]
+pineland-core = { path = "../pineland-core" }
+pineland-model = { path = "../pineland-model" }
+pineland-inference = { path = "../pineland-inference" }
+pineland-io = { path = "../pineland-io" }
+pineland-hpc = { path = "../pineland-hpc" }
+
+[[bin]]
+name = "pineland"
+path = "src/main.rs"

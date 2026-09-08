@@ -1,0 +1,17 @@
+[package]
+name = "pineland-hpc"
+version = "1.0.0"
+edition = "2021"
+
+[features]
+default = []
+mpi = ["dep:mpi"]
+
+[dependencies]
+pineland-core = { path = "../pineland-core" }
+pineland-model = { path = "../pineland-model" }
+pineland-inference = { path = "../pineland-inference" }
+mpi = { version = "0.8.2", optional = true }
+
+[lib]
+path = "src/lib.rs"
