@@ -47,7 +47,7 @@ BALANCE_RESAMPLING = False
 PWB_PER_REPEAT = PARTICLES * WEEKLY_BOUNDARIES * BRANCH_EQUIVALENTS
 
 
-def _run_repeat(repeat_index: int) -> dict[str, Any]:
+def _run_repeat(repeat_index: int, *, workers: int) -> dict[str, Any]:
     runner_script = ROOT / "studies/research_program/scripts/benchmark_afghanistan_resident_filter_scaling.py"
     with tempfile.TemporaryDirectory(prefix="pineland_phase_a_fixed_work_") as temp_dir:
         raw_output = Path(temp_dir) / f"repeat_{repeat_index}.json"
@@ -58,7 +58,7 @@ def _run_repeat(repeat_index: int) -> dict[str, Any]:
             "--particles", str(PARTICLES),
             "--weeks", str(WEEKLY_BOUNDARIES),
             "--branches", str(BRANCH_EQUIVALENTS),
-            "--workers", str(WORKERS),
+            "--workers", str(workers),
             "--output", str(raw_output),
         ]
         if not BALANCE_RESAMPLING:
@@ -73,9 +73,9 @@ def _run_repeat(repeat_index: int) -> dict[str, Any]:
                 + completed.stderr[-4000:]
             )
         payload = json.loads(raw_output.read_text(encoding="utf-8"))
-    rows = [row for row in payload["results"] if row["workers"] == WORKERS]
+    rows = [row for row in payload["results"] if row["workers"] == workers]
     if len(rows) != 1:
-        raise RuntimeError(f"expected one {WORKERS}-worker result, got {len(rows)}")
+        raise RuntimeError(f"expected one {workers}-worker result, got {len(rows)}")
     row = rows[0]
     wall_seconds = float(row["wall_seconds"])
     return {
@@ -87,17 +87,19 @@ def _run_repeat(repeat_index: int) -> dict[str, Any]:
         "wall_seconds": wall_seconds,
         "pwb_per_second": PWB_PER_REPEAT / wall_seconds,
         "subprocess_wall_seconds": subprocess_wall,
-        "workers": WORKERS,
+        "workers": workers,
         "engine": "resident_filter_transport",
         "source_payload": row,
     }
 
 
-def run(*, output: Path, repetitions: int) -> dict[str, Any]:
+def run(*, output: Path, repetitions: int, workers: int = WORKERS) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite existing benchmark evidence: {output}")
     if repetitions < 1:
         raise ValueError("repetitions must be positive")
+    if workers < 1 or workers > PARTICLES:
+        raise ValueError("workers must lie in [1, particles]")
     config = SimulationConfig(
         seed=BASE_SEED,
         agent_count=80,
@@ -105,7 +107,9 @@ def run(*, output: Path, repetitions: int) -> dict[str, Any]:
         horizon_days=max(60.0, HORIZON_DAYS),
         output_mode="ensemble",
     )
-    repeats = [_run_repeat(index) for index in range(repetitions)]
+    repeats = [
+        _run_repeat(index, workers=workers) for index in range(repetitions)
+    ]
     rates = [item["pwb_per_second"] for item in repeats]
     median_rate = statistics.median(rates)
     return {
@@ -120,7 +124,7 @@ def run(*, output: Path, repetitions: int) -> dict[str, Any]:
             "repetitions": repetitions,
             "horizon_days": HORIZON_DAYS,
             "engine": "resident_filter_transport",
-            "workers": WORKERS,
+            "workers": workers,
             "balance_resampling": BALANCE_RESAMPLING,
             "synthetic_observations": "all-inactive; no historical outcome values are read or fitted",
             "likelihood_branches": BRANCH_EQUIVALENTS,
@@ -155,7 +159,7 @@ def run(*, output: Path, repetitions: int) -> dict[str, Any]:
                 "weekly_boundaries": WEEKLY_BOUNDARIES,
                 "branch_equivalents": BRANCH_EQUIVALENTS,
                 "base_seed": BASE_SEED,
-                "workers": WORKERS,
+                "workers": workers,
                 "balance_resampling": BALANCE_RESAMPLING,
                 "horizon_days": HORIZON_DAYS,
             }),
@@ -172,8 +176,13 @@ def main() -> None:
         default=ROOT / "studies/research_program/phase_a_fixed_work_benchmark_v1.json",
     )
     parser.add_argument("--repetitions", type=int, default=3)
+    parser.add_argument("--workers", type=int, default=WORKERS)
     args = parser.parse_args()
-    result = run(output=args.output.resolve(), repetitions=args.repetitions)
+    result = run(
+        output=args.output.resolve(),
+        repetitions=args.repetitions,
+        workers=args.workers,
+    )
     args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
     args.output.resolve().write_text(
         json.dumps(result, indent=2, sort_keys=True), encoding="utf-8"
