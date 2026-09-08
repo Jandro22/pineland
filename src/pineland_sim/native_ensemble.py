@@ -1570,16 +1570,31 @@ class NativeEnsembleRunner:
                    for key in world.supply_sources)
         )
 
-    def _rebuild_structure(self, batch: "ParticleBatchState") -> None:
+    def _rebuild_structure(
+        self,
+        batch: "ParticleBatchState",
+        *,
+        preserve_lanes: tuple[int, ...] = (),
+    ) -> None:
         """Rare structural boundary for new organizations/formations.
 
         Dynamic organization ecology can create entity IDs that did not exist
         when the batch was first packed. At that point all lanes are explicitly
         materialized once, a new union codebook is built, and packed authority
-        resumes. This is deliberately rare and never occurs on a normal hot
-        physical/information tick.
+        resumes. The lane whose sparse event created the structure is already
+        synchronized *before* the reference handler runs. Exporting the old
+        packed state over that lane here would erase the just-computed event
+        (for example, organization ecology can both add a formation and change
+        existing formations). Other lanes still need the normal packed export
+        before the union topology is rebuilt.
+
+        This is deliberately rare and never occurs on a normal
+        hot physical/information tick.
         """
-        batch.synchronize_to_worlds()
+        preserved = {int(lane) for lane in preserve_lanes}
+        for lane in range(batch.particle_count):
+            if lane not in preserved:
+                batch.synchronize_lane_to_world(lane)
         replacement = PackedHotState.from_particles(
             batch.particles, self.topology
         )
@@ -1630,7 +1645,7 @@ class NativeEnsembleRunner:
         world.time = float(time)
         hook(world, float(time))
         if self._structure_changed(world):
-            self._rebuild_structure(batch)
+            self._rebuild_structure(batch, preserve_lanes=(lane,))
         else:
             self.hot_state.import_lane(lane, world, self.topology)
             batch.refresh_beliefs_from_world(lane)
@@ -1672,7 +1687,7 @@ class NativeEnsembleRunner:
             self.event_counts.get(event.event_type, 0) + 1
         )
         if self._structure_changed(world):
-            self._rebuild_structure(batch)
+            self._rebuild_structure(batch, preserve_lanes=(lane,))
         else:
             self.hot_state.import_lane(lane, world, self.topology)
             batch.refresh_beliefs_from_world(lane)
