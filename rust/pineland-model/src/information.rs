@@ -9,7 +9,10 @@
 
 use pineland_core::config::SimulationConfig;
 use pineland_core::rng::{python_exp, PyRandomCompat};
-use pineland_core::state::{clamp01, BeliefKey, ParticleState, CONTROL_DIMENSIONS};
+use pineland_core::state::{
+    clamp01, BeliefKey, InformationHistoryEntry, InformationObservation, InformationRelay,
+    ParticleState, CONTROL_DIMENSIONS, INFORMATION_NONE,
+};
 use pineland_core::topology::StaticTopology;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -21,14 +24,35 @@ enum SourceType {
     OrganizationMember,
     PoliticalElite,
     Interpreter,
+    Patrol,
 }
 
-#[derive(Clone, Debug)]
-struct ControlHistoryEntry {
-    target: usize,
+type ControlHistoryEntry = InformationHistoryEntry;
+
+/// Persist the control-report identity produced by a patrol event.
+///
+/// Patrols execute before the first same-time background information event.
+/// Python therefore exposes their reports to the three-day corroboration
+/// operator even though the patrol module owns the local fusion transition.
+/// Keeping this small boundary public lets patrol retain its historical RNG
+/// and local-belief implementation while sharing the exact evidence index.
+pub fn record_patrol_control_history(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    formation: usize,
     locality: usize,
-    source: String,
     time: f64,
+) {
+    let observer = particle.formations.organization[formation] as usize;
+    let target = control_target(observer);
+    let source_id = format!("PATROL-{}", formation_name(particle, formation));
+    particle.information_history.push(InformationHistoryEntry {
+        target: target as u32,
+        locality: locality as u32,
+        observation_type: 1,
+        time,
+        source_identity: source_identity_code(particle, topology, &source_id),
+    });
 }
 
 impl SourceType {
@@ -41,6 +65,7 @@ impl SourceType {
             Self::OrganizationMember => "organization_member",
             Self::PoliticalElite => "political_elite",
             Self::Interpreter => "interpreter",
+            Self::Patrol => "patrol",
         }
     }
 
@@ -62,7 +87,13 @@ pub fn collect_and_fuse(
     _elapsed_days: f64,
     time: f64,
 ) {
-    let mut history = initial_control_history(particle, topology, time);
+    // Corroboration is part of the future-decision state.  Start each event
+    // from the persisted three-day tail, including patrol reports generated
+    // at an earlier scheduler event, then append this event in source order.
+    particle
+        .information_history
+        .retain(|entry| entry.time >= time - 3.0);
+    let mut history = particle.information_history.clone();
     let mut post_indices = (0..particle.security_posts.organization.len()).collect::<Vec<_>>();
     post_indices.sort_by(|left, right| {
         post_name(particle, topology, *left).cmp(&post_name(particle, topology, *right))
@@ -318,46 +349,14 @@ pub fn collect_and_fuse(
             &mut history,
         );
     }
-}
-
-fn initial_control_history(
-    particle: &ParticleState,
-    _topology: &StaticTopology,
-    time: f64,
-) -> Vec<ControlHistoryEntry> {
-    // The first information event follows the opening patrol events at the
-    // same timestamp.  Their control reports are already present in Python's
-    // three-day source history when background collection begins.  Until the
-    // persistent history schema is added, seed this known t=0 boundary here;
-    // later events will use the in-event history below.
-    if time.abs() > 1.0e-12 {
-        return Vec::new();
-    }
-    let mut history = Vec::new();
-    for patrol in 0..particle.patrols.formation.len() {
-        if particle.patrols.active.get(patrol).copied().unwrap_or(0) == 0 {
-            continue;
-        }
-        let formation = particle.patrols.formation[patrol] as usize;
-        if formation >= particle.formations.personnel.len() {
-            continue;
-        }
-        let organization = particle.formations.organization[formation] as usize;
-        history.push(ControlHistoryEntry {
-            target: control_target(organization),
-            locality: particle.formations.locality[formation] as usize,
-            source: format!("PATROL-{}", formation_name(particle, formation)),
-            time: 0.0,
-        });
-    }
-    history
+    particle.information_history = history;
 }
 
 fn corroboration_weight(
     history: &[ControlHistoryEntry],
     target: usize,
     locality: usize,
-    source_id: &str,
+    source_identity: u32,
     time: f64,
     config: &SimulationConfig,
     source_type: SourceType,
@@ -368,19 +367,20 @@ fn corroboration_weight(
         .get(source_type.name())
         .copied()
         .unwrap_or(0.5);
-    let mut sources = Vec::<&str>::new();
+    let mut sources = Vec::<u32>::new();
     let mut weight = 0.0;
     for entry in history.iter().rev() {
         if entry.time < time - 3.0 {
             break;
         }
-        if entry.target == target
-            && entry.locality == locality
-            && entry.source != source_id
+        if entry.target == target as u32
+            && entry.locality == locality as u32
+            && entry.observation_type == 1
+            && entry.source_identity != source_identity
             && (entry.time - time).abs() <= 3.0
-            && !sources.contains(&entry.source.as_str())
+            && !sources.contains(&entry.source_identity)
         {
-            sources.push(entry.source.as_str());
+            sources.push(entry.source_identity);
             weight += 1.0 - correlation;
             if weight >= 3.0 {
                 return 3.0;
@@ -388,6 +388,273 @@ fn corroboration_weight(
         }
     }
     weight
+}
+
+fn source_type_code(source_type: SourceType) -> u8 {
+    match source_type {
+        SourceType::FixedPost => 0,
+        SourceType::Civilian => 1,
+        SourceType::SocialNetwork => 2,
+        SourceType::Administrative => 3,
+        SourceType::OrganizationMember => 4,
+        SourceType::PoliticalElite => 5,
+        SourceType::Interpreter => 6,
+        SourceType::Patrol => 7,
+    }
+}
+
+fn source_type_from_code(code: u8) -> Option<SourceType> {
+    Some(match code {
+        0 => SourceType::FixedPost,
+        1 => SourceType::Civilian,
+        2 => SourceType::SocialNetwork,
+        3 => SourceType::Administrative,
+        4 => SourceType::OrganizationMember,
+        5 => SourceType::PoliticalElite,
+        6 => SourceType::Interpreter,
+        7 => SourceType::Patrol,
+        _ => return None,
+    })
+}
+
+fn command_node_ids(particle: &ParticleState) -> Vec<String> {
+    let mut values = (0..particle.organizations.kind.len())
+        .map(|organization| format!("CMD:{}", crate::organization_name(organization)))
+        .collect::<Vec<_>>();
+    values.sort();
+    values
+}
+
+fn command_node_code(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    node: &str,
+) -> Option<u32> {
+    let mut commands = command_node_ids(particle);
+    let position = commands.iter().position(|value| value == node)?;
+    let base = particle.organizations.kind.len()
+        + particle.formations.personnel.len()
+        + particle.security_posts.organization.len()
+        + auxiliary_node_ids(particle, topology).len();
+    commands.shrink_to_fit();
+    Some((base + position) as u32)
+}
+
+fn stable_hash_code(value: &str) -> u32 {
+    let mut hash = 2_166_136_261u32;
+    for byte in value.as_bytes() {
+        hash ^= u32::from(*byte);
+        hash = hash.wrapping_mul(16_777_619);
+    }
+    hash & 0x3fff_ffff
+}
+
+fn source_id_code(particle: &ParticleState, topology: &StaticTopology, source_id: &str) -> u32 {
+    let organizations = particle.organizations.kind.len();
+    if let Some(formation) = formation_index(particle, source_id) {
+        return (organizations + formation) as u32;
+    }
+    let mut posts = (0..particle.security_posts.organization.len())
+        .map(|index| (post_name(particle, topology, index), index))
+        .collect::<Vec<_>>();
+    posts.sort_by(|left, right| left.0.cmp(&right.0));
+    if let Some(position) = posts.iter().position(|(name, _)| name == source_id) {
+        return (organizations + particle.formations.personnel.len() + position) as u32;
+    }
+    let mut auxiliary = auxiliary_node_ids(particle, topology);
+    auxiliary.sort();
+    if let Some(position) = auxiliary
+        .iter()
+        .position(|identifier| identifier == source_id)
+    {
+        return (organizations + particle.formations.personnel.len() + posts.len() + position)
+            as u32;
+    }
+    0x4000_0000u32 | stable_hash_code(source_id)
+}
+
+fn source_identity_code(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    source_id: &str,
+) -> u32 {
+    if source_id.starts_with("PATROL-") {
+        return 0x2000_0000u32 | stable_hash_code(source_id);
+    }
+    source_id_code(particle, topology, source_id)
+}
+
+fn information_observation_codebook(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    source_id: &str,
+) -> (u32, u32, u32) {
+    let source = source_id_code(particle, topology, source_id);
+    let community = if source_id.starts_with('C') {
+        community_index(source_id)
+            .filter(|index| *index < particle.communities.locality.len())
+            .map(|index| index as u32)
+            .unwrap_or(INFORMATION_NONE)
+    } else {
+        INFORMATION_NONE
+    };
+    let formation = formation_index(particle, source_id)
+        .map(|index| index as u32)
+        .unwrap_or(INFORMATION_NONE);
+    (source, community, formation)
+}
+
+fn information_decay_rate(
+    config: &SimulationConfig,
+    observation_type: u8,
+    target_formation: u32,
+) -> f64 {
+    if observation_type == 0 || target_formation != INFORMATION_NONE {
+        config.information.formation_decay_rate
+    } else {
+        config.information.default_decay_rate
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn publish_information_observation(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    observer: usize,
+    observer_node: &str,
+    source_id: &str,
+    source_type: SourceType,
+    observation_type: u8,
+    target: Option<usize>,
+    target_formation: Option<usize>,
+    locality: usize,
+    microzone: usize,
+    time: f64,
+    quality: f64,
+    confidence: f64,
+    control: [f64; CONTROL_DIMENSIONS],
+    violence: f64,
+    presence: f64,
+    personnel: f64,
+    detection_probability: f64,
+    detected: bool,
+) {
+    let sequence = particle.next_information_observation_sequence;
+    particle.next_information_observation_sequence = sequence.saturating_add(1);
+    let observer_node_code = dynamic_observer_code(particle, topology, observer_node);
+    let (source, source_community, source_formation) =
+        information_observation_codebook(particle, topology, source_id);
+    let source_identity = source_identity_code(particle, topology, source_id);
+    let target_code = target.map(|value| value as u32).unwrap_or(INFORMATION_NONE);
+    let target_formation_code = target_formation
+        .map(|value| value as u32)
+        .unwrap_or(INFORMATION_NONE);
+    particle
+        .information_observations
+        .push(InformationObservation {
+            sequence,
+            observer: observer as u32,
+            observer_node: observer_node_code,
+            source,
+            source_identity,
+            source_community,
+            source_formation,
+            source_type: source_type_code(source_type),
+            observation_type,
+            target: target_code,
+            target_formation: target_formation_code,
+            locality: locality as u32,
+            microzone: microzone as u32,
+            time,
+            quality: clamp01(quality),
+            confidence: clamp01(confidence),
+            decay_rate: information_decay_rate(config, observation_type, target_formation_code),
+            control,
+            violence: clamp01(violence),
+            presence: clamp01(presence),
+            personnel: personnel.max(0.0),
+            detection_probability: clamp01(detection_probability),
+            detected: u8::from(detected),
+        });
+    queue_information_relay(
+        particle,
+        topology,
+        config,
+        sequence,
+        observer,
+        observer_node_code,
+        locality,
+        time,
+        source_type,
+    );
+}
+
+fn queue_information_relay(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    observation: u64,
+    observer: usize,
+    source_node: u32,
+    _locality: usize,
+    time: f64,
+    source_type: SourceType,
+) {
+    let destination_name = format!("CMD:{}", crate::organization_name(observer));
+    let Some(destination_node) = command_node_code(particle, topology, &destination_name) else {
+        return;
+    };
+    if source_node == destination_node {
+        return;
+    }
+    let mut reliability = config.information.relay_base_reliability;
+    let mut latency_hours = 0.0;
+    let mut route = vec![source_node, destination_node];
+    let formation_code = source_node as usize;
+    let formation_start = particle.organizations.kind.len();
+    let formation_end = formation_start + particle.formations.personnel.len();
+    if (formation_start..formation_end).contains(&formation_code) {
+        let formation = formation_code - formation_start;
+        if let Some(edge) = (0..particle.command_edges.organization.len()).find(|index| {
+            particle.command_edges.organization[*index] as usize == observer
+                && particle.command_edges.formation[*index] as usize == formation
+        }) {
+            reliability = particle.command_edges.reliability[edge];
+            latency_hours = particle.command_edges.latency_hours[edge];
+        }
+    } else {
+        reliability *= 0.7
+            + 0.3
+                * particle
+                    .organizations
+                    .institutional_quality
+                    .get(observer)
+                    .copied()
+                    .unwrap_or(0.5);
+    }
+    latency_hours += config
+        .information
+        .source_latency_hours
+        .get(source_type.name())
+        .copied()
+        .unwrap_or(0.0);
+    let sequence = particle.next_information_relay_sequence;
+    particle.next_information_relay_sequence = sequence.saturating_add(1);
+    particle.information_relays.push(InformationRelay {
+        sequence,
+        observation,
+        organization: observer as u32,
+        source_node,
+        destination_node,
+        route: std::mem::take(&mut route),
+        sent_at: time,
+        arrives_at: time + latency_hours.max(0.0) / 24.0,
+        reliability: clamp01(reliability),
+        latency_hours: latency_hours.max(0.0),
+        status: 0,
+        delivered_at: -1.0e9,
+    });
 }
 
 fn observe_from_source(
@@ -574,7 +841,7 @@ fn observe_control(
         history,
         target,
         locality,
-        source_id,
+        source_identity_code(particle, topology, source_id),
         time,
         config,
         source_type,
@@ -622,12 +889,37 @@ fn observe_control(
             fuse_zone(particle, config, zone_index, time, weight, observed[1]);
         }
     }
+    let source_identity = source_identity_code(particle, topology, source_id);
     history.push(ControlHistoryEntry {
-        target,
-        locality,
-        source: source_id.to_string(),
+        target: target as u32,
+        locality: locality as u32,
+        observation_type: 1,
         time,
+        source_identity,
     });
+    publish_information_observation(
+        particle,
+        topology,
+        config,
+        observer,
+        observer_node,
+        source_id,
+        source_type,
+        1,
+        Some(target),
+        None,
+        locality,
+        topology.primary_zone[locality] as usize,
+        time,
+        quality,
+        confidence,
+        observed,
+        _violence,
+        0.0,
+        0.0,
+        0.0,
+        true,
+    );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
 }
 
@@ -927,7 +1219,12 @@ fn source_trust(
                 .copied()
                 .unwrap_or(0.5)
                 .clamp(0.0, 1.0);
-    if let Some(community) = community_index(source_id) {
+    if matches!(
+        source_type,
+        SourceType::Civilian | SourceType::SocialNetwork
+    ) && community_index(source_id).is_some()
+    {
+        let community = community_index(source_id).unwrap();
         let cooperation = if observer == crate::INSURGENT {
             particle
                 .communities
@@ -964,6 +1261,7 @@ fn report_probability(
         SourceType::OrganizationMember => config.information.member_report_rate,
         SourceType::FixedPost => config.information.fixed_post_report_rate,
         SourceType::Interpreter => config.information.interpreter_report_rate,
+        SourceType::Patrol => config.information.patrol_report_rate,
     };
     if source_type == SourceType::Administrative {
         probability *= 0.35 + 0.95 * clamp01(particle.locality.administrative_capacity[locality]);
@@ -1257,11 +1555,22 @@ fn dynamic_observer_code(particle: &ParticleState, topology: &StaticTopology, no
     }
     let mut auxiliary = auxiliary_node_ids(particle, topology);
     auxiliary.sort();
-    let position = auxiliary
-        .iter()
-        .position(|identifier| identifier == node)
-        .unwrap_or(0);
-    (organizations + particle.formations.personnel.len() + posts.len() + position) as u32
+    if let Some(position) = auxiliary.iter().position(|identifier| identifier == node) {
+        return (organizations + particle.formations.personnel.len() + posts.len() + position)
+            as u32;
+    }
+    if let Some(code) = command_node_code(particle, topology, node) {
+        return code;
+    }
+    // All internally generated nodes are in one of the registries above. The
+    // deterministic fallback keeps externally supplied diagnostic nodes from
+    // aliasing the first auxiliary node.
+    let base = organizations
+        + particle.formations.personnel.len()
+        + posts.len()
+        + auxiliary.len()
+        + command_node_ids(particle).len();
+    base as u32 + (stable_hash_code(node) & 0x3fff_ffff)
 }
 
 fn auxiliary_node_ids(particle: &ParticleState, topology: &StaticTopology) -> Vec<String> {

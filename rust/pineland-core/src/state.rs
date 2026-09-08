@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 pub const CONTROL_DIMENSIONS: usize = 7;
+pub const INFORMATION_NONE: u32 = u32::MAX;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LocalityState {
@@ -962,6 +963,96 @@ pub struct Counters {
     pub checkpoints: u64,
 }
 
+/// Fixed-width observation payload retained while a command-network relay is
+/// in flight.  The native engine keeps the reported value, never the hidden
+/// truth used to generate it, so a restart can continue the same stochastic
+/// information path without reconstructing Python objects.
+#[derive(Clone, Debug, PartialEq)]
+pub struct InformationObservation {
+    pub sequence: u64,
+    pub observer: u32,
+    pub observer_node: u32,
+    pub source: u32,
+    pub source_identity: u32,
+    pub source_community: u32,
+    pub source_formation: u32,
+    pub source_type: u8,
+    pub observation_type: u8,
+    pub target: u32,
+    pub target_formation: u32,
+    pub locality: u32,
+    pub microzone: u32,
+    pub time: f64,
+    pub quality: f64,
+    pub confidence: f64,
+    pub decay_rate: f64,
+    pub control: [f64; CONTROL_DIMENSIONS],
+    pub violence: f64,
+    pub presence: f64,
+    pub personnel: f64,
+    pub detection_probability: f64,
+    pub detected: u8,
+}
+
+impl InformationObservation {
+    pub fn new(sequence: u64) -> Self {
+        Self {
+            sequence,
+            observer: INFORMATION_NONE,
+            observer_node: INFORMATION_NONE,
+            source: INFORMATION_NONE,
+            source_identity: INFORMATION_NONE,
+            source_community: INFORMATION_NONE,
+            source_formation: INFORMATION_NONE,
+            source_type: 0,
+            observation_type: 0,
+            target: INFORMATION_NONE,
+            target_formation: INFORMATION_NONE,
+            locality: INFORMATION_NONE,
+            microzone: INFORMATION_NONE,
+            time: 0.0,
+            quality: 0.0,
+            confidence: 0.0,
+            decay_rate: 0.0,
+            control: [0.0; CONTROL_DIMENSIONS],
+            violence: 0.0,
+            presence: 0.0,
+            personnel: 0.0,
+            detection_probability: 0.0,
+            detected: 0,
+        }
+    }
+}
+
+/// A command-network transmission.  `status` is 0 for in-transit, 1 for
+/// delivered, and 2 for dropped. `delivered_at` uses a negative sentinel for
+/// Python's None.
+#[derive(Clone, Debug, PartialEq)]
+pub struct InformationRelay {
+    pub sequence: u64,
+    pub observation: u64,
+    pub organization: u32,
+    pub source_node: u32,
+    pub destination_node: u32,
+    pub route: Vec<u32>,
+    pub sent_at: f64,
+    pub arrives_at: f64,
+    pub reliability: f64,
+    pub latency_hours: f64,
+    pub status: u8,
+    pub delivered_at: f64,
+}
+
+/// Bounded source history used by the three-day corroboration operator.
+#[derive(Clone, Debug, PartialEq)]
+pub struct InformationHistoryEntry {
+    pub target: u32,
+    pub locality: u32,
+    pub observation_type: u8,
+    pub time: f64,
+    pub source_identity: u32,
+}
+
 impl Counters {
     pub fn record(&mut self, kind: &str) {
         *self.event_counts.entry(kind.to_string()).or_default() += 1;
@@ -1016,6 +1107,12 @@ pub struct ParticleState {
     pub rng: RngStreams,
     pub counters: Counters,
     pub observations: Vec<ObservationRecord>,
+    pub information_observations: Vec<InformationObservation>,
+    pub information_relays: Vec<InformationRelay>,
+    pub information_history: Vec<InformationHistoryEntry>,
+    pub next_information_observation_sequence: u64,
+    pub next_information_relay_sequence: u64,
+    pub last_information_decay_at: f64,
     pub event_log: Vec<EventRecord>,
     pub weights_log: f64,
     pub ancestry: Vec<u64>,
@@ -1059,6 +1156,12 @@ impl ParticleState {
             rng,
             counters: Counters::default(),
             observations: Vec::new(),
+            information_observations: Vec::new(),
+            information_relays: Vec::new(),
+            information_history: Vec::new(),
+            next_information_observation_sequence: 1,
+            next_information_relay_sequence: 1,
+            last_information_decay_at: 0.0,
             event_log: Vec::new(),
             weights_log: 0.0,
             ancestry: vec![0],
@@ -1143,6 +1246,7 @@ impl ParticleState {
         append_f64s(&mut material, &self.communities.cohesion);
         append_f64s(&mut material, &self.social_edges.weight);
         append_f64s(&mut material, &self.zone_beliefs.estimate);
+        append_information_state(&mut material, self);
         sha256::digest_hex(&material)
     }
 
@@ -1474,6 +1578,7 @@ impl ParticleState {
             material.extend_from_slice(&observation.value.to_bits().to_le_bytes());
             material.extend_from_slice(&observation.confidence.to_bits().to_le_bytes());
         }
+        append_information_state(material, self);
         material.extend_from_slice(&(self.event_log.len() as u64).to_le_bytes());
         for event in &self.event_log {
             material.extend_from_slice(&event.time.to_bits().to_le_bytes());
@@ -3459,6 +3564,79 @@ impl ParticleState {
             }
         }
         Ok(())
+    }
+}
+
+fn append_information_state(material: &mut Vec<u8>, particle: &ParticleState) {
+    material.extend_from_slice(&particle.next_information_observation_sequence.to_le_bytes());
+    material.extend_from_slice(&particle.next_information_relay_sequence.to_le_bytes());
+    material.extend_from_slice(&particle.last_information_decay_at.to_bits().to_le_bytes());
+    material.extend_from_slice(&(particle.information_observations.len() as u64).to_le_bytes());
+    for observation in &particle.information_observations {
+        material.extend_from_slice(&observation.sequence.to_le_bytes());
+        for value in [
+            observation.observer,
+            observation.observer_node,
+            observation.source,
+            observation.source_identity,
+            observation.source_community,
+            observation.source_formation,
+            observation.target,
+            observation.target_formation,
+            observation.locality,
+            observation.microzone,
+        ] {
+            material.extend_from_slice(&value.to_le_bytes());
+        }
+        material.push(observation.source_type);
+        material.push(observation.observation_type);
+        for value in [
+            observation.time,
+            observation.quality,
+            observation.confidence,
+            observation.decay_rate,
+        ] {
+            material.extend_from_slice(&value.to_bits().to_le_bytes());
+        }
+        append_f64s(material, &observation.control);
+        for value in [
+            observation.violence,
+            observation.presence,
+            observation.personnel,
+            observation.detection_probability,
+        ] {
+            material.extend_from_slice(&value.to_bits().to_le_bytes());
+        }
+        material.push(observation.detected);
+    }
+    material.extend_from_slice(&(particle.information_relays.len() as u64).to_le_bytes());
+    for relay in &particle.information_relays {
+        material.extend_from_slice(&relay.sequence.to_le_bytes());
+        material.extend_from_slice(&relay.observation.to_le_bytes());
+        material.extend_from_slice(&relay.organization.to_le_bytes());
+        for value in [relay.source_node, relay.destination_node] {
+            material.extend_from_slice(&value.to_le_bytes());
+        }
+        material.extend_from_slice(&(relay.route.len() as u64).to_le_bytes());
+        append_u32s(material, &relay.route);
+        for value in [
+            relay.sent_at,
+            relay.arrives_at,
+            relay.reliability,
+            relay.latency_hours,
+            relay.delivered_at,
+        ] {
+            material.extend_from_slice(&value.to_bits().to_le_bytes());
+        }
+        material.push(relay.status);
+    }
+    material.extend_from_slice(&(particle.information_history.len() as u64).to_le_bytes());
+    for entry in &particle.information_history {
+        material.extend_from_slice(&entry.target.to_le_bytes());
+        material.extend_from_slice(&entry.locality.to_le_bytes());
+        material.push(entry.observation_type);
+        material.extend_from_slice(&entry.time.to_bits().to_le_bytes());
+        material.extend_from_slice(&entry.source_identity.to_le_bytes());
     }
 }
 

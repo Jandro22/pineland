@@ -11,7 +11,11 @@ pub fn update(
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     _time: f64,
+    elapsed_days: f64,
 ) {
+    if elapsed_days <= 0.0 {
+        return;
+    }
     for locality in 0..topology.locality_count() {
         let offset = locality * CONTROL_DIMENSIONS;
         let insurgent_foothold = crate::INSURGENT * topology.locality_count() + locality;
@@ -27,8 +31,6 @@ pub fn update(
         particle.locality.insurgent_control[offset + 5] = clamp01(
             particle.locality.insurgent_control[offset + 5] * (1.0 - rate) + exposure * rate,
         );
-        particle.footholds.raw_signal[insurgent_foothold] =
-            clamp01(particle.footholds.raw_signal[insurgent_foothold] * 0.98 + exposure * 0.02);
     }
 }
 

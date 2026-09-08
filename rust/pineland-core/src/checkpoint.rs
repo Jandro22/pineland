@@ -9,7 +9,8 @@ use crate::json::JsonValue;
 use crate::rng::{PyRandomCompat, RngState, RngStreams};
 use crate::sha256;
 use crate::state::{
-    decode_event, encode_event, BeliefKey, ByteReader, Counters, EventRecord, ObservationRecord,
+    decode_event, encode_event, BeliefKey, ByteReader, Counters, EventRecord,
+    InformationHistoryEntry, InformationObservation, InformationRelay, ObservationRecord,
     ParticleState, StateError,
 };
 use std::collections::BTreeMap;
@@ -20,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 4;
+pub const CHECKPOINT_VERSION: u32 = 5;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -155,6 +156,7 @@ impl CheckpointStore {
             put_f64(&mut buffer, record.value);
             put_f64(&mut buffer, record.confidence);
         }
+        encode_information_state(&mut buffer, particle);
         put_u64(&mut buffer, particle.event_log.len() as u64);
         for record in &particle.event_log {
             put_f64(&mut buffer, record.time);
@@ -238,6 +240,7 @@ impl CheckpointStore {
                 confidence: reader.f64()?,
             });
         }
+        decode_information_state(&mut reader, &mut particle)?;
         let event_count = bounded_count(reader.u64()?)?;
         particle.event_log = Vec::with_capacity(event_count);
         for _ in 0..event_count {
@@ -1325,6 +1328,149 @@ fn decode_beliefs(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), C
     p.beliefs.source_confidence = read_f64_vec(r)?;
     p.beliefs.evidence_count = read_u32_vec(r)?;
     p.beliefs.dirty = read_u32_vec(r)?;
+    Ok(())
+}
+
+fn encode_information_state(b: &mut Vec<u8>, p: &ParticleState) {
+    put_u64(b, p.next_information_observation_sequence);
+    put_u64(b, p.next_information_relay_sequence);
+    put_f64(b, p.last_information_decay_at);
+    put_u64(b, p.information_observations.len() as u64);
+    for observation in &p.information_observations {
+        put_u64(b, observation.sequence);
+        for value in [
+            observation.observer,
+            observation.observer_node,
+            observation.source,
+            observation.source_identity,
+            observation.source_community,
+            observation.source_formation,
+            observation.target,
+            observation.target_formation,
+            observation.locality,
+            observation.microzone,
+        ] {
+            put_u32(b, value);
+        }
+        b.push(observation.source_type);
+        b.push(observation.observation_type);
+        put_f64(b, observation.time);
+        put_f64(b, observation.quality);
+        put_f64(b, observation.confidence);
+        put_f64(b, observation.decay_rate);
+        for value in observation.control {
+            put_f64(b, value);
+        }
+        put_f64(b, observation.violence);
+        put_f64(b, observation.presence);
+        put_f64(b, observation.personnel);
+        put_f64(b, observation.detection_probability);
+        b.push(observation.detected);
+    }
+    put_u64(b, p.information_relays.len() as u64);
+    for relay in &p.information_relays {
+        put_u64(b, relay.sequence);
+        put_u64(b, relay.observation);
+        put_u32(b, relay.organization);
+        put_u32(b, relay.source_node);
+        put_u32(b, relay.destination_node);
+        put_u64(b, relay.route.len() as u64);
+        for value in &relay.route {
+            put_u32(b, *value);
+        }
+        put_f64(b, relay.sent_at);
+        put_f64(b, relay.arrives_at);
+        put_f64(b, relay.reliability);
+        put_f64(b, relay.latency_hours);
+        b.push(relay.status);
+        put_f64(b, relay.delivered_at);
+    }
+    put_u64(b, p.information_history.len() as u64);
+    for entry in &p.information_history {
+        put_u32(b, entry.target);
+        put_u32(b, entry.locality);
+        b.push(entry.observation_type);
+        put_f64(b, entry.time);
+        put_u32(b, entry.source_identity);
+    }
+}
+
+fn decode_information_state(
+    r: &mut ByteReader<'_>,
+    p: &mut ParticleState,
+) -> Result<(), CheckpointError> {
+    p.next_information_observation_sequence = r.u64()?;
+    p.next_information_relay_sequence = r.u64()?;
+    p.last_information_decay_at = r.f64()?;
+    let observation_count = bounded_count(r.u64()?)?;
+    p.information_observations = Vec::with_capacity(observation_count);
+    for _ in 0..observation_count {
+        let mut observation = InformationObservation::new(r.u64()?);
+        observation.observer = r.u32()?;
+        observation.observer_node = r.u32()?;
+        observation.source = r.u32()?;
+        observation.source_identity = r.u32()?;
+        observation.source_community = r.u32()?;
+        observation.source_formation = r.u32()?;
+        observation.target = r.u32()?;
+        observation.target_formation = r.u32()?;
+        observation.locality = r.u32()?;
+        observation.microzone = r.u32()?;
+        observation.source_type = r.u8()?;
+        observation.observation_type = r.u8()?;
+        observation.time = r.f64()?;
+        observation.quality = r.f64()?;
+        observation.confidence = r.f64()?;
+        observation.decay_rate = r.f64()?;
+        for value in &mut observation.control {
+            *value = r.f64()?;
+        }
+        observation.violence = r.f64()?;
+        observation.presence = r.f64()?;
+        observation.personnel = r.f64()?;
+        observation.detection_probability = r.f64()?;
+        observation.detected = r.u8()?;
+        p.information_observations.push(observation);
+    }
+    let relay_count = bounded_count(r.u64()?)?;
+    p.information_relays = Vec::with_capacity(relay_count);
+    for _ in 0..relay_count {
+        let sequence = r.u64()?;
+        let observation = r.u64()?;
+        let organization = r.u32()?;
+        let source_node = r.u32()?;
+        let destination_node = r.u32()?;
+        let route_count = bounded_count(r.u64()?)?;
+        let mut route = Vec::with_capacity(route_count);
+        for _ in 0..route_count {
+            route.push(r.u32()?);
+        }
+        p.information_relays.push(InformationRelay {
+            sequence,
+            observation,
+            organization,
+            source_node,
+            destination_node,
+            route,
+            sent_at: r.f64()?,
+            arrives_at: r.f64()?,
+            reliability: r.f64()?,
+            latency_hours: r.f64()?,
+            status: r.u8()?,
+            delivered_at: r.f64()?,
+        });
+    }
+    let history_count = bounded_count(r.u64()?)?;
+    p.information_history = Vec::with_capacity(history_count);
+    for _ in 0..history_count {
+        p.information_history.push(InformationHistoryEntry {
+            target: r.u32()?,
+            locality: r.u32()?,
+            observation_type: r.u8()?,
+            time: r.f64()?,
+            source_identity: r.u32()?,
+        });
+    }
     Ok(())
 }
 fn encode_logistics(b: &mut Vec<u8>, p: &ParticleState) {

@@ -11,8 +11,12 @@ pub fn update(
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     _time: f64,
+    elapsed_days: f64,
 ) {
-    if !config.foreign_affairs.enabled {
+    // The reference process returns before touching state or consuming RNG
+    // when the scheduler reports the initialization event with zero elapsed
+    // time.
+    if !config.foreign_affairs.enabled || elapsed_days <= 0.0 {
         return;
     }
     let n = topology.locality_count();

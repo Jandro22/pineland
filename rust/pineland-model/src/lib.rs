@@ -1642,6 +1642,7 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:social_influence", rng);
             }
@@ -1664,6 +1665,7 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:recruitment", rng);
             }
@@ -1739,10 +1741,22 @@ impl SimulationEngine {
                 movement::command(&mut self.particle, &self.topology, &self.config, event.time)
             }
             EventPayload::Governance => {
-                governance::update(&mut self.particle, &self.topology, &self.config, event.time)
+                governance::update(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    event.time,
+                    event.elapsed_days,
+                )
             }
             EventPayload::Economy => {
-                economy::update(&mut self.particle, &self.topology, &self.config, event.time)
+                economy::update(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    event.time,
+                    event.elapsed_days,
+                )
             }
             EventPayload::OrganizationEcology => {
                 let mut rng = self.take_rng("process:organization_ecology");
@@ -1752,6 +1766,7 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:organization_ecology", rng);
             }
@@ -1763,6 +1778,7 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:political_order", rng);
             }
@@ -1774,6 +1790,7 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:foreign_affairs", rng);
             }
@@ -1785,6 +1802,7 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:peace_process", rng);
             }
@@ -1796,6 +1814,7 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:recording_noise", rng);
             }

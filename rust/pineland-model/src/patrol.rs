@@ -585,6 +585,13 @@ fn observe_control(
             particle.zone_beliefs.last_reliable_observation_at[index] = time;
         }
     }
+    crate::information::record_patrol_control_history(
+        particle,
+        topology,
+        observer_formation,
+        locality,
+        time,
+    );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
 }
 

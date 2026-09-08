@@ -11,8 +11,12 @@ pub fn recruit(
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     time: f64,
+    elapsed_days: f64,
 ) {
-    if !config.include_insurgency {
+    // Recruitment is intentionally not evaluated at the zero-duration
+    // initialization event. This mirrors ProcessEngine.on_recruitment and
+    // preserves the process RNG continuation contract.
+    if !config.include_insurgency || elapsed_days <= 0.0 {
         return;
     }
     let n = topology.locality_count();

@@ -11,8 +11,11 @@ pub fn update(
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     _time: f64,
+    elapsed_days: f64,
 ) {
-    if !config.peace_process.enabled {
+    // Peace processing is a strict no-op at the initial zero-duration event;
+    // keeping the RNG untouched is part of trajectory continuation parity.
+    if !config.peace_process.enabled || elapsed_days <= 0.0 {
         return;
     }
     let n = topology.locality_count();
