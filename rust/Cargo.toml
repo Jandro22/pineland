@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = [
+    "pineland-core",
+    "pineland-model",
+    "pineland-inference",
+    "pineland-io",
+    "pineland-hpc",
+    "pineland-cli",
+    "pineland-python",
+]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+debug = false
+
