@@ -534,9 +534,14 @@ fn observe_control(
     // schema reserves codes after the seven fixed organizations for formation
     // observers and marks these rows with kind=3.
     let dynamic_observer = particle.organizations.kind.len() as u32 + observer_formation as u32;
+    let target_actor = if insurgent_observer {
+        crate::INSURGENT
+    } else {
+        crate::GOVERNMENT
+    };
     let dynamic_key = BeliefKey {
         observer: dynamic_observer,
-        target: crate::GOVERNMENT as u32,
+        target: target_actor as u32,
         locality: locality as u32,
         kind: 3,
     };
