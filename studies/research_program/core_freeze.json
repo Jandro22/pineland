@@ -1,7 +1,7 @@
 {
   "authoritative_certificate": "outputs/final_release/RELEASE_CERTIFICATE_LIVE.json",
   "calibration_licensed": false,
-  "certificate_payload_sha256": "7f8646a33b29890c22327d48940f0dd529e312d4fd450a2d59c28e9bf6b2c667",
+  "certificate_payload_sha256": "e31cd43e3937e4d15a0506ea04600c43b089646ae5742c8fb88529b2b129b1d4",
   "certification_evidence_keys": [
     "settled_tree_certificate"
   ],
@@ -28,7 +28,7 @@
     "settled_tree_certificate": {
       "artifact": {
         "path": "outputs/final_release/RELEASE_CERTIFICATE_LIVE.json",
-        "sha256": "8cbd8ba6eede57fb9e5f82b7038b421ce7536d6c33599645e17e804191ff961b"
+        "sha256": "0730e9517de41f276139e7e8ff837243aea084e5348a849f93c50da6cbeb0c2d"
       },
       "status": "verified_pinned_file"
     }

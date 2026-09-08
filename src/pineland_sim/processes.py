@@ -59,6 +59,11 @@ from .organization_ecology import (
     process_organization_ecology,
     recruit_and_retain,
 )
+from .organizational_state import (
+    advance_local_footholds,
+    record_local_foothold_action,
+    record_local_foothold_arrival,
+)
 from .political_order import process_political_order
 from .foreign_affairs import process_foreign_affairs
 from .peace_process import process_peace
@@ -71,6 +76,26 @@ from .access import (
 )
 from .civilian import record_displacement_harm
 from .relations import record_relation_harm
+
+
+# Full aggregate snapshots are reserved for handlers that can mutate a broad
+# stock domain.  Narrow observation/clock handlers must not pay an O(population)
+# scan at both sides of every event.  Patrol is accounted incrementally from
+# its explicit sustainment result below.
+STOCK_SNAPSHOT_EVENT_TYPES = frozenset({
+    "contact",
+    "economy",
+    "foreign_affairs",
+    "force_movement",
+    "governance",
+    "logistics",
+    "organized_action",
+    "organization_ecology",
+    "peace_process",
+    "political_order",
+    "policy_treatment",
+    "recruitment",
+})
 
 
 def _continuous_capacity_update(
@@ -176,6 +201,11 @@ class ProcessEngine:
             "peace_process",
         }:
             advance_patrol_presence_memory(self.world, self.world.time)
+        if event.event_type in {
+            "force_movement", "organized_action", "recruitment",
+            "organization_ecology", "physical_refresh",
+        }:
+            advance_local_footholds(self.world, self.world.time)
         if self._injected_rng is None:
             self.rng = self._process_rngs.setdefault(
                 event.event_type,
@@ -193,7 +223,11 @@ class ProcessEngine:
         )
         self.world.active_event_id = event_id
         particle_mode = self.world.execution_profile == "particle"
-        before_stocks = {} if particle_mode else self.world.tracked_stock_totals()
+        before_stocks = (
+            None
+            if particle_mode or event.event_type not in STOCK_SNAPSHOT_EVENT_TYPES
+            else self.world.tracked_stock_totals()
+        )
         forensic = self.world.config.output_mode == "forensic"
         before_controls = ({
             locality_id: {actor: vector.to_dict() for actor, vector in locality.control.items()}
@@ -220,6 +254,31 @@ class ProcessEngine:
             self.world.active_event_id = None
             raise
         raw_result = dict(result)
+        if event.event_type == "organized_action" and float(
+            raw_result.get("state_based_violence_event", 0.0)
+        ) > 0:
+            source_locality = str(
+                raw_result.get(
+                    "source_locality_id",
+                    event.payload.get("locality_id"),
+                )
+            )
+            record_local_foothold_action(
+                self.world,
+                str(raw_result.get(
+                    "initiator_organization_id",
+                    event.payload.get("organization_id"),
+                )),
+                source_locality,
+            )
+        if event.event_type in {
+            "force_movement", "recruitment", "organization_ecology",
+            "organized_action",
+        }:
+            # Apply same-boundary renewal after the handler as well.  This is
+            # what makes an arrival or recruit visible to the next event at
+            # the same calendar time without adding a stochastic draw.
+            advance_local_footholds(self.world, self.world.time)
         if not particle_mode:
             self.world.event_counts[event.event_type] = self.world.event_counts.get(event.event_type, 0) + 1
         if not particle_mode and event.event_type == "organized_action":
@@ -392,9 +451,21 @@ class ProcessEngine:
             # are identical to forensic and ensemble modes.
             if synthetic is not None:
                 self.world.synthetic_records.append(synthetic)
-        if not particle_mode:
+        if not particle_mode and before_stocks is not None:
             self.world.record_stock_transactions(event_id, event.event_type, before_stocks,
                                                  self.world.tracked_stock_totals())
+        elif not particle_mode and event.event_type == "patrol":
+            # ``on_patrol`` has one explicit material mutation: supply
+            # consumption returned as ``sustainment``.  Formation movement,
+            # fatigue, readiness, and belief/report updates are not tracked
+            # stocks, so this is a complete delta for the handler contract.
+            supply_delta = float(raw_result.get("sustainment", 0.0))
+            if abs(supply_delta) > 1e-12:
+                self.world.record_stock_deltas(
+                    event_id,
+                    event.event_type,
+                    {"military_supply": supply_delta},
+                )
         if forensic:
             self.world.record_state_delta(event_id, event.event_type, before_controls, before_formations, actors)
         if particle_mode and event.event_type == "information":
@@ -598,27 +669,38 @@ class ProcessEngine:
             current_zone.microzone_id, self.world.time,
         )
 
-        candidates = sorted(self.world.physical_neighbors[current_zone.microzone_id])
-        moved_to = current_zone.microzone_id
-        travel_hours = self.world.config.intervals.patrol * 24
-        if candidates:
-            weights = []
-            for candidate in candidates:
-                zone_belief = ensure_zone_belief(
-                    self.world, formation.organization_id, candidate, self.world.time
-                )
-                self.world.materialize_compact_confidence(zone_belief)
-                edge = self.world.physical_edges[self.world.physical_neighbors[current_zone.microzone_id][candidate]]
-                perceived_need = (((1 - zone_belief.physical_control_estimate) *
-                                   (.55 + .45 * zone_belief.confidence) +
-                                   .18 * (1 - zone_belief.confidence))
-                                  if self.world.config.physical.adaptive_patrol_routing else .5)
-                route_noise = self.rng.uniform(0, self.world.config.physical.patrol_route_randomness)
-                score = 2.5 * perceived_need - edge.travel_time_hours / self.world.config.physical.response_decay_hours + route_noise
-                weights.append(exp(max(-8, min(8, score))))
-            moved_to = self.rng.choices(candidates, weights=weights, k=1)[0]
-            edge = self.world.physical_edges[self.world.physical_neighbors[current_zone.microzone_id][moved_to]]
-            travel_hours = edge.travel_time_hours * (1 + edge.disruption) / max(.2, formation.mobility)
+        # The packed patrol island supplies the route at the point where the
+        # reference handler would draw it.  The wrapper still owns observation,
+        # supply-ledger, and archival semantics; it consumes this exact route
+        # instead of drawing a second set of candidate noises.
+        packed_route = getattr(self, "_packed_patrol_route", None)
+        if callable(packed_route):
+            packed_route = packed_route()
+        if packed_route is None:
+            candidates = sorted(self.world.physical_neighbors[current_zone.microzone_id])
+            moved_to = current_zone.microzone_id
+            travel_hours = self.world.config.intervals.patrol * 24
+            if candidates:
+                weights = []
+                for candidate in candidates:
+                    zone_belief = ensure_zone_belief(
+                        self.world, formation.organization_id, candidate, self.world.time
+                    )
+                    self.world.materialize_compact_confidence(zone_belief)
+                    edge = self.world.physical_edges[self.world.physical_neighbors[current_zone.microzone_id][candidate]]
+                    perceived_need = (((1 - zone_belief.physical_control_estimate) *
+                                       (.55 + .45 * zone_belief.confidence) +
+                                       .18 * (1 - zone_belief.confidence))
+                                      if self.world.config.physical.adaptive_patrol_routing else .5)
+                    route_noise = self.rng.uniform(0, self.world.config.physical.patrol_route_randomness)
+                    score = 2.5 * perceived_need - edge.travel_time_hours / self.world.config.physical.response_decay_hours + route_noise
+                    weights.append(exp(max(-8, min(8, score))))
+                moved_to = self.rng.choices(candidates, weights=weights, k=1)[0]
+                edge = self.world.physical_edges[self.world.physical_neighbors[current_zone.microzone_id][moved_to]]
+                travel_hours = edge.travel_time_hours * (1 + edge.disruption) / max(.2, formation.mobility)
+        else:
+            moved_to, travel_hours = packed_route
+        if moved_to != current_zone.microzone_id:
             patrol.current_microzone_id = moved_to
             patrol.route_history.append(moved_to)
             patrol.available_at = self.world.time + travel_hours / 24
@@ -664,7 +746,14 @@ class ProcessEngine:
                 "affected_entity_ids": tuple(order.order_id for order in orders)}
 
     def on_force_movement(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
-        return advance_movement_orders(self.world, self.world.time)
+        result = advance_movement_orders(self.world, self.world.time)
+        for formation_id in result.get("arrived_formation_ids", ()):
+            formation = self.world.formations.get(str(formation_id))
+            if formation is not None:
+                record_local_foothold_arrival(
+                    self.world, formation, self.world.time
+                )
+        return result
 
     def on_logistics(self, event_id: str, event: ScheduledEvent) -> dict[str, Any]:
         elapsed_days = float(

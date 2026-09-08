@@ -56,7 +56,8 @@ class _CompactBeliefState:
     __slots__ = (
         "keys", "key_to_index", "state", "decay_event_positions",
         "decay_events", "logical_time", "default_decay_rate",
-        "target_decay_rate",
+        "target_decay_rate", "schema_generation", "dirty_keys",
+        "pending_decay",
     )
     STRIDE = 0
     HASH_TAG = b"pineland.compact.belief.v1\0"
@@ -70,6 +71,8 @@ class _CompactBeliefState:
         logical_time: float = 0.0,
         default_decay_rate: float = 0.0,
         target_decay_rate: float = 0.0,
+        schema_generation: int = 0,
+        dirty_keys: Iterable[tuple[str, ...]] = (),
     ) -> None:
         normalized_keys = list(keys)
         if len(set(normalized_keys)) != len(normalized_keys):
@@ -98,6 +101,15 @@ class _CompactBeliefState:
         self.logical_time = float(logical_time)
         self.default_decay_rate = float(default_decay_rate)
         self.target_decay_rate = float(target_decay_rate)
+        # The codebook is append-only during ordinary optimized execution.
+        # Consumers use this epoch to avoid scanning thousands of keys merely
+        # to discover that the schema is unchanged at the next boundary.
+        self.schema_generation = int(schema_generation)
+        self.dirty_keys = set(tuple(key) for key in dirty_keys)
+        # A lazy decay step affects every row, but it must not force a full
+        # key scan merely to build a per-row dirty set.  The batch boundary
+        # uses this bit to select one contiguous materialization/copy instead.
+        self.pending_decay = False
 
     @classmethod
     def from_beliefs(cls, beliefs: Mapping[tuple[str, ...], Any]):
@@ -123,6 +135,8 @@ class _CompactBeliefState:
         self.key_to_index[key] = index
         self.state.extend(self._belief_row(belief))
         self.decay_event_positions.append(len(self.decay_events))
+        self.schema_generation += 1
+        self.dirty_keys.add(tuple(key))
         return index
 
     def row(self, key: tuple[str, ...]) -> tuple[float, ...]:
@@ -147,6 +161,7 @@ class _CompactBeliefState:
         self.logical_time = float(time)
         self.decay_events = ()
         self.decay_event_positions = array("I", [0] * len(self.keys))
+        self.pending_decay = False
 
     def advance_decay(self, time: float) -> None:
         """Record an exact decay step without walking the belief population."""
@@ -158,6 +173,7 @@ class _CompactBeliefState:
             elapsed, self.default_decay_rate, self.target_decay_rate
         ))
         self.logical_time = target_time
+        self.pending_decay = True
 
     def materialize(self, key: tuple[str, ...], time: float | None = None) -> None:
         """Apply pending decay steps to one row, preserving eager arithmetic."""
@@ -181,6 +197,26 @@ class _CompactBeliefState:
                 confidence = clamp(confidence * exp(-rate * elapsed))
             self.state[offset] = confidence
             self.decay_event_positions[index] = len(self.decay_events)
+            self.dirty_keys.add(tuple(key))
+
+    def mark_dirty(self, key: tuple[str, ...]) -> None:
+        """Mark one compact row as needing an object/packed-view sync."""
+        if key in self.key_to_index:
+            self.dirty_keys.add(tuple(key))
+
+    def consume_dirty(self) -> tuple[tuple[str, ...], ...]:
+        """Return and clear rows changed since the previous boundary."""
+        result = tuple(sorted(self.dirty_keys))
+        self.dirty_keys.clear()
+        return result
+
+    def materialize_all(self) -> None:
+        """Apply pending lazy decay once before a contiguous bulk transfer."""
+        if len(self.decay_events) == 0:
+            return
+        for index, key in enumerate(self.keys):
+            self.materialize_index(index, key)
+        self.pending_decay = False
 
     def sync_confidence_to_beliefs(self, beliefs: Mapping[tuple[str, ...], Any],
                                    time: float | None = None) -> None:
@@ -201,6 +237,9 @@ class _CompactBeliefState:
             self.decay_event_positions = array(
                 "I", [len(self.decay_events)] * len(self.keys)
             )
+            self.pending_decay = False
+            self.schema_generation += 1
+            self.dirty_keys.update(tuple(key) for key in self.keys)
             return
         for key in self.keys:
             offset = self.key_to_index[key] * self.STRIDE
@@ -208,9 +247,11 @@ class _CompactBeliefState:
                 "d", self._belief_row(beliefs[key])
             )
             self.decay_event_positions[self.key_to_index[key]] = len(self.decay_events)
+            self.dirty_keys.add(tuple(key))
+        self.pending_decay = False
 
     def clone(self):
-        return type(self)(
+        clone = type(self)(
             self.keys,
             array("d", self.state),
             array("I", self.decay_event_positions),
@@ -218,7 +259,11 @@ class _CompactBeliefState:
             self.logical_time,
             self.default_decay_rate,
             self.target_decay_rate,
+            self.schema_generation,
+            self.dirty_keys,
         )
+        clone.pending_decay = self.pending_decay
+        return clone
 
     def state_sha256(self) -> str:
         for key in self.keys:
@@ -291,6 +336,7 @@ class CompactPresenceBeliefState(_CompactBeliefState):
         # clock. ``decay_information`` advances ``logical_time`` explicitly;
         # use that clock here so direct/API fusions retain oracle semantics.
         self.materialize(key)
+        self.dirty_keys.add(tuple(key))
         offset = self.index(key) * self.STRIDE
         old_confidence = self.state[offset + 1]
         prior = max(.02, old_confidence)
@@ -413,12 +459,16 @@ class CompactControlBeliefState:
     stable across an information tick and avoids copying the hot state array.
     """
 
-    __slots__ = ("keys", "key_to_index", "state")
+    __slots__ = (
+        "keys", "key_to_index", "state", "schema_generation", "dirty_keys",
+    )
 
     def __init__(
         self,
         keys: Iterable[tuple[str, str, str]] = (),
         state: array | None = None,
+        schema_generation: int = 0,
+        dirty_keys: Iterable[tuple[str, str, str]] = (),
     ) -> None:
         normalized_keys = list(keys)
         if len(set(normalized_keys)) != len(normalized_keys):
@@ -434,6 +484,8 @@ class CompactControlBeliefState:
             raise ValueError(
                 "compact control-belief state has an invalid row stride"
             )
+        self.schema_generation = int(schema_generation)
+        self.dirty_keys = set(tuple(key) for key in dirty_keys)
 
     @classmethod
     def from_beliefs(
@@ -469,7 +521,12 @@ class CompactControlBeliefState:
 
     def clone(self) -> "CompactControlBeliefState":
         """Copy row storage for an independent particle/world clone."""
-        return type(self)(self.keys, array("d", self.state))
+        return type(self)(
+            self.keys,
+            array("d", self.state),
+            self.schema_generation,
+            self.dirty_keys,
+        )
 
     def index(self, key: tuple[str, str, str]) -> int:
         return self.key_to_index[key]
@@ -487,6 +544,8 @@ class CompactControlBeliefState:
         self.keys.append(key)
         self.key_to_index[key] = index
         self.state.extend(self._belief_row(belief))
+        self.schema_generation += 1
+        self.dirty_keys.add(tuple(key))
         return index
 
     def row(self, key: tuple[str, str, str]) -> tuple[float, ...]:
@@ -524,6 +583,15 @@ class CompactControlBeliefState:
             if belief is not None:
                 self.write_to_belief(key, belief)
 
+    def mark_dirty(self, key: tuple[str, str, str]) -> None:
+        if key in self.key_to_index:
+            self.dirty_keys.add(tuple(key))
+
+    def consume_dirty(self) -> tuple[tuple[str, str, str], ...]:
+        result = tuple(sorted(self.dirty_keys))
+        self.dirty_keys.clear()
+        return result
+
     def sync_confidence_to_beliefs(
         self,
         beliefs: Mapping[tuple[str, str, str], ActorBelief],
@@ -552,6 +620,8 @@ class CompactControlBeliefState:
             self.keys = list(replacement.keys)
             self.key_to_index = replacement.key_to_index
             self.state = replacement.state
+            self.schema_generation += 1
+            self.dirty_keys.update(tuple(key) for key in self.keys)
             return
         for key in self.keys:
             belief = beliefs[key]
@@ -559,6 +629,7 @@ class CompactControlBeliefState:
             self.state[offset:offset + CONTROL_STATE_STRIDE] = array(
                 "d", self._belief_row(belief)
             )
+            self.dirty_keys.add(tuple(key))
 
     def decay(self, elapsed: float, rate: float) -> None:
         """Apply exact confidence decay to every compact control belief."""
@@ -567,6 +638,7 @@ class CompactControlBeliefState:
         factor = exp(-rate * elapsed)
         for offset in range(7, len(self.state), CONTROL_STATE_STRIDE):
             self.state[offset] = clamp(self.state[offset] * factor)
+        self.dirty_keys.update(self.keys)
 
     def fuse(
         self,
@@ -578,6 +650,7 @@ class CompactControlBeliefState:
         contradiction_penalty: float,
     ) -> None:
         """Apply the reference control recurrence directly to one row."""
+        self.dirty_keys.add(tuple(key))
         offset = self.index(key) * CONTROL_STATE_STRIDE
         prior_confidence = self.state[offset + 7]
         contradiction_decay = exp(

@@ -16,6 +16,7 @@ from .relations import organizations_hostile
 from .organizational_state import (
     local_operational_knowledge,
     local_organizational_embeddedness,
+    local_foothold_strength,
 )
 from .logistics import shortest_locality_path
 from .access import edge_restriction_level
@@ -567,8 +568,9 @@ def action_choice_weights(world, organization_id: str, locality_id: str) -> dict
             max(clamp(item.physical) for item in hostile_beliefs),
         )
     risk = clamp(organization.phenotype.get("risk_tolerance", 0.5))
-    embedded = local_organizational_embeddedness(
-        world, organization_id, locality_id
+    embedded = max(
+        local_organizational_embeddedness(world, organization_id, locality_id),
+        local_foothold_strength(world, organization_id, locality_id),
     )
     governance = clamp(organization.phenotype.get("governance_investment", 0.5))
     fielded_share = clamp(fielded / max(1e-12, total))

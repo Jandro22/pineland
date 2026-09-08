@@ -720,19 +720,26 @@ def recompute_contested_controls(world: WorldState, locality_id: str, time: floa
             zone.physical_control[actor] = clamp(value * (1 - competition_strength * opponent_value))
             aggregate += zone.population_share * zone.physical_control[actor]
         adjusted[actor] = clamp(aggregate)
-    # Preserve the historical aggregate key only when no active concrete
-    # organization owns the literal identifier "insurgent".
     if active_insurgents and "insurgent" not in active_insurgents:
-        aggregate = 0.0
+        # The side key is the authoritative contested physical aggregate used
+        # by aggregate_insurgent_control.  Previously only the concrete
+        # organization rows were contested here, so the side key remained raw
+        # (or absent) and diagnostics could silently report zero/incorrect
+        # insurgent control.
+        side_aggregate = 0.0
         for zone in zones:
-            value = raw_zones[_INSURGENT_SIDE_ACTOR][zone.microzone_id]
+            raw_side = raw_zones[_INSURGENT_SIDE_ACTOR][zone.microzone_id]
             government_value = raw_zones["government"][zone.microzone_id]
-            contested = clamp(
-                value * (1 - competition_strength * government_value)
+            contested_side = clamp(
+                raw_side * (1 - competition_strength * government_value)
             )
-            zone.physical_control["insurgent"] = contested
-            aggregate += zone.population_share * contested
-        adjusted["insurgent"] = clamp(aggregate)
+            zone.physical_control[_INSURGENT_SIDE_ACTOR] = contested_side
+            # Preserve the historical aggregate key for callers that still
+            # request the literal legacy actor name.
+            zone.physical_control["insurgent"] = contested_side
+            side_aggregate += zone.population_share * contested_side
+        adjusted[_INSURGENT_SIDE_ACTOR] = clamp(side_aggregate)
+        adjusted["insurgent"] = adjusted[_INSURGENT_SIDE_ACTOR]
     return adjusted
 
 
