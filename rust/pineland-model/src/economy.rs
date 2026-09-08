@@ -9,7 +9,11 @@ pub fn update(
     topology: &StaticTopology,
     config: &SimulationConfig,
     _time: f64,
+    elapsed_days: f64,
 ) {
+    if elapsed_days <= 0.0 {
+        return;
+    }
     for locality in 0..topology.locality_count() {
         let violence = particle.locality.violence[locality];
         let disruption = particle.locality.disruption[locality];

@@ -125,6 +125,8 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
         | {f"INTERPRETER-CAP:{locality_id}" for locality_id in locality_ids}
     )
     auxiliary_node_index = indexed(auxiliary_node_ids)
+    command_node_ids = sorted(f"CMD:{organization_id}" for organization_id in organization_ids)
+    command_node_index = indexed(command_node_ids)
     person_ids = list(world.ordered_person_ids or sorted(world.persons))
     person_index = indexed(person_ids)
     persons = [world.persons[person_id] for person_id in person_ids]
@@ -291,7 +293,21 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
             community_index.get(person.community_id, U32_MAX) for person in persons
         ),
         "people_public_behavior": digest_u8(
-            {"neutral": 0, "insurgent_sympathy": 1, "armed_participation": 2}[person.public_behavior]
+            {
+                # Preserve the Native-v1 codes already used by the
+                # initialization contract; extend them for positive-time
+                # social transitions without collapsing distinct Python
+                # behaviors into the same native state.
+                "neutral": 0,
+                "insurgent_sympathy": 1,
+                "armed_participation": 2,
+                "government_cooperation": 3,
+                "party_participation": 4,
+                "civil_society": 5,
+                "protest": 6,
+                "inactive": 7,
+                "migration": 8,
+            }[person.public_behavior]
             for person in persons
         ),
         "people_expected_control": digest_f64(
@@ -1000,6 +1016,14 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
                 + len(formation_ids)
                 + len(posts)
                 + auxiliary_node_index[observer_id]
+            )
+        if observer_id in command_node_index:
+            return (
+                len(organization_ids)
+                + len(formation_ids)
+                + len(posts)
+                + len(auxiliary_node_ids)
+                + command_node_index[observer_id]
             )
         raise KeyError(f"unmapped dynamic belief observer {observer_id!r}")
 

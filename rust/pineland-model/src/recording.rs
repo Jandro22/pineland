@@ -11,8 +11,9 @@ pub fn update(
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     _time: f64,
+    elapsed_days: f64,
 ) {
-    if !config.recording.enabled {
+    if !config.recording.enabled || elapsed_days <= 0.0 {
         return;
     }
     let Some(event) = particle.event_log.last().cloned() else {

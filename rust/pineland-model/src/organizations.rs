@@ -11,8 +11,13 @@ pub fn update(
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     time: f64,
+    elapsed_days: f64,
 ) {
-    if !config.organization_ecology.enabled {
+    // The Python process engine treats the initialization-time ecology event
+    // as a true no-op.  In particular, it must not consume the ecology RNG
+    // stream or mutate organization/foothold state before a positive ecology
+    // interval has elapsed.
+    if !config.organization_ecology.enabled || elapsed_days <= 0.0 {
         return;
     }
     for organization in 0..particle.organizations.active.len() {
