@@ -28,8 +28,9 @@ use pineland_core::rng::{python_sum, seed_from_namespace, PyRandomCompat, RngStr
 use pineland_core::scheduler::{EventPayload, ScheduledEvent, SchedulerError};
 use pineland_core::sha256;
 use pineland_core::state::{
-    clamp01, BeliefKey, EventRecord, LogisticsState, ParticleState, PersonState, SecurityPostState,
-    StateError, CONTROL_DIMENSIONS,
+    clamp01, BeliefKey, EventRecord, ForeignSystemState, LogisticsState,
+    OrganizationRelationState, ParticleState, PersonState, PoliticalState, SecurityPostState,
+    SocialEdgeState, StateError, CONTROL_DIMENSIONS,
 };
 use pineland_core::topology::StaticTopology;
 use std::fmt;
@@ -44,6 +45,19 @@ pub const INSURGENT: usize = 6;
 // Foreign expeditionary organizations are not part of the initial Pineland
 // organization table.  Keep a non-colliding tag for future extensions.
 pub const FOREIGN: usize = 7;
+
+fn organization_name(index: usize) -> &'static str {
+    match index {
+        GOVERNMENT => "government",
+        MILITARY => "fdf",
+        POLICE => "police",
+        PARTY_1 => "party-1",
+        PARTY_2 => "party-2",
+        PARTY_3 => "party-3",
+        INSURGENT => "insurgent",
+        _ => "unknown",
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ModelError {
@@ -96,6 +110,7 @@ impl SimulationEngine {
         let initialization_seed = config.initialization_seed.unwrap_or(config.seed);
         let generated = StaticTopology::pineland(&config, initialization_seed);
         let topology = generated.topology;
+        let geography_rng = generated.geography_rng.clone();
         let organization_count = 7;
         let total_population: f64 = if topology
             .district_population
@@ -172,6 +187,11 @@ impl SimulationEngine {
             generated.world_rng,
             generated.physical_rng,
         )?;
+        engine
+            .particle
+            .rng
+            .streams
+            .insert("geography-generation".to_string(), geography_rng);
         engine.schedule_initial_events()?;
         Ok(engine)
     }
@@ -198,6 +218,80 @@ impl SimulationEngine {
             started_at: 0.0,
             last_boundary: 0.0,
         })
+    }
+
+    fn materialize_households(&mut self) {
+        let count = self
+            .particle
+            .people
+            .household
+            .iter()
+            .copied()
+            .max()
+            .map(|value| value as usize + 1)
+            .unwrap_or(0);
+        let mut households = pineland_core::state::HouseholdState::new(count);
+        for household in 0..count {
+            let mut members = Vec::new();
+            for person in 0..self.particle.people.locality.len() {
+                if self.particle.people.household[person] as usize == household {
+                    members.push(person as u32);
+                }
+            }
+            if let Some(&first) = members.first() {
+                let first = first as usize;
+                households.locality[household] = self.particle.people.home[first];
+                households.residence[household] = self.particle.people.residence[first];
+            }
+            // CPython 3.12+ uses its compensated float-sum path for the
+            // built-in sum used by Household. Match it at the boundary.
+            let mut resource_values = Vec::with_capacity(members.len());
+            let mut dependents = 0u32;
+            for &person in &members {
+                let person = person as usize;
+                resource_values.push(self.particle.people.resources[person]);
+                dependents += u32::from(self.particle.people.age[person] < 16);
+            }
+            households.resources[household] = python_sum(&resource_values);
+            households.dependents[household] = dependents;
+            households.member_indices.extend(members);
+            households.member_offsets[household + 1] = households.member_indices.len() as u32;
+        }
+        self.particle.households = households;
+    }
+
+    fn materialize_communities(&mut self, partition: &CommunityPartition) {
+        let mut communities = pineland_core::state::CommunityState::new(partition.groups.len());
+        for (index, (locality, members, cohesion)) in partition.groups.iter().enumerate() {
+            communities.locality[index] = *locality as u32;
+            communities.cohesion[index] = *cohesion;
+            // SocialCommunity._language_profile uses Python's built-in sum
+            // for both the denominator and each weighted language total.
+            let total_weight = python_sum(
+                &members
+                    .iter()
+                    .map(|person| self.particle.people.represented_population[*person])
+                    .collect::<Vec<_>>(),
+            );
+            for language in 0..4 {
+                let total = python_sum(
+                    &members
+                        .iter()
+                        .map(|person| {
+                            self.particle.people.represented_population[*person]
+                                * self.particle.people.languages[*person * 4 + language]
+                        })
+                        .collect::<Vec<_>>(),
+                );
+                communities.language_profile[index * 4 + language] = total / total_weight.max(1e-9);
+            }
+            communities
+                .member_indices
+                .extend(members.iter().map(|person| *person as u32));
+            communities.member_offsets[index + 1] = communities.member_indices.len() as u32;
+            communities.bridge_offsets[index + 1] = communities.bridge_members.len() as u32;
+        }
+        self.particle.communities = communities;
     }
 
     fn initialize_world(
@@ -401,6 +495,12 @@ impl SimulationEngine {
                 self.particle.people.trust[person] = trust;
                 self.particle.people.trust_insurgent[person] = trust_insurgent;
                 self.particle.people.resources[person] = resources;
+                self.particle.people.expected_control[person * 2] = 0.7;
+                self.particle.people.expected_control[person * 2 + 1] = 0.1;
+                self.particle.people.state_legitimacy[person] = 0.65;
+                self.particle.people.government_legitimacy[person] = 0.55;
+                self.particle.people.political_access[person] = 0.45;
+                self.particle.people.origin_tie_strength[person] = 1.0;
                 // Initial Python persons have no organization-specific
                 // insurgent affinity. Trust in the insurgent side is a
                 // separate attribute and must not be copied into sympathy.
@@ -427,7 +527,7 @@ impl SimulationEngine {
                     "social-network-generation",
                 ))
             });
-        let community_count = assign_household_communities(
+        let community_partition = assign_household_communities(
             &mut self.particle.people,
             n,
             self.config.social_network.target_community_size as f64
@@ -438,7 +538,14 @@ impl SimulationEngine {
                 * self.config.social_network.community_size_unit_population,
             &mut social_rng,
         )?;
-        let _ = community_count;
+        self.materialize_households();
+        self.materialize_communities(&community_partition);
+        materialize_social_graph(
+            &mut self.particle,
+            &self.topology,
+            &self.config,
+            &mut social_rng,
+        )?;
         self.particle
             .rng
             .streams
@@ -715,6 +822,7 @@ impl SimulationEngine {
             self.particle.logistics.source_production[source] =
                 capacity * self.config.logistics.source_daily_production_fraction;
         }
+        let mut command_edges = pineland_core::state::CommandEdgeState::default();
         for formation in 0..self.particle.formations.personnel.len() {
             if self.particle.formations.active[formation] == 0 {
                 continue;
@@ -724,14 +832,29 @@ impl SimulationEngine {
             self.particle.formations.command[formation] = clamp01(
                 0.35 + 0.35 * org_quality + 0.3 * self.particle.formations.command[formation],
             );
-            let _ = logistics_rng.uniform(0.0, 1.5);
+            let district = self.topology.locality_to_district
+                [self.particle.formations.locality[formation] as usize]
+                as usize;
+            let connectivity = self
+                .topology
+                .district_connectivity
+                .get(district)
+                .copied()
+                .unwrap_or(0.5);
+            let latency = 1.0 + 6.0 * (1.0 - connectivity) + logistics_rng.uniform(0.0, 1.5);
+            command_edges.organization.push(organization as u32);
+            command_edges.formation.push(formation as u32);
+            command_edges
+                .reliability
+                .push(self.particle.formations.command[formation]);
+            command_edges.latency_hours.push(latency);
         }
+        self.particle.command_edges = command_edges;
+        self.particle.manpower = pineland_core::state::ManpowerState::default();
         self.particle
             .rng
             .streams
             .insert("logistics-world-generation".to_string(), logistics_rng);
-
-        initialize_footholds(&mut self.particle, &self.topology, &self.config);
 
         let post_count = n + government_formations;
         self.particle.security_posts = SecurityPostState::new(post_count);
@@ -779,38 +902,507 @@ impl SimulationEngine {
         initialize_physical_control(&mut self.particle, &self.topology, &self.config);
 
         // Python continues the physical-world RNG after topology, posts, and
-        // control construction to seed every observer/zone belief.  The
-        // current dense state does not yet expose the full zone-belief table,
-        // but the draws still belong to the certified continuation boundary.
-        for _observer in 0..self.particle.organizations.kind.len() {
-            for _zone in 0..self.topology.microzone_count() {
-                let _ = physical_rng.uniform(
+        // control construction to seed every observer/zone belief. Store the
+        // complete table rather than retaining only the stream continuation.
+        let observer_count = if self.config.include_insurgency {
+            self.particle.organizations.kind.len()
+        } else {
+            self.particle.organizations.kind.len().saturating_sub(1)
+        };
+        let mut zone_keys = Vec::with_capacity(observer_count * self.topology.microzone_count());
+        let mut zone_beliefs = pineland_core::state::ZoneBeliefState::new(Vec::new());
+        for observer in 0..observer_count {
+            for zone in 0..self.topology.microzone_count() {
+                let actor = if self.particle.organizations.kind[observer] == 3 {
+                    INSURGENT
+                } else {
+                    GOVERNMENT
+                };
+                let truth = if actor == INSURGENT {
+                    self.particle.zones.insurgent_control[zone]
+                } else {
+                    self.particle.zones.government_control[zone]
+                };
+                let noise = physical_rng.uniform(
                     -self.config.physical.zone_observation_noise,
                     self.config.physical.zone_observation_noise,
                 );
+                zone_keys.push(pineland_core::state::ZoneBeliefKey {
+                    observer: observer as u32,
+                    zone: zone as u32,
+                });
+                zone_beliefs.estimate.push(clamp01(truth + noise));
+                zone_beliefs.confidence.push(0.35);
+                zone_beliefs.updated_at.push(0.0);
+                zone_beliefs.last_reliable_observation_at.push(-1.0e9);
+                zone_beliefs.evidence_count.push(0);
+                zone_beliefs.contradiction.push(0.0);
             }
         }
+        zone_beliefs.keys = zone_keys;
+        self.particle.zone_beliefs = zone_beliefs;
         self.particle
             .rng
             .streams
             .insert("physical-world-generation".to_string(), physical_rng);
 
-        // Leader construction is a separate initialization stream. There is
-        // no native leader SoA yet, but consuming the exact twelve draws per
-        // insurgent organization keeps the certified stream boundary explicit.
+        // Python's organization-ecology initializer materializes capital,
+        // phenotype, ideology, and one leader for each active insurgent
+        // organization. Keep those values in explicit native state; they are
+        // decision inputs, not merely audit metadata.
+        if self.config.include_insurgency {
+            let organization = INSURGENT;
+            let resources = self.particle.organizations.capital[organization];
+            let knowledge = self.particle.organizations.local_knowledge[organization];
+            let quality = self.particle.organizations.institutional_quality[organization];
+            self.particle.organizations.capital_social[organization] =
+                clamp01(0.45 + 0.35 * knowledge);
+            self.particle.organizations.capital_political[organization] = 0.55;
+            self.particle.organizations.capital_organizational[organization] = clamp01(quality);
+            self.particle.organizations.capital_material[organization] =
+                clamp01(resources / 150_000.0);
+            let phenotype = organization * 8;
+            self.particle.organizations.phenotype[phenotype] = 0.55;
+            self.particle.organizations.phenotype[phenotype + 1] = 0.55;
+            self.particle.organizations.phenotype[phenotype + 2] = 0.35;
+            self.particle.organizations.phenotype[phenotype + 3] = 0.62;
+            self.particle.organizations.phenotype[phenotype + 4] = 0.58;
+            self.particle.organizations.phenotype[phenotype + 5] =
+                self.particle.organizations.discipline[organization];
+            self.particle.organizations.phenotype[phenotype + 6] = knowledge;
+            self.particle.organizations.phenotype[phenotype + 7] = clamp01(
+                self.particle.organizations.external_support[organization] / resources.max(1.0),
+            );
+            self.particle.organizations.ideology[organization * 2] = 0.72;
+            self.particle.organizations.ideology[organization * 2 + 1] = 0.22;
+            self.particle.organizations.adaptation_rate[organization] =
+                self.config.organization_ecology.adaptation_rate;
+        }
+
         let mut ecology_rng = PyRandomCompat::from_seed(seed_from_namespace(
             initialization_seed,
             &self.config.random_stream_namespace,
             "organization-ecology-generation",
         ));
         if self.config.include_insurgency {
-            for _ in 0..6 {
-                let _ = ecology_rng.uniform(0.3, 0.8);
+            let mut base = [0.0; 6];
+            for value in &mut base {
+                *value = ecology_rng.uniform(0.3, 0.8);
             }
-            for _ in 0..6 {
-                let _ = ecology_rng.normalvariate(0.0, 0.04);
+            let mut leader = pineland_core::state::LeaderState::default();
+            leader.organization.push(INSURGENT as u32);
+            let values = (0..6)
+                .map(|index| clamp01(base[index] + ecology_rng.normalvariate(0.0, 0.04)))
+                .collect::<Vec<_>>();
+            leader.competence.push(values[0]);
+            leader.charisma.push(values[1]);
+            leader.risk_tolerance.push(values[2]);
+            leader.ideological_rigidity.push(values[3]);
+            leader.political_skill.push(values[4]);
+            leader.organizational_skill.push(values[5]);
+            leader.active.push(1);
+            self.particle.organizations.leader[INSURGENT] = 0;
+            self.particle.leaders = leader;
+        }
+        // The Python generator initializes political institutions after
+        // ecology. Materialize the complete political state here, including
+        // branch memberships and sampled elite anchors. This is part of the
+        // initialization boundary, not optional audit metadata.
+        let mut political_rng = PyRandomCompat::from_seed(seed_from_namespace(
+            initialization_seed,
+            &self.config.random_stream_namespace,
+            "political-order-generation",
+        ));
+        let mut political = PoliticalState::new();
+        let mut branch_members = vec![Vec::<u32>::new(); n * 3];
+        let mut branch_brokers = vec![Vec::<u32>::new(); n * 3];
+        for kind in 0..6 {
+            let base = if kind == 4 || kind == 0 { 0.68 } else { 0.55 };
+            political.institution_type.push(kind as u8);
+            political.institution_level.push(0);
+            political.institution_locality.push(u32::MAX);
+            political.institution_district.push(u32::MAX);
+            political
+                .institution_capacity
+                .push(clamp01(base + political_rng.uniform(-0.08, 0.08)));
+            political.institution_autonomy.push(0.25);
+            political.institution_compliance.push(0.72);
+            political.institution_reach.push(0.72);
+            political
+                .institution_integrity
+                .push(clamp01(0.62 + political_rng.uniform(-0.1, 0.1)));
+            political.institution_resources.push(0.0);
+            political.institution_governing_party.push(PARTY_1 as u32);
+        }
+        for district in 0..self.topology.district_count() {
+            let connectivity = self
+                .topology
+                .district_connectivity
+                .get(district)
+                .copied()
+                .unwrap_or(0.5);
+            political.institution_type.push(6);
+            political.institution_level.push(1);
+            political.institution_locality.push(u32::MAX);
+            political.institution_district.push(district as u32);
+            political
+                .institution_capacity
+                .push(clamp01(0.35 + 0.4 * connectivity));
+            political
+                .institution_autonomy
+                .push(political_rng.uniform(0.45, 0.8));
+            political
+                .institution_compliance
+                .push(political_rng.uniform(0.5, 0.9));
+            political.institution_reach.push(connectivity);
+            political
+                .institution_integrity
+                .push(political_rng.uniform(0.45, 0.8));
+            political.institution_resources.push(0.0);
+            political.institution_governing_party.push(PARTY_1 as u32);
+        }
+        for locality in 0..n {
+            let capacity = self.particle.locality.administrative_capacity[locality];
+            let district = self.topology.locality_to_district[locality];
+            political.institution_type.push(7);
+            political.institution_level.push(2);
+            political.institution_locality.push(locality as u32);
+            political.institution_district.push(district);
+            political.institution_capacity.push(capacity);
+            political
+                .institution_autonomy
+                .push(political_rng.uniform(0.35, 0.8));
+            political
+                .institution_compliance
+                .push(political_rng.uniform(0.45, 0.9));
+            political
+                .institution_reach
+                .push(clamp01(0.35 + 0.55 * self.particle.locality.infrastructure[locality]));
+            political
+                .institution_integrity
+                .push(political_rng.uniform(0.35, 0.8));
+            political.institution_resources.push(0.0);
+            political.institution_governing_party.push(PARTY_1 as u32);
+            for party in 0..3 {
+                political.branch_party.push((PARTY_1 + party) as u32);
+                political.branch_locality.push(locality as u32);
+                political.branch_resources.push(0.0);
+                political.branch_patronage.push(0.0);
+                political
+                    .branch_electoral_support
+                    .push(political_rng.uniform(0.1, 0.5));
+                political
+                    .branch_institutional_influence
+                    .push(political_rng.uniform(0.05, 0.35));
+                political.branch_member_offsets.push(0);
+                political.branch_broker_offsets.push(0);
             }
         }
+        for person in 0..self.particle.people.locality.len() {
+            for party in 0..3 {
+                self.particle.people.party_legitimacy[person * 3 + party] =
+                    political_rng.uniform(0.2, 0.75);
+            }
+            self.particle.people.state_legitimacy[person] = clamp01(
+                0.5 + 0.25 * self.particle.people.trust[person],
+            );
+            self.particle.people.government_legitimacy[person] = clamp01(
+                0.35 + 0.3 * self.particle.people.trust[person],
+            );
+            self.particle.people.political_access[person] = clamp01(
+                0.25 + 0.35 * self.particle.people.efficacy[person],
+            );
+            if political_rng.random() < 0.28 {
+                let preference_offset = person * 3;
+                let mut preferred = 0usize;
+                for party in 1..3 {
+                    // Python's max() retains the first party on exact ties.
+                    if self.particle.people.preferences[preference_offset + party]
+                        > self.particle.people.preferences[preference_offset + preferred]
+                    {
+                        preferred = party;
+                    }
+                }
+                let locality = self.particle.people.residence[person] as usize;
+                branch_members[locality * 3 + preferred].push(person as u32);
+            }
+        }
+        // LocalElite creation happens after all person-level affiliation
+        // draws in Python.  These two uniforms therefore must remain in a
+        // separate pass; consuming them while creating the locality rows
+        // shifts every subsequent seed stream.
+        for locality in 0..n {
+            let mut candidate: Option<usize> = None;
+            for person in 0..self.particle.people.locality.len() {
+                if self.particle.people.residence[person] as usize != locality {
+                    continue;
+                }
+                let degree = self.particle.social_edges.neighbor_offsets[person + 1]
+                    - self.particle.social_edges.neighbor_offsets[person];
+                if candidate.is_none()
+                    || degree
+                        > self.particle.social_edges.neighbor_offsets[candidate.unwrap() + 1]
+                            - self.particle.social_edges.neighbor_offsets[candidate.unwrap()]
+                {
+                    candidate = Some(person);
+                }
+            }
+            if let Some(person) = candidate {
+                let mut aligned = 0usize;
+                for party in 1..3 {
+                    if self.particle.people.party_legitimacy[person * 3 + party]
+                        > self.particle.people.party_legitimacy[person * 3 + aligned]
+                    {
+                        aligned = party;
+                    }
+                }
+                let elite = political.elite_person.len();
+                political.elite_person.push(person as u32);
+                political.elite_locality.push(locality as u32);
+                let degree = self.particle.social_edges.neighbor_offsets[person + 1]
+                    - self.particle.social_edges.neighbor_offsets[person];
+                political
+                    .elite_network_centrality
+                    .push(clamp01(degree as f64 / 20.0));
+                political.elite_resources.push(0.0);
+                political
+                    .elite_legitimacy
+                    .push(political_rng.uniform(0.35, 0.8));
+                political
+                    .elite_institutional_ties
+                    .push(political_rng.uniform(0.3, 0.85));
+                political
+                    .elite_party_alignment
+                    .push((PARTY_1 + aligned) as u32);
+                branch_brokers[locality * 3 + aligned].push(elite as u32);
+            }
+        }
+        let mut member_indices = Vec::new();
+        let mut broker_indices = Vec::new();
+        political.branch_member_offsets.clear();
+        political.branch_member_offsets.push(0);
+        political.branch_broker_offsets.clear();
+        political.branch_broker_offsets.push(0);
+        for branch in 0..branch_members.len() {
+            member_indices.extend(branch_members[branch].iter().copied());
+            political
+                .branch_member_offsets
+                .push(member_indices.len() as u32);
+            broker_indices.extend(branch_brokers[branch].iter().copied());
+            political
+                .branch_broker_offsets
+                .push(broker_indices.len() as u32);
+        }
+        political.branch_member_indices = member_indices;
+        political.branch_broker_indices = broker_indices;
+        political.ruling_party = PARTY_1 as u32;
+        self.particle.political = political;
+        self.particle
+            .rng
+            .streams
+            .insert("political-order-generation".to_string(), political_rng);
+
+        // Foreign initialization follows political initialization in the
+        // Python generator. It has its own deterministic stream and retains
+        // state rows for every neighbor, border, belief, and interpreter.
+        let mut foreign_rng = PyRandomCompat::from_seed(seed_from_namespace(
+            initialization_seed,
+            &self.config.random_stream_namespace,
+            "foreign-system-generation",
+        ));
+        let mut foreign = ForeignSystemState::new();
+        let patterns = ["FS", "AR", "VE", "TA", "FS/AR", "VE/TA"];
+        let foreign_count = self.config.foreign_affairs.neighbor_count;
+        for index in 0..foreign_count {
+            let primary = patterns.get(index).copied().unwrap_or("FS");
+            for language in ["FS", "AR", "VE", "TA"] {
+                foreign
+                    .language_profile
+                    .push(if primary.contains(language) { 0.85 } else { 0.12 });
+            }
+            foreign.resources.push(foreign_rng.uniform(600_000.0, 1_800_000.0));
+            foreign
+                .stability_preference
+                .push(foreign_rng.uniform(0.3, 0.9));
+            foreign
+                .government_alignment
+                .push(foreign_rng.uniform(-0.7, 0.9));
+            foreign
+                .ideological_alignment
+                .push(foreign_rng.uniform(-0.8, 0.8));
+            foreign
+                .border_security_priority
+                .push(foreign_rng.uniform(0.35, 0.9));
+            foreign
+                .regional_influence
+                .push(foreign_rng.uniform(0.25, 0.85));
+            foreign
+                .commercial_interest
+                .push(foreign_rng.uniform(0.2, 0.8));
+            foreign
+                .humanitarian_preference
+                .push(foreign_rng.uniform(0.2, 0.85));
+            foreign
+                .cost_sensitivity
+                .push(foreign_rng.uniform(0.3, 0.85));
+            foreign
+                .domestic_opposition
+                .push(foreign_rng.uniform(0.15, 0.65));
+            foreign.willingness.push(foreign_rng.uniform(0.35, 0.8));
+            foreign.opportunity.push(foreign_rng.uniform(0.4, 0.9));
+            foreign.cumulative_cost.push(0.0);
+            foreign.cumulative_casualties.push(0.0);
+        }
+        foreign.rival_offsets.push(0);
+        if foreign_count > 0 {
+            for index in 0..foreign_count {
+                foreign.rival_indices.push(((index + 1) % foreign_count) as u32);
+                foreign.rival_offsets.push(foreign.rival_indices.len() as u32);
+            }
+        }
+        for district in 0..self.topology.district_count() {
+            let state = if foreign_count == 0 {
+                0
+            } else {
+                district % foreign_count
+            };
+            let start = self.topology
+                .locality_to_district
+                .iter()
+                .position(|value| *value as usize == district)
+                .unwrap_or(0);
+            let mut locality = start;
+            for candidate in start..n {
+                if self.topology.locality_to_district[candidate] as usize != district {
+                    continue;
+                }
+                if self.topology.locality_terrain_friction[candidate]
+                    > self.topology.locality_terrain_friction[locality]
+                {
+                    locality = candidate;
+                }
+            }
+            let pattern = self
+                .topology
+                .district_language_patterns
+                .get(district)
+                .map(String::as_str)
+                .unwrap_or("FS");
+            let overlap = pattern
+                .split('/')
+                .filter_map(|language| ["FS", "AR", "VE", "TA"].iter().position(|item| *item == language))
+                .map(|language| foreign.language_profile[state * 4 + language])
+                .fold(0.0, f64::max);
+            foreign.border_foreign_state.push(state as u32);
+            foreign.border_district.push(district as u32);
+            foreign.border_locality.push(locality as u32);
+            foreign
+                .border_terrain_friction
+                .push(self.topology.locality_terrain_friction[locality]);
+            foreign
+                .border_infrastructure
+                .push(self.topology.locality_infrastructure[locality]);
+            foreign
+                .border_legal_permeability
+                .push(foreign_rng.uniform(0.15, 0.8));
+            foreign
+                .border_social_permeability
+                .push(foreign_rng.uniform(0.25, 0.95));
+            foreign.border_language_overlap.push(overlap);
+            foreign
+                .border_kinship_overlap
+                .push(foreign_rng.uniform(0.2, 0.85));
+            foreign
+                .border_state_monitoring
+                .push(foreign_rng.uniform(0.25, 0.85));
+            foreign.belief_foreign_state.push(state as u32);
+            foreign.belief_locality.push(locality as u32);
+            foreign.belief_government_control.push(0.5);
+            foreign.belief_insurgent_presence.push(0.2);
+            foreign.belief_confidence.push(0.12);
+            foreign.belief_updated_at.push(0.0);
+
+            let mut candidate: Option<usize> = None;
+            for person in 0..self.particle.people.locality.len() {
+                if self.particle.people.residence[person] as usize != locality {
+                    continue;
+                }
+                let degree = self.particle.social_edges.neighbor_offsets[person + 1]
+                    - self.particle.social_edges.neighbor_offsets[person];
+                if candidate.is_none()
+                    || degree
+                        > self.particle.social_edges.neighbor_offsets[candidate.unwrap() + 1]
+                            - self.particle.social_edges.neighbor_offsets[candidate.unwrap()]
+                {
+                    candidate = Some(person);
+                }
+            }
+            if let Some(person) = candidate {
+                let foreign_language = (0..4)
+                    .map(|language| {
+                        self.particle.people.languages[person * 4 + language]
+                            * foreign.language_profile[state * 4 + language]
+                    })
+                    .collect::<Vec<_>>();
+                let local_language = (0..4)
+                    .map(|language| self.particle.people.languages[person * 4 + language])
+                    .fold(0.0, f64::max);
+                let degree = self.particle.social_edges.neighbor_offsets[person + 1]
+                    - self.particle.social_edges.neighbor_offsets[person];
+                foreign.interpreter_person.push(person as u32);
+                foreign.interpreter_foreign_state.push(state as u32);
+                foreign.interpreter_locality.push(locality as u32);
+                foreign
+                    .interpreter_foreign_language
+                    .push(python_sum(&foreign_language).max(0.05).clamp(0.0, 1.0));
+                foreign.interpreter_local_language.push(local_language);
+                foreign.interpreter_foreign_trust.push(0.55);
+                foreign.interpreter_local_trust.push(clamp01(
+                    0.35 + 0.5 * self.particle.people.trust[person],
+                ));
+                foreign
+                    .interpreter_cultural_knowledge
+                    .push(clamp01(0.35 + degree as f64 / 25.0));
+            }
+        }
+        self.particle.foreign = foreign;
+        self.particle
+            .rng
+            .streams
+            .insert("foreign-system-generation".to_string(), foreign_rng);
+
+        // Relations are initialized last among the auxiliary generators and
+        // are canonicalized by the same lexicographic organization IDs as
+        // Python's combinations(sorted(active), 2).
+        let mut relation = OrganizationRelationState::default();
+        let mut active_ids: Vec<usize> = (0..self.particle.organizations.kind.len())
+            .filter(|index| self.particle.organizations.active[*index] != 0)
+            .collect();
+        active_ids.sort_by_key(|index| organization_name(*index));
+        for left in 0..active_ids.len() {
+            for right in left + 1..active_ids.len() {
+                let first = active_ids[left];
+                let second = active_ids[right];
+                relation.organization_a.push(first as u32);
+                relation.organization_b.push(second as u32);
+                let hostile = (first == INSURGENT
+                    && matches!(second, GOVERNMENT | MILITARY | POLICE))
+                    || (second == INSURGENT
+                        && matches!(first, GOVERNMENT | MILITARY | POLICE));
+                let allied = matches!(first, GOVERNMENT | MILITARY | POLICE)
+                    && matches!(second, GOVERNMENT | MILITARY | POLICE);
+                let status = if hostile { 4 } else if allied { 0 } else { 2 };
+                relation.status.push(status);
+                relation.rivalry_memory.push(0.0);
+                relation.hostility_memory.push(if hostile { 1.0 } else { 0.0 });
+                relation.cooperation_memory.push(if allied { 1.0 } else { 0.0 });
+                relation.updated_at.push(0.0);
+                relation.last_interaction_at.push(0.0);
+                relation.has_last_interaction.push(0);
+            }
+        }
+        self.particle.relations = relation;
+        initialize_footholds(&mut self.particle, &self.topology, &self.config);
         self.particle
             .rng
             .streams
@@ -1691,6 +2283,12 @@ fn language_index(value: &str) -> Option<usize> {
     }
 }
 
+#[derive(Clone, Debug)]
+struct CommunityPartition {
+    /// `(locality, person rows in Python community.member_ids order, cohesion)`.
+    groups: Vec<(usize, Vec<usize>, f64)>,
+}
+
 fn assign_household_communities(
     people: &mut PersonState,
     locality_count: usize,
@@ -1698,7 +2296,7 @@ fn assign_household_communities(
     target: f64,
     maximum: f64,
     rng: &mut PyRandomCompat,
-) -> Result<usize, ModelError> {
+) -> Result<CommunityPartition, ModelError> {
     let mut households_by_locality: Vec<Vec<usize>> =
         (0..locality_count).map(|_| Vec::new()).collect();
     let mut household_members: std::collections::BTreeMap<usize, Vec<f64>> =
@@ -1719,6 +2317,7 @@ fn assign_household_communities(
         .map(|(household, members)| (household, python_sum(&members)))
         .collect::<std::collections::BTreeMap<_, _>>();
     let mut community = 0u32;
+    let mut partition = CommunityPartition { groups: Vec::new() };
     for households in &mut households_by_locality {
         households.sort_unstable();
         rng.shuffle_indices(households)
@@ -1783,6 +2382,14 @@ fn assign_household_communities(
             }
         }
         for group in groups {
+            let mut members = Vec::new();
+            for household in &group {
+                for person in 0..people.locality.len() {
+                    if people.household[person] as usize == *household {
+                        members.push(person);
+                    }
+                }
+            }
             for person in 0..people.locality.len() {
                 if group.contains(&(people.household[person] as usize)) {
                     people.community[person] = community;
@@ -1792,11 +2399,370 @@ fn assign_household_communities(
             // each group, before the next locality is shuffled.  Keeping this
             // draw at the same boundary is required for subsequent locality
             // partitions to see the identical Python RNG stream.
-            let _ = rng.uniform(0.45, 0.85);
+            let cohesion = rng.uniform(0.45, 0.85);
+            let locality = members
+                .first()
+                .map(|person| people.locality[*person] as usize)
+                .unwrap_or(0);
+            partition.groups.push((locality, members, cohesion));
             community = community.saturating_add(1);
         }
     }
-    Ok(community as usize)
+    debug_assert_eq!(community as usize, partition.groups.len());
+    Ok(partition)
+}
+
+fn social_language_compatibility(particle: &ParticleState, first: usize, second: usize) -> f64 {
+    let mut result: f64 = 0.0;
+    for language in 0..4 {
+        result = result.max(
+            particle.people.languages[first * 4 + language]
+                .min(particle.people.languages[second * 4 + language]),
+        );
+    }
+    clamp01(result)
+}
+
+fn social_layer_bit(layer: u8) -> u8 {
+    match layer {
+        0 => 1, // household
+        1 => 2, // community
+        2 => 4, // bridge
+        _ => 0,
+    }
+}
+
+fn add_social_edge(
+    particle: &mut ParticleState,
+    edge_index: &mut std::collections::BTreeMap<(usize, usize), usize>,
+    neighbors: &mut [Vec<usize>],
+    first: usize,
+    second: usize,
+    layer: u8,
+    base_strength: f64,
+    trust: f64,
+    represented_capacity: Option<f64>,
+    language_topology_enabled: bool,
+) {
+    if first == second {
+        return;
+    }
+    let (first, second) = if first < second {
+        (first, second)
+    } else {
+        (second, first)
+    };
+    let compatibility = social_language_compatibility(&particle, first, second);
+    let language_factor = if language_topology_enabled {
+        0.35 + 0.65 * compatibility
+    } else {
+        1.0
+    };
+    let weight = clamp01(base_strength * language_factor);
+    let represented_relationships = represented_capacity.unwrap_or_else(|| {
+        2.0 * particle.people.represented_population[first]
+            * particle.people.represented_population[second]
+            / (particle.people.represented_population[first]
+                + particle.people.represented_population[second])
+                .max(1e-12)
+    });
+    if let Some(index) = edge_index.get(&(first, second)).copied() {
+        particle.social_edges.layers[index] |= social_layer_bit(layer);
+        particle.social_edges.weight[index] = particle.social_edges.weight[index].max(weight);
+        particle.social_edges.trust[index] = particle.social_edges.trust[index].max(clamp01(trust));
+        particle.social_edges.language_compatibility[index] =
+            particle.social_edges.language_compatibility[index].max(compatibility);
+        particle.social_edges.represented_relationships[index] =
+            particle.social_edges.represented_relationships[index]
+                .max(represented_relationships.max(0.0));
+        return;
+    }
+    let index = particle.social_edges.person_a.len();
+    edge_index.insert((first, second), index);
+    particle.social_edges.person_a.push(first as u32);
+    particle.social_edges.person_b.push(second as u32);
+    particle.social_edges.layers.push(social_layer_bit(layer));
+    particle.social_edges.weight.push(weight);
+    particle
+        .social_edges
+        .language_compatibility
+        .push(compatibility);
+    particle.social_edges.trust.push(clamp01(trust));
+    particle
+        .social_edges
+        .represented_relationships
+        .push(represented_relationships.max(0.0));
+    neighbors[first].push(second);
+    neighbors[second].push(first);
+}
+
+fn locality_adjacency_from_topology(
+    topology: &StaticTopology,
+) -> Vec<std::collections::BTreeMap<usize, f64>> {
+    let mut adjacency = (0..topology.locality_count())
+        .map(|_| std::collections::BTreeMap::new())
+        .collect::<Vec<_>>();
+    for locality in 0..topology.locality_count() {
+        for (neighbor, cost) in topology.locality_edges.neighbors(locality) {
+            adjacency[locality].insert(neighbor as usize, cost);
+        }
+    }
+    adjacency
+}
+
+fn materialize_social_graph(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+) -> Result<(), ModelError> {
+    let people_count = particle.people.locality.len();
+    particle.social_edges = SocialEdgeState::new(people_count);
+    let mut edge_index = std::collections::BTreeMap::<(usize, usize), usize>::new();
+    let mut neighbors = (0..people_count).map(|_| Vec::new()).collect::<Vec<_>>();
+    let language_enabled = config.social_network.language_topology_enabled;
+
+    // Household multiplex layer. Household rows preserve Python's person
+    // insertion order, which is also the order used by the pair loop.
+    for household in 0..particle.households.locality.len() {
+        let start = particle.households.member_offsets[household] as usize;
+        let end = particle.households.member_offsets[household + 1] as usize;
+        let members = particle.households.member_indices[start..end].to_vec();
+        for (index, first) in members.iter().enumerate() {
+            for second in members.iter().skip(index + 1) {
+                add_social_edge(
+                    particle,
+                    &mut edge_index,
+                    &mut neighbors,
+                    *first as usize,
+                    *second as usize,
+                    0,
+                    config.social_network.household_tie_strength,
+                    0.9,
+                    None,
+                    language_enabled,
+                );
+            }
+        }
+    }
+
+    // Community multiplex layer. The shuffle is performed on the temporary
+    // member list, just as Python shuffles a list copy, so canonical member
+    // order remains available for later bridge ranking.
+    for community in 0..particle.communities.locality.len() {
+        let start = particle.communities.member_offsets[community] as usize;
+        let end = particle.communities.member_offsets[community + 1] as usize;
+        let mut members = particle.communities.member_indices[start..end]
+            .iter()
+            .map(|value| *value as usize)
+            .collect::<Vec<_>>();
+        let community_cohesion = particle.communities.cohesion[community];
+        rng.shuffle_indices(&mut members)
+            .map_err(|error| ModelError::Invalid(format!("community member shuffle: {error}")))?;
+        if members.len() > 1 {
+            for index in 0..members.len() {
+                add_social_edge(
+                    particle,
+                    &mut edge_index,
+                    &mut neighbors,
+                    members[index],
+                    members[(index + 1) % members.len()],
+                    1,
+                    config.social_network.community_tie_strength,
+                    community_cohesion,
+                    None,
+                    language_enabled,
+                );
+            }
+        }
+        for person in members.iter().copied() {
+            let target_degree =
+                (python_round_i64(rng.normalvariate(config.social_network.mean_social_degree, 2.0))
+                    .max(2) as usize)
+                    .min(config.social_network.maximum_social_degree);
+            let mut attempts = 0usize;
+            while neighbors[person].len() < target_degree && attempts < target_degree * 5 {
+                attempts += 1;
+                let candidate = rng
+                    .choice_index(members.len())
+                    .map_err(|error| ModelError::Invalid(format!("community choice: {error}")))?;
+                let candidate = members[candidate];
+                if candidate != person
+                    && neighbors[candidate].len() < config.social_network.maximum_social_degree
+                {
+                    add_social_edge(
+                        particle,
+                        &mut edge_index,
+                        &mut neighbors,
+                        person,
+                        candidate,
+                        1,
+                        config.social_network.community_tie_strength * rng.uniform(0.7, 1.0),
+                        community_cohesion,
+                        None,
+                        language_enabled,
+                    );
+                }
+            }
+        }
+    }
+
+    // Keep the Python insertion order of communities by locality, then use
+    // the same represented-mass opportunity weights for cross-community
+    // bridges. Cross-locality adjacency is read from the shared generated
+    // topology; no identifier-order geography is introduced here.
+    let mut communities_by_locality = (0..topology.locality_count())
+        .map(|_| Vec::<usize>::new())
+        .collect::<Vec<_>>();
+    for community in 0..particle.communities.locality.len() {
+        communities_by_locality[particle.communities.locality[community] as usize].push(community);
+    }
+    let locality_adjacency = locality_adjacency_from_topology(topology);
+    for community in 0..particle.communities.locality.len() {
+        let source_locality = particle.communities.locality[community] as usize;
+        let start = particle.communities.member_offsets[community] as usize;
+        let end = particle.communities.member_offsets[community + 1] as usize;
+        let source_members = particle.communities.member_indices[start..end]
+            .iter()
+            .map(|value| *value as usize)
+            .collect::<Vec<_>>();
+        let represented_population = python_sum(
+            &source_members
+                .iter()
+                .map(|person| particle.people.represented_population[*person])
+                .collect::<Vec<_>>(),
+        );
+        let mut target_ids = Vec::new();
+        let mut target_weights = Vec::new();
+        let mut locality_ids = vec![source_locality];
+        locality_ids.extend(locality_adjacency[source_locality].keys().copied());
+        for locality in locality_ids {
+            let attenuation = if locality == source_locality {
+                1.0
+            } else {
+                1.0 / (1.0 + locality_adjacency[source_locality][&locality].max(0.0))
+            };
+            for candidate in communities_by_locality[locality].iter().copied() {
+                if candidate == community {
+                    continue;
+                }
+                let target_start = particle.communities.member_offsets[candidate] as usize;
+                let target_end = particle.communities.member_offsets[candidate + 1] as usize;
+                let mass = python_sum(
+                    &particle.communities.member_indices[target_start..target_end]
+                        .iter()
+                        .map(|person| particle.people.represented_population[*person as usize])
+                        .collect::<Vec<_>>(),
+                ) * attenuation;
+                if mass > 0.0 {
+                    target_ids.push(candidate);
+                    target_weights.push(mass);
+                }
+            }
+        }
+        // Python sorts the dictionary keys before passing candidates and
+        // weights to random.choices.  Locality traversal is intentionally
+        // source-first, so sort the accumulated community IDs separately and
+        // carry their weights with them.
+        let mut targets = target_ids
+            .into_iter()
+            .zip(target_weights)
+            .collect::<Vec<_>>();
+        targets.sort_by_key(|(candidate, _)| *candidate);
+        let (target_ids, target_weights): (Vec<_>, Vec<_>) = targets.into_iter().unzip();
+        let mut ranking = source_members;
+        ranking.sort_by(|left, right| {
+            let mut left_languages = (0..4)
+                .map(|language| particle.people.languages[*left * 4 + language])
+                .collect::<Vec<_>>();
+            let mut right_languages = (0..4)
+                .map(|language| particle.people.languages[*right * 4 + language])
+                .collect::<Vec<_>>();
+            left_languages.sort_by(|a, b| b.total_cmp(a));
+            right_languages.sort_by(|a, b| b.total_cmp(a));
+            // Python's list.sort is stable.  Equal second-language scores
+            // therefore retain the community member insertion order; adding
+            // an identifier tie-break here changes the RNG-consuming bridge
+            // sequence even though the ordering looks deterministic.
+            right_languages[1].total_cmp(&left_languages[1])
+        });
+        let mut remaining = represented_population * clamp01(config.social_network.bridge_fraction);
+        if target_ids.is_empty() || remaining <= 0.0 {
+            particle.communities.bridge_offsets[community + 1] =
+                particle.communities.bridge_members.len() as u32;
+            continue;
+        }
+        for source in ranking {
+            if remaining <= 1e-12 {
+                break;
+            }
+            let source_capacity = particle.people.represented_population[source].min(remaining);
+            let target_index = rng
+                .choices_indices(target_ids.len(), Some(&target_weights), 1)
+                .map_err(|error| ModelError::Invalid(format!("bridge target choice: {error}")))?[0];
+            let target_community = target_ids[target_index];
+            let target_start = particle.communities.member_offsets[target_community] as usize;
+            let target_end = particle.communities.member_offsets[target_community + 1] as usize;
+            // Python's max returns the first item on a tie.  A hand-written
+            // strict comparison preserves that behavior (Iterator::max_by
+            // is allowed to retain the later equal item).
+            let target = particle.communities.member_indices[target_start..target_end]
+                .iter()
+                .copied()
+                .fold(None, |best: Option<(u32, f64)>, candidate| {
+                    let score = social_language_compatibility(particle, source, candidate as usize);
+                    match best {
+                        None => Some((candidate, score)),
+                        Some((_best_candidate, best_score)) if score > best_score => {
+                            Some((candidate, score))
+                        }
+                        Some(existing) => Some(existing),
+                    }
+                })
+                .map(|(candidate, _)| candidate as usize)
+                .unwrap_or(0);
+            add_social_edge(
+                particle,
+                &mut edge_index,
+                &mut neighbors,
+                source,
+                target,
+                2,
+                config.social_network.bridge_tie_strength,
+                0.5,
+                Some(source_capacity),
+                language_enabled,
+            );
+            particle.communities.bridge_members.push(source as u32);
+            remaining -= source_capacity;
+        }
+        particle.communities.bridge_offsets[community + 1] =
+            particle.communities.bridge_members.len() as u32;
+    }
+
+    for row in &mut neighbors {
+        row.sort_unstable();
+    }
+    let mut graph = SocialEdgeState::new(people_count);
+    graph.person_a = std::mem::take(&mut particle.social_edges.person_a);
+    graph.person_b = std::mem::take(&mut particle.social_edges.person_b);
+    graph.layers = std::mem::take(&mut particle.social_edges.layers);
+    graph.weight = std::mem::take(&mut particle.social_edges.weight);
+    graph.language_compatibility =
+        std::mem::take(&mut particle.social_edges.language_compatibility);
+    graph.trust = std::mem::take(&mut particle.social_edges.trust);
+    graph.represented_relationships =
+        std::mem::take(&mut particle.social_edges.represented_relationships);
+    let mut cursor = 0u32;
+    for (person, row) in neighbors.into_iter().enumerate() {
+        graph
+            .neighbor_indices
+            .extend(row.iter().map(|value| *value as u32));
+        cursor += row.len() as u32;
+        graph.neighbor_offsets[person + 1] = cursor;
+    }
+    particle.social_edges = graph;
+    Ok(())
 }
 
 fn locality_distance(topology: &StaticTopology, left: usize, right: usize) -> f64 {
@@ -1835,6 +2801,15 @@ fn assign_formation_membership(
         people.organization[person] = organization as u32;
         people.armed_fraction[person] = fraction;
         people.rebel_sympathy[person] = fraction;
+        let organization_count = people
+            .insurgent_affinity
+            .len()
+            .checked_div(people.locality.len().max(1))
+            .unwrap_or(0);
+        if organization < organization_count {
+            people.insurgent_affinity[person * organization_count + organization] = fraction;
+        }
+        people.public_behavior[person] = if fraction >= 0.5 { 2 } else { 1 };
         remaining -= represented * fraction;
     }
     remaining.max(0.0)
@@ -1881,6 +2856,15 @@ fn assign_fallback_membership(
         people.organization[person] = organization as u32;
         people.armed_fraction[person] = fraction;
         people.rebel_sympathy[person] = fraction;
+        let organization_count = people
+            .insurgent_affinity
+            .len()
+            .checked_div(people.locality.len().max(1))
+            .unwrap_or(0);
+        if organization < organization_count {
+            people.insurgent_affinity[person * organization_count + organization] = fraction;
+        }
+        people.public_behavior[person] = if fraction >= 0.5 { 2 } else { 1 };
         remaining -= represented * fraction;
     }
 }
