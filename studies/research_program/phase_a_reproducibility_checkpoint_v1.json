@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "phase_a_reproducibility_checkpoint_v1",
+  "commit": "96ada39174dab55154c6b265371ca0fabd79a7df",
+  "dirty_tree": true,
+  "dirty_paths_policy": "pre-existing research artifacts and current professor-packet text artifacts preserved; no blind cleanup",
+  "model_sha256": "4fd7dc84732a907fd954ddec3d688acf2672293ea032829da34043d3480f0e87",
+  "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "python": "3.14.0",
+  "native_kernels_available": true,
+  "test_command": "python -m pytest -q",
+  "test_result": {
+    "passed": 676,
+    "failed": 1,
+    "failure": "tests/test_research_program.py::ResearchProgramTests::test_authoritative_certificate_is_valid_and_drift_fails_closed",
+    "interpretation": "expected fail-closed negative: live model hash differs from the frozen historical certificate; no historical calibration is licensed"
+  },
+  "research_script_compile_command": "python -m py_compile studies/research_program/scripts/*.py",
+  "research_script_compile_result": "passed",
+  "fixed_work_benchmark": "studies/research_program/phase_a_fixed_work_benchmark_v4.json",
+  "phase_a_certificate": "studies/research_program/phase_a_certificate_v6.json",
+  "phase_b_validation": "studies/research_program/phase_b_inference_validation_v4.json",
+  "historical_authorization": false,
+  "historical_outreach_performed": false
+}
