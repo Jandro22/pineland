@@ -811,19 +811,16 @@ impl BeliefState {
                 .iter()
                 .position(|existing| existing.kind == 3)
                 .unwrap_or(self.keys.len());
-            dynamic_start
-                + self.keys[dynamic_start..]
-                    .partition_point(|existing| existing < &key)
+            dynamic_start + self.keys[dynamic_start..].partition_point(|existing| existing < &key)
         } else {
             self.keys.len()
         };
         self.keys.insert(index, key);
         self.presence.insert(index, 0.0);
-        self.control
-            .splice(
-                index * CONTROL_DIMENSIONS..index * CONTROL_DIMENSIONS,
-                std::iter::repeat_n(0.0, CONTROL_DIMENSIONS),
-            );
+        self.control.splice(
+            index * CONTROL_DIMENSIONS..index * CONTROL_DIMENSIONS,
+            std::iter::repeat_n(0.0, CONTROL_DIMENSIONS),
+        );
         self.confidence.insert(index, 0.0);
         self.updated_at.insert(index, 0.0);
         self.last_reliable_observation_at.insert(index, -1.0e9);
