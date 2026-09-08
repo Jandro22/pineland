@@ -61,24 +61,38 @@ def _run_one(
     if release_templates:
         templates.clear()
     started = perf_counter()
-    filter_ = runner.run_training_filter(
-        particles,
-        observations,
-        filter_seed=seed + 17_003,
-        likelihood_branches=branches,
+    pool = runner.PersistentParticlePool(
+        [particle.state for particle in particles],
+        propagate=runner._resident_particle_job,
+        fork_state=runner._fork_particle_state,
         workers=workers,
-        collect_worker_diagnostics=True,
+        summarize_state=runner._resident_particle_identity,
     )
+    try:
+        filter_ = runner.run_training_filter(
+            particles,
+            observations,
+            filter_seed=seed + 17_003,
+            likelihood_branches=branches,
+            workers=workers,
+            collect_worker_diagnostics=True,
+            resident_pool=pool,
+            keep_resident=True,
+        )
+        summaries = dict(pool.summarize())
+    finally:
+        pool.close()
     wall_seconds = perf_counter() - started
+    decision_hashes = [
+        summaries[index]["decision_state_sha256"]
+        for index in range(len(particles))
+    ]
     return {
         "workers": workers,
         "wall_seconds": wall_seconds,
         "updates": len(filter_.history),
         "weights": particle_weights(filter_.particles),
-        "decision_state_sha256": [
-            decision_state_sha256(particle.state.world)
-            for particle in filter_.particles
-        ],
+        "decision_state_sha256": decision_hashes,
         "nested_propagator_diagnostics": getattr(
             filter_, "nested_propagator_diagnostics", {}
         ),
