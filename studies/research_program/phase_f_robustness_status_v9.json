@@ -1,0 +1,47 @@
+{
+  "design": {
+    "ablations": "remove access, logistics, control, beliefs, and organization ecology one at a time",
+    "cross_case": "Nepal and Afghanistan only after the once-only frozen confrontation is authorized",
+    "mcse": "report Monte Carlo standard errors with effective sample sizes",
+    "missingness": "retain missing and negative observations; no favorable-case deletion",
+    "placebos": "spatial adjacency permutation, timestamp shuffle, prior-only belief, random parent attribution",
+    "seed_panel": "predeclared multi-seed panel; report all failures"
+  },
+  "evidence": {
+    "phase_b": {
+      "path": "studies/research_program/phase_b_inference_validation_v6.json",
+      "sha256": "1c74a265da63e6f082ff45b064ff99b9d9acf552031ba08f871079173a19d87b"
+    },
+    "phase_d": {
+      "path": "studies/research_program/phase_d_historical_confrontation_status_v9.json",
+      "sha256": "1d3035e7f5392bd8018b1bef5d708879cf7289f09e41016a57daa7f83f38b92f"
+    },
+    "phase_e": {
+      "path": "studies/research_program/phase_e_theory_contract_v9.json",
+      "sha256": "c664d886cfbeea1e7885cc5e2661c4a10200811e90860a9cf1dead5ce6ea1174"
+    }
+  },
+  "gates": {
+    "cross_case_transfer_robustness_executed": false,
+    "historical_case_robustness_executed": false,
+    "historical_competing_observation_operators_executed": false,
+    "synthetic_placebos_and_ablations_specified": true,
+    "synthetic_seed_and_mcse_validation": true
+  },
+  "generated_at_utc": "2026-09-08T06:56:40.193464+00:00",
+  "limitations": [
+    "Historical robustness is not executed under the current contract because the historical gate is closed.",
+    "The existing v5 historical logs are stale-core evidence and are not reused as current results.",
+    "A failed performance gate remains a deployment limitation, not a scientific null result."
+  ],
+  "passed": false,
+  "provenance": {
+    "builder_sha256": "044c8e185c8ff47f3fd11816dfbba1ad4fefaec67b47ffbe8bc201df0df800ed",
+    "commit": "e8ffb4a1f4c5118c42c27af299cbffaf49b1bd9c",
+    "model_sha256": "bc8a5f0e98a913501a2770b7683dfe1d9dbcd5ae25a33963a05e552ee62e9da3",
+    "payload_sha256": "9ebf7a419b136aa35fa0581f754b354af1051c7758c5a17eab0e69eb695b0063"
+  },
+  "schema_version": "1.0.0",
+  "status": "robustness_synthetic_only",
+  "study_id": "phase_f_robustness_status_v1"
+}

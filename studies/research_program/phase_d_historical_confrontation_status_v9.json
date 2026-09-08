@@ -1,0 +1,50 @@
+{
+  "case_plan": {
+    "afghanistan": {
+      "stages": [
+        "init",
+        "smoke",
+        "one_year",
+        "full_horizon",
+        "identical_row_reproducibility"
+      ],
+      "status": "blocked_by_phase_c_gate"
+    },
+    "nepal": {
+      "seeds_required": 8,
+      "stages": [
+        "full",
+        "predictive_competition",
+        "identical_row_reproducibility"
+      ],
+      "status": "blocked_by_phase_c_gate"
+    }
+  },
+  "gate_reason": "The current method contract does not authorize historical execution. Existing v5 logs are preserved as stale-core evidence and are not promoted.",
+  "generated_at_utc": "2026-09-08T06:56:39.520522+00:00",
+  "once_only_rule": {
+    "executed_under_current_contract": false,
+    "historical_tuning_permitted": false,
+    "negative_or_missing_results_preserved": true,
+    "required": true
+  },
+  "passed": false,
+  "preserved_prior_evidence": {
+    "prior_afghanistan_full_log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "prior_afghanistan_init_log": "325dd0cd4df3dddf4b48d086909b7ea9d109a2ab16c759a6e824e7d08dbbd230",
+    "prior_afghanistan_smoke_log": "c7d1aa74c2a3ecf621541503ec860b2299410e1e5ed5b83973a83d562e57a2ca",
+    "prior_afghanistan_year_log": "a2af83486626e60fe5ca95c966be5f0793712f3dbe443190a481fe2f120aa5a2",
+    "prior_nepal_competition_log": "4ef3db747943f3697b5d1631a86cbe2ad12faf499e64747e31ad5e2f30b1af4b",
+    "prior_nepal_full_log": "b06477c1a751636a9757c88714f2f2727b3a1033f0bef66c82cfe55feb156d48"
+  },
+  "provenance": {
+    "commit": "e8ffb4a1f4c5118c42c27af299cbffaf49b1bd9c",
+    "contract_path": "studies/research_program/phase_c_method_contract_v9.json",
+    "contract_sha256": "c90477732c2925d3cc2181d5655985d1b996453fecce67e9cad30d7f75a0832a",
+    "current_model_sha256": "bc8a5f0e98a913501a2770b7683dfe1d9dbcd5ae25a33963a05e552ee62e9da3",
+    "status_payload_sha256": "01a60698fb5f2afee7e119b1527f2b9ad0e1b0bd726bce6ffab46c560f990301"
+  },
+  "schema_version": "1.0.0",
+  "status": "historical_confrontation_not_authorized",
+  "study_id": "phase_d_historical_confrontation_status_v1"
+}

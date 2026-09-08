@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "phase_a_migration_decision_v3",
+  "status": "profile_driven_migration_kept_e1_passed_e2_unmet_and_alternate_rejected",
+  "decision": {
+    "production_engine": "packed_nested_resident_filter",
+    "rejected_engine": "packed_global_nested_filter",
+    "reason": "The alternate all-particle packed batch preserved exact continuation semantics but removed the resident worker parallelism that dominates this scheduler-oracle workload.",
+    "equations_changed": false,
+    "historical_outcomes_used": false
+  },
+  "evidence": {
+    "profile": "studies/research_program/phase_a_execution_profile_v7.json",
+    "migration_validation": "studies/research_program/phase_a_migration_validation_v4.json",
+    "exactness": "studies/research_program/phase_a_exactness_battery_v9.json",
+    "canonical_benchmark": "studies/research_program/phase_a_fixed_work_benchmark_candidate_hot_boundary_v1.json",
+    "canonical_benchmark_result": {
+      "median_pwb_per_second": 5.583899565467305,
+      "coefficient_of_variation": 0.032946156577154474,
+      "repetitions": 5,
+      "pwb_per_repeat": 768,
+      "E1_passed": true,
+      "E2_passed": false
+    },
+    "alternate_probe": {
+      "path": "studies/research_program/phase_a_fixed_work_global_probe_v1.json",
+      "exact_smoke_passed": true,
+      "median_pwb_per_second": 0.6860052214474139,
+      "E1_passed": false,
+      "E2_passed": false
+    }
+  },
+  "gate_policy": "No migration is promoted from a microbenchmark or extrapolation; the complete fixed workload is the performance authority. E1 is the minimum gate; E2 is retained as an explicit target and negative result.",
+  "provenance": {
+    "model_sha256": "bc8a5f0e98a913501a2770b7683dfe1d9dbcd5ae25a33963a05e552ee62e9da3",
+    "source_commit": "e8ffb4a1f4c5118c42c27af299cbffaf49b1bd9c",
+    "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "alternate_probe_sha256": "e4035c7095c45862fc49f649293a008fe4e4925972b7c1b09fa7ae0528fc4036"
+  },
+  "passed": true
+}

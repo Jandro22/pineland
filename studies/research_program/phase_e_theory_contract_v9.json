@@ -1,0 +1,126 @@
+{
+  "claims_policy": "Equations and predictions are specified; no historical transfer claim is promoted without an authorized once-only confrontation.",
+  "equations": {
+    "access": "logit(A_{i,t+1}) = rho_A logit(A_{i,t}) + beta_AP P_{i,t} + beta_AL L_{i,t} - beta_AQ coercion_{i,t} + eps^A_{i,t}",
+    "action_hazard": "lambda_{i,j,t} = H_{i,j,t} * exp(theta_0 + theta_O O_{i,t} + theta_A A_{i,t} + theta_C C_{i,t} + theta_L L_{i,t} + theta_B f(B_{i,t}))",
+    "belief": "B_{i,t+1} = Normalize(B_{i,t} * likelihood(observation_t | state_i,t))",
+    "capacity": "logit(O_{i,t+1}) = rho_O logit(O_{i,t}) + beta_OS support_{i,t} + beta_OC C_{i,t} - beta_OX attrition_{i,t} + eps^O_{i,t}",
+    "control": "C_{i,t+1} = clip(C_{i,t} + beta_CO O_{i,t} + beta_CA A_{i,t} - beta_CR response_{i,t} + eps^C_{i,t}, -1, 1)",
+    "logistics": "L_{i,t+1} = clip(L_{i,t} + inflow_{i,t} - consumption_{i,t} - interdiction_{i,t}, 0, 1)",
+    "reproduction_quantity": "R_t = sum_{new footholds j} E[1{j becomes active by t+Delta} | active footholds at t] / max(1, active footholds_t)"
+  },
+  "evidence": {
+    "historical_confrontation": {
+      "passed": false,
+      "path": "studies/research_program/phase_d_historical_confrontation_status_v9.json",
+      "sha256": "1d3035e7f5392bd8018b1bef5d708879cf7289f09e41016a57daa7f83f38b92f"
+    },
+    "synthetic_inference_validation": {
+      "passed": true,
+      "path": "studies/research_program/phase_b_inference_validation_v6.json",
+      "sha256": "1c74a265da63e6f082ff45b064ff99b9d9acf552031ba08f871079173a19d87b"
+    }
+  },
+  "generated_at_utc": "2026-09-08T06:56:39.859270+00:00",
+  "latent_variables": [
+    {
+      "domain": "[0,1]",
+      "name": "organization capacity",
+      "symbol": "O_{i,t}"
+    },
+    {
+      "domain": "[0,1]",
+      "name": "civilian access",
+      "symbol": "A_{i,t}"
+    },
+    {
+      "domain": "[-1,1]",
+      "name": "territorial control",
+      "symbol": "C_{i,t}"
+    },
+    {
+      "domain": "simplex over actor-local hypotheses",
+      "name": "belief state",
+      "symbol": "B_{i,t}"
+    },
+    {
+      "domain": "[0,1]",
+      "name": "logistics readiness",
+      "symbol": "L_{i,t}"
+    },
+    {
+      "domain": "[0,1]",
+      "name": "operational posture / presence",
+      "symbol": "P_{i,t}"
+    },
+    {
+      "domain": "[0,\u221e)",
+      "name": "local exposure / opportunity",
+      "symbol": "H_{i,t}"
+    }
+  ],
+  "passed": false,
+  "predictions": [
+    {
+      "falsifier": "No increase or a sign reversal across preregistered synthetic contrasts.",
+      "id": "P1",
+      "prediction": "Holding exposure fixed, higher civilian access raises delayed foothold survival through capacity accumulation."
+    },
+    {
+      "falsifier": "Capacity and action move synchronously with no readiness mediation.",
+      "id": "P2",
+      "prediction": "Logistics shocks reduce realized action through readiness before they reduce latent organizational capacity."
+    },
+    {
+      "falsifier": "Uncertainty changes total intensity only, with no dispersion effect.",
+      "id": "P3",
+      "prediction": "Belief uncertainty broadens action-location dispersion rather than simply scaling total action."
+    },
+    {
+      "falsifier": "Extinction occurs with R_t consistently above one or R_t never responds to the shock.",
+      "id": "P4",
+      "prediction": "R_t crosses below one after sustained access or logistics loss, preceding extinction of active footholds."
+    },
+    {
+      "falsifier": "Placebo topology and true topology yield indistinguishable parent attribution.",
+      "id": "P5",
+      "prediction": "Spatially connected access produces clustered, parent-attributed colonization rather than independent uniform ignition."
+    }
+  ],
+  "provenance": {
+    "builder_sha256": "4ab3f291770e3ec7420b89704f42fe700868c12a432f058fdf0ca06b1b419d0b",
+    "commit": "e8ffb4a1f4c5118c42c27af299cbffaf49b1bd9c",
+    "model_sha256": "bc8a5f0e98a913501a2770b7683dfe1d9dbcd5ae25a33963a05e552ee62e9da3",
+    "payload_sha256": "c9ddc4db059821d88abd181ba6de66902c06c687e0f1bbd01f6c7c5d6d357fcd"
+  },
+  "schema_version": "1.0.0",
+  "status": "theory_specified_synthetic_supported_historical_unconfronted",
+  "study_id": "phase_e_theory_contract_v1",
+  "test_matrix": {
+    "ablations": [
+      "remove civilian access",
+      "remove logistics",
+      "remove territorial control",
+      "remove information/belief channel",
+      "remove organization ecology"
+    ],
+    "placebos": [
+      "permute spatial adjacency",
+      "shuffle observation timestamps",
+      "replace belief update with prior-only",
+      "randomize parent attribution"
+    ],
+    "robustness": [
+      "seed panel",
+      "particle-count ladder",
+      "ESS threshold ladder",
+      "proposal variance ladder",
+      "missingness and observation-noise ladder"
+    ],
+    "synthetic_identification": [
+      "vary one structural coefficient at a time",
+      "recover sign and ordering from blinded simulations",
+      "report posterior coverage and RMSE in posterior SD"
+    ]
+  }
+}
