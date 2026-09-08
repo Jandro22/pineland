@@ -127,6 +127,7 @@ def build_memo() -> None:
     phase_c = _json("phase_c_method_contract_v1.json") or {}
     phase_d = _json("phase_d_historical_confrontation_status_v1.json") or {}
     phase_f = _json("phase_f_robustness_status_v1.json") or {}
+    benchmark_failure = _json("phase_a_fixed_work_benchmark_failure_v1.json") or {}
     story: list[Any] = [P("Modelling Insurgencies through Agent-Based Simulations", "title"), P("Professor-ready research memo | current gate state as of 2026-09-08", "subtitle")]
     story += [P("Decision", "h1"), P("The computational program now has a reproducible exactness and synthetic-inference spine, but it is not authorized to promote a historical transfer claim. The current packet keeps the historical gate closed because the live core differs from the prior certificate and the fixed production throughput gate must be independently recorded before historical confrontation.", "callout")]
     story += [P("What is established", "h1"), _table([
@@ -140,7 +141,7 @@ def build_memo() -> None:
     story += [P("Current blockers", "h1"), _table([
         ["Blocker", "Consequence"],
         ["Core freeze drift", "Prior v5 historical artifacts are stale-core evidence and cannot be promoted."],
-        ["Performance gate", "E1/E2 are reported from the current fixed workload; a failure is a deployment limitation, not a scientific result."],
+        ["Performance gate", "The complete fixed 768-PWB run exceeded the safe resource window and was stopped; no PWB/s value is reported and E1/E2 remain failed closed."],
         ["Historical confrontation", "Nepal and Afghanistan are not rerun unless the frozen method contract authorizes the once-only run."],
     ], [2.1 * inch, 3.8 * inch]), PageBreak()]
     story += [P("Recommended next decision", "h1"), P("Treat this packet as a methods and audit handoff. If the throughput gate passes and the core boundary is frozen, run the preregistered Nepal and Afghanistan confrontation exactly once, preserve every seed and negative result, and report calibration-free predictive scores against predeclared observation operators. If the gate fails, optimize the identified packed synchronization bottleneck before any historical rerun.")]
@@ -185,6 +186,7 @@ def build_technical_note() -> None:
         ["Packed execution self seconds", profile.get("median_domain_self_seconds", {}).get("packed_execution", "not available")],
         ["Sparse reference self seconds", profile.get("median_domain_self_seconds", {}).get("sparse_reference_processes", "not available")],
     ], [2.9 * inch, 3.0 * inch]), Spacer(1, 8)]
+    story += [P("The separate fixed 32-particle x 8-week x 3-branch production run did not complete within the controlled resource window. It produced no partial timing result. This is recorded as an implementation/deployment failure, not as evidence for or against the scientific mechanism.", "callout")]
     story += [P("5. Historical authorization rule", "h1"), P("Historical work requires a passing exactness/performance/inference spine and a clean core boundary. The contract records the current model hash and all dirty paths. Existing historical v5 outputs are never silently rebound to a new model hash. A current-core historical confrontation is once-only: no calibration loop, no post-hoc branch selection, and no deletion of negative seeds.")]
     story += [P("6. Independent reproduction command family", "h1"), P("Run the phase scripts in order: exactness battery, authority audit, kernel oracles, representative profile, fixed-work benchmark, phase-A certificate, phase-C contract, phase-D historical gate, phase-E theory contract, phase-F robustness status, then packet builder. Every script refuses to overwrite an existing evidence artifact.")]
     _doc(OUTPUT / "02_technical_note.pdf", story)
@@ -236,6 +238,7 @@ def build_architecture_figure() -> None:
 def build_results() -> None:
     phase_a = _json("phase_a_certificate_v1.json") or {}
     benchmark = _json("phase_a_fixed_work_benchmark_v1.json") or {}
+    benchmark_failure = _json("phase_a_fixed_work_benchmark_failure_v1.json") or {}
     phase_b = _json("phase_b_inference_validation_v2.json") or {}
     story: list[Any] = [P("Results packet: what passed, what did not", "title"), P("Execution-only and synthetic evidence; historical transfer withheld until authorized", "subtitle")]
     story += [P("Gate summary", "h1"), _table([
@@ -249,6 +252,8 @@ def build_results() -> None:
         ["B synthetic", phase_b.get("passed", "not built"), "History-free inference validation."],
     ], [1.2 * inch, 1.0 * inch, 3.4 * inch]), Spacer(1, 10)]
     story += [P("Fixed workload definition", "h1"), P("The fixed workload is 32 particles, 8 weekly boundaries, and 3 branch-equivalents: 768 particle-week-boundaries per measured repeat. The benchmark records wall time, workers, source payload, model hash, and the exact synthetic observation rule. It is not acceptable to infer a passing rate from a smaller run.")]
+    if benchmark_failure:
+        story += [P("Current fixed-work result: incomplete resource-limit run; no PWB/s is reported, and E1/E2 are failed closed. The complete-ensemble rule is active.", "callout")]
     if benchmark:
         story += [_table([
             ["Measured quantity", "Value"],
@@ -291,7 +296,7 @@ def build_limitations() -> None:
         ["Guided v1 synthetic validation", "ESS ratio was below its preregistered threshold.", "Preserve the failure; v2 is a declared protocol revision with unchanged thresholds."],
         ["Historical confrontation", phase_d.get("status", "not built"), "Run only after phase C authorization and only once."],
         ["Robustness", phase_f.get("status", "not built"), "Synthetic checks are available; historical robustness is gated."],
-        ["Throughput", "Must use the exact 768-PWB workload.", "Optimize the measured synchronization/transport bottleneck; do not extrapolate."],
+        ["Throughput", "The exact 768-PWB workload exceeded the controlled resource window before completion.", "No PWB/s is reported; optimize synchronization/transport and rerun the complete workload."],
     ], [1.65 * inch, 2.55 * inch, 2.0 * inch]), Spacer(1, 10)]
     story += [P("Scope limitations", "h1"), P("The theory is a compact latent-state account, not a universal theory of insurgency. Historical observation operators can be weakly identified. Case geography can encode assumptions. Sparse historical evidence is not treated as a complete measurement of latent control or civilian harm. Negative evidence and missingness remain part of the evidence model.")]
     story += [P("Reproducibility limitations", "h1"), P("The current working tree contains existing study artifacts and live source changes. The contract records the exact dirty paths and tracked-diff hash. Reproduction requires the same Python/native runtime family, protocol files, seeds, and model hash.")]
@@ -305,8 +310,9 @@ def main() -> None:
         "01_two_page_research_memo.pdf", "02_technical_note.pdf", "03_architecture_figure.pdf",
         "04_results_packet.pdf", "05_claims_and_evidence.pdf", "06_limitations_and_failures.pdf",
     )]
+    overwrite = "--overwrite" in sys.argv
     existing = [path for path in pdfs if path.exists()]
-    if existing:
+    if existing and not overwrite:
         raise FileExistsError(f"refusing to overwrite packet PDFs: {existing}")
     build_memo(); build_technical_note(); build_architecture_figure(); build_results(); build_claims(); build_limitations()
     manifest = {
@@ -321,7 +327,7 @@ def main() -> None:
         "source_artifacts": {
             name: {"path": str((PROGRAM / name).relative_to(ROOT)).replace("\\", "/"), "sha256": _sha(PROGRAM / name)}
             for name in (
-                "phase_a_certificate_v1.json", "phase_a_execution_profile_v1.json",
+                "phase_a_certificate_v1.json", "phase_a_execution_profile_v1.json", "phase_a_fixed_work_benchmark_failure_v1.json",
                 "phase_b_inference_validation_v1.json", "phase_b_inference_validation_v2.json",
                 "phase_c_method_contract_v1.json", "phase_d_historical_confrontation_status_v1.json",
                 "phase_e_theory_contract_v1.json", "phase_f_robustness_status_v1.json",
@@ -330,7 +336,7 @@ def main() -> None:
         "review_requirements": ["verify hashes", "rerun exactness and synthetic gates", "inspect fixed workload", "do not promote historical claims without authorization"],
     }
     (OUTPUT / "07_reproducibility_manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
-    readme = """# Professor packet\n\nThis is a gated research handoff for the Pineland insurgency agent-based simulation program. It contains implementation evidence, synthetic inference validation, a fixed-work performance record, theory specification, and a failure ledger.\n\nHistorical transfer claims are withheld unless the phase-C contract authorizes the once-only Nepal/Afghanistan confrontation under the live model hash. Prior stale-core logs are preserved as provenance and are not promoted.\n\n## Review order\n\n1. Read `01_two_page_research_memo.pdf`.\n2. Inspect `07_reproducibility_manifest.json` and verify hashes.\n3. Read `02_technical_note.pdf` and `03_architecture_figure.pdf`.\n4. Check the fixed workload and every gate in `04_results_packet.pdf`.\n5. Use `05_claims_and_evidence.pdf` and `06_limitations_and_failures.pdf` to bound claims.\n\nNo external outreach was performed.\n"""
+    readme = """# Professor packet\n\nThis is a gated research handoff for the Pineland insurgency agent-based simulation program. It contains implementation evidence, synthetic inference validation, a fixed-work performance record, theory specification, and a failure ledger.\n\nHistorical transfer claims are withheld unless the phase-C contract authorizes the once-only Nepal/Afghanistan confrontation under the live model hash. Prior stale-core logs are preserved as provenance and are not promoted.\n\n## Review order\n\n1. Read `01_two_page_research_memo.pdf`.\n2. Inspect `07_reproducibility_manifest.json` and verify hashes.\n3. Read `02_technical_note.pdf` and `03_architecture_figure.pdf`.\n4. Check the fixed workload and every gate in `04_results_packet.pdf`.\n5. Use `05_claims_and_evidence.pdf` and `06_limitations_and_failures.pdf` to bound claims.\n\nThe complete fixed workload was not silently replaced by a partial run: its controlled resource-limit failure is recorded in `studies/research_program/phase_a_fixed_work_benchmark_failure_v1.json`, and E1/E2 remain failed closed.\n\nNo external outreach was performed.\n"""
     (OUTPUT / "08_professor_readme.md").write_text(readme, encoding="utf-8")
     print(json.dumps({"output": str(OUTPUT), "pdf_count": len(pdfs), "manifest": str(OUTPUT / "07_reproducibility_manifest.json")}))
 
