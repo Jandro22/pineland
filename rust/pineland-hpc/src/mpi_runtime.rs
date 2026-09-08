@@ -141,7 +141,7 @@ pub fn resume_filter_to_directory(
     }
     let topology = states
         .first()
-        .map(topology_for_particle)
+        .map(|state| topology_for_particle(state, &config))
         .ok_or_else(|| "MPI filter checkpoint contains no particles".to_string())?;
     let engines = states
         .into_iter()
@@ -449,10 +449,22 @@ fn run_on_world<C: Communicator + CommunicatorCollectives>(
 
 fn topology_for_particle(
     particle: &pineland_core::state::ParticleState,
+    config: &SimulationConfig,
 ) -> pineland_core::topology::StaticTopology {
-    let locality_count = particle.locality.population.len().max(1);
-    let zones_per_locality = (particle.zones.population_share.len() / locality_count).max(1);
-    pineland_core::topology::StaticTopology::synthetic(locality_count, zones_per_locality)
+    let initialization_seed = config.initialization_seed.unwrap_or(config.seed);
+    let topology =
+        pineland_core::topology::StaticTopology::pineland(config, initialization_seed).topology;
+    if particle.locality.population.len() != topology.locality_count()
+        || particle.zones.population_share.len() != topology.microzone_count()
+    {
+        let locality_count = particle.locality.population.len().max(1);
+        let zones_per_locality = (particle.zones.population_share.len() / locality_count).max(1);
+        return pineland_core::topology::StaticTopology::synthetic(
+            locality_count,
+            zones_per_locality,
+        );
+    }
+    topology
 }
 
 fn all_gather_f64<C: Communicator + CommunicatorCollectives>(

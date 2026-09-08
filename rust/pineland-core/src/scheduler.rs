@@ -105,12 +105,18 @@ pub struct ScheduledEvent {
     pub time: f64,
     pub priority: u16,
     pub sequence: u64,
+    /// Python's recurring payload carries the elapsed interval separately
+    /// from the event timestamp.  Keeping it explicit avoids inferring a
+    /// zero-length t=0 boundary from time alone and preserves restart
+    /// semantics across burn-in and checkpoints.
+    pub elapsed_days: f64,
     pub payload: EventPayload,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum SchedulerError {
     NonFiniteTime(f64),
+    InvalidElapsedDays(f64),
     SequenceOverflow,
 }
 
@@ -118,6 +124,12 @@ impl fmt::Display for SchedulerError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NonFiniteTime(time) => write!(formatter, "event time must be finite, got {time}"),
+            Self::InvalidElapsedDays(days) => {
+                write!(
+                    formatter,
+                    "event elapsed days must be finite and non-negative, got {days}"
+                )
+            }
             Self::SequenceOverflow => formatter.write_str("event sequence overflow"),
         }
     }
@@ -187,8 +199,21 @@ impl Scheduler {
         priority: u16,
         payload: EventPayload,
     ) -> Result<u64, SchedulerError> {
+        self.schedule_with_elapsed(time, priority, 0.0, payload)
+    }
+
+    pub fn schedule_with_elapsed(
+        &mut self,
+        time: f64,
+        priority: u16,
+        elapsed_days: f64,
+        payload: EventPayload,
+    ) -> Result<u64, SchedulerError> {
         if !time.is_finite() {
             return Err(SchedulerError::NonFiniteTime(time));
+        }
+        if !elapsed_days.is_finite() || elapsed_days < 0.0 {
+            return Err(SchedulerError::InvalidElapsedDays(elapsed_days));
         }
         let sequence = self.next_sequence;
         self.next_sequence = self
@@ -199,6 +224,7 @@ impl Scheduler {
             time,
             priority,
             sequence,
+            elapsed_days,
             payload,
         }));
         Ok(sequence)

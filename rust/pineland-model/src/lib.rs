@@ -1533,6 +1533,19 @@ impl SimulationEngine {
     }
 
     pub fn advance_until(&mut self, until: f64) -> Result<(), ModelError> {
+        self.advance_until_limited(until, None).map(|_| ())
+    }
+
+    /// Advance through at most `max_events` events when a limit is supplied.
+    ///
+    /// The bounded form is a certification/diagnostic boundary: it lets the
+    /// Python oracle compare the state immediately after each typed process
+    /// without weakening the production `advance_until` contract.
+    pub fn advance_until_limited(
+        &mut self,
+        until: f64,
+        max_events: Option<usize>,
+    ) -> Result<usize, ModelError> {
         if !until.is_finite() {
             return Err(ModelError::Invalid(
                 "target time must be finite".to_string(),
@@ -1544,17 +1557,19 @@ impl SimulationEngine {
                 self.particle.time
             )));
         }
+        let mut processed = 0usize;
         while self
             .particle
             .scheduler
             .peek()
             .is_some_and(|event| event.time <= until)
+            && max_events.map_or(true, |limit| processed < limit)
         {
             let event = self.particle.scheduler.pop_next().expect("peeked event");
             self.particle.time = event.time;
             self.particle.counters.record(event.payload.kind());
             let sequence = event.sequence;
-            self.process_event(&event)?;
+            self.process_event(&event, until)?;
             self.particle.event_log.push(EventRecord {
                 time: event.time,
                 sequence,
@@ -1563,14 +1578,25 @@ impl SimulationEngine {
                 value: 1.0,
             });
             self.reschedule_recurring(&event)?;
+            processed += 1;
         }
-        self.particle.time = until;
+        let stopped_at_limit = max_events.map_or(false, |limit| {
+            processed >= limit
+                && self
+                    .particle
+                    .scheduler
+                    .peek()
+                    .is_some_and(|event| event.time <= until)
+        });
+        if !stopped_at_limit {
+            self.particle.time = until;
+        }
         self.last_boundary = until;
         self.particle.validate()?;
-        Ok(())
+        Ok(processed)
     }
 
-    fn process_event(&mut self, event: &ScheduledEvent) -> Result<(), ModelError> {
+    fn process_event(&mut self, event: &ScheduledEvent, horizon: f64) -> Result<(), ModelError> {
         match &event.payload {
             EventPayload::Patrol { .. } => {
                 let mut rng = self.take_rng("patrol");
@@ -1579,6 +1605,10 @@ impl SimulationEngine {
                     &self.topology,
                     &self.config,
                     &mut rng,
+                    match &event.payload {
+                        EventPayload::Patrol { patrol } => patrol.get() as usize,
+                        _ => unreachable!("patrol handler received non-patrol payload"),
+                    },
                     event.time,
                 );
                 self.put_rng("patrol", rng);
@@ -1593,6 +1623,7 @@ impl SimulationEngine {
                     &self.topology,
                     &self.config,
                     &mut rng,
+                    event.elapsed_days,
                     event.time,
                 );
                 self.put_rng("information", rng);
@@ -1649,13 +1680,24 @@ impl SimulationEngine {
             }
             EventPayload::ContactScan => {
                 let mut rng = self.take_rng("contact");
-                combat::schedule_contacts(
-                    &mut self.particle,
-                    &self.topology,
-                    &self.config,
-                    &mut rng,
-                    event.time,
-                )?;
+                let exposure_days = self
+                    .config
+                    .intervals
+                    .contact
+                    .min((horizon - event.time).max(0.0));
+                if exposure_days > 0.0
+                    && self.config.combat.organized_action_architecture == "multichannel_v5"
+                {
+                    self.schedule_organized_actions(event.time + exposure_days, exposure_days)?;
+                } else {
+                    combat::schedule_contacts(
+                        &mut self.particle,
+                        &self.topology,
+                        &self.config,
+                        &mut rng,
+                        event.time,
+                    )?;
+                }
                 self.put_rng("contact", rng);
             }
             EventPayload::Contact {
@@ -1688,6 +1730,7 @@ impl SimulationEngine {
                     &self.topology,
                     &self.config,
                     &mut rng,
+                    event.elapsed_days,
                     event.time,
                 );
                 self.put_rng("logistics", rng);
@@ -1765,6 +1808,67 @@ impl SimulationEngine {
         Ok(())
     }
 
+    /// Schedule the one-shot organized-action opportunities emitted by a
+    /// multichannel contact scan.  The Python scheduler emits these in active
+    /// organization order, then sorted locality order, before it reschedules
+    /// the scan itself; preserving that insertion order is part of the event
+    /// continuation contract.
+    fn schedule_organized_actions(
+        &mut self,
+        action_time: f64,
+        interval_days: f64,
+    ) -> Result<(), ModelError> {
+        if !self.config.include_insurgency {
+            return Ok(());
+        }
+        let locality_count = self.topology.locality_count();
+        for organization in 0..self.particle.organizations.kind.len() {
+            let kind = self.particle.organizations.kind[organization];
+            let action_kind = matches!(kind, 1 | 2 | 3 | 5);
+            if !action_kind
+                || self
+                    .particle
+                    .organizations
+                    .active
+                    .get(organization)
+                    .copied()
+                    != Some(1)
+            {
+                continue;
+            }
+            for locality in 0..locality_count {
+                let has_capacity = (0..self.particle.formations.personnel.len()).any(|formation| {
+                    self.particle.formations.active[formation] != 0
+                        && self.particle.formations.organization[formation] as usize == organization
+                        && self.particle.formations.locality[formation] as usize == locality
+                        && self.particle.formations.personnel[formation] > 0.0
+                        && self.particle.formations.moving[formation] == 0
+                        && self.particle.formations.outside_pineland[formation] == 0
+                        && self.particle.formations.operational_status[formation] == 1
+                });
+                let has_manpower = (0..self.particle.manpower.pool.len()).any(|index| {
+                    self.particle.manpower.organization[index] as usize == organization
+                        && self.particle.manpower.locality[index] as usize == locality
+                        && self.particle.manpower.pool[index] > 0.0
+                        && self.particle.manpower.supply_reserve[index] > 0.0
+                });
+                if !(has_capacity || has_manpower) {
+                    continue;
+                }
+                self.particle.scheduler.schedule_with_elapsed(
+                    action_time,
+                    18,
+                    interval_days,
+                    EventPayload::OrganizedAction {
+                        organization: (organization as u32).into(),
+                        locality: (locality as u32).into(),
+                    },
+                )?;
+            }
+        }
+        Ok(())
+    }
+
     fn reschedule_recurring(&mut self, event: &ScheduledEvent) -> Result<(), ModelError> {
         let interval = match event.payload {
             EventPayload::Patrol { .. } => self.config.intervals.patrol,
@@ -1789,7 +1893,17 @@ impl SimulationEngine {
             EventPayload::Checkpoint => self.config.intervals.checkpoint,
             _ => return Ok(()),
         };
-        self.schedule(event.time + interval, event.priority, event.payload.clone())?;
+        // Python's Simulation._reschedule calls scheduler.schedule without a
+        // priority argument.  Recurrences therefore use the scheduler
+        // default (100), even though their initial t=0 event has a process
+        // priority.  Preserving that distinction is required for exact
+        // same-time ordering after the first recurrence.
+        self.particle.scheduler.schedule_with_elapsed(
+            event.time + interval,
+            100,
+            interval,
+            event.payload.clone(),
+        )?;
         Ok(())
     }
 
