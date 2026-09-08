@@ -167,7 +167,11 @@ def main(argv: Iterable[str] | None = None) -> int:
                 for key in expected["counts"]
                 if expected["counts"].get(key) != actual["counts"].get(key)
             }
-            row = {"seed": seed, "mismatches": mismatching_fields}
+            row = {
+                "seed": seed,
+                "mismatches": mismatching_fields,
+                "native_components": actual.get("components", {}),
+            }
             rows.append(row)
             if mismatching_fields:
                 mismatches.append(row)
