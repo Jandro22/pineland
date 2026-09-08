@@ -421,6 +421,7 @@ class CompactZoneBeliefState(_CompactBeliefState):
         # Confidence decay is advanced explicitly by ``decay_information``;
         # an observation timestamp alone is not a decay event.
         self.materialize(key)
+        self.dirty_keys.add(tuple(key))
         offset = self.index(key) * self.STRIDE
         old_confidence = self.state[offset + 1]
         prior = max(.02, old_confidence)

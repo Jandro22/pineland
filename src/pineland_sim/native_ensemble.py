@@ -822,7 +822,11 @@ class PackedHotState:
         )
 
     def advance_patrol_presence(
-        self, lane: int, time: float, topology: "StaticWorldTopology"
+        self,
+        lane: int,
+        time: float,
+        topology: "StaticWorldTopology",
+        patrol_index: int | None = None,
     ) -> float:
         total = 0.0
         tau = self._cfg(lane, self.C_PRESENCE_TAU)
@@ -833,7 +837,14 @@ class PackedHotState:
         lane_patrol_base = int(lane) * patrol_count
         lane_formation_base = int(lane) * formation_count
         lane_organization_base = int(lane) * organization_count
-        for patrol in range(patrol_count):
+        patrol_indices = (
+            range(patrol_count)
+            if patrol_index is None
+            else (int(patrol_index),)
+        )
+        for patrol in patrol_indices:
+            if patrol < 0 or patrol >= patrol_count:
+                continue
             base = lane_patrol_base + patrol
             if not self.patrol_present[base]:
                 continue
@@ -1331,11 +1342,9 @@ class PackedHotState:
             or not self.formation_flags[self._ff(lane, formation_index, self.FF_EFFECTIVE)]
         ):
             return None
-        patrol_id = self.patrol_ids[patrol]
-        patrol_object = world.patrols.get(patrol_id)
         formation_id = self.formation_ids[formation_index]
         formation_object = world.formations.get(formation_id)
-        if patrol_object is None or formation_object is None or formation_object.moving:
+        if formation_object is None or formation_object.moving:
             return None
         current_zone_id = topology.microzone_ids[zone_index]
         neighbors = world.physical_neighbors.get(current_zone_id, {})
@@ -1346,15 +1355,6 @@ class PackedHotState:
 
         from .physical import ensure_zone_belief
 
-        # The reference handler ensures the current row before iterating the
-        # candidate rows.  Keep that structural side effect in the same order;
-        # it matters when a newly-created organization first receives a patrol.
-        ensure_zone_belief(
-            world,
-            formation_object.organization_id,
-            current_zone_id,
-            float(time),
-        )
         weights: list[float] = []
         for candidate in candidates:
             zone_belief = ensure_zone_belief(
@@ -2072,18 +2072,22 @@ class NativeEnsembleRunner:
         world = simulation.world
         patrol_id = str(event.payload.get("patrol_id", ""))
         batch.times[lane] = float(event.time)
+        patrol_index = self.hot_state.patrol_index.get(patrol_id)
 
         # Match the reference pre-handler presence integration while keeping
         # both the memory and per-patrol accounting timestamps packed.
-        self.hot_state.advance_patrol_presence(
-            lane, float(event.time), self.topology
-        )
+        if patrol_index is not None:
+            self.hot_state.advance_patrol_presence(
+                lane,
+                float(event.time),
+                self.topology,
+                patrol_index=patrol_index,
+            )
         self.hot_state.export_patrol_context_to_world(
             lane, world, self.topology, patrol_id=patrol_id
         )
         world.time = float(event.time)
 
-        patrol_index = self.hot_state.patrol_index.get(patrol_id)
         process_engine = simulation.processes
         previous_route = getattr(process_engine, "_packed_patrol_route", None)
         process_engine._packed_patrol_route = (

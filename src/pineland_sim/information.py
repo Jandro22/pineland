@@ -965,6 +965,8 @@ def _flush_compact_native_zone_fusions(
         state_stride=6,
     ):
         return False
+    for key in touched:
+        compact.mark_dirty(key)
     for key, belief in touched.items():
         compact.write_to_belief(key, belief)
     return True
@@ -1035,6 +1037,8 @@ def _flush_compact_native_control_chunk(
         state_stride=13,
     ):
         return False
+    for key in state_index_by_key:
+        compact.mark_dirty(key)
 
     for key in state_index_by_key:
         belief = world.control_beliefs[key]
@@ -1497,6 +1501,8 @@ def _flush_compact_presence_fusions(
                 state_stride=7,
             ):
                 raise RuntimeError("native presence fusion was requested but unavailable")
+    for node, key in touched:
+        compact_by_node[node].mark_dirty(key)
     for (node, key), belief in touched.items():
         compact_by_node[node].write_to_belief(key, belief)
     return len(pending)
