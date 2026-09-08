@@ -882,6 +882,23 @@ class HistoricalCoalitionSchedule:
         cloned.control_snapshot_time = self.control_snapshot_time
         return cloned
 
+    def next_boundary_time(self) -> float | None:
+        """Return the next time at which this hook can mutate or snapshot state.
+
+        Native ensemble execution calls the policy hook only at these sparse
+        boundaries instead of before every scheduled process event. Ordinary
+        Simulation.run semantics are unchanged because __call__ remains
+        idempotent between boundaries.
+        """
+        candidates: list[float] = []
+        if self.cursor < len(self.schedule):
+            candidates.append(float(self.schedule[self.cursor][0]))
+        if self.police_cursor < len(self.police_schedule):
+            candidates.append(float(self.police_schedule[self.police_cursor][0]))
+        if self.control_snapshot is None:
+            candidates.append(float(self.control_validation_day))
+        return min(candidates) if candidates else None
+
     def _apply_stock(self, world, target: float, row: dict[str, Any]) -> None:
         formations = sorted(
             (

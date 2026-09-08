@@ -107,6 +107,7 @@ class PackedHotState:
     organization_active: array
     organization_kind: array
     organization_government_side: array
+    organization_action_eligible: array
     formation_present: array
     formation_organization: array
     formation_locality: array
@@ -128,6 +129,7 @@ class PackedHotState:
     zone_presence_memory: array
     zone_presence_updated_at: array
     zone_physical_control: array
+    zone_insurgent_side_raw: array
     zone_org_presence_memory: array
     zone_org_presence_updated_at: array
     zone_org_physical_control: array
@@ -234,6 +236,13 @@ class PackedHotState:
     def _cfg(self, lane: int, field_index: int) -> float:
         return float(self.config_values[lane * self.C_STRIDE + field_index])
 
+    def _lp(self, lane: int, locality: int) -> float:
+        return float(
+            self.locality_population[
+                lane * self.locality_count + locality
+            ]
+        )
+
     @classmethod
     def from_particles(
         cls, particles: Sequence[Any], topology: "StaticWorldTopology"
@@ -278,6 +287,7 @@ class PackedHotState:
             organization_active=array("B", [0]) * (p * o),
             organization_kind=array("B", [0]) * (p * o),
             organization_government_side=array("B", [0]) * (p * o),
+            organization_action_eligible=array("B", [0]) * (p * o),
             formation_present=array("B", [0]) * (p * f),
             formation_organization=array("I", [UINT32_MISSING]) * (p * f),
             formation_locality=array("I", [UINT32_MISSING]) * (p * f),
@@ -303,13 +313,17 @@ class PackedHotState:
             zone_presence_memory=array("d", [0.0]) * (p * z * 2),
             zone_presence_updated_at=array("d", [0.0]) * (p * z * 2),
             zone_physical_control=array("d", [0.0]) * (p * z * 2),
+            zone_insurgent_side_raw=array("d", [0.0]) * (p * z),
             zone_org_presence_memory=array("d", [0.0]) * (p * z * o),
             zone_org_presence_updated_at=array("d", [0.0]) * (p * z * o),
             zone_org_physical_control=array("d", [0.0]) * (p * z * o),
             locality_population=array(
                 "d",
-                (float(worlds[0].localities[key].population)
-                 for key in topology.locality_ids),
+                (
+                    float(world.localities[key].population)
+                    for world in worlds
+                    for key in topology.locality_ids
+                ),
             ),
             zone_population_share=array(
                 "d",
@@ -369,6 +383,14 @@ class PackedHotState:
             self.organization_government_side[offset] = int(
                 _actor_matches_organization(world, organization_id, "government")
             )
+            self.organization_action_eligible[offset] = int(
+                organization.kind in {
+                    OrganizationKind.INSURGENT,
+                    OrganizationKind.MILITARY,
+                    OrganizationKind.POLICE,
+                    OrganizationKind.FOREIGN,
+                }
+            )
         for formation_id, fi in self.formation_index.items():
             offset = self._fo(lane, fi)
             formation = world.formations.get(formation_id)
@@ -413,6 +435,10 @@ class PackedHotState:
                     0.0,
                     float(world.organization_manpower_supply_reserves.get(key, 0.0)),
                 )
+        for locality_id, li in topology.locality_index.items():
+            self.locality_population[
+                lane * self.locality_count + li
+            ] = float(world.localities[locality_id].population)
         self._import_supply_posts_patrols(lane, world, topology)
         self._import_zone_state(lane, world, topology)
         cfg = world.config
@@ -536,6 +562,11 @@ class PackedHotState:
                 zone.presence_updated_at.get("insurgent", world.time)
             )
             self.zone_physical_control[io] = float(
+                zone.physical_control.get("insurgent", 0.0)
+            )
+            self.zone_insurgent_side_raw[
+                lane * self.microzone_count + zi
+            ] = float(
                 zone.physical_control.get(
                     "__insurgent_side__",
                     zone.physical_control.get("insurgent", 0.0),
@@ -565,6 +596,7 @@ class PackedHotState:
             "organization_active": self.organization_count,
             "organization_kind": self.organization_count,
             "organization_government_side": self.organization_count,
+            "organization_action_eligible": self.organization_count,
             "formation_present": self.formation_count,
             "formation_organization": self.formation_count,
             "formation_locality": self.formation_count,
@@ -586,6 +618,7 @@ class PackedHotState:
             "zone_presence_memory": self.microzone_count * 2,
             "zone_presence_updated_at": self.microzone_count * 2,
             "zone_physical_control": self.microzone_count * 2,
+            "zone_insurgent_side_raw": self.microzone_count,
             "zone_org_presence_memory": (
                 self.microzone_count * self.organization_count
             ),
@@ -595,6 +628,7 @@ class PackedHotState:
             "zone_org_physical_control": (
                 self.microzone_count * self.organization_count
             ),
+            "locality_population": self.locality_count,
             "config_values": self.C_STRIDE,
         }
         for name, block in blocks.items():
@@ -713,7 +747,7 @@ class PackedHotState:
         if (
             not self.organization_present[oo]
             or not self.organization_active[oo]
-            or self.organization_kind[oo] not in {GOVERNMENT_SIDE, INSURGENT_SIDE}
+            or not self.organization_action_eligible[oo]
         ):
             return 0.0
         unfielded, fielded = self.local_fighter_equivalents(
@@ -769,6 +803,18 @@ class PackedHotState:
         if side == GOVERNMENT_SIDE:
             return bool(self.organization_government_side[oo])
         return False
+
+    def active_insurgent_count(self, lane: int) -> int:
+        return sum(
+            1
+            for organization in range(self.organization_count)
+            if (
+                self.organization_present[self._oo(lane, organization)]
+                and self.organization_active[self._oo(lane, organization)]
+                and self.organization_kind[self._oo(lane, organization)]
+                == INSURGENT_SIDE
+            )
+        )
 
     def advance_patrol_presence(
         self, lane: int, time: float, topology: "StaticWorldTopology"
@@ -852,7 +898,7 @@ class PackedHotState:
                 )
             )
             normalized = deployed / max(
-                250.0, self.locality_population[locality] * 0.002
+                250.0, self._lp(lane, locality) * 0.002
             )
             target = self._cfg(lane, self.C_PATROL_GAIN) * normalized
             contribution = max(0.0, target) * (
@@ -860,6 +906,13 @@ class PackedHotState:
             )
             self.zone_presence_memory[zo] = current + contribution
             self.zone_presence_updated_at[zo] = float(time)
+            if (
+                side_slot == 1
+                and self.organization_ids[organization] == "insurgent"
+            ):
+                org_zone = self._zo(lane, zone, organization)
+                self.zone_org_presence_memory[org_zone] = current + contribution
+                self.zone_org_presence_updated_at[org_zone] = float(time)
             total += contribution
         return total
 
@@ -1040,7 +1093,7 @@ class PackedHotState:
                 zone for zone, owner in enumerate(topology.microzone_locality)
                 if int(owner) == locality
             ]
-            population = self.locality_population[locality]
+            population = self._lp(lane, locality)
             for side_slot, side in enumerate((GOVERNMENT_SIDE, INSURGENT_SIDE)):
                 response = self.response_times(
                     lane, locality, side, time, topology
@@ -1165,6 +1218,9 @@ class PackedHotState:
                             self.zone_org_presence_updated_at[org_zone] = float(
                                 time
                             )
+                            if self.organization_ids[organization] == "insurgent":
+                                self.zone_presence_memory[zo] = value
+                                self.zone_presence_updated_at[zo] = float(time)
                             memory += value
                     else:
                         elapsed = max(
@@ -1200,6 +1256,9 @@ class PackedHotState:
             for zone in zone_indices:
                 government = raw[zone * 2]
                 insurgent = raw[zone * 2 + 1]
+                self.zone_insurgent_side_raw[
+                    lane * self.microzone_count + zone
+                ] = insurgent
                 government_contested = clamp(
                     government * (1.0 - 0.35 * insurgent)
                 )
@@ -1335,15 +1394,76 @@ class PackedHotState:
             zone.presence_updated_at["government"] = float(
                 self.zone_presence_updated_at[go]
             )
+            zone.presence_memory["insurgent"] = float(
+                self.zone_presence_memory[io]
+            )
+            zone.presence_updated_at["insurgent"] = float(
+                self.zone_presence_updated_at[io]
+            )
+            for organization_id, oi in self.organization_index.items():
+                org_zone = self._zo(lane, zi, oi)
+                if (
+                    self.organization_present[self._oo(lane, oi)]
+                    and self.organization_kind[self._oo(lane, oi)]
+                    == INSURGENT_SIDE
+                ):
+                    zone.presence_memory[organization_id] = float(
+                        self.zone_org_presence_memory[org_zone]
+                    )
+                    zone.presence_updated_at[organization_id] = float(
+                        self.zone_org_presence_updated_at[org_zone]
+                    )
             zone.physical_control["government"] = float(
                 self.zone_physical_control[go]
             )
             zone.physical_control["__insurgent_side__"] = float(
-                self.zone_physical_control[io]
+                self.zone_insurgent_side_raw[
+                    lane * self.microzone_count + zi
+                ]
             )
             zone.physical_control["insurgent"] = float(
                 self.zone_physical_control[io]
             )
+
+        # Locality physical state is a scalar mirror of the authoritative
+        # microzone state. Sparse handlers read it directly, so materialize the
+        # aggregate only at this explicit Python-view boundary.
+        for locality_id, li in topology.locality_index.items():
+            government = 0.0
+            insurgent = 0.0
+            for zi, owner in enumerate(topology.microzone_locality):
+                if int(owner) != li:
+                    continue
+                share = self.zone_population_share[zi]
+                government += share * self.zone_physical_control[
+                    self._zs(lane, zi, 0)
+                ]
+                insurgent += share * self.zone_physical_control[
+                    self._zs(lane, zi, 1)
+                ]
+            locality = world.localities[locality_id]
+            locality.population = self._lp(lane, li)
+            locality.control.setdefault(
+                "government", type(next(iter(locality.control.values())))()
+            ).physical = clamp(government)
+            locality.control.setdefault(
+                "insurgent", type(next(iter(locality.control.values())))()
+            ).physical = clamp(insurgent)
+            active_insurgents = [
+                organization_id
+                for organization_id, oi in self.organization_index.items()
+                if (
+                    self.organization_present[self._oo(lane, oi)]
+                    and self.organization_active[self._oo(lane, oi)]
+                    and self.organization_kind[self._oo(lane, oi)]
+                    == INSURGENT_SIDE
+                )
+            ]
+            if len(active_insurgents) == 1:
+                locality.control.setdefault(
+                    active_insurgents[0],
+                    type(next(iter(locality.control.values())))(),
+                ).physical = clamp(insurgent)
 
         world.rebuild_runtime_entity_indexes()
         if clear_dirty:
@@ -1361,11 +1481,19 @@ class NativeEnsembleRunner:
     hot_state: PackedHotState
     sparse_boundary: SparseBoundary | None = None
     enable_information_boundary: bool = True
+    enable_physical_island: bool = True
+    enable_action_noop_island: bool = True
+    scheduler_oracle: bool = True
     event_counts: dict[str, int] = field(default_factory=dict)
     physical_refreshes: int = 0
     action_opportunities: int = 0
     information_boundaries: int = 0
     sparse_boundaries: int = 0
+    realized_action_boundaries: int = 0
+    packed_noop_actions: int = 0
+    policy_boundaries: int = 0
+    structural_rebuilds: int = 0
+    initialized_lanes: set[int] = field(default_factory=set, repr=False)
 
     @classmethod
     def from_batch(
@@ -1374,6 +1502,9 @@ class NativeEnsembleRunner:
         *,
         sparse_boundary: SparseBoundary | None = None,
         enable_information_boundary: bool = True,
+        enable_physical_island: bool = True,
+        enable_action_noop_island: bool = True,
+        scheduler_oracle: bool = True,
     ) -> "NativeEnsembleRunner":
         hot = getattr(batch, "hot_state", None)
         if hot is None:
@@ -1386,10 +1517,305 @@ class NativeEnsembleRunner:
             hot_state=hot,
             sparse_boundary=sparse_boundary,
             enable_information_boundary=enable_information_boundary,
+            enable_physical_island=enable_physical_island,
+            enable_action_noop_island=enable_action_noop_island,
+            scheduler_oracle=bool(scheduler_oracle),
         )
 
     def __call__(self, batch: "ParticleBatchState", until: float) -> None:
         self.advance(batch, min(batch.times), float(until))
+
+    @property
+    def requires_reference_lineages(self) -> bool:
+        """Whether resampling must fork scheduler/RNG metadata per child."""
+        return bool(self.scheduler_oracle)
+
+    def _initialize_lane(
+        self, batch: "ParticleBatchState", lane: int
+    ) -> Any:
+        if lane in self.initialized_lanes:
+            simulation = _particle_simulation(batch.particles[lane])
+            if simulation is None:
+                raise RuntimeError("scheduler-oracle execution needs Simulation views")
+            return simulation
+        if not batch.particles:
+            raise RuntimeError("scheduler-oracle execution needs retained particles")
+        particle = batch.particles[lane]
+        simulation = _particle_simulation(particle)
+        if simulation is None:
+            raise RuntimeError("scheduler-oracle execution needs Simulation views")
+        was_initialized = bool(getattr(simulation, "_initialized", False))
+        simulation.initialize()
+        # Initialization can execute a configured burn-in. Pull that exact
+        # stabilized state back into the packed lane once; ordinary zero-burn-in
+        # initialization only populates the event queue and is inexpensive.
+        if not was_initialized:
+            self.hot_state.import_lane(lane, simulation.world, self.topology)
+            batch.refresh_beliefs_from_world(lane)
+            batch.times[lane] = float(simulation.world.time)
+        self.initialized_lanes.add(lane)
+        return simulation
+
+    def _structure_changed(self, world: Any) -> bool:
+        return (
+            any(key not in self.hot_state.organization_index
+                for key in world.organizations)
+            or any(key not in self.hot_state.formation_index
+                   for key in world.formations)
+            or any(key not in self.hot_state.patrol_index
+                   for key in world.patrols)
+            or any(key not in self.hot_state.post_index
+                   for key in world.security_posts)
+            or any(key not in self.hot_state.supply_source_index
+                   for key in world.supply_sources)
+        )
+
+    def _rebuild_structure(self, batch: "ParticleBatchState") -> None:
+        """Rare structural boundary for new organizations/formations.
+
+        Dynamic organization ecology can create entity IDs that did not exist
+        when the batch was first packed. At that point all lanes are explicitly
+        materialized once, a new union codebook is built, and packed authority
+        resumes. This is deliberately rare and never occurs on a normal hot
+        physical/information tick.
+        """
+        batch.synchronize_to_worlds()
+        replacement = PackedHotState.from_particles(
+            batch.particles, self.topology
+        )
+        batch.hot_state = replacement
+        self.hot_state = replacement
+        self.structural_rebuilds += 1
+
+    def _consume_packed_process_event(
+        self, simulation: Any, event_type: str
+    ) -> None:
+        """Advance ProcessEngine event identity for a packed-handled event."""
+        from .world import seeded_rng
+
+        process_engine = simulation.processes
+        process_engine.event_counter += 1
+        if process_engine._injected_rng is None:
+            process_engine.rng = process_engine._process_rngs.setdefault(
+                event_type,
+                seeded_rng(
+                    process_engine.world.config,
+                    process_engine._stream_name(f"process:{event_type}"),
+                ),
+            )
+        process_engine.world.active_event_id = None
+        self.event_counts[event_type] = self.event_counts.get(event_type, 0) + 1
+
+    def _apply_policy_if_due(
+        self,
+        batch: "ParticleBatchState",
+        lane: int,
+        time: float,
+    ) -> None:
+        simulation = _particle_simulation(batch.particles[lane])
+        hook = getattr(simulation, "policy_hook", None)
+        if hook is None:
+            return
+        next_boundary = getattr(hook, "next_boundary_time", None)
+        if callable(next_boundary):
+            due = next_boundary()
+            if due is None or float(due) > float(time) + 1e-12:
+                return
+        # Generic hooks without a boundary protocol retain reference semantics
+        # by executing at every event. Hooks that implement next_boundary_time
+        # pay this materialization cost only when they can actually change state.
+        batch.times[lane] = float(time)
+        batch.synchronize_lane_to_world(lane)
+        world = _particle_world(batch.particles[lane])
+        world.time = float(time)
+        hook(world, float(time))
+        if self._structure_changed(world):
+            self._rebuild_structure(batch)
+        else:
+            self.hot_state.import_lane(lane, world, self.topology)
+            batch.refresh_beliefs_from_world(lane)
+        self.policy_boundaries += 1
+
+    def _maybe_start_recruitment(self, simulation: Any, time: float) -> None:
+        if getattr(simulation, "_recruitment_clock_started", False):
+            return
+        if not any(
+            organization.kind is OrganizationKind.INSURGENT
+            and organization.status == "active"
+            for organization in simulation.world.organizations.values()
+        ):
+            return
+        interval = simulation.world.config.intervals.recruitment
+        simulation.scheduler.schedule(
+            float(time),
+            "recruitment",
+            {"interval": interval, "elapsed_days": 0.0},
+            priority=60,
+        )
+        simulation._recruitment_clock_started = True
+
+    def _execute_reference_event(
+        self,
+        batch: "ParticleBatchState",
+        lane: int,
+        event: Any,
+    ) -> None:
+        """Execute exactly one explicitly sparse ProcessEngine event."""
+        simulation = _particle_simulation(batch.particles[lane])
+        batch.times[lane] = float(event.time)
+        batch.synchronize_lane_to_world(lane)
+        world = simulation.world
+        world.time = float(event.time)
+        simulation.processes.execute(event)
+        self.sparse_boundaries += 1
+        self.event_counts[event.event_type] = (
+            self.event_counts.get(event.event_type, 0) + 1
+        )
+        if self._structure_changed(world):
+            self._rebuild_structure(batch)
+        else:
+            self.hot_state.import_lane(lane, world, self.topology)
+            batch.refresh_beliefs_from_world(lane)
+
+    def _schedule_organized_actions(
+        self,
+        simulation: Any,
+        lane: int,
+        current_time: float,
+        *,
+        interval_days: float,
+        realization_time: float,
+    ) -> int:
+        """Schedule action opportunities from packed local capacity.
+
+        Iteration is by the same sorted organization/locality IDs used by the
+        reference scheduler, preserving same-time sequence order.
+        """
+        scheduled = 0
+        for organization_id in self.hot_state.organization_ids:
+            organization = self.hot_state.organization_index[organization_id]
+            oo = self.hot_state._oo(lane, organization)
+            if (
+                not self.hot_state.organization_present[oo]
+                or not self.hot_state.organization_active[oo]
+                or not self.hot_state.organization_action_eligible[oo]
+            ):
+                continue
+            for locality_id in sorted(self.hot_state.locality_ids):
+                locality = self.topology.locality_index[locality_id]
+                unfielded, fielded = self.hot_state.local_fighter_equivalents(
+                    lane, organization, locality
+                )
+                if unfielded + fielded <= 0.0:
+                    continue
+                simulation.scheduler.schedule(
+                    float(realization_time),
+                    "organized_action",
+                    {
+                        "organization_id": organization_id,
+                        "locality_id": locality_id,
+                        "interval_days": float(interval_days),
+                    },
+                    priority=18,
+                )
+                scheduled += 1
+        self.action_opportunities += scheduled
+        return scheduled
+
+    def _organized_action_event(
+        self,
+        batch: "ParticleBatchState",
+        lane: int,
+        event: Any,
+    ) -> bool:
+        """Handle the dominant no-action path without materializing a world.
+
+        Returns True when the complete event was handled in packed state. If an
+        action opportunity realizes, the RNG is restored and False is returned
+        so the exact reference consequence handler consumes the same draw and
+        all subsequent channel/consequence draws.
+        """
+        from .world import seeded_rng
+
+        simulation = _particle_simulation(batch.particles[lane])
+        world = simulation.world
+        organization_id = str(event.payload["organization_id"])
+        locality_id = str(event.payload["locality_id"])
+        organization = self.hot_state.organization_index.get(organization_id)
+        locality = self.topology.locality_index.get(locality_id)
+        if organization is None or locality is None:
+            return False
+        oo = self.hot_state._oo(lane, organization)
+        if (
+            not self.hot_state.organization_present[oo]
+            or not self.hot_state.organization_active[oo]
+            or not self.hot_state.organization_action_eligible[oo]
+        ):
+            self._consume_packed_process_event(simulation, "organized_action")
+            self.packed_noop_actions += 1
+            return True
+        self.hot_state.advance_patrol_presence(
+            lane, float(event.time), self.topology
+        )
+        interval_days = max(
+            0.0, float(event.payload.get("interval_days", 1.0))
+        )
+        hazard = self.hot_state.action_attempt_hazard(
+            lane, organization, locality
+        )
+        unfielded, fielded = self.hot_state.local_fighter_equivalents(
+            lane, organization, locality
+        )
+        if unfielded + fielded <= 0.0:
+            world.record_activity_hazard(
+                time=float(event.time),
+                locality_id=locality_id,
+                hazard_per_day=hazard,
+                interval_days=interval_days,
+            )
+            self._consume_packed_process_event(simulation, "organized_action")
+            self.packed_noop_actions += 1
+            return True
+        probability = self.hot_state.action_attempt_probability(
+            lane, organization, locality, interval_days
+        )
+        process_engine = simulation.processes
+        rng = process_engine._process_rngs.setdefault(
+            "organized_action",
+            seeded_rng(
+                world.config,
+                process_engine._stream_name("process:organized_action"),
+            ),
+        )
+        before = rng.getstate()
+        draw = rng.random()
+        if draw >= probability:
+            # Successful attempts are handed to the reference realization
+            # handler, which records this same exposure. Record it here only
+            # when the whole no-op event remains packed.
+            world.record_activity_hazard(
+                time=float(event.time),
+                locality_id=locality_id,
+                hazard_per_day=hazard,
+                interval_days=interval_days,
+            )
+            states = list(
+                self.hot_state.rng_states.get(
+                    "organized_action",
+                    (None,) * self.hot_state.particle_count,
+                )
+            )
+            states[lane] = rng.getstate()
+            self.hot_state.rng_states["organized_action"] = tuple(states)
+            self._consume_packed_process_event(simulation, "organized_action")
+            self.packed_noop_actions += 1
+            return True
+        # Let the reference handler realize the action from the exact pre-draw
+        # RNG state. It will repeat this successful draw and then consume
+        # channel/target/consequence randomness in the canonical order.
+        rng.setstate(before)
+        self.realized_action_boundaries += 1
+        return False
 
     def _information_boundary(
         self, batch: "ParticleBatchState", lane: int, time: float
@@ -1414,6 +1840,7 @@ class NativeEnsembleRunner:
         from .world import seeded_rng
 
         process_engine = simulation.processes
+        process_engine.event_counter += 1
         rng = process_engine._process_rngs.setdefault(
             "information",
             seeded_rng(
@@ -1421,8 +1848,12 @@ class NativeEnsembleRunner:
                 process_engine._stream_name("process:information"),
             ),
         )
+        process_engine.rng = rng
         world.time = float(time)
         process_information_numeric(world, float(time), rng)
+        if world.execution_profile == "particle":
+            world.compact_particle_information_state()
+        world.active_event_id = None
         batch.refresh_beliefs_from_world(lane)
         states = list(
             self.hot_state.rng_states.get(
@@ -1432,6 +1863,9 @@ class NativeEnsembleRunner:
         states[lane] = rng.getstate()
         self.hot_state.rng_states["information"] = tuple(states)
         self.information_boundaries += 1
+        self.event_counts["information"] = (
+            self.event_counts.get("information", 0) + 1
+        )
 
     def _sparse(
         self,
@@ -1453,6 +1887,189 @@ class NativeEnsembleRunner:
             self.hot_state.import_lane(lane, world, self.topology)
             batch.refresh_beliefs_from_world(lane)
 
+    def _advance_scheduler_oracle(
+        self,
+        batch: "ParticleBatchState",
+        end_time: float,
+    ) -> None:
+        """Advance exact scheduler order while executing migrated islands packed."""
+        if not batch.particles:
+            raise RuntimeError(
+                "scheduler-oracle execution needs retained particle views"
+            )
+        simulations = [
+            self._initialize_lane(batch, lane)
+            for lane in range(batch.particle_count)
+        ]
+        while True:
+            next_time = inf
+            lanes: list[int] = []
+            for lane, simulation in enumerate(simulations):
+                candidate = simulation.scheduler.peek_time()
+                if candidate is None:
+                    continue
+                candidate = float(candidate)
+                if candidate < next_time - 1e-12:
+                    next_time = candidate
+                    lanes = [lane]
+                elif abs(candidate - next_time) <= 1e-12:
+                    lanes.append(lane)
+            if next_time == inf or next_time > end_time + 1e-12:
+                break
+
+            # Particle lanes are independent. Within each lane, consume every
+            # event at this timestamp in exact scheduler priority/sequence
+            # order, including events newly scheduled at the same timestamp.
+            for lane in lanes:
+                simulation = simulations[lane]
+                while (
+                    simulation.scheduler.peek_time() is not None
+                    and abs(
+                        float(simulation.scheduler.peek_time()) - next_time
+                    ) <= 1e-12
+                ):
+                    event = simulation.scheduler.pop_next()
+                    if (
+                        event.event_type == "checkpoint"
+                        and not simulation._checkpointing
+                    ):
+                        continue
+                    batch.times[lane] = float(event.time)
+                    self._apply_policy_if_due(
+                        batch, lane, float(event.time)
+                    )
+
+                    if event.event_type == "contact_scan":
+                        interval = float(event.payload["interval"])
+                        exposure_days = min(
+                            interval,
+                            max(0.0, end_time - float(event.time)),
+                        )
+                        if exposure_days > 0.0:
+                            if (
+                                simulation.world.config.combat
+                                .organized_action_architecture
+                                == "multichannel_v5"
+                            ):
+                                self._schedule_organized_actions(
+                                    simulation,
+                                    lane,
+                                    float(event.time),
+                                    interval_days=exposure_days,
+                                    realization_time=(
+                                        float(event.time) + exposure_days
+                                    ),
+                                )
+                            else:
+                                # Legacy contact architecture is not a hot
+                                # Phase-A target. Preserve it as an explicit
+                                # sparse scheduler boundary.
+                                batch.synchronize_lane_to_world(lane)
+                                simulation.world.time = float(event.time)
+                                simulation._schedule_contacts(
+                                    float(event.time),
+                                    interval_days=exposure_days,
+                                    realization_time=(
+                                        float(event.time) + exposure_days
+                                    ),
+                                )
+                                self.sparse_boundaries += 1
+                        simulation._reschedule(
+                            event.event_type,
+                            event.payload,
+                            float(event.time),
+                        )
+                        self.event_counts["contact_scan"] = (
+                            self.event_counts.get("contact_scan", 0) + 1
+                        )
+                        continue
+
+                    if event.event_type == "physical_refresh":
+                        if (
+                            self.enable_physical_island
+                            and self.hot_state.active_insurgent_count(lane) <= 1
+                        ):
+                            self.hot_state.recompute_physical_lane(
+                                lane, float(event.time), self.topology
+                            )
+                            self._consume_packed_process_event(
+                                simulation, "physical_refresh"
+                            )
+                            self.physical_refreshes += 1
+                        else:
+                            self._execute_reference_event(
+                                batch, lane, event
+                            )
+                        self._maybe_start_recruitment(
+                            simulation, float(event.time)
+                        )
+                        simulation._reschedule(
+                            event.event_type,
+                            event.payload,
+                            float(event.time),
+                        )
+                        continue
+
+                    if event.event_type == "information":
+                        if self.enable_information_boundary:
+                            self._information_boundary(
+                                batch, lane, float(event.time)
+                            )
+                        else:
+                            self._execute_reference_event(
+                                batch, lane, event
+                            )
+                        self._maybe_start_recruitment(
+                            simulation, float(event.time)
+                        )
+                        simulation._reschedule(
+                            event.event_type,
+                            event.payload,
+                            float(event.time),
+                        )
+                        continue
+
+                    if event.event_type == "organized_action":
+                        handled = (
+                            self._organized_action_event(
+                                batch, lane, event
+                            )
+                            if self.enable_action_noop_island
+                            else False
+                        )
+                        if not handled:
+                            self._execute_reference_event(
+                                batch, lane, event
+                            )
+                        self._maybe_start_recruitment(
+                            simulation, float(event.time)
+                        )
+                        # Organized-action realization events are one-shot.
+                        continue
+
+                    # Every other event is named, counted, and crosses the
+                    # explicit reference boundary one event at a time. This is
+                    # categorically different from calling Simulation.run().
+                    self._execute_reference_event(batch, lane, event)
+                    self._maybe_start_recruitment(
+                        simulation, float(event.time)
+                    )
+                    simulation._reschedule(
+                        event.event_type,
+                        event.payload,
+                        float(event.time),
+                    )
+
+        # Calendar boundary semantics match Simulation.run: close continuous
+        # patrol exposure through the requested horizon without manufacturing
+        # another discrete event.
+        for lane, simulation in enumerate(simulations):
+            self.hot_state.advance_patrol_presence(
+                lane, end_time, self.topology
+            )
+            batch.times[lane] = float(end_time)
+            simulation.world.time = float(end_time)
+
     def advance(
         self,
         batch: "ParticleBatchState",
@@ -1464,6 +2081,9 @@ class NativeEnsembleRunner:
         end_time = float(end_time)
         if end_time < min(batch.times) - 1e-12:
             raise ValueError("native ensemble cannot move backward")
+        if self.scheduler_oracle and batch.particles:
+            self._advance_scheduler_oracle(batch, end_time)
+            return
         while True:
             next_time = inf
             next_name = None

@@ -19,6 +19,10 @@ from pineland_sim.action_model import action_attempt_hazard
 from pineland_sim.entities import OrganizationKind
 from pineland_sim.native_ensemble import GOVERNMENT_SIDE, INSURGENT_SIDE
 from pineland_sim.physical import recompute_contested_controls, response_times
+from pineland_sim.reproducibility import (
+    decision_state_sha256,
+    simulation_execution_sha256,
+)
 
 
 def _particle(seed: int = 92001) -> SimulationParticle:
@@ -32,6 +36,26 @@ def _particle(seed: int = 92001) -> SimulationParticle:
         )
     )
     return SimulationParticle(Simulation(world))
+
+
+def _ensemble_particle(seed: int = 92101) -> SimulationParticle:
+    world = generate_pineland(
+        SimulationConfig(
+            seed=seed,
+            agent_count=80,
+            locality_count=17,
+            horizon_days=2.0,
+            output_mode="ensemble",
+        )
+    )
+    simulation = Simulation(world)
+    simulation.configure_execution(
+        execution_backend="ensemble",
+        validate_invariants=False,
+        checkpointing=False,
+        retain_output_archives=False,
+    )
+    return SimulationParticle(simulation)
 
 
 def _disable_sparse_clocks(batch: ParticleBatchState) -> None:
@@ -157,7 +181,9 @@ def test_native_runner_never_calls_particle_advance_to() -> None:
     batch = ParticleBatchState.from_particles([first, second])
     _disable_sparse_clocks(batch)
     runner = NativeEnsembleRunner.from_batch(
-        batch, enable_information_boundary=False
+        batch,
+        enable_information_boundary=False,
+        scheduler_oracle=False,
     )
     with patch.object(
         SimulationParticle,
@@ -180,7 +206,9 @@ def test_native_runner_exposes_nonmigrated_boundary_instead_of_fallback() -> Non
     batch.hot_state.next_clocks["logistics"][0] = math.inf
     batch.hot_state.next_clocks["force_movement"][0] = 0.0
     runner = NativeEnsembleRunner.from_batch(
-        batch, enable_information_boundary=False
+        batch,
+        enable_information_boundary=False,
+        scheduler_oracle=False,
     )
     with pytest.raises(RuntimeError, match="non-migrated"):
         batch.advance_to(0.0, runner=runner)
@@ -192,8 +220,11 @@ def test_packed_filter_can_own_native_runner() -> None:
     filter_ = PackedParticleFilter.from_particles(
         [first, second],
         rng=random.Random(1),
-        native_runner=True,
+        native_runner=False,
     )
+    filter_.enable_native_runner(
+        enable_information_boundary=False,
+    ).scheduler_oracle = False
     _disable_sparse_clocks(filter_.batch)
     with patch.object(
         SimulationParticle,
@@ -213,8 +244,51 @@ def test_native_runner_rejects_backward_time() -> None:
     batch = ParticleBatchState.from_particles([particle])
     _disable_sparse_clocks(batch)
     runner = NativeEnsembleRunner.from_batch(
-        batch, enable_information_boundary=False
+        batch,
+        enable_information_boundary=False,
+        scheduler_oracle=False,
     )
     batch.times[0] = 1.0
     with pytest.raises(ValueError, match="backward"):
         runner.advance(batch, 1.0, 0.5)
+
+
+def test_scheduler_oracle_matches_reference_world_and_future_execution() -> None:
+    reference = _ensemble_particle(92102)
+    native = _ensemble_particle(92102)
+    batch = ParticleBatchState.from_particles([native])
+    runner = NativeEnsembleRunner.from_batch(batch)
+
+    for horizon in (0.25, 0.5, 1.0):
+        reference.advance_to(horizon)
+        batch.advance_to(horizon, runner=runner)
+        batch.synchronize_lane_to_world(0)
+        assert decision_state_sha256(native.world) == decision_state_sha256(
+            reference.world
+        )
+        assert simulation_execution_sha256(
+            native.simulation,
+            lineage_id=native.lineage_id,
+        ) == simulation_execution_sha256(
+            reference.simulation,
+            lineage_id=reference.lineage_id,
+        )
+
+
+def test_scheduler_oracle_retains_dynamically_created_belief_keys() -> None:
+    reference = _ensemble_particle(92103)
+    native = _ensemble_particle(92103)
+    batch = ParticleBatchState.from_particles([native])
+    initial_node_keys = set(batch.node_presence_state.keys)
+    runner = NativeEnsembleRunner.from_batch(batch)
+
+    reference.advance_to(0.25)
+    batch.advance_to(0.25, runner=runner)
+    batch.synchronize_lane_to_world(0)
+
+    created = set(native.world.node_presence_beliefs) - initial_node_keys
+    assert created
+    assert created.issubset(set(batch.node_presence_state.keys))
+    assert decision_state_sha256(native.world) == decision_state_sha256(
+        reference.world
+    )

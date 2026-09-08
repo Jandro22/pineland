@@ -3406,6 +3406,86 @@ class ParticleBatchState:
             CompactZoneBeliefState,
         )
 
+        def ensure_keys(
+            state: EnsembleBeliefState,
+            incoming: Iterable[tuple[str, ...]],
+            *,
+            prior_confidence: float,
+        ) -> None:
+            merged = tuple(sorted(set(state.keys).union(
+                tuple(tuple(str(item) for item in key) for key in incoming)
+            )))
+            if merged == state.keys:
+                return
+            old_keys = state.keys
+            old_index = dict(state.key_to_index)
+            old_state = state.state
+            expanded = array("d")
+            default = _default_row(
+                state.stride,
+                prior_confidence=prior_confidence,
+            )
+            for lane in range(state.particle_count):
+                for key in merged:
+                    prior_index = old_index.get(key)
+                    if prior_index is None:
+                        expanded.extend(default)
+                        continue
+                    start = (
+                        lane * len(old_keys) + prior_index
+                    ) * state.stride
+                    expanded.extend(
+                        old_state[start:start + state.stride]
+                    )
+            state.keys = merged
+            state.key_to_index = {
+                key: index for index, key in enumerate(merged)
+            }
+            state.state = expanded
+            state.compact_backing = None
+
+        prior_confidence = world.config.information.prior_confidence
+        compact_control = getattr(world, "compact_control_state", None)
+        ensure_keys(
+            self.control_state,
+            (
+                tuple(compact_control.keys)
+                if compact_control is not None
+                else tuple(world.control_beliefs)
+            ),
+            prior_confidence=prior_confidence,
+        )
+        compact_presence = getattr(world, "compact_presence_state", None)
+        ensure_keys(
+            self.presence_state,
+            (
+                tuple(compact_presence.keys)
+                if compact_presence is not None
+                else tuple(world.presence_beliefs)
+            ),
+            prior_confidence=prior_confidence,
+        )
+        compact_node = getattr(world, "compact_node_presence_state", None)
+        ensure_keys(
+            self.node_presence_state,
+            (
+                tuple(compact_node.keys)
+                if compact_node is not None
+                else tuple(world.node_presence_beliefs)
+            ),
+            prior_confidence=prior_confidence,
+        )
+        compact_zone = getattr(world, "compact_zone_state", None)
+        ensure_keys(
+            self.zone_state,
+            (
+                tuple(compact_zone.keys)
+                if compact_zone is not None
+                else tuple(world.zone_beliefs)
+            ),
+            prior_confidence=prior_confidence,
+        )
+
         def write_rows(
             state: EnsembleBeliefState,
             compact: Any,
@@ -3423,7 +3503,7 @@ class ParticleBatchState:
                     particle_index * state.entity_count + state.key_to_index[key]
                 ) * state.stride
                 for field_index, value in enumerate(row):
-                    state.values[base + field_index] = float(value)
+                    state.state[base + field_index] = float(value)
 
         write_rows(
             self.control_state,
@@ -3450,79 +3530,162 @@ class ParticleBatchState:
             CompactZoneBeliefState._belief_row,
         )
 
-    def synchronize_to_worlds(self) -> None:
-        """Mirror packed rows into legacy objects at an explicit boundary."""
+    def synchronize_lane_to_world(
+        self,
+        particle_index: int,
+        *,
+        include_hot_state: bool = True,
+    ) -> None:
+        """Mirror one packed lane into its Python reference/view world.
+
+        Native ensemble sparse boundaries call this instead of synchronizing
+        every particle.  The reference objects remain a boundary representation
+        rather than the hot execution substrate.
+        """
         if not self.particles:
-            return
+            raise RuntimeError("lane synchronization needs retained Python views")
+        particle_index = int(particle_index)
+        if not 0 <= particle_index < self.particle_count:
+            raise IndexError(particle_index)
         from .compact_information_state import (
             CompactControlBeliefState, CompactPresenceBeliefState, CompactZoneBeliefState,
         )
         from .entities import ActorBelief, PresenceBelief, ActorZoneBelief
-        for particle_index, particle in enumerate(self.particles):
-            world = particle.world
-            # Controls
+        particle = self.particles[particle_index]
+        world = particle.world
+        compact = getattr(world, "compact_control_state", None)
+        if compact is None:
             compact = CompactControlBeliefState(
-                self.control_state.keys,
-                array("d", (
-                    value
-                    for key in self.control_state.keys
-                    for value in self.control_state.row(particle_index, key)
-                )),
+                (),
+                array("d"),
             )
-            for key in self.control_state.keys:
-                if key not in world.control_beliefs:
-                    world.control_beliefs[key] = ActorBelief(
-                        key[0], key[2], ControlVector(*([0.5] * 7)),
-                        world.config.information.prior_confidence, 0.0,
+        for key in self.control_state.keys:
+            if key not in world.control_beliefs:
+                world.control_beliefs[key] = ActorBelief(
+                    key[0], key[2], ControlVector(*([0.5] * 7)),
+                    world.config.information.prior_confidence, 0.0,
+                )
+            compact.ensure(key, world.control_beliefs[key])
+            # Materialize first so pending lazy-decay events are marked
+            # consumed before replacing the row with authoritative packed
+            # values. Otherwise the next read would apply the same decay twice.
+            materialize = getattr(compact, "materialize", None)
+            if callable(materialize):
+                materialize(key)
+            packed_start = self.control_state.offset(particle_index, key)
+            compact_start = compact.index(key) * self.control_state.stride
+            compact.state[
+                compact_start:compact_start + self.control_state.stride
+            ] = self.control_state.state[
+                packed_start:packed_start + self.control_state.stride
+            ]
+        world.compact_control_state = compact
+        for key in self.control_state.keys:
+            compact.write_to_belief(key, world.control_beliefs[key])
+
+        def sync_presence(
+            state: EnsembleBeliefState,
+            attribute: str,
+            *,
+            node: bool = False,
+        ) -> None:
+            compact_attribute = (
+                "compact_node_presence_state"
+                if node else "compact_presence_state"
+            )
+            compact_presence = getattr(world, compact_attribute, None)
+            if compact_presence is None:
+                compact_presence = CompactPresenceBeliefState(
+                    (),
+                    array("d"),
+                )
+                compact_presence.configure_decay(
+                    world.config.information.default_decay_rate,
+                    world.config.information.formation_decay_rate,
+                )
+                compact_presence.set_decay_clock(
+                    world.last_information_decay_at
+                )
+            target = getattr(world, attribute)
+            for key in state.keys:
+                if key not in target:
+                    location = key[2].split(":", 1)
+                    locality_id = location[0]
+                    microzone_id = (
+                        None
+                        if len(location) == 1 or location[1] == "*"
+                        else location[1]
                     )
-            world.compact_control_state = compact
-            for key in self.control_state.keys:
-                compact.write_to_belief(key, world.control_beliefs[key])
-
-            def sync_presence(state: EnsembleBeliefState, attribute: str, cls_type: Any, node: bool = False):
-                compact = CompactPresenceBeliefState(
-                    state.keys,
-                    array("d", (
-                        value
-                        for key in state.keys
-                        for value in state.row(particle_index, key)
-                    )),
-                )
-                target = getattr(world, attribute)
-                for key in state.keys:
-                    if key not in target:
-                        location = key[2].split(":", 1)
-                        locality_id = location[0]
-                        microzone_id = None if len(location) == 1 or location[1] == "*" else location[1]
-                        target[key] = PresenceBelief(
-                            key[0], key[1], locality_id, microzone_id=microzone_id,
-                            target_id=None if key[3] == "*" else key[3],
-                            confidence=world.config.information.prior_confidence,
-                        )
-                setattr(world, "compact_node_presence_state" if node else "compact_presence_state", compact)
-                for key in state.keys:
-                    compact.write_to_belief(key, target[key])
-
-            sync_presence(self.presence_state, "presence_beliefs", PresenceBelief)
-            sync_presence(self.node_presence_state, "node_presence_beliefs", PresenceBelief, node=True)
-            compact_zone = CompactZoneBeliefState(
-                self.zone_state.keys,
-                array("d", (
-                    value
-                    for key in self.zone_state.keys
-                    for value in self.zone_state.row(particle_index, key)
-                )),
+                    target[key] = PresenceBelief(
+                        key[0], key[1], locality_id,
+                        microzone_id=microzone_id,
+                        target_id=None if key[3] == "*" else key[3],
+                        confidence=world.config.information.prior_confidence,
+                    )
+                compact_presence.ensure(key, target[key])
+                compact_presence.materialize(key)
+                packed_start = state.offset(particle_index, key)
+                compact_start = compact_presence.index(key) * state.stride
+                compact_presence.state[
+                    compact_start:compact_start + state.stride
+                ] = state.state[
+                    packed_start:packed_start + state.stride
+                ]
+            setattr(
+                world,
+                compact_attribute,
+                compact_presence,
             )
-            for key in self.zone_state.keys:
-                if key not in world.zone_beliefs:
-                    world.zone_beliefs[key] = ActorZoneBelief(key[0], key[1], 0.5, world.config.information.prior_confidence, 0.0)
-                compact_zone.write_to_belief(key, world.zone_beliefs[key])
-            world.compact_zone_state = compact_zone
-            if self.hot_state is not None:
-                self.hot_state.export_lane_to_world(
-                    particle_index, world, self.topology
+            for key in state.keys:
+                compact_presence.write_to_belief(key, target[key])
+
+        sync_presence(self.presence_state, "presence_beliefs")
+        sync_presence(
+            self.node_presence_state,
+            "node_presence_beliefs",
+            node=True,
+        )
+        compact_zone = getattr(world, "compact_zone_state", None)
+        if compact_zone is None:
+            compact_zone = CompactZoneBeliefState(
+                (),
+                array("d"),
+            )
+            compact_zone.configure_decay(
+                world.config.information.formation_decay_rate
+            )
+            compact_zone.set_decay_clock(world.last_information_decay_at)
+        for key in self.zone_state.keys:
+            if key not in world.zone_beliefs:
+                world.zone_beliefs[key] = ActorZoneBelief(
+                    key[0], key[1], 0.5,
+                    world.config.information.prior_confidence, 0.0,
                 )
-            world.time = float(self.times[particle_index])
+            compact_zone.ensure(key, world.zone_beliefs[key])
+            compact_zone.materialize(key)
+            packed_start = self.zone_state.offset(particle_index, key)
+            compact_start = (
+                compact_zone.index(key) * self.zone_state.stride
+            )
+            compact_zone.state[
+                compact_start:compact_start + self.zone_state.stride
+            ] = self.zone_state.state[
+                packed_start:packed_start + self.zone_state.stride
+            ]
+            compact_zone.write_to_belief(key, world.zone_beliefs[key])
+        world.compact_zone_state = compact_zone
+        if include_hot_state and self.hot_state is not None:
+            self.hot_state.export_lane_to_world(
+                particle_index, world, self.topology
+            )
+        world.time = float(self.times[particle_index])
+
+    def synchronize_to_worlds(self) -> None:
+        """Mirror packed rows into legacy objects at an explicit boundary."""
+        if not self.particles:
+            return
+        for particle_index in range(self.particle_count):
+            self.synchronize_lane_to_world(particle_index)
 
     def state_sha256(self) -> str:
         digest = hashlib.sha256()
@@ -3534,13 +3697,16 @@ class ParticleBatchState:
         if self.hot_state is not None:
             for name in (
                 "organization_present", "organization_active",
-                "organization_kind", "formation_present",
+                "organization_kind", "organization_action_eligible",
+                "formation_present",
                 "formation_organization", "formation_locality",
                 "formation_microzone", "formation_values", "formation_flags",
                 "manpower_pool", "manpower_supply_reserve",
                 "supply_source_stock", "post_values", "post_indices",
                 "patrol_values", "patrol_indices", "zone_presence_memory",
                 "zone_presence_updated_at", "zone_physical_control",
+                "zone_insurgent_side_raw",
+                "locality_population",
                 "config_values",
             ):
                 digest.update(getattr(self.hot_state, name).tobytes())
@@ -3762,7 +3928,28 @@ class PackedParticleFilter:
         if resampled:
             parents = tuple(systematic_resample_indices(posterior, self.rng))
             unique = len(set(parents))
-            self.batch.gather(parents)
+            requires_reference_lineages = bool(
+                active_runner is not None
+                and getattr(
+                    active_runner,
+                    "requires_reference_lineages",
+                    False,
+                )
+            )
+            if requires_reference_lineages:
+                # Scheduler queues, per-process RNG streams and policy-hook
+                # cursors are cold execution metadata rather than packed world
+                # state. Materialize them only at the resampling boundary and
+                # fork independent child lineages before propagation resumes.
+                self.batch.synchronize_to_worlds()
+            self.batch.gather(
+                parents,
+                clone_reference_states=requires_reference_lineages,
+            )
+            if requires_reference_lineages:
+                active_runner.initialized_lanes = set(
+                    range(self.batch.particle_count)
+                )
             self.resampling_events += 1
         result = PackedFilterUpdate(
             float(until), prior_ess, posterior_ess, max(posterior),
