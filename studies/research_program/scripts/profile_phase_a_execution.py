@@ -31,12 +31,12 @@ from pineland_sim.reproducibility import model_sha256, repository_state  # noqa:
 
 def _run_once(seed: int) -> dict[str, Any]:
     particles = []
-    for offset in range(8):
+    for offset in range(4):
         config = SimulationConfig(
             seed=seed + offset,
             agent_count=80,
             locality_count=17,
-            horizon_days=14.0,
+            horizon_days=7.0,
             output_mode="ensemble",
         )
         simulation = Simulation(generate_pineland(config))
@@ -52,7 +52,7 @@ def _run_once(seed: int) -> dict[str, Any]:
     profiler = cProfile.Profile()
     start = time.perf_counter()
     profiler.enable()
-    batch.advance_to(14.0, runner=runner)
+    batch.advance_to(7.0, runner=runner)
     profiler.disable()
     wall = time.perf_counter() - start
 
@@ -96,8 +96,8 @@ def _run_once(seed: int) -> dict[str, Any]:
         })
     return {
         "seed": seed,
-        "particles": 8,
-        "horizon_days": 14.0,
+        "particles": 4,
+        "horizon_days": 7.0,
         "wall_seconds": wall,
         "profile_cpu_seconds": total_profile_cpu,
         "domain_self_seconds": dict(sorted(domain_totals.items())),
@@ -127,8 +127,8 @@ def run(output: Path) -> dict[str, Any]:
         "study_id": "phase_a_execution_profile_v1",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "protocol": {
-            "particles": 8,
-            "horizon_days": 14.0,
+            "particles": 4,
+            "horizon_days": 7.0,
             "repeats": 3,
             "accounting_rule": "Every cProfile self-time record is assigned to exactly one domain; no migration is selected from intuition alone.",
         },
