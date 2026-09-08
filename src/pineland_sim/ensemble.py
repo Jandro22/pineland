@@ -3807,6 +3807,27 @@ class ParticleBatchState:
         for particle_index in range(self.particle_count):
             self.synchronize_lane_to_world(particle_index)
 
+    def synchronize_hot_lane_to_world(self, particle_index: int) -> None:
+        """Export only mutable entity/physical state before a sparse handler.
+
+        Patrol handlers read formations, patrols, supply, and manpower, while
+        their numeric information path owns belief updates and is refreshed
+        after the handler.  Avoiding a redundant full belief-codebook write at
+        this boundary preserves the same reference semantics and removes a
+        measured synchronization bottleneck.
+        """
+        if not self.particles:
+            raise RuntimeError("lane synchronization needs retained Python views")
+        particle_index = int(particle_index)
+        if not 0 <= particle_index < self.particle_count:
+            raise IndexError(particle_index)
+        world = self.particles[particle_index].world
+        if self.hot_state is not None:
+            self.hot_state.export_lane_to_world(
+                particle_index, world, self.topology
+            )
+        world.time = float(self.times[particle_index])
+
     def state_sha256(self) -> str:
         digest = hashlib.sha256()
         digest.update(self.topology.signature.__repr__().encode())

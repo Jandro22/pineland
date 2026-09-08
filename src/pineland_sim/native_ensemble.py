@@ -1685,7 +1685,10 @@ class NativeEnsembleRunner:
         """Execute exactly one explicitly sparse ProcessEngine event."""
         simulation = _particle_simulation(batch.particles[lane])
         batch.times[lane] = float(event.time)
-        batch.synchronize_lane_to_world(lane)
+        if event.event_type == "patrol":
+            batch.synchronize_hot_lane_to_world(lane)
+        else:
+            batch.synchronize_lane_to_world(lane)
         world = simulation.world
         world.time = float(event.time)
         simulation.processes.execute(event)

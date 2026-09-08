@@ -100,6 +100,7 @@ def run(
     particle_count: int = PARTICLES,
     weeks: int = WEEKS,
     branches: int = BRANCHES,
+    balance_resampling: bool = True,
 ) -> dict:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite existing benchmark evidence: {output}")
@@ -128,7 +129,7 @@ def run(
             workers=workers,
             resident_pool=pool,
             keep_resident=True,
-            balance_resampling=False,
+            balance_resampling=balance_resampling,
             packed_execution=True,
         )
         summaries = dict(pool.summarize())
@@ -213,6 +214,7 @@ def main() -> int:
     parser.add_argument("--particles", type=int, default=PARTICLES)
     parser.add_argument("--weeks", type=int, default=WEEKS)
     parser.add_argument("--branches", type=int, default=BRANCHES)
+    parser.add_argument("--unbalanced-resampling", action="store_true")
     args = parser.parse_args()
     run(
         output=args.output.resolve(),
@@ -221,6 +223,7 @@ def main() -> int:
         particle_count=args.particles,
         weeks=args.weeks,
         branches=args.branches,
+        balance_resampling=not args.unbalanced_resampling,
     )
     return 0
 

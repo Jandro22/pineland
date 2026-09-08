@@ -43,7 +43,7 @@ BRANCH_EQUIVALENTS = 3
 HORIZON_DAYS = 7.0 * WEEKLY_BOUNDARIES
 BASE_SEED = 20050111
 WORKERS = 16
-BALANCE_RESAMPLING = False
+BALANCE_RESAMPLING = True
 PWB_PER_REPEAT = PARTICLES * WEEKLY_BOUNDARIES * BRANCH_EQUIVALENTS
 
 
@@ -58,6 +58,8 @@ def _run_repeat(repeat_index: int, *, workers: int) -> dict[str, Any]:
             "--workers", str(workers),
             "--output", str(raw_output),
         ]
+        if not BALANCE_RESAMPLING:
+            command.append("--unbalanced-resampling")
         started = time.perf_counter()
         completed = subprocess.run(command, check=False, capture_output=True, text=True)
         subprocess_wall = time.perf_counter() - started
@@ -101,11 +103,16 @@ def run(*, output: Path, repetitions: int, workers: int = WORKERS) -> dict[str, 
         horizon_days=max(60.0, HORIZON_DAYS),
         output_mode="ensemble",
     )
+    warmup = _run_repeat(-1, workers=workers)
     repeats = [
         _run_repeat(index, workers=workers) for index in range(repetitions)
     ]
     rates = [item["pwb_per_second"] for item in repeats]
     median_rate = statistics.median(rates)
+    mean_rate = statistics.mean(rates)
+    coefficient_of_variation = (
+        statistics.stdev(rates) / mean_rate if len(rates) > 1 and mean_rate else 0.0
+    )
     return {
         "schema_version": "1.0.0",
         "study_id": "phase_a_fixed_work_benchmark_v1",
@@ -116,6 +123,7 @@ def run(*, output: Path, repetitions: int, workers: int = WORKERS) -> dict[str, 
             "branch_equivalents": BRANCH_EQUIVALENTS,
             "pwb_per_repeat": PWB_PER_REPEAT,
             "repetitions": repetitions,
+            "warmup": warmup,
             "horizon_days": HORIZON_DAYS,
             "engine": "packed_nested_resident_filter",
             "workers": workers,
@@ -135,6 +143,7 @@ def run(*, output: Path, repetitions: int, workers: int = WORKERS) -> dict[str, 
             "median_pwb_per_second": median_rate,
             "min_pwb_per_second": min(rates),
             "max_pwb_per_second": max(rates),
+            "coefficient_of_variation": coefficient_of_variation,
             "E1_passed": median_rate >= 4.0,
             "E2_passed": median_rate >= 10.0,
             "passed": median_rate >= 4.0,
