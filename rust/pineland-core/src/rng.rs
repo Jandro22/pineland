@@ -36,6 +36,7 @@ pub enum RngError {
     EmptyPopulation,
     InvalidRange,
     InvalidSampleSize,
+    InvalidDistributionParameter,
 }
 
 impl fmt::Display for RngError {
@@ -45,6 +46,9 @@ impl fmt::Display for RngError {
             Self::EmptyPopulation => formatter.write_str("cannot draw from an empty population"),
             Self::InvalidRange => formatter.write_str("range must have a positive width"),
             Self::InvalidSampleSize => formatter.write_str("sample size is outside the population"),
+            Self::InvalidDistributionParameter => {
+                formatter.write_str("distribution parameters must be positive")
+            }
         }
     }
 }
@@ -362,6 +366,94 @@ impl PyRandomCompat {
                 return mean + z * standard_deviation;
             }
         }
+    }
+
+    /// Exact equivalent of CPython's `Random.lognormvariate` helper.
+    pub fn lognormvariate(&mut self, mean: f64, standard_deviation: f64) -> f64 {
+        self.normalvariate(mean, standard_deviation).exp()
+    }
+
+    /// Exact equivalent of CPython's `Random.expovariate` helper.
+    pub fn expovariate(&mut self, lambd: f64) -> Result<f64, RngError> {
+        if lambd == 0.0 || !lambd.is_finite() {
+            return Err(RngError::InvalidDistributionParameter);
+        }
+        Ok(-(1.0 - self.random()).ln() / lambd)
+    }
+
+    /// Exact equivalent of CPython's `Random.gammavariate` helper for the
+    /// parameter ranges used by Pineland's generator and certification suite.
+    pub fn gammavariate(&mut self, alpha: f64, beta: f64) -> Result<f64, RngError> {
+        if alpha <= 0.0 || beta <= 0.0 || !alpha.is_finite() || !beta.is_finite() {
+            return Err(RngError::InvalidDistributionParameter);
+        }
+
+        if alpha > 1.0 {
+            // R.C.H. Cheng, "The generation of Gamma variables with
+            // non-integral shape parameters", Applied Statistics (1977).
+            let ainv = (2.0 * alpha - 1.0).sqrt();
+            let bbb = alpha - 4.0f64.ln();
+            let ccc = alpha + ainv;
+            let sg_magicconst = 1.0 + 4.5f64.ln();
+            loop {
+                let u1 = self.random();
+                if !(1e-7 < u1 && u1 < 0.9999999) {
+                    continue;
+                }
+                let u2 = 1.0 - self.random();
+                let v = (u1 / (1.0 - u1)).ln() / ainv;
+                let x = alpha * v.exp();
+                let z = u1 * u1 * u2;
+                let r = bbb + ccc * v - x;
+                if r + sg_magicconst - 4.5 * z >= 0.0 || r >= z.ln() {
+                    return Ok(x * beta);
+                }
+            }
+        } else if alpha == 1.0 {
+            Ok(-(1.0 - self.random()).ln() * beta)
+        } else {
+            // Algorithm GS of Kennedy & Gentle for 0 < alpha < 1.
+            loop {
+                let u = self.random();
+                let b = (std::f64::consts::E + alpha) / std::f64::consts::E;
+                let p = b * u;
+                let x = if p <= 1.0 {
+                    p.powf(1.0 / alpha)
+                } else {
+                    -((b - p) / alpha).ln()
+                };
+                let u1 = self.random();
+                let accepted = if p > 1.0 {
+                    u1 <= x.powf(alpha - 1.0)
+                } else {
+                    u1 <= (-x).exp()
+                };
+                if accepted {
+                    return Ok(x * beta);
+                }
+            }
+        }
+    }
+
+    /// Exact equivalent of CPython's `Random.betavariate` helper.
+    pub fn betavariate(&mut self, alpha: f64, beta: f64) -> Result<f64, RngError> {
+        let y = self.gammavariate(alpha, 1.0)?;
+        if y != 0.0 {
+            Ok(y / (y + self.gammavariate(beta, 1.0)?))
+        } else {
+            Ok(0.0)
+        }
+    }
+
+    /// Fisher-Yates shuffle over an index/value slice.  The caller supplies
+    /// the values because the native core does not prescribe a Python object
+    /// population type.
+    pub fn shuffle_indices(&mut self, values: &mut [usize]) -> Result<(), RngError> {
+        for index in (1..values.len()).rev() {
+            let selected = self.randbelow(index + 1)?;
+            values.swap(index, selected);
+        }
+        Ok(())
     }
 
     pub fn clear_gauss_cache(&mut self) {

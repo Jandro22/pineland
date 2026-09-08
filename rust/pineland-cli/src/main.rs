@@ -18,6 +18,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+mod certification;
+mod scheduler_certification;
+
 const VERSION: &str = "1.0.0";
 
 fn main() {
@@ -54,6 +57,8 @@ fn dispatch() -> Result<(), String> {
         "inspect-checkpoint" => inspect_checkpoint(&arguments),
         "hash-state" => hash_state(&arguments),
         "benchmark" => benchmark(&arguments),
+        "certify-rng" => certification::certify_rng(&arguments),
+        "certify-scheduler" => scheduler_certification::certify_scheduler(&arguments),
         other => Err(format!(
             "unknown command '{other}'. Run `pineland help` for usage."
         )),
@@ -1010,6 +1015,8 @@ fn print_help() {
     println!("  inspect-checkpoint CHECKPOINT_DIR");
     println!("  hash-state [config.json|CHECKPOINT_DIR]");
     println!("  benchmark [config.json] --particles N --days N --threads N");
+    println!("  certify-rng [--state-file FILE --operation OP --draws N]");
+    println!("  certify-scheduler");
     println!("  version");
     println!();
     println!("Observations accept JSON arrays, {{\"observations\": [...]}} documents, or JSONL.");
