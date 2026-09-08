@@ -20,7 +20,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 1;
+pub const CHECKPOINT_VERSION: u32 = 2;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -125,7 +125,11 @@ impl CheckpointStore {
         put_u64_vec(&mut buffer, &particle.ancestry);
         encode_locality(&mut buffer, particle);
         encode_people(&mut buffer, particle);
+        encode_households(&mut buffer, particle);
+        encode_communities(&mut buffer, particle);
+        encode_social_edges(&mut buffer, particle);
         encode_zones(&mut buffer, particle);
+        encode_zone_beliefs(&mut buffer, particle);
         encode_organizations(&mut buffer, particle);
         encode_formations(&mut buffer, particle);
         encode_patrols(&mut buffer, particle);
@@ -133,6 +137,12 @@ impl CheckpointStore {
         encode_footholds(&mut buffer, particle);
         encode_beliefs(&mut buffer, particle);
         encode_logistics(&mut buffer, particle);
+        encode_command_edges(&mut buffer, particle);
+        encode_manpower(&mut buffer, particle);
+        encode_leaders(&mut buffer, particle);
+        encode_political(&mut buffer, particle);
+        encode_foreign(&mut buffer, particle);
+        encode_relations(&mut buffer, particle);
         encode_scheduler(&mut buffer, particle);
         encode_rng(&mut buffer, particle);
         encode_counters(&mut buffer, &particle.counters);
@@ -184,19 +194,38 @@ impl CheckpointStore {
         particle.weights_log = weights_log;
         particle.filter_boundary = filter_boundary;
         particle.ancestry = ancestry;
-        decode_locality(&mut reader, &mut particle)?;
-        decode_people(&mut reader, &mut particle)?;
-        decode_zones(&mut reader, &mut particle)?;
-        decode_organizations(&mut reader, &mut particle)?;
-        decode_formations(&mut reader, &mut particle)?;
-        decode_patrols(&mut reader, &mut particle)?;
-        decode_security_posts(&mut reader, &mut particle)?;
-        decode_footholds(&mut reader, &mut particle)?;
-        decode_beliefs(&mut reader, &mut particle)?;
-        decode_logistics(&mut reader, &mut particle)?;
-        decode_scheduler(&mut reader, &mut particle)?;
-        decode_rng(&mut reader, &mut particle)?;
-        decode_counters(&mut reader, &mut particle.counters)?;
+        decode_locality(&mut reader, &mut particle).map_err(|e| section_error("locality", e))?;
+        decode_people(&mut reader, &mut particle).map_err(|e| section_error("people", e))?;
+        decode_households(&mut reader, &mut particle)
+            .map_err(|e| section_error("households", e))?;
+        decode_communities(&mut reader, &mut particle)
+            .map_err(|e| section_error("communities", e))?;
+        decode_social_edges(&mut reader, &mut particle)
+            .map_err(|e| section_error("social_edges", e))?;
+        decode_zones(&mut reader, &mut particle).map_err(|e| section_error("zones", e))?;
+        decode_zone_beliefs(&mut reader, &mut particle)
+            .map_err(|e| section_error("zone_beliefs", e))?;
+        decode_organizations(&mut reader, &mut particle)
+            .map_err(|e| section_error("organizations", e))?;
+        decode_formations(&mut reader, &mut particle)
+            .map_err(|e| section_error("formations", e))?;
+        decode_patrols(&mut reader, &mut particle).map_err(|e| section_error("patrols", e))?;
+        decode_security_posts(&mut reader, &mut particle)
+            .map_err(|e| section_error("security_posts", e))?;
+        decode_footholds(&mut reader, &mut particle).map_err(|e| section_error("footholds", e))?;
+        decode_beliefs(&mut reader, &mut particle).map_err(|e| section_error("beliefs", e))?;
+        decode_logistics(&mut reader, &mut particle).map_err(|e| section_error("logistics", e))?;
+        decode_command_edges(&mut reader, &mut particle)
+            .map_err(|e| section_error("command_edges", e))?;
+        decode_manpower(&mut reader, &mut particle).map_err(|e| section_error("manpower", e))?;
+        decode_leaders(&mut reader, &mut particle).map_err(|e| section_error("leaders", e))?;
+        decode_political(&mut reader, &mut particle).map_err(|e| section_error("political", e))?;
+        decode_foreign(&mut reader, &mut particle).map_err(|e| section_error("foreign", e))?;
+        decode_relations(&mut reader, &mut particle).map_err(|e| section_error("relations", e))?;
+        decode_scheduler(&mut reader, &mut particle).map_err(|e| section_error("scheduler", e))?;
+        decode_rng(&mut reader, &mut particle).map_err(|e| section_error("rng", e))?;
+        decode_counters(&mut reader, &mut particle.counters)
+            .map_err(|e| section_error("counters", e))?;
         let observation_count = bounded_count(reader.u64()?)?;
         particle.observations = Vec::with_capacity(observation_count);
         for _ in 0..observation_count {
@@ -652,11 +681,19 @@ fn string_field(
         .map(str::to_string)
         .ok_or_else(|| CheckpointError::Invalid(format!("manifest missing {name}")))
 }
+fn section_error(section: &str, error: CheckpointError) -> CheckpointError {
+    match error {
+        CheckpointError::Invalid(message) => {
+            CheckpointError::Invalid(format!("{section}: {message}"))
+        }
+        other => other,
+    }
+}
 fn bounded_count(value: u64) -> Result<usize, CheckpointError> {
     if value > 100_000_000 {
-        Err(CheckpointError::Invalid(
-            "declared array is too large".to_string(),
-        ))
+        Err(CheckpointError::Invalid(format!(
+            "declared array is too large: {value}"
+        )))
     } else {
         usize::try_from(value)
             .map_err(|_| CheckpointError::Invalid("array length overflow".to_string()))
@@ -801,6 +838,7 @@ fn encode_people(b: &mut Vec<u8>, p: &ParticleState) {
     put_f64_vec(b, &x.languages);
     put_f64_vec(b, &x.identities);
     put_f64_vec(b, &x.preferences);
+    put_f64_vec(b, &x.party_legitimacy);
     put_f64_vec(b, &x.grievance);
     put_f64_vec(b, &x.fear);
     put_f64_vec(b, &x.efficacy);
@@ -812,7 +850,16 @@ fn encode_people(b: &mut Vec<u8>, p: &ParticleState) {
     put_f64_vec(b, &x.rebel_sympathy);
     put_u32_vec(b, &x.organization);
     put_f64_vec(b, &x.armed_fraction);
-    put_u32_vec(b, &x.community)
+    put_u32_vec(b, &x.community);
+    put_u8_vec(b, &x.public_behavior);
+    put_f64_vec(b, &x.expected_control);
+    put_f64_vec(b, &x.state_legitimacy);
+    put_f64_vec(b, &x.government_legitimacy);
+    put_f64_vec(b, &x.political_access);
+    put_u8_vec(b, &x.displaced);
+    put_u32_vec(b, &x.displacement_count);
+    put_f64_vec(b, &x.origin_tie_strength);
+    put_f64_vec(b, &x.insurgent_affinity)
 }
 fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.people;
@@ -823,6 +870,7 @@ fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), Ch
     x.languages = read_f64_vec(r)?;
     x.identities = read_f64_vec(r)?;
     x.preferences = read_f64_vec(r)?;
+    x.party_legitimacy = read_f64_vec(r)?;
     x.grievance = read_f64_vec(r)?;
     x.fear = read_f64_vec(r)?;
     x.efficacy = read_f64_vec(r)?;
@@ -835,6 +883,104 @@ fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), Ch
     x.organization = read_u32_vec(r)?;
     x.armed_fraction = read_f64_vec(r)?;
     x.community = read_u32_vec(r)?;
+    x.public_behavior = read_u8_vec(r)?;
+    x.expected_control = read_f64_vec(r)?;
+    x.state_legitimacy = read_f64_vec(r)?;
+    x.government_legitimacy = read_f64_vec(r)?;
+    x.political_access = read_f64_vec(r)?;
+    x.displaced = read_u8_vec(r)?;
+    x.displacement_count = read_u32_vec(r)?;
+    x.origin_tie_strength = read_f64_vec(r)?;
+    x.insurgent_affinity = read_f64_vec(r)?;
+    Ok(())
+}
+
+fn encode_households(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.households;
+    put_u32_vec(b, &x.locality);
+    put_u32_vec(b, &x.residence);
+    put_f64_vec(b, &x.resources);
+    put_u32_vec(b, &x.dependents);
+    put_u32_vec(b, &x.member_offsets);
+    put_u32_vec(b, &x.member_indices);
+}
+
+fn decode_households(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
+    let x = &mut p.households;
+    x.locality = read_u32_vec(r)?;
+    x.residence = read_u32_vec(r)?;
+    x.resources = read_f64_vec(r)?;
+    x.dependents = read_u32_vec(r)?;
+    x.member_offsets = read_u32_vec(r)?;
+    x.member_indices = read_u32_vec(r)?;
+    Ok(())
+}
+
+fn encode_communities(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.communities;
+    put_u32_vec(b, &x.locality);
+    for values in [
+        &x.cohesion,
+        &x.government_cooperation,
+        &x.insurgent_sympathy,
+        &x.language_profile,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.member_offsets);
+    put_u32_vec(b, &x.member_indices);
+    put_u32_vec(b, &x.bridge_offsets);
+    put_u32_vec(b, &x.bridge_members);
+}
+
+fn decode_communities(
+    r: &mut ByteReader<'_>,
+    p: &mut ParticleState,
+) -> Result<(), CheckpointError> {
+    let x = &mut p.communities;
+    x.locality = read_u32_vec(r)?;
+    x.cohesion = read_f64_vec(r)?;
+    x.government_cooperation = read_f64_vec(r)?;
+    x.insurgent_sympathy = read_f64_vec(r)?;
+    x.language_profile = read_f64_vec(r)?;
+    x.member_offsets = read_u32_vec(r)?;
+    x.member_indices = read_u32_vec(r)?;
+    x.bridge_offsets = read_u32_vec(r)?;
+    x.bridge_members = read_u32_vec(r)?;
+    Ok(())
+}
+
+fn encode_social_edges(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.social_edges;
+    put_u32_vec(b, &x.person_a);
+    put_u32_vec(b, &x.person_b);
+    put_u8_vec(b, &x.layers);
+    for values in [
+        &x.weight,
+        &x.language_compatibility,
+        &x.trust,
+        &x.represented_relationships,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.neighbor_offsets);
+    put_u32_vec(b, &x.neighbor_indices);
+}
+
+fn decode_social_edges(
+    r: &mut ByteReader<'_>,
+    p: &mut ParticleState,
+) -> Result<(), CheckpointError> {
+    let x = &mut p.social_edges;
+    x.person_a = read_u32_vec(r)?;
+    x.person_b = read_u32_vec(r)?;
+    x.layers = read_u8_vec(r)?;
+    x.weight = read_f64_vec(r)?;
+    x.language_compatibility = read_f64_vec(r)?;
+    x.trust = read_f64_vec(r)?;
+    x.represented_relationships = read_f64_vec(r)?;
+    x.neighbor_offsets = read_u32_vec(r)?;
+    x.neighbor_indices = read_u32_vec(r)?;
     Ok(())
 }
 fn encode_zones(b: &mut Vec<u8>, p: &ParticleState) {
@@ -868,6 +1014,44 @@ fn decode_zones(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), Che
     x.insurgent_presence_updated_at = read_f64_vec(r)?;
     Ok(())
 }
+
+fn encode_zone_beliefs(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.zone_beliefs;
+    put_u64(b, x.keys.len() as u64);
+    for key in &x.keys {
+        put_u32(b, key.observer);
+        put_u32(b, key.zone);
+    }
+    put_f64_vec(b, &x.estimate);
+    put_f64_vec(b, &x.confidence);
+    put_f64_vec(b, &x.updated_at);
+    put_f64_vec(b, &x.last_reliable_observation_at);
+    put_u32_vec(b, &x.evidence_count);
+    put_f64_vec(b, &x.contradiction);
+}
+
+fn decode_zone_beliefs(
+    r: &mut ByteReader<'_>,
+    p: &mut ParticleState,
+) -> Result<(), CheckpointError> {
+    let count = bounded_count(r.u64()?)?;
+    let mut keys = Vec::with_capacity(count);
+    for _ in 0..count {
+        keys.push(crate::state::ZoneBeliefKey {
+            observer: r.u32()?,
+            zone: r.u32()?,
+        });
+    }
+    p.zone_beliefs.keys = keys;
+    p.zone_beliefs.estimate = read_f64_vec(r)?;
+    p.zone_beliefs.confidence = read_f64_vec(r)?;
+    p.zone_beliefs.updated_at = read_f64_vec(r)?;
+    p.zone_beliefs.last_reliable_observation_at = read_f64_vec(r)?;
+    p.zone_beliefs.evidence_count = read_u32_vec(r)?;
+    p.zone_beliefs.contradiction = read_f64_vec(r)?;
+    Ok(())
+}
+
 fn encode_organizations(b: &mut Vec<u8>, p: &ParticleState) {
     let x = &p.organizations;
     put_u8_vec(b, &x.kind);
@@ -884,10 +1068,19 @@ fn encode_organizations(b: &mut Vec<u8>, p: &ParticleState) {
         &x.external_support,
         &x.member_population,
         &x.founded_at,
+        &x.capital_social,
+        &x.capital_political,
+        &x.capital_organizational,
+        &x.capital_material,
+        &x.phenotype,
+        &x.ideology,
+        &x.external_sanctuary,
+        &x.adaptation_rate,
     ] {
         put_f64_vec(b, v)
     }
-    put_u32_vec(b, &x.succession_count)
+    put_u32_vec(b, &x.succession_count);
+    put_u32_vec(b, &x.leader);
 }
 fn decode_organizations(
     r: &mut ByteReader<'_>,
@@ -907,7 +1100,16 @@ fn decode_organizations(
     x.external_support = read_f64_vec(r)?;
     x.member_population = read_f64_vec(r)?;
     x.founded_at = read_f64_vec(r)?;
+    x.capital_social = read_f64_vec(r)?;
+    x.capital_political = read_f64_vec(r)?;
+    x.capital_organizational = read_f64_vec(r)?;
+    x.capital_material = read_f64_vec(r)?;
+    x.phenotype = read_f64_vec(r)?;
+    x.ideology = read_f64_vec(r)?;
+    x.external_sanctuary = read_f64_vec(r)?;
+    x.adaptation_rate = read_f64_vec(r)?;
     x.succession_count = read_u32_vec(r)?;
+    x.leader = read_u32_vec(r)?;
     Ok(())
 }
 fn encode_formations(b: &mut Vec<u8>, p: &ParticleState) {
@@ -946,29 +1148,29 @@ fn encode_formations(b: &mut Vec<u8>, p: &ParticleState) {
 }
 fn decode_formations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.formations;
-    x.organization = read_u32_vec(r)?;
-    x.locality = read_u32_vec(r)?;
-    x.microzone = read_u32_vec(r)?;
-    x.personnel = read_f64_vec(r)?;
-    x.quality = read_f64_vec(r)?;
-    x.cohesion = read_f64_vec(r)?;
-    x.readiness = read_f64_vec(r)?;
-    x.sustainment = read_f64_vec(r)?;
-    x.information = read_f64_vec(r)?;
-    x.mobility = read_f64_vec(r)?;
-    x.command = read_f64_vec(r)?;
-    x.embeddedness = read_f64_vec(r)?;
-    x.fatigue = read_f64_vec(r)?;
-    x.availability = read_f64_vec(r)?;
-    x.supply_stock = read_f64_vec(r)?;
-    x.supply_capacity = read_f64_vec(r)?;
-    x.cumulative_losses = read_f64_vec(r)?;
-    x.home_locality = read_u32_vec(r)?;
-    x.active = read_u8_vec(r)?;
-    x.moving = read_u8_vec(r)?;
-    x.operational_status = read_u8_vec(r)?;
-    x.outside_pineland = read_u8_vec(r)?;
-    x.operational_posture = read_u8_vec(r)?;
+    x.organization = read_u32_vec(r).map_err(|e| section_error("organization", e))?;
+    x.locality = read_u32_vec(r).map_err(|e| section_error("locality", e))?;
+    x.microzone = read_u32_vec(r).map_err(|e| section_error("microzone", e))?;
+    x.personnel = read_f64_vec(r).map_err(|e| section_error("personnel", e))?;
+    x.quality = read_f64_vec(r).map_err(|e| section_error("quality", e))?;
+    x.cohesion = read_f64_vec(r).map_err(|e| section_error("cohesion", e))?;
+    x.readiness = read_f64_vec(r).map_err(|e| section_error("readiness", e))?;
+    x.sustainment = read_f64_vec(r).map_err(|e| section_error("sustainment", e))?;
+    x.information = read_f64_vec(r).map_err(|e| section_error("information", e))?;
+    x.mobility = read_f64_vec(r).map_err(|e| section_error("mobility", e))?;
+    x.command = read_f64_vec(r).map_err(|e| section_error("command", e))?;
+    x.embeddedness = read_f64_vec(r).map_err(|e| section_error("embeddedness", e))?;
+    x.fatigue = read_f64_vec(r).map_err(|e| section_error("fatigue", e))?;
+    x.availability = read_f64_vec(r).map_err(|e| section_error("availability", e))?;
+    x.supply_stock = read_f64_vec(r).map_err(|e| section_error("supply_stock", e))?;
+    x.supply_capacity = read_f64_vec(r).map_err(|e| section_error("supply_capacity", e))?;
+    x.cumulative_losses = read_f64_vec(r).map_err(|e| section_error("cumulative_losses", e))?;
+    x.home_locality = read_u32_vec(r).map_err(|e| section_error("home_locality", e))?;
+    x.active = read_u8_vec(r).map_err(|e| section_error("active", e))?;
+    x.moving = read_u8_vec(r).map_err(|e| section_error("moving", e))?;
+    x.operational_status = read_u8_vec(r).map_err(|e| section_error("operational_status", e))?;
+    x.outside_pineland = read_u8_vec(r).map_err(|e| section_error("outside_pineland", e))?;
+    x.operational_posture = read_u8_vec(r).map_err(|e| section_error("operational_posture", e))?;
     Ok(())
 }
 fn encode_patrols(b: &mut Vec<u8>, p: &ParticleState) {
@@ -1154,6 +1356,288 @@ fn decode_logistics(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(),
     x.cumulative_delivered = r.f64()?;
     Ok(())
 }
+
+fn encode_command_edges(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.command_edges;
+    put_u32_vec(b, &x.organization);
+    put_u32_vec(b, &x.formation);
+    put_f64_vec(b, &x.reliability);
+    put_f64_vec(b, &x.latency_hours);
+}
+
+fn decode_command_edges(
+    r: &mut ByteReader<'_>,
+    p: &mut ParticleState,
+) -> Result<(), CheckpointError> {
+    let x = &mut p.command_edges;
+    x.organization = read_u32_vec(r)?;
+    x.formation = read_u32_vec(r)?;
+    x.reliability = read_f64_vec(r)?;
+    x.latency_hours = read_f64_vec(r)?;
+    Ok(())
+}
+
+fn encode_manpower(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.manpower;
+    put_u32_vec(b, &x.organization);
+    put_u32_vec(b, &x.locality);
+    put_f64_vec(b, &x.pool);
+    put_f64_vec(b, &x.supply_reserve);
+}
+
+fn decode_manpower(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
+    let x = &mut p.manpower;
+    x.organization = read_u32_vec(r)?;
+    x.locality = read_u32_vec(r)?;
+    x.pool = read_f64_vec(r)?;
+    x.supply_reserve = read_f64_vec(r)?;
+    Ok(())
+}
+
+fn encode_leaders(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.leaders;
+    put_u32_vec(b, &x.organization);
+    for values in [
+        &x.competence,
+        &x.charisma,
+        &x.risk_tolerance,
+        &x.ideological_rigidity,
+        &x.political_skill,
+        &x.organizational_skill,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u8_vec(b, &x.active);
+}
+
+fn decode_leaders(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
+    let x = &mut p.leaders;
+    x.organization = read_u32_vec(r)?;
+    x.competence = read_f64_vec(r)?;
+    x.charisma = read_f64_vec(r)?;
+    x.risk_tolerance = read_f64_vec(r)?;
+    x.ideological_rigidity = read_f64_vec(r)?;
+    x.political_skill = read_f64_vec(r)?;
+    x.organizational_skill = read_f64_vec(r)?;
+    x.active = read_u8_vec(r)?;
+    Ok(())
+}
+
+fn encode_political(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.political;
+    put_u8_vec(b, &x.institution_type);
+    put_u8_vec(b, &x.institution_level);
+    put_u32_vec(b, &x.institution_locality);
+    put_u32_vec(b, &x.institution_district);
+    for values in [
+        &x.institution_capacity,
+        &x.institution_autonomy,
+        &x.institution_compliance,
+        &x.institution_reach,
+        &x.institution_integrity,
+        &x.institution_resources,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.institution_governing_party);
+    put_u32_vec(b, &x.branch_party);
+    put_u32_vec(b, &x.branch_locality);
+    for values in [
+        &x.branch_resources,
+        &x.branch_patronage,
+        &x.branch_electoral_support,
+        &x.branch_institutional_influence,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.branch_member_offsets);
+    put_u32_vec(b, &x.branch_member_indices);
+    put_u32_vec(b, &x.branch_broker_offsets);
+    put_u32_vec(b, &x.branch_broker_indices);
+    put_u32_vec(b, &x.elite_person);
+    put_u32_vec(b, &x.elite_locality);
+    for values in [
+        &x.elite_network_centrality,
+        &x.elite_resources,
+        &x.elite_legitimacy,
+        &x.elite_institutional_ties,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.elite_party_alignment);
+    put_u32(b, x.ruling_party);
+    put_f64(b, x.private_diversion_stock);
+}
+
+fn decode_political(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
+    let x = &mut p.political;
+    x.institution_type = read_u8_vec(r)?;
+    x.institution_level = read_u8_vec(r)?;
+    x.institution_locality = read_u32_vec(r)?;
+    x.institution_district = read_u32_vec(r)?;
+    x.institution_capacity = read_f64_vec(r)?;
+    x.institution_autonomy = read_f64_vec(r)?;
+    x.institution_compliance = read_f64_vec(r)?;
+    x.institution_reach = read_f64_vec(r)?;
+    x.institution_integrity = read_f64_vec(r)?;
+    x.institution_resources = read_f64_vec(r)?;
+    x.institution_governing_party = read_u32_vec(r)?;
+    x.branch_party = read_u32_vec(r)?;
+    x.branch_locality = read_u32_vec(r)?;
+    x.branch_resources = read_f64_vec(r)?;
+    x.branch_patronage = read_f64_vec(r)?;
+    x.branch_electoral_support = read_f64_vec(r)?;
+    x.branch_institutional_influence = read_f64_vec(r)?;
+    x.branch_member_offsets = read_u32_vec(r)?;
+    x.branch_member_indices = read_u32_vec(r)?;
+    x.branch_broker_offsets = read_u32_vec(r)?;
+    x.branch_broker_indices = read_u32_vec(r)?;
+    x.elite_person = read_u32_vec(r)?;
+    x.elite_locality = read_u32_vec(r)?;
+    x.elite_network_centrality = read_f64_vec(r)?;
+    x.elite_resources = read_f64_vec(r)?;
+    x.elite_legitimacy = read_f64_vec(r)?;
+    x.elite_institutional_ties = read_f64_vec(r)?;
+    x.elite_party_alignment = read_u32_vec(r)?;
+    x.ruling_party = r.u32()?;
+    x.private_diversion_stock = r.f64()?;
+    Ok(())
+}
+
+fn encode_foreign(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.foreign;
+    for values in [
+        &x.resources,
+        &x.stability_preference,
+        &x.government_alignment,
+        &x.ideological_alignment,
+        &x.border_security_priority,
+        &x.regional_influence,
+        &x.commercial_interest,
+        &x.humanitarian_preference,
+        &x.cost_sensitivity,
+        &x.domestic_opposition,
+        &x.willingness,
+        &x.language_profile,
+        &x.opportunity,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.rival_offsets);
+    put_u32_vec(b, &x.rival_indices);
+    put_f64_vec(b, &x.cumulative_cost);
+    put_f64_vec(b, &x.cumulative_casualties);
+    put_u32_vec(b, &x.border_foreign_state);
+    put_u32_vec(b, &x.border_district);
+    put_u32_vec(b, &x.border_locality);
+    for values in [
+        &x.border_terrain_friction,
+        &x.border_infrastructure,
+        &x.border_legal_permeability,
+        &x.border_social_permeability,
+        &x.border_language_overlap,
+        &x.border_kinship_overlap,
+        &x.border_state_monitoring,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.belief_foreign_state);
+    put_u32_vec(b, &x.belief_locality);
+    for values in [
+        &x.belief_government_control,
+        &x.belief_insurgent_presence,
+        &x.belief_confidence,
+        &x.belief_updated_at,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.interpreter_person);
+    put_u32_vec(b, &x.interpreter_foreign_state);
+    put_u32_vec(b, &x.interpreter_locality);
+    for values in [
+        &x.interpreter_foreign_language,
+        &x.interpreter_local_language,
+        &x.interpreter_foreign_trust,
+        &x.interpreter_local_trust,
+        &x.interpreter_cultural_knowledge,
+    ] {
+        put_f64_vec(b, values);
+    }
+}
+
+fn decode_foreign(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
+    let x = &mut p.foreign;
+    x.resources = read_f64_vec(r)?;
+    x.stability_preference = read_f64_vec(r)?;
+    x.government_alignment = read_f64_vec(r)?;
+    x.ideological_alignment = read_f64_vec(r)?;
+    x.border_security_priority = read_f64_vec(r)?;
+    x.regional_influence = read_f64_vec(r)?;
+    x.commercial_interest = read_f64_vec(r)?;
+    x.humanitarian_preference = read_f64_vec(r)?;
+    x.cost_sensitivity = read_f64_vec(r)?;
+    x.domestic_opposition = read_f64_vec(r)?;
+    x.willingness = read_f64_vec(r)?;
+    x.language_profile = read_f64_vec(r)?;
+    x.opportunity = read_f64_vec(r)?;
+    x.rival_offsets = read_u32_vec(r)?;
+    x.rival_indices = read_u32_vec(r)?;
+    x.cumulative_cost = read_f64_vec(r)?;
+    x.cumulative_casualties = read_f64_vec(r)?;
+    x.border_foreign_state = read_u32_vec(r)?;
+    x.border_district = read_u32_vec(r)?;
+    x.border_locality = read_u32_vec(r)?;
+    x.border_terrain_friction = read_f64_vec(r)?;
+    x.border_infrastructure = read_f64_vec(r)?;
+    x.border_legal_permeability = read_f64_vec(r)?;
+    x.border_social_permeability = read_f64_vec(r)?;
+    x.border_language_overlap = read_f64_vec(r)?;
+    x.border_kinship_overlap = read_f64_vec(r)?;
+    x.border_state_monitoring = read_f64_vec(r)?;
+    x.belief_foreign_state = read_u32_vec(r)?;
+    x.belief_locality = read_u32_vec(r)?;
+    x.belief_government_control = read_f64_vec(r)?;
+    x.belief_insurgent_presence = read_f64_vec(r)?;
+    x.belief_confidence = read_f64_vec(r)?;
+    x.belief_updated_at = read_f64_vec(r)?;
+    x.interpreter_person = read_u32_vec(r)?;
+    x.interpreter_foreign_state = read_u32_vec(r)?;
+    x.interpreter_locality = read_u32_vec(r)?;
+    x.interpreter_foreign_language = read_f64_vec(r)?;
+    x.interpreter_local_language = read_f64_vec(r)?;
+    x.interpreter_foreign_trust = read_f64_vec(r)?;
+    x.interpreter_local_trust = read_f64_vec(r)?;
+    x.interpreter_cultural_knowledge = read_f64_vec(r)?;
+    Ok(())
+}
+
+fn encode_relations(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.relations;
+    put_u32_vec(b, &x.organization_a);
+    put_u32_vec(b, &x.organization_b);
+    put_u8_vec(b, &x.status);
+    put_f64_vec(b, &x.rivalry_memory);
+    put_f64_vec(b, &x.hostility_memory);
+    put_f64_vec(b, &x.cooperation_memory);
+    put_f64_vec(b, &x.updated_at);
+    put_f64_vec(b, &x.last_interaction_at);
+    put_u8_vec(b, &x.has_last_interaction);
+}
+
+fn decode_relations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
+    let x = &mut p.relations;
+    x.organization_a = read_u32_vec(r)?;
+    x.organization_b = read_u32_vec(r)?;
+    x.status = read_u8_vec(r)?;
+    x.rivalry_memory = read_f64_vec(r)?;
+    x.hostility_memory = read_f64_vec(r)?;
+    x.cooperation_memory = read_f64_vec(r)?;
+    x.updated_at = read_f64_vec(r)?;
+    x.last_interaction_at = read_f64_vec(r)?;
+    x.has_last_interaction = read_u8_vec(r)?;
+    Ok(())
+}
+
 fn encode_scheduler(b: &mut Vec<u8>, p: &ParticleState) {
     put_u64(b, p.scheduler.next_sequence);
     put_u64(b, p.scheduler.processed);
@@ -1261,12 +1745,151 @@ mod tests {
     use crate::ids::PatrolId;
     use crate::rng::RngStreams;
     use crate::scheduler::EventPayload;
-    use crate::state::{BeliefKey, EventRecord, ObservationRecord, ParticleState};
+    use crate::state::{
+        BeliefKey, CommunityState, EventRecord, ForeignSystemState, HouseholdState,
+        ObservationRecord, OrganizationRelationState, ParticleState, PersonState, SocialEdgeState,
+        ZoneBeliefKey,
+    };
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn representative_particle() -> ParticleState {
         let mut particle =
             ParticleState::new(2, 4, 2, 3, 4, RngStreams::new(99, "checkpoint-test"));
+        particle.people = PersonState::new(2).with_organizations(2);
+        particle.people.locality = vec![0, 1];
+        particle.people.party_legitimacy = vec![0.2; 6];
+        particle.people.insurgent_affinity = vec![0.1; 4];
+        particle.households = HouseholdState::new(1);
+        particle.households.locality[0] = 0;
+        particle.households.residence[0] = 1;
+        particle.households.resources[0] = 12.5;
+        particle.households.dependents[0] = 1;
+        particle.households.member_offsets = vec![0, 2];
+        particle.households.member_indices = vec![0, 1];
+        particle.communities = CommunityState::new(1);
+        particle.communities.locality[0] = 0;
+        particle.communities.cohesion[0] = 0.7;
+        particle.communities.government_cooperation[0] = 0.4;
+        particle.communities.insurgent_sympathy[0] = 0.3;
+        particle.communities.language_profile = vec![0.6, 0.2, 0.1, 0.1];
+        particle.communities.member_offsets = vec![0, 2];
+        particle.communities.member_indices = vec![0, 1];
+        particle.communities.bridge_offsets = vec![0, 1];
+        particle.communities.bridge_members = vec![1];
+        particle.social_edges = SocialEdgeState::new(2);
+        particle.social_edges.person_a = vec![0];
+        particle.social_edges.person_b = vec![1];
+        particle.social_edges.layers = vec![3];
+        particle.social_edges.weight = vec![0.8];
+        particle.social_edges.language_compatibility = vec![0.9];
+        particle.social_edges.trust = vec![0.6];
+        particle.social_edges.represented_relationships = vec![1.0];
+        particle.social_edges.neighbor_offsets = vec![0, 1, 2];
+        particle.social_edges.neighbor_indices = vec![1, 0];
+        particle.zone_beliefs = crate::state::ZoneBeliefState::new(vec![ZoneBeliefKey {
+            observer: 0,
+            zone: 0,
+        }]);
+        particle.zone_beliefs.estimate[0] = 0.25;
+        particle.zone_beliefs.confidence[0] = 0.5;
+        particle.command_edges.organization = vec![0];
+        particle.command_edges.formation = vec![0];
+        particle.command_edges.reliability = vec![0.8];
+        particle.command_edges.latency_hours = vec![2.0];
+        particle.manpower.organization = vec![1];
+        particle.manpower.locality = vec![0];
+        particle.manpower.pool = vec![25.0];
+        particle.manpower.supply_reserve = vec![4.0];
+        particle.leaders.organization = vec![1];
+        particle.leaders.competence = vec![0.7];
+        particle.leaders.charisma = vec![0.6];
+        particle.leaders.risk_tolerance = vec![0.4];
+        particle.leaders.ideological_rigidity = vec![0.3];
+        particle.leaders.political_skill = vec![0.5];
+        particle.leaders.organizational_skill = vec![0.8];
+        particle.leaders.active = vec![1];
+        particle.political.institution_type = vec![0];
+        particle.political.institution_level = vec![0];
+        particle.political.institution_locality = vec![u32::MAX];
+        particle.political.institution_district = vec![u32::MAX];
+        particle.political.institution_capacity = vec![0.7];
+        particle.political.institution_autonomy = vec![0.2];
+        particle.political.institution_compliance = vec![0.8];
+        particle.political.institution_reach = vec![0.9];
+        particle.political.institution_integrity = vec![0.6];
+        particle.political.institution_resources = vec![0.0];
+        particle.political.institution_governing_party = vec![0];
+        particle.political.branch_party = vec![0];
+        particle.political.branch_locality = vec![0];
+        particle.political.branch_resources = vec![0.0];
+        particle.political.branch_patronage = vec![0.0];
+        particle.political.branch_electoral_support = vec![0.4];
+        particle.political.branch_institutional_influence = vec![0.2];
+        particle.political.branch_member_offsets = vec![0, 1];
+        particle.political.branch_member_indices = vec![0];
+        particle.political.branch_broker_offsets = vec![0, 1];
+        particle.political.branch_broker_indices = vec![0];
+        particle.political.elite_person = vec![0];
+        particle.political.elite_locality = vec![0];
+        particle.political.elite_network_centrality = vec![0.1];
+        particle.political.elite_resources = vec![0.0];
+        particle.political.elite_legitimacy = vec![0.5];
+        particle.political.elite_institutional_ties = vec![0.4];
+        particle.political.elite_party_alignment = vec![0];
+        particle.political.ruling_party = 0;
+        particle.foreign = ForeignSystemState::new();
+        particle.foreign.resources = vec![1_000_000.0];
+        particle.foreign.stability_preference = vec![0.5];
+        particle.foreign.government_alignment = vec![0.2];
+        particle.foreign.ideological_alignment = vec![0.1];
+        particle.foreign.border_security_priority = vec![0.5];
+        particle.foreign.regional_influence = vec![0.4];
+        particle.foreign.commercial_interest = vec![0.3];
+        particle.foreign.humanitarian_preference = vec![0.6];
+        particle.foreign.cost_sensitivity = vec![0.5];
+        particle.foreign.domestic_opposition = vec![0.2];
+        particle.foreign.willingness = vec![0.5];
+        particle.foreign.language_profile = vec![0.8, 0.1, 0.05, 0.05];
+        particle.foreign.opportunity = vec![0.7];
+        particle.foreign.rival_offsets = vec![0, 1];
+        particle.foreign.rival_indices = vec![0];
+        particle.foreign.cumulative_cost = vec![0.0];
+        particle.foreign.cumulative_casualties = vec![0.0];
+        particle.foreign.border_foreign_state = vec![0];
+        particle.foreign.border_district = vec![u32::MAX];
+        particle.foreign.border_locality = vec![0];
+        particle.foreign.border_terrain_friction = vec![0.5];
+        particle.foreign.border_infrastructure = vec![0.5];
+        particle.foreign.border_legal_permeability = vec![0.5];
+        particle.foreign.border_social_permeability = vec![0.5];
+        particle.foreign.border_language_overlap = vec![0.8];
+        particle.foreign.border_kinship_overlap = vec![0.4];
+        particle.foreign.border_state_monitoring = vec![0.5];
+        particle.foreign.belief_foreign_state = vec![0];
+        particle.foreign.belief_locality = vec![0];
+        particle.foreign.belief_government_control = vec![0.5];
+        particle.foreign.belief_insurgent_presence = vec![0.2];
+        particle.foreign.belief_confidence = vec![0.12];
+        particle.foreign.belief_updated_at = vec![0.0];
+        particle.foreign.interpreter_person = vec![0];
+        particle.foreign.interpreter_foreign_state = vec![0];
+        particle.foreign.interpreter_locality = vec![0];
+        particle.foreign.interpreter_foreign_language = vec![0.8];
+        particle.foreign.interpreter_local_language = vec![0.9];
+        particle.foreign.interpreter_foreign_trust = vec![0.55];
+        particle.foreign.interpreter_local_trust = vec![0.6];
+        particle.foreign.interpreter_cultural_knowledge = vec![0.4];
+        particle.relations = OrganizationRelationState {
+            organization_a: vec![0],
+            organization_b: vec![1],
+            status: vec![0],
+            rivalry_memory: vec![0.0],
+            hostility_memory: vec![0.0],
+            cooperation_memory: vec![1.0],
+            updated_at: vec![0.0],
+            last_interaction_at: vec![0.0],
+            has_last_interaction: vec![0],
+        };
         particle.locality.population[0] = 100.0;
         particle.locality.government_control[0] = 0.8;
         particle.beliefs = crate::state::BeliefState::with_keys(vec![BeliefKey {
