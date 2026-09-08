@@ -51,7 +51,6 @@ def _run_repeat(
     repeat_index: int,
     *,
     workers: int,
-    global_packed: bool,
 ) -> dict[str, Any]:
     runner_script = ROOT / "studies/research_program/scripts/benchmark_phase_a_fixed_workload.py"
     with tempfile.TemporaryDirectory(prefix="pineland_phase_a_fixed_work_") as temp_dir:
@@ -63,8 +62,6 @@ def _run_repeat(
             "--workers", str(workers),
             "--output", str(raw_output),
         ]
-        if global_packed:
-            command.append("--global-packed")
         if not BALANCE_RESAMPLING:
             command.append("--unbalanced-resampling")
         started = time.perf_counter()
@@ -101,7 +98,6 @@ def run(
     output: Path,
     repetitions: int,
     workers: int = WORKERS,
-    global_packed: bool = False,
 ) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite existing benchmark evidence: {output}")
@@ -109,8 +105,6 @@ def run(
         raise ValueError("repetitions must be positive")
     if workers < 1 or workers > PARTICLES:
         raise ValueError("workers must lie in [1, particles]")
-    if global_packed and workers != 1:
-        raise ValueError("global packed execution requires workers=1")
     config = SimulationConfig(
         seed=BASE_SEED,
         agent_count=80,
@@ -118,11 +112,9 @@ def run(
         horizon_days=max(60.0, HORIZON_DAYS),
         output_mode="ensemble",
     )
-    warmup = _run_repeat(-1, workers=workers, global_packed=global_packed)
+    warmup = _run_repeat(-1, workers=workers)
     repeats = [
-        _run_repeat(
-            index, workers=workers, global_packed=global_packed
-        ) for index in range(repetitions)
+        _run_repeat(index, workers=workers) for index in range(repetitions)
     ]
     rates = [item["pwb_per_second"] for item in repeats]
     median_rate = statistics.median(rates)
@@ -142,12 +134,8 @@ def run(
             "repetitions": repetitions,
             "warmup": warmup,
             "horizon_days": HORIZON_DAYS,
-            "engine": (
-                "packed_global_nested_filter"
-                if global_packed else "packed_nested_resident_filter"
-            ),
+            "engine": "packed_nested_resident_filter",
             "workers": workers,
-            "global_packed": global_packed,
             "balance_resampling": BALANCE_RESAMPLING,
             "synthetic_observations": "all-inactive; no historical outcome values are read or fitted",
             "likelihood_branches": BRANCH_EQUIVALENTS,
@@ -186,7 +174,6 @@ def run(
                 "workers": workers,
                 "balance_resampling": BALANCE_RESAMPLING,
                 "horizon_days": HORIZON_DAYS,
-                "global_packed": global_packed,
             }),
         },
         "passed": median_rate >= 4.0,
@@ -202,13 +189,11 @@ def main() -> None:
     )
     parser.add_argument("--repetitions", type=int, default=5)
     parser.add_argument("--workers", type=int, default=WORKERS)
-    parser.add_argument("--global-packed", action="store_true")
     args = parser.parse_args()
     result = run(
         output=args.output.resolve(),
         repetitions=args.repetitions,
         workers=args.workers,
-        global_packed=args.global_packed,
     )
     args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
     args.output.resolve().write_text(

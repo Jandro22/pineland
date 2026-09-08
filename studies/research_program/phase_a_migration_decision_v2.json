@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "phase_a_migration_decision_v2",
+  "status": "profile_driven_migration_kept_and_alternate_rejected",
+  "decision": {
+    "production_engine": "packed_nested_resident_filter",
+    "rejected_engine": "packed_global_nested_filter",
+    "reason": "The alternate all-particle packed batch preserved exact continuation semantics but removed the resident worker parallelism that dominates this scheduler-oracle workload.",
+    "equations_changed": false,
+    "historical_outcomes_used": false
+  },
+  "evidence": {
+    "profile": "studies/research_program/phase_a_execution_profile_v6.json",
+    "migration_validation": "studies/research_program/phase_a_migration_validation_v3.json",
+    "exactness": "studies/research_program/phase_a_exactness_battery_v8.json",
+    "canonical_benchmark": "studies/research_program/phase_a_fixed_work_benchmark_v4.json",
+    "alternate_probe": {
+      "path": "studies/research_program/phase_a_fixed_work_global_probe_v1.json",
+      "exact_smoke_passed": true,
+      "median_pwb_per_second": 0.6860052214474139,
+      "E1_passed": false,
+      "E2_passed": false
+    }
+  },
+  "gate_policy": "No migration is promoted from a microbenchmark or extrapolation; the complete fixed workload remains the performance authority.",
+  "passed": true
+}
