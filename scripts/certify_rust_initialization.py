@@ -1013,6 +1013,11 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
         "peace_process": 17,
         "recording_noise": 18,
         "checkpoint": 19,
+        # These payloads are inserted by contact scanning rather than during
+        # the initial population pass, but they are part of the scheduler
+        # semantic contract once a trajectory has advanced.
+        "organized_action": 20,
+        "contact": 21,
     }
     scheduler_rows = []
     for event in simulation.scheduler.pending_events():

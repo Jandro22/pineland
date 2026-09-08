@@ -62,6 +62,7 @@ fn dispatch() -> Result<(), String> {
         "certify-initialization" => {
             initialization_certification::certify_initialization(&arguments)
         }
+        "certify-trajectory" => initialization_certification::certify_trajectory(&arguments),
         "certify-scheduler" => scheduler_certification::certify_scheduler(&arguments),
         other => Err(format!(
             "unknown command '{other}'. Run `pineland help` for usage."
@@ -267,7 +268,7 @@ fn resume(arguments: &Arguments) -> Result<(), String> {
     }
     config.validate().map_err(|error| error.to_string())?;
     let output = PathBuf::from(arguments.string("output", "outputs/native-resumed"));
-    let topology = topology_for_particle(&particle);
+    let topology = topology_for_particle(&particle, &config);
     let mut engine = SimulationEngine::from_particle(config, topology, particle)
         .map_err(|error| error.to_string())?;
     engine
@@ -560,7 +561,7 @@ fn filter_mpi(arguments: &Arguments) -> Result<(), String> {
         CheckpointStore::read_directory(&mpi_run.checkpoint).map_err(|error| error.to_string())?;
     let topology = states
         .first()
-        .map(topology_for_particle)
+        .map(|state| topology_for_particle(state, &config))
         .ok_or_else(|| "MPI checkpoint contains no particles".to_string())?;
     let engines = states
         .into_iter()
@@ -654,7 +655,7 @@ fn filter_from_checkpoint(
     }
     let topology = particles
         .first()
-        .map(topology_for_particle)
+        .map(|particle| topology_for_particle(particle, &config))
         .ok_or_else(|| "checkpoint contains no particles".to_string())?;
     let engines = particles
         .into_iter()
@@ -996,10 +997,20 @@ fn checkpoint_argument(arguments: &Arguments, command: &str) -> Result<PathBuf, 
         .ok_or_else(|| format!("{command} requires a checkpoint directory"))
 }
 
-fn topology_for_particle(particle: &pineland_core::state::ParticleState) -> StaticTopology {
-    let locality_count = particle.locality.population.len().max(1);
-    let zones_per_locality = (particle.zones.population_share.len() / locality_count).max(1);
-    StaticTopology::synthetic(locality_count, zones_per_locality)
+fn topology_for_particle(
+    particle: &pineland_core::state::ParticleState,
+    config: &SimulationConfig,
+) -> StaticTopology {
+    let initialization_seed = config.initialization_seed.unwrap_or(config.seed);
+    let topology = StaticTopology::pineland(config, initialization_seed).topology;
+    if particle.locality.population.len() != topology.locality_count()
+        || particle.zones.population_share.len() != topology.microzone_count()
+    {
+        let locality_count = particle.locality.population.len().max(1);
+        let zones_per_locality = (particle.zones.population_share.len() / locality_count).max(1);
+        return StaticTopology::synthetic(locality_count, zones_per_locality);
+    }
+    topology
 }
 
 fn print_help() {
@@ -1021,6 +1032,7 @@ fn print_help() {
     println!("  benchmark [config.json] --particles N --days N --threads N");
     println!("  certify-rng [--state-file FILE --operation OP --draws N]");
     println!("  certify-initialization [config.json]");
+    println!("  certify-trajectory [config.json] --until N");
     println!("  certify-scheduler");
     println!("  version");
     println!();

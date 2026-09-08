@@ -12,6 +12,7 @@ pub fn collect_and_fuse(
     topology: &StaticTopology,
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
+    _elapsed_days: f64,
     time: f64,
 ) {
     let locality_count = topology.locality_count();

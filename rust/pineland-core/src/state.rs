@@ -3470,6 +3470,7 @@ pub(crate) fn encode_event(buffer: &mut Vec<u8>, event: &ScheduledEvent) {
     buffer.extend_from_slice(&event.time.to_bits().to_le_bytes());
     buffer.extend_from_slice(&event.priority.to_le_bytes());
     buffer.extend_from_slice(&event.sequence.to_le_bytes());
+    buffer.extend_from_slice(&event.elapsed_days.to_bits().to_le_bytes());
     encode_payload(buffer, &event.payload);
 }
 
@@ -3477,11 +3478,13 @@ pub(crate) fn decode_event(reader: &mut ByteReader<'_>) -> Result<ScheduledEvent
     let time = f64::from_bits(reader.u64()?);
     let priority = reader.u16()?;
     let sequence = reader.u64()?;
+    let elapsed_days = f64::from_bits(reader.u64()?);
     let payload = decode_payload(reader)?;
     Ok(ScheduledEvent {
         time,
         priority,
         sequence,
+        elapsed_days,
         payload,
     })
 }

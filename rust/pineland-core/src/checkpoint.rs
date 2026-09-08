@@ -20,7 +20,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 2;
+pub const CHECKPOINT_VERSION: u32 = 3;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {

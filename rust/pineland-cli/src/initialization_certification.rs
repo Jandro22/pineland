@@ -33,6 +33,60 @@ pub(crate) fn certify_initialization(arguments: &Arguments) -> Result<(), String
     Ok(())
 }
 
+/// Export the same component inventory after a deterministic native
+/// trajectory.  Keeping this boundary identical to the initialization
+/// certificate makes the first divergent process/state field observable to
+/// the Python oracle instead of hiding it behind one opaque state hash.
+pub(crate) fn certify_trajectory(arguments: &Arguments) -> Result<(), String> {
+    let mut config = super::config(arguments)?;
+    if let Some(until) = arguments.value("until") {
+        config.horizon_days = until
+            .parse::<f64>()
+            .map_err(|_| "--until must be a number".to_string())?;
+        config.validate().map_err(|error| error.to_string())?;
+    }
+    let target = config.horizon_days;
+    let mut engine = SimulationEngine::new(config).map_err(|error| error.to_string())?;
+    let processed = if let Some(value) = arguments.value("max-events") {
+        let limit = value
+            .parse::<usize>()
+            .map_err(|_| "--max-events must be an integer".to_string())?;
+        engine
+            .advance_until_limited(target, Some(limit))
+            .map_err(|error| error.to_string())?
+    } else {
+        engine.run().map_err(|error| error.to_string())?;
+        engine.particle.scheduler.processed as usize
+    };
+    if arguments.value("max-events").is_none() && (engine.particle.time - target).abs() > 1e-10 {
+        return Err(format!(
+            "native trajectory stopped at {}, expected {target}",
+            engine.particle.time
+        ));
+    }
+    let mut result = JsonValue::object();
+    result.insert(
+        "schema",
+        JsonValue::string("pineland-trajectory-certification-v1"),
+    );
+    result.insert(
+        "configuration_hash",
+        JsonValue::string(engine.config.canonical_hash()),
+    );
+    result.insert("target_time", JsonValue::number(target));
+    result.insert("actual_time", JsonValue::number(engine.particle.time));
+    result.insert("events_processed", JsonValue::integer(processed as u64));
+    result.insert("counts", counts(&engine));
+    result.insert("components", components(&engine));
+    result.insert("diagnostics", diagnostics(&engine));
+    result.insert("rng_streams", rng_streams(&engine));
+    result.insert("scheduler", scheduler(&engine));
+    result.insert("state_hash", JsonValue::string(engine.state_hash()));
+    result.insert("decision_hash", JsonValue::string(engine.decision_hash()));
+    println!("{}", result.to_pretty());
+    Ok(())
+}
+
 fn counts(engine: &SimulationEngine) -> JsonValue {
     let particle = &engine.particle;
     let households = particle
@@ -1305,17 +1359,80 @@ fn diagnostics(engine: &SimulationEngine) -> JsonValue {
         "formation_locality",
         u32_array(&particle.formations.locality),
     );
+    value.insert("formation_fatigue", f64_array(&particle.formations.fatigue));
+    value.insert(
+        "formation_readiness",
+        f64_array(&particle.formations.readiness),
+    );
+    value.insert(
+        "formation_availability",
+        f64_array(&particle.formations.availability),
+    );
+    value.insert(
+        "formation_supply_stock",
+        f64_array(&particle.formations.supply_stock),
+    );
+    value.insert(
+        "formation_cohesion",
+        f64_array(&particle.formations.cohesion),
+    );
+    value.insert(
+        "patrol_route_position",
+        u32_array(&particle.patrols.route_position),
+    );
+    value.insert(
+        "patrol_route_target",
+        u32_array(&particle.patrols.route_target),
+    );
+    value.insert(
+        "patrol_next_available",
+        f64_array(&particle.patrols.next_available),
+    );
+    value.insert(
+        "patrol_last_departure",
+        f64_array(&particle.patrols.last_departure),
+    );
     value.insert(
         "formation_personnel",
         f64_array(&particle.formations.personnel),
     );
     value.insert(
+        "formation_personnel_bits",
+        u64_array(&particle.formations.personnel),
+    );
+    value.insert(
+        "formation_organization",
+        u32_array(&particle.formations.organization),
+    );
+    let mut organization_personnel = vec![0.0; particle.organizations.kind.len()];
+    for formation in 0..particle.formations.personnel.len() {
+        if particle.formations.active[formation] != 0 {
+            let organization = particle.formations.organization[formation] as usize;
+            if let Some(total) = organization_personnel.get_mut(organization) {
+                *total += particle.formations.personnel[formation].max(0.0);
+            }
+        }
+    }
+    value.insert("organization_personnel", f64_array(&organization_personnel));
+    value.insert(
         "logistics_capacity",
         f64_array(&particle.logistics.source_capacity),
     );
     value.insert(
+        "logistics_organization",
+        u32_array(&particle.logistics.organization),
+    );
+    value.insert(
+        "logistics_locality",
+        u32_array(&particle.logistics.locality),
+    );
+    value.insert(
         "logistics_production",
         f64_array(&particle.logistics.source_production),
+    );
+    value.insert(
+        "logistics_production_bits",
+        u64_array(&particle.logistics.source_production),
     );
     value.insert(
         "logistics_stock",
@@ -1501,4 +1618,13 @@ fn f64_array(values: &[f64]) -> JsonValue {
 
 fn u32_array(values: &[u32]) -> JsonValue {
     JsonValue::Array(values.iter().copied().map(JsonValue::integer).collect())
+}
+
+fn u64_array(values: &[f64]) -> JsonValue {
+    JsonValue::Array(
+        values
+            .iter()
+            .map(|value| JsonValue::integer(value.to_bits()))
+            .collect(),
+    )
 }
