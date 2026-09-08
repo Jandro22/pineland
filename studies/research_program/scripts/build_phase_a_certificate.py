@@ -28,17 +28,24 @@ def _load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def run(output: Path) -> dict[str, Any]:
+def run(
+    output: Path,
+    *,
+    exactness_path: Path | None = None,
+    profile_path: Path | None = None,
+    migration_path: Path | None = None,
+    phase_b_path: Path | None = None,
+) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite certificate: {output}")
     program = ROOT / "studies/research_program"
     artifacts = {
-        "A1_exactness": program / "phase_a_exactness_battery_v1.json",
+        "A1_exactness": exactness_path or program / "phase_a_exactness_battery_v1.json",
         "A2_packed_authority": program / "phase_a_packed_state_authority_v1.json",
         "A3_kernel_oracles": program / "phase_a_kernel_oracles_v1.json",
-        "A4_profile": program / "phase_a_execution_profile_v1.json",
-        "A6_migration_decision": program / "phase_a_migration_decision_v1.json",
-        "B_inference": program / "phase_b_inference_validation_v2.json",
+        "A4_profile": profile_path or program / "phase_a_execution_profile_v1.json",
+        "A6_migration_decision": migration_path or program / "phase_a_migration_decision_v1.json",
+        "B_inference": phase_b_path or program / "phase_b_inference_validation_v2.json",
     }
     benchmark_path = program / "phase_a_fixed_work_benchmark_v1.json"
     loaded = {name: _load(path) for name, path in artifacts.items()}
@@ -119,8 +126,18 @@ def main() -> None:
         type=Path,
         default=ROOT / "studies/research_program/phase_a_certificate_v1.json",
     )
+    parser.add_argument("--exactness", type=Path)
+    parser.add_argument("--profile", type=Path)
+    parser.add_argument("--migration", type=Path)
+    parser.add_argument("--phase-b", type=Path)
     args = parser.parse_args()
-    result = run(args.output.resolve())
+    result = run(
+        args.output.resolve(),
+        exactness_path=args.exactness.resolve() if args.exactness else None,
+        profile_path=args.profile.resolve() if args.profile else None,
+        migration_path=args.migration.resolve() if args.migration else None,
+        phase_b_path=args.phase_b.resolve() if args.phase_b else None,
+    )
     print(json.dumps({"output": str(args.output.resolve()), "passed": result["passed"]}))
 
 

@@ -26,12 +26,17 @@ def _load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def run(output: Path) -> dict[str, Any]:
+def run(
+    output: Path,
+    *,
+    phase_a_path: Path | None = None,
+    phase_b_path: Path | None = None,
+) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite method contract: {output}")
     program = ROOT / "studies/research_program"
-    phase_a_path = program / "phase_a_certificate_v1.json"
-    phase_b_path = program / "phase_b_inference_validation_v2.json"
+    phase_a_path = phase_a_path or program / "phase_a_certificate_v1.json"
+    phase_b_path = phase_b_path or program / "phase_b_inference_validation_v2.json"
     phase_a = _load(phase_a_path)
     phase_b = _load(phase_b_path)
     repo = repository_state(ROOT)
@@ -120,8 +125,14 @@ def main() -> None:
         type=Path,
         default=ROOT / "studies/research_program/phase_c_method_contract_v1.json",
     )
+    parser.add_argument("--phase-a", type=Path)
+    parser.add_argument("--phase-b", type=Path)
     args = parser.parse_args()
-    result = run(args.output.resolve())
+    result = run(
+        args.output.resolve(),
+        phase_a_path=args.phase_a.resolve() if args.phase_a else None,
+        phase_b_path=args.phase_b.resolve() if args.phase_b else None,
+    )
     print(json.dumps({"output": str(args.output.resolve()), "passed": result["passed"]}))
 
 

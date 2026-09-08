@@ -19,13 +19,24 @@ from pineland_sim.reproducibility import canonical_sha256, file_sha256, model_sh
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=ROOT / "studies/research_program/phase_a_fixed_work_benchmark_failure_v1.json")
+    parser.add_argument("--study-id", default="phase_a_fixed_work_benchmark_failure_v1")
+    parser.add_argument("--workers", type=int, default=16)
+    parser.add_argument("--unbalanced-resampling", action="store_true")
+    parser.add_argument(
+        "--termination",
+        default="controlled stop after the complete fixed ensemble failed to produce a finished artifact",
+    )
+    parser.add_argument(
+        "--resource-window",
+        default="resident workers remained memory-heavy and execution was load-imbalanced; no partial timing accepted",
+    )
     args = parser.parse_args()
     output = args.output.resolve()
     if output.exists():
         raise FileExistsError(output)
     payload = {
         "schema_version": "1.0.0",
-        "study_id": "phase_a_fixed_work_benchmark_failure_v1",
+        "study_id": args.study_id,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "status": "incomplete_resource_limit",
         "protocol": {
@@ -34,15 +45,16 @@ def main() -> None:
             "branch_equivalents": 3,
             "pwb": 768,
             "engine": "resident_filter_transport",
-            "workers": 16,
+            "workers": args.workers,
+            "balance_resampling": not args.unbalanced_resampling,
             "synthetic_observations": "all-inactive; no historical outcome values read or fitted",
         },
         "observed": {
             "complete_ensemble": False,
             "complete_timing": False,
             "partial_results_reported": False,
-            "termination": "controlled stop after working set exceeded approximately 20 GB without completing the fixed ensemble",
-            "resource_window": "approximately 20 GB working set; child workers confirmed terminated",
+            "termination": args.termination,
+            "resource_window": args.resource_window,
         },
         "interpretation": "No PWB/s value is reported. E1 and E2 remain failed_closed pending a complete repeat.",
         "provenance": {
@@ -52,7 +64,13 @@ def main() -> None:
             "model_sha256": model_sha256(ROOT),
             "python": platform.python_version(),
             "record_script_sha256": file_sha256(Path(__file__)),
-            "protocol_sha256": canonical_sha256({"particles": 32, "weekly_boundaries": 8, "branch_equivalents": 3, "workers": 16}),
+            "protocol_sha256": canonical_sha256({
+                "particles": 32,
+                "weekly_boundaries": 8,
+                "branch_equivalents": 3,
+                "workers": args.workers,
+                "balance_resampling": not args.unbalanced_resampling,
+            }),
         },
         "passed": False,
     }
