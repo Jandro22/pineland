@@ -799,17 +799,42 @@ impl BeliefState {
         if let Some(index) = self.keys.iter().position(|existing| existing == &key) {
             return index;
         }
-        let index = self.keys.len();
-        self.keys.push(key);
-        self.presence.push(0.0);
+        // Fixed rows are created in the Python compatibility order. Dynamic
+        // information nodes are appended after those rows, but their native
+        // observer codes must be sorted before hashing because Python's
+        // control-belief dictionary is canonicalized by numeric node code.
+        // Keep the insertion policy here so every producer (patrol,
+        // background information, and future relays) shares one boundary.
+        let index = if key.kind == 3 {
+            let dynamic_start = self
+                .keys
+                .iter()
+                .position(|existing| existing.kind == 3)
+                .unwrap_or(self.keys.len());
+            dynamic_start
+                + self.keys[dynamic_start..]
+                    .partition_point(|existing| existing < &key)
+        } else {
+            self.keys.len()
+        };
+        self.keys.insert(index, key);
+        self.presence.insert(index, 0.0);
         self.control
-            .extend(std::iter::repeat_n(0.0, CONTROL_DIMENSIONS));
-        self.confidence.push(0.0);
-        self.updated_at.push(0.0);
-        self.last_reliable_observation_at.push(-1.0e9);
-        self.contradiction.push(0.0);
-        self.source_confidence.push(0.0);
-        self.evidence_count.push(0);
+            .splice(
+                index * CONTROL_DIMENSIONS..index * CONTROL_DIMENSIONS,
+                std::iter::repeat_n(0.0, CONTROL_DIMENSIONS),
+            );
+        self.confidence.insert(index, 0.0);
+        self.updated_at.insert(index, 0.0);
+        self.last_reliable_observation_at.insert(index, -1.0e9);
+        self.contradiction.insert(index, 0.0);
+        self.source_confidence.insert(index, 0.0);
+        self.evidence_count.insert(index, 0);
+        for dirty in &mut self.dirty {
+            if *dirty as usize >= index {
+                *dirty += 1;
+            }
+        }
         index
     }
 
