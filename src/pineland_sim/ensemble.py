@@ -3492,18 +3492,40 @@ class ParticleBatchState:
             fallback: dict,
             row_factory: Any,
         ) -> None:
-            for key in state.keys:
-                if compact is not None and key in compact.key_to_index:
-                    row = compact.row(key)
+            entity_count = state.entity_count
+            lane_base = particle_index * entity_count * state.stride
+            materializer = getattr(compact, "materialize", None)
+            compact_index_lookup = (
+                compact.key_to_index if compact is not None else None
+            )
+            for entity_index, key in enumerate(state.keys):
+                compact_index = (
+                    compact_index_lookup.get(key)
+                    if compact_index_lookup is not None else None
+                )
+                if compact_index is not None:
+                    # ``compact.row`` is the public tuple view, but this
+                    # boundary already targets another contiguous numeric
+                    # buffer.  Materialize the exact source row and copy its
+                    # slice directly, avoiding a temporary tuple and a second
+                    # Python-level field walk.
+                    if callable(materializer):
+                        materializer(key)
+                    compact_start = compact_index * state.stride
+                    source_row = compact.state[
+                        compact_start:compact_start + state.stride
+                    ]
                 elif key in fallback:
-                    row = row_factory(fallback[key])
+                    source_row = array("d", row_factory(fallback[key]))
                 else:
                     continue
-                base = (
-                    particle_index * state.entity_count + state.key_to_index[key]
-                ) * state.stride
-                for field_index, value in enumerate(row):
-                    state.state[base + field_index] = float(value)
+                base = lane_base + entity_index * state.stride
+                # Keep the authoritative packed buffer as the write target, but
+                # perform the contiguous row copy in the array implementation
+                # rather than executing one Python assignment per field.  This
+                # is semantics-preserving: array('d') applies the same binary
+                # float conversion as the previous float(value) assignments.
+                state.state[base:base + state.stride] = source_row
 
         write_rows(
             self.control_state,
@@ -3558,8 +3580,12 @@ class ParticleBatchState:
             compact = CompactControlBeliefState(
                 (),
                 array("d"),
-            )
-        for key in self.control_state.keys:
+                )
+        control_lane_base = (
+            particle_index * self.control_state.entity_count
+            * self.control_state.stride
+        )
+        for entity_index, key in enumerate(self.control_state.keys):
             if key not in world.control_beliefs:
                 world.control_beliefs[key] = ActorBelief(
                     key[0], key[2], ControlVector(*([0.5] * 7)),
@@ -3572,7 +3598,7 @@ class ParticleBatchState:
             materialize = getattr(compact, "materialize", None)
             if callable(materialize):
                 materialize(key)
-            packed_start = self.control_state.offset(particle_index, key)
+            packed_start = control_lane_base + entity_index * self.control_state.stride
             compact_start = compact.index(key) * self.control_state.stride
             compact.state[
                 compact_start:compact_start + self.control_state.stride
@@ -3607,7 +3633,8 @@ class ParticleBatchState:
                     world.last_information_decay_at
                 )
             target = getattr(world, attribute)
-            for key in state.keys:
+            lane_base = particle_index * state.entity_count * state.stride
+            for entity_index, key in enumerate(state.keys):
                 if key not in target:
                     location = key[2].split(":", 1)
                     locality_id = location[0]
@@ -3624,7 +3651,7 @@ class ParticleBatchState:
                     )
                 compact_presence.ensure(key, target[key])
                 compact_presence.materialize(key)
-                packed_start = state.offset(particle_index, key)
+                packed_start = lane_base + entity_index * state.stride
                 compact_start = compact_presence.index(key) * state.stride
                 compact_presence.state[
                     compact_start:compact_start + state.stride
@@ -3655,7 +3682,11 @@ class ParticleBatchState:
                 world.config.information.formation_decay_rate
             )
             compact_zone.set_decay_clock(world.last_information_decay_at)
-        for key in self.zone_state.keys:
+        zone_lane_base = (
+            particle_index * self.zone_state.entity_count
+            * self.zone_state.stride
+        )
+        for entity_index, key in enumerate(self.zone_state.keys):
             if key not in world.zone_beliefs:
                 world.zone_beliefs[key] = ActorZoneBelief(
                     key[0], key[1], 0.5,
@@ -3663,7 +3694,7 @@ class ParticleBatchState:
                 )
             compact_zone.ensure(key, world.zone_beliefs[key])
             compact_zone.materialize(key)
-            packed_start = self.zone_state.offset(particle_index, key)
+            packed_start = zone_lane_base + entity_index * self.zone_state.stride
             compact_start = (
                 compact_zone.index(key) * self.zone_state.stride
             )

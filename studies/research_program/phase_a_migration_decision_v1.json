@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "phase_a_migration_decision_v1",
+  "status": "target_selected",
+  "evidence": {
+    "profile": "studies/research_program/phase_a_execution_profile_v1.json",
+    "profile_sha256": "0d278914fc3664edf338df7b70a3f9e33162bb588fe2f1d00ef7343f409fc3ed"
+  },
+  "observed_profile": {
+    "workload": "4 particles x 7 days x 3 repeats",
+    "dominant_domain": "packed_state_and_synchronization",
+    "median_profile_cpu_seconds": 38.4328121,
+    "median_domain_self_seconds": {
+      "packed_state_and_synchronization": 16.2426397,
+      "packed_execution": 6.3854225,
+      "sparse_reference_processes": 0.0940844
+    }
+  },
+  "selected_migration": {
+    "target": "row materialization and lane synchronization",
+    "reason": "The dominant measured self-time is packed-state synchronization; moving sparse physics or organizational kernels first would not address the measured bottleneck.",
+    "correctness_constraint": "No synchronization elision is permitted unless the sparse-boundary authority and continuation hashes remain exact.",
+    "throughput_gate": "Rerun the complete 768-PWB workload after any migration; never extrapolate from the representative profile."
+  },
+  "rejected_without_evidence": [
+    "blind conversion of remaining sparse reference processes",
+    "equation changes for speed",
+    "dropping continuation or genealogy state",
+    "partial-ensemble throughput reporting"
+  ],
+  "passed": true
+}

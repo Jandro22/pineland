@@ -37,6 +37,7 @@ def run(output: Path) -> dict[str, Any]:
         "A2_packed_authority": program / "phase_a_packed_state_authority_v1.json",
         "A3_kernel_oracles": program / "phase_a_kernel_oracles_v1.json",
         "A4_profile": program / "phase_a_execution_profile_v1.json",
+        "A6_migration_decision": program / "phase_a_migration_decision_v1.json",
         "B_inference": program / "phase_b_inference_validation_v2.json",
     }
     benchmark_path = program / "phase_a_fixed_work_benchmark_v1.json"
@@ -51,6 +52,7 @@ def run(output: Path) -> dict[str, Any]:
         "A2_authority_inventory": bool(loaded["A2_packed_authority"]["passed"]),
         "A3_kernel_oracles": bool(loaded["A3_kernel_oracles"]["passed"]),
         "A4_profile_accounting": bool(loaded["A4_profile"]["passed"]),
+        "A6_profile_driven_migration": bool(loaded["A6_migration_decision"]["passed"]),
         "A5_E1_minimum": bool(benchmark["results"]["E1_passed"]),
         "A5_E2_target": bool(benchmark["results"]["E2_passed"]),
         "A7_packed_filtering": bool(
@@ -63,6 +65,7 @@ def run(output: Path) -> dict[str, Any]:
         "A2_authority_inventory",
         "A3_kernel_oracles",
         "A4_profile_accounting",
+        "A6_profile_driven_migration",
         "A5_E1_minimum",
         "A7_packed_filtering",
     ))
