@@ -111,13 +111,25 @@ pub struct PersonState {
     pub locality: Vec<u32>,
     pub represented_population: Vec<f64>,
     pub household: Vec<u32>,
+    pub age: Vec<u8>,
+    /// Flattened language, identity, and party-preference rows.  The fixed
+    /// widths are the Pineland schema: four languages, three identity
+    /// dimensions, and three party preferences per representative person.
+    pub languages: Vec<f64>,
+    pub identities: Vec<f64>,
+    pub preferences: Vec<f64>,
     pub grievance: Vec<f64>,
     pub fear: Vec<f64>,
     pub efficacy: Vec<f64>,
     pub trust: Vec<f64>,
+    pub trust_insurgent: Vec<f64>,
+    pub resources: Vec<f64>,
     pub home: Vec<u32>,
     pub residence: Vec<u32>,
     pub rebel_sympathy: Vec<f64>,
+    pub organization: Vec<u32>,
+    pub armed_fraction: Vec<f64>,
+    pub community: Vec<u32>,
 }
 
 impl PersonState {
@@ -126,13 +138,22 @@ impl PersonState {
             locality: vec![0; count],
             represented_population: vec![0.0; count],
             household: (0..count).map(|value| value as u32).collect(),
+            age: vec![0; count],
+            languages: vec![0.0; count * 4],
+            identities: vec![0.0; count * 3],
+            preferences: vec![0.0; count * 3],
             grievance: vec![0.0; count],
             fear: vec![0.0; count],
             efficacy: vec![0.5; count],
             trust: vec![0.5; count],
+            trust_insurgent: vec![0.2; count],
+            resources: vec![0.0; count],
             home: vec![0; count],
             residence: vec![0; count],
             rebel_sympathy: vec![0.0; count],
+            organization: vec![u32::MAX; count],
+            armed_fraction: vec![0.0; count],
+            community: vec![u32::MAX; count],
         }
     }
 }
@@ -140,6 +161,7 @@ impl PersonState {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct PatrolState {
     pub formation: Vec<u32>,
+    pub active: Vec<u8>,
     pub route_position: Vec<u32>,
     pub route_target: Vec<u32>,
     pub last_departure: Vec<f64>,
@@ -151,6 +173,7 @@ impl PatrolState {
     pub fn new(count: usize) -> Self {
         Self {
             formation: (0..count).map(|value| value as u32).collect(),
+            active: vec![1; count],
             route_position: vec![0; count],
             route_target: vec![0; count],
             last_departure: vec![-1.0e9; count],
@@ -165,7 +188,10 @@ pub struct SecurityPostState {
     pub organization: Vec<u32>,
     pub locality: Vec<u32>,
     pub microzone: Vec<u32>,
+    pub personnel: Vec<f64>,
     pub presence: Vec<f64>,
+    pub available_fraction: Vec<f64>,
+    pub formation: Vec<u32>,
     pub detection_rate: Vec<f64>,
     pub reliability: Vec<f64>,
     pub updated_at: Vec<f64>,
@@ -178,7 +204,10 @@ impl SecurityPostState {
             organization: vec![0; count],
             locality: (0..count).map(|value| value as u32).collect(),
             microzone: vec![0; count],
+            personnel: vec![0.0; count],
             presence: vec![0.0; count],
+            available_fraction: vec![0.0; count],
+            formation: vec![u32::MAX; count],
             detection_rate: vec![0.5; count],
             reliability: vec![0.5; count],
             updated_at: vec![0.0; count],
@@ -491,6 +520,8 @@ impl BeliefState {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LogisticsState {
+    pub organization: Vec<u32>,
+    pub locality: Vec<u32>,
     pub source_stock: Vec<f64>,
     pub source_capacity: Vec<f64>,
     pub source_production: Vec<f64>,
@@ -505,6 +536,8 @@ pub struct LogisticsState {
 impl LogisticsState {
     pub fn new(count: usize) -> Self {
         Self {
+            organization: vec![0; count],
+            locality: vec![0; count],
             source_stock: vec![0.0; count],
             source_capacity: vec![0.0; count],
             source_production: vec![0.0; count],
@@ -705,13 +738,22 @@ impl ParticleState {
         append_u32s(material, &self.people.locality);
         append_f64s(material, &self.people.represented_population);
         append_u32s(material, &self.people.household);
+        append_u8s(material, &self.people.age);
+        append_f64s(material, &self.people.languages);
+        append_f64s(material, &self.people.identities);
+        append_f64s(material, &self.people.preferences);
         append_f64s(material, &self.people.grievance);
         append_f64s(material, &self.people.fear);
         append_f64s(material, &self.people.efficacy);
         append_f64s(material, &self.people.trust);
+        append_f64s(material, &self.people.trust_insurgent);
+        append_f64s(material, &self.people.resources);
         append_u32s(material, &self.people.home);
         append_u32s(material, &self.people.residence);
         append_f64s(material, &self.people.rebel_sympathy);
+        append_u32s(material, &self.people.organization);
+        append_f64s(material, &self.people.armed_fraction);
+        append_u32s(material, &self.people.community);
         append_f64s(material, &self.zones.population_share);
         append_f64s(material, &self.zones.infrastructure);
         append_f64s(material, &self.zones.terrain_friction);
@@ -760,6 +802,7 @@ impl ParticleState {
         append_u8s(material, &self.formations.outside_pineland);
         append_u8s(material, &self.formations.operational_posture);
         append_u32s(material, &self.patrols.formation);
+        append_u8s(material, &self.patrols.active);
         append_u32s(material, &self.patrols.route_position);
         append_u32s(material, &self.patrols.route_target);
         append_f64s(material, &self.patrols.last_departure);
@@ -768,7 +811,10 @@ impl ParticleState {
         append_u32s(material, &self.security_posts.organization);
         append_u32s(material, &self.security_posts.locality);
         append_u32s(material, &self.security_posts.microzone);
+        append_f64s(material, &self.security_posts.personnel);
         append_f64s(material, &self.security_posts.presence);
+        append_f64s(material, &self.security_posts.available_fraction);
+        append_u32s(material, &self.security_posts.formation);
         append_f64s(material, &self.security_posts.detection_rate);
         append_f64s(material, &self.security_posts.reliability);
         append_f64s(material, &self.security_posts.updated_at);
@@ -809,6 +855,8 @@ impl ParticleState {
         append_f64s(material, &self.beliefs.source_confidence);
         append_u32s(material, &self.beliefs.evidence_count);
         append_u32s(material, &self.beliefs.dirty);
+        append_u32s(material, &self.logistics.organization);
+        append_u32s(material, &self.logistics.locality);
         append_f64s(material, &self.logistics.source_stock);
         append_f64s(material, &self.logistics.source_capacity);
         append_f64s(material, &self.logistics.source_production);
@@ -922,19 +970,50 @@ impl ParticleState {
                 "represented population",
             ),
             (self.people.household.len(), "person household"),
+            (self.people.age.len(), "person age"),
             (self.people.grievance.len(), "person grievance"),
             (self.people.fear.len(), "person fear"),
             (self.people.efficacy.len(), "person efficacy"),
             (self.people.trust.len(), "person trust"),
+            (self.people.trust_insurgent.len(), "person insurgent trust"),
+            (self.people.resources.len(), "person resources"),
             (self.people.home.len(), "person home"),
             (self.people.residence.len(), "person residence"),
             (self.people.rebel_sympathy.len(), "person sympathy"),
+            (self.people.organization.len(), "person organization"),
+            (self.people.armed_fraction.len(), "person armed fraction"),
+            (self.people.community.len(), "person community"),
         ] {
             if length != people_count {
                 return Err(StateError::LengthMismatch {
                     name: name.to_string(),
                     left: length,
                     right: people_count,
+                });
+            }
+        }
+        for (length, name, expected) in [
+            (
+                self.people.languages.len(),
+                "person languages",
+                people_count * 4,
+            ),
+            (
+                self.people.identities.len(),
+                "person identities",
+                people_count * 3,
+            ),
+            (
+                self.people.preferences.len(),
+                "person preferences",
+                people_count * 3,
+            ),
+        ] {
+            if length != expected {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: expected,
                 });
             }
         }
@@ -1071,6 +1150,7 @@ impl ParticleState {
         }
         for (length, name) in [
             (self.patrols.formation.len(), "patrol formation"),
+            (self.patrols.active.len(), "patrol active"),
             (self.patrols.route_position.len(), "patrol route position"),
             (self.patrols.route_target.len(), "patrol route target"),
             (self.patrols.last_departure.len(), "patrol departure"),
@@ -1095,7 +1175,19 @@ impl ParticleState {
                 self.security_posts.microzone.len(),
                 "security post microzone",
             ),
+            (
+                self.security_posts.personnel.len(),
+                "security post personnel",
+            ),
             (self.security_posts.presence.len(), "security post presence"),
+            (
+                self.security_posts.available_fraction.len(),
+                "security post availability",
+            ),
+            (
+                self.security_posts.formation.len(),
+                "security post formation",
+            ),
             (
                 self.security_posts.detection_rate.len(),
                 "security post detection rate",
@@ -1205,16 +1297,19 @@ impl ParticleState {
             });
         }
         let organization_count = self.organizations.kind.len();
+        let source_count = self.logistics.source_stock.len();
         for (length, name) in [
+            (self.logistics.organization.len(), "source organization"),
+            (self.logistics.locality.len(), "source locality"),
             (self.logistics.source_stock.len(), "source stock"),
             (self.logistics.source_capacity.len(), "source capacity"),
             (self.logistics.source_production.len(), "source production"),
         ] {
-            if length != organization_count {
+            if length != source_count {
                 return Err(StateError::LengthMismatch {
                     name: name.to_string(),
                     left: length,
-                    right: organization_count,
+                    right: source_count,
                 });
             }
         }
@@ -1294,6 +1389,12 @@ impl ParticleState {
                     .microzone
                     .iter()
                     .map(|value| (*value, "security post microzone", zone_count)),
+            )
+            .chain(
+                self.logistics
+                    .locality
+                    .iter()
+                    .map(|value| (*value, "source locality", locality_count)),
             )
             .chain(
                 self.footholds

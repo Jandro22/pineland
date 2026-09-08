@@ -797,26 +797,44 @@ fn encode_people(b: &mut Vec<u8>, p: &ParticleState) {
     put_u32_vec(b, &x.locality);
     put_f64_vec(b, &x.represented_population);
     put_u32_vec(b, &x.household);
+    put_u8_vec(b, &x.age);
+    put_f64_vec(b, &x.languages);
+    put_f64_vec(b, &x.identities);
+    put_f64_vec(b, &x.preferences);
     put_f64_vec(b, &x.grievance);
     put_f64_vec(b, &x.fear);
     put_f64_vec(b, &x.efficacy);
     put_f64_vec(b, &x.trust);
+    put_f64_vec(b, &x.trust_insurgent);
+    put_f64_vec(b, &x.resources);
     put_u32_vec(b, &x.home);
     put_u32_vec(b, &x.residence);
-    put_f64_vec(b, &x.rebel_sympathy)
+    put_f64_vec(b, &x.rebel_sympathy);
+    put_u32_vec(b, &x.organization);
+    put_f64_vec(b, &x.armed_fraction);
+    put_u32_vec(b, &x.community)
 }
 fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.people;
     x.locality = read_u32_vec(r)?;
     x.represented_population = read_f64_vec(r)?;
     x.household = read_u32_vec(r)?;
+    x.age = read_u8_vec(r)?;
+    x.languages = read_f64_vec(r)?;
+    x.identities = read_f64_vec(r)?;
+    x.preferences = read_f64_vec(r)?;
     x.grievance = read_f64_vec(r)?;
     x.fear = read_f64_vec(r)?;
     x.efficacy = read_f64_vec(r)?;
     x.trust = read_f64_vec(r)?;
+    x.trust_insurgent = read_f64_vec(r)?;
+    x.resources = read_f64_vec(r)?;
     x.home = read_u32_vec(r)?;
     x.residence = read_u32_vec(r)?;
     x.rebel_sympathy = read_f64_vec(r)?;
+    x.organization = read_u32_vec(r)?;
+    x.armed_fraction = read_f64_vec(r)?;
+    x.community = read_u32_vec(r)?;
     Ok(())
 }
 fn encode_zones(b: &mut Vec<u8>, p: &ParticleState) {
@@ -956,6 +974,7 @@ fn decode_formations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<()
 fn encode_patrols(b: &mut Vec<u8>, p: &ParticleState) {
     let x = &p.patrols;
     put_u32_vec(b, &x.formation);
+    put_u8_vec(b, &x.active);
     put_u32_vec(b, &x.route_position);
     put_u32_vec(b, &x.route_target);
     put_f64_vec(b, &x.last_departure);
@@ -965,6 +984,7 @@ fn encode_patrols(b: &mut Vec<u8>, p: &ParticleState) {
 fn decode_patrols(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.patrols;
     x.formation = read_u32_vec(r)?;
+    x.active = read_u8_vec(r)?;
     x.route_position = read_u32_vec(r)?;
     x.route_target = read_u32_vec(r)?;
     x.last_departure = read_f64_vec(r)?;
@@ -977,7 +997,10 @@ fn encode_security_posts(b: &mut Vec<u8>, p: &ParticleState) {
     put_u32_vec(b, &x.organization);
     put_u32_vec(b, &x.locality);
     put_u32_vec(b, &x.microzone);
+    put_f64_vec(b, &x.personnel);
     put_f64_vec(b, &x.presence);
+    put_f64_vec(b, &x.available_fraction);
+    put_u32_vec(b, &x.formation);
     put_f64_vec(b, &x.detection_rate);
     put_f64_vec(b, &x.reliability);
     put_f64_vec(b, &x.updated_at);
@@ -991,7 +1014,10 @@ fn decode_security_posts(
     x.organization = read_u32_vec(r)?;
     x.locality = read_u32_vec(r)?;
     x.microzone = read_u32_vec(r)?;
+    x.personnel = read_f64_vec(r)?;
     x.presence = read_f64_vec(r)?;
+    x.available_fraction = read_f64_vec(r)?;
+    x.formation = read_u32_vec(r)?;
     x.detection_rate = read_f64_vec(r)?;
     x.reliability = read_f64_vec(r)?;
     x.updated_at = read_f64_vec(r)?;
@@ -1097,6 +1123,8 @@ fn decode_beliefs(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), C
 }
 fn encode_logistics(b: &mut Vec<u8>, p: &ParticleState) {
     let x = &p.logistics;
+    put_u32_vec(b, &x.organization);
+    put_u32_vec(b, &x.locality);
     for v in [&x.source_stock, &x.source_capacity, &x.source_production] {
         put_f64_vec(b, v)
     }
@@ -1113,6 +1141,8 @@ fn encode_logistics(b: &mut Vec<u8>, p: &ParticleState) {
 }
 fn decode_logistics(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.logistics;
+    x.organization = read_u32_vec(r)?;
+    x.locality = read_u32_vec(r)?;
     x.source_stock = read_f64_vec(r)?;
     x.source_capacity = read_f64_vec(r)?;
     x.source_production = read_f64_vec(r)?;
