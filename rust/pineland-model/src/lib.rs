@@ -1599,7 +1599,7 @@ impl SimulationEngine {
     fn process_event(&mut self, event: &ScheduledEvent, horizon: f64) -> Result<(), ModelError> {
         match &event.payload {
             EventPayload::Patrol { .. } => {
-                let mut rng = self.take_rng("patrol");
+                let mut rng = self.take_rng("process:patrol");
                 patrol::advance(
                     &mut self.particle,
                     &self.topology,
@@ -1611,13 +1611,13 @@ impl SimulationEngine {
                     },
                     event.time,
                 );
-                self.put_rng("patrol", rng);
+                self.put_rng("process:patrol", rng);
             }
             EventPayload::PhysicalRefresh => {
                 physical::refresh(&mut self.particle, &self.topology, &self.config, event.time)
             }
             EventPayload::Information => {
-                let mut rng = self.take_rng("information");
+                let mut rng = self.take_rng("process:information");
                 information::collect_and_fuse(
                     &mut self.particle,
                     &self.topology,
@@ -1626,7 +1626,7 @@ impl SimulationEngine {
                     event.elapsed_days,
                     event.time,
                 );
-                self.put_rng("information", rng);
+                self.put_rng("process:information", rng);
             }
             EventPayload::Beliefs => beliefs::decay_and_propagate(
                 &mut self.particle,
@@ -1635,7 +1635,7 @@ impl SimulationEngine {
                 event.time,
             ),
             EventPayload::SocialInfluence => {
-                let mut rng = self.take_rng("social-influence");
+                let mut rng = self.take_rng("process:social_influence");
                 social::update(
                     &mut self.particle,
                     &self.topology,
@@ -1643,10 +1643,10 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("social-influence", rng);
+                self.put_rng("process:social_influence", rng);
             }
             EventPayload::Mobility => {
-                let mut rng = self.take_rng("mobility");
+                let mut rng = self.take_rng("process:mobility");
                 movement::civilian_mobility(
                     &mut self.particle,
                     &self.topology,
@@ -1654,10 +1654,10 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("mobility", rng);
+                self.put_rng("process:mobility", rng);
             }
             EventPayload::Recruitment => {
-                let mut rng = self.take_rng("recruitment");
+                let mut rng = self.take_rng("process:recruitment");
                 recruitment::recruit(
                     &mut self.particle,
                     &self.topology,
@@ -1665,10 +1665,10 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("recruitment", rng);
+                self.put_rng("process:recruitment", rng);
             }
             EventPayload::OrganizedAction { .. } => {
-                let mut rng = self.take_rng("organized-action");
+                let mut rng = self.take_rng("process:organized_action");
                 actions::opportunities(
                     &mut self.particle,
                     &self.topology,
@@ -1676,10 +1676,10 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("organized-action", rng);
+                self.put_rng("process:organized_action", rng);
             }
             EventPayload::ContactScan => {
-                let mut rng = self.take_rng("contact");
+                let mut rng = self.take_rng("process:contact_scan");
                 let exposure_days = self
                     .config
                     .intervals
@@ -1698,7 +1698,7 @@ impl SimulationEngine {
                         event.time,
                     )?;
                 }
-                self.put_rng("contact", rng);
+                self.put_rng("process:contact_scan", rng);
             }
             EventPayload::Contact {
                 first,
@@ -1706,7 +1706,7 @@ impl SimulationEngine {
                 locality,
                 microzone,
             } => {
-                let mut rng = self.take_rng("contact");
+                let mut rng = self.take_rng("process:contact");
                 combat::resolve_contact(
                     &mut self.particle,
                     &self.topology,
@@ -1718,13 +1718,13 @@ impl SimulationEngine {
                     locality.get() as usize,
                     microzone.get() as usize,
                 );
-                self.put_rng("contact", rng);
+                self.put_rng("process:contact", rng);
             }
             EventPayload::ForceMovement => {
                 movement::command(&mut self.particle, &self.topology, &self.config, event.time)
             }
             EventPayload::Logistics => {
-                let mut rng = self.take_rng("logistics");
+                let mut rng = self.take_rng("process:logistics");
                 logistics::update(
                     &mut self.particle,
                     &self.topology,
@@ -1733,7 +1733,7 @@ impl SimulationEngine {
                     event.elapsed_days,
                     event.time,
                 );
-                self.put_rng("logistics", rng);
+                self.put_rng("process:logistics", rng);
             }
             EventPayload::Command => {
                 movement::command(&mut self.particle, &self.topology, &self.config, event.time)
@@ -1745,7 +1745,7 @@ impl SimulationEngine {
                 economy::update(&mut self.particle, &self.topology, &self.config, event.time)
             }
             EventPayload::OrganizationEcology => {
-                let mut rng = self.take_rng("organization-ecology-events");
+                let mut rng = self.take_rng("process:organization_ecology");
                 organizations::update(
                     &mut self.particle,
                     &self.topology,
@@ -1753,10 +1753,10 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("organization-ecology-events", rng);
+                self.put_rng("process:organization_ecology", rng);
             }
             EventPayload::PoliticalOrder => {
-                let mut rng = self.take_rng("political");
+                let mut rng = self.take_rng("process:political_order");
                 political::update(
                     &mut self.particle,
                     &self.topology,
@@ -1764,10 +1764,10 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("political", rng);
+                self.put_rng("process:political_order", rng);
             }
             EventPayload::ForeignAffairs => {
-                let mut rng = self.take_rng("foreign");
+                let mut rng = self.take_rng("process:foreign_affairs");
                 foreign::update(
                     &mut self.particle,
                     &self.topology,
@@ -1775,10 +1775,10 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("foreign", rng);
+                self.put_rng("process:foreign_affairs", rng);
             }
             EventPayload::PeaceProcess => {
-                let mut rng = self.take_rng("peace");
+                let mut rng = self.take_rng("process:peace_process");
                 peace::update(
                     &mut self.particle,
                     &self.topology,
@@ -1786,10 +1786,10 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("peace", rng);
+                self.put_rng("process:peace_process", rng);
             }
             EventPayload::RecordingNoise => {
-                let mut rng = self.take_rng("recording");
+                let mut rng = self.take_rng("process:recording_noise");
                 recording::update(
                     &mut self.particle,
                     &self.topology,
@@ -1797,7 +1797,7 @@ impl SimulationEngine {
                     &mut rng,
                     event.time,
                 );
-                self.put_rng("recording", rng);
+                self.put_rng("process:recording_noise", rng);
             }
             EventPayload::Checkpoint => {
                 self.particle.counters.checkpoints =
