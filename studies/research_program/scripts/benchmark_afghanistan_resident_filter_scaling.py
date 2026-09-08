@@ -50,6 +50,7 @@ def _run_one(
     branches: int,
     seed: int,
     release_templates: bool = False,
+    balance_resampling: bool = True,
 ):
     particles = [
         runner.Particle(
@@ -58,6 +59,7 @@ def _run_one(
         )
         for index, template in enumerate(templates)
     ]
+    particle_count = len(particles)
     if release_templates:
         templates.clear()
     started = perf_counter()
@@ -66,7 +68,7 @@ def _run_one(
         propagate=runner._resident_particle_job,
         fork_state=runner._fork_particle_state,
         workers=workers,
-        summarize_state=runner._resident_particle_identity,
+        summarize_state=runner._resident_particle_hash,
     )
     try:
         filter_ = runner.run_training_filter(
@@ -78,6 +80,7 @@ def _run_one(
             collect_worker_diagnostics=True,
             resident_pool=pool,
             keep_resident=True,
+            balance_resampling=balance_resampling,
         )
         summaries = dict(pool.summarize())
     finally:
@@ -85,7 +88,7 @@ def _run_one(
     wall_seconds = perf_counter() - started
     decision_hashes = [
         summaries[index]["decision_state_sha256"]
-        for index in range(len(particles))
+        for index in range(particle_count)
     ]
     return {
         "workers": workers,
@@ -109,6 +112,11 @@ def main() -> None:
     parser.add_argument("--weeks", type=int, default=8)
     parser.add_argument("--branches", type=int, default=3)
     parser.add_argument("--workers", type=int, nargs="+", default=(8, 12, 16))
+    parser.add_argument(
+        "--unbalanced-resampling",
+        action="store_true",
+        help="keep resampled children on parent workers to avoid large peer-state transfers",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.particles < 2 or args.weeks < 1 or args.branches < 1:
@@ -152,6 +160,7 @@ def main() -> None:
             branches=args.branches,
             seed=args.seed,
             release_templates=(worker_index == len(args.workers) - 1),
+            balance_resampling=not args.unbalanced_resampling,
         ))
     reference = rows[0]
     for row in rows:
@@ -168,6 +177,7 @@ def main() -> None:
         "particles": args.particles,
         "weeks": args.weeks,
         "branches": args.branches,
+        "balance_resampling": not args.unbalanced_resampling,
         "results": rows,
         "best_workers": best["workers"],
         "all_exact": all(

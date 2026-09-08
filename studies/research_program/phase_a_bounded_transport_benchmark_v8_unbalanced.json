@@ -1,0 +1,146 @@
+{
+  "all_exact": true,
+  "balance_resampling": false,
+  "best_workers": 4,
+  "branches": 1,
+  "particles": 8,
+  "results": [
+    {
+      "decision_state_sha256": [
+        "abf95fe61bfa2dc0adffcd541ce0f589487df2abc69bd13b5f443587b662cfc6",
+        "4d49716ebd3e33b490e3335455cfa62aa33d81f44419a9904e861df7889ae8de",
+        "e5e1c188b0537465000250ec2aec814e7b4deff5034111dfeef4b375417c07e7",
+        "2c9b4d5e87220cce8380e1b3e6ed4a18809ea9cd6ae3c19d57b8cc064da55009",
+        "f773aabeefe40030626c70db26ec720771d6d2f1e8d540dedfaa05c384e44bd1",
+        "c424d5e1e0463a521b614bd5133bba152a30d4bf72b36431592f66ed9fbd2139",
+        "2a3e2a533779e882db812a476a56fd368582f52257b34455dbc80343d1153dfe",
+        "5e4aeec1b353ee7b5d70b70a64a7a75cb2f3a4c72c7331eb0a43e3468e6dc6fd"
+      ],
+      "exact_state_equivalence": true,
+      "exact_weight_equivalence": true,
+      "nested_propagator_diagnostics": {
+        "exact_descendant_match_calls": 0,
+        "exact_descendant_match_fraction": 0.0,
+        "maximum_minimum_descendant_hamming_mismatch": 12,
+        "mean_minimum_descendant_hamming_mismatch": 2.625,
+        "nested_propagation_calls": 16,
+        "workers": 4
+      },
+      "updates": 2,
+      "wall_seconds": 35.90039199986495,
+      "weights": [
+        0.06250000000000007,
+        0.06249999999999973,
+        0.06249999999999973,
+        0.062499999999999944,
+        0.18749999999999978,
+        0.18750000000000044,
+        0.18750000000000044,
+        0.18749999999999978
+      ],
+      "worker_balance_history": [
+        {
+          "assignment_after": [
+            3,
+            2,
+            1,
+            2
+          ],
+          "assignment_before": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "end_day": 7.0,
+          "maximum_posterior_weight": 0.4576259364505302,
+          "posterior_ess": 3.541218702954439,
+          "resample_transport": null,
+          "resampled": true,
+          "unique_parent_particles": 5,
+          "week_index": 0,
+          "worker_compute": [
+            {
+              "state_count": 2,
+              "wall_seconds": 8.731044699903578,
+              "worker_index": 0
+            },
+            {
+              "state_count": 2,
+              "wall_seconds": 9.043494499986991,
+              "worker_index": 1
+            },
+            {
+              "state_count": 2,
+              "wall_seconds": 8.765487000113353,
+              "worker_index": 2
+            },
+            {
+              "state_count": 2,
+              "wall_seconds": 8.34337729983963,
+              "worker_index": 3
+            }
+          ]
+        },
+        {
+          "assignment_after": [
+            3,
+            2,
+            1,
+            2
+          ],
+          "assignment_before": [
+            3,
+            2,
+            1,
+            2
+          ],
+          "end_day": 14.0,
+          "maximum_posterior_weight": 0.18750000000000044,
+          "posterior_ess": 6.399999999999995,
+          "resample_transport": null,
+          "resampled": false,
+          "unique_parent_particles": 8,
+          "week_index": 1,
+          "worker_compute": [
+            {
+              "state_count": 3,
+              "wall_seconds": 14.638309499947354,
+              "worker_index": 0
+            },
+            {
+              "state_count": 2,
+              "wall_seconds": 10.240253400057554,
+              "worker_index": 1
+            },
+            {
+              "state_count": 1,
+              "wall_seconds": 4.895047999918461,
+              "worker_index": 2
+            },
+            {
+              "state_count": 2,
+              "wall_seconds": 9.92561800009571,
+              "worker_index": 3
+            }
+          ]
+        }
+      ],
+      "workers": 4
+    }
+  ],
+  "runtime": {
+    "gil_enabled": true,
+    "logical_cpu_count": 16,
+    "machine": "AMD64",
+    "platform": "Windows-10-10.0.19044-SP0",
+    "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "python_cache_tag": "cpython-314",
+    "python_implementation": "CPython",
+    "python_version": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]"
+  },
+  "schema_version": "pineland.performance.afghanistan_resident_filter_scaling.v1",
+  "scientific_status": "execution-only; synthetic all-inactive observations",
+  "seed": 20050111,
+  "weeks": 2
+}
