@@ -101,7 +101,6 @@ def run(
     weeks: int = WEEKS,
     branches: int = BRANCHES,
     balance_resampling: bool = True,
-    global_packed: bool = False,
 ) -> dict:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite existing benchmark evidence: {output}")
@@ -109,14 +108,12 @@ def run(
         raise ValueError("particle_count/weeks/branches must be valid")
     if workers < 1 or workers > particle_count:
         raise ValueError("workers must lie in [1, particles]")
-    if global_packed and workers != 1:
-        raise ValueError("global packed execution requires workers=1")
     particles = _build_particles(seed, particle_count)
     observations = _observations(particles[0].state.world, weeks)
     config = _config(seed)
     started = perf_counter()
     coordinator_cpu_started = process_time()
-    pool = None if global_packed else PersistentParticlePool(
+    pool = PersistentParticlePool(
         [particle.state for particle in particles],
         propagate=runner._resident_particle_job,
         fork_state=runner._fork_particle_state,
@@ -131,23 +128,14 @@ def run(
             likelihood_branches=branches,
             workers=workers,
             resident_pool=pool,
-            keep_resident=not global_packed,
+            keep_resident=True,
             balance_resampling=balance_resampling,
             packed_execution=True,
-            global_packed_execution=global_packed,
         )
-        summaries = (
-            {
-                index: runner._resident_particle_hash(particle.state)
-                for index, particle in enumerate(filter_.particles)
-            }
-            if global_packed else
-            dict(pool.summarize())
-        )
-        worker_cpu_seconds = 0.0 if global_packed else pool.cpu_seconds()
+        summaries = dict(pool.summarize())
+        worker_cpu_seconds = pool.cpu_seconds()
     finally:
-        if pool is not None:
-            pool.close()
+        pool.close()
     wall_seconds = perf_counter() - started
     row = {
         "seed": int(seed),
@@ -159,12 +147,9 @@ def run(
         "pwb_per_second": particle_count * weeks * branches / wall_seconds,
         "coordinator_cpu_seconds": process_time() - coordinator_cpu_started,
         "resident_worker_cpu_seconds": worker_cpu_seconds,
-        "process_count": int(1 if global_packed else 1 + workers),
+        "process_count": int(1 + workers),
         "workers": workers,
-        "engine": (
-            "packed_global_nested_filter"
-            if global_packed else "packed_nested_resident_filter"
-        ),
+        "engine": "packed_nested_resident_filter",
         "weights": particle_weights(filter_.particles),
         "decision_state_sha256": [
             summaries[index]["decision_state_sha256"]
@@ -230,7 +215,6 @@ def main() -> int:
     parser.add_argument("--weeks", type=int, default=WEEKS)
     parser.add_argument("--branches", type=int, default=BRANCHES)
     parser.add_argument("--unbalanced-resampling", action="store_true")
-    parser.add_argument("--global-packed", action="store_true")
     args = parser.parse_args()
     run(
         output=args.output.resolve(),
@@ -240,7 +224,6 @@ def main() -> int:
         weeks=args.weeks,
         branches=args.branches,
         balance_resampling=not args.unbalanced_resampling,
-        global_packed=args.global_packed,
     )
     return 0
 
