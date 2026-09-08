@@ -23,5 +23,11 @@
     }
   },
   "gate_policy": "No migration is promoted from a microbenchmark or extrapolation; the complete fixed workload remains the performance authority.",
+  "provenance": {
+    "model_sha256": "4fd7dc84732a907fd954ddec3d688acf2672293ea032829da34043d3480f0e87",
+    "source_commit": "aa60a0275f799c6dcacc9b15c92ba9808a0fc441",
+    "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "alternate_probe_sha256": "e4035c7095c45862fc49f649293a008fe4e4925972b7c1b09fa7ae0528fc4036"
+  },
   "passed": true
 }

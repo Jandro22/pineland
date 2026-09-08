@@ -1288,6 +1288,7 @@ class PackedHotState:
         topology: "StaticWorldTopology",
         *,
         clear_dirty: bool = True,
+        rebuild_indexes: bool = True,
     ) -> None:
         """Write only migrated hot state into a Python reference/view world."""
         for formation_id, fi in self.formation_index.items():
@@ -1472,7 +1473,8 @@ class PackedHotState:
                     type(next(iter(locality.control.values())))(),
                 ).physical = clamp(insurgent)
 
-        world.rebuild_runtime_entity_indexes()
+        if rebuild_indexes:
+            world.rebuild_runtime_entity_indexes()
         if clear_dirty:
             self.dirty_lanes.discard(lane)
 
@@ -1688,7 +1690,17 @@ class NativeEnsembleRunner:
         if event.event_type == "patrol":
             batch.synchronize_hot_lane_to_world(lane)
         else:
-            batch.synchronize_lane_to_world(lane)
+            # Ordinary sparse handlers consume the Python object view of the
+            # mutable world state.  Belief rows are already authoritative in
+            # that same view: the only packed belief transition is the
+            # information boundary, which refreshes the rows immediately
+            # after its reference computation.  Rewriting the full belief
+            # codebook before every sparse event is therefore redundant and
+            # dominates this exact scheduler-oracle path.  Keep the full
+            # boundary for policy/structural paths and legacy contact
+            # scheduling, whose contracts explicitly permit external belief
+            # edits; ordinary events need only the hot-state export.
+            batch.synchronize_hot_lane_to_world(lane)
         world = simulation.world
         world.time = float(event.time)
         simulation.processes.execute(event)

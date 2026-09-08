@@ -2296,9 +2296,19 @@ class EnsembleBeliefState:
         particle = int(particle)
         if not 0 <= particle < self.particle_count:
             raise IndexError("particle outside ensemble")
+        existing = (
+            self.key_presence[particle]
+            if self.key_presence is not None else None
+        )
+        source_keys = getattr(keys, "keys", None)
+        if existing is not None and callable(source_keys):
+            # Dict-key view equality is implemented without allocating a new
+            # set.  Dynamic belief additions/deletions still fall through to
+            # the normalized replacement below.
+            if source_keys() == existing:
+                return
         normalized = frozenset(tuple(key) for key in keys)
-        unknown = normalized - set(self.keys)
-        if unknown:
+        if any(key not in self.key_to_index for key in normalized):
             raise ValueError("lane presence contains keys outside the packed codebook")
         presence = list(self.key_presence or ())
         presence[particle] = normalized
@@ -3476,11 +3486,20 @@ class ParticleBatchState:
             *,
             prior_confidence: float,
         ) -> None:
-            merged = tuple(sorted(set(state.keys).union(
-                tuple(tuple(str(item) for item in key) for key in incoming)
-            )))
-            if merged == state.keys:
+            # The common path sees an unchanged compact codebook on every
+            # sparse boundary.  Avoid rebuilding a set and sorting the full
+            # union on each refresh; normalize and collect only genuinely new
+            # keys, then pay the deterministic merge cost at the rare dynamic
+            # codebook boundary.
+            new_keys = []
+            known = state.key_to_index
+            for key in incoming:
+                normalized = tuple(str(item) for item in key)
+                if normalized not in known and normalized not in new_keys:
+                    new_keys.append(normalized)
+            if not new_keys:
                 return
+            merged = tuple(sorted((*state.keys, *new_keys)))
             old_keys = state.keys
             old_index = dict(state.key_to_index)
             old_state = state.state
@@ -3572,6 +3591,7 @@ class ParticleBatchState:
             entity_count = state.entity_count
             lane_base = particle_index * entity_count * state.stride
             materializer = getattr(compact, "materialize", None)
+            indexed_materializer = getattr(compact, "materialize_index", None)
             compact_index_lookup = (
                 compact.key_to_index if compact is not None else None
             )
@@ -3586,7 +3606,9 @@ class ParticleBatchState:
                     # buffer.  Materialize the exact source row and copy its
                     # slice directly, avoiding a temporary tuple and a second
                     # Python-level field walk.
-                    if callable(materializer):
+                    if callable(indexed_materializer):
+                        indexed_materializer(compact_index, key)
+                    elif callable(materializer):
                         materializer(key)
                     compact_start = compact_index * state.stride
                     source_row = compact.state[
@@ -3824,7 +3846,8 @@ class ParticleBatchState:
         world = self.particles[particle_index].world
         if self.hot_state is not None:
             self.hot_state.export_lane_to_world(
-                particle_index, world, self.topology
+                particle_index, world, self.topology,
+                rebuild_indexes=False,
             )
         world.time = float(self.times[particle_index])
 

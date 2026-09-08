@@ -161,7 +161,17 @@ class _CompactBeliefState:
 
     def materialize(self, key: tuple[str, ...], time: float | None = None) -> None:
         """Apply pending decay steps to one row, preserving eager arithmetic."""
-        index = self.index(key)
+        self.materialize_index(self.index(key), key, time=time)
+
+    def materialize_index(
+        self,
+        index: int,
+        key: tuple[str, ...],
+        *,
+        time: float | None = None,
+    ) -> None:
+        """Materialize a known row index without repeating the key lookup."""
+        index = int(index)
         event_index = self.decay_event_positions[index]
         if event_index < len(self.decay_events):
             offset = index * self.STRIDE + self.CONFIDENCE_OFFSET
