@@ -107,7 +107,7 @@ pub fn collect_and_fuse(
             observer: crate::GOVERNMENT as u32,
             target: crate::INSURGENT as u32,
             locality: locality as u32,
-            kind: 1,
+            kind: 2,
         });
         particle.beliefs.fuse_control(
             control_index,

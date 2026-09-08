@@ -830,7 +830,7 @@ impl BeliefState {
         let denominator = prior + weight;
         let scale = denominator / (1.0 + denominator);
         let age = (time - self.updated_at[index]).max(0.0);
-        let decay = (-age / memory_days.max(f64::MIN_POSITIVE)).exp();
+        let decay = crate::rng::python_exp(-age / memory_days.max(f64::MIN_POSITIVE));
         let offset = index * CONTROL_DIMENSIONS;
         let mut contradiction = self.contradiction[index] * decay;
         let mut confidence = prior_confidence;
@@ -840,7 +840,7 @@ impl BeliefState {
             self.control[offset + dimension] =
                 clamp01((prior * old + weight * value) / denominator);
             contradiction += weight * (value - old).abs();
-            confidence = clamp01(scale * (-penalty * contradiction).exp());
+            confidence = clamp01(scale * crate::rng::python_exp(-penalty * contradiction));
         }
         self.confidence[index] = confidence;
         self.updated_at[index] = time;
@@ -872,14 +872,16 @@ impl BeliefState {
         let denominator = prior + weight;
         let old = self.presence[index];
         let age = (time - self.updated_at[index]).max(0.0);
-        let mut contradiction =
-            self.contradiction[index] * (-age / memory_days.max(f64::MIN_POSITIVE)).exp();
+        let mut contradiction = self.contradiction[index]
+            * crate::rng::python_exp(-age / memory_days.max(f64::MIN_POSITIVE));
         contradiction += weight * (clamp01(presence) - old).abs();
         self.presence[index] = clamp01((prior * old + weight * clamp01(presence)) / denominator);
         self.source_confidence[index] =
             (self.source_confidence[index] * prior + weight * personnel.max(0.0)) / denominator;
-        self.confidence[index] =
-            clamp01((prior + weight) / (1.0 + prior + weight) * (-penalty * contradiction).exp());
+        self.confidence[index] = clamp01(
+            (prior + weight) / (1.0 + prior + weight)
+                * crate::rng::python_exp(-penalty * contradiction),
+        );
         self.updated_at[index] = time;
         if weight >= 0.12 {
             self.last_reliable_observation_at[index] = time;

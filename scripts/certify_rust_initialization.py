@@ -117,11 +117,20 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
     household_index = indexed(household_ids)
     community_ids = list(sorted(world.social_communities))
     community_index = indexed(community_ids)
+    auxiliary_node_ids = sorted(
+        set(community_ids)
+        | {f"ADMIN:{locality_id}" for locality_id in locality_ids}
+        | {f"ELITE:{community_id}" for community_id in community_ids}
+        | {f"ELITE-CAP:{locality_id}" for locality_id in locality_ids}
+        | {f"INTERPRETER-CAP:{locality_id}" for locality_id in locality_ids}
+    )
+    auxiliary_node_index = indexed(auxiliary_node_ids)
     person_ids = list(world.ordered_person_ids or sorted(world.persons))
     person_index = indexed(person_ids)
     persons = [world.persons[person_id] for person_id in person_ids]
     formations = [world.formations[formation_id] for formation_id in formation_ids]
     posts = list(world.security_posts.values())
+    post_index = {post.post_id: index for index, post in enumerate(posts)}
     patrol_by_formation = {patrol.formation_id: patrol for patrol in world.patrols.values()}
     foothold_by_key = world.local_footholds
     sources = list(world.supply_sources.values())
@@ -967,28 +976,85 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
                     getattr(control.control_estimate, dimension) for dimension in CONTROL_DIMENSIONS
                 )
                 belief_confidence.append(control.confidence)
+    fixed_control_keys = {
+        (organization_id, target, locality_id)
+        for organization_id in organization_ids
+        for locality_id in locality_ids
+        for target in (
+            "insurgent" if organization_id == "insurgent" else "government",
+            "government" if organization_id == "insurgent" else "insurgent",
+        )
+    }
+    # Field nodes (currently patrol formations) create dynamic control rows in
+    # Python.  They are part of the continuation contract even though they do
+    # not exist at initialization.  Native reserves observer codes after the
+    # fixed organization table for these formation observers.
+    def dynamic_observer_code(observer_id: str) -> int:
+        if observer_id in formation_index:
+            return len(organization_ids) + formation_index[observer_id]
+        if observer_id in post_index:
+            return len(organization_ids) + len(formation_ids) + post_index[observer_id]
+        if observer_id in auxiliary_node_index:
+            return (
+                len(organization_ids)
+                + len(formation_ids)
+                + len(posts)
+                + auxiliary_node_index[observer_id]
+            )
+        raise KeyError(f"unmapped dynamic belief observer {observer_id!r}")
+
+    dynamic_control_keys = sorted(
+        (
+            key
+            for key in world.control_beliefs
+            if key not in fixed_control_keys
+        ),
+        key=lambda key: (
+            dynamic_observer_code(key[0]),
+            organization_index[key[1]],
+            locality_index[key[2]],
+        ),
+    )
+    for observer_id, target, locality_id in dynamic_control_keys:
+        control = world.control_beliefs[(observer_id, target, locality_id)]
+        belief_presence.append(0.0)
+        belief_control.extend(
+            getattr(control.control_estimate, dimension) for dimension in CONTROL_DIMENSIONS
+        )
+        belief_confidence.append(control.confidence)
+    belief_key_material = [
+        struct.pack(
+            "<IIIB",
+            organization_index[organization_id],
+            organization_index[target],
+            locality_index[locality_id],
+            kind,
+        )
+        for organization_id in organization_ids
+        for locality_id in locality_ids
+        for target, kind in (
+            ("insurgent", 0),
+            (("insurgent" if organization_id == "insurgent" else "government"), 1),
+            (("government" if organization_id == "insurgent" else "insurgent"), 2),
+        )
+    ]
+    for observer_id, target, locality_id in dynamic_control_keys:
+        belief_key_material.append(
+            struct.pack(
+                "<IIIB",
+                dynamic_observer_code(observer_id),
+                organization_index[target],
+                locality_index[locality_id],
+                3,
+            )
+        )
     values.update(
         {
             "belief_presence": digest_f64(belief_presence),
             "belief_control": digest_f64(belief_control),
             "belief_confidence": digest_f64(belief_confidence),
             "belief_keys": hashlib.sha256(
-                b"".join(
-                    struct.pack(
-                        "<IIIB",
-                        organization_index[organization_id],
-                        organization_index[target],
-                        locality_index[locality_id],
-                        kind,
-                    )
-                    for organization_id in organization_ids
-                    for locality_id in locality_ids
-                    for target, kind in (
-                        ("insurgent", 0),
-                        (("insurgent" if organization_id == "insurgent" else "government"), 1),
-                        (("government" if organization_id == "insurgent" else "insurgent"), 2),
-                    )
-                )
+                b"".join(belief_key_material)
             ).hexdigest(),
         }
     )

@@ -2,7 +2,7 @@
 
 use pineland_core::config::SimulationConfig;
 use pineland_core::rng::{python_exp, PyRandomCompat};
-use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
+use pineland_core::state::{clamp01, BeliefKey, ParticleState, CONTROL_DIMENSIONS};
 use pineland_core::topology::StaticTopology;
 
 const GOVERNMENT_KIND: u8 = 0;
@@ -204,6 +204,21 @@ fn advance_patrol_presence_memory(
     updated_values[zone] = time;
     memory_values[zone] += target * (1.0 - python_exp(-duration / memory));
     particle.patrols.presence_accounted_at[patrol] = time;
+}
+
+/// Close every deployed patrol's presence-memory interval at a physical
+/// refresh boundary.  Python performs this pass once before recomputing the
+/// response and control fields; keeping the traversal in patrol-id order
+/// makes the state transition deterministic and auditable.
+pub fn advance_all_presence_memory(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    time: f64,
+) {
+    for patrol in 0..particle.patrols.formation.len() {
+        advance_patrol_presence_memory(particle, topology, config, patrol, time);
+    }
 }
 
 fn observe_patrol(
@@ -503,12 +518,10 @@ fn observe_control(
     } else {
         &particle.locality.government_control
     };
-    let mut observed_physical = 0.0;
+    let mut observed = [0.0; CONTROL_DIMENSIONS];
     for dimension in 0..CONTROL_DIMENSIONS {
         let value = clamp01(values[offset + dimension] + rng.uniform(-noise, noise));
-        if dimension == 1 {
-            observed_physical = value;
-        }
+        observed[dimension] = value;
     }
     let _violence = clamp01(particle.locality.violence[locality] + rng.uniform(-noise, noise));
     let observation_confidence = (0.45 + 0.45 * trust).clamp(0.0, 1.0);
@@ -516,21 +529,32 @@ fn observe_control(
         * quality
         * trust
         * language.powf(config.information.language_fusion_weight);
-    if std::env::var_os("PINELAND_DEBUG_PATROL").is_some() {
-        eprintln!(
-            "native patrol control formation={} locality={} zone={} quality={:.17e} trust={:.17e} language={:.17e} noise={:.17e} observed_physical={:.17e} confidence={:.17e} weight={:.17e}",
-            observer_formation,
-            locality,
-            microzone,
-            quality,
-            trust,
-            language,
-            noise,
-            observed_physical,
-            observation_confidence,
-            weight,
-        );
+    // The field node fuses the complete control vector into its own dynamic
+    // control-belief row.  Python names this node by formation ID; the native
+    // schema reserves codes after the seven fixed organizations for formation
+    // observers and marks these rows with kind=3.
+    let dynamic_observer = particle.organizations.kind.len() as u32 + observer_formation as u32;
+    let dynamic_key = BeliefKey {
+        observer: dynamic_observer,
+        target: crate::GOVERNMENT as u32,
+        locality: locality as u32,
+        kind: 3,
+    };
+    let is_new = !particle.beliefs.keys.iter().any(|key| key == &dynamic_key);
+    let dynamic_index = particle.beliefs.ensure_key(dynamic_key);
+    if is_new {
+        let offset = dynamic_index * CONTROL_DIMENSIONS;
+        particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS].fill(0.5);
+        particle.beliefs.confidence[dynamic_index] = config.information.prior_confidence;
     }
+    particle.beliefs.fuse_control(
+        dynamic_index,
+        time,
+        weight,
+        &observed,
+        config.information.contradiction_memory_days,
+        config.information.contradiction_penalty,
+    );
     if let Some(index) = zone_belief_index(particle, observer_organization, microzone) {
         let prior_confidence = particle.zone_beliefs.confidence[index];
         let prior = prior_confidence.max(0.02);
@@ -541,9 +565,9 @@ fn observe_control(
                 -((time - particle.zone_beliefs.updated_at[index]).max(0.0))
                     / config.information.contradiction_memory_days,
             )
-            + weight * (observed_physical - old).abs();
+            + weight * (observed[1] - old).abs();
         particle.zone_beliefs.estimate[index] =
-            clamp01((prior * old + weight * observed_physical) / denominator);
+            clamp01((prior * old + weight * observed[1]) / denominator);
         particle.zone_beliefs.confidence[index] = clamp01(
             (prior + weight) / (1.0 + prior + weight)
                 * python_exp(-config.information.contradiction_penalty * contradiction),
