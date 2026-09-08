@@ -16,6 +16,7 @@ import multiprocessing as mp
 import hashlib
 import os
 import pickle
+from queue import Empty
 import random
 from time import perf_counter
 import traceback
@@ -421,8 +422,11 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
             command_queue.put((command, payload))
 
     @staticmethod
-    def _receive(result_queue, expected: str):
-        command, payload = result_queue.get()
+    def _receive(result_queue, expected: str, *, timeout: float | None = None):
+        if timeout is None:
+            command, payload = result_queue.get()
+        else:
+            command, payload = result_queue.get(timeout=timeout)
         if command == "error":
             raise RuntimeError(f"resident particle worker failed:\n{payload}")
         if command != expected:
@@ -710,7 +714,15 @@ class PersistentParticlePool(Generic[StateT, ObservationT, ResultT]):
             command_queue.put(("shutdown", None))
         for process, _, result_queue in self._workers:
             try:
-                self._receive(result_queue, "shutdown")
+                if process.is_alive():
+                    try:
+                        self._receive(result_queue, "shutdown", timeout=10.0)
+                    except Empty:
+                        # A worker may have exited after completing its last
+                        # result but before the best-effort shutdown ack.
+                        # Teardown must not strand the coordinator on a dead
+                        # IPC endpoint.
+                        pass
             finally:
                 process.join(timeout=10)
                 if process.is_alive():
