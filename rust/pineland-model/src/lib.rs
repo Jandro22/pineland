@@ -24,7 +24,7 @@ pub mod social;
 
 use pineland_core::config::{ConfigError, SimulationConfig};
 use pineland_core::json::JsonValue;
-use pineland_core::rng::{seed_from_namespace, PyRandomCompat, RngStreams};
+use pineland_core::rng::{python_sum, seed_from_namespace, PyRandomCompat, RngStreams};
 use pineland_core::scheduler::{EventPayload, ScheduledEvent, SchedulerError};
 use pineland_core::sha256;
 use pineland_core::state::{
@@ -97,8 +97,12 @@ impl SimulationEngine {
         let generated = StaticTopology::pineland(&config, initialization_seed);
         let topology = generated.topology;
         let organization_count = 7;
-        let total_population: f64 = if topology.locality_population.iter().any(|value| *value > 0.0) {
-            topology.locality_population.iter().sum()
+        let total_population: f64 = if topology.district_population.iter().any(|value| *value > 0.0) {
+            // Python's generator retains the registry population as the
+            // represented-population denominator. Locality integer rounding
+            // is a display/state allocation and may sum one person above or
+            // below that registry total.
+            topology.district_population.iter().sum()
         } else {
             // The small synthetic topology remains available to unit tests and
             // low-dimensional smoke runs.  Its scientific generator is only
@@ -214,7 +218,11 @@ impl SimulationEngine {
             // certificate, but still receive a valid conserved population.
             vec![1.0; n]
         };
-        let total_population: f64 = locality_population.iter().sum();
+        let total_population: f64 = if self.topology.district_population.iter().any(|value| *value > 0.0) {
+            python_sum(&self.topology.district_population)
+        } else {
+            python_sum(&locality_population)
+        };
         for locality in 0..n {
             let population = locality_population[locality];
             let offset = locality * CONTROL_DIMENSIONS;
@@ -300,7 +308,7 @@ impl SimulationEngine {
         organizations.discipline = vec![0.7, 0.78, 0.62, 0.5, 0.5, 0.5, 0.65];
         organizations.accountability = vec![0.55, 0.58, 0.55, 0.55, 0.55, 0.55, 0.25];
         organizations.local_knowledge = vec![0.55, 0.42, 0.7, 0.6, 0.6, 0.6, 0.72];
-        organizations.persistence = vec![0.8, 0.72, 0.45, 0.75, 0.75, 0.75, 0.8];
+        organizations.persistence = vec![0.8, 0.72, 0.78, 0.75, 0.75, 0.75, 0.8];
         organizations.mobility = vec![0.7, 0.75, 0.45, 0.5, 0.5, 0.5, 0.65];
         organizations.institutional_quality = vec![0.7, 0.76, 0.58, 0.6, 0.6, 0.6, 0.52];
         organizations.external_support = vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 10_000.0];
@@ -749,21 +757,21 @@ impl SimulationEngine {
         self.schedule(0.0, 20, EventPayload::Command)?;
         self.schedule(0.0, 25, EventPayload::ForceMovement)?;
         self.schedule(0.0, 27, EventPayload::Logistics)?;
-        self.schedule(0.0, 35, EventPayload::PhysicalRefresh)?;
         self.schedule(0.0, 38, EventPayload::Information)?;
         self.schedule(0.0, 42, EventPayload::Beliefs)?;
+        self.schedule(0.0, 35, EventPayload::PhysicalRefresh)?;
         self.schedule(0.0, 45, EventPayload::SocialInfluence)?;
-        self.schedule(0.0, 50, EventPayload::Mobility)?;
-        self.schedule(0.0, 57, EventPayload::PoliticalOrder)?;
         self.schedule(0.0, 58, EventPayload::OrganizationEcology)?;
+        self.schedule(0.0, 57, EventPayload::PoliticalOrder)?;
         self.schedule(0.0, 59, EventPayload::ForeignAffairs)?;
         self.schedule(0.0, 61, EventPayload::PeaceProcess)?;
+        self.schedule(0.0, 50, EventPayload::Mobility)?;
         self.schedule(0.0, 70, EventPayload::Governance)?;
         self.schedule(0.0, 80, EventPayload::Economy)?;
         self.schedule(0.0, 85, EventPayload::RecordingNoise)?;
         self.schedule(0.0, 90, EventPayload::Checkpoint)?;
         if self.config.include_insurgency {
-            self.schedule(0.0, 24, EventPayload::Recruitment)?;
+            self.schedule(0.0, 60, EventPayload::Recruitment)?;
         }
         Ok(())
     }
@@ -1370,6 +1378,7 @@ fn assign_formation_membership(
         let fraction = (remaining / represented).min(1.0);
         people.organization[person] = organization as u32;
         people.armed_fraction[person] = fraction;
+        people.rebel_sympathy[person] = fraction;
         remaining -= represented * fraction;
     }
     remaining.max(0.0)
@@ -1413,6 +1422,7 @@ fn assign_fallback_membership(
         let fraction = (remaining / represented).min(1.0);
         people.organization[person] = organization as u32;
         people.armed_fraction[person] = fraction;
+        people.rebel_sympathy[person] = fraction;
         remaining -= represented * fraction;
     }
 }

@@ -139,6 +139,12 @@ def reference_vectors(draws: int, sample_rounds: int, shuffle_rounds: int) -> di
             "lognormvariate": float_vector(
                 seed, draws, lambda rng: rng.lognormvariate(0.0, 0.55)
             ),
+            "lognormvariate_045": float_vector(
+                seed, draws, lambda rng: rng.lognormvariate(0.0, 0.45)
+            ),
+            "lognormvariate_080": float_vector(
+                seed, draws, lambda rng: rng.lognormvariate(0.0, 0.8)
+            ),
             "expovariate": float_vector(
                 seed, draws, lambda rng: rng.expovariate(1.0 / 3.75)
             ),

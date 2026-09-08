@@ -10,6 +10,30 @@ use std::collections::BTreeMap;
 use std::f64::consts::PI;
 use std::fmt;
 
+// CPython's ``math.exp`` on Windows is backed by the Universal CRT.  Rust's
+// intrinsic f64::exp can differ from that implementation by one ulp for some
+// arguments, which is enough to change a canonical static-world digest even
+// though the MT stream itself is unchanged. Keep the platform oracle explicit
+// for the exact-parity build and use the native intrinsic elsewhere.
+#[cfg(windows)]
+#[link(name = "ucrt")]
+unsafe extern "C" {
+    fn exp(value: f64) -> f64;
+}
+
+fn python_exp(value: f64) -> f64 {
+    #[cfg(windows)]
+    {
+        // SAFETY: the Universal CRT exp function is pure for finite inputs and
+        // has the same f64 ABI used by CPython's math module.
+        unsafe { exp(value) }
+    }
+    #[cfg(not(windows))]
+    {
+        value.exp()
+    }
+}
+
 const N: usize = 624;
 const M: usize = 397;
 const MATRIX_A: u32 = 0x9908_B0DF;
@@ -356,7 +380,7 @@ impl PyRandomCompat {
         // retaining the CPython algorithm here makes the native API useful for
         // both initialization and event processes.  Unlike gauss(), this does
         // not use the cached spare value.
-        let nv_magicconst = 4.0 * (-0.5f64).exp() / 2.0f64.sqrt();
+        let nv_magicconst = 4.0 * python_exp(-0.5) / 2.0f64.sqrt();
         loop {
             let u1 = self.random();
             let u2 = 1.0 - self.random();
@@ -370,7 +394,14 @@ impl PyRandomCompat {
 
     /// Exact equivalent of CPython's `Random.lognormvariate` helper.
     pub fn lognormvariate(&mut self, mean: f64, standard_deviation: f64) -> f64 {
-        self.normalvariate(mean, standard_deviation).exp()
+        python_exp(self.normalvariate(mean, standard_deviation))
+    }
+
+    /// The exp implementation used by the Python-compatible distribution
+    /// helpers. Exposed for topology generation so static-world transforms do
+    /// not silently use a different platform math routine.
+    pub fn python_exp(value: f64) -> f64 {
+        python_exp(value)
     }
 
     /// Exact equivalent of CPython's `Random.expovariate` helper.
@@ -467,6 +498,28 @@ pub fn seed_from_namespace(seed: u64, namespace: &str, stream: &str) -> u64 {
     let token = format!("{seed}:{namespace}:{stream}");
     let digest = sha256::digest(token.as_bytes());
     u64::from_be_bytes(digest[..8].try_into().expect("SHA-256 prefix length"))
+}
+
+/// Match CPython 3.12+'s compensated floating-point `sum` path.
+///
+/// Pineland's Python generator uses the built-in `sum` for normalized locality
+/// and microzone weights.  A plain Rust iterator sum is a left-fold and can
+/// land one ulp away from CPython's compensated result, even when every RNG
+/// draw is identical.  The two-term Neumaier accumulator is the algorithm used
+/// by the CPython float fast path for finite inputs.
+pub fn python_sum(values: &[f64]) -> f64 {
+    let mut hi = 0.0;
+    let mut lo = 0.0;
+    for value in values {
+        let next = hi + *value;
+        if hi.abs() >= value.abs() {
+            lo += (hi - next) + *value;
+        } else {
+            lo += (*value - next) + hi;
+        }
+        hi = next;
+    }
+    hi + lo
 }
 
 const DEFAULT_STREAMS: &[&str] = &[
