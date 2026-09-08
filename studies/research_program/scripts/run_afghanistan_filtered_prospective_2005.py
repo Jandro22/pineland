@@ -1326,6 +1326,14 @@ def _resident_particle_identity(state: SimulationParticle) -> dict[str, object]:
     }
 
 
+def _resident_particle_hash(state: SimulationParticle) -> dict[str, object]:
+    """Return only the state fields needed by execution benchmarks."""
+    return {
+        "lineage_id": state.lineage_id,
+        "decision_state_sha256": decision_state_sha256(state.world),
+    }
+
+
 def make_nested_propagator(
     *,
     branches: int,

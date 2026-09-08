@@ -43,6 +43,7 @@ BRANCH_EQUIVALENTS = 3
 HORIZON_DAYS = 7.0 * WEEKLY_BOUNDARIES
 BASE_SEED = 20050111
 WORKERS = 16
+BALANCE_RESAMPLING = False
 PWB_PER_REPEAT = PARTICLES * WEEKLY_BOUNDARIES * BRANCH_EQUIVALENTS
 
 
@@ -60,6 +61,8 @@ def _run_repeat(repeat_index: int) -> dict[str, Any]:
             "--workers", str(WORKERS),
             "--output", str(raw_output),
         ]
+        if not BALANCE_RESAMPLING:
+            command.append("--unbalanced-resampling")
         started = time.perf_counter()
         completed = subprocess.run(command, check=False, capture_output=True, text=True)
         subprocess_wall = time.perf_counter() - started
@@ -118,6 +121,7 @@ def run(*, output: Path, repetitions: int) -> dict[str, Any]:
             "horizon_days": HORIZON_DAYS,
             "engine": "resident_filter_transport",
             "workers": WORKERS,
+            "balance_resampling": BALANCE_RESAMPLING,
             "synthetic_observations": "all-inactive; no historical outcome values are read or fitted",
             "likelihood_branches": BRANCH_EQUIVALENTS,
             "historical_geography_for_execution": True,
@@ -152,6 +156,7 @@ def run(*, output: Path, repetitions: int) -> dict[str, Any]:
                 "branch_equivalents": BRANCH_EQUIVALENTS,
                 "base_seed": BASE_SEED,
                 "workers": WORKERS,
+                "balance_resampling": BALANCE_RESAMPLING,
                 "horizon_days": HORIZON_DAYS,
             }),
         },
