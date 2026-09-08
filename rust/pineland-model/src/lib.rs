@@ -1871,7 +1871,18 @@ impl SimulationEngine {
 
     fn reschedule_recurring(&mut self, event: &ScheduledEvent) -> Result<(), ModelError> {
         let interval = match event.payload {
-            EventPayload::Patrol { .. } => self.config.intervals.patrol,
+            EventPayload::Patrol { patrol } => {
+                let patrol = patrol.get() as usize;
+                let travel_interval = self
+                    .particle
+                    .patrols
+                    .next_available
+                    .get(patrol)
+                    .copied()
+                    .map(|available_at| (available_at - event.time).max(0.0))
+                    .unwrap_or(0.0);
+                self.config.intervals.patrol.max(travel_interval)
+            }
             EventPayload::Information => self.config.intervals.information,
             EventPayload::Beliefs => self.config.intervals.beliefs,
             EventPayload::PhysicalRefresh => self.config.intervals.physical_refresh,

@@ -1393,6 +1393,48 @@ fn diagnostics(engine: &SimulationEngine) -> JsonValue {
         f64_array(&particle.patrols.last_departure),
     );
     value.insert(
+        "zone_belief_observer",
+        u32_array(
+            &particle
+                .zone_beliefs
+                .keys
+                .iter()
+                .map(|key| key.observer)
+                .collect::<Vec<_>>(),
+        ),
+    );
+    value.insert(
+        "zone_belief_zone",
+        u32_array(
+            &particle
+                .zone_beliefs
+                .keys
+                .iter()
+                .map(|key| key.zone)
+                .collect::<Vec<_>>(),
+        ),
+    );
+    value.insert(
+        "zone_belief_estimate",
+        f64_array(&particle.zone_beliefs.estimate),
+    );
+    value.insert(
+        "zone_belief_confidence",
+        f64_array(&particle.zone_beliefs.confidence),
+    );
+    value.insert(
+        "zone_belief_updated_at",
+        f64_array(&particle.zone_beliefs.updated_at),
+    );
+    value.insert(
+        "zone_belief_contradiction",
+        f64_array(&particle.zone_beliefs.contradiction),
+    );
+    value.insert(
+        "zone_belief_evidence",
+        u32_array(&particle.zone_beliefs.evidence_count),
+    );
+    value.insert(
         "formation_personnel",
         f64_array(&particle.formations.personnel),
     );

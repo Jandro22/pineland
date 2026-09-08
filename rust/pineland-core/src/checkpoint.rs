@@ -20,7 +20,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 3;
+pub const CHECKPOINT_VERSION: u32 = 4;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -1181,6 +1181,8 @@ fn encode_patrols(b: &mut Vec<u8>, p: &ParticleState) {
     put_u32_vec(b, &x.route_target);
     put_f64_vec(b, &x.last_departure);
     put_f64_vec(b, &x.next_available);
+    put_f64_vec(b, &x.response_fraction);
+    put_f64_vec(b, &x.presence_accounted_at);
     put_u32_vec(b, &x.detections)
 }
 fn decode_patrols(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
@@ -1191,6 +1193,8 @@ fn decode_patrols(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), C
     x.route_target = read_u32_vec(r)?;
     x.last_departure = read_f64_vec(r)?;
     x.next_available = read_f64_vec(r)?;
+    x.response_fraction = read_f64_vec(r)?;
+    x.presence_accounted_at = read_f64_vec(r)?;
     x.detections = read_u32_vec(r)?;
     Ok(())
 }

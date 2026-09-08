@@ -58,7 +58,7 @@ impl ProvenanceManifest {
             initialization_seed,
             rng_schema: "cpython-mt19937-random-v1".to_string(),
             scheduler_schema: "time-priority-sequence-v1".to_string(),
-            checkpoint_schema: "PINELAND-v3-little-endian".to_string(),
+            checkpoint_schema: "PINELAND-v4-little-endian".to_string(),
             mpi_world_size: env::var("OMPI_COMM_WORLD_SIZE")
                 .or_else(|_| env::var("PMI_SIZE"))
                 .ok()
