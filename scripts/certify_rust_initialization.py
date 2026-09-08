@@ -263,9 +263,9 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
         ),
         "organizations_member_population": digest_f64(
             sum(
-                world.persons[person_id].weight * world.persons[person_id].armed_fraction
-                for person_id in organization.member_ids
-                if person_id in world.persons
+                person.weight * person.armed_fraction
+                for person in persons
+                if person.organization_id == organization.organization_id
             )
             for organization in world.organizations.values()
         ),
@@ -430,23 +430,58 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
             "belief_presence": digest_f64(belief_presence),
             "belief_control": digest_f64(belief_control),
             "belief_confidence": digest_f64(belief_confidence),
-            "belief_keys": [
-                (organization_index[organization_id], organization_index[target], locality_index[locality_id], kind)
-                for organization_id in organization_ids
-                for locality_id in locality_ids
-                for target, kind in (
-                    ("insurgent", 0),
-                    (("insurgent" if organization_id == "insurgent" else "government"), 1),
-                    (("government" if organization_id == "insurgent" else "insurgent"), 2),
+            "belief_keys": hashlib.sha256(
+                b"".join(
+                    struct.pack(
+                        "<IIIB",
+                        organization_index[organization_id],
+                        organization_index[target],
+                        locality_index[locality_id],
+                        kind,
+                    )
+                    for organization_id in organization_ids
+                    for locality_id in locality_ids
+                    for target, kind in (
+                        ("insurgent", 0),
+                        (("insurgent" if organization_id == "insurgent" else "government"), 1),
+                        (("government" if organization_id == "insurgent" else "insurgent"), 2),
+                    )
                 )
-            ],
+            ).hexdigest(),
         }
     )
 
+    event_codes = {
+        "patrol": 1,
+        "contact_scan": 2,
+        "command": 3,
+        "force_movement": 4,
+        "logistics": 5,
+        "information": 6,
+        "beliefs": 7,
+        "physical_refresh": 8,
+        "social_influence": 9,
+        "mobility": 10,
+        "recruitment": 11,
+        "organization_ecology": 12,
+        "governance": 13,
+        "economy": 14,
+        "political_order": 15,
+        "foreign_affairs": 16,
+        "peace_process": 17,
+        "recording_noise": 18,
+        "checkpoint": 19,
+    }
     scheduler_rows = []
     for event in simulation.scheduler.pending_events():
         scheduler_rows.append(
-            (event.time.hex(), event.priority, event.sequence, event.event_type)
+            {
+                "time_bits": struct.unpack("<Q", struct.pack("<d", event.time))[0],
+                "priority": event.priority,
+                "sequence": event.sequence,
+                "kind": event.event_type,
+                "code": event_codes[event.event_type],
+            }
         )
     values["scheduler"] = scheduler_rows
     return values
@@ -567,19 +602,21 @@ def main(argv: Iterable[str] | None = None) -> int:
                 for key in expected["counts"]
                 if expected["counts"].get(key) != actual["counts"].get(key)
             }
+            rust_components = dict(actual.get("components", {}))
+            rust_components["scheduler"] = actual.get("scheduler")
             row = {
                 "seed": seed,
                 "mismatches": mismatching_fields,
                 "component_mismatches": {
                     key: {
                         "python": expected["components"].get(key),
-                        "rust": actual.get("components", {}).get(key),
+                        "rust": rust_components.get(key),
                     }
                     for key in expected["components"]
                     if expected["components"].get(key)
-                    != actual.get("components", {}).get(key)
+                    != rust_components.get(key)
                 },
-                "native_components": actual.get("components", {}),
+                "native_components": rust_components,
             }
             rows.append(row)
             if mismatching_fields or row["component_mismatches"]:

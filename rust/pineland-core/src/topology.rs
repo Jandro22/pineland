@@ -2,7 +2,7 @@
 
 use crate::config::SimulationConfig;
 use crate::ids::{DistrictId, LocalityId, MicrozoneId};
-use crate::rng::{seed_from_namespace, PyRandomCompat};
+use crate::rng::{python_sum, seed_from_namespace, PyRandomCompat};
 use std::collections::HashSet;
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -389,10 +389,14 @@ impl StaticTopology {
             ) = *row;
             let count = 1 + extra[district_index];
             let mut weights = (0..count)
-                .map(|_| (0.8 * world_rng.normalvariate(0.0, 1.0)).exp().max(0.1))
+                // CPython calls normalvariate(0, 0.8) directly.  Scaling a
+                // unit draw afterwards is mathematically equivalent but can
+                // differ by one ulp and therefore changes the normalized
+                // locality shares in an exact-parity certificate.
+                .map(|_| PyRandomCompat::python_exp(world_rng.normalvariate(0.0, 0.8)).max(0.1))
                 .collect::<Vec<_>>();
             weights[0] *= if urban > 0.55 { 2.5 } else { 1.4 };
-            let denominator: f64 = weights.iter().sum();
+            let denominator = python_sum(&weights);
             for (index, weight) in weights.iter().enumerate() {
                 let share = *weight / denominator;
                 let kind = if index == 0 && urban >= 0.55 {
@@ -507,9 +511,13 @@ impl StaticTopology {
                 _ => config.physical.village_microzones,
             };
             let raw_shares = (0..zone_count)
-                .map(|_| (0.45 * physical_rng.normalvariate(0.0, 1.0)).exp())
+                // Preserve the Python call boundary for the same reason as
+                // the locality weights above: normalvariate(0, 0.45) must be
+                // evaluated before the exponential, not reconstructed by a
+                // post-hoc multiplication of a unit normal.
+                .map(|_| PyRandomCompat::python_exp(physical_rng.normalvariate(0.0, 0.45)))
                 .collect::<Vec<_>>();
-            let denominator: f64 = raw_shares.iter().sum();
+            let denominator = python_sum(&raw_shares);
             let start = microzones.len();
             primary_zone.push(start as u32);
             for (zone_index, raw_share) in raw_shares.iter().enumerate() {
