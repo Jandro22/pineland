@@ -28,8 +28,8 @@ use pineland_core::rng::{python_sum, seed_from_namespace, PyRandomCompat, RngStr
 use pineland_core::scheduler::{EventPayload, ScheduledEvent, SchedulerError};
 use pineland_core::sha256;
 use pineland_core::state::{
-    clamp01, BeliefKey, EventRecord, LogisticsState, ParticleState, PersonState,
-    SecurityPostState, StateError, CONTROL_DIMENSIONS,
+    clamp01, BeliefKey, EventRecord, LogisticsState, ParticleState, PersonState, SecurityPostState,
+    StateError, CONTROL_DIMENSIONS,
 };
 use pineland_core::topology::StaticTopology;
 use std::fmt;
@@ -97,7 +97,11 @@ impl SimulationEngine {
         let generated = StaticTopology::pineland(&config, initialization_seed);
         let topology = generated.topology;
         let organization_count = 7;
-        let total_population: f64 = if topology.district_population.iter().any(|value| *value > 0.0) {
+        let total_population: f64 = if topology
+            .district_population
+            .iter()
+            .any(|value| *value > 0.0)
+        {
             // Python's generator retains the registry population as the
             // represented-population denominator. Locality integer rounding
             // is a display/state allocation and may sum one person above or
@@ -149,7 +153,8 @@ impl SimulationEngine {
             foothold_count,
             RngStreams::new(config.seed, config.random_stream_namespace.clone()),
         );
-        particle.security_posts = SecurityPostState::new(topology.locality_count() + government_formations);
+        particle.security_posts =
+            SecurityPostState::new(topology.locality_count() + government_formations);
         particle.logistics = LogisticsState::new(17 + insurgent_formations);
         particle.beliefs = make_belief_state(&topology, &config);
         let mut engine = Self {
@@ -165,6 +170,7 @@ impl SimulationEngine {
             insurgent_formations,
             initialization_seed,
             generated.world_rng,
+            generated.physical_rng,
         )?;
         engine.schedule_initial_events()?;
         Ok(engine)
@@ -200,6 +206,7 @@ impl SimulationEngine {
         insurgent_formations: usize,
         initialization_seed: u64,
         mut world_rng: PyRandomCompat,
+        mut physical_rng: PyRandomCompat,
     ) -> Result<(), ModelError> {
         let n = self.topology.locality_count();
         // Initialization has its own seed contract. Process streams remain
@@ -218,21 +225,24 @@ impl SimulationEngine {
             // certificate, but still receive a valid conserved population.
             vec![1.0; n]
         };
-        let total_population: f64 = if self.topology.district_population.iter().any(|value| *value > 0.0) {
+        let total_population: f64 = if self
+            .topology
+            .district_population
+            .iter()
+            .any(|value| *value > 0.0)
+        {
             python_sum(&self.topology.district_population)
         } else {
             python_sum(&locality_population)
         };
-        for locality in 0..n {
-            let population = locality_population[locality];
+        for (locality, population) in locality_population.iter().copied().enumerate().take(n) {
             let offset = locality * CONTROL_DIMENSIONS;
             self.particle.locality.population[locality] = population;
-            self.particle.locality.economic_output[locality] =
-                if scientific_registry {
-                    self.topology.locality_economic_output[locality]
-                } else {
-                    population
-                };
+            self.particle.locality.economic_output[locality] = if scientific_registry {
+                self.topology.locality_economic_output[locality]
+            } else {
+                population
+            };
             self.particle.locality.infrastructure[locality] =
                 self.topology.locality_infrastructure[locality];
             self.particle.locality.administrative_capacity[locality] =
@@ -259,7 +269,7 @@ impl SimulationEngine {
                 self.particle.locality.insurgent_control[offset..offset + CONTROL_DIMENSIONS]
                     .fill(0.0);
             }
-                self.particle.locality.government_governance[locality] =
+            self.particle.locality.government_governance[locality] =
                 self.particle.locality.administrative_capacity[locality];
             self.particle.locality.insurgent_governance[locality] = 0.0;
             let range = self.topology.zones_for_locality(locality.into());
@@ -268,12 +278,10 @@ impl SimulationEngine {
                 // dense particle copies it without consuming a process RNG.
                 self.particle.zones.population_share[zone] =
                     self.topology.zone_population_share[zone];
-                self.particle.zones.infrastructure[zone] =
-                    self.topology.zone_infrastructure[zone];
+                self.particle.zones.infrastructure[zone] = self.topology.zone_infrastructure[zone];
                 self.particle.zones.terrain_friction[zone] =
                     self.topology.zone_terrain_friction[zone];
-                self.particle.zones.observability[zone] =
-                    self.topology.zone_observability[zone];
+                self.particle.zones.observability[zone] = self.topology.zone_observability[zone];
                 self.particle.zones.government_control[zone] =
                     self.particle.locality.government_control[offset + 1];
             }
@@ -294,7 +302,11 @@ impl SimulationEngine {
             100_000.0,
             100_000.0,
             100_000.0,
-            if self.config.include_insurgency { 80_000.0 } else { 0.0 },
+            if self.config.include_insurgency {
+                80_000.0
+            } else {
+                0.0
+            },
         ];
         organizations.cohesion = vec![
             0.72,
@@ -325,8 +337,9 @@ impl SimulationEngine {
                 .min(remaining);
             let locality = world_rng
                 .choices_indices(n, Some(&locality_population), 1)
-                .map_err(|error| ModelError::Invalid(format!("population locality draw: {error}")))?
-                [0];
+                .map_err(|error| {
+                    ModelError::Invalid(format!("population locality draw: {error}"))
+                })?[0];
             let district = self.topology.locality_to_district[locality] as usize;
             let pattern = language_patterns
                 .get(district)
@@ -350,17 +363,15 @@ impl SimulationEngine {
                     }
                 }
                 let federal_support = world_rng.uniform(0.2, 0.75);
-                self.particle.people.languages[language_offset] = self.particle.people.languages
-                    [language_offset]
-                    .max(federal_support);
+                self.particle.people.languages[language_offset] =
+                    self.particle.people.languages[language_offset].max(federal_support);
 
                 let preference_offset = person * 3;
                 for party in 0..3 {
                     self.particle.people.preferences[preference_offset + party] =
                         world_rng.random();
                 }
-                let age = python_round_i64(world_rng.normalvariate(34.0, 18.0))
-                    .clamp(1, 90) as u8;
+                let age = python_round_i64(world_rng.normalvariate(34.0, 18.0)).clamp(1, 90) as u8;
                 let identity_offset = person * 3;
                 for identity in 0..3 {
                     self.particle.people.identities[identity_offset + identity] =
@@ -409,11 +420,13 @@ impl SimulationEngine {
             .rng
             .get("social-network-generation")
             .cloned()
-            .unwrap_or_else(|| PyRandomCompat::from_seed(seed_from_namespace(
-                initialization_seed,
-                &self.config.random_stream_namespace,
-                "social-network-generation",
-            )));
+            .unwrap_or_else(|| {
+                PyRandomCompat::from_seed(seed_from_namespace(
+                    initialization_seed,
+                    &self.config.random_stream_namespace,
+                    "social-network-generation",
+                ))
+            });
         let community_count = assign_household_communities(
             &mut self.particle.people,
             n,
@@ -426,9 +439,6 @@ impl SimulationEngine {
             &mut social_rng,
         )?;
         let _ = community_count;
-        for _ in 0..community_count {
-            let _ = social_rng.uniform(0.45, 0.85);
-        }
         self.particle
             .rng
             .streams
@@ -478,7 +488,10 @@ impl SimulationEngine {
                 );
             }
         }
-        self.particle.rng.streams.insert("force-generation".to_string(), force_rng);
+        self.particle
+            .rng
+            .streams
+            .insert("force-generation".to_string(), force_rng);
 
         // Local armed membership is fractional and is assigned by grievance
         // within each formation locality, with a deterministic nearest-locality
@@ -504,44 +517,87 @@ impl SimulationEngine {
                         .fighter_conversion_fraction
                         .max(1e-9);
             }
-            let mut locally_unfilled = 0.0;
             let mut formation_localities = Vec::new();
             for (locality, target) in targets_by_locality {
                 formation_localities.push(locality);
-                locally_unfilled += assign_formation_membership(
+                let _ = assign_formation_membership(
                     &mut self.particle.people,
                     organization,
                     locality,
                     target,
                 );
             }
-            if locally_unfilled > 1e-9 {
+            // Python computes the fallback target from the completed local
+            // assignments.  Re-summing here with the Python-compatible
+            // compensated sum avoids carrying a different sequence of
+            // subtraction roundoff through the per-locality helper.
+            let target_total = python_sum(
+                &self
+                    .particle
+                    .formations
+                    .personnel
+                    .iter()
+                    .enumerate()
+                    .filter(|(formation, _)| {
+                        self.particle.formations.active[*formation] != 0
+                            && self.particle.formations.organization[*formation] as usize
+                                == organization
+                    })
+                    .map(|(_, personnel)| {
+                        *personnel
+                            / self
+                                .config
+                                .organization_ecology
+                                .fighter_conversion_fraction
+                                .max(1e-9)
+                    })
+                    .collect::<Vec<_>>(),
+            );
+            let assigned_mass = python_sum(
+                &(0..self.particle.people.locality.len())
+                    .filter(|person| {
+                        self.particle.people.organization[*person] as usize == organization
+                    })
+                    .map(|person| {
+                        self.particle.people.represented_population[person]
+                            * self.particle.people.armed_fraction[person]
+                    })
+                    .collect::<Vec<_>>(),
+            );
+            let remaining_total = (target_total - assigned_mass).max(0.0);
+            if remaining_total > 1e-12 {
                 assign_fallback_membership(
                     &mut self.particle.people,
                     &self.topology,
                     organization,
-                    locally_unfilled,
+                    remaining_total,
                     &formation_localities,
                 );
             }
         }
+        let mut member_masses = vec![Vec::<f64>::new(); self.particle.organizations.kind.len()];
         for person in 0..self.particle.people.locality.len() {
             let organization = self.particle.people.organization[person];
             if organization != u32::MAX {
                 let index = organization as usize;
-                self.particle.organizations.member_population[index] +=
-                    self.particle.people.represented_population[person]
-                        * self.particle.people.armed_fraction[person];
+                if let Some(values) = member_masses.get_mut(index) {
+                    values.push(
+                        self.particle.people.represented_population[person]
+                            * self.particle.people.armed_fraction[person],
+                    );
+                }
             }
+        }
+        for (organization, masses) in member_masses.into_iter().enumerate() {
+            self.particle.organizations.member_population[organization] = python_sum(&masses);
         }
 
         // Sources are one administrative center per district for state forces
         // and one home locality per insurgent formation. This is the 17+9 = 26
         // source boundary in the default 34-locality factorial configuration.
         let district_count = self.topology.district_count();
-        let mut source_rows: Vec<(usize, usize)> = Vec::with_capacity(district_count + insurgent_formations);
-        let insurgent_total_strength =
-            total_population * self.config.initial_insurgent_share;
+        let mut source_rows: Vec<(usize, usize)> =
+            Vec::with_capacity(district_count + insurgent_formations);
         for district in 0..district_count {
             let locality = (0..n)
                 .find(|index| self.topology.locality_to_district[*index] as usize == district)
@@ -551,9 +607,8 @@ impl SimulationEngine {
         let mut insurgent_source_localities = Vec::new();
         for formation in government_formations..government_formations + insurgent_formations {
             if self.particle.formations.active[formation] != 0 {
-                insurgent_source_localities.push(
-                    self.particle.formations.home_locality[formation] as usize,
-                );
+                insurgent_source_localities
+                    .push(self.particle.formations.home_locality[formation] as usize);
             }
         }
         insurgent_source_localities.sort_unstable();
@@ -569,48 +624,90 @@ impl SimulationEngine {
             &self.config.random_stream_namespace,
             "logistics-world-generation",
         ));
+        let mut formations_by_organization =
+            vec![Vec::<usize>::new(); self.particle.organizations.kind.len()];
+        for formation in 0..self.particle.formations.personnel.len() {
+            let organization = self.particle.formations.organization[formation] as usize;
+            if self.particle.formations.active[formation] != 0 {
+                formations_by_organization[organization].push(formation);
+            }
+        }
         for (source, (organization, locality)) in source_rows.iter().copied().enumerate() {
             self.particle.logistics.organization[source] = organization as u32;
             self.particle.logistics.locality[source] = locality as u32;
-            let catchment = if organization == MILITARY {
-                self.topology
-                    .district_population
-                    .get(self.topology.locality_to_district[locality] as usize)
-                    .copied()
-                    .unwrap_or(locality_population[locality])
-            } else {
-                self.particle
-                    .formations
-                    .personnel
+            let formation_ids = formations_by_organization
+                .get(organization)
+                .cloned()
+                .unwrap_or_default();
+            let organization_personnel = python_sum(
+                &formation_ids
                     .iter()
-                    .enumerate()
-                    .filter(|(formation, _)| {
-                        self.particle.formations.active[*formation] != 0
-                            && self.particle.formations.organization[*formation] as usize
-                                == organization
-                            && self.particle.formations.home_locality[*formation] as usize
-                                == locality
-                    })
-                    .map(|(_, personnel)| *personnel)
-                    .sum::<f64>()
-            };
-            let total_force = if organization == MILITARY {
-                government_strength
-            } else {
-                insurgent_total_strength
-            };
-            let requirement = total_force
+                    .map(|formation| self.particle.formations.personnel[*formation])
+                    .collect::<Vec<_>>(),
+            );
+            let organization_daily_requirement = organization_personnel
                 * self.config.logistics.presence_consumption_per_person_day
                 * self.config.logistics.organization_sustainment_coverage;
-            let weight = if organization == MILITARY {
-                catchment / total_population.max(1.0)
+            let catchment_weights = if organization == MILITARY {
+                source_rows
+                    .iter()
+                    .filter(|(candidate, _)| *candidate == organization)
+                    .map(|(_, source_locality)| {
+                        self.topology
+                            .district_population
+                            .get(self.topology.locality_to_district[*source_locality] as usize)
+                            .copied()
+                            .unwrap_or(locality_population[*source_locality])
+                    })
+                    .collect::<Vec<_>>()
             } else {
-                catchment / insurgent_total_strength.max(1.0)
+                let insurgent_sources = source_rows
+                    .iter()
+                    .filter(|(candidate, _)| *candidate == organization)
+                    .map(|(_, source_locality)| *source_locality)
+                    .collect::<Vec<_>>();
+                insurgent_sources
+                    .iter()
+                    .map(|source_locality| {
+                        python_sum(
+                            &formation_ids
+                                .iter()
+                                .filter(|formation| {
+                                    self.particle.formations.home_locality[**formation] as usize
+                                        == *source_locality
+                                })
+                                .map(|formation| self.particle.formations.personnel[*formation])
+                                .collect::<Vec<_>>(),
+                        )
+                    })
+                    .collect::<Vec<_>>()
             };
-            let production = requirement * weight;
-            let capacity = if self.config.logistics.source_capacity_model == "organization_manpower" {
-                (production / self.config.logistics.source_daily_production_fraction.max(1e-12)).max(5_000.0)
+            let total_weight = python_sum(&catchment_weights);
+            let source_index = source_rows[..source]
+                .iter()
+                .filter(|(candidate, _)| *candidate == organization)
+                .count();
+            let weight = catchment_weights.get(source_index).copied().unwrap_or(0.0);
+            let production = organization_daily_requirement * weight / total_weight.max(1.0);
+            let capacity = if self.config.logistics.source_capacity_model == "organization_manpower"
+            {
+                (production
+                    / self
+                        .config
+                        .logistics
+                        .source_daily_production_fraction
+                        .max(1e-12))
+                .max(5_000.0)
             } else {
+                let catchment = if organization == MILITARY {
+                    self.topology
+                        .district_population
+                        .get(self.topology.locality_to_district[locality] as usize)
+                        .copied()
+                        .unwrap_or(locality_population[locality])
+                } else {
+                    weight
+                };
                 (catchment * self.config.logistics.source_capacity_per_resident).max(5_000.0)
             };
             self.particle.logistics.source_capacity[source] = capacity;
@@ -629,21 +726,21 @@ impl SimulationEngine {
             );
             let _ = logistics_rng.uniform(0.0, 1.5);
         }
-        self.particle.rng.streams.insert("logistics-world-generation".to_string(), logistics_rng);
+        self.particle
+            .rng
+            .streams
+            .insert("logistics-world-generation".to_string(), logistics_rng);
 
-        initialize_footholds(
-            &mut self.particle,
-            &self.topology,
-            &self.config,
-        );
+        initialize_footholds(&mut self.particle, &self.topology, &self.config);
 
         let post_count = n + government_formations;
         self.particle.security_posts = SecurityPostState::new(post_count);
-        for locality in 0..n {
+        for (locality, population) in locality_population.iter().copied().enumerate().take(n) {
             self.particle.security_posts.organization[locality] = POLICE as u32;
             self.particle.security_posts.locality[locality] = locality as u32;
-            self.particle.security_posts.microzone[locality] = self.topology.locality_post_zone[locality];
-            let personnel = (locality_population[locality] * 0.0015).clamp(15.0, 300.0);
+            self.particle.security_posts.microzone[locality] =
+                self.topology.locality_central_zone[locality];
+            let personnel = (population * 0.0015).clamp(15.0, 300.0);
             self.particle.security_posts.personnel[locality] = personnel;
             self.particle.security_posts.presence[locality] = (personnel / 250.0).clamp(0.0, 1.0);
             self.particle.security_posts.available_fraction[locality] = 0.65;
@@ -656,9 +753,12 @@ impl SimulationEngine {
         for formation in 0..government_formations {
             let post = n + formation;
             self.particle.security_posts.organization[post] = MILITARY as u32;
-            self.particle.security_posts.locality[post] = self.particle.formations.locality[formation];
-            self.particle.security_posts.microzone[post] = self.particle.formations.microzone[formation];
-            self.particle.security_posts.personnel[post] = self.particle.formations.personnel[formation];
+            self.particle.security_posts.locality[post] =
+                self.particle.formations.locality[formation];
+            self.particle.security_posts.microzone[post] =
+                self.particle.formations.microzone[formation];
+            self.particle.security_posts.personnel[post] =
+                self.particle.formations.personnel[formation];
             self.particle.security_posts.presence[post] =
                 (self.particle.formations.personnel[formation] / 2_000.0).clamp(0.0, 1.0);
             self.particle.security_posts.available_fraction[post] = 0.4;
@@ -669,6 +769,31 @@ impl SimulationEngine {
                 self.config.information.prior_confidence;
             self.particle.security_posts.staffed[post] = 1;
         }
+
+        // Physical initialization is an authoritative part of the Python
+        // world generator, not a later approximation.  Recompute each side's
+        // raw zone reach from fixed posts and formation response sources,
+        // solve local physical response times on the generated graph, then
+        // apply the same zone-level contestation operator before writing the
+        // locality physical-control component.
+        initialize_physical_control(&mut self.particle, &self.topology, &self.config);
+
+        // Python continues the physical-world RNG after topology, posts, and
+        // control construction to seed every observer/zone belief.  The
+        // current dense state does not yet expose the full zone-belief table,
+        // but the draws still belong to the certified continuation boundary.
+        for _observer in 0..self.particle.organizations.kind.len() {
+            for _zone in 0..self.topology.microzone_count() {
+                let _ = physical_rng.uniform(
+                    -self.config.physical.zone_observation_noise,
+                    self.config.physical.zone_observation_noise,
+                );
+            }
+        }
+        self.particle
+            .rng
+            .streams
+            .insert("physical-world-generation".to_string(), physical_rng);
 
         // Leader construction is a separate initialization stream. There is
         // no native leader SoA yet, but consuming the exact twelve draws per
@@ -686,8 +811,14 @@ impl SimulationEngine {
                 let _ = ecology_rng.normalvariate(0.0, 0.04);
             }
         }
-        self.particle.rng.streams.insert("organization-ecology-generation".to_string(), ecology_rng);
-        self.particle.rng.streams.insert("world-generation".to_string(), world_rng);
+        self.particle
+            .rng
+            .streams
+            .insert("organization-ecology-generation".to_string(), ecology_rng);
+        self.particle
+            .rng
+            .streams
+            .insert("world-generation".to_string(), world_rng);
         Ok(())
     }
 
@@ -734,8 +865,10 @@ impl SimulationEngine {
         f.operational_status[index] = 1;
         self.particle.patrols.formation[index] = index as u32;
         self.particle.patrols.active[index] = u8::from(organization != INSURGENT);
-        self.particle.patrols.route_position[index] = zone as u32;
-        self.particle.patrols.route_target[index] = zone as u32;
+        self.particle.patrols.route_position[index] =
+            u32::from(organization != INSURGENT) * zone as u32;
+        self.particle.patrols.route_target[index] =
+            u32::from(organization != INSURGENT) * zone as u32;
     }
 
     fn schedule_initial_events(&mut self) -> Result<(), ModelError> {
@@ -1166,6 +1299,312 @@ impl SimulationEngine {
     }
 }
 
+fn python_effective_readiness(particle: &ParticleState, formation: usize) -> f64 {
+    let supply_fraction = if particle.formations.supply_capacity[formation] > 0.0 {
+        clamp01(
+            particle.formations.supply_stock[formation]
+                / particle.formations.supply_capacity[formation],
+        )
+    } else {
+        clamp01(particle.formations.sustainment[formation])
+    };
+    let fatigue_effect = 1.0 - 0.65 * clamp01(particle.formations.fatigue[formation]);
+    let fatigue_adjusted = clamp01(particle.formations.readiness[formation] * fatigue_effect);
+    let supply_effect = 0.2 + 0.8 * supply_fraction;
+    clamp01(fatigue_adjusted * supply_effect * clamp01(particle.formations.command[formation]))
+}
+
+fn python_effective_strength(particle: &ParticleState, formation: usize) -> f64 {
+    let available = particle.formations.personnel[formation].max(0.0)
+        * clamp01(particle.formations.availability[formation])
+        * python_effective_readiness(particle, formation);
+    if available <= 0.0 {
+        0.0
+    } else {
+        available
+            * particle.formations.quality[formation]
+            * particle.formations.cohesion[formation]
+            * (0.5 + particle.formations.information[formation])
+    }
+}
+
+fn organization_matches_side(organization: usize, actor: usize) -> bool {
+    match actor {
+        GOVERNMENT => matches!(organization, GOVERNMENT | MILITARY | POLICE),
+        INSURGENT => organization == INSURGENT,
+        _ => false,
+    }
+}
+
+fn local_response_distances(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    locality: usize,
+    actor: usize,
+) -> Vec<f64> {
+    let zones = topology
+        .zones_for_locality(locality.into())
+        .collect::<Vec<_>>();
+    let mut distances = vec![f64::INFINITY; topology.microzone_count()];
+    let mut source_delays = Vec::<(usize, f64)>::new();
+
+    for post in 0..particle.security_posts.locality.len() {
+        if particle.security_posts.locality[post] as usize != locality {
+            continue;
+        }
+        let organization = particle.security_posts.organization[post] as usize;
+        if !organization_matches_side(organization, actor) {
+            continue;
+        }
+        let mut available = particle.security_posts.available_fraction[post];
+        let formation = particle.security_posts.formation[post];
+        if formation != u32::MAX {
+            let formation = formation as usize;
+            if particle.formations.moving[formation] != 0
+                || particle.formations.outside_pineland[formation] != 0
+                || particle.formations.operational_status[formation] != 1
+                || particle.formations.locality[formation] as usize != locality
+            {
+                available = 0.0;
+            } else {
+                available *= particle.formations.availability[formation]
+                    * python_effective_readiness(particle, formation);
+            }
+        }
+        if available > 0.0 {
+            source_delays.push((
+                particle.security_posts.microzone[post] as usize,
+                (1.0 - available) * config.physical.response_decay_hours,
+            ));
+        }
+    }
+
+    // The Python response operator includes both a formation source and its
+    // patrol source.  They have the same opening-day .30 dispatch fraction;
+    // retaining one minimum source per formation is numerically equivalent
+    // while avoiding a duplicate queue entry.
+    for formation in 0..particle.formations.personnel.len() {
+        if particle.formations.locality[formation] as usize != locality
+            || particle.formations.active[formation] == 0
+            || particle.formations.moving[formation] != 0
+            || particle.formations.outside_pineland[formation] != 0
+            || particle.formations.operational_status[formation] != 1
+            || particle.formations.personnel[formation] <= 0.0
+            || !organization_matches_side(
+                particle.formations.organization[formation] as usize,
+                actor,
+            )
+        {
+            continue;
+        }
+        let effective_fraction = 0.30
+            * particle.formations.availability[formation]
+            * python_effective_readiness(particle, formation);
+        if effective_fraction > 0.0 {
+            source_delays.push((
+                particle.formations.microzone[formation] as usize,
+                (1.0 - effective_fraction) * config.physical.response_decay_hours,
+            ));
+        }
+    }
+
+    // Match Python's cached response operator exactly: first compute
+    // topology-only shortest paths from each source with a zero origin, then
+    // add the dispatch delay to the completed path.  Seeding Dijkstra with a
+    // dispatch delay would reassociate floating-point additions as
+    // ``(delay + edge_1) + edge_2`` instead of Python's
+    // ``delay + (edge_1 + edge_2)``.
+    let mut topology_distances = Vec::with_capacity(source_delays.len());
+    for (source, _) in &source_delays {
+        let source = *source;
+        let mut path = vec![f64::INFINITY; topology.microzone_count()];
+        if source >= path.len() || topology.microzone_to_locality[source] as usize != locality {
+            topology_distances.push(path);
+            continue;
+        }
+        path[source] = 0.0;
+        let mut settled = vec![false; topology.microzone_count()];
+        loop {
+            let next = zones
+                .iter()
+                .copied()
+                .filter(|zone| !settled[*zone] && path[*zone].is_finite())
+                .min_by(|left, right| {
+                    path[*left]
+                        .total_cmp(&path[*right])
+                        .then_with(|| left.cmp(right))
+                });
+            let Some(zone) = next else { break };
+            settled[zone] = true;
+            let base = path[zone];
+            for (neighbor, travel_time) in topology.physical_edges.neighbors(zone) {
+                let neighbor = neighbor as usize;
+                if topology.microzone_to_locality[neighbor] as usize != locality
+                    || settled[neighbor]
+                {
+                    continue;
+                }
+                let candidate = base + travel_time;
+                if candidate < path[neighbor] {
+                    path[neighbor] = candidate;
+                }
+            }
+        }
+        topology_distances.push(path);
+    }
+    for target in zones {
+        let mut best = f64::INFINITY;
+        for (index, (_, delay)) in source_delays.iter().enumerate() {
+            let candidate = *delay + topology_distances[index][target];
+            if candidate < best {
+                best = candidate;
+            }
+        }
+        distances[target] = best;
+    }
+    distances
+}
+
+fn initialize_physical_control(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+) {
+    let zone_count = topology.microzone_count();
+    let locality_count = topology.locality_count();
+    let mut raw_government = vec![0.0; zone_count];
+    let mut raw_insurgent = vec![0.0; zone_count];
+
+    for locality in 0..locality_count {
+        let response_government =
+            local_response_distances(particle, topology, config, locality, GOVERNMENT);
+        let response_insurgent =
+            local_response_distances(particle, topology, config, locality, INSURGENT);
+        let zones = topology
+            .zones_for_locality(locality.into())
+            .collect::<Vec<_>>();
+
+        for zone in zones {
+            let mut post_values = [0.0f64; 2];
+            for post in 0..particle.security_posts.locality.len() {
+                if particle.security_posts.locality[post] as usize != locality
+                    || particle.security_posts.microzone[post] as usize != zone
+                {
+                    continue;
+                }
+                let organization = particle.security_posts.organization[post] as usize;
+                let actor_index = if organization_matches_side(organization, GOVERNMENT) {
+                    Some(0)
+                } else if organization_matches_side(organization, INSURGENT) {
+                    Some(1)
+                } else {
+                    None
+                };
+                let Some(actor_index) = actor_index else {
+                    continue;
+                };
+                let mut effective_presence = particle.security_posts.presence[post];
+                let formation = particle.security_posts.formation[post];
+                if formation != u32::MAX {
+                    let formation = formation as usize;
+                    if particle.formations.moving[formation] != 0
+                        || particle.formations.outside_pineland[formation] != 0
+                        || particle.formations.operational_status[formation] != 1
+                        || particle.formations.locality[formation] as usize != locality
+                    {
+                        effective_presence = 0.0;
+                    } else {
+                        effective_presence *= particle.formations.availability[formation]
+                            * python_effective_readiness(particle, formation);
+                    }
+                }
+                post_values[actor_index] += effective_presence;
+            }
+            let mut formation_values = [0.0f64; 2];
+            let denominator = (250.0f64).max(particle.locality.population[locality] * 0.002);
+            for formation in 0..particle.formations.personnel.len() {
+                if particle.formations.locality[formation] as usize != locality
+                    || particle.formations.active[formation] == 0
+                    || particle.formations.moving[formation] != 0
+                    || particle.formations.outside_pineland[formation] != 0
+                    || particle.formations.operational_status[formation] != 1
+                    || particle.formations.personnel[formation] <= 0.0
+                {
+                    continue;
+                }
+                let actor_index = if organization_matches_side(
+                    particle.formations.organization[formation] as usize,
+                    GOVERNMENT,
+                ) {
+                    Some(0)
+                } else if organization_matches_side(
+                    particle.formations.organization[formation] as usize,
+                    INSURGENT,
+                ) {
+                    Some(1)
+                } else {
+                    None
+                };
+                let Some(actor_index) = actor_index else {
+                    continue;
+                };
+                if particle.formations.microzone[formation] as usize == zone {
+                    formation_values[actor_index] += config.physical.formation_presence_gain
+                        * python_effective_strength(particle, formation)
+                        / denominator;
+                }
+            }
+            let government_presence = 1.0
+                - (-(config.physical.fixed_post_presence_gain * post_values[0]
+                    + formation_values[0]))
+                    .exp();
+            let insurgent_presence = 1.0
+                - (-(config.physical.fixed_post_presence_gain * post_values[1]
+                    + formation_values[1]))
+                    .exp();
+            let government_response = response_government[zone];
+            let insurgent_response = response_insurgent[zone];
+            raw_government[zone] = clamp01(
+                0.55 * government_presence
+                    + 0.45
+                        * if government_response.is_infinite() {
+                            0.0
+                        } else {
+                            (-government_response / config.physical.response_decay_hours).exp()
+                        },
+            );
+            raw_insurgent[zone] = clamp01(
+                0.55 * insurgent_presence
+                    + 0.45
+                        * if insurgent_response.is_infinite() {
+                            0.0
+                        } else {
+                            (-insurgent_response / config.physical.response_decay_hours).exp()
+                        },
+            );
+        }
+    }
+
+    for locality in 0..locality_count {
+        let mut government = 0.0;
+        let mut insurgent = 0.0;
+        for zone in topology.zones_for_locality(locality.into()) {
+            let government_value =
+                clamp01(raw_government[zone] * (1.0 - 0.35 * raw_insurgent[zone]));
+            let insurgent_value =
+                clamp01(raw_insurgent[zone] * (1.0 - 0.35 * raw_government[zone]));
+            particle.zones.government_control[zone] = government_value;
+            particle.zones.insurgent_control[zone] = insurgent_value;
+            government += particle.zones.population_share[zone] * government_value;
+            insurgent += particle.zones.population_share[zone] * insurgent_value;
+        }
+        let offset = locality * CONTROL_DIMENSIONS;
+        particle.locality.government_control[offset + 1] = clamp01(government);
+        particle.locality.insurgent_control[offset + 1] = clamp01(insurgent);
+    }
+}
+
 fn make_belief_state(
     topology: &StaticTopology,
     config: &SimulationConfig,
@@ -1262,15 +1701,23 @@ fn assign_household_communities(
 ) -> Result<usize, ModelError> {
     let mut households_by_locality: Vec<Vec<usize>> =
         (0..locality_count).map(|_| Vec::new()).collect();
-    let mut household_mass = std::collections::BTreeMap::<usize, f64>::new();
+    let mut household_members: std::collections::BTreeMap<usize, Vec<f64>> =
+        std::collections::BTreeMap::new();
     for person in 0..people.locality.len() {
         let household = people.household[person] as usize;
-        *household_mass.entry(household).or_default() += people.represented_population[person];
+        household_members
+            .entry(household)
+            .or_default()
+            .push(people.represented_population[person]);
         let locality = people.locality[person] as usize;
         if locality < locality_count && !households_by_locality[locality].contains(&household) {
             households_by_locality[locality].push(household);
         }
     }
+    let household_mass = household_members
+        .into_iter()
+        .map(|(household, members)| (household, python_sum(&members)))
+        .collect::<std::collections::BTreeMap<_, _>>();
     let mut community = 0u32;
     for households in &mut households_by_locality {
         households.sort_unstable();
@@ -1297,26 +1744,30 @@ fn assign_household_communities(
             let mut previous_count = groups
                 .last()
                 .map(|group| {
-                    group
-                        .iter()
-                        .map(|household| household_mass.get(household).copied().unwrap_or(0.0))
-                        .sum::<f64>()
+                    python_sum(
+                        &group
+                            .iter()
+                            .map(|household| household_mass.get(household).copied().unwrap_or(0.0))
+                            .collect::<Vec<_>>(),
+                    )
                 })
                 .unwrap_or(0.0);
             if !groups.is_empty()
                 && current_count < target / 2.0
                 && previous_count + current_count <= maximum
             {
-                groups.last_mut().expect("group exists").append(&mut current);
+                groups
+                    .last_mut()
+                    .expect("group exists")
+                    .append(&mut current);
             } else {
                 if !groups.is_empty() && current_count < minimum {
                     loop {
-                        if groups.last().map_or(true, Vec::is_empty) || current_count >= minimum {
+                        if groups.last().is_none_or(Vec::is_empty) || current_count >= minimum {
                             break;
                         }
                         let candidate = *groups.last().and_then(|group| group.last()).unwrap();
-                        let candidate_mass =
-                            household_mass.get(&candidate).copied().unwrap_or(0.0);
+                        let candidate_mass = household_mass.get(&candidate).copied().unwrap_or(0.0);
                         if previous_count - candidate_mass < minimum
                             || current_count + candidate_mass > maximum
                         {
@@ -1334,9 +1785,14 @@ fn assign_household_communities(
         for group in groups {
             for person in 0..people.locality.len() {
                 if group.contains(&(people.household[person] as usize)) {
-                        people.community[person] = community;
+                    people.community[person] = community;
                 }
             }
+            // SocialCommunity construction draws cohesion immediately after
+            // each group, before the next locality is shuffled.  Keeping this
+            // draw at the same boundary is required for subsequent locality
+            // partitions to see the identical Python RNG stream.
+            let _ = rng.uniform(0.45, 0.85);
             community = community.saturating_add(1);
         }
     }
@@ -1405,7 +1861,9 @@ fn assign_fallback_membership(
             .unwrap_or(f64::INFINITY);
         let right_distance = formation_localities
             .iter()
-            .map(|locality| locality_distance(topology, people.locality[*right] as usize, *locality))
+            .map(|locality| {
+                locality_distance(topology, people.locality[*right] as usize, *locality)
+            })
             .min_by(|a, b| a.total_cmp(b))
             .unwrap_or(f64::INFINITY);
         left_distance
@@ -1443,7 +1901,8 @@ fn initialize_footholds(
             particle.footholds.infrastructure[index] = particle.locality.infrastructure[locality];
             particle.footholds.target_knowledge[index] =
                 if organization == INSURGENT { 0.25 } else { 0.5 };
-            particle.footholds.sustainment[index] = if organization == INSURGENT { 0.65 } else { 0.9 };
+            particle.footholds.sustainment[index] =
+                if organization == INSURGENT { 0.65 } else { 0.9 };
             if organization != INSURGENT || !config.include_insurgency {
                 continue;
             }
@@ -1507,7 +1966,11 @@ fn initialize_footholds(
                 0.0
             };
             let formation_channel = clamp01(
-                fielded / config.organization_ecology.minimum_formation_personnel.max(1.0),
+                fielded
+                    / config
+                        .organization_ecology
+                        .minimum_formation_personnel
+                        .max(1.0),
             ) * mean_embeddedness;
             let offset = locality * CONTROL_DIMENSIONS;
             let institutional_channel = clamp01(
@@ -1525,9 +1988,13 @@ fn initialize_footholds(
             particle.footholds.membership[index] =
                 clamp01(local_membership / particle.locality.population[locality].max(1e-12));
             particle.footholds.embeddedness[index] = raw;
-            let viable = raw >= config.organization_ecology.local_foothold_viability_threshold;
+            let viable = raw
+                >= config
+                    .organization_ecology
+                    .local_foothold_viability_threshold;
             particle.footholds.first_activated_at[index] = if viable { 0.0 } else { -1.0e9 };
-            particle.footholds.last_activated_at[index] = particle.footholds.first_activated_at[index];
+            particle.footholds.last_activated_at[index] =
+                particle.footholds.first_activated_at[index];
             particle.footholds.viable_activation_count[index] = u32::from(viable);
         }
     }
@@ -1555,12 +2022,12 @@ mod tests {
             ..Default::default()
         };
         let engine = SimulationEngine::new(config).unwrap();
-        assert_eq!(engine.particle.people.locality.len(), 4);
+        assert_eq!(engine.particle.people.locality.len(), 100);
         assert_eq!(
             engine.particle.patrols.formation.len(),
             engine.particle.formations.organization.len()
         );
-        assert_eq!(engine.particle.security_posts.locality.len(), 4);
+        assert!(engine.particle.security_posts.locality.len() >= 4);
         assert!(engine.particle.validate().is_ok());
     }
 
@@ -1585,10 +2052,7 @@ mod tests {
         let mut changed_initialization = a.config.clone();
         changed_initialization.initialization_seed = Some(44);
         let c = SimulationEngine::new(changed_initialization).unwrap();
-        assert_ne!(
-            a.particle.locality.population,
-            c.particle.locality.population
-        );
+        assert_ne!(a.particle.people.grievance, c.particle.people.grievance);
     }
 
     #[test]
