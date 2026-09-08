@@ -2127,6 +2127,12 @@ class EnsembleBeliefState:
     dirty_keys: set[tuple[int, tuple[str, ...]]] = field(
         default_factory=set, repr=False
     )
+    # The packed codebook is the union across lanes, but a dynamic belief key
+    # can exist in only some lanes.  Keep that semantic distinction explicit so
+    # synchronizing one lane never materializes another lane's default row.
+    key_presence: tuple[frozenset[tuple[str, ...]], ...] | None = field(
+        default=None, repr=False
+    )
 
     def __post_init__(self) -> None:
         self.keys = tuple(tuple(str(item) for item in key) for key in self.keys)
@@ -2144,6 +2150,20 @@ class EnsembleBeliefState:
         if len(set(self.keys)) != len(self.keys):
             raise ValueError("ensemble belief keys must be unique")
         self.key_to_index = {key: index for index, key in enumerate(self.keys)}
+        if self.key_presence is None:
+            self.key_presence = tuple(
+                frozenset(self.keys) for _ in range(self.particle_count)
+            )
+        else:
+            self.key_presence = tuple(
+                frozenset(tuple(key) for key in lane_keys)
+                for lane_keys in self.key_presence
+            )
+            if len(self.key_presence) != self.particle_count:
+                raise ValueError("ensemble belief key presence must match particles")
+            unknown = set().union(*self.key_presence) - set(self.keys)
+            if unknown:
+                raise ValueError("ensemble belief key presence contains unknown keys")
 
     @property
     def entity_count(self) -> int:
@@ -2159,6 +2179,8 @@ class EnsembleBeliefState:
         keys: Iterable[tuple[str, ...]],
         rows_by_particle: Sequence[Sequence[Sequence[float]]],
         stride: int,
+        *,
+        key_presence: Sequence[Iterable[tuple[str, ...]]] | None = None,
     ) -> "EnsembleBeliefState":
         normalized_keys = tuple(tuple(key) for key in keys)
         particle_count = len(rows_by_particle)
@@ -2172,7 +2194,17 @@ class EnsembleBeliefState:
                 if len(row) != stride:
                     raise ValueError("ensemble row has an invalid stride")
                 state.extend(float(value) for value in row)
-        return cls(normalized_keys, particle_count, stride, state)
+        return cls(
+            normalized_keys,
+            particle_count,
+            stride,
+            state,
+            key_presence=(
+                None
+                if key_presence is None
+                else tuple(frozenset(tuple(key) for key in lane) for lane in key_presence)
+            ),
+        )
 
     @classmethod
     def zeros(
@@ -2257,6 +2289,21 @@ class EnsembleBeliefState:
             self.dirty_keys.add((particle, key))
         return old_entities
 
+    def set_present_keys(
+        self, particle: int, keys: Iterable[tuple[str, ...]]
+    ) -> None:
+        """Record the dynamic key universe actually present in one lane."""
+        particle = int(particle)
+        if not 0 <= particle < self.particle_count:
+            raise IndexError("particle outside ensemble")
+        normalized = frozenset(tuple(key) for key in keys)
+        unknown = normalized - set(self.keys)
+        if unknown:
+            raise ValueError("lane presence contains keys outside the packed codebook")
+        presence = list(self.key_presence or ())
+        presence[particle] = normalized
+        self.key_presence = tuple(presence)
+
     def _materialize_keys(self, updates: Sequence[tuple[Any, ...]]) -> None:
         """Materialize lazy compact confidence only for rows being fused."""
         backing = self.compact_backing
@@ -2296,6 +2343,9 @@ class EnsembleBeliefState:
             start = parent * block
             self.state.extend(old[start:start + block])
         self.particle_count = len(parents)
+        self.key_presence = tuple(
+            (self.key_presence or ())[parent] for parent in parents
+        )
         # Gather changes lane identity; stale dirty-lane metadata cannot be
         # meaningfully remapped and is unnecessary because packed filters do
         # not synchronize through one-lane oracle boundaries here.
@@ -2304,7 +2354,8 @@ class EnsembleBeliefState:
     def clone(self) -> "EnsembleBeliefState":
         return type(self)(
             self.keys, self.particle_count, self.stride,
-            array("d", self.state), None, set(self.dirty_keys)
+            array("d", self.state), None, set(self.dirty_keys),
+            tuple(self.key_presence or ()),
         )
 
     def sha256(self) -> str:
@@ -3355,6 +3406,19 @@ class ParticleBatchState:
             presence_rows(worlds, "compact_zone_state", "zone_beliefs", ZONE_STATE_STRIDE),
             ZONE_STATE_STRIDE,
         )
+        for state, fallback_name in (
+            (control_state, "control_beliefs"),
+            (presence_state, "presence_beliefs"),
+            (node_presence_state, "node_presence_beliefs"),
+            (zone_state, "zone_beliefs"),
+        ):
+            state.key_presence = tuple(
+                frozenset(
+                    tuple(key)
+                    for key in getattr(world, fallback_name)
+                )
+                for world in worlds
+            )
         batch = cls(
             topology,
             array("d", [float(item.time) for item in particles]),
@@ -3446,45 +3510,58 @@ class ParticleBatchState:
 
         prior_confidence = world.config.information.prior_confidence
         compact_control = getattr(world, "compact_control_state", None)
+        compact_presence = getattr(world, "compact_presence_state", None)
+        compact_node = getattr(world, "compact_node_presence_state", None)
+        compact_zone = getattr(world, "compact_zone_state", None)
+        control_incoming = (
+            tuple(compact_control.keys)
+            if compact_control is not None
+            else tuple(world.control_beliefs)
+        )
+        presence_incoming = (
+            tuple(compact_presence.keys)
+            if compact_presence is not None
+            else tuple(world.presence_beliefs)
+        )
+        node_incoming = (
+            tuple(compact_node.keys)
+            if compact_node is not None
+            else tuple(world.node_presence_beliefs)
+        )
+        zone_incoming = (
+            tuple(compact_zone.keys)
+            if compact_zone is not None
+            else tuple(world.zone_beliefs)
+        )
         ensure_keys(
             self.control_state,
-            (
-                tuple(compact_control.keys)
-                if compact_control is not None
-                else tuple(world.control_beliefs)
-            ),
+            control_incoming,
             prior_confidence=prior_confidence,
         )
         compact_presence = getattr(world, "compact_presence_state", None)
         ensure_keys(
             self.presence_state,
-            (
-                tuple(compact_presence.keys)
-                if compact_presence is not None
-                else tuple(world.presence_beliefs)
-            ),
+            presence_incoming,
             prior_confidence=prior_confidence,
         )
         compact_node = getattr(world, "compact_node_presence_state", None)
         ensure_keys(
             self.node_presence_state,
-            (
-                tuple(compact_node.keys)
-                if compact_node is not None
-                else tuple(world.node_presence_beliefs)
-            ),
+            node_incoming,
             prior_confidence=prior_confidence,
         )
         compact_zone = getattr(world, "compact_zone_state", None)
         ensure_keys(
             self.zone_state,
-            (
-                tuple(compact_zone.keys)
-                if compact_zone is not None
-                else tuple(world.zone_beliefs)
-            ),
+            zone_incoming,
             prior_confidence=prior_confidence,
         )
+        self.control_state.set_present_keys(particle_index, world.control_beliefs)
+        self.presence_state.set_present_keys(particle_index, world.presence_beliefs)
+        self.node_presence_state.set_present_keys(
+            particle_index, world.node_presence_beliefs
+        )
+        self.zone_state.set_present_keys(particle_index, world.zone_beliefs)
 
         def write_rows(
             state: EnsembleBeliefState,
@@ -3575,6 +3652,10 @@ class ParticleBatchState:
         from .entities import ActorBelief, PresenceBelief, ActorZoneBelief
         particle = self.particles[particle_index]
         world = particle.world
+        control_present = self.control_state.key_presence[particle_index]
+        presence_present = self.presence_state.key_presence[particle_index]
+        node_present = self.node_presence_state.key_presence[particle_index]
+        zone_present = self.zone_state.key_presence[particle_index]
         compact = getattr(world, "compact_control_state", None)
         if compact is None:
             compact = CompactControlBeliefState(
@@ -3586,6 +3667,8 @@ class ParticleBatchState:
             * self.control_state.stride
         )
         for entity_index, key in enumerate(self.control_state.keys):
+            if key not in control_present:
+                continue
             if key not in world.control_beliefs:
                 world.control_beliefs[key] = ActorBelief(
                     key[0], key[2], ControlVector(*([0.5] * 7)),
@@ -3607,7 +3690,8 @@ class ParticleBatchState:
             ]
         world.compact_control_state = compact
         for key in self.control_state.keys:
-            compact.write_to_belief(key, world.control_beliefs[key])
+            if key in control_present:
+                compact.write_to_belief(key, world.control_beliefs[key])
 
         def sync_presence(
             state: EnsembleBeliefState,
@@ -3635,6 +3719,8 @@ class ParticleBatchState:
             target = getattr(world, attribute)
             lane_base = particle_index * state.entity_count * state.stride
             for entity_index, key in enumerate(state.keys):
+                if key not in (node_present if node else presence_present):
+                    continue
                 if key not in target:
                     location = key[2].split(":", 1)
                     locality_id = location[0]
@@ -3664,7 +3750,8 @@ class ParticleBatchState:
                 compact_presence,
             )
             for key in state.keys:
-                compact_presence.write_to_belief(key, target[key])
+                if key in (node_present if node else presence_present):
+                    compact_presence.write_to_belief(key, target[key])
 
         sync_presence(self.presence_state, "presence_beliefs")
         sync_presence(
@@ -3687,6 +3774,8 @@ class ParticleBatchState:
             * self.zone_state.stride
         )
         for entity_index, key in enumerate(self.zone_state.keys):
+            if key not in zone_present:
+                continue
             if key not in world.zone_beliefs:
                 world.zone_beliefs[key] = ActorZoneBelief(
                     key[0], key[1], 0.5,

@@ -1353,10 +1353,17 @@ class PackedHotState:
                 reserve = float(self.manpower_supply_reserve[offset])
                 if pool > 1e-12:
                     world.organization_manpower_pools[key] = pool
+                elif key in world.organization_manpower_pools:
+                    # A zero-valued pool can be an explicit decision-state key
+                    # created by a reference sparse event.  Preserve that key;
+                    # only omit keys that were never represented in the world.
+                    world.organization_manpower_pools[key] = 0.0
                 else:
                     world.organization_manpower_pools.pop(key, None)
                 if reserve > 1e-12:
                     world.organization_manpower_supply_reserves[key] = reserve
+                elif key in world.organization_manpower_supply_reserves:
+                    world.organization_manpower_supply_reserves[key] = 0.0
                 else:
                     world.organization_manpower_supply_reserves.pop(key, None)
 

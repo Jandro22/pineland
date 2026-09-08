@@ -42,11 +42,13 @@ from historical_case import (  # noqa: E402
 from pineland_sim import (  # noqa: E402
     AssimilationObservation,
     Particle,
+    ParticleBatchState,
     PersistentParticlePool,
     SequentialParticleFilter,
     Simulation,
     SimulationConfig,
     SimulationParticle,
+    NativeEnsembleRunner,
     generate_pineland,
 )
 from pineland_sim.state_estimation import (  # noqa: E402
@@ -1196,6 +1198,77 @@ def _nested_particle_job(
     return new_state, likelihood, propagator.diagnostics()
 
 
+def _nested_packed_particle_job(
+    job: tuple[
+        SimulationParticle,
+        float,
+        ProvinceWeekObservation,
+        int,
+        int,
+    ],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    """Run the exact nested branches through one packed authoritative batch.
+
+    Branch creation and selection are byte-for-byte the nested contract.  Only
+    the propagation substrate changes: the three independent descendants share
+    one packed topology/hot-state execution object and retain their reference
+    schedulers for sparse oracle boundaries.
+    """
+    state, time, observation, branches, filter_seed = job
+    parent_lineage = state.lineage_id
+    branch_states = [
+        state.consume_fork(index)
+        if index == branches - 1
+        else state.fork(index)
+        for index in range(branches)
+    ]
+    batch = ParticleBatchState.from_particles(branch_states)
+    runner = NativeEnsembleRunner.from_batch(batch, scheduler_oracle=True)
+    batch.advance_to(time, runner=runner)
+    active_counts = [0] * len(observation.provinces)
+    masks: list[int] = []
+    for branch in branch_states:
+        mask = _active_province_mask(branch, observation)
+        masks.append(mask)
+        for province_index in range(len(active_counts)):
+            active_counts[province_index] += int(
+                bool(mask & (1 << province_index))
+            )
+
+    log_likelihood = 0.0
+    for province_index, province in enumerate(observation.provinces):
+        probability = _jeffreys_branch_probability(
+            active_counts[province_index], branches
+        )
+        log_likelihood += _bernoulli_log_probability(
+            probability,
+            bool(observation.active_mask & observation.province_bits[province]),
+        )
+    selected_index, minimum_mismatch, _ = _conditioned_branch_mask_index(
+        masks,
+        observation.active_mask,
+        random.Random(
+            _nested_selection_seed(
+                filter_seed, parent_lineage, observation.week_index
+            )
+        ),
+    )
+    # Only the selected descendant continues.  The branch mask is a scheduler
+    # output already resident on each reference world; exporting all discarded
+    # lanes would add no scientific information and would pay the full object
+    # graph materialization cost three times.
+    batch.synchronize_lane_to_world(selected_index)
+    diagnostics = {
+        "nested_propagation_calls": 1,
+        "exact_descendant_match_calls": int(minimum_mismatch == 0),
+        "exact_descendant_match_fraction": float(minimum_mismatch == 0),
+        "mean_minimum_descendant_hamming_mismatch": minimum_mismatch,
+        "maximum_minimum_descendant_hamming_mismatch": minimum_mismatch,
+        "packed_runner_sparse_boundaries": int(runner.sparse_boundaries),
+    }
+    return branch_states[selected_index], log_likelihood, diagnostics
+
+
 def _rao_blackwellized_particle_job(
     job: tuple[
         SimulationParticle,
@@ -1249,6 +1322,17 @@ def _nested_persistent_job(
     )
 
 
+def _nested_packed_persistent_job(
+    state: SimulationParticle,
+    time: float,
+    payload: tuple[ProvinceWeekObservation, int, int],
+) -> tuple[SimulationParticle, float, dict[str, float | int]]:
+    observation, branches, filter_seed = payload
+    return _nested_packed_particle_job(
+        (state, time, observation, branches, filter_seed)
+    )
+
+
 def _rao_blackwellized_persistent_job(
     state: SimulationParticle,
     time: float,
@@ -1285,6 +1369,16 @@ def _resident_particle_job(
             state,
             time,
             (payload[1], payload[2]),
+        )
+    if (
+        isinstance(payload, tuple)
+        and len(payload) == 4
+        and payload[0] == "packed_nested"
+    ):
+        return _nested_packed_persistent_job(
+            state,
+            time,
+            (payload[1], payload[2], payload[3]),
         )
     if (
         isinstance(payload, tuple)
@@ -1367,6 +1461,7 @@ def run_training_filter(
     balance_resampling: bool = True,
     resident_pool: PersistentParticlePool | None = None,
     keep_resident: bool = False,
+    packed_execution: bool = False,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
     if workers < 1:
         raise ValueError("workers must be positive")
@@ -1492,7 +1587,11 @@ def run_training_filter(
                     )
                     for particle in filter_.particles
                 ]
-                completed = list(map(_nested_particle_job, jobs))
+                completed = list(map(
+                    _nested_packed_particle_job if packed_execution
+                    else _nested_particle_job,
+                    jobs,
+                ))
             elif likelihood_method == "rao_blackwellized":
                 jobs = [
                     (
@@ -1524,7 +1623,11 @@ def run_training_filter(
             resident_payload = (
                 ("rao_blackwellized", observation, rb_likelihood)
                 if likelihood_method == "rao_blackwellized"
-                else (observation, likelihood_branches, filter_seed)
+                else (
+                    ("packed_nested", observation, likelihood_branches, filter_seed)
+                    if packed_execution
+                    else (observation, likelihood_branches, filter_seed)
+                )
             )
             if collect_worker_diagnostics:
                 completed, worker_rows = executor.propagate_profiled(
