@@ -92,6 +92,10 @@ The native CLI also provides `validate-config`, `generate`, `resume`,
 `version`. See [`rust/BUILD.md`](rust/BUILD.md) and the checked-in SLURM
 templates under [`rust/hpc/`](rust/hpc/) for portable and Owl execution.
 
+For a live multi-node filter, build `pineland-cli` with the optional `mpi`
+feature on the Owl MPI image and pass `filter --mpi`; ordinary Windows builds
+remain MPI-free.
+
 Use Python 3.11 or newer. The package has no runtime dependencies.
 
 ```powershell
