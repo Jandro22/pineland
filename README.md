@@ -77,6 +77,21 @@ sensitivity/recovery diagnostics, and a data-free first-paper contract. See
 
 ## Quick start
 
+### Pineland Native v1
+
+The standalone Rust runtime is under [`rust/`](rust/README.md). It owns the
+simulation and inference hot path and does not require Python:
+
+```powershell
+cargo test --workspace --manifest-path rust/Cargo.toml
+cargo run --release --locked --manifest-path rust/Cargo.toml -p pineland-cli -- run scenarios/baseline.json --seed 20011126 --days 7 --output outputs/native-baseline
+```
+
+The native CLI also provides `validate-config`, `generate`, `resume`,
+`filter`, `forecast`, `inspect-checkpoint`, `hash-state`, `benchmark`, and
+`version`. See [`rust/BUILD.md`](rust/BUILD.md) and the checked-in SLURM
+templates under [`rust/hpc/`](rust/hpc/) for portable and Owl execution.
+
 Use Python 3.11 or newer. The package has no runtime dependencies.
 
 ```powershell
