@@ -1356,7 +1356,10 @@ fn diagnostics(engine: &SimulationEngine) -> JsonValue {
         }
         locality_edge_offsets.push(locality_edge_neighbors.len() as u32);
     }
-    value.insert("locality_edge_neighbors", u32_array(&locality_edge_neighbors));
+    value.insert(
+        "locality_edge_neighbors",
+        u32_array(&locality_edge_neighbors),
+    );
     value.insert("locality_edge_weights", f64_array(&locality_edge_weights));
     value.insert("locality_edge_offsets", u32_array(&locality_edge_offsets));
     value.insert(

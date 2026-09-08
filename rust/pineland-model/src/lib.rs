@@ -28,9 +28,9 @@ use pineland_core::rng::{python_sum, seed_from_namespace, PyRandomCompat, RngStr
 use pineland_core::scheduler::{EventPayload, ScheduledEvent, SchedulerError};
 use pineland_core::sha256;
 use pineland_core::state::{
-    clamp01, BeliefKey, EventRecord, ForeignSystemState, LogisticsState,
-    OrganizationRelationState, ParticleState, PersonState, PoliticalState, SecurityPostState,
-    SocialEdgeState, StateError, CONTROL_DIMENSIONS,
+    clamp01, BeliefKey, EventRecord, ForeignSystemState, LogisticsState, OrganizationRelationState,
+    ParticleState, PersonState, PoliticalState, SecurityPostState, SocialEdgeState, StateError,
+    CONTROL_DIMENSIONS,
 };
 use pineland_core::topology::StaticTopology;
 use std::fmt;
@@ -1075,9 +1075,9 @@ impl SimulationEngine {
             political
                 .institution_compliance
                 .push(political_rng.uniform(0.45, 0.9));
-            political
-                .institution_reach
-                .push(clamp01(0.35 + 0.55 * self.particle.locality.infrastructure[locality]));
+            political.institution_reach.push(clamp01(
+                0.35 + 0.55 * self.particle.locality.infrastructure[locality],
+            ));
             political
                 .institution_integrity
                 .push(political_rng.uniform(0.35, 0.8));
@@ -1103,15 +1103,12 @@ impl SimulationEngine {
                 self.particle.people.party_legitimacy[person * 3 + party] =
                     political_rng.uniform(0.2, 0.75);
             }
-            self.particle.people.state_legitimacy[person] = clamp01(
-                0.5 + 0.25 * self.particle.people.trust[person],
-            );
-            self.particle.people.government_legitimacy[person] = clamp01(
-                0.35 + 0.3 * self.particle.people.trust[person],
-            );
-            self.particle.people.political_access[person] = clamp01(
-                0.25 + 0.35 * self.particle.people.efficacy[person],
-            );
+            self.particle.people.state_legitimacy[person] =
+                clamp01(0.5 + 0.25 * self.particle.people.trust[person]);
+            self.particle.people.government_legitimacy[person] =
+                clamp01(0.35 + 0.3 * self.particle.people.trust[person]);
+            self.particle.people.political_access[person] =
+                clamp01(0.25 + 0.35 * self.particle.people.efficacy[person]);
             if political_rng.random() < 0.28 {
                 let preference_offset = person * 3;
                 let mut preferred = 0usize;
@@ -1218,9 +1215,15 @@ impl SimulationEngine {
             for language in ["FS", "AR", "VE", "TA"] {
                 foreign
                     .language_profile
-                    .push(if primary.contains(language) { 0.85 } else { 0.12 });
+                    .push(if primary.contains(language) {
+                        0.85
+                    } else {
+                        0.12
+                    });
             }
-            foreign.resources.push(foreign_rng.uniform(600_000.0, 1_800_000.0));
+            foreign
+                .resources
+                .push(foreign_rng.uniform(600_000.0, 1_800_000.0));
             foreign
                 .stability_preference
                 .push(foreign_rng.uniform(0.3, 0.9));
@@ -1253,11 +1256,16 @@ impl SimulationEngine {
             foreign.cumulative_cost.push(0.0);
             foreign.cumulative_casualties.push(0.0);
         }
+        foreign.rival_offsets.clear();
         foreign.rival_offsets.push(0);
         if foreign_count > 0 {
             for index in 0..foreign_count {
-                foreign.rival_indices.push(((index + 1) % foreign_count) as u32);
-                foreign.rival_offsets.push(foreign.rival_indices.len() as u32);
+                foreign
+                    .rival_indices
+                    .push(((index + 1) % foreign_count) as u32);
+                foreign
+                    .rival_offsets
+                    .push(foreign.rival_indices.len() as u32);
             }
         }
         for district in 0..self.topology.district_count() {
@@ -1266,7 +1274,8 @@ impl SimulationEngine {
             } else {
                 district % foreign_count
             };
-            let start = self.topology
+            let start = self
+                .topology
                 .locality_to_district
                 .iter()
                 .position(|value| *value as usize == district)
@@ -1290,7 +1299,11 @@ impl SimulationEngine {
                 .unwrap_or("FS");
             let overlap = pattern
                 .split('/')
-                .filter_map(|language| ["FS", "AR", "VE", "TA"].iter().position(|item| *item == language))
+                .filter_map(|language| {
+                    ["FS", "AR", "VE", "TA"]
+                        .iter()
+                        .position(|item| *item == language)
+                })
                 .map(|language| foreign.language_profile[state * 4 + language])
                 .fold(0.0, f64::max);
             foreign.border_foreign_state.push(state as u32);
@@ -1357,9 +1370,9 @@ impl SimulationEngine {
                     .push(python_sum(&foreign_language).max(0.05).clamp(0.0, 1.0));
                 foreign.interpreter_local_language.push(local_language);
                 foreign.interpreter_foreign_trust.push(0.55);
-                foreign.interpreter_local_trust.push(clamp01(
-                    0.35 + 0.5 * self.particle.people.trust[person],
-                ));
+                foreign
+                    .interpreter_local_trust
+                    .push(clamp01(0.35 + 0.5 * self.particle.people.trust[person]));
                 foreign
                     .interpreter_cultural_knowledge
                     .push(clamp01(0.35 + degree as f64 / 25.0));
@@ -1387,15 +1400,24 @@ impl SimulationEngine {
                 relation.organization_b.push(second as u32);
                 let hostile = (first == INSURGENT
                     && matches!(second, GOVERNMENT | MILITARY | POLICE))
-                    || (second == INSURGENT
-                        && matches!(first, GOVERNMENT | MILITARY | POLICE));
+                    || (second == INSURGENT && matches!(first, GOVERNMENT | MILITARY | POLICE));
                 let allied = matches!(first, GOVERNMENT | MILITARY | POLICE)
                     && matches!(second, GOVERNMENT | MILITARY | POLICE);
-                let status = if hostile { 4 } else if allied { 0 } else { 2 };
+                let status = if hostile {
+                    4
+                } else if allied {
+                    0
+                } else {
+                    2
+                };
                 relation.status.push(status);
                 relation.rivalry_memory.push(0.0);
-                relation.hostility_memory.push(if hostile { 1.0 } else { 0.0 });
-                relation.cooperation_memory.push(if allied { 1.0 } else { 0.0 });
+                relation
+                    .hostility_memory
+                    .push(if hostile { 1.0 } else { 0.0 });
+                relation
+                    .cooperation_memory
+                    .push(if allied { 1.0 } else { 0.0 });
                 relation.updated_at.push(0.0);
                 relation.last_interaction_at.push(0.0);
                 relation.has_last_interaction.push(0);
@@ -2432,6 +2454,7 @@ fn social_layer_bit(layer: u8) -> u8 {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn add_social_edge(
     particle: &mut ParticleState,
     edge_index: &mut std::collections::BTreeMap<(usize, usize), usize>,
@@ -2452,7 +2475,7 @@ fn add_social_edge(
     } else {
         (second, first)
     };
-    let compatibility = social_language_compatibility(&particle, first, second);
+    let compatibility = social_language_compatibility(particle, first, second);
     let language_factor = if language_topology_enabled {
         0.35 + 0.65 * compatibility
     } else {
@@ -2502,9 +2525,13 @@ fn locality_adjacency_from_topology(
     let mut adjacency = (0..topology.locality_count())
         .map(|_| std::collections::BTreeMap::new())
         .collect::<Vec<_>>();
-    for locality in 0..topology.locality_count() {
+    for (locality, neighbors) in adjacency
+        .iter_mut()
+        .enumerate()
+        .take(topology.locality_count())
+    {
         for (neighbor, cost) in topology.locality_edges.neighbors(locality) {
-            adjacency[locality].insert(neighbor as usize, cost);
+            neighbors.insert(neighbor as usize, cost);
         }
     }
     adjacency

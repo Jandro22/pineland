@@ -380,6 +380,8 @@ pub struct PoliticalState {
 impl PoliticalState {
     pub fn new() -> Self {
         Self {
+            branch_member_offsets: vec![0],
+            branch_broker_offsets: vec![0],
             ruling_party: u32::MAX,
             ..Self::default()
         }
@@ -436,7 +438,10 @@ pub struct ForeignSystemState {
 
 impl ForeignSystemState {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            rival_offsets: vec![0],
+            ..Self::default()
+        }
     }
 }
 
@@ -1322,7 +1327,13 @@ impl ParticleState {
         append_f64s(material, &self.political.elite_institutional_ties);
         append_u32s(material, &self.political.elite_party_alignment);
         material.extend_from_slice(&self.political.ruling_party.to_le_bytes());
-        material.extend_from_slice(&self.political.private_diversion_stock.to_bits().to_le_bytes());
+        material.extend_from_slice(
+            &self
+                .political
+                .private_diversion_stock
+                .to_bits()
+                .to_le_bytes(),
+        );
         append_f64s(material, &self.foreign.resources);
         append_f64s(material, &self.foreign.stability_preference);
         append_f64s(material, &self.foreign.government_alignment);
@@ -2139,6 +2150,361 @@ impl ParticleState {
                 });
             }
         }
+        let institution_count = self.political.institution_type.len();
+        for (length, name) in [
+            (self.political.institution_level.len(), "institution level"),
+            (
+                self.political.institution_locality.len(),
+                "institution locality",
+            ),
+            (
+                self.political.institution_district.len(),
+                "institution district",
+            ),
+            (
+                self.political.institution_capacity.len(),
+                "institution capacity",
+            ),
+            (
+                self.political.institution_autonomy.len(),
+                "institution autonomy",
+            ),
+            (
+                self.political.institution_compliance.len(),
+                "institution compliance",
+            ),
+            (self.political.institution_reach.len(), "institution reach"),
+            (
+                self.political.institution_integrity.len(),
+                "institution integrity",
+            ),
+            (
+                self.political.institution_resources.len(),
+                "institution resources",
+            ),
+            (
+                self.political.institution_governing_party.len(),
+                "institution governing party",
+            ),
+        ] {
+            if length != institution_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: institution_count,
+                });
+            }
+        }
+        let branch_count = self.political.branch_party.len();
+        for (length, name) in [
+            (self.political.branch_locality.len(), "branch locality"),
+            (self.political.branch_resources.len(), "branch resources"),
+            (self.political.branch_patronage.len(), "branch patronage"),
+            (
+                self.political.branch_electoral_support.len(),
+                "branch electoral support",
+            ),
+            (
+                self.political.branch_institutional_influence.len(),
+                "branch institutional influence",
+            ),
+        ] {
+            if length != branch_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: branch_count,
+                });
+            }
+        }
+        for (length, name, expected) in [
+            (
+                self.political.branch_member_offsets.len(),
+                "branch member offsets",
+                branch_count + 1,
+            ),
+            (
+                self.political.branch_broker_offsets.len(),
+                "branch broker offsets",
+                branch_count + 1,
+            ),
+        ] {
+            if length != expected {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: expected,
+                });
+            }
+        }
+        if self
+            .political
+            .branch_member_offsets
+            .last()
+            .copied()
+            .unwrap_or(0) as usize
+            != self.political.branch_member_indices.len()
+            || self
+                .political
+                .branch_broker_offsets
+                .last()
+                .copied()
+                .unwrap_or(0) as usize
+                != self.political.branch_broker_indices.len()
+        {
+            return Err(StateError::Corrupt(
+                "political branch offsets do not cover membership rows".to_string(),
+            ));
+        }
+        let elite_count = self.political.elite_person.len();
+        for (length, name) in [
+            (self.political.elite_locality.len(), "elite locality"),
+            (
+                self.political.elite_network_centrality.len(),
+                "elite network centrality",
+            ),
+            (self.political.elite_resources.len(), "elite resources"),
+            (self.political.elite_legitimacy.len(), "elite legitimacy"),
+            (
+                self.political.elite_institutional_ties.len(),
+                "elite institutional ties",
+            ),
+            (
+                self.political.elite_party_alignment.len(),
+                "elite party alignment",
+            ),
+        ] {
+            if length != elite_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: elite_count,
+                });
+            }
+        }
+
+        let foreign_state_count = self.foreign.resources.len();
+        for (length, name) in [
+            (
+                self.foreign.stability_preference.len(),
+                "foreign stability preference",
+            ),
+            (
+                self.foreign.government_alignment.len(),
+                "foreign government alignment",
+            ),
+            (
+                self.foreign.ideological_alignment.len(),
+                "foreign ideological alignment",
+            ),
+            (
+                self.foreign.border_security_priority.len(),
+                "foreign border security priority",
+            ),
+            (
+                self.foreign.regional_influence.len(),
+                "foreign regional influence",
+            ),
+            (
+                self.foreign.commercial_interest.len(),
+                "foreign commercial interest",
+            ),
+            (
+                self.foreign.humanitarian_preference.len(),
+                "foreign humanitarian preference",
+            ),
+            (
+                self.foreign.cost_sensitivity.len(),
+                "foreign cost sensitivity",
+            ),
+            (
+                self.foreign.domestic_opposition.len(),
+                "foreign domestic opposition",
+            ),
+            (self.foreign.willingness.len(), "foreign willingness"),
+            (self.foreign.opportunity.len(), "foreign opportunity"),
+            (
+                self.foreign.cumulative_cost.len(),
+                "foreign cumulative cost",
+            ),
+            (
+                self.foreign.cumulative_casualties.len(),
+                "foreign cumulative casualties",
+            ),
+        ] {
+            if length != foreign_state_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: foreign_state_count,
+                });
+            }
+        }
+        if self.foreign.language_profile.len() != foreign_state_count * 4 {
+            return Err(StateError::LengthMismatch {
+                name: "foreign language profile".to_string(),
+                left: self.foreign.language_profile.len(),
+                right: foreign_state_count * 4,
+            });
+        }
+        if self.foreign.rival_offsets.len() != foreign_state_count + 1
+            || self.foreign.rival_offsets.last().copied().unwrap_or(0) as usize
+                != self.foreign.rival_indices.len()
+        {
+            return Err(StateError::LengthMismatch {
+                name: "foreign rival offsets".to_string(),
+                left: self.foreign.rival_offsets.len(),
+                right: foreign_state_count + 1,
+            });
+        }
+        let border_count = self.foreign.border_foreign_state.len();
+        for (length, name) in [
+            (self.foreign.border_district.len(), "border district"),
+            (self.foreign.border_locality.len(), "border locality"),
+            (
+                self.foreign.border_terrain_friction.len(),
+                "border terrain friction",
+            ),
+            (
+                self.foreign.border_infrastructure.len(),
+                "border infrastructure",
+            ),
+            (
+                self.foreign.border_legal_permeability.len(),
+                "border legal permeability",
+            ),
+            (
+                self.foreign.border_social_permeability.len(),
+                "border social permeability",
+            ),
+            (
+                self.foreign.border_language_overlap.len(),
+                "border language overlap",
+            ),
+            (
+                self.foreign.border_kinship_overlap.len(),
+                "border kinship overlap",
+            ),
+            (
+                self.foreign.border_state_monitoring.len(),
+                "border state monitoring",
+            ),
+        ] {
+            if length != border_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: border_count,
+                });
+            }
+        }
+        let foreign_belief_count = self.foreign.belief_foreign_state.len();
+        for (length, name) in [
+            (
+                self.foreign.belief_locality.len(),
+                "foreign belief locality",
+            ),
+            (
+                self.foreign.belief_government_control.len(),
+                "foreign belief government control",
+            ),
+            (
+                self.foreign.belief_insurgent_presence.len(),
+                "foreign belief insurgent presence",
+            ),
+            (
+                self.foreign.belief_confidence.len(),
+                "foreign belief confidence",
+            ),
+            (
+                self.foreign.belief_updated_at.len(),
+                "foreign belief timestamp",
+            ),
+        ] {
+            if length != foreign_belief_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: foreign_belief_count,
+                });
+            }
+        }
+        let interpreter_count = self.foreign.interpreter_person.len();
+        for (length, name) in [
+            (
+                self.foreign.interpreter_foreign_state.len(),
+                "interpreter foreign state",
+            ),
+            (
+                self.foreign.interpreter_locality.len(),
+                "interpreter locality",
+            ),
+            (
+                self.foreign.interpreter_foreign_language.len(),
+                "interpreter foreign language",
+            ),
+            (
+                self.foreign.interpreter_local_language.len(),
+                "interpreter local language",
+            ),
+            (
+                self.foreign.interpreter_foreign_trust.len(),
+                "interpreter foreign trust",
+            ),
+            (
+                self.foreign.interpreter_local_trust.len(),
+                "interpreter local trust",
+            ),
+            (
+                self.foreign.interpreter_cultural_knowledge.len(),
+                "interpreter cultural knowledge",
+            ),
+        ] {
+            if length != interpreter_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: interpreter_count,
+                });
+            }
+        }
+        let relation_count = self.relations.organization_a.len();
+        for (length, name) in [
+            (
+                self.relations.organization_b.len(),
+                "relation organization b",
+            ),
+            (self.relations.status.len(), "relation status"),
+            (
+                self.relations.rivalry_memory.len(),
+                "relation rivalry memory",
+            ),
+            (
+                self.relations.hostility_memory.len(),
+                "relation hostility memory",
+            ),
+            (
+                self.relations.cooperation_memory.len(),
+                "relation cooperation memory",
+            ),
+            (self.relations.updated_at.len(), "relation timestamp"),
+            (
+                self.relations.last_interaction_at.len(),
+                "relation last interaction",
+            ),
+            (
+                self.relations.has_last_interaction.len(),
+                "relation interaction flag",
+            ),
+        ] {
+            if length != relation_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: relation_count,
+                });
+            }
+        }
         let source_count = self.logistics.source_stock.len();
         for (length, name) in [
             (self.logistics.organization.len(), "source organization"),
@@ -2257,6 +2623,153 @@ impl ParticleState {
                 )));
             }
         }
+        for member in &self.political.branch_member_indices {
+            if *member as usize >= people_count {
+                return Err(StateError::Corrupt(format!(
+                    "political branch member id {member} is outside {people_count}"
+                )));
+            }
+        }
+        for broker in &self.political.branch_broker_indices {
+            if *broker as usize >= elite_count {
+                return Err(StateError::Corrupt(format!(
+                    "political branch broker id {broker} is outside {elite_count}"
+                )));
+            }
+        }
+        for (value, name, bound) in self
+            .political
+            .institution_locality
+            .iter()
+            .map(|value| (*value, "institution locality", locality_count))
+            .chain(
+                self.political
+                    .institution_district
+                    .iter()
+                    .map(|value| (*value, "institution district", usize::MAX)),
+            )
+            .chain(
+                self.political
+                    .branch_locality
+                    .iter()
+                    .map(|value| (*value, "branch locality", locality_count)),
+            )
+            .chain(
+                self.political
+                    .branch_party
+                    .iter()
+                    .map(|value| (*value, "branch party", organization_count)),
+            )
+            .chain(
+                self.political
+                    .institution_governing_party
+                    .iter()
+                    .map(|value| (*value, "institution governing party", organization_count)),
+            )
+        {
+            if value != u32::MAX && value as usize >= bound {
+                return Err(StateError::Corrupt(format!(
+                    "{name} id {value} is outside {bound}"
+                )));
+            }
+        }
+        for (value, name, bound) in self
+            .political
+            .elite_person
+            .iter()
+            .map(|value| (*value, "elite person", people_count))
+            .chain(
+                self.political
+                    .elite_locality
+                    .iter()
+                    .map(|value| (*value, "elite locality", locality_count)),
+            )
+            .chain(
+                self.political
+                    .elite_party_alignment
+                    .iter()
+                    .map(|value| (*value, "elite party alignment", organization_count)),
+            )
+        {
+            if value != u32::MAX && value as usize >= bound {
+                return Err(StateError::Corrupt(format!(
+                    "{name} id {value} is outside {bound}"
+                )));
+            }
+        }
+        for (value, name, bound) in self
+            .foreign
+            .rival_indices
+            .iter()
+            .map(|value| (*value, "foreign rival state", foreign_state_count))
+            .chain(
+                self.foreign
+                    .border_foreign_state
+                    .iter()
+                    .map(|value| (*value, "border foreign state", foreign_state_count)),
+            )
+            .chain(
+                self.foreign
+                    .border_district
+                    .iter()
+                    .map(|value| (*value, "border district", usize::MAX)),
+            )
+            .chain(
+                self.foreign
+                    .border_locality
+                    .iter()
+                    .map(|value| (*value, "border locality", locality_count)),
+            )
+            .chain(
+                self.foreign
+                    .belief_foreign_state
+                    .iter()
+                    .map(|value| (*value, "foreign belief state", foreign_state_count)),
+            )
+            .chain(
+                self.foreign
+                    .belief_locality
+                    .iter()
+                    .map(|value| (*value, "foreign belief locality", locality_count)),
+            )
+            .chain(
+                self.foreign
+                    .interpreter_person
+                    .iter()
+                    .map(|value| (*value, "interpreter person", people_count)),
+            )
+            .chain(
+                self.foreign
+                    .interpreter_foreign_state
+                    .iter()
+                    .map(|value| (*value, "interpreter foreign state", foreign_state_count)),
+            )
+            .chain(
+                self.foreign
+                    .interpreter_locality
+                    .iter()
+                    .map(|value| (*value, "interpreter locality", locality_count)),
+            )
+        {
+            if value as usize >= bound {
+                return Err(StateError::Corrupt(format!(
+                    "{name} id {value} is outside {bound}"
+                )));
+            }
+        }
+        for (value, name) in self
+            .relations
+            .organization_a
+            .iter()
+            .chain(self.relations.organization_b.iter())
+            .map(|value| (*value, "relation organization"))
+        {
+            if value as usize >= organization_count {
+                return Err(StateError::Corrupt(format!(
+                    "{name} id {value} is outside {organization_count}"
+                )));
+            }
+        }
         for index in &self.beliefs.dirty {
             if *index as usize >= belief_count {
                 return Err(StateError::Corrupt(format!(
@@ -2298,11 +2811,28 @@ impl ParticleState {
                 &self.people.represented_population,
                 "represented population",
             ),
+            (&self.people.languages, "person languages"),
+            (&self.people.identities, "person identities"),
+            (&self.people.preferences, "person preferences"),
+            (&self.people.party_legitimacy, "person party legitimacy"),
             (&self.people.grievance, "person grievance"),
             (&self.people.fear, "person fear"),
             (&self.people.efficacy, "person efficacy"),
             (&self.people.trust, "person trust"),
+            (&self.people.trust_insurgent, "person insurgent trust"),
             (&self.people.rebel_sympathy, "person sympathy"),
+            (&self.people.expected_control, "person expected control"),
+            (&self.people.state_legitimacy, "person state legitimacy"),
+            (
+                &self.people.government_legitimacy,
+                "person government legitimacy",
+            ),
+            (&self.people.political_access, "person political access"),
+            (
+                &self.people.origin_tie_strength,
+                "person origin tie strength",
+            ),
+            (&self.people.insurgent_affinity, "person insurgent affinity"),
         ] {
             check_finite(values, name)?;
         }
@@ -2548,6 +3078,233 @@ impl ParticleState {
             (&self.logistics.source_stock, "source stock"),
             (&self.logistics.source_capacity, "source capacity"),
             (&self.logistics.source_production, "source production"),
+        ] {
+            check_finite(values, name)?;
+        }
+        for (values, name) in [
+            (&self.households.resources, "household resources"),
+            (&self.communities.cohesion, "community cohesion"),
+            (
+                &self.communities.government_cooperation,
+                "community government cooperation",
+            ),
+            (
+                &self.communities.insurgent_sympathy,
+                "community insurgent sympathy",
+            ),
+            (
+                &self.communities.language_profile,
+                "community language profile",
+            ),
+            (&self.social_edges.weight, "social edge weight"),
+            (
+                &self.social_edges.language_compatibility,
+                "social edge language compatibility",
+            ),
+            (&self.social_edges.trust, "social edge trust"),
+            (
+                &self.social_edges.represented_relationships,
+                "social edge represented relationships",
+            ),
+            (&self.zone_beliefs.estimate, "zone belief estimate"),
+            (&self.zone_beliefs.confidence, "zone belief confidence"),
+            (&self.zone_beliefs.updated_at, "zone belief timestamp"),
+            (
+                &self.zone_beliefs.last_reliable_observation_at,
+                "zone belief reliable timestamp",
+            ),
+            (
+                &self.zone_beliefs.contradiction,
+                "zone belief contradiction",
+            ),
+            (
+                &self.organizations.capital_social,
+                "organization social capital",
+            ),
+            (
+                &self.organizations.capital_political,
+                "organization political capital",
+            ),
+            (
+                &self.organizations.capital_organizational,
+                "organization organizational capital",
+            ),
+            (
+                &self.organizations.capital_material,
+                "organization material capital",
+            ),
+            (&self.organizations.phenotype, "organization phenotype"),
+            (&self.organizations.ideology, "organization ideology"),
+            (
+                &self.organizations.external_sanctuary,
+                "organization sanctuary",
+            ),
+            (
+                &self.organizations.adaptation_rate,
+                "organization adaptation rate",
+            ),
+            (&self.leaders.competence, "leader competence"),
+            (&self.leaders.charisma, "leader charisma"),
+            (&self.leaders.risk_tolerance, "leader risk tolerance"),
+            (
+                &self.leaders.ideological_rigidity,
+                "leader ideological rigidity",
+            ),
+            (&self.leaders.political_skill, "leader political skill"),
+            (
+                &self.leaders.organizational_skill,
+                "leader organizational skill",
+            ),
+            (&self.command_edges.reliability, "command reliability"),
+            (&self.command_edges.latency_hours, "command latency"),
+            (&self.manpower.pool, "manpower pool"),
+            (&self.manpower.supply_reserve, "manpower supply reserve"),
+            (&self.political.institution_capacity, "institution capacity"),
+            (&self.political.institution_autonomy, "institution autonomy"),
+            (
+                &self.political.institution_compliance,
+                "institution compliance",
+            ),
+            (&self.political.institution_reach, "institution reach"),
+            (
+                &self.political.institution_integrity,
+                "institution integrity",
+            ),
+            (
+                &self.political.institution_resources,
+                "institution resources",
+            ),
+            (&self.political.branch_resources, "branch resources"),
+            (&self.political.branch_patronage, "branch patronage"),
+            (
+                &self.political.branch_electoral_support,
+                "branch electoral support",
+            ),
+            (
+                &self.political.branch_institutional_influence,
+                "branch institutional influence",
+            ),
+            (
+                &self.political.elite_network_centrality,
+                "elite network centrality",
+            ),
+            (&self.political.elite_resources, "elite resources"),
+            (&self.political.elite_legitimacy, "elite legitimacy"),
+            (
+                &self.political.elite_institutional_ties,
+                "elite institutional ties",
+            ),
+            (&self.foreign.resources, "foreign resources"),
+            (
+                &self.foreign.stability_preference,
+                "foreign stability preference",
+            ),
+            (
+                &self.foreign.government_alignment,
+                "foreign government alignment",
+            ),
+            (
+                &self.foreign.ideological_alignment,
+                "foreign ideological alignment",
+            ),
+            (
+                &self.foreign.border_security_priority,
+                "foreign border security priority",
+            ),
+            (
+                &self.foreign.regional_influence,
+                "foreign regional influence",
+            ),
+            (
+                &self.foreign.commercial_interest,
+                "foreign commercial interest",
+            ),
+            (
+                &self.foreign.humanitarian_preference,
+                "foreign humanitarian preference",
+            ),
+            (&self.foreign.cost_sensitivity, "foreign cost sensitivity"),
+            (
+                &self.foreign.domestic_opposition,
+                "foreign domestic opposition",
+            ),
+            (&self.foreign.willingness, "foreign willingness"),
+            (&self.foreign.language_profile, "foreign language profile"),
+            (&self.foreign.opportunity, "foreign opportunity"),
+            (&self.foreign.cumulative_cost, "foreign cumulative cost"),
+            (
+                &self.foreign.cumulative_casualties,
+                "foreign cumulative casualties",
+            ),
+            (
+                &self.foreign.border_terrain_friction,
+                "border terrain friction",
+            ),
+            (&self.foreign.border_infrastructure, "border infrastructure"),
+            (
+                &self.foreign.border_legal_permeability,
+                "border legal permeability",
+            ),
+            (
+                &self.foreign.border_social_permeability,
+                "border social permeability",
+            ),
+            (
+                &self.foreign.border_language_overlap,
+                "border language overlap",
+            ),
+            (
+                &self.foreign.border_kinship_overlap,
+                "border kinship overlap",
+            ),
+            (
+                &self.foreign.border_state_monitoring,
+                "border state monitoring",
+            ),
+            (
+                &self.foreign.belief_government_control,
+                "foreign belief government control",
+            ),
+            (
+                &self.foreign.belief_insurgent_presence,
+                "foreign belief insurgent presence",
+            ),
+            (&self.foreign.belief_confidence, "foreign belief confidence"),
+            (&self.foreign.belief_updated_at, "foreign belief timestamp"),
+            (
+                &self.foreign.interpreter_foreign_language,
+                "interpreter foreign language",
+            ),
+            (
+                &self.foreign.interpreter_local_language,
+                "interpreter local language",
+            ),
+            (
+                &self.foreign.interpreter_foreign_trust,
+                "interpreter foreign trust",
+            ),
+            (
+                &self.foreign.interpreter_local_trust,
+                "interpreter local trust",
+            ),
+            (
+                &self.foreign.interpreter_cultural_knowledge,
+                "interpreter cultural knowledge",
+            ),
+            (&self.relations.rivalry_memory, "relation rivalry memory"),
+            (
+                &self.relations.hostility_memory,
+                "relation hostility memory",
+            ),
+            (
+                &self.relations.cooperation_memory,
+                "relation cooperation memory",
+            ),
+            (&self.relations.updated_at, "relation timestamp"),
+            (
+                &self.relations.last_interaction_at,
+                "relation last interaction",
+            ),
         ] {
             check_finite(values, name)?;
         }
