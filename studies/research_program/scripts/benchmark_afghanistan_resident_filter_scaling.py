@@ -51,6 +51,7 @@ def _run_one(
     seed: int,
     release_templates: bool = False,
     balance_resampling: bool = True,
+    packed_execution: bool = False,
 ):
     particles = [
         runner.Particle(
@@ -81,6 +82,7 @@ def _run_one(
             resident_pool=pool,
             keep_resident=True,
             balance_resampling=balance_resampling,
+            packed_execution=packed_execution,
         )
         summaries = dict(pool.summarize())
     finally:
@@ -92,6 +94,7 @@ def _run_one(
     ]
     return {
         "workers": workers,
+        "engine": "packed_nested_resident_filter" if packed_execution else "resident_filter_transport",
         "wall_seconds": wall_seconds,
         "updates": len(filter_.history),
         "weights": particle_weights(filter_.particles),
@@ -117,6 +120,11 @@ def main() -> None:
         action="store_true",
         help="keep resampled children on parent workers to avoid large peer-state transfers",
     )
+    parser.add_argument(
+        "--packed",
+        action="store_true",
+        help="propagate each exact nested branch set through NativeEnsembleRunner",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.particles < 2 or args.weeks < 1 or args.branches < 1:
@@ -129,7 +137,12 @@ def main() -> None:
     inputs = runner.load_historical_inputs()
     horizon = max(60.0, 7.0 * args.weeks)
     base_world = runner.generate_pineland(
-        runner._config(args.seed, horizon), empirical_geography=case
+        runner._config(
+            args.seed,
+            horizon,
+            execution_backend="ensemble" if args.packed else "optimized",
+        ),
+        empirical_geography=case,
     )
     runner._precompute_province_lookup(base_world)
     templates = [
@@ -146,6 +159,7 @@ def main() -> None:
             case=case,
             inputs=inputs,
             base_world=base_world,
+            execution_backend="ensemble" if args.packed else "optimized",
         )
         for index in range(args.particles)
     ]
@@ -161,6 +175,7 @@ def main() -> None:
             seed=args.seed,
             release_templates=(worker_index == len(args.workers) - 1),
             balance_resampling=not args.unbalanced_resampling,
+            packed_execution=args.packed,
         ))
     reference = rows[0]
     for row in rows:
@@ -177,6 +192,7 @@ def main() -> None:
         "particles": args.particles,
         "weeks": args.weeks,
         "branches": args.branches,
+        "engine": "packed_nested_resident_filter" if args.packed else "resident_filter_transport",
         "balance_resampling": not args.unbalanced_resampling,
         "results": rows,
         "best_workers": best["workers"],

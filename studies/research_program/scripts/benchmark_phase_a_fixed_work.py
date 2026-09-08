@@ -60,6 +60,7 @@ def _run_repeat(repeat_index: int, *, workers: int) -> dict[str, Any]:
             "--branches", str(BRANCH_EQUIVALENTS),
             "--workers", str(workers),
             "--output", str(raw_output),
+            "--packed",
         ]
         if not BALANCE_RESAMPLING:
             command.append("--unbalanced-resampling")
@@ -88,7 +89,7 @@ def _run_repeat(repeat_index: int, *, workers: int) -> dict[str, Any]:
         "pwb_per_second": PWB_PER_REPEAT / wall_seconds,
         "subprocess_wall_seconds": subprocess_wall,
         "workers": workers,
-        "engine": "resident_filter_transport",
+        "engine": "packed_nested_resident_filter",
         "source_payload": row,
     }
 
@@ -123,7 +124,7 @@ def run(*, output: Path, repetitions: int, workers: int = WORKERS) -> dict[str, 
             "pwb_per_repeat": PWB_PER_REPEAT,
             "repetitions": repetitions,
             "horizon_days": HORIZON_DAYS,
-            "engine": "resident_filter_transport",
+            "engine": "packed_nested_resident_filter",
             "workers": workers,
             "balance_resampling": BALANCE_RESAMPLING,
             "synthetic_observations": "all-inactive; no historical outcome values are read or fitted",
