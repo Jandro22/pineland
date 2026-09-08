@@ -22,11 +22,12 @@ def run(
     *,
     phase_d_path: Path | None = None,
     phase_e_path: Path | None = None,
+    phase_b_path: Path | None = None,
 ) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite robustness status: {output}")
     program = ROOT / "studies/research_program"
-    phase_b_path = program / "phase_b_inference_validation_v2.json"
+    phase_b_path = phase_b_path or program / "phase_b_inference_validation_v2.json"
     phase_d_path = phase_d_path or program / "phase_d_historical_confrontation_status_v1.json"
     phase_e_path = phase_e_path or program / "phase_e_theory_contract_v1.json"
     phase_b = json.loads(phase_b_path.read_text(encoding="utf-8"))
@@ -81,11 +82,13 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=ROOT / "studies/research_program/phase_f_robustness_status_v1.json")
     parser.add_argument("--phase-d", type=Path)
     parser.add_argument("--phase-e", type=Path)
+    parser.add_argument("--phase-b", type=Path)
     args = parser.parse_args()
     result = run(
         args.output.resolve(),
         phase_d_path=args.phase_d.resolve() if args.phase_d else None,
         phase_e_path=args.phase_e.resolve() if args.phase_e else None,
+        phase_b_path=args.phase_b.resolve() if args.phase_b else None,
     )
     print(json.dumps({"output": str(args.output.resolve()), "passed": result["passed"]}))
 

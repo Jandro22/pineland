@@ -17,10 +17,15 @@ if str(SRC) not in sys.path:
 from pineland_sim.reproducibility import canonical_sha256, file_sha256, model_sha256, repository_state  # noqa: E402
 
 
-def run(output: Path, *, phase_d_path: Path | None = None) -> dict[str, Any]:
+def run(
+    output: Path,
+    *,
+    phase_d_path: Path | None = None,
+    phase_b_path: Path | None = None,
+) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite theory contract: {output}")
-    phase_b_path = ROOT / "studies/research_program/phase_b_inference_validation_v2.json"
+    phase_b_path = phase_b_path or ROOT / "studies/research_program/phase_b_inference_validation_v2.json"
     phase_d_path = phase_d_path or ROOT / "studies/research_program/phase_d_historical_confrontation_status_v1.json"
     phase_b = json.loads(phase_b_path.read_text(encoding="utf-8"))
     phase_d = json.loads(phase_d_path.read_text(encoding="utf-8"))
@@ -94,10 +99,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=ROOT / "studies/research_program/phase_e_theory_contract_v1.json")
     parser.add_argument("--phase-d", type=Path)
+    parser.add_argument("--phase-b", type=Path)
     args = parser.parse_args()
     result = run(
         args.output.resolve(),
         phase_d_path=args.phase_d.resolve() if args.phase_d else None,
+        phase_b_path=args.phase_b.resolve() if args.phase_b else None,
     )
     print(json.dumps({"output": str(args.output.resolve()), "passed": result["passed"]}))
 
