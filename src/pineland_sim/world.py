@@ -1369,10 +1369,10 @@ class WorldState:
         # Keep the aggregate cursor synchronized even when this event has no
         # changed stock.  The next incremental event can then derive its
         # before/after pair without calling tracked_stock_totals().
-        self.stock_ledger_last_totals = {
-            name: float(after.get(name, 0.0))
-            for name in set(before) | set(after)
-        }
+        cursor = dict(self.stock_ledger_last_totals)
+        for name in sorted(set(before) | set(after)):
+            cursor[name] = float(after.get(name, 0.0))
+        self.stock_ledger_last_totals = cursor
 
     def record_stock_deltas(
         self,
