@@ -1614,6 +1614,11 @@ def run_training_filter(
                 workers=workers,
                 summarize_state=_resident_particle_identity,
             )
+            # Windows spawn has already serialized the states into the
+            # resident workers.  Drop the coordinator's duplicate references
+            # before propagation so the fixed ensemble is bounded by worker
+            # residency rather than by an avoidable parent-side copy.
+            del initial_states
         try:
             # The coordinator retains only weights/ancestry metadata while
             # workers own the mutable simulation objects.
@@ -1621,6 +1626,7 @@ def run_training_filter(
                 Particle(None, particle.log_weight)
                 for particle in filter_.particles
             ]
+            particles.clear()
             for observation in ordered_observations:
                 assimilate_one(observation, executor)
                 maybe_save_restart(observation, executor)

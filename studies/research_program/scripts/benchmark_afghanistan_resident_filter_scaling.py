@@ -41,7 +41,16 @@ def _observations(runner, world, weeks: int):
     ]
 
 
-def _run_one(runner, templates, observations, *, workers: int, branches: int, seed: int):
+def _run_one(
+    runner,
+    templates,
+    observations,
+    *,
+    workers: int,
+    branches: int,
+    seed: int,
+    release_templates: bool = False,
+):
     particles = [
         runner.Particle(
             template.state.fork(900_000 + index),
@@ -49,6 +58,8 @@ def _run_one(runner, templates, observations, *, workers: int, branches: int, se
         )
         for index, template in enumerate(templates)
     ]
+    if release_templates:
+        templates.clear()
     started = perf_counter()
     filter_ = runner.run_training_filter(
         particles,
@@ -117,17 +128,17 @@ def main() -> None:
         for index in range(args.particles)
     ]
     observations = _observations(runner, base_world, args.weeks)
-    rows = [
-        _run_one(
+    rows = []
+    for worker_index, workers in enumerate(args.workers):
+        rows.append(_run_one(
             runner,
             templates,
             observations,
             workers=workers,
             branches=args.branches,
             seed=args.seed,
-        )
-        for workers in args.workers
-    ]
+            release_templates=(worker_index == len(args.workers) - 1),
+        ))
     reference = rows[0]
     for row in rows:
         row["exact_state_equivalence"] = (
