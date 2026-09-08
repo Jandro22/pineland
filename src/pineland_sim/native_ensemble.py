@@ -31,6 +31,17 @@ HOT_CLOCKS = (
     "logistics",
 )
 
+# These handlers operate on person/belief/output state and do not consume the
+# packed formation/post/zone hot lane.  Keeping them out of the generic
+# export/import pair makes the event boundary reflect the fields it can
+# actually dirty.
+NARROW_REFERENCE_EVENT_TYPES = frozenset({
+    "beliefs",
+    "mobility",
+    "recording_noise",
+    "social_influence",
+})
+
 
 def _particle_world(particle: Any) -> Any:
     world = getattr(particle, "world", None)
@@ -648,102 +659,92 @@ class PackedHotState:
         }
 
     def formation_effective_readiness(self, lane: int, formation: int) -> float:
-        if not self.formation_present[self._fo(lane, formation)]:
+        formation_count = len(self.formation_ids)
+        fo = int(lane) * formation_count + int(formation)
+        value_base = fo * self.F_STRIDE
+        flag_base = fo * self.FF_STRIDE
+        if not self.formation_present[fo]:
             return 0.0
-        stock = self.formation_values[
-            self._fv(lane, formation, self.F_SUPPLY_STOCK)
-        ]
-        capacity = self.formation_values[
-            self._fv(lane, formation, self.F_SUPPLY_CAPACITY)
-        ]
-        sustainment = self.formation_values[
-            self._fv(lane, formation, self.F_SUSTAINMENT)
-        ]
+        stock = self.formation_values[value_base + self.F_SUPPLY_STOCK]
+        capacity = self.formation_values[value_base + self.F_SUPPLY_CAPACITY]
+        sustainment = self.formation_values[value_base + self.F_SUSTAINMENT]
         supply_fraction = (
             clamp(stock / capacity) if capacity > 0 else clamp(sustainment)
         )
-        readiness = self.formation_values[
-            self._fv(lane, formation, self.F_READINESS)
-        ]
-        fatigue = self.formation_values[
-            self._fv(lane, formation, self.F_FATIGUE)
-        ]
-        command = self.formation_values[
-            self._fv(lane, formation, self.F_COMMAND)
-        ]
+        readiness = self.formation_values[value_base + self.F_READINESS]
+        fatigue = self.formation_values[value_base + self.F_FATIGUE]
+        command = self.formation_values[value_base + self.F_COMMAND]
         fatigue_adjusted = clamp(readiness * (1.0 - 0.65 * clamp(fatigue)))
         return clamp(
             fatigue_adjusted * (0.2 + 0.8 * supply_fraction) * clamp(command)
         )
 
     def formation_effective_strength(self, lane: int, formation: int) -> float:
+        formation_count = len(self.formation_ids)
+        fo = int(lane) * formation_count + int(formation)
+        value_base = fo * self.F_STRIDE
+        flag_base = fo * self.FF_STRIDE
         if (
-            not self.formation_present[self._fo(lane, formation)]
-            or self.formation_flags[self._ff(lane, formation, self.FF_MOVING)]
-            or self.formation_flags[self._ff(lane, formation, self.FF_OUTSIDE)]
-            or not self.formation_flags[
-                self._ff(lane, formation, self.FF_EFFECTIVE)
-            ]
+            not self.formation_present[fo]
+            or self.formation_flags[flag_base + self.FF_MOVING]
+            or self.formation_flags[flag_base + self.FF_OUTSIDE]
+            or not self.formation_flags[flag_base + self.FF_EFFECTIVE]
         ):
             return 0.0
-        personnel = max(
-            0.0,
-            self.formation_values[self._fv(lane, formation, self.F_PERSONNEL)],
-        )
-        availability = clamp(
-            self.formation_values[self._fv(lane, formation, self.F_AVAILABILITY)]
-        )
+        personnel = max(0.0, self.formation_values[value_base + self.F_PERSONNEL])
+        availability = clamp(self.formation_values[value_base + self.F_AVAILABILITY])
         available = (
             personnel * availability
             * self.formation_effective_readiness(lane, formation)
         )
         return (
             available
-            * self.formation_values[self._fv(lane, formation, self.F_QUALITY)]
-            * self.formation_values[self._fv(lane, formation, self.F_COHESION)]
+            * self.formation_values[value_base + self.F_QUALITY]
+            * self.formation_values[value_base + self.F_COHESION]
             * (
                 0.5
-                + self.formation_values[
-                    self._fv(lane, formation, self.F_INFORMATION)
-                ]
+                + self.formation_values[value_base + self.F_INFORMATION]
             )
         )
 
     def local_fighter_equivalents(
         self, lane: int, organization: int, locality: int
     ) -> tuple[float, float]:
-        offset = self._ol(lane, organization, locality)
+        organization_count = len(self.organization_ids)
+        locality_count = len(self.locality_ids)
+        formation_count = len(self.formation_ids)
+        offset = (
+            (int(lane) * organization_count + int(organization))
+            * locality_count + int(locality)
+        )
         unfielded = min(
             max(0.0, self.manpower_pool[offset]),
             max(0.0, self.manpower_supply_reserve[offset])
             / self._cfg(lane, self.C_SUPPLY_PER_FIGHTER),
         )
         fielded = 0.0
-        for formation in range(self.formation_count):
-            fo = self._fo(lane, formation)
+        lane_formation_base = int(lane) * formation_count
+        for formation in range(formation_count):
+            fo = lane_formation_base + formation
+            value_base = fo * self.F_STRIDE
+            flag_base = fo * self.FF_STRIDE
             if (
                 self.formation_present[fo]
                 and self.formation_organization[fo] == organization
                 and self.formation_locality[fo] == locality
-                and not self.formation_flags[
-                    self._ff(lane, formation, self.FF_MOVING)
-                ]
-                and not self.formation_flags[
-                    self._ff(lane, formation, self.FF_OUTSIDE)
-                ]
+                and not self.formation_flags[flag_base + self.FF_MOVING]
+                and not self.formation_flags[flag_base + self.FF_OUTSIDE]
             ):
                 fielded += max(
                     0.0,
-                    self.formation_values[
-                        self._fv(lane, formation, self.F_PERSONNEL)
-                    ],
+                    self.formation_values[value_base + self.F_PERSONNEL],
                 )
         return unfielded, fielded
 
     def action_attempt_hazard(
         self, lane: int, organization: int, locality: int
     ) -> float:
-        oo = self._oo(lane, organization)
+        oo = int(lane) * len(self.organization_ids) + int(organization)
         if (
             not self.organization_present[oo]
             or not self.organization_active[oo]
@@ -782,9 +783,11 @@ class PackedHotState:
     def action_probability_surface(self, interval_days: float) -> array:
         """Return [particle, organization, locality] action probabilities."""
         result = array("d")
+        organization_count = len(self.organization_ids)
+        locality_count = len(self.locality_ids)
         for lane in range(self.particle_count):
-            for organization in range(self.organization_count):
-                for locality in range(self.locality_count):
+            for organization in range(organization_count):
+                for locality in range(locality_count):
                     result.append(
                         self.action_attempt_probability(
                             lane, organization, locality, interval_days
@@ -795,7 +798,7 @@ class PackedHotState:
     def _organization_matches_side(
         self, lane: int, organization: int, side: int
     ) -> bool:
-        oo = self._oo(lane, organization)
+        oo = int(lane) * len(self.organization_ids) + int(organization)
         if not self.organization_active[oo]:
             return False
         if side == INSURGENT_SIDE:
@@ -805,13 +808,15 @@ class PackedHotState:
         return False
 
     def active_insurgent_count(self, lane: int) -> int:
+        organization_count = len(self.organization_ids)
+        lane_base = int(lane) * organization_count
         return sum(
             1
-            for organization in range(self.organization_count)
+            for organization in range(organization_count)
             if (
-                self.organization_present[self._oo(lane, organization)]
-                and self.organization_active[self._oo(lane, organization)]
-                and self.organization_kind[self._oo(lane, organization)]
+                self.organization_present[lane_base + organization]
+                and self.organization_active[lane_base + organization]
+                and self.organization_kind[lane_base + organization]
                 == INSURGENT_SIDE
             )
         )
@@ -822,8 +827,14 @@ class PackedHotState:
         total = 0.0
         tau = self._cfg(lane, self.C_PRESENCE_TAU)
         patrol_count = len(self.patrol_ids)
+        formation_count = len(self.formation_ids)
+        organization_count = len(self.organization_ids)
+        microzone_count = len(self.microzone_ids)
+        lane_patrol_base = int(lane) * patrol_count
+        lane_formation_base = int(lane) * formation_count
+        lane_organization_base = int(lane) * organization_count
         for patrol in range(patrol_count):
-            base = lane * patrol_count + patrol
+            base = lane_patrol_base + patrol
             if not self.patrol_present[base]:
                 continue
             ibase = base * self.PATROL_INDEX_STRIDE
@@ -839,20 +850,20 @@ class PackedHotState:
                 or zone == UINT32_MISSING
             ):
                 continue
-            fo = self._fo(lane, formation)
+            fo = lane_formation_base + formation
             if (
                 not self.formation_present[fo]
                 or self.formation_values[
-                    self._fv(lane, formation, self.F_PERSONNEL)
+                    fo * self.F_STRIDE + self.F_PERSONNEL
                 ] <= 0.0
                 or self.formation_flags[
-                    self._ff(lane, formation, self.FF_MOVING)
+                    fo * self.FF_STRIDE + self.FF_MOVING
                 ]
                 or self.formation_flags[
-                    self._ff(lane, formation, self.FF_OUTSIDE)
+                    fo * self.FF_STRIDE + self.FF_OUTSIDE
                 ]
                 or not self.formation_flags[
-                    self._ff(lane, formation, self.FF_EFFECTIVE)
+                    fo * self.FF_STRIDE + self.FF_EFFECTIVE
                 ]
                 or self.formation_locality[fo] != locality
                 or self.patrol_values[
@@ -882,7 +893,7 @@ class PackedHotState:
             side_slot = (
                 1
                 if self.organization_kind[
-                    self._oo(lane, organization)
+                    lane_organization_base + organization
                 ] == INSURGENT_SIDE
                 else 0
             )
@@ -910,7 +921,10 @@ class PackedHotState:
                 side_slot == 1
                 and self.organization_ids[organization] == "insurgent"
             ):
-                org_zone = self._zo(lane, zone, organization)
+                org_zone = (
+                    (lane * microzone_count + zone) * organization_count
+                    + organization
+                )
                 self.zone_org_presence_memory[org_zone] = current + contribution
                 self.zone_org_presence_updated_at[org_zone] = float(time)
             total += contribution
@@ -932,8 +946,11 @@ class PackedHotState:
         delays: dict[int, float] = {}
         decay = self._cfg(lane, self.C_RESPONSE_DECAY)
         post_count = len(self.post_ids)
+        formation_count = len(self.formation_ids)
+        lane_post_base = int(lane) * post_count
+        lane_formation_base = int(lane) * formation_count
         for post in range(post_count):
-            base = lane * post_count + post
+            base = lane_post_base + post
             if not self.post_present[base]:
                 continue
             ibase = base * self.POST_INDEX_STRIDE
@@ -953,26 +970,20 @@ class PackedHotState:
                 self.post_indices[ibase + self.POST_FORMATION]
             )
             if formation != UINT32_MISSING:
-                fo = self._fo(lane, formation)
+                fo = lane_formation_base + formation
+                flag_base = fo * self.FF_STRIDE
+                value_base = fo * self.F_STRIDE
                 if (
                     not self.formation_present[fo]
-                    or self.formation_flags[
-                        self._ff(lane, formation, self.FF_MOVING)
-                    ]
-                    or self.formation_flags[
-                        self._ff(lane, formation, self.FF_OUTSIDE)
-                    ]
-                    or not self.formation_flags[
-                        self._ff(lane, formation, self.FF_EFFECTIVE)
-                    ]
+                    or self.formation_flags[flag_base + self.FF_MOVING]
+                    or self.formation_flags[flag_base + self.FF_OUTSIDE]
+                    or not self.formation_flags[flag_base + self.FF_EFFECTIVE]
                     or self.formation_locality[fo] != locality
                 ):
                     available = 0.0
                 else:
                     available *= (
-                        self.formation_values[
-                            self._fv(lane, formation, self.F_AVAILABILITY)
-                        ]
+                        self.formation_values[value_base + self.F_AVAILABILITY]
                         * self.formation_effective_readiness(lane, formation)
                     )
             if available > 0:
@@ -981,8 +992,9 @@ class PackedHotState:
                 delays[zone] = min(delay, delays.get(zone, inf))
 
         patrol_count = len(self.patrol_ids)
+        lane_patrol_base = int(lane) * patrol_count
         for patrol in range(patrol_count):
-            base = lane * patrol_count + patrol
+            base = lane_patrol_base + patrol
             if not self.patrol_present[base]:
                 continue
             ibase = base * self.PATROL_INDEX_STRIDE
@@ -1006,20 +1018,24 @@ class PackedHotState:
                 continue
             if (
                 self.formation_flags[
-                    self._ff(lane, formation, self.FF_MOVING)
+                    (lane_formation_base + formation) * self.FF_STRIDE
+                    + self.FF_MOVING
                 ]
                 or self.formation_flags[
-                    self._ff(lane, formation, self.FF_OUTSIDE)
+                    (lane_formation_base + formation) * self.FF_STRIDE
+                    + self.FF_OUTSIDE
                 ]
                 or not self.formation_flags[
-                    self._ff(lane, formation, self.FF_EFFECTIVE)
+                    (lane_formation_base + formation) * self.FF_STRIDE
+                    + self.FF_EFFECTIVE
                 ]
             ):
                 continue
             effective = (
                 self.patrol_values[vbase + self.PATROL_RESPONSE]
                 * self.formation_values[
-                    self._fv(lane, formation, self.F_AVAILABILITY)
+                    (lane_formation_base + formation) * self.F_STRIDE
+                    + self.F_AVAILABILITY
                 ]
                 * self.formation_effective_readiness(lane, formation)
             )
@@ -1028,23 +1044,17 @@ class PackedHotState:
                 delay = (1.0 - effective) * decay
                 delays[zone] = min(delay, delays.get(zone, inf))
 
-        for formation in range(self.formation_count):
-            fo = self._fo(lane, formation)
+        for formation in range(formation_count):
+            fo = lane_formation_base + formation
+            flag_base = fo * self.FF_STRIDE
+            value_base = fo * self.F_STRIDE
             if (
                 not self.formation_present[fo]
                 or self.formation_locality[fo] != locality
-                or self.formation_flags[
-                    self._ff(lane, formation, self.FF_MOVING)
-                ]
-                or self.formation_flags[
-                    self._ff(lane, formation, self.FF_OUTSIDE)
-                ]
-                or not self.formation_flags[
-                    self._ff(lane, formation, self.FF_EFFECTIVE)
-                ]
-                or self.formation_values[
-                    self._fv(lane, formation, self.F_PERSONNEL)
-                ] <= 0
+                or self.formation_flags[flag_base + self.FF_MOVING]
+                or self.formation_flags[flag_base + self.FF_OUTSIDE]
+                or not self.formation_flags[flag_base + self.FF_EFFECTIVE]
+                or self.formation_values[value_base + self.F_PERSONNEL] <= 0
             ):
                 continue
             organization = int(self.formation_organization[fo])
@@ -1057,17 +1067,16 @@ class PackedHotState:
                 continue
             effective = (
                 0.30
-                * self.formation_values[
-                    self._fv(lane, formation, self.F_AVAILABILITY)
-                ]
+                * self.formation_values[value_base + self.F_AVAILABILITY]
                 * self.formation_effective_readiness(lane, formation)
             )
             if effective > 0:
                 delay = (1.0 - effective) * decay
                 delays[zone] = min(delay, delays.get(zone, inf))
 
-        result = [inf] * self.microzone_count
-        count = self.microzone_count
+        microzone_count = len(self.microzone_ids)
+        result = [inf] * microzone_count
+        count = microzone_count
         for target in zone_indices:
             best = inf
             for source, delay in delays.items():
@@ -1085,10 +1094,18 @@ class PackedHotState:
     ) -> array:
         """Refresh contested side-level physical control for one packed lane."""
         self.advance_patrol_presence(lane, time, topology)
-        raw = array("d", [0.0]) * (self.microzone_count * 2)
-        aggregates = array("d", [0.0]) * (self.locality_count * 2)
+        microzone_count = len(self.microzone_ids)
+        locality_count = len(self.locality_ids)
+        formation_count = len(self.formation_ids)
+        organization_count = len(self.organization_ids)
+        post_count = len(self.post_ids)
+        lane_formation_base = int(lane) * formation_count
+        lane_post_base = int(lane) * post_count
+        lane_organization_base = int(lane) * organization_count
+        raw = array("d", [0.0]) * (microzone_count * 2)
+        aggregates = array("d", [0.0]) * (locality_count * 2)
         tau = self._cfg(lane, self.C_PRESENCE_TAU)
-        for locality in range(self.locality_count):
+        for locality in range(locality_count):
             zone_indices = [
                 zone for zone, owner in enumerate(topology.microzone_locality)
                 if int(owner) == locality
@@ -1101,9 +1118,8 @@ class PackedHotState:
                 posts = {zone: 0.0 for zone in zone_indices}
                 formations = {zone: 0.0 for zone in zone_indices}
 
-                post_count = len(self.post_ids)
                 for post in range(post_count):
-                    base = lane * post_count + post
+                    base = lane_post_base + post
                     if not self.post_present[base]:
                         continue
                     ibase = base * self.POST_INDEX_STRIDE
@@ -1127,27 +1143,19 @@ class PackedHotState:
                         self.post_indices[ibase + self.POST_FORMATION]
                     )
                     if formation != UINT32_MISSING:
-                        fo = self._fo(lane, formation)
+                        fo = lane_formation_base + formation
+                        value_base = fo * self.F_STRIDE
+                        flag_base = fo * self.FF_STRIDE
                         if (
-                            self.formation_flags[
-                                self._ff(lane, formation, self.FF_MOVING)
-                            ]
-                            or self.formation_flags[
-                                self._ff(lane, formation, self.FF_OUTSIDE)
-                            ]
-                            or not self.formation_flags[
-                                self._ff(lane, formation, self.FF_EFFECTIVE)
-                            ]
+                            self.formation_flags[flag_base + self.FF_MOVING]
+                            or self.formation_flags[flag_base + self.FF_OUTSIDE]
+                            or not self.formation_flags[flag_base + self.FF_EFFECTIVE]
                             or self.formation_locality[fo] != locality
                         ):
                             effective_presence = 0.0
                         else:
                             effective_presence *= (
-                                self.formation_values[
-                                    self._fv(
-                                        lane, formation, self.F_AVAILABILITY
-                                    )
-                                ]
+                                self.formation_values[value_base + self.F_AVAILABILITY]
                                 * self.formation_effective_readiness(
                                     lane, formation
                                 )
@@ -1156,23 +1164,17 @@ class PackedHotState:
                     if zone in posts:
                         posts[zone] += effective_presence
 
-                for formation in range(self.formation_count):
-                    fo = self._fo(lane, formation)
+                for formation in range(formation_count):
+                    fo = lane_formation_base + formation
+                    value_base = fo * self.F_STRIDE
+                    flag_base = fo * self.FF_STRIDE
                     if (
                         not self.formation_present[fo]
                         or self.formation_locality[fo] != locality
-                        or self.formation_flags[
-                            self._ff(lane, formation, self.FF_MOVING)
-                        ]
-                        or self.formation_flags[
-                            self._ff(lane, formation, self.FF_OUTSIDE)
-                        ]
-                        or not self.formation_flags[
-                            self._ff(lane, formation, self.FF_EFFECTIVE)
-                        ]
-                        or self.formation_values[
-                            self._fv(lane, formation, self.F_PERSONNEL)
-                        ] <= 0
+                        or self.formation_flags[flag_base + self.FF_MOVING]
+                        or self.formation_flags[flag_base + self.FF_OUTSIDE]
+                        or not self.formation_flags[flag_base + self.FF_EFFECTIVE]
+                        or self.formation_values[value_base + self.F_PERSONNEL] <= 0
                     ):
                         continue
                     organization = int(self.formation_organization[fo])
@@ -1193,17 +1195,20 @@ class PackedHotState:
                     )
 
                 for zone in zone_indices:
-                    zo = self._zs(lane, zone, side_slot)
+                    zo = (lane * microzone_count + zone) * 2 + side_slot
                     if side == INSURGENT_SIDE:
                         memory = 0.0
-                        for organization in range(self.organization_count):
-                            oo = self._oo(lane, organization)
+                        for organization in range(organization_count):
+                            oo = lane_organization_base + organization
                             if (
                                 not self.organization_active[oo]
                                 or self.organization_kind[oo] != INSURGENT_SIDE
                             ):
                                 continue
-                            org_zone = self._zo(lane, zone, organization)
+                            org_zone = (
+                                (lane * microzone_count + zone)
+                                * organization_count + organization
+                            )
                             elapsed = max(
                                 0.0,
                                 float(time)
@@ -1257,7 +1262,7 @@ class PackedHotState:
                 government = raw[zone * 2]
                 insurgent = raw[zone * 2 + 1]
                 self.zone_insurgent_side_raw[
-                    lane * self.microzone_count + zone
+                    lane * microzone_count + zone
                 ] = insurgent
                 government_contested = clamp(
                     government * (1.0 - 0.35 * insurgent)
@@ -1265,10 +1270,11 @@ class PackedHotState:
                 insurgent_contested = clamp(
                     insurgent * (1.0 - 0.35 * government)
                 )
-                self.zone_physical_control[self._zs(lane, zone, 0)] = (
+                zone_base = (lane * microzone_count + zone) * 2
+                self.zone_physical_control[zone_base] = (
                     government_contested
                 )
-                self.zone_physical_control[self._zs(lane, zone, 1)] = (
+                self.zone_physical_control[zone_base + 1] = (
                     insurgent_contested
                 )
                 share = self.zone_population_share[zone]
@@ -1280,6 +1286,346 @@ class PackedHotState:
             )
         self.dirty_lanes.add(lane)
         return aggregates
+
+    def plan_patrol_route(
+        self,
+        lane: int,
+        patrol: int,
+        time: float,
+        world: Any,
+        topology: "StaticWorldTopology",
+        rng: Any,
+    ) -> tuple[str, float] | None:
+        """Draw one patrol route from packed state in reference order.
+
+        The route equation is unchanged from ``ProcessEngine.on_patrol``. The
+        compact zone belief remains the source of perceived need, while the
+        static physical graph is read only for candidate ordering and edge
+        travel properties. Returning the selected destination and travel time
+        lets the archival/reference wrapper consume the result without doing a
+        second RNG pass.
+        """
+        patrol = int(patrol)
+        base = int(lane) * len(self.patrol_ids) + patrol
+        if not self.patrol_present[base]:
+            return None
+        ibase = base * self.PATROL_INDEX_STRIDE
+        vbase = base * self.PATROL_STRIDE
+        formation_index = int(
+            self.patrol_indices[ibase + self.PATROL_FORMATION]
+        )
+        zone_index = int(self.patrol_indices[ibase + self.PATROL_ZONE])
+        locality_index = int(self.patrol_indices[ibase + self.PATROL_LOCALITY])
+        if (
+            formation_index == UINT32_MISSING
+            or zone_index == UINT32_MISSING
+            or locality_index == UINT32_MISSING
+        ):
+            return None
+        fo = self._fo(lane, formation_index)
+        if (
+            not self.formation_present[fo]
+            or self.formation_values[self._fv(lane, formation_index, self.F_PERSONNEL)] <= 0.0
+            or self.formation_flags[self._ff(lane, formation_index, self.FF_MOVING)]
+            or self.formation_flags[self._ff(lane, formation_index, self.FF_OUTSIDE)]
+            or not self.formation_flags[self._ff(lane, formation_index, self.FF_EFFECTIVE)]
+        ):
+            return None
+        patrol_id = self.patrol_ids[patrol]
+        patrol_object = world.patrols.get(patrol_id)
+        formation_id = self.formation_ids[formation_index]
+        formation_object = world.formations.get(formation_id)
+        if patrol_object is None or formation_object is None or formation_object.moving:
+            return None
+        current_zone_id = topology.microzone_ids[zone_index]
+        neighbors = world.physical_neighbors.get(current_zone_id, {})
+        candidates = sorted(neighbors)
+        travel_hours = float(world.config.intervals.patrol) * 24.0
+        if not candidates:
+            return current_zone_id, travel_hours
+
+        from .physical import ensure_zone_belief
+
+        # The reference handler ensures the current row before iterating the
+        # candidate rows.  Keep that structural side effect in the same order;
+        # it matters when a newly-created organization first receives a patrol.
+        ensure_zone_belief(
+            world,
+            formation_object.organization_id,
+            current_zone_id,
+            float(time),
+        )
+        weights: list[float] = []
+        for candidate in candidates:
+            zone_belief = ensure_zone_belief(
+                world,
+                formation_object.organization_id,
+                candidate,
+                float(time),
+            )
+            world.materialize_compact_confidence(zone_belief)
+            edge = world.physical_edges[neighbors[candidate]]
+            perceived_need = (
+                (
+                    (1.0 - zone_belief.physical_control_estimate)
+                    * (0.55 + 0.45 * zone_belief.confidence)
+                    + 0.18 * (1.0 - zone_belief.confidence)
+                )
+                if world.config.physical.adaptive_patrol_routing
+                else 0.5
+            )
+            route_noise = rng.uniform(
+                0.0, world.config.physical.patrol_route_randomness
+            )
+            score = (
+                2.5 * perceived_need
+                - edge.travel_time_hours / world.config.physical.response_decay_hours
+                + route_noise
+            )
+            weights.append(exp(max(-8.0, min(8.0, score))))
+        moved_to = rng.choices(candidates, weights=weights, k=1)[0]
+        edge = world.physical_edges[neighbors[moved_to]]
+        travel_hours = (
+            edge.travel_time_hours
+            * (1.0 + edge.disruption)
+            / max(0.2, formation_object.mobility)
+        )
+        return moved_to, travel_hours
+
+    def export_patrol_context_to_world(
+        self,
+        lane: int,
+        world: Any,
+        topology: "StaticWorldTopology",
+        patrol_id: str | None = None,
+    ) -> None:
+        """Expose only the state needed by one patrol reference wrapper.
+
+        This is deliberately narrower than ``export_lane_to_world``: the
+        patrol information kernel still uses the public world/compact belief
+        API, but no full pool/post/locality/belief export is performed for the
+        common patrol event.
+        """
+        lane = int(lane)
+        for formation_id, fi in self.formation_index.items():
+            formation = world.formations.get(formation_id)
+            if formation is None:
+                continue
+            fo = self._fo(lane, fi)
+            if not self.formation_present[fo]:
+                continue
+            locality = int(self.formation_locality[fo])
+            zone = int(self.formation_microzone[fo])
+            if locality != UINT32_MISSING:
+                formation.locality_id = topology.locality_ids[locality]
+            formation.current_microzone_id = (
+                topology.microzone_ids[zone]
+                if zone != UINT32_MISSING else None
+            )
+            values = {
+                "personnel": self.F_PERSONNEL,
+                "quality": self.F_QUALITY,
+                "cohesion": self.F_COHESION,
+                "readiness": self.F_READINESS,
+                "sustainment": self.F_SUSTAINMENT,
+                "information": self.F_INFORMATION,
+                "command": self.F_COMMAND,
+                "fatigue": self.F_FATIGUE,
+                "availability": self.F_AVAILABILITY,
+                "supply_stock": self.F_SUPPLY_STOCK,
+                "supply_capacity": self.F_SUPPLY_CAPACITY,
+            }
+            for name, field_index in values.items():
+                setattr(
+                    formation,
+                    name,
+                    float(self.formation_values[self._fv(lane, fi, field_index)]),
+                )
+            formation.moving = bool(
+                self.formation_flags[self._ff(lane, fi, self.FF_MOVING)]
+            )
+            formation.outside_pineland = bool(
+                self.formation_flags[self._ff(lane, fi, self.FF_OUTSIDE)]
+            )
+            formation.operational_status = (
+                "effective"
+                if self.formation_flags[self._ff(lane, fi, self.FF_EFFECTIVE)]
+                else "ineffective"
+            )
+
+        patrol_count = len(self.patrol_ids)
+        for patrol_id, pi in self.patrol_index.items():
+            patrol = world.patrols.get(patrol_id)
+            if patrol is None:
+                continue
+            base = lane * patrol_count + pi
+            ibase = base * self.PATROL_INDEX_STRIDE
+            vbase = base * self.PATROL_STRIDE
+            zone = int(self.patrol_indices[ibase + self.PATROL_ZONE])
+            if zone != UINT32_MISSING:
+                patrol.current_microzone_id = topology.microzone_ids[zone]
+            patrol.available_at = float(
+                self.patrol_values[vbase + self.PATROL_AVAILABLE_AT]
+            )
+            patrol.response_fraction = float(
+                self.patrol_values[vbase + self.PATROL_RESPONSE]
+            )
+            accounted = float(
+                self.patrol_values[vbase + self.PATROL_ACCOUNTED_AT]
+            )
+            patrol.presence_accounted_at = (
+                None if accounted < -1e250 else accounted
+            )
+
+        # The generic ProcessEngine boundary integrates all deployed patrols;
+        # mirror the packed memory/timestamps before it runs so it observes no
+        # duplicate dwell interval.
+        for zone_id, zi in topology.microzone_index.items():
+            zone = world.microzones[zone_id]
+            for side_slot, actor in enumerate(("government", "insurgent")):
+                offset = self._zs(lane, zi, side_slot)
+                zone.presence_memory[actor] = float(
+                    self.zone_presence_memory[offset]
+                )
+                zone.presence_updated_at[actor] = float(
+                    self.zone_presence_updated_at[offset]
+                )
+
+        # Patrol reports carry the observing locality's control vector.  Keep
+        # that scalar view current without rebuilding all locality indexes.
+        selected_patrol = (
+            self.patrol_index.get(str(patrol_id))
+            if patrol_id is not None else None
+        )
+        if selected_patrol is None:
+            selected_patrol = next(
+                (
+                    pi for pi in range(patrol_count)
+                    if self.patrol_present[lane * patrol_count + pi]
+                ),
+                None,
+            )
+        if selected_patrol is not None:
+            pi = selected_patrol
+            locality_index = int(
+                self.patrol_indices[
+                    (lane * patrol_count + pi) * self.PATROL_INDEX_STRIDE
+                    + self.PATROL_LOCALITY
+                ]
+            )
+            if locality_index != UINT32_MISSING:
+                locality_id = topology.locality_ids[locality_index]
+                locality = world.localities[locality_id]
+                locality.population = self._lp(lane, locality_index)
+                government = 0.0
+                insurgent = 0.0
+                for zi, owner in enumerate(topology.microzone_locality):
+                    if int(owner) != locality_index:
+                        continue
+                    share = self.zone_population_share[zi]
+                    government += share * self.zone_physical_control[
+                        self._zs(lane, zi, 0)
+                    ]
+                    insurgent += share * self.zone_physical_control[
+                        self._zs(lane, zi, 1)
+                    ]
+                for actor, value in (
+                    ("government", government),
+                    ("insurgent", insurgent),
+                ):
+                    vector = locality.control.get(actor)
+                    if vector is not None:
+                        vector.physical = clamp(value)
+
+    def import_patrol_context_from_world(
+        self,
+        lane: int,
+        world: Any,
+        topology: "StaticWorldTopology",
+        patrol_id: str | None = None,
+    ) -> None:
+        """Pull back the narrow state mutated by the patrol wrapper."""
+        lane = int(lane)
+        for formation_id, fi in self.formation_index.items():
+            formation = world.formations.get(formation_id)
+            if formation is None:
+                continue
+            fo = self._fo(lane, fi)
+            if not self.formation_present[fo]:
+                continue
+            self.formation_locality[fo] = topology.locality_index.get(
+                formation.locality_id, UINT32_MISSING
+            )
+            self.formation_microzone[fo] = topology.microzone_index.get(
+                formation.current_microzone_id, UINT32_MISSING
+            )
+            values = (
+                formation.personnel, formation.quality, formation.cohesion,
+                formation.readiness, formation.sustainment, formation.information,
+                formation.command, formation.fatigue, formation.availability,
+                formation.supply_stock, formation.supply_capacity,
+            )
+            for field_index, value in enumerate(values):
+                self.formation_values[self._fv(lane, fi, field_index)] = float(value)
+            self.formation_flags[self._ff(lane, fi, self.FF_MOVING)] = int(
+                formation.moving
+            )
+            self.formation_flags[self._ff(lane, fi, self.FF_OUTSIDE)] = int(
+                formation.outside_pineland
+            )
+            self.formation_flags[self._ff(lane, fi, self.FF_EFFECTIVE)] = int(
+                formation.operational_status == "effective"
+            )
+
+        patrol_count = len(self.patrol_ids)
+        for patrol_id, pi in self.patrol_index.items():
+            patrol = world.patrols.get(patrol_id)
+            if patrol is None:
+                continue
+            base = lane * patrol_count + pi
+            ibase = base * self.PATROL_INDEX_STRIDE
+            vbase = base * self.PATROL_STRIDE
+            self.patrol_indices[ibase + self.PATROL_ZONE] = topology.microzone_index.get(
+                patrol.current_microzone_id, UINT32_MISSING
+            )
+            self.patrol_values[vbase + self.PATROL_AVAILABLE_AT] = float(
+                patrol.available_at
+            )
+            self.patrol_values[vbase + self.PATROL_RESPONSE] = float(
+                patrol.response_fraction
+            )
+            self.patrol_values[vbase + self.PATROL_ACCOUNTED_AT] = (
+                -1e300
+                if patrol.presence_accounted_at is None
+                else float(patrol.presence_accounted_at)
+            )
+
+        for zone_id, zi in topology.microzone_index.items():
+            zone = world.microzones[zone_id]
+            for side_slot, actor in enumerate(("government", "insurgent")):
+                offset = self._zs(lane, zi, side_slot)
+                self.zone_presence_memory[offset] = float(
+                    zone.presence_memory.get(actor, 0.0)
+                )
+                self.zone_presence_updated_at[offset] = float(
+                    zone.presence_updated_at.get(actor, world.time)
+                )
+        self.dirty_lanes.add(lane)
+
+    def import_locality_population_lane(
+        self,
+        lane: int,
+        world: Any,
+        topology: "StaticWorldTopology",
+    ) -> None:
+        """Pull back the only packed field changed by civilian mobility."""
+        lane = int(lane)
+        base = lane * self.locality_count
+        for locality_id, li in topology.locality_index.items():
+            self.locality_population[base + li] = float(
+                world.localities[locality_id].population
+            )
+        self.dirty_lanes.add(lane)
 
     def export_lane_to_world(
         self,
@@ -1612,22 +1958,53 @@ class NativeEnsembleRunner:
         self.structural_rebuilds += 1
 
     def _consume_packed_process_event(
-        self, simulation: Any, event_type: str
+        self, simulation: Any, event_type: str, time: float | None = None
     ) -> None:
-        """Advance ProcessEngine event identity for a packed-handled event."""
+        """Advance ProcessEngine bookkeeping for a packed-handled event.
+
+        Packed islands bypass ``ProcessEngine.execute``; preserve its
+        deterministic boundary hooks as well as the event counter/RNG stream.
+        Those hooks update continuous patrol-memory and local-foothold stocks,
+        so omitting them would make a packed no-op observably different from
+        the reference event even when no substantive handler mutation occurs.
+        """
         from .world import seeded_rng
 
         process_engine = simulation.processes
+        world = process_engine.world
+        if time is not None:
+            world.time = float(time)
+        from .organizational_state import advance_local_footholds
+        from .physical import advance_patrol_presence_memory
+
+        if event_type in {
+            "physical_refresh", "force_movement", "logistics", "contact",
+            "organized_action", "recruitment", "organization_ecology",
+            "foreign_affairs", "peace_process",
+        }:
+            advance_patrol_presence_memory(world, world.time)
+        if event_type in {
+            "force_movement", "organized_action", "recruitment",
+            "organization_ecology", "physical_refresh",
+        }:
+            advance_local_footholds(world, world.time)
         process_engine.event_counter += 1
         if process_engine._injected_rng is None:
             process_engine.rng = process_engine._process_rngs.setdefault(
                 event_type,
                 seeded_rng(
-                    process_engine.world.config,
+                    world.config,
                     process_engine._stream_name(f"process:{event_type}"),
                 ),
             )
-        process_engine.world.active_event_id = None
+        # A packed no-op has no handler result, but the reference engine still
+        # closes the same local-foothold boundary after the event.
+        if event_type in {
+            "force_movement", "recruitment", "organization_ecology",
+            "organized_action",
+        }:
+            advance_local_footholds(world, world.time)
+        world.active_event_id = None
         self.event_counts[event_type] = self.event_counts.get(event_type, 0) + 1
 
     def _apply_policy_if_due(
@@ -1678,6 +2055,60 @@ class NativeEnsembleRunner:
         )
         simulation._recruitment_clock_started = True
 
+    def _execute_packed_patrol(
+        self,
+        batch: "ParticleBatchState",
+        lane: int,
+        event: Any,
+    ) -> None:
+        """Execute a patrol without the full hot-state import/export cycle.
+
+        Patrol presence, route choice, and the narrow formation/patrol rows are
+        carried by ``PackedHotState``.  The reference process wrapper remains
+        responsible for exact observation RNG order, compact belief fusion,
+        event archival, and incremental stock accounting.
+        """
+        simulation = _particle_simulation(batch.particles[lane])
+        world = simulation.world
+        patrol_id = str(event.payload.get("patrol_id", ""))
+        batch.times[lane] = float(event.time)
+
+        # Match the reference pre-handler presence integration while keeping
+        # both the memory and per-patrol accounting timestamps packed.
+        self.hot_state.advance_patrol_presence(
+            lane, float(event.time), self.topology
+        )
+        self.hot_state.export_patrol_context_to_world(
+            lane, world, self.topology, patrol_id=patrol_id
+        )
+        world.time = float(event.time)
+
+        patrol_index = self.hot_state.patrol_index.get(patrol_id)
+        process_engine = simulation.processes
+        previous_route = getattr(process_engine, "_packed_patrol_route", None)
+        process_engine._packed_patrol_route = (
+            None
+            if patrol_index is None
+            else lambda: self.hot_state.plan_patrol_route(
+                lane,
+                patrol_index,
+                float(event.time),
+                world,
+                self.topology,
+                process_engine.rng,
+            )
+        )
+        try:
+            process_engine.execute(event)
+        finally:
+            process_engine._packed_patrol_route = previous_route
+
+        self.hot_state.import_patrol_context_from_world(
+            lane, world, self.topology, patrol_id=patrol_id
+        )
+        batch.refresh_beliefs_from_world(lane)
+        self.event_counts["patrol"] = self.event_counts.get("patrol", 0) + 1
+
     def _execute_reference_event(
         self,
         batch: "ParticleBatchState",
@@ -1689,7 +2120,7 @@ class NativeEnsembleRunner:
         batch.times[lane] = float(event.time)
         if event.event_type == "patrol":
             batch.synchronize_hot_lane_to_world(lane)
-        else:
+        elif event.event_type not in NARROW_REFERENCE_EVENT_TYPES:
             # Ordinary sparse handlers consume the Python object view of the
             # mutable world state.  Belief rows are already authoritative in
             # that same view: the only packed belief transition is the
@@ -1710,6 +2141,13 @@ class NativeEnsembleRunner:
         )
         if self._structure_changed(world):
             self._rebuild_structure(batch, preserve_lanes=(lane,))
+        elif event.event_type in NARROW_REFERENCE_EVENT_TYPES:
+            if event.event_type == "mobility":
+                self.hot_state.import_locality_population_lane(
+                    lane, world, self.topology
+                )
+            if event.event_type == "beliefs":
+                batch.refresh_beliefs_from_world(lane)
         else:
             self.hot_state.import_lane(lane, world, self.topology)
             batch.refresh_beliefs_from_world(lane)
@@ -1788,7 +2226,9 @@ class NativeEnsembleRunner:
             or not self.hot_state.organization_active[oo]
             or not self.hot_state.organization_action_eligible[oo]
         ):
-            self._consume_packed_process_event(simulation, "organized_action")
+            self._consume_packed_process_event(
+                simulation, "organized_action", float(event.time)
+            )
             self.packed_noop_actions += 1
             return True
         self.hot_state.advance_patrol_presence(
@@ -1810,7 +2250,9 @@ class NativeEnsembleRunner:
                 hazard_per_day=hazard,
                 interval_days=interval_days,
             )
-            self._consume_packed_process_event(simulation, "organized_action")
+            self._consume_packed_process_event(
+                simulation, "organized_action", float(event.time)
+            )
             self.packed_noop_actions += 1
             return True
         probability = self.hot_state.action_attempt_probability(
@@ -1844,7 +2286,9 @@ class NativeEnsembleRunner:
             )
             states[lane] = rng.getstate()
             self.hot_state.rng_states["organized_action"] = tuple(states)
-            self._consume_packed_process_event(simulation, "organized_action")
+            self._consume_packed_process_event(
+                simulation, "organized_action", float(event.time)
+            )
             self.packed_noop_actions += 1
             return True
         # Let the reference handler realize the action from the exact pre-draw
@@ -2021,6 +2465,18 @@ class NativeEnsembleRunner:
                         )
                         continue
 
+                    if event.event_type == "patrol":
+                        self._execute_packed_patrol(batch, lane, event)
+                        self._maybe_start_recruitment(
+                            simulation, float(event.time)
+                        )
+                        simulation._reschedule(
+                            event.event_type,
+                            event.payload,
+                            float(event.time),
+                        )
+                        continue
+
                     if event.event_type == "physical_refresh":
                         if (
                             self.enable_physical_island
@@ -2030,7 +2486,8 @@ class NativeEnsembleRunner:
                                 lane, float(event.time), self.topology
                             )
                             self._consume_packed_process_event(
-                                simulation, "physical_refresh"
+                                simulation, "physical_refresh",
+                                float(event.time),
                             )
                             self.physical_refreshes += 1
                         else:

@@ -433,6 +433,11 @@ class OrganizationEcologyConfig:
     # numerical-resolution control, not an empirical fit parameter.
     recruitment_subcohorts: int = 20
     recruitment_requires_access: bool = True
+    # Slow local organizational memory.  This is a general structural prior:
+    # movement does not erase a locality's social/institutional stock, but the
+    # stock decays when it is not renewed.  It is not a Nepal calibration knob.
+    local_foothold_memory_days: float = 45.0
+    local_foothold_viability_threshold: float = 0.20
     # Utility-scale effect of constituency/franchise congruence.  A locally
     # rooted organization is more attractive to civilians whose local/district
     # identities are salient; an externally implanted franchise is less so.
@@ -456,8 +461,11 @@ class OrganizationEcologyConfig:
                 self.minimum_proto_represented_population <= 0 or
                 self.minimum_split_represented_population <= 0 or
                 self.minimum_formation_personnel < 0 or
-                self.recruitment_subcohorts < 1):
+                self.recruitment_subcohorts < 1 or
+                self.local_foothold_memory_days <= 0):
             raise ValueError("invalid organization ecology interval or minimum size")
+        if not 0 <= self.local_foothold_viability_threshold <= 1:
+            raise ValueError("local_foothold_viability_threshold must be in [0, 1]")
         if not 0 <= self.local_rootedness_weight <= 3:
             raise ValueError("local_rootedness_weight must be in [0, 3]")
         for name in ("proto_base_hazard", "birth_base_hazard", "proto_decay_rate",

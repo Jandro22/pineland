@@ -1,8 +1,9 @@
 """Score frozen Pineland ensembles and simple competitors on identical rows.
 
 This is post-processing only: no simulator parameter is fitted and holdout
-outcomes never update competitor state.  Candidate probabilities are empirical
-ensemble frequencies on the exact historical panel cells.
+outcomes never update competitor state. Candidate probabilities retain the raw
+empirical ensemble frequency for auditability and use a preregisterable
+Jeffreys posterior predictive estimate for scoring finite ensembles.
 """
 from __future__ import annotations
 
@@ -31,16 +32,24 @@ def sha256(path: Path) -> str:
 
 
 def _require_content_addressed_core(freeze_path: Path) -> None:
-    from pineland_sim.reproducibility import model_sha256
+    from pineland_sim.reproducibility import model_sha256, require_certified_core
 
     freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
     identity = freeze.get("software_identity", freeze)
-    live = model_sha256(ROOT)
-    if identity.get("model_sha256") != live:
+    status = require_certified_core(ROOT)
+    if not status.get("passed", False):
         raise RuntimeError(
-            "refusing to score historical outputs: live core does not match "
-            f"{freeze_path} (expected={identity.get('model_sha256')}, live={live})"
+            "refusing to score historical outputs: active core is not certified"
         )
+    # Temporary contract fixtures used by tests/export validation do not have
+    # a repository and therefore cannot have a live source hash to compare.
+    if (ROOT / ".git").exists():
+        live = model_sha256(ROOT)
+        if identity.get("model_sha256") != live:
+            raise RuntimeError(
+                "refusing to score historical outputs: live core does not match "
+                f"{freeze_path} (expected={identity.get('model_sha256')}, live={live})"
+            )
 
 
 def frozen_core(execution_contract: Path | None = None) -> tuple[str, str]:
@@ -151,6 +160,35 @@ def ensemble_probability(panel: pd.DataFrame, unit_col: str, cell_time_col: str,
     ]
 
 
+def ensemble_probability_smoothed(
+    panel: pd.DataFrame,
+    unit_col: str,
+    cell_time_col: str,
+    members: list[set[tuple[str, int]]],
+    *,
+    prior_alpha: float = 0.5,
+    prior_beta: float = 0.5,
+) -> list[float]:
+    """Return a Beta-binomial posterior predictive probability.
+
+    Jeffreys' prior is symmetric and contributes one effective observation in
+    total. It prevents finite ensembles from assigning exact zero/one
+    probabilities while leaving the raw member frequency available for
+    diagnostics. This repairs log-score boundary behavior; it is not a model
+    dynamics correction.
+    """
+    if prior_alpha <= 0 or prior_beta <= 0:
+        raise ValueError("prior_alpha and prior_beta must be positive")
+    denominator = float(len(members)) + prior_alpha + prior_beta
+    return [
+        (
+            sum((str(unit), int(time)) in member for member in members)
+            + prior_alpha
+        ) / denominator
+        for unit, time in zip(panel[unit_col], panel[cell_time_col])
+    ]
+
+
 def decision(scores: pd.DataFrame, *, complete: bool, member_count: int,
              expected_members: int, final_stage: bool) -> dict:
     holdout = scores[scores.split != "training"]
@@ -225,8 +263,18 @@ def main() -> int:
     )
     if len(files) > args.expected_members:
         raise ValueError("more ensemble members found than expected")
-    panel["pineland_recorded_ensemble"] = ensemble_probability(panel, unit_col, cell_time_col, recorded)
-    panel["pineland_latent_ensemble"] = ensemble_probability(panel, unit_col, cell_time_col, latent)
+    panel["pineland_recorded_ensemble_raw"] = ensemble_probability(
+        panel, unit_col, cell_time_col, recorded
+    )
+    panel["pineland_latent_ensemble_raw"] = ensemble_probability(
+        panel, unit_col, cell_time_col, latent
+    )
+    panel["pineland_recorded_ensemble"] = ensemble_probability_smoothed(
+        panel, unit_col, cell_time_col, recorded
+    )
+    panel["pineland_latent_ensemble"] = ensemble_probability_smoothed(
+        panel, unit_col, cell_time_col, latent
+    )
     spec = PanelSpec(
         unit_col=unit_col,
         time_col=time_col,
@@ -254,7 +302,13 @@ def main() -> int:
         "holdout_refit": False,
         "holdout_target_updates": False,
         "candidate_parameter_fit": False,
-        "candidate_probability_definition": "fraction_of_frozen_ensemble_members_with_active_cell",
+        "candidate_probability_definition": (
+            "jeffreys_beta_binomial_posterior_predictive_from_frozen_ensemble"
+        ),
+        "raw_candidate_probability_definition": (
+            "fraction_of_frozen_ensemble_members_with_active_cell"
+        ),
+        "finite_ensemble_prior": {"alpha": 0.5, "beta": 0.5},
         "rows": len(panel),
         "models": sorted(scores.model.unique().tolist()),
     })

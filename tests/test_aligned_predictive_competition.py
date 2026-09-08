@@ -34,6 +34,19 @@ def test_ensemble_probability_is_exact_member_frequency():
     assert MODULE.ensemble_probability(panel, "u", "sim_t", members) == [0.5, 0.5]
 
 
+def test_smoothed_ensemble_probability_preserves_finite_ensemble_boundaries():
+    panel = pd.DataFrame({"u": ["A", "B"], "sim_t": [1, 1]})
+    members = [{("A", 1)}, {("A", 1), ("B", 1)}, set(), {("B", 1)}]
+    assert MODULE.ensemble_probability_smoothed(panel, "u", "sim_t", members) == [0.5, 0.5]
+    assert MODULE.ensemble_probability_smoothed(
+        panel.iloc[:1], "u", "sim_t", [set(), set(), set(), set()]
+    ) == [0.1]
+    with pytest.raises(ValueError):
+        MODULE.ensemble_probability_smoothed(
+            panel, "u", "sim_t", members, prior_alpha=0.0
+        )
+
+
 def test_decision_fails_closed_for_incomplete_ensemble():
     scores = pd.DataFrame([
         {"split":"temporal_validation","model":"pineland_recorded_ensemble","log_score":-0.1,"brier":0.05},

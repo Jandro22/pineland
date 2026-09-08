@@ -538,6 +538,33 @@ class Organization:
 
 
 @dataclass(slots=True)
+class LocalFoothold:
+    """Persistent organizational stock at one locality.
+
+    A formation's current location is an instantaneous physical fact.  A
+    foothold is the slower stock of local ties, routines, and organizational
+    memory that can survive a movement event and decay when it is not renewed.
+    The stock is deliberately kept separate from fighter capacity: it can
+    improve access and knowledge without teleporting armed personnel into a
+    locality.
+    """
+
+    organization_id: str
+    locality_id: str
+    strength: float = 0.0
+    raw_signal: float = 0.0
+    updated_at: float = 0.0
+    first_activated_at: float | None = None
+    last_activated_at: float | None = None
+    cumulative_active_days: float = 0.0
+    cumulative_arrivals: int = 0
+    cumulative_recruits: float = 0.0
+    cumulative_actions: int = 0
+    viable_activation_count: int = 0
+    renewal_count: int = 0
+
+
+@dataclass(slots=True)
 class OrganizationRelation:
     organization_a_id: str
     organization_b_id: str

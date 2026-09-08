@@ -2133,6 +2133,12 @@ class EnsembleBeliefState:
     key_presence: tuple[frozenset[tuple[str, ...]], ...] | None = field(
         default=None, repr=False
     )
+    # Identity plus structural epoch of the source compact store.  Refreshes
+    # use this token to skip the common-path codebook scan.
+    source_schema_tokens: tuple[tuple[int, int] | None, ...] | None = field(
+        default=None, repr=False
+    )
+    schema_generation: int = field(default=0, repr=False)
 
     def __post_init__(self) -> None:
         self.keys = tuple(tuple(str(item) for item in key) for key in self.keys)
@@ -2164,6 +2170,16 @@ class EnsembleBeliefState:
             unknown = set().union(*self.key_presence) - set(self.keys)
             if unknown:
                 raise ValueError("ensemble belief key presence contains unknown keys")
+        if self.source_schema_tokens is None:
+            self.source_schema_tokens = tuple(
+                None for _ in range(self.particle_count)
+            )
+        else:
+            self.source_schema_tokens = tuple(self.source_schema_tokens)
+            if len(self.source_schema_tokens) != self.particle_count:
+                raise ValueError(
+                    "ensemble source schema tokens must match particles"
+                )
 
     @property
     def entity_count(self) -> int:
@@ -2276,11 +2292,18 @@ class EnsembleBeliefState:
             self.key_to_index = dict(backing.key_to_index)
             self.state = backing.state
             self.dirty_keys.add((0, key))
+            self.schema_generation += 1
+            backing.schema_generation = int(
+                getattr(backing, "schema_generation", 0)
+            ) + 1
+            if hasattr(backing, "dirty_keys"):
+                backing.dirty_keys.add(tuple(key))
             return index
         old_entities = self.entity_count
         old_state = self.state
         self.keys = (*self.keys, key)
         self.key_to_index[key] = old_entities
+        self.schema_generation += 1
         self.state = array("d")
         for particle in range(self.particle_count):
             start = particle * old_entities * self.stride
@@ -2313,6 +2336,36 @@ class EnsembleBeliefState:
         presence = list(self.key_presence or ())
         presence[particle] = normalized
         self.key_presence = tuple(presence)
+
+    @staticmethod
+    def schema_token(compact: Any | None) -> tuple[int, int] | None:
+        """Return the source identity/epoch token for refresh fast paths."""
+        if compact is None:
+            return None
+        return (
+            id(compact),
+            int(getattr(compact, "schema_generation", 0)),
+        )
+
+    def source_schema_matches(
+        self, particle: int, compact: Any | None
+    ) -> bool:
+        particle = int(particle)
+        tokens = self.source_schema_tokens or ()
+        return (
+            0 <= particle < len(tokens)
+            and tokens[particle] == self.schema_token(compact)
+        )
+
+    def remember_source_schema(
+        self, particle: int, compact: Any | None
+    ) -> None:
+        particle = int(particle)
+        tokens = list(self.source_schema_tokens or ())
+        if len(tokens) != self.particle_count:
+            tokens = [None] * self.particle_count
+        tokens[particle] = self.schema_token(compact)
+        self.source_schema_tokens = tuple(tokens)
 
     def _materialize_keys(self, updates: Sequence[tuple[Any, ...]]) -> None:
         """Materialize lazy compact confidence only for rows being fused."""
@@ -2356,6 +2409,10 @@ class EnsembleBeliefState:
         self.key_presence = tuple(
             (self.key_presence or ())[parent] for parent in parents
         )
+        self.source_schema_tokens = tuple(
+            (self.source_schema_tokens or ())[parent]
+            for parent in parents
+        )
         # Gather changes lane identity; stale dirty-lane metadata cannot be
         # meaningfully remapped and is unnecessary because packed filters do
         # not synchronize through one-lane oracle boundaries here.
@@ -2363,9 +2420,15 @@ class EnsembleBeliefState:
 
     def clone(self) -> "EnsembleBeliefState":
         return type(self)(
-            self.keys, self.particle_count, self.stride,
-            array("d", self.state), None, set(self.dirty_keys),
-            tuple(self.key_presence or ()),
+            self.keys,
+            self.particle_count,
+            self.stride,
+            array("d", self.state),
+            compact_backing=None,
+            dirty_keys=set(self.dirty_keys),
+            key_presence=tuple(self.key_presence or ()),
+            source_schema_tokens=tuple(self.source_schema_tokens or ()),
+            schema_generation=self.schema_generation,
         )
 
     def sha256(self) -> str:
@@ -2395,6 +2458,9 @@ class EnsembleBeliefState:
             return 0
         self._materialize_keys(updates)
         self.mark_dirty(updates)
+        if self.compact_backing is not None:
+            for update in updates:
+                self.compact_backing.mark_dirty(tuple(update[1]))
         indices = array("I")
         times = array("d")
         weights = array("d")
@@ -2457,6 +2523,9 @@ class EnsembleBeliefState:
             return 0
         self._materialize_keys(updates)
         self.mark_dirty(updates)
+        if self.compact_backing is not None:
+            for update in updates:
+                self.compact_backing.mark_dirty(tuple(update[1]))
         indices = array("I")
         times = array("d")
         weights = array("d")
@@ -2514,6 +2583,9 @@ class EnsembleBeliefState:
             return 0
         self._materialize_keys(updates)
         self.mark_dirty(updates)
+        if self.compact_backing is not None:
+            for update in updates:
+                self.compact_backing.mark_dirty(tuple(update[1]))
         indices = array("I"); times = array("d"); weights = array("d"); observed = array("d")
         for particle, key, time, weight, value in updates:
             indices.append(particle * self.entity_count + self.key_to_index[tuple(key)])
@@ -2669,6 +2741,12 @@ def _sync_numeric_world_state(
             else:
                 ensure_zone(key)
             backing.write_to_belief(key, beliefs[key])
+            if hasattr(backing, "mark_dirty"):
+                # The numeric runtime may have mutated a shared state array
+                # without going through the compact store's own fuse method.
+                # Preserve an explicit dirty-row handoff for the next packed
+                # lane refresh.
+                backing.mark_dirty(key)
             if state.stride == CONTROL_STATE_STRIDE:
                 # Preserve the legacy same-side projection used by logistics.
                 legacy = getattr(world, "beliefs", {}).get((key[0], key[2]))
@@ -3468,7 +3546,12 @@ class ParticleBatchState:
             else:
                 self.particles = [self.particles[index] for index in parents]
 
-    def refresh_beliefs_from_world(self, particle_index: int) -> None:
+    def refresh_beliefs_from_world(
+        self,
+        particle_index: int,
+        *,
+        force_full: bool = False,
+    ) -> None:
         """Pull one lane's compact belief rows from its Python view."""
         if not self.particles:
             raise RuntimeError("belief refresh needs a retained Python view")
@@ -3552,50 +3635,84 @@ class ParticleBatchState:
             if compact_zone is not None
             else tuple(world.zone_beliefs)
         )
-        ensure_keys(
-            self.control_state,
-            control_incoming,
-            prior_confidence=prior_confidence,
+        compact_states = (
+            (self.control_state, compact_control, control_incoming),
+            (self.presence_state, compact_presence, presence_incoming),
+            (self.node_presence_state, compact_node, node_incoming),
+            (self.zone_state, compact_zone, zone_incoming),
         )
-        compact_presence = getattr(world, "compact_presence_state", None)
-        ensure_keys(
-            self.presence_state,
-            presence_incoming,
-            prior_confidence=prior_confidence,
-        )
-        compact_node = getattr(world, "compact_node_presence_state", None)
-        ensure_keys(
-            self.node_presence_state,
-            node_incoming,
-            prior_confidence=prior_confidence,
-        )
-        compact_zone = getattr(world, "compact_zone_state", None)
-        ensure_keys(
-            self.zone_state,
-            zone_incoming,
-            prior_confidence=prior_confidence,
-        )
-        self.control_state.set_present_keys(particle_index, world.control_beliefs)
-        self.presence_state.set_present_keys(particle_index, world.presence_beliefs)
-        self.node_presence_state.set_present_keys(
-            particle_index, world.node_presence_beliefs
-        )
-        self.zone_state.set_present_keys(particle_index, world.zone_beliefs)
+        schema_changed: dict[int, bool] = {}
+        for state, compact, incoming in compact_states:
+            # A missing compact store is a legacy/reference path: without an
+            # epoch there is no safe way to prove that the mapping did not
+            # change, so retain its defensive scan.
+            changed = compact is None or not state.source_schema_matches(
+                particle_index, compact
+            )
+            schema_changed[id(state)] = changed
+            if changed:
+                ensure_keys(
+                    state,
+                    incoming,
+                    prior_confidence=prior_confidence,
+                )
+            state.remember_source_schema(particle_index, compact)
+
+        # Presence is part of the packed codebook contract.  It normally
+        # changes only when the compact store's epoch changes; skipping these
+        # dict-key walks is the main benefit of the schema fast path.
+        if schema_changed[id(self.control_state)]:
+            self.control_state.set_present_keys(
+                particle_index, world.control_beliefs
+            )
+        if schema_changed[id(self.presence_state)]:
+            self.presence_state.set_present_keys(
+                particle_index, world.presence_beliefs
+            )
+        if schema_changed[id(self.node_presence_state)]:
+            self.node_presence_state.set_present_keys(
+                particle_index, world.node_presence_beliefs
+            )
+        if schema_changed[id(self.zone_state)]:
+            self.zone_state.set_present_keys(
+                particle_index, world.zone_beliefs
+            )
 
         def write_rows(
             state: EnsembleBeliefState,
             compact: Any,
             fallback: dict,
             row_factory: Any,
+            selected_keys: set[tuple[str, ...]] | None,
         ) -> None:
             entity_count = state.entity_count
             lane_base = particle_index * entity_count * state.stride
+            if selected_keys is not None and not selected_keys:
+                return
+            if (
+                selected_keys is None
+                and compact is not None
+                and tuple(compact.keys) == state.keys
+                and state.key_presence[particle_index]
+                == frozenset(state.keys)
+            ):
+                # The common case is already contiguous and complete.  One
+                # slice replaces the old per-key materialize/slice/copy loop.
+                materialize_all = getattr(compact, "materialize_all", None)
+                if callable(materialize_all):
+                    materialize_all()
+                state.state[lane_base:lane_base + entity_count * state.stride] = (
+                    compact.state[:]
+                )
+                return
             materializer = getattr(compact, "materialize", None)
             indexed_materializer = getattr(compact, "materialize_index", None)
             compact_index_lookup = (
                 compact.key_to_index if compact is not None else None
             )
             for entity_index, key in enumerate(state.keys):
+                if selected_keys is not None and key not in selected_keys:
+                    continue
                 compact_index = (
                     compact_index_lookup.get(key)
                     if compact_index_lookup is not None else None
@@ -3626,30 +3743,58 @@ class ParticleBatchState:
                 # float conversion as the previous float(value) assignments.
                 state.state[base:base + state.stride] = source_row
 
+        selected_by_state: dict[int, set[tuple[str, ...]] | None] = {}
+        for state, compact, _ in compact_states:
+            changed = schema_changed[id(state)]
+            # Lazy confidence decay changes every row without changing the
+            # codebook.  The compact store advertises that global mutation as
+            # one bit so this boundary can take the contiguous path instead
+            # of scanning keys to manufacture a dirty set.
+            if (
+                force_full
+                or changed
+                or bool(getattr(compact, "pending_decay", False))
+            ):
+                selected_by_state[id(state)] = None
+            elif compact is not None and hasattr(compact, "consume_dirty"):
+                selected_by_state[id(state)] = set(compact.consume_dirty())
+            else:
+                # Reference mappings do not expose dirty rows.
+                selected_by_state[id(state)] = None
+
         write_rows(
             self.control_state,
             getattr(world, "compact_control_state", None),
             world.control_beliefs,
             CompactControlBeliefState._belief_row,
+            selected_by_state[id(self.control_state)],
         )
         write_rows(
             self.presence_state,
             getattr(world, "compact_presence_state", None),
             world.presence_beliefs,
             CompactPresenceBeliefState._belief_row,
+            selected_by_state[id(self.presence_state)],
         )
         write_rows(
             self.node_presence_state,
             getattr(world, "compact_node_presence_state", None),
             world.node_presence_beliefs,
             CompactPresenceBeliefState._belief_row,
+            selected_by_state[id(self.node_presence_state)],
         )
         write_rows(
             self.zone_state,
             getattr(world, "compact_zone_state", None),
             world.zone_beliefs,
             CompactZoneBeliefState._belief_row,
+            selected_by_state[id(self.zone_state)],
         )
+        # Materialization during a selected-row copy can set dirty bits.  The
+        # rows have just been copied, so consume those bookkeeping bits now.
+        for _, compact, _ in compact_states:
+            if compact is not None and hasattr(compact, "consume_dirty"):
+                compact.consume_dirty()
 
     def synchronize_lane_to_world(
         self,

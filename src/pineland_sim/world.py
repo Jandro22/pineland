@@ -43,6 +43,7 @@ from .entities import (
     PeaceTransition,
     Locality,
     Organization,
+    LocalFoothold,
     OrganizationRelation,
     OrganizationKind,
     Microzone,
@@ -218,6 +219,11 @@ class WorldState:
     # people without creating weapons/sustainment, and only the equipped share
     # can contribute to organized armed action or become a fielded formation.
     organization_manpower_supply_reserves: dict[tuple[str, str], float] = field(default_factory=dict)
+    # Slower locality-level organizational stock.  This is scientific state:
+    # it survives formation movement and is renewed or eroded by later events.
+    # It is intentionally separate from fighter pools so a foothold never
+    # creates armed capacity by itself.
+    local_footholds: dict[tuple[str, str], LocalFoothold] = field(default_factory=dict)
     engagements: dict[str, Engagement] = field(default_factory=dict)
     leaders: dict[str, LeadershipAgent] = field(default_factory=dict)
     proto_organizations: dict[str, ProtoOrganization] = field(default_factory=dict)
@@ -332,6 +338,10 @@ class WorldState:
     stock_ledger_event_ids: set[str] = field(default_factory=set)
     stock_ledger_transaction_count: int = 0
     initial_tracked_stocks: dict[str, float] = field(default_factory=dict)
+    # Last accounted aggregate.  Incremental event paths (for example patrol
+    # supply consumption) advance this small cache without rescanning every
+    # person, organization, formation, and stock source.
+    stock_ledger_last_totals: dict[str, float] = field(default_factory=dict)
     active_event_id: str | None = None
     # Runtime bookkeeping profile. This is deliberately excluded from
     # scientific state hashes and never changes transition equations.
@@ -1279,6 +1289,7 @@ class WorldState:
 
     def initialize_stock_ledger(self) -> None:
         self.initial_tracked_stocks = self.tracked_stock_totals()
+        self.stock_ledger_last_totals = dict(self.initial_tracked_stocks)
         self.stock_ledger_deltas.clear()
         self.stock_ledger_by_class.clear()
         self.stock_ledger_by_boundary.clear()
@@ -1355,6 +1366,39 @@ class WorldState:
             flow_totals["transactions"] += 1
             self.stock_ledger_event_ids.add(str(event_id))
             self.stock_ledger_transaction_count += 1
+        # Keep the aggregate cursor synchronized even when this event has no
+        # changed stock.  The next incremental event can then derive its
+        # before/after pair without calling tracked_stock_totals().
+        self.stock_ledger_last_totals = {
+            name: float(after.get(name, 0.0))
+            for name in set(before) | set(after)
+        }
+
+    def record_stock_deltas(
+        self,
+        event_id: str,
+        event_type: str,
+        deltas: dict[str, float],
+    ) -> None:
+        """Record known stock mutations without an aggregate rescan.
+
+        This is intentionally narrow: callers must provide the complete delta
+        for every tracked stock touched by the event.  It is used for handlers
+        whose mutation contract is explicit (currently patrol supply use); all
+        broader handlers continue to use exact before/after snapshots.
+        """
+        if not deltas:
+            return
+        if not self.stock_ledger_last_totals:
+            # Hand-built worlds used by low-level tests may not have called
+            # initialize_stock_ledger yet.  Pay this compatibility cost once,
+            # then remain incremental for subsequent events.
+            self.stock_ledger_last_totals = self.tracked_stock_totals()
+        before = dict(self.stock_ledger_last_totals)
+        after = dict(before)
+        for name, delta in deltas.items():
+            after[name] = after.get(name, 0.0) + float(delta)
+        self.record_stock_transactions(event_id, event_type, before, after)
 
     def stock_ledger_residual(self, stock_name: str | None = None) -> float:
         current = self.tracked_stock_totals()
@@ -1407,7 +1451,12 @@ class WorldState:
         for stock_name, value in current.items():
             initial = self.initial_tracked_stocks.get(stock_name, value)
             delta = self.stock_ledger_deltas.get(stock_name, 0.0)
-            residuals[stock_name] = value - initial - delta
+            residual = value - initial - delta
+            # Repeated bounded transfers can leave a sub-nanounit residue from
+            # binary floating-point subtraction.  Keep the ledger strict for
+            # material drift while reporting that numerical noise as the exact
+            # reconciliation it represents.
+            residuals[stock_name] = 0.0 if abs(residual) <= 1e-9 else residual
         if baseline_mismatch:
             # Some low-level tests intentionally reset the supply baseline
             # while constructing an isolated scenario.  Keep that explicit
@@ -1636,6 +1685,22 @@ class WorldState:
             raise AssertionError("negative local manpower pool")
         if any(value < -tolerance for value in self.organization_manpower_supply_reserves.values()):
             raise AssertionError("negative local manpower supply reserve")
+        for key, foothold in self.local_footholds.items():
+            if key != (foothold.organization_id, foothold.locality_id):
+                raise AssertionError("local foothold key does not match entity")
+            if not 0.0 <= foothold.strength <= 1.0 + tolerance:
+                raise AssertionError("local foothold strength outside [0, 1]")
+            if not 0.0 <= foothold.raw_signal <= 1.0 + tolerance:
+                raise AssertionError("local foothold raw signal outside [0, 1]")
+            if (
+                foothold.cumulative_active_days < -tolerance
+                or foothold.cumulative_arrivals < 0
+                or foothold.cumulative_recruits < -tolerance
+                or foothold.cumulative_actions < 0
+                or foothold.viable_activation_count < 0
+                or foothold.renewal_count < 0
+            ):
+                raise AssertionError("invalid local foothold accounting")
         for district_id, hierarchy in self.district_hierarchy.items():
             if district_id not in self.districts:
                 raise AssertionError("district hierarchy references missing district")
@@ -1747,12 +1812,20 @@ class WorldState:
 
     def summary(self) -> dict[str, Any]:
         from .physical import aggregate_insurgent_control
+        from .organizational_state import local_foothold_diagnostics
 
         government_control = [loc.control["government"].effective() for loc in self.localities.values()]
-        insurgent_control = [
-            aggregate_insurgent_control(self, loc.locality_id).effective()
+        insurgent_vectors = [
+            aggregate_insurgent_control(self, loc.locality_id)
             for loc in self.localities.values()
         ]
+        insurgent_control = [vector.effective() for vector in insurgent_vectors]
+        insurgent_physical_control = [vector.physical for vector in insurgent_vectors]
+        insurgent_operational_control = [
+            (vector.physical + vector.expected) / 2.0
+            for vector in insurgent_vectors
+        ]
+        footholds = local_foothold_diagnostics(self)
         finite_information_ages = [
             max(0.0, self.time - belief.last_reliable_observation_at)
             for belief in self.presence_beliefs.values()
@@ -1814,6 +1887,10 @@ class WorldState:
             "mobilized_fighter_pool_supply": sum(
                 self.organization_manpower_supply_reserves.values()
             ),
+            "local_footholds": footholds["count"],
+            "viable_local_footholds": footholds["viable_count"],
+            "mean_local_foothold_strength": footholds["mean_strength"],
+            "viable_local_foothold_activations": footholds["viable_activation_count"],
             "active_insurgent_formation_personnel": sum(
                 formation.personnel for formation in self.formations.values()
                 if formation.organization_id in self.organizations and
@@ -1880,6 +1957,14 @@ class WorldState:
             "state_delta_records": len(self.state_deltas),
             "mean_government_effective_control": sum(government_control) / len(government_control),
             "mean_insurgent_effective_control": sum(insurgent_control) / len(insurgent_control),
+            "mean_insurgent_physical_control": (
+                sum(insurgent_physical_control) / len(insurgent_physical_control)
+                if insurgent_physical_control else 0.0
+            ),
+            "mean_insurgent_operational_control": (
+                sum(insurgent_operational_control) / len(insurgent_operational_control)
+                if insurgent_operational_control else 0.0
+            ),
             "detection_counts": dict(self.information_detections),
         }
 

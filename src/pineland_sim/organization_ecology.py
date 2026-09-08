@@ -20,8 +20,12 @@ from .relations import (
 )
 from .entities import RelationStatus
 from .organizational_state import (
+    initialize_local_footholds,
     local_membership_rootedness,
+    local_foothold_diagnostics,
     local_organizational_embeddedness,
+    local_foothold_strength,
+    record_local_foothold_recruitment,
 )
 
 
@@ -719,6 +723,7 @@ def initialize_organization_ecology(world) -> None:
         organization.ideology = {"reform": .72, "separatism": .22}
         organization.adaptation_rate = world.config.organization_ecology.adaptation_rate
         _create_leader(world, organization, rng)
+    initialize_local_footholds(world)
 
 
 def _create_leader(world, organization: Organization, rng: random.Random,
@@ -1152,10 +1157,18 @@ def recruit_and_retain(world, time: float, rng: random.Random,
                     person,
                     local_language_profile_by_org[oid].get(person.residence_locality_id),
                 )
+                foothold_access = local_foothold_strength(
+                    world, oid, person.residence_locality_id
+                )
+                foothold_language_factor = _recruitment_language_access_factor(
+                    person,
+                    language_profile_by_org[oid],
+                )
                 access_strength = max(
                     clamp(exposure),
                     formation_access * formation_language_factor,
                     member_access * member_language_factor,
+                    foothold_access * foothold_language_factor,
                 )
                 if cfg.recruitment_requires_access and access_strength <= 0:
                     continue
@@ -1210,6 +1223,12 @@ def recruit_and_retain(world, time: float, rng: random.Random,
                     represented_delta = person.weight * delta_fraction
                     recruits += represented_delta
                     franchise_recruits[winner.organization_id] += represented_delta
+                    record_local_foothold_recruitment(
+                        world,
+                        winner.organization_id,
+                        person.residence_locality_id,
+                        represented_delta,
+                    )
                     fighter_delta = represented_delta * cfg.fighter_conversion_fraction
                     applied, created = _apply_local_fighter_change(
                         world, winner, person.residence_locality_id, fighter_delta
@@ -1826,6 +1845,7 @@ def process_organization_ecology(world, time: float, rng: random.Random,
         world, time, interval_days, rng
     )
     synchronize_memberships(world)
+    initialize_local_footholds(world, time)
     return {"proto_created": len(created), "births": births, "splits": splits,
             "mergers": mergers, "collapses": collapses,
             "active_armed_organizations": len(armed_organizations(world)),
@@ -1862,4 +1882,5 @@ def organization_ecology_diagnostics(world) -> dict:
             locality_id: locality_franchise_support_profile(world, locality_id)
             for locality_id in world.localities
         },
+        "local_footholds": local_foothold_diagnostics(world),
     }

@@ -19,6 +19,7 @@ from .world import WorldState, seeded_initialization_rng, seeded_rng
 from .access import route_restriction_level
 from .relations import STATE_SECURITY_KINDS, organizations_hostile
 from .physical import aggregate_insurgent_control
+from .organizational_state import local_foothold_strength
 
 
 def command_edge_key(first_id: str, second_id: str) -> tuple[str, str]:
@@ -532,8 +533,18 @@ def _local_armed_footholds(world: WorldState, organization_id: str) -> dict[str,
     scale = max(
         1e-9, world.config.organization_ecology.minimum_proto_represented_population
     )
-    return {locality_id: clamp(quantity / scale)
-            for locality_id, quantity in represented.items()}
+    result = {
+        locality_id: clamp(quantity / scale)
+        for locality_id, quantity in represented.items()
+    }
+    # Persistent organizational memory is a strategic destination signal, not
+    # current fighter capacity. Keep the legacy represented-membership channel
+    # and take the stronger of the two locality signals.
+    for locality_id in world.localities:
+        persistent = local_foothold_strength(world, organization_id, locality_id)
+        if persistent > result.get(locality_id, 0.0):
+            result[locality_id] = persistent
+    return result
 
 
 def _sanctuary_access(world: WorldState, organization_id: str,
@@ -1055,9 +1066,12 @@ def choose_withdrawal_order(world: WorldState, formation_id: str, time: float, r
     )
 
 
-def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | float]:
+def advance_movement_orders(
+    world: WorldState, time: float
+) -> dict[str, int | float | tuple[str, ...]]:
     departed = arrived = blocked = unavailable = 0
     movement_cost = 0.0
+    arrived_formation_ids: list[str] = []
     for order in _active_movement_orders(world):
         formation = world.formations[order.formation_id]
         if order.status == "pending" and order.execute_at <= time:
@@ -1113,9 +1127,11 @@ def advance_movement_orders(world: WorldState, time: float) -> dict[str, int | f
             order.status = "arrived"
             world.active_movement_order_ids.pop(order.order_id, None)
             arrived += 1
+            arrived_formation_ids.append(formation.formation_id)
     return {"departed": departed, "arrived": arrived, "blocked_supply": blocked,
             "blocked_unavailable": unavailable,
-            "movement_supply_consumed": movement_cost}
+            "movement_supply_consumed": movement_cost,
+            "arrived_formation_ids": tuple(sorted(arrived_formation_ids))}
 
 
 def _nearest_source(world: WorldState, formation) -> tuple[SupplySource | None, list[str], float]:

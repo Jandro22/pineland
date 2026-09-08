@@ -56,6 +56,7 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "stock_ledger_deltas", "stock_ledger_by_class",
     "stock_ledger_by_boundary", "stock_ledger_by_flow_kind",
     "stock_ledger_event_ids", "stock_ledger_transaction_count",
+    "stock_ledger_last_totals",
     "locality_path_cache", "locality_travel_time_cache",
     "locality_route_metrics_cache", "physical_distance_cache",
     "physical_distance_signature", "command_path_cache",

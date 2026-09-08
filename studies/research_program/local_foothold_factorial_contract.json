@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "synthetic_local_foothold_reproduction_factorial_v1",
+  "status": "preregistered_synthetic_design_not_run",
+  "historical_outcomes_used": false,
+  "historical_parameter_fitting": false,
+  "core_change_licensed": false,
+  "design": {
+    "seeds": [
+      20260904,
+      20270911,
+      20280918,
+      20290925,
+      20301002,
+      20311009,
+      20321016,
+      20331023
+    ],
+    "agent_count": 300,
+    "locality_count": 34,
+    "horizon_days": 90,
+    "matched_seed_assignment": true,
+    "factors": {
+      "local_membership": [
+        "absent",
+        "present"
+      ],
+      "embedded_infrastructure": [
+        "absent",
+        "present"
+      ],
+      "target_knowledge": [
+        "uninformed",
+        "informed"
+      ],
+      "logistics": [
+        "constrained",
+        "sustained"
+      ],
+      "government_pressure": [
+        "low",
+        "high"
+      ]
+    },
+    "cells": 32
+  },
+  "primary_estimands": [
+    "probability_of_focal_locality_action_within_30_days",
+    "one_week_action_persistence",
+    "foothold_survival_at_90_days",
+    "new_viable_footholds_from_focal_locality",
+    "neighbor_colonization_count"
+  ],
+  "secondary_diagnostics": [
+    "focal_action_hazard_integral",
+    "focal_fielded_personnel",
+    "focal_supply_fraction",
+    "focal_readiness",
+    "latent_state_based_events",
+    "recorded_state_based_events",
+    "supply_conservation_residual"
+  ],
+  "directional_predictions": {
+    "local_membership": "Local membership should increase foothold renewal and downstream action persistence.",
+    "embedded_infrastructure": "Persistent local infrastructure should preserve knowledge/access after movement and increase foothold survival without directly creating fighters.",
+    "target_knowledge": "Target knowledge should increase execution conditional on local capacity, not create local organizational stock.",
+    "logistics": "Sustained logistics should increase realized action conditional on an opportunity, not substitute for local embeddedness.",
+    "government_pressure": "Higher government pressure should reduce execution probability and survival, with the sign estimated jointly rather than assumed to identify the bottleneck."
+  },
+  "falsifiers": [
+    "the local-foothold stock does not survive a matched movement when no current formation remains at the source",
+    "embedded infrastructure creates fighter equivalents without recruitment or fielded personnel",
+    "target knowledge changes action hazard before local capacity exists",
+    "the five factors cannot be recovered from the 32-cell synthetic truth table",
+    "any cell has source drift or a failed run manifest",
+    "supply conservation fails after the declared intervention baseline is reset"
+  ],
+  "acceptance_gate": "Synthetic recovery only. No historical fit, Nepal retuning, or core-change license follows from this experiment."
+}
