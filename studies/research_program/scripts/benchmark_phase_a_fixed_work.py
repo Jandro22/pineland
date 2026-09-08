@@ -48,22 +48,16 @@ PWB_PER_REPEAT = PARTICLES * WEEKLY_BOUNDARIES * BRANCH_EQUIVALENTS
 
 
 def _run_repeat(repeat_index: int, *, workers: int) -> dict[str, Any]:
-    runner_script = ROOT / "studies/research_program/scripts/benchmark_afghanistan_resident_filter_scaling.py"
+    runner_script = ROOT / "studies/research_program/scripts/benchmark_phase_a_fixed_workload.py"
     with tempfile.TemporaryDirectory(prefix="pineland_phase_a_fixed_work_") as temp_dir:
         raw_output = Path(temp_dir) / f"repeat_{repeat_index}.json"
         command = [
             sys.executable,
             str(runner_script),
             "--seed", str(BASE_SEED + repeat_index),
-            "--particles", str(PARTICLES),
-            "--weeks", str(WEEKLY_BOUNDARIES),
-            "--branches", str(BRANCH_EQUIVALENTS),
             "--workers", str(workers),
             "--output", str(raw_output),
-            "--packed",
         ]
-        if not BALANCE_RESAMPLING:
-            command.append("--unbalanced-resampling")
         started = time.perf_counter()
         completed = subprocess.run(command, check=False, capture_output=True, text=True)
         subprocess_wall = time.perf_counter() - started
@@ -74,10 +68,9 @@ def _run_repeat(repeat_index: int, *, workers: int) -> dict[str, Any]:
                 + completed.stderr[-4000:]
             )
         payload = json.loads(raw_output.read_text(encoding="utf-8"))
-    rows = [row for row in payload["results"] if row["workers"] == workers]
-    if len(rows) != 1:
-        raise RuntimeError(f"expected one {workers}-worker result, got {len(rows)}")
-    row = rows[0]
+    row = payload["result"]
+    if row["workers"] != workers:
+        raise RuntimeError(f"expected a {workers}-worker result, got {row['workers']}")
     wall_seconds = float(row["wall_seconds"])
     return {
         "repeat": repeat_index,
@@ -90,7 +83,7 @@ def _run_repeat(repeat_index: int, *, workers: int) -> dict[str, Any]:
         "subprocess_wall_seconds": subprocess_wall,
         "workers": workers,
         "engine": "packed_nested_resident_filter",
-        "source_payload": row,
+        "source_payload": payload,
     }
 
 
@@ -129,7 +122,7 @@ def run(*, output: Path, repetitions: int, workers: int = WORKERS) -> dict[str, 
             "balance_resampling": BALANCE_RESAMPLING,
             "synthetic_observations": "all-inactive; no historical outcome values are read or fitted",
             "likelihood_branches": BRANCH_EQUIVALENTS,
-            "historical_geography_for_execution": True,
+            "historical_geography_for_execution": False,
             "acceptance": {
                 "E1_pwb_per_second_minimum": 4.0,
                 "E2_pwb_per_second_target": 10.0,
@@ -176,7 +169,7 @@ def main() -> None:
         type=Path,
         default=ROOT / "studies/research_program/phase_a_fixed_work_benchmark_v1.json",
     )
-    parser.add_argument("--repetitions", type=int, default=3)
+    parser.add_argument("--repetitions", type=int, default=5)
     parser.add_argument("--workers", type=int, default=WORKERS)
     args = parser.parse_args()
     result = run(
