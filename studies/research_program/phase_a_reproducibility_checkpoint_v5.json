@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "phase_a_reproducibility_checkpoint_v5",
+  "commit": "394d9b8c8fe94d6f15eecdc8b6d580b1141425b3",
+  "dirty_tree": true,
+  "dirty_paths_policy": "pre-existing research artifacts and current text/JSON evidence preserved; no blind cleanup; no PDFs regenerated",
+  "model_sha256": "bc8a5f0e98a913501a2770b7683dfe1d9dbcd5ae25a33963a05e552ee62e9da3",
+  "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "python": "3.14.0",
+  "native_kernels_available": true,
+  "test_command": "python -m pytest -q",
+  "test_result": {
+    "passed": 676,
+    "failed": 1,
+    "failure": "tests/test_research_program.py::ResearchProgramTests::test_authoritative_certificate_is_valid_and_drift_fails_closed",
+    "interpretation": "expected fail-closed negative: live model hash differs from the frozen historical certificate; no historical calibration is licensed"
+  },
+  "focused_test_command": "python -m pytest -q tests/test_native_ensemble.py tests/test_native_kernels.py tests/test_state_estimation.py",
+  "focused_test_result": "28 passed",
+  "research_script_compile_result": "passed",
+  "exactness": "studies/research_program/phase_a_exactness_battery_v9.json",
+  "execution_profile": "studies/research_program/phase_a_execution_profile_v7.json",
+  "migration_validation": "studies/research_program/phase_a_migration_validation_v4.json",
+  "fixed_work_benchmark": "studies/research_program/phase_a_fixed_work_benchmark_v5.json",
+  "phase_a_certificate": "studies/research_program/phase_a_certificate_v11.json",
+  "phase_b_validation": "studies/research_program/phase_b_inference_validation_v6.json",
+  "phase_c_contract": "studies/research_program/phase_c_method_contract_v11.json",
+  "phase_d_status": "studies/research_program/phase_d_historical_confrontation_status_v11.json",
+  "phase_e_contract": "studies/research_program/phase_e_theory_contract_v11.json",
+  "phase_f_status": "studies/research_program/phase_f_robustness_status_v11.json",
+  "historical_authorization": false,
+  "historical_outreach_performed": false,
+  "performance_result": {
+    "pwb_per_repeat": 768,
+    "measured_repetitions": 5,
+    "median_pwb_per_second": 5.583899565467305,
+    "E1_passed": true,
+    "E2_passed": false
+  }
+}
