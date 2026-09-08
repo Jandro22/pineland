@@ -1,0 +1,34 @@
+{
+  "schema": "pineland-native-v1-r1-seal-v1",
+  "status": "passed",
+  "commit": "22609b08782fbc8bc45231a0fbda81a78e798443",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+  "cargo_lock_sha256": "3d1035ed86f152afe57e9d8edbafaf157f9d5d2f5ddd1e9c087aebcf7c3d8541",
+  "windows_release_binary": "rust/target/release/pineland.exe",
+  "windows_release_binary_sha256": "c7d2067245ee9c2be6c932c2b383082d949c217efaad93a66b0d98a06a8e9a7c",
+  "checks": {
+    "cargo_fmt_check": "passed",
+    "cargo_clippy_workspace_all_targets_locked": "passed",
+    "cargo_test_workspace_locked": "passed",
+    "cargo_test_workspace_locked_no_default_features": "passed",
+    "release_build": "passed",
+    "tracked_target_files": "none",
+    "silent_python_fallback": "not used by native certification commands"
+  },
+  "native_cli_commands": [
+    "generate",
+    "run",
+    "resume",
+    "filter",
+    "forecast",
+    "benchmark",
+    "hash-state",
+    "inspect-checkpoint",
+    "version",
+    "certify-rng",
+    "certify-initialization",
+    "certify-scheduler"
+  ],
+  "historical_runs": "untouched"
+}
