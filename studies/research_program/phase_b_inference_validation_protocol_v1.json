@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "phase_b_inference_validation_v1",
+  "status": "preregistered_before_results",
+  "historical_data_allowed": false,
+  "rb": {
+    "analytic_absolute_error": 1e-12,
+    "monte_carlo_cells": 256,
+    "branches_per_cell": 4096,
+    "mean_absolute_error": 0.02,
+    "absolute_error_p95": 0.05,
+    "absolute_mean_signed_bias": 0.01
+  },
+  "guided": {
+    "replicates": 100,
+    "particles": 256,
+    "posterior_mean_rmse_in_posterior_sd": 0.10,
+    "posterior_variance_relative_error": 0.10,
+    "coverage_minimum": 0.90,
+    "ess_ratio_median_minimum": 1.50
+  },
+  "mcse": {
+    "probabilities": [0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99],
+    "replicates_per_probability": 200,
+    "tolerance": 0.02,
+    "maximum_absolute_error_p95": 0.05,
+    "rmse": 0.022,
+    "pooled_coverage_minimum": 0.925,
+    "per_regime_coverage_minimum": 0.90
+  },
+  "combined": {
+    "worlds": 100,
+    "particles": 256,
+    "reference_prior_draws": 20000,
+    "posterior_mean_absolute_error_p95": 0.15,
+    "latent_interval_coverage_minimum": 0.90
+  },
+  "seeds": {
+    "rb": 2026090701,
+    "guided": 2026090702,
+    "mcse": 2026090703,
+    "combined": 2026090704
+  },
+  "stopping_rule": "binary_mcse_upper_bound(values) <= tolerance after at least 32 draws; otherwise stop at the declared maximum",
+  "historical_tuning_forbidden": true,
+  "threshold_edit_rule": "Any change creates a new protocol version and preserves the prior result artifact."
+}

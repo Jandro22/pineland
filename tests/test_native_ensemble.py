@@ -275,6 +275,92 @@ def test_scheduler_oracle_matches_reference_world_and_future_execution() -> None
         )
 
 
+def test_scheduler_oracle_preserves_sparse_structural_updates_at_week_boundary() -> None:
+    """A structural rebuild must not overwrite the event that caused it.
+
+    Organization ecology can add formations while also changing existing
+    formations.  The lane is synchronized before the sparse reference event;
+    rebuilding from the old packed lane after that event would erase those
+    changes and only surface at a later checkpoint.
+    """
+    reference = _ensemble_particle(92101)
+    native = _ensemble_particle(92101)
+    batch = ParticleBatchState.from_particles([native])
+    runner = NativeEnsembleRunner.from_batch(batch)
+
+    for horizon in (2.0, 7.0):
+        reference.advance_to(horizon)
+        batch.advance_to(horizon, runner=runner)
+        batch.synchronize_lane_to_world(0)
+        assert decision_state_sha256(native.world) == decision_state_sha256(
+            reference.world
+        )
+        assert simulation_execution_sha256(
+            native.simulation,
+            lineage_id=native.lineage_id,
+        ) == simulation_execution_sha256(
+            reference.simulation,
+            lineage_id=reference.lineage_id,
+        )
+
+
+def test_packed_filter_resampling_forks_exact_lineages() -> None:
+    seeds = (93001, 93002, 93003, 93004)
+    particles = [_ensemble_particle(seed) for seed in seeds]
+    filter_ = PackedParticleFilter.from_particles(
+        particles,
+        rng=random.Random(314159),
+        ess_fraction=0.99,
+        native_runner=True,
+    )
+    update = filter_.update(
+        0.25,
+        log_likelihood=(0.0, -100.0, -100.0, -100.0),
+    )
+    assert update.resampled
+    assert update.parent_indices == (0, 0, 0, 0)
+    assert tuple(item.lineage_id for item in filter_.batch.particles) == (
+        "root.0", "root.1", "root.2", "root.3"
+    )
+    hashes = tuple(
+        decision_state_sha256(item.world) for item in filter_.batch.particles
+    )
+    assert len(set(hashes)) == 1
+    execution = tuple(
+        simulation_execution_sha256(
+            item.simulation,
+            lineage_id=item.lineage_id,
+        )
+        for item in filter_.batch.particles
+    )
+    assert len(set(execution)) == 4
+    filter_.update(2.0, log_likelihood=(0.0, 0.0, 0.0, 0.0))
+    assert len({
+        decision_state_sha256(item.world) for item in filter_.batch.particles
+    }) > 1
+
+
+def test_packed_state_authority_inventory_covers_runtime_schema() -> None:
+    from dataclasses import fields
+    import json
+    from pathlib import Path
+
+    from pineland_sim.ensemble import StaticWorldTopology
+    from pineland_sim.native_ensemble import PackedHotState
+
+    root = Path(__file__).resolve().parents[1]
+    artifact = root / "studies/research_program/phase_a_packed_state_authority_v1.json"
+    payload = json.loads(artifact.read_text(encoding="utf-8"))
+    assert payload["passed"]
+    assert payload["checks"]["every_packed_field_declared"]
+    assert set(payload["static_topology_schema_fields"]) == {
+        field.name for field in fields(StaticWorldTopology)
+    }
+    assert {
+        item["field"] for item in payload["packed_hot_state_inventory"]
+    } == {field.name for field in fields(PackedHotState)}
+
+
 def test_scheduler_oracle_retains_dynamically_created_belief_keys() -> None:
     reference = _ensemble_particle(92103)
     native = _ensemble_particle(92103)

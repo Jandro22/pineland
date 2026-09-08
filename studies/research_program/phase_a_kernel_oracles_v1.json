@@ -1,0 +1,55 @@
+{
+  "generated_at_utc": "2026-09-08T01:22:55.263255+00:00",
+  "numeric_information_fusion": {
+    "kernels": {
+      "control": {
+        "max_absolute_error": 0.0,
+        "passed": true,
+        "state_values": 416,
+        "updates": 512
+      },
+      "presence": {
+        "max_absolute_error": 0.0,
+        "passed": true,
+        "state_values": 224,
+        "updates": 512
+      },
+      "zone": {
+        "max_absolute_error": 0.0,
+        "passed": true,
+        "state_values": 192,
+        "updates": 512
+      }
+    },
+    "native_library_available": true,
+    "passed": true
+  },
+  "passed": true,
+  "physical_and_action": {
+    "action_hazard_comparisons": 5100,
+    "action_hazard_max_absolute_error": 0.0,
+    "generated_seeds": 100,
+    "passed": true,
+    "response_time_comparisons": 19400,
+    "response_time_max_absolute_error": 0.0
+  },
+  "protocol": {
+    "action_cells": "all active organization-locality cells in 100 generated worlds",
+    "action_tolerance": 1e-12,
+    "information_fusion_updates_per_kernel": 512,
+    "information_tolerance": 1e-12,
+    "physical_generated_states": 100,
+    "physical_tolerance": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  },
+  "provenance": {
+    "command": "python studies/research_program/scripts/run_phase_a_kernel_oracles.py",
+    "commit": "5e0d0a995c3a51279a130a63733ade2b1cfce17b",
+    "model_sha256": "4616f2d411b8a81100e59cb24a396a5fc273a587a7d62f6811fef9116381f523",
+    "tracked_diff_sha256": "baf286a61b0ad946c99a450c9a3832c3148f869645f7daf0e889f2426a716927"
+  },
+  "schema_version": "1.0.0",
+  "study_id": "phase_a_kernel_oracles_v1"
+}

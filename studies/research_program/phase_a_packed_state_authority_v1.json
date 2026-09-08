@@ -1,0 +1,379 @@
+{
+  "authority_legend": [
+    "EXPLICIT_SPARSE_BOUNDARY",
+    "OUTPUT_ONLY",
+    "PACKED_AUTHORITATIVE",
+    "STATIC_TOPOLOGY"
+  ],
+  "checks": {
+    "all_authorities_valid": true,
+    "every_packed_field_declared": true,
+    "extra_inventory_entries": [],
+    "invalid_authorities": [],
+    "missing_packed_fields": [],
+    "no_future_decision_field_without_authority": true,
+    "no_undeclared_inventory_entries": true
+  },
+  "explicit_sparse_boundaries": [
+    {
+      "authority": "EXPLICIT_SPARSE_BOUNDARY",
+      "boundary": "scheduler_queue_and_sequence",
+      "owner": "Simulation.scheduler",
+      "reason": "Exact event ordering is retained in the scheduler oracle."
+    },
+    {
+      "authority": "EXPLICIT_SPARSE_BOUNDARY",
+      "boundary": "process_rng_streams_and_event_counter",
+      "owner": "ProcessEngine",
+      "reason": "Reference handlers and fork lineage metadata retain exact continuation."
+    },
+    {
+      "authority": "EXPLICIT_SPARSE_BOUNDARY",
+      "boundary": "rich_entity_creation",
+      "owner": "NativeEnsembleRunner._rebuild_structure",
+      "reason": "A structural event rebuilds the packed codebook once, without hiding a rich-world fallback."
+    },
+    {
+      "authority": "EXPLICIT_SPARSE_BOUNDARY",
+      "boundary": "realized_organized_action",
+      "owner": "NativeEnsembleRunner._organized_action_event",
+      "reason": "Only realized actions cross to the exact reference consequence handler; no-op hazards remain packed."
+    },
+    {
+      "authority": "EXPLICIT_SPARSE_BOUNDARY",
+      "boundary": "non_migrated_event_types",
+      "owner": "NativeEnsembleRunner._execute_reference_event",
+      "reason": "The boundary is named and counted; it is never an implicit particle.advance_to fallback."
+    },
+    {
+      "authority": "EXPLICIT_SPARSE_BOUNDARY",
+      "boundary": "numeric_information_rows_and_relays",
+      "owner": "NumericInformationRuntime",
+      "reason": "Fixed-width reports/relays are retained as the explicit information boundary representation."
+    }
+  ],
+  "generated_at_utc": "2026-09-08T01:15:15.303240+00:00",
+  "packed_hot_state_inventory": [
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "clock_intervals",
+      "future_decision_input": true,
+      "reason": "migrated process clock intervals"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "config_values",
+      "future_decision_input": true,
+      "reason": "lane-specific scientific configuration"
+    },
+    {
+      "authority": "OUTPUT_ONLY",
+      "field": "dirty_lanes",
+      "future_decision_input": false,
+      "reason": "synchronization bookkeeping"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "formation_flags",
+      "future_decision_input": true,
+      "reason": "moving/outside/effective state"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "formation_ids",
+      "future_decision_input": false,
+      "reason": "formation codebook"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "formation_index",
+      "future_decision_input": false,
+      "reason": "formation codebook index"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "formation_locality",
+      "future_decision_input": true,
+      "reason": "formation locality"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "formation_microzone",
+      "future_decision_input": true,
+      "reason": "formation microzone"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "formation_organization",
+      "future_decision_input": true,
+      "reason": "formation ownership"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "formation_present",
+      "future_decision_input": true,
+      "reason": "formation existence"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "formation_values",
+      "future_decision_input": true,
+      "reason": "personnel/readiness/supply/quality state"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "locality_ids",
+      "future_decision_input": false,
+      "reason": "locality codebook"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "locality_population",
+      "future_decision_input": true,
+      "reason": "mutable locality population after civilian harm"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "manpower_pool",
+      "future_decision_input": true,
+      "reason": "unfielded organizational manpower"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "manpower_supply_reserve",
+      "future_decision_input": true,
+      "reason": "local manpower sustainment reserve"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "microzone_ids",
+      "future_decision_input": false,
+      "reason": "microzone codebook"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "next_clocks",
+      "future_decision_input": true,
+      "reason": "migrated process clock continuation"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "organization_action_eligible",
+      "future_decision_input": true,
+      "reason": "organized-action eligibility"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "organization_active",
+      "future_decision_input": true,
+      "reason": "organization status"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "organization_government_side",
+      "future_decision_input": true,
+      "reason": "actor-side resolution"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "organization_ids",
+      "future_decision_input": false,
+      "reason": "organization codebook"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "organization_index",
+      "future_decision_input": false,
+      "reason": "organization codebook index"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "organization_kind",
+      "future_decision_input": true,
+      "reason": "organization type"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "organization_present",
+      "future_decision_input": true,
+      "reason": "organization existence"
+    },
+    {
+      "authority": "OUTPUT_ONLY",
+      "field": "particle_count",
+      "future_decision_input": false,
+      "reason": "batch shape, not a scientific state input"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "patrol_ids",
+      "future_decision_input": false,
+      "reason": "patrol codebook"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "patrol_index",
+      "future_decision_input": false,
+      "reason": "patrol codebook index"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "patrol_indices",
+      "future_decision_input": true,
+      "reason": "patrol ownership/location links"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "patrol_present",
+      "future_decision_input": true,
+      "reason": "patrol existence"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "patrol_values",
+      "future_decision_input": true,
+      "reason": "patrol availability/response memory"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "post_ids",
+      "future_decision_input": false,
+      "reason": "security-post codebook"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "post_index",
+      "future_decision_input": false,
+      "reason": "security-post codebook index"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "post_indices",
+      "future_decision_input": true,
+      "reason": "post ownership/location links"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "post_present",
+      "future_decision_input": true,
+      "reason": "security-post existence"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "post_values",
+      "future_decision_input": true,
+      "reason": "post presence/availability"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "rng_states",
+      "future_decision_input": true,
+      "reason": "migrated process RNG continuation"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "supply_source_ids",
+      "future_decision_input": false,
+      "reason": "supply-source codebook"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "supply_source_index",
+      "future_decision_input": false,
+      "reason": "supply-source codebook index"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "supply_source_locality",
+      "future_decision_input": true,
+      "reason": "supply-source locality"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "supply_source_organization",
+      "future_decision_input": true,
+      "reason": "supply-source ownership"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "supply_source_present",
+      "future_decision_input": true,
+      "reason": "supply-source existence"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "supply_source_stock",
+      "future_decision_input": true,
+      "reason": "mutable source stock"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "zone_insurgent_side_raw",
+      "future_decision_input": true,
+      "reason": "literal insurgent-side physical memory"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "zone_org_physical_control",
+      "future_decision_input": true,
+      "reason": "organization-specific physical control"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "zone_org_presence_memory",
+      "future_decision_input": true,
+      "reason": "organization-specific presence memory"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "zone_org_presence_updated_at",
+      "future_decision_input": true,
+      "reason": "organization presence clocks"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "zone_physical_control",
+      "future_decision_input": true,
+      "reason": "aggregate zone physical control"
+    },
+    {
+      "authority": "STATIC_TOPOLOGY",
+      "field": "zone_population_share",
+      "future_decision_input": true,
+      "reason": "fixed microzone population share"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "zone_presence_memory",
+      "future_decision_input": true,
+      "reason": "government/insurgent presence memory"
+    },
+    {
+      "authority": "PACKED_AUTHORITATIVE",
+      "field": "zone_presence_updated_at",
+      "future_decision_input": true,
+      "reason": "presence-memory clocks"
+    }
+  ],
+  "passed": true,
+  "provenance": {
+    "command": "python studies/research_program/scripts/build_phase_a_authority_audit.py",
+    "commit": "5e0d0a995c3a51279a130a63733ade2b1cfce17b",
+    "model_sha256": "4616f2d411b8a81100e59cb24a396a5fc273a587a7d62f6811fef9116381f523",
+    "tracked_diff_sha256": "baf286a61b0ad946c99a450c9a3832c3148f869645f7daf0e889f2426a716927"
+  },
+  "schema_version": "1.0.0",
+  "static_topology_schema_fields": [
+    "locality_ids",
+    "locality_index",
+    "microzone_ids",
+    "microzone_index",
+    "microzone_locality",
+    "organization_ids",
+    "organization_index",
+    "physical_distances",
+    "signature",
+    "source_plan"
+  ],
+  "study_id": "phase_a_packed_state_authority_v1"
+}

@@ -1,0 +1,234 @@
+{
+  "combined": {
+    "guided_component_passed": true,
+    "latent_interval_coverage": 0.96,
+    "mcse_component_passed": true,
+    "packed_propagation_passed": true,
+    "passed": true,
+    "posterior_mean_absolute_error_mean": 0.04154141007718287,
+    "posterior_mean_absolute_error_p95": 0.08994048210487182,
+    "rb_component_passed": true,
+    "reference_prior_draws": 20000,
+    "worlds": 100
+  },
+  "generated_at_utc": "2026-09-08T01:19:44.317479+00:00",
+  "guided": {
+    "bootstrap": {
+      "coverage": 0.92,
+      "mean_rmse_in_posterior_sd": 0.09884274931448662,
+      "median_ess": 113.8624600524509,
+      "variance_relative_error_median_abs": 0.07802037753071611
+    },
+    "guided": {
+      "coverage": 0.96,
+      "mean_rmse_in_posterior_sd": 0.06389852423037434,
+      "median_ess": 255.99999999999994,
+      "variance_relative_error_median_abs": 0.07261556171656863
+    },
+    "median_ess_ratio": 2.248326622804032,
+    "particles": 256,
+    "passed": true,
+    "replicates": 100
+  },
+  "mcse": {
+    "by_probability": {
+      "0.01": {
+        "absolute_error_p95": 0.016143790849673205,
+        "coverage": 0.93,
+        "mean_sample_count": 114.885,
+        "p95_sample_count": 153,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.009316053141847788
+      },
+      "0.05": {
+        "absolute_error_p95": 0.02887323943661972,
+        "coverage": 0.96,
+        "mean_sample_count": 200.425,
+        "p95_sample_count": 244,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.014387789739241402
+      },
+      "0.1": {
+        "absolute_error_p95": 0.03832599118942732,
+        "coverage": 0.97,
+        "mean_sample_count": 290.56,
+        "p95_sample_count": 341,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.018424925592914837
+      },
+      "0.25": {
+        "absolute_error_p95": 0.039361702127659576,
+        "coverage": 0.945,
+        "mean_sample_count": 512.46,
+        "p95_sample_count": 544,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.01986249728489301
+      },
+      "0.5": {
+        "absolute_error_p95": 0.03760000000000002,
+        "coverage": 0.955,
+        "mean_sample_count": 624.995,
+        "p95_sample_count": 625,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.020016358537602474
+      },
+      "0.75": {
+        "absolute_error_p95": 0.04184549356223177,
+        "coverage": 0.92,
+        "mean_sample_count": 512.82,
+        "p95_sample_count": 545,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.021813660953257034
+      },
+      "0.9": {
+        "absolute_error_p95": 0.032773109243697474,
+        "coverage": 0.96,
+        "mean_sample_count": 298.87,
+        "p95_sample_count": 344,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.01775176138760633
+      },
+      "0.95": {
+        "absolute_error_p95": 0.034615384615384714,
+        "coverage": 0.95,
+        "mean_sample_count": 196.75,
+        "p95_sample_count": 249,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.016821894513346113
+      },
+      "0.99": {
+        "absolute_error_p95": 0.011126760563380245,
+        "coverage": 0.96,
+        "mean_sample_count": 113.96,
+        "p95_sample_count": 142,
+        "passed": true,
+        "replicates": 200,
+        "rmse": 0.008352520561869314
+      }
+    },
+    "passed": true,
+    "pooled": {
+      "absolute_error_p95": 0.034615384615384714,
+      "coverage": 0.95,
+      "experiments": 1800,
+      "rmse": 0.016905456718092828
+    }
+  },
+  "passed": true,
+  "protocol": {
+    "combined": {
+      "latent_interval_coverage_minimum": 0.9,
+      "particles": 256,
+      "posterior_mean_absolute_error_p95": 0.15,
+      "reference_prior_draws": 20000,
+      "worlds": 100
+    },
+    "guided": {
+      "coverage_minimum": 0.9,
+      "ess_ratio_median_minimum": 1.5,
+      "observation": 2.0,
+      "particles": 256,
+      "posterior_mean_rmse_in_posterior_sd": 0.1,
+      "posterior_variance_relative_error": 0.1,
+      "proposal_variance": 0.5,
+      "replicates": 100
+    },
+    "historical_data_allowed": false,
+    "historical_tuning_forbidden": true,
+    "mcse": {
+      "maximum_absolute_error_p95": 0.05,
+      "per_regime_coverage_minimum": 0.9,
+      "pooled_coverage_minimum": 0.925,
+      "probabilities": [
+        0.01,
+        0.05,
+        0.1,
+        0.25,
+        0.5,
+        0.75,
+        0.9,
+        0.95,
+        0.99
+      ],
+      "replicates_per_probability": 200,
+      "rmse": 0.022,
+      "tolerance": 0.02
+    },
+    "rb": {
+      "absolute_error_p95": 0.05,
+      "absolute_mean_signed_bias": 0.01,
+      "analytic_absolute_error": 1e-12,
+      "branches_per_cell": 4096,
+      "mean_absolute_error": 0.02,
+      "monte_carlo_cells": 256
+    },
+    "revision_reason": "The v1 Gaussian observation produced a valid but subthreshold 1.43x median ESS gain; v2 uses a more informative declared observation and posterior-matched proposal without changing acceptance thresholds.",
+    "schema_version": "1.0.0",
+    "seeds": {
+      "combined": 2026090704,
+      "guided": 2026090702,
+      "mcse": 2026090703,
+      "rb": 2026090701
+    },
+    "status": "preregistered_before_results",
+    "stopping_rule": "binary_mcse_upper_bound(values) <= tolerance after at least 32 draws; otherwise stop at the declared maximum",
+    "study_id": "phase_b_inference_validation_v2",
+    "supersedes": "phase_b_inference_validation_protocol_v1.json",
+    "threshold_edit_rule": "Any change creates a new protocol version and preserves the prior result artifact."
+  },
+  "provenance": {
+    "command": "python studies/research_program/scripts/run_phase_b_inference_validation.py",
+    "model_sha256": "4616f2d411b8a81100e59cb24a396a5fc273a587a7d62f6811fef9116381f523",
+    "phase_a_artifact_sha256": "9c1a537f61ed357ded091672e2d3ae6b9b048bdda85853b086ed0c41962c4449",
+    "protocol_sha256": "edb449ae023a4e86a8f7abc4c4cf27636a34baaac25e7f90ad389bafe69448d9"
+  },
+  "rb": {
+    "analytic": [
+      {
+        "absolute_error": 0.0,
+        "expected": 0.0,
+        "hazard": 0.0,
+        "observed": 0.0
+      },
+      {
+        "absolute_error": 0.0,
+        "expected": 0.5,
+        "hazard": 0.6931471805599453,
+        "observed": 0.5
+      },
+      {
+        "absolute_error": 2.212171962145971e-17,
+        "expected": 9.999778782798785e-13,
+        "hazard": 1e-12,
+        "observed": 9.999999999995e-13
+      },
+      {
+        "absolute_error": 0.0,
+        "expected": 1.0,
+        "hazard": 50.0,
+        "observed": 1.0
+      }
+    ],
+    "monte_carlo": {
+      "absolute_error_p95": 0.0059683116888825175,
+      "branches_per_cell": 4096,
+      "cells": 256,
+      "mae": 0.0013900570283965567,
+      "maximum_absolute_error": 0.015912097417434823,
+      "mean_signed_bias": -0.0002828396116465142,
+      "rmse": 0.0028288963458326494
+    },
+    "passed": true
+  },
+  "schema_version": "1.0.0",
+  "status": "synthetic_only",
+  "study_id": "phase_b_inference_validation_v1"
+}
