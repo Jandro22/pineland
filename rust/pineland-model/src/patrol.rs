@@ -480,9 +480,8 @@ fn observe_control(
         .unwrap_or(0.5)
         * (0.7 + 0.3 * clamp01(accountability)))
     .clamp(0.02, 1.0);
-    let language = (0.35
-        + 0.55 * particle.formations.information[observer_formation]
-        + 0.1
+    let language = (0.45
+        + 0.45
             * local_organizational_embeddedness(
                 particle,
                 topology,
@@ -517,6 +516,21 @@ fn observe_control(
         * quality
         * trust
         * language.powf(config.information.language_fusion_weight);
+    if std::env::var_os("PINELAND_DEBUG_PATROL").is_some() {
+        eprintln!(
+            "native patrol control formation={} locality={} zone={} quality={:.17e} trust={:.17e} language={:.17e} noise={:.17e} observed_physical={:.17e} confidence={:.17e} weight={:.17e}",
+            observer_formation,
+            locality,
+            microzone,
+            quality,
+            trust,
+            language,
+            noise,
+            observed_physical,
+            observation_confidence,
+            weight,
+        );
+    }
     if let Some(index) = zone_belief_index(particle, observer_organization, microzone) {
         let prior_confidence = particle.zone_beliefs.confidence[index];
         let prior = prior_confidence.max(0.02);
