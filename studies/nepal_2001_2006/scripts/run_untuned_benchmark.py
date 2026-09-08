@@ -249,6 +249,10 @@ def main() -> None:
                                                 "C_decomposition", "D_contact_semantics",
                                                 "E_combined"), default="E_combined")
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument(
+        "--core-freeze", type=Path,
+        help="Optional content-addressed current core freeze for an authorized rerun.",
+    )
     args = parser.parse_args()
     if args.workers < 1 or args.agent_count < 1 or not args.seeds:
         parser.error("positive workers, positive agent-count, and at least one seed are required")
@@ -262,9 +266,19 @@ def main() -> None:
     expected = {seed: output_dir / f"seed_{seed}_agents_{args.agent_count}.json" for seed in args.seeds}
     pending = [seed for seed, path in expected.items() if args.force or not path.exists()]
     if pending:
-        from pineland_sim.reproducibility import require_certified_core
+        from pineland_sim.reproducibility import model_sha256, require_certified_core
         try:
-            require_certified_core(ROOT)
+            if args.core_freeze is None:
+                require_certified_core(ROOT)
+            else:
+                freeze = json.loads(args.core_freeze.resolve().read_text(encoding="utf-8"))
+                expected_model = freeze.get("software_identity", freeze).get("model_sha256")
+                live_model = model_sha256(ROOT)
+                if expected_model != live_model:
+                    raise RuntimeError(
+                        "live core does not match the requested current freeze "
+                        f"(expected={expected_model}, live={live_model})"
+                    )
         except RuntimeError as exc:
             raise SystemExit(str(exc)) from exc
     prior_manifest_path = output_dir / f"manifest_agents_{args.agent_count}.json"

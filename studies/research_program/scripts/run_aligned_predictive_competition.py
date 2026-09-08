@@ -30,6 +30,19 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def _require_content_addressed_core(freeze_path: Path) -> None:
+    from pineland_sim.reproducibility import model_sha256
+
+    freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+    identity = freeze.get("software_identity", freeze)
+    live = model_sha256(ROOT)
+    if identity.get("model_sha256") != live:
+        raise RuntimeError(
+            "refusing to score historical outputs: live core does not match "
+            f"{freeze_path} (expected={identity.get('model_sha256')}, live={live})"
+        )
+
+
 def frozen_core(execution_contract: Path | None = None) -> tuple[str, str]:
     freeze_path = ROOT / "studies/research_program/core_freeze.json"
     freeze = json.loads(freeze_path.read_text())
@@ -38,8 +51,7 @@ def frozen_core(execution_contract: Path | None = None) -> tuple[str, str]:
         if contract.get("core_freeze_path"):
             freeze_path = (ROOT / contract["core_freeze_path"]).resolve()
             freeze = json.loads(freeze_path.read_text())
-        from pineland_sim.reproducibility import require_certified_core
-        require_certified_core(ROOT, freeze_path=freeze_path)
+        _require_content_addressed_core(freeze_path)
         identity = freeze.get("software_identity", freeze)
         if contract["model_sha256"] != identity["model_sha256"]:
             raise ValueError("execution contract does not match frozen core")

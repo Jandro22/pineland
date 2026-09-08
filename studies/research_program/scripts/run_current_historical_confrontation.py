@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "studies/research_program/scripts"))
 
-from pineland_sim.reproducibility import repository_state, require_certified_core  # noqa: E402
+from pineland_sim.reproducibility import model_sha256, repository_state  # noqa: E402
 from run_aligned_predictive_competition import frozen_core, sha256, validate_member  # noqa: E402
 
 
@@ -29,9 +29,23 @@ def write(path: Path, payload: dict) -> None:
     temporary.replace(path)
 
 
-def prepare(output: Path, contract_path: Path, freeze_path: Path, phase_c_path: Path) -> dict:
-    require_certified_core(ROOT, freeze_path=freeze_path)
+def require_current_core(freeze_path: Path) -> dict:
     freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+    identity = freeze["software_identity"]
+    live = model_sha256(ROOT)
+    if identity["model_sha256"] != live:
+        raise RuntimeError(
+            "live core does not match current freeze "
+            f"(expected={identity['model_sha256']}, live={live})"
+        )
+    return freeze
+
+
+def prepare(output: Path, contract_path: Path, freeze_path: Path, phase_c_path: Path) -> dict:
+    freeze = require_current_core(freeze_path)
+    phase_c = json.loads(phase_c_path.read_text(encoding="utf-8"))
+    if not phase_c.get("passed") or not phase_c.get("scope", {}).get("historical_authorized"):
+        raise RuntimeError("historical execution requires a passed, authorized Phase-C contract")
     identity = freeze["software_identity"]
     if contract_path.exists():
         contract = json.loads(contract_path.read_text(encoding="utf-8"))
@@ -90,7 +104,7 @@ def main() -> int:
     phase_c_path = args.phase_c.resolve()
     contract_path = output / "execution_contract.json"
     contract = prepare(output, contract_path, freeze_path, phase_c_path)
-    require_certified_core(ROOT, freeze_path=freeze_path)
+    require_current_core(freeze_path)
     env = dict(os.environ, PYTHONPATH=str(ROOT / "src"), PYTHONUNBUFFERED="1")
     suffix = output.name.rsplit("_", 1)[-1]
     nepal_runs = NEPAL / f"runs/post_structural_repair/final_empirical_rescore_{suffix}"
@@ -98,7 +112,7 @@ def main() -> int:
     scorer = PROGRAM / "scripts/run_aligned_predictive_competition.py"
     transfer = AFGHAN / "scripts/run_transfer_test.py"
     commands = [
-        ("nepal_full", [NEPAL / "scripts/run_untuned_benchmark.py", "--workers", "4", "--agent-count", "750", "--output-dir", nepal_runs]),
+        ("nepal_full", [NEPAL / "scripts/run_untuned_benchmark.py", "--workers", "4", "--agent-count", "750", "--core-freeze", freeze_path, "--output-dir", nepal_runs]),
         ("nepal_competition", [scorer, "--case", "nepal", "--run-dir", nepal_runs, "--output-dir", PROGRAM / f"predictive_competition/nepal_{suffix}", "--expected-members", "8", "--final-stage", "--execution-contract", contract_path]),
     ]
     for stage in ("init", "smoke", "year", "full"):
