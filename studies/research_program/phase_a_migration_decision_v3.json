@@ -13,7 +13,7 @@
     "profile": "studies/research_program/phase_a_execution_profile_v7.json",
     "migration_validation": "studies/research_program/phase_a_migration_validation_v4.json",
     "exactness": "studies/research_program/phase_a_exactness_battery_v9.json",
-    "canonical_benchmark": "studies/research_program/phase_a_fixed_work_benchmark_candidate_hot_boundary_v1.json",
+    "canonical_benchmark": "studies/research_program/phase_a_fixed_work_benchmark_v5.json",
     "canonical_benchmark_result": {
       "median_pwb_per_second": 5.583899565467305,
       "coefficient_of_variation": 0.032946156577154474,
