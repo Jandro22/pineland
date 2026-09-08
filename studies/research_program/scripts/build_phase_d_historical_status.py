@@ -21,10 +21,10 @@ def _hash_if_exists(path: Path) -> str | None:
     return file_sha256(path) if path.exists() else None
 
 
-def run(output: Path) -> dict[str, Any]:
+def run(output: Path, *, contract_path: Path | None = None) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite historical gate: {output}")
-    contract_path = ROOT / "studies/research_program/phase_c_method_contract_v1.json"
+    contract_path = contract_path or ROOT / "studies/research_program/phase_c_method_contract_v1.json"
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
     historical_authorized = bool(contract.get("scope", {}).get("historical_authorized"))
     prior = ROOT / "studies/research_program/historical_revalidation_v5"
@@ -81,8 +81,12 @@ def run(output: Path) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=ROOT / "studies/research_program/phase_d_historical_confrontation_status_v1.json")
+    parser.add_argument("--contract", type=Path)
     args = parser.parse_args()
-    result = run(args.output.resolve())
+    result = run(
+        args.output.resolve(),
+        contract_path=args.contract.resolve() if args.contract else None,
+    )
     print(json.dumps({"output": str(args.output.resolve()), "passed": result["passed"]}))
 
 

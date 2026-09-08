@@ -262,7 +262,13 @@ def validate_mcse(protocol: dict[str, Any]) -> dict[str, Any]:
     return report
 
 
-def validate_combined(protocol: dict[str, Any], rb: dict[str, Any], guided: dict[str, Any], mcse: dict[str, Any]) -> dict[str, Any]:
+def validate_combined(
+    protocol: dict[str, Any],
+    rb: dict[str, Any],
+    guided: dict[str, Any],
+    mcse: dict[str, Any],
+    phase_a_path: Path,
+) -> dict[str, Any]:
     """Combine exact RB likelihoods with an importance-corrected proposal.
 
     The high-cost reference is a prior Monte Carlo integral for the same
@@ -302,7 +308,7 @@ def validate_combined(protocol: dict[str, Any], rb: dict[str, Any], guided: dict
         interval = (_weighted_quantile(values, weights, 0.025), _weighted_quantile(values, weights, 0.975))
         errors.append(abs(estimate - reference_mean))
         coverages.append(interval[0] <= latent <= interval[1])
-    phase_a = json.loads(PHASE_A_PATH.read_text(encoding="utf-8")) if PHASE_A_PATH.exists() else {"passed": False}
+    phase_a = json.loads(phase_a_path.read_text(encoding="utf-8")) if phase_a_path.exists() else {"passed": False}
     report = {
         "worlds": len(errors),
         "reference_prior_draws": protocol["combined"]["reference_prior_draws"],
@@ -322,14 +328,14 @@ def validate_combined(protocol: dict[str, Any], rb: dict[str, Any], guided: dict
     return report
 
 
-def run(output: Path) -> dict[str, Any]:
+def run(output: Path, *, phase_a_path: Path = PHASE_A_PATH) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite existing validation evidence: {output}")
     protocol = json.loads(PROTOCOL_PATH.read_text(encoding="utf-8"))
     rb = validate_rb(protocol)
     guided = validate_guided(protocol)
     mcse = validate_mcse(protocol)
-    combined = validate_combined(protocol, rb, guided, mcse)
+    combined = validate_combined(protocol, rb, guided, mcse, phase_a_path)
     result = {
         "schema_version": "1.0.0",
         "study_id": "phase_b_inference_validation_v1",
@@ -338,7 +344,8 @@ def run(output: Path) -> dict[str, Any]:
         "provenance": {
             "model_sha256": model_sha256(ROOT),
             "protocol_sha256": file_sha256(PROTOCOL_PATH),
-            "phase_a_artifact_sha256": file_sha256(PHASE_A_PATH) if PHASE_A_PATH.exists() else None,
+            "phase_a_artifact_sha256": file_sha256(phase_a_path) if phase_a_path.exists() else None,
+            "phase_a_artifact": str(phase_a_path.relative_to(ROOT)).replace("\\", "/"),
             "command": "python studies/research_program/scripts/run_phase_b_inference_validation.py",
         },
         "protocol": protocol,
@@ -361,8 +368,9 @@ def main() -> int:
         type=Path,
         default=ROOT / "studies/research_program/phase_b_inference_validation_v2.json",
     )
+    parser.add_argument("--phase-a", type=Path, default=PHASE_A_PATH)
     args = parser.parse_args()
-    result = run(args.output.resolve())
+    result = run(args.output.resolve(), phase_a_path=args.phase_a.resolve())
     print(json.dumps({
         "output": str(args.output.resolve()),
         "passed": result["passed"],
