@@ -1435,6 +1435,66 @@ fn diagnostics(engine: &SimulationEngine) -> JsonValue {
         u32_array(&particle.zone_beliefs.evidence_count),
     );
     value.insert(
+        "belief_observer",
+        u32_array(
+            &particle
+                .beliefs
+                .keys
+                .iter()
+                .map(|key| key.observer)
+                .collect::<Vec<_>>(),
+        ),
+    );
+    value.insert(
+        "belief_target",
+        u32_array(
+            &particle
+                .beliefs
+                .keys
+                .iter()
+                .map(|key| key.target)
+                .collect::<Vec<_>>(),
+        ),
+    );
+    value.insert(
+        "belief_locality",
+        u32_array(
+            &particle
+                .beliefs
+                .keys
+                .iter()
+                .map(|key| key.locality)
+                .collect::<Vec<_>>(),
+        ),
+    );
+    value.insert(
+        "belief_kind",
+        u32_array(
+            &particle
+                .beliefs
+                .keys
+                .iter()
+                .map(|key| key.kind as u32)
+                .collect::<Vec<_>>(),
+        ),
+    );
+    value.insert("belief_presence", f64_array(&particle.beliefs.presence));
+    value.insert("belief_control", f64_array(&particle.beliefs.control));
+    value.insert("belief_confidence", f64_array(&particle.beliefs.confidence));
+    value.insert("belief_updated_at", f64_array(&particle.beliefs.updated_at));
+    value.insert(
+        "belief_reliable_at",
+        f64_array(&particle.beliefs.last_reliable_observation_at),
+    );
+    value.insert(
+        "belief_contradiction",
+        f64_array(&particle.beliefs.contradiction),
+    );
+    value.insert(
+        "belief_evidence",
+        u32_array(&particle.beliefs.evidence_count),
+    );
+    value.insert(
         "formation_personnel",
         f64_array(&particle.formations.personnel),
     );
