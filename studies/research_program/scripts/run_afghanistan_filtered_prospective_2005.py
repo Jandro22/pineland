@@ -1269,6 +1269,82 @@ def _nested_packed_particle_job(
     return branch_states[selected_index], log_likelihood, diagnostics
 
 
+def _global_packed_nested_job(
+    states: list[SimulationParticle],
+    time: float,
+    observation: ProvinceWeekObservation,
+    branches: int,
+    filter_seed: int,
+) -> list[tuple[SimulationParticle, float, dict[str, float | int]]]:
+    """Propagate every particle/branch lane in one exact packed batch.
+
+    The branch construction, Jeffreys likelihood, conditioned selection, and
+    lineage seed are identical to ``_nested_packed_particle_job``.  Packing
+    across particles removes one Python batch construction and one IPC job per
+    particle/week while preserving a separate scheduler/RNG lane for every
+    branch.  This is an execution-only transformation: no equation or
+    observation operator changes.
+    """
+    if not states:
+        raise ValueError("global packed propagation needs at least one state")
+    if branches < 1:
+        raise ValueError("branches must be positive")
+    branch_states: list[SimulationParticle] = []
+    parent_lineages: list[str] = []
+    for state in states:
+        parent_lineages.append(state.lineage_id)
+        for index in range(branches):
+            branch_states.append(
+                state.consume_fork(index)
+                if index == branches - 1
+                else state.fork(index)
+            )
+    batch = ParticleBatchState.from_particles(branch_states)
+    runner = NativeEnsembleRunner.from_batch(batch, scheduler_oracle=True)
+    batch.advance_to(time, runner=runner)
+
+    results: list[tuple[SimulationParticle, float, dict[str, float | int]]] = []
+    for parent_index, parent_lineage in enumerate(parent_lineages):
+        offset = parent_index * branches
+        masks = [
+            _active_province_mask(branch_states[offset + index], observation)
+            for index in range(branches)
+        ]
+        log_likelihood = 0.0
+        for province in observation.provinces:
+            bit = observation.province_bits[province]
+            active_count = sum(bool(mask & bit) for mask in masks)
+            probability = _jeffreys_branch_probability(active_count, branches)
+            log_likelihood += _bernoulli_log_probability(
+                probability,
+                bool(observation.active_mask & bit),
+            )
+        selected_index, minimum_mismatch, _ = _conditioned_branch_mask_index(
+            masks,
+            observation.active_mask,
+            random.Random(
+                _nested_selection_seed(
+                    filter_seed, parent_lineage, observation.week_index
+                )
+            ),
+        )
+        selected_lane = offset + selected_index
+        batch.synchronize_lane_to_world(selected_lane)
+        results.append((
+            branch_states[selected_lane],
+            log_likelihood,
+            {
+                "nested_propagation_calls": 1,
+                "exact_descendant_match_calls": int(minimum_mismatch == 0),
+                "exact_descendant_match_fraction": float(minimum_mismatch == 0),
+                "mean_minimum_descendant_hamming_mismatch": minimum_mismatch,
+                "maximum_minimum_descendant_hamming_mismatch": minimum_mismatch,
+                "packed_runner_sparse_boundaries": int(runner.sparse_boundaries),
+            },
+        ))
+    return results
+
+
 def _rao_blackwellized_particle_job(
     job: tuple[
         SimulationParticle,
@@ -1462,6 +1538,7 @@ def run_training_filter(
     resident_pool: PersistentParticlePool | None = None,
     keep_resident: bool = False,
     packed_execution: bool = False,
+    global_packed_execution: bool = False,
 ) -> SequentialParticleFilter[SimulationParticle, ProvinceWeekObservation]:
     if workers < 1:
         raise ValueError("workers must be positive")
@@ -1471,6 +1548,15 @@ def run_training_filter(
         raise ValueError("restart_every_weeks must be positive")
     if resident_pool is not None and workers == 1:
         raise ValueError("resident_pool requires workers greater than one")
+    if global_packed_execution and (
+        not packed_execution
+        or workers != 1
+        or resident_pool is not None
+    ):
+        raise ValueError(
+            "global packed execution requires packed_execution=True, workers=1, "
+            "and no resident pool"
+        )
     likelihood_method = str(likelihood_method)
     if likelihood_method not in {"nested", "rao_blackwellized", "guided"}:
         raise ValueError(
@@ -1716,7 +1802,15 @@ def run_training_filter(
     else:
         owns_executor = resident_pool is None
         executor = resident_pool
-        if executor is None:
+        if global_packed_execution:
+            completed = _global_packed_nested_job(
+                [particle.state for particle in filter_.particles],
+                observation.end_day,
+                observation,
+                likelihood_branches,
+                filter_seed,
+            )
+        elif executor is None:
             initial_states = [particle.state for particle in filter_.particles]
             executor = PersistentParticlePool(
                 initial_states,
@@ -2115,7 +2209,11 @@ def forecast_weighted_field(
     member_cells: list[list[dict[str, int | str]]] = []
     forecast_branch_cells: list[list[list[dict[str, int | str]]]] = []
     posterior_particle_summaries: list[dict[str, object]]
-    if workers == 1:
+    if global_packed_execution:
+        for observation in ordered_observations:
+            assimilate_one(observation, None)
+            maybe_save_restart(observation, None)
+    elif workers == 1:
         jobs = [
             (
                 particle.state,
