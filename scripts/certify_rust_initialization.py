@@ -118,12 +118,60 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
     community_ids = list(sorted(world.social_communities))
     community_index = indexed(community_ids)
     person_ids = list(world.ordered_person_ids or sorted(world.persons))
+    person_index = indexed(person_ids)
     persons = [world.persons[person_id] for person_id in person_ids]
     formations = [world.formations[formation_id] for formation_id in formation_ids]
     posts = list(world.security_posts.values())
     patrol_by_formation = {patrol.formation_id: patrol for patrol in world.patrols.values()}
     foothold_by_key = world.local_footholds
     sources = list(world.supply_sources.values())
+
+    # Auxiliary initialization tables are explicit certificate inputs.  Set
+    # memberships are canonicalized by native person/elite index rather than
+    # inheriting Python hash iteration order.
+    political_institutions = list(world.political_institutions.values())
+    institution_type_codes = {
+        "executive": 0,
+        "legislature": 1,
+        "civil_administration": 2,
+        "judiciary": 3,
+        "military": 4,
+        "police": 5,
+        "district_government": 6,
+        "municipal_government": 7,
+    }
+    institution_level_codes = {"federal": 0, "district": 1, "municipal": 2}
+    party_branches = list(world.party_branches.values())
+    local_elites = list(world.local_elites.values())
+    elite_index = indexed(elite.elite_id for elite in local_elites)
+    branch_member_indices: list[int] = []
+    branch_member_offsets = [0]
+    branch_broker_indices: list[int] = []
+    branch_broker_offsets = [0]
+    for branch in party_branches:
+        branch_member_indices.extend(
+            sorted(person_index[person_id] for person_id in branch.member_ids)
+        )
+        branch_member_offsets.append(len(branch_member_indices))
+        branch_broker_indices.extend(
+            sorted(elite_index[elite_id] for elite_id in branch.broker_ids)
+        )
+        branch_broker_offsets.append(len(branch_broker_indices))
+
+    foreign_states = list(world.foreign_states.values())
+    foreign_state_index = indexed(state.state_id for state in foreign_states)
+    border_segments = list(world.border_segments.values())
+    foreign_beliefs = list(world.foreign_beliefs.values())
+    interpreter_brokers = list(world.interpreter_brokers.values())
+    relation_rows = list(world.organization_relations.values())
+    relation_status_codes = {
+        "allied": 0,
+        "cooperative": 1,
+        "neutral": 2,
+        "rival": 3,
+        "hostile": 4,
+        "ceasefire": 5,
+    }
 
     values: dict[str, object] = {
         "locality_kind_counts": [
@@ -210,6 +258,11 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
             for person in persons
             for party in range(1, 4)
         ),
+        "people_party_legitimacy": digest_f64(
+            person.party_legitimacy.get(f"party-{party}", 0.0)
+            for person in persons
+            for party in range(1, 4)
+        ),
         "people_grievance": digest_f64(person.grievance for person in persons),
         "people_fear": digest_f64(person.fear for person in persons),
         "people_efficacy": digest_f64(person.efficacy for person in persons),
@@ -227,6 +280,126 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
         "people_armed_fraction": digest_f64(person.armed_fraction for person in persons),
         "people_community": digest_u32(
             community_index.get(person.community_id, U32_MAX) for person in persons
+        ),
+        "people_public_behavior": digest_u8(
+            {"neutral": 0, "insurgent_sympathy": 1, "armed_participation": 2}[person.public_behavior]
+            for person in persons
+        ),
+        "people_expected_control": digest_f64(
+            person.expected_control.get(actor, 0.0)
+            for person in persons
+            for actor in ("government", "insurgent")
+        ),
+        "people_state_legitimacy": digest_f64(person.state_legitimacy for person in persons),
+        "people_government_legitimacy": digest_f64(
+            person.government_legitimacy for person in persons
+        ),
+        "people_political_access": digest_f64(person.political_access for person in persons),
+        "people_displaced": digest_u8(int(person.displaced) for person in persons),
+        "people_displacement_count": digest_u32(person.displacement_count for person in persons),
+        "people_origin_tie_strength": digest_f64(person.origin_tie_strength for person in persons),
+        "people_insurgent_affinity": digest_f64(
+            person.insurgent_affinity.get(organization_id, 0.0)
+            for person in persons
+            for organization_id in organization_ids
+        ),
+        "households_locality": digest_u32(
+            locality_index[household.home_locality_id] for household in world.households.values()
+        ),
+        "households_residence": digest_u32(
+            locality_index[household.residence_locality_id]
+            for household in world.households.values()
+        ),
+        "households_resources": digest_f64(
+            household.resources for household in world.households.values()
+        ),
+        "households_dependents": digest_u32(
+            household.dependents for household in world.households.values()
+        ),
+        "households_member_offsets": digest_u32(
+            [0]
+            + [
+                sum(len(world.households[household_id].member_ids) for household_id in household_ids)
+                for household_ids in [list(world.households)[: index + 1]
+                                      for index in range(len(world.households))]
+            ]
+        ),
+        "households_member_indices": digest_u32(
+            person_index[person_id]
+            for household in world.households.values()
+            for person_id in household.member_ids
+        ),
+        "communities_locality": digest_u32(
+            locality_index[community.locality_id]
+            for community in (world.social_communities[community_id] for community_id in community_ids)
+        ),
+        "communities_cohesion": digest_f64(
+            world.social_communities[community_id].cohesion for community_id in community_ids
+        ),
+        "communities_language_profile": digest_f64(
+            world.social_communities[community_id].language_profile[language]
+            for community_id in community_ids
+            for language in LANGUAGES
+        ),
+        "communities_member_offsets": digest_u32(
+            [0]
+            + [
+                sum(
+                    len(world.social_communities[item].member_ids)
+                    for item in community_ids[: index + 1]
+                )
+                for index in range(len(community_ids))
+            ]
+        ),
+        "communities_member_indices": digest_u32(
+            person_index[person_id]
+            for community_id in community_ids
+            for person_id in world.social_communities[community_id].member_ids
+        ),
+        "communities_bridge_offsets": digest_u32(
+            [0]
+            + [
+                sum(
+                    len(world.social_communities[item].bridge_member_ids)
+                    for item in community_ids[: index + 1]
+                )
+                for index in range(len(community_ids))
+            ]
+        ),
+        "communities_bridge_members": digest_u32(
+            person_index[person_id]
+            for community_id in community_ids
+            for person_id in world.social_communities[community_id].bridge_member_ids
+        ),
+        "social_edges_person_a": digest_u32(
+            person_index[edge.person_a_id] for edge in world.social_edges.values()
+        ),
+        "social_edges_person_b": digest_u32(
+            person_index[edge.person_b_id] for edge in world.social_edges.values()
+        ),
+        "social_edges_layers": digest_u8(
+            sum({"household": 1, "community": 2, "bridge": 4}[layer] for layer in edge.layers)
+            for edge in world.social_edges.values()
+        ),
+        "social_edges_weight": digest_f64(edge.weight for edge in world.social_edges.values()),
+        "social_edges_language_compatibility": digest_f64(
+            edge.language_compatibility for edge in world.social_edges.values()
+        ),
+        "social_edges_trust": digest_f64(edge.trust for edge in world.social_edges.values()),
+        "social_edges_represented_relationships": digest_f64(
+            edge.represented_relationships for edge in world.social_edges.values()
+        ),
+        "social_edges_neighbor_offsets": digest_u32(
+            [0]
+            + [
+                sum(len(world.social_neighbors[person_id]) for person_id in person_ids[: index + 1])
+                for index in range(len(person_ids))
+            ]
+        ),
+        "social_edges_neighbor_indices": digest_u32(
+            person_index[neighbor]
+            for person_id in person_ids
+            for neighbor in world.social_neighbors[person_id]
         ),
         "organizations_kind": digest_u8(
             ORG_KIND_INDEX[organization.kind.value] for organization in world.organizations.values()
@@ -267,6 +440,50 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
                 for person in persons
                 if person.organization_id == organization.organization_id
             )
+            for organization in world.organizations.values()
+        ),
+        "organizations_capital_social": digest_f64(
+            organization.capital.get("social", 0.0) for organization in world.organizations.values()
+        ),
+        "organizations_capital_political": digest_f64(
+            organization.capital.get("political", 0.0) for organization in world.organizations.values()
+        ),
+        "organizations_capital_organizational": digest_f64(
+            organization.capital.get("organizational", 0.0)
+            for organization in world.organizations.values()
+        ),
+        "organizations_capital_material": digest_f64(
+            organization.capital.get("material", 0.0) for organization in world.organizations.values()
+        ),
+        "organizations_phenotype": digest_f64(
+            organization.phenotype[key]
+            for organization in world.organizations.values()
+            for key in (
+                "centralization",
+                "political_investment",
+                "governance_investment",
+                "dispersion",
+                "risk_tolerance",
+                "discipline",
+                "local_embeddedness",
+                "resource_dependence",
+            )
+        ),
+        "organizations_ideology": digest_f64(
+            organization.ideology[key]
+            for organization in world.organizations.values()
+            for key in ("reform", "separatism")
+        ),
+        "organizations_external_sanctuary": digest_f64(
+            organization.external_sanctuary for organization in world.organizations.values()
+        ),
+        "organizations_adaptation_rate": digest_f64(
+            organization.adaptation_rate for organization in world.organizations.values()
+        ),
+        "organizations_leader": digest_u32(
+            indexed(list(world.leaders))[organization.leader_id]
+            if organization.leader_id is not None
+            else U32_MAX
             for organization in world.organizations.values()
         ),
         "formations_organization": digest_u32(
@@ -378,7 +595,332 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
         "logistics_source_stock": digest_f64(source.stock for source in sources),
         "logistics_source_capacity": digest_f64(source.capacity for source in sources),
         "logistics_source_production": digest_f64(source.production_per_day for source in sources),
+        "zone_belief_keys": hashlib.sha256(
+            b"".join(
+                struct.pack(
+                    "<II",
+                    organization_index[observer],
+                    zone_index[microzone_id],
+                )
+                for (observer, microzone_id) in world.zone_beliefs
+            )
+        ).hexdigest(),
+        "zone_belief_estimate": digest_f64(
+            belief.physical_control_estimate for belief in world.zone_beliefs.values()
+        ),
+        "zone_belief_confidence": digest_f64(
+            belief.confidence for belief in world.zone_beliefs.values()
+        ),
+        "zone_belief_updated_at": digest_f64(
+            belief.updated_at for belief in world.zone_beliefs.values()
+        ),
+        "zone_belief_reliable_at": digest_f64(
+            belief.last_reliable_observation_at for belief in world.zone_beliefs.values()
+        ),
+        "zone_belief_evidence": digest_u32(
+            belief.evidence_count for belief in world.zone_beliefs.values()
+        ),
+        "zone_belief_contradiction": digest_f64(
+            belief.contradiction_index for belief in world.zone_beliefs.values()
+        ),
+        "command_edges_organization": digest_u32(
+            organization_index[edge.organization_id]
+            for edge in world.command_edges.values()
+        ),
+        "command_edges_formation": digest_u32(
+            formation_index[edge.node_b_id]
+            for edge in world.command_edges.values()
+        ),
+        "command_edges_reliability": digest_f64(
+            edge.reliability for edge in world.command_edges.values()
+        ),
+        "command_edges_latency_hours": digest_f64(
+            edge.latency_hours for edge in world.command_edges.values()
+        ),
+        "manpower_organization": digest_u32(
+            organization_index[organization_id]
+            for (organization_id, _locality_id) in sorted(world.organization_manpower_pools)
+        ),
+        "manpower_locality": digest_u32(
+            locality_index[locality_id]
+            for (_organization_id, locality_id) in sorted(world.organization_manpower_pools)
+        ),
+        "manpower_pool": digest_f64(
+            world.organization_manpower_pools[key]
+            for key in sorted(world.organization_manpower_pools)
+        ),
+        "manpower_supply_reserve": digest_f64(
+            world.organization_manpower_supply_reserves.get(key, 0.0)
+            for key in sorted(world.organization_manpower_pools)
+        ),
+        "leaders_organization": digest_u32(
+            organization_index[leader.organization_id] for leader in world.leaders.values()
+        ),
+        "leaders_competence": digest_f64(leader.competence for leader in world.leaders.values()),
+        "leaders_charisma": digest_f64(leader.charisma for leader in world.leaders.values()),
+        "leaders_risk_tolerance": digest_f64(
+            leader.risk_tolerance for leader in world.leaders.values()
+        ),
+        "leaders_ideological_rigidity": digest_f64(
+            leader.ideological_rigidity for leader in world.leaders.values()
+        ),
+        "leaders_political_skill": digest_f64(
+            leader.political_skill for leader in world.leaders.values()
+        ),
+        "leaders_organizational_skill": digest_f64(
+            leader.organizational_skill for leader in world.leaders.values()
+        ),
+        "leaders_active": digest_u8(int(leader.active) for leader in world.leaders.values()),
     }
+
+    values.update(
+        {
+            "political_institution_type": digest_u8(
+                institution_type_codes[institution.institution_type]
+                for institution in political_institutions
+            ),
+            "political_institution_level": digest_u8(
+                institution_level_codes[institution.level]
+                for institution in political_institutions
+            ),
+            "political_institution_locality": digest_u32(
+                locality_index.get(institution.locality_id, U32_MAX)
+                for institution in political_institutions
+            ),
+            "political_institution_district": digest_u32(
+                sorted(world.districts).index(institution.district_id)
+                if institution.district_id is not None
+                else U32_MAX
+                for institution in political_institutions
+            ),
+            "political_institution_capacity": digest_f64(
+                institution.capacity for institution in political_institutions
+            ),
+            "political_institution_autonomy": digest_f64(
+                institution.autonomy for institution in political_institutions
+            ),
+            "political_institution_compliance": digest_f64(
+                institution.compliance for institution in political_institutions
+            ),
+            "political_institution_reach": digest_f64(
+                institution.reach for institution in political_institutions
+            ),
+            "political_institution_integrity": digest_f64(
+                institution.integrity for institution in political_institutions
+            ),
+            "political_institution_resources": digest_f64(
+                institution.resources for institution in political_institutions
+            ),
+            "political_institution_governing_party": digest_u32(
+                organization_index.get(institution.governing_party_id, U32_MAX)
+                for institution in political_institutions
+            ),
+            "political_branch_party": digest_u32(
+                organization_index[branch.party_id] for branch in party_branches
+            ),
+            "political_branch_locality": digest_u32(
+                locality_index[branch.locality_id] for branch in party_branches
+            ),
+            "political_branch_resources": digest_f64(
+                branch.resources for branch in party_branches
+            ),
+            "political_branch_patronage": digest_f64(
+                branch.patronage_stock for branch in party_branches
+            ),
+            "political_branch_electoral_support": digest_f64(
+                branch.electoral_support for branch in party_branches
+            ),
+            "political_branch_institutional_influence": digest_f64(
+                branch.institutional_influence for branch in party_branches
+            ),
+            "political_branch_member_offsets": digest_u32(branch_member_offsets),
+            "political_branch_member_indices": digest_u32(branch_member_indices),
+            "political_branch_broker_offsets": digest_u32(branch_broker_offsets),
+            "political_branch_broker_indices": digest_u32(branch_broker_indices),
+            "political_elite_person": digest_u32(
+                person_index[elite.person_id] for elite in local_elites
+            ),
+            "political_elite_locality": digest_u32(
+                locality_index[elite.locality_id] for elite in local_elites
+            ),
+            "political_elite_network_centrality": digest_f64(
+                elite.network_centrality for elite in local_elites
+            ),
+            "political_elite_resources": digest_f64(
+                elite.resources for elite in local_elites
+            ),
+            "political_elite_legitimacy": digest_f64(
+                elite.legitimacy for elite in local_elites
+            ),
+            "political_elite_institutional_ties": digest_f64(
+                elite.institutional_ties for elite in local_elites
+            ),
+            "political_elite_party_alignment": digest_u32(
+                organization_index.get(elite.party_alignment, U32_MAX)
+                for elite in local_elites
+            ),
+            "political_ruling_party": digest_u32(
+                [organization_index.get(world.ruling_party_id, U32_MAX)]
+            ),
+            "political_private_diversion_stock": digest_f64(
+                [world.private_diversion_stock]
+            ),
+            "foreign_resources": digest_f64(state.resources for state in foreign_states),
+            "foreign_stability_preference": digest_f64(
+                state.stability_preference for state in foreign_states
+            ),
+            "foreign_government_alignment": digest_f64(
+                state.government_alignment for state in foreign_states
+            ),
+            "foreign_ideological_alignment": digest_f64(
+                state.ideological_alignment for state in foreign_states
+            ),
+            "foreign_border_security_priority": digest_f64(
+                state.border_security_priority for state in foreign_states
+            ),
+            "foreign_regional_influence": digest_f64(
+                state.regional_influence for state in foreign_states
+            ),
+            "foreign_commercial_interest": digest_f64(
+                state.commercial_interest for state in foreign_states
+            ),
+            "foreign_humanitarian_preference": digest_f64(
+                state.humanitarian_preference for state in foreign_states
+            ),
+            "foreign_cost_sensitivity": digest_f64(
+                state.cost_sensitivity for state in foreign_states
+            ),
+            "foreign_domestic_opposition": digest_f64(
+                state.domestic_opposition for state in foreign_states
+            ),
+            "foreign_willingness": digest_f64(state.willingness for state in foreign_states),
+            "foreign_language_profile": digest_f64(
+                state.language_profile[language]
+                for state in foreign_states
+                for language in LANGUAGES
+            ),
+            "foreign_opportunity": digest_f64(state.opportunity for state in foreign_states),
+            "foreign_rival_offsets": digest_u32(
+                [0]
+                + [
+                    sum(len(sorted(state.rival_ids)) for state in foreign_states[: index + 1])
+                    for index in range(len(foreign_states))
+                ]
+            ),
+            "foreign_rival_indices": digest_u32(
+                foreign_state_index[rival_id]
+                for state in foreign_states
+                for rival_id in sorted(state.rival_ids)
+            ),
+            "foreign_cumulative_cost": digest_f64(
+                state.cumulative_cost for state in foreign_states
+            ),
+            "foreign_cumulative_casualties": digest_f64(
+                state.cumulative_casualties for state in foreign_states
+            ),
+            "foreign_border_foreign_state": digest_u32(
+                foreign_state_index[border.foreign_state_id] for border in border_segments
+            ),
+            "foreign_border_district": digest_u32(
+                sorted(world.districts).index(border.district_id)
+                for border in border_segments
+            ),
+            "foreign_border_locality": digest_u32(
+                locality_index[border.locality_id] for border in border_segments
+            ),
+            "foreign_border_terrain_friction": digest_f64(
+                border.terrain_friction for border in border_segments
+            ),
+            "foreign_border_infrastructure": digest_f64(
+                border.infrastructure for border in border_segments
+            ),
+            "foreign_border_legal_permeability": digest_f64(
+                border.legal_permeability for border in border_segments
+            ),
+            "foreign_border_social_permeability": digest_f64(
+                border.social_permeability for border in border_segments
+            ),
+            "foreign_border_language_overlap": digest_f64(
+                border.language_overlap for border in border_segments
+            ),
+            "foreign_border_kinship_overlap": digest_f64(
+                border.kinship_overlap for border in border_segments
+            ),
+            "foreign_border_state_monitoring": digest_f64(
+                border.state_monitoring for border in border_segments
+            ),
+            "foreign_belief_foreign_state": digest_u32(
+                foreign_state_index[belief.foreign_state_id] for belief in foreign_beliefs
+            ),
+            "foreign_belief_locality": digest_u32(
+                locality_index[belief.locality_id] for belief in foreign_beliefs
+            ),
+            "foreign_belief_government_control": digest_f64(
+                belief.government_control_estimate for belief in foreign_beliefs
+            ),
+            "foreign_belief_insurgent_presence": digest_f64(
+                belief.insurgent_presence_estimate for belief in foreign_beliefs
+            ),
+            "foreign_belief_confidence": digest_f64(
+                belief.confidence for belief in foreign_beliefs
+            ),
+            "foreign_belief_updated_at": digest_f64(
+                belief.updated_at for belief in foreign_beliefs
+            ),
+            "foreign_interpreter_person": digest_u32(
+                person_index[broker.person_id] for broker in interpreter_brokers
+            ),
+            "foreign_interpreter_foreign_state": digest_u32(
+                foreign_state_index[broker.foreign_state_id]
+                for broker in interpreter_brokers
+            ),
+            "foreign_interpreter_locality": digest_u32(
+                locality_index[broker.locality_id] for broker in interpreter_brokers
+            ),
+            "foreign_interpreter_foreign_language": digest_f64(
+                broker.foreign_language for broker in interpreter_brokers
+            ),
+            "foreign_interpreter_local_language": digest_f64(
+                broker.local_language for broker in interpreter_brokers
+            ),
+            "foreign_interpreter_foreign_trust": digest_f64(
+                broker.foreign_trust for broker in interpreter_brokers
+            ),
+            "foreign_interpreter_local_trust": digest_f64(
+                broker.local_trust for broker in interpreter_brokers
+            ),
+            "foreign_interpreter_cultural_knowledge": digest_f64(
+                broker.cultural_knowledge for broker in interpreter_brokers
+            ),
+            "relations_organization_a": digest_u32(
+                organization_index[relation.organization_a_id] for relation in relation_rows
+            ),
+            "relations_organization_b": digest_u32(
+                organization_index[relation.organization_b_id] for relation in relation_rows
+            ),
+            "relations_status": digest_u8(
+                relation_status_codes[relation.status.value] for relation in relation_rows
+            ),
+            "relations_rivalry_memory": digest_f64(
+                relation.rivalry_memory for relation in relation_rows
+            ),
+            "relations_hostility_memory": digest_f64(
+                relation.hostility_memory for relation in relation_rows
+            ),
+            "relations_cooperation_memory": digest_f64(
+                relation.cooperation_memory for relation in relation_rows
+            ),
+            "relations_updated_at": digest_f64(
+                relation.updated_at for relation in relation_rows
+            ),
+            "relations_last_interaction_at": digest_f64(
+                relation.last_interaction_at or 0.0 for relation in relation_rows
+            ),
+            "relations_has_last_interaction": digest_u8(
+                int(relation.last_interaction_at is not None) for relation in relation_rows
+            ),
+        }
+    )
 
     belief_presence: list[float] = []
     belief_control: list[float] = []
@@ -527,6 +1069,18 @@ def python_inventory(config: SimulationConfig) -> dict[str, object]:
         "manpower_pools": len(world.organization_manpower_pools),
         "logistics_sources": summary["supply_sources"],
         "belief_state": len(world.beliefs) + len(world.control_beliefs),
+        "zone_belief_state": len(world.zone_beliefs),
+        "social_edges": len(world.social_edges),
+        "command_edges": len(world.command_edges),
+        "leaders": len(world.leaders),
+        "political_institutions": len(world.political_institutions),
+        "party_branches": len(world.party_branches),
+        "local_elites": len(world.local_elites),
+        "foreign_states": len(world.foreign_states),
+        "border_segments": len(world.border_segments),
+        "foreign_beliefs": len(world.foreign_beliefs),
+        "interpreter_brokers": len(world.interpreter_brokers),
+        "organization_relations": len(world.organization_relations),
         "scheduler": len(simulation.scheduler),
     }
     return {

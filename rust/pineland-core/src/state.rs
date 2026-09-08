@@ -118,6 +118,7 @@ pub struct PersonState {
     pub languages: Vec<f64>,
     pub identities: Vec<f64>,
     pub preferences: Vec<f64>,
+    pub party_legitimacy: Vec<f64>,
     pub grievance: Vec<f64>,
     pub fear: Vec<f64>,
     pub efficacy: Vec<f64>,
@@ -130,6 +131,23 @@ pub struct PersonState {
     pub organization: Vec<u32>,
     pub armed_fraction: Vec<f64>,
     pub community: Vec<u32>,
+    /// CPython's public-behavior enum encoded as a stable numeric code:
+    /// neutral=0, insurgent_sympathy=1, armed_participation=2.
+    pub public_behavior: Vec<u8>,
+    /// Expected control for government and insurgent actors, two values per
+    /// representative person.  This is distinct from the hidden locality
+    /// control and from actor-held belief state.
+    pub expected_control: Vec<f64>,
+    pub state_legitimacy: Vec<f64>,
+    pub government_legitimacy: Vec<f64>,
+    pub political_access: Vec<f64>,
+    pub displaced: Vec<u8>,
+    pub displacement_count: Vec<u32>,
+    pub origin_tie_strength: Vec<f64>,
+    /// Sparse affinity is dense at the native boundary because the initial
+    /// registry has a fixed seven-organization codebook.  Later dynamic
+    /// organizations can extend the row count without changing person order.
+    pub insurgent_affinity: Vec<f64>,
 }
 
 impl PersonState {
@@ -142,6 +160,7 @@ impl PersonState {
             languages: vec![0.0; count * 4],
             identities: vec![0.0; count * 3],
             preferences: vec![0.0; count * 3],
+            party_legitimacy: vec![0.0; count * 3],
             grievance: vec![0.0; count],
             fear: vec![0.0; count],
             efficacy: vec![0.5; count],
@@ -154,8 +173,286 @@ impl PersonState {
             organization: vec![u32::MAX; count],
             armed_fraction: vec![0.0; count],
             community: vec![u32::MAX; count],
+            public_behavior: vec![0; count],
+            expected_control: vec![0.0; count * 2],
+            state_legitimacy: vec![0.65; count],
+            government_legitimacy: vec![0.55; count],
+            political_access: vec![0.45; count],
+            displaced: vec![0; count],
+            displacement_count: vec![0; count],
+            origin_tie_strength: vec![1.0; count],
+            insurgent_affinity: Vec::new(),
         }
     }
+
+    pub fn with_organizations(mut self, organization_count: usize) -> Self {
+        self.insurgent_affinity = vec![0.0; self.locality.len() * organization_count];
+        self
+    }
+}
+
+/// Explicit household topology.  Person rows reference a household index;
+/// offsets/indices preserve the Python insertion order without retaining
+/// heap-allocated objects in the trajectory state.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct HouseholdState {
+    pub locality: Vec<u32>,
+    pub residence: Vec<u32>,
+    pub resources: Vec<f64>,
+    pub dependents: Vec<u32>,
+    pub member_offsets: Vec<u32>,
+    pub member_indices: Vec<u32>,
+}
+
+impl HouseholdState {
+    pub fn new(count: usize) -> Self {
+        Self {
+            locality: vec![0; count],
+            residence: vec![0; count],
+            resources: vec![0.0; count],
+            dependents: vec![0; count],
+            member_offsets: vec![0; count + 1],
+            member_indices: Vec::new(),
+        }
+    }
+}
+
+/// Explicit community membership and language profile state.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct CommunityState {
+    pub locality: Vec<u32>,
+    pub cohesion: Vec<f64>,
+    pub government_cooperation: Vec<f64>,
+    pub insurgent_sympathy: Vec<f64>,
+    pub language_profile: Vec<f64>,
+    pub member_offsets: Vec<u32>,
+    pub member_indices: Vec<u32>,
+    pub bridge_offsets: Vec<u32>,
+    pub bridge_members: Vec<u32>,
+}
+
+impl CommunityState {
+    pub fn new(count: usize) -> Self {
+        Self {
+            locality: vec![0; count],
+            cohesion: vec![0.0; count],
+            government_cooperation: vec![0.0; count],
+            insurgent_sympathy: vec![0.0; count],
+            language_profile: vec![0.0; count * 4],
+            member_offsets: vec![0; count + 1],
+            member_indices: Vec::new(),
+            bridge_offsets: vec![0; count + 1],
+            bridge_members: Vec::new(),
+        }
+    }
+}
+
+/// Social multiplex edge table. `layers` uses bits household=1,
+/// community=2, bridge=4; this is lossless for the current Python schema
+/// because layers are a sorted set on every edge.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct SocialEdgeState {
+    pub person_a: Vec<u32>,
+    pub person_b: Vec<u32>,
+    pub layers: Vec<u8>,
+    pub weight: Vec<f64>,
+    pub language_compatibility: Vec<f64>,
+    pub trust: Vec<f64>,
+    pub represented_relationships: Vec<f64>,
+    pub neighbor_offsets: Vec<u32>,
+    pub neighbor_indices: Vec<u32>,
+}
+
+impl SocialEdgeState {
+    pub fn new(people: usize) -> Self {
+        Self {
+            person_a: Vec::new(),
+            person_b: Vec::new(),
+            layers: Vec::new(),
+            weight: Vec::new(),
+            language_compatibility: Vec::new(),
+            trust: Vec::new(),
+            represented_relationships: Vec::new(),
+            neighbor_offsets: vec![0; people + 1],
+            neighbor_indices: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ZoneBeliefKey {
+    pub observer: u32,
+    pub zone: u32,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ZoneBeliefState {
+    pub keys: Vec<ZoneBeliefKey>,
+    pub estimate: Vec<f64>,
+    pub confidence: Vec<f64>,
+    pub updated_at: Vec<f64>,
+    pub last_reliable_observation_at: Vec<f64>,
+    pub evidence_count: Vec<u32>,
+    pub contradiction: Vec<f64>,
+}
+
+impl ZoneBeliefState {
+    pub fn new(keys: Vec<ZoneBeliefKey>) -> Self {
+        let count = keys.len();
+        Self {
+            keys,
+            estimate: vec![0.0; count],
+            confidence: vec![0.0; count],
+            updated_at: vec![0.0; count],
+            last_reliable_observation_at: vec![-1.0e9; count],
+            evidence_count: vec![0; count],
+            contradiction: vec![0.0; count],
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct LeaderState {
+    pub organization: Vec<u32>,
+    pub competence: Vec<f64>,
+    pub charisma: Vec<f64>,
+    pub risk_tolerance: Vec<f64>,
+    pub ideological_rigidity: Vec<f64>,
+    pub political_skill: Vec<f64>,
+    pub organizational_skill: Vec<f64>,
+    pub active: Vec<u8>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct CommandEdgeState {
+    pub organization: Vec<u32>,
+    pub formation: Vec<u32>,
+    pub reliability: Vec<f64>,
+    pub latency_hours: Vec<f64>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ManpowerState {
+    pub organization: Vec<u32>,
+    pub locality: Vec<u32>,
+    pub pool: Vec<f64>,
+    pub supply_reserve: Vec<f64>,
+}
+
+/// Dense initialization/state representation of the political institutions,
+/// party branches, and sampled elite anchors created by the Python generator.
+/// The rows follow Python insertion order; set-valued memberships are stored
+/// in canonical person/elite index order through the offset arrays.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct PoliticalState {
+    pub institution_type: Vec<u8>,
+    pub institution_level: Vec<u8>,
+    pub institution_locality: Vec<u32>,
+    pub institution_district: Vec<u32>,
+    pub institution_capacity: Vec<f64>,
+    pub institution_autonomy: Vec<f64>,
+    pub institution_compliance: Vec<f64>,
+    pub institution_reach: Vec<f64>,
+    pub institution_integrity: Vec<f64>,
+    pub institution_resources: Vec<f64>,
+    pub institution_governing_party: Vec<u32>,
+    pub branch_party: Vec<u32>,
+    pub branch_locality: Vec<u32>,
+    pub branch_resources: Vec<f64>,
+    pub branch_patronage: Vec<f64>,
+    pub branch_electoral_support: Vec<f64>,
+    pub branch_institutional_influence: Vec<f64>,
+    pub branch_member_offsets: Vec<u32>,
+    pub branch_member_indices: Vec<u32>,
+    pub branch_broker_offsets: Vec<u32>,
+    pub branch_broker_indices: Vec<u32>,
+    pub elite_person: Vec<u32>,
+    pub elite_locality: Vec<u32>,
+    pub elite_network_centrality: Vec<f64>,
+    pub elite_resources: Vec<f64>,
+    pub elite_legitimacy: Vec<f64>,
+    pub elite_institutional_ties: Vec<f64>,
+    pub elite_party_alignment: Vec<u32>,
+    pub ruling_party: u32,
+    pub private_diversion_stock: f64,
+}
+
+impl PoliticalState {
+    pub fn new() -> Self {
+        Self {
+            ruling_party: u32::MAX,
+            ..Self::default()
+        }
+    }
+}
+
+/// Foreign-system initialization and mutable state.  The language profiles,
+/// border rows, beliefs, and interpreter rows are explicit so the native
+/// engine cannot silently replace a foreign channel with a scalar shortcut.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ForeignSystemState {
+    pub resources: Vec<f64>,
+    pub stability_preference: Vec<f64>,
+    pub government_alignment: Vec<f64>,
+    pub ideological_alignment: Vec<f64>,
+    pub border_security_priority: Vec<f64>,
+    pub regional_influence: Vec<f64>,
+    pub commercial_interest: Vec<f64>,
+    pub humanitarian_preference: Vec<f64>,
+    pub cost_sensitivity: Vec<f64>,
+    pub domestic_opposition: Vec<f64>,
+    pub willingness: Vec<f64>,
+    pub language_profile: Vec<f64>,
+    pub opportunity: Vec<f64>,
+    pub rival_offsets: Vec<u32>,
+    pub rival_indices: Vec<u32>,
+    pub cumulative_cost: Vec<f64>,
+    pub cumulative_casualties: Vec<f64>,
+    pub border_foreign_state: Vec<u32>,
+    pub border_district: Vec<u32>,
+    pub border_locality: Vec<u32>,
+    pub border_terrain_friction: Vec<f64>,
+    pub border_infrastructure: Vec<f64>,
+    pub border_legal_permeability: Vec<f64>,
+    pub border_social_permeability: Vec<f64>,
+    pub border_language_overlap: Vec<f64>,
+    pub border_kinship_overlap: Vec<f64>,
+    pub border_state_monitoring: Vec<f64>,
+    pub belief_foreign_state: Vec<u32>,
+    pub belief_locality: Vec<u32>,
+    pub belief_government_control: Vec<f64>,
+    pub belief_insurgent_presence: Vec<f64>,
+    pub belief_confidence: Vec<f64>,
+    pub belief_updated_at: Vec<f64>,
+    pub interpreter_person: Vec<u32>,
+    pub interpreter_foreign_state: Vec<u32>,
+    pub interpreter_locality: Vec<u32>,
+    pub interpreter_foreign_language: Vec<f64>,
+    pub interpreter_local_language: Vec<f64>,
+    pub interpreter_foreign_trust: Vec<f64>,
+    pub interpreter_local_trust: Vec<f64>,
+    pub interpreter_cultural_knowledge: Vec<f64>,
+}
+
+impl ForeignSystemState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+/// Organization-to-organization relation rows.  Status codes are stable:
+/// allied=0, cooperative=1, neutral=2, rival=3, hostile=4, ceasefire=5.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct OrganizationRelationState {
+    pub organization_a: Vec<u32>,
+    pub organization_b: Vec<u32>,
+    pub status: Vec<u8>,
+    pub rivalry_memory: Vec<f64>,
+    pub hostility_memory: Vec<f64>,
+    pub cooperation_memory: Vec<f64>,
+    pub updated_at: Vec<f64>,
+    pub last_interaction_at: Vec<f64>,
+    pub has_last_interaction: Vec<u8>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -232,10 +529,32 @@ pub struct OrganizationState {
     pub member_population: Vec<f64>,
     pub founded_at: Vec<f64>,
     pub succession_count: Vec<u32>,
+    pub capital_social: Vec<f64>,
+    pub capital_political: Vec<f64>,
+    pub capital_organizational: Vec<f64>,
+    pub capital_material: Vec<f64>,
+    /// Eight phenotype dimensions in the Python dictionary insertion order:
+    /// centralization, political investment, governance investment,
+    /// dispersion, risk tolerance, discipline, local embeddedness, resource
+    /// dependence.
+    pub phenotype: Vec<f64>,
+    /// Two ideology dimensions: reform and separatism.
+    pub ideology: Vec<f64>,
+    pub external_sanctuary: Vec<f64>,
+    pub adaptation_rate: Vec<f64>,
+    pub leader: Vec<u32>,
 }
 
 impl OrganizationState {
     pub fn new(count: usize) -> Self {
+        let mut ideology = vec![0.0; count * 2];
+        for organization in 0..count {
+            // Python Organization defaults to a neutral reform prior and no
+            // separatist prior. The insurgent ecology initializer overwrites
+            // its row later; keeping this default here also covers inactive
+            // or non-insurgent organizations in exact initialization hashes.
+            ideology[organization * 2] = 0.5;
+        }
         Self {
             kind: vec![0; count],
             active: vec![1; count],
@@ -251,6 +570,15 @@ impl OrganizationState {
             member_population: vec![0.0; count],
             founded_at: vec![0.0; count],
             succession_count: vec![0; count],
+            capital_social: vec![0.0; count],
+            capital_political: vec![0.0; count],
+            capital_organizational: vec![0.0; count],
+            capital_material: vec![0.0; count],
+            phenotype: vec![0.5; count * 8],
+            ideology,
+            external_sanctuary: vec![0.0; count],
+            adaptation_rate: vec![0.12; count],
+            leader: vec![u32::MAX; count],
         }
     }
 }
@@ -592,13 +920,23 @@ pub struct ParticleState {
     pub locality: LocalityState,
     pub zones: ZoneState,
     pub people: PersonState,
+    pub households: HouseholdState,
+    pub communities: CommunityState,
+    pub social_edges: SocialEdgeState,
     pub organizations: OrganizationState,
     pub formations: FormationState,
     pub patrols: PatrolState,
     pub security_posts: SecurityPostState,
     pub footholds: FootholdState,
     pub beliefs: BeliefState,
+    pub zone_beliefs: ZoneBeliefState,
     pub logistics: LogisticsState,
+    pub command_edges: CommandEdgeState,
+    pub manpower: ManpowerState,
+    pub leaders: LeaderState,
+    pub political: PoliticalState,
+    pub foreign: ForeignSystemState,
+    pub relations: OrganizationRelationState,
     pub scheduler: Scheduler,
     pub rng: RngStreams,
     pub counters: Counters,
@@ -624,14 +962,24 @@ impl ParticleState {
             time: 0.0,
             locality: LocalityState::new(localities),
             zones: ZoneState::new(zones),
-            people: PersonState::new(0),
+            people: PersonState::new(0).with_organizations(organizations),
+            households: HouseholdState::new(0),
+            communities: CommunityState::new(0),
+            social_edges: SocialEdgeState::new(0),
             organizations: OrganizationState::new(organizations),
             formations: FormationState::new(formations),
             patrols: PatrolState::new(formations),
             security_posts: SecurityPostState::new(localities),
             footholds: FootholdState::new(footholds),
             beliefs: BeliefState::default(),
+            zone_beliefs: ZoneBeliefState::default(),
             logistics: LogisticsState::new(organizations),
+            command_edges: CommandEdgeState::default(),
+            manpower: ManpowerState::default(),
+            leaders: LeaderState::default(),
+            political: PoliticalState::new(),
+            foreign: ForeignSystemState::new(),
+            relations: OrganizationRelationState::default(),
             scheduler: Scheduler::new(),
             rng,
             counters: Counters::default(),
@@ -653,7 +1001,8 @@ impl ParticleState {
         rng: RngStreams,
     ) -> Self {
         let mut particle = Self::new(localities, zones, organizations, formations, footholds, rng);
-        particle.people = PersonState::new(people);
+        particle.people = PersonState::new(people).with_organizations(organizations);
+        particle.social_edges = SocialEdgeState::new(people);
         particle
     }
 
@@ -710,6 +1059,15 @@ impl ParticleState {
         ] {
             append_f64s(&mut material, values);
         }
+        append_f64s(&mut material, &self.people.represented_population);
+        append_f64s(&mut material, &self.people.insurgent_affinity);
+        append_u8s(&mut material, &self.people.public_behavior);
+        append_f64s(&mut material, &self.people.party_legitimacy);
+        append_f64s(&mut material, &self.organizations.phenotype);
+        append_f64s(&mut material, &self.organizations.ideology);
+        append_f64s(&mut material, &self.communities.cohesion);
+        append_f64s(&mut material, &self.social_edges.weight);
+        append_f64s(&mut material, &self.zone_beliefs.estimate);
         sha256::digest_hex(&material)
     }
 
@@ -742,6 +1100,7 @@ impl ParticleState {
         append_f64s(material, &self.people.languages);
         append_f64s(material, &self.people.identities);
         append_f64s(material, &self.people.preferences);
+        append_f64s(material, &self.people.party_legitimacy);
         append_f64s(material, &self.people.grievance);
         append_f64s(material, &self.people.fear);
         append_f64s(material, &self.people.efficacy);
@@ -754,6 +1113,39 @@ impl ParticleState {
         append_u32s(material, &self.people.organization);
         append_f64s(material, &self.people.armed_fraction);
         append_u32s(material, &self.people.community);
+        append_u8s(material, &self.people.public_behavior);
+        append_f64s(material, &self.people.expected_control);
+        append_f64s(material, &self.people.state_legitimacy);
+        append_f64s(material, &self.people.government_legitimacy);
+        append_f64s(material, &self.people.political_access);
+        append_u8s(material, &self.people.displaced);
+        append_u32s(material, &self.people.displacement_count);
+        append_f64s(material, &self.people.origin_tie_strength);
+        append_f64s(material, &self.people.insurgent_affinity);
+        append_u32s(material, &self.households.locality);
+        append_u32s(material, &self.households.residence);
+        append_f64s(material, &self.households.resources);
+        append_u32s(material, &self.households.dependents);
+        append_u32s(material, &self.households.member_offsets);
+        append_u32s(material, &self.households.member_indices);
+        append_u32s(material, &self.communities.locality);
+        append_f64s(material, &self.communities.cohesion);
+        append_f64s(material, &self.communities.government_cooperation);
+        append_f64s(material, &self.communities.insurgent_sympathy);
+        append_f64s(material, &self.communities.language_profile);
+        append_u32s(material, &self.communities.member_offsets);
+        append_u32s(material, &self.communities.member_indices);
+        append_u32s(material, &self.communities.bridge_offsets);
+        append_u32s(material, &self.communities.bridge_members);
+        append_u32s(material, &self.social_edges.person_a);
+        append_u32s(material, &self.social_edges.person_b);
+        append_u8s(material, &self.social_edges.layers);
+        append_f64s(material, &self.social_edges.weight);
+        append_f64s(material, &self.social_edges.language_compatibility);
+        append_f64s(material, &self.social_edges.trust);
+        append_f64s(material, &self.social_edges.represented_relationships);
+        append_u32s(material, &self.social_edges.neighbor_offsets);
+        append_u32s(material, &self.social_edges.neighbor_indices);
         append_f64s(material, &self.zones.population_share);
         append_f64s(material, &self.zones.infrastructure);
         append_f64s(material, &self.zones.terrain_friction);
@@ -764,6 +1156,16 @@ impl ParticleState {
         append_f64s(material, &self.zones.insurgent_presence);
         append_f64s(material, &self.zones.government_presence_updated_at);
         append_f64s(material, &self.zones.insurgent_presence_updated_at);
+        for key in &self.zone_beliefs.keys {
+            material.extend_from_slice(&key.observer.to_le_bytes());
+            material.extend_from_slice(&key.zone.to_le_bytes());
+        }
+        append_f64s(material, &self.zone_beliefs.estimate);
+        append_f64s(material, &self.zone_beliefs.confidence);
+        append_f64s(material, &self.zone_beliefs.updated_at);
+        append_f64s(material, &self.zone_beliefs.last_reliable_observation_at);
+        append_u32s(material, &self.zone_beliefs.evidence_count);
+        append_f64s(material, &self.zone_beliefs.contradiction);
         append_u8s(material, &self.organizations.kind);
         append_u8s(material, &self.organizations.active);
         append_f64s(material, &self.organizations.capital);
@@ -778,6 +1180,15 @@ impl ParticleState {
         append_f64s(material, &self.organizations.member_population);
         append_f64s(material, &self.organizations.founded_at);
         append_u32s(material, &self.organizations.succession_count);
+        append_f64s(material, &self.organizations.capital_social);
+        append_f64s(material, &self.organizations.capital_political);
+        append_f64s(material, &self.organizations.capital_organizational);
+        append_f64s(material, &self.organizations.capital_material);
+        append_f64s(material, &self.organizations.phenotype);
+        append_f64s(material, &self.organizations.ideology);
+        append_f64s(material, &self.organizations.external_sanctuary);
+        append_f64s(material, &self.organizations.adaptation_rate);
+        append_u32s(material, &self.organizations.leader);
         append_u32s(material, &self.formations.organization);
         append_u32s(material, &self.formations.locality);
         append_u32s(material, &self.formations.microzone);
@@ -866,6 +1277,102 @@ impl ParticleState {
         material.extend_from_slice(&self.logistics.cumulative_lost.to_bits().to_le_bytes());
         material.extend_from_slice(&self.logistics.cumulative_shipped.to_bits().to_le_bytes());
         material.extend_from_slice(&self.logistics.cumulative_delivered.to_bits().to_le_bytes());
+        append_u32s(material, &self.command_edges.organization);
+        append_u32s(material, &self.command_edges.formation);
+        append_f64s(material, &self.command_edges.reliability);
+        append_f64s(material, &self.command_edges.latency_hours);
+        append_u32s(material, &self.manpower.organization);
+        append_u32s(material, &self.manpower.locality);
+        append_f64s(material, &self.manpower.pool);
+        append_f64s(material, &self.manpower.supply_reserve);
+        append_u32s(material, &self.leaders.organization);
+        append_f64s(material, &self.leaders.competence);
+        append_f64s(material, &self.leaders.charisma);
+        append_f64s(material, &self.leaders.risk_tolerance);
+        append_f64s(material, &self.leaders.ideological_rigidity);
+        append_f64s(material, &self.leaders.political_skill);
+        append_f64s(material, &self.leaders.organizational_skill);
+        append_u8s(material, &self.leaders.active);
+        append_u8s(material, &self.political.institution_type);
+        append_u8s(material, &self.political.institution_level);
+        append_u32s(material, &self.political.institution_locality);
+        append_u32s(material, &self.political.institution_district);
+        append_f64s(material, &self.political.institution_capacity);
+        append_f64s(material, &self.political.institution_autonomy);
+        append_f64s(material, &self.political.institution_compliance);
+        append_f64s(material, &self.political.institution_reach);
+        append_f64s(material, &self.political.institution_integrity);
+        append_f64s(material, &self.political.institution_resources);
+        append_u32s(material, &self.political.institution_governing_party);
+        append_u32s(material, &self.political.branch_party);
+        append_u32s(material, &self.political.branch_locality);
+        append_f64s(material, &self.political.branch_resources);
+        append_f64s(material, &self.political.branch_patronage);
+        append_f64s(material, &self.political.branch_electoral_support);
+        append_f64s(material, &self.political.branch_institutional_influence);
+        append_u32s(material, &self.political.branch_member_offsets);
+        append_u32s(material, &self.political.branch_member_indices);
+        append_u32s(material, &self.political.branch_broker_offsets);
+        append_u32s(material, &self.political.branch_broker_indices);
+        append_u32s(material, &self.political.elite_person);
+        append_u32s(material, &self.political.elite_locality);
+        append_f64s(material, &self.political.elite_network_centrality);
+        append_f64s(material, &self.political.elite_resources);
+        append_f64s(material, &self.political.elite_legitimacy);
+        append_f64s(material, &self.political.elite_institutional_ties);
+        append_u32s(material, &self.political.elite_party_alignment);
+        material.extend_from_slice(&self.political.ruling_party.to_le_bytes());
+        material.extend_from_slice(&self.political.private_diversion_stock.to_bits().to_le_bytes());
+        append_f64s(material, &self.foreign.resources);
+        append_f64s(material, &self.foreign.stability_preference);
+        append_f64s(material, &self.foreign.government_alignment);
+        append_f64s(material, &self.foreign.ideological_alignment);
+        append_f64s(material, &self.foreign.border_security_priority);
+        append_f64s(material, &self.foreign.regional_influence);
+        append_f64s(material, &self.foreign.commercial_interest);
+        append_f64s(material, &self.foreign.humanitarian_preference);
+        append_f64s(material, &self.foreign.cost_sensitivity);
+        append_f64s(material, &self.foreign.domestic_opposition);
+        append_f64s(material, &self.foreign.willingness);
+        append_f64s(material, &self.foreign.language_profile);
+        append_f64s(material, &self.foreign.opportunity);
+        append_u32s(material, &self.foreign.rival_offsets);
+        append_u32s(material, &self.foreign.rival_indices);
+        append_f64s(material, &self.foreign.cumulative_cost);
+        append_f64s(material, &self.foreign.cumulative_casualties);
+        append_u32s(material, &self.foreign.border_foreign_state);
+        append_u32s(material, &self.foreign.border_district);
+        append_u32s(material, &self.foreign.border_locality);
+        append_f64s(material, &self.foreign.border_terrain_friction);
+        append_f64s(material, &self.foreign.border_infrastructure);
+        append_f64s(material, &self.foreign.border_legal_permeability);
+        append_f64s(material, &self.foreign.border_social_permeability);
+        append_f64s(material, &self.foreign.border_language_overlap);
+        append_f64s(material, &self.foreign.border_kinship_overlap);
+        append_f64s(material, &self.foreign.border_state_monitoring);
+        append_u32s(material, &self.foreign.belief_foreign_state);
+        append_u32s(material, &self.foreign.belief_locality);
+        append_f64s(material, &self.foreign.belief_government_control);
+        append_f64s(material, &self.foreign.belief_insurgent_presence);
+        append_f64s(material, &self.foreign.belief_confidence);
+        append_f64s(material, &self.foreign.belief_updated_at);
+        append_u32s(material, &self.foreign.interpreter_person);
+        append_u32s(material, &self.foreign.interpreter_foreign_state);
+        append_u32s(material, &self.foreign.interpreter_locality);
+        append_f64s(material, &self.foreign.interpreter_foreign_language);
+        append_f64s(material, &self.foreign.interpreter_local_language);
+        append_f64s(material, &self.foreign.interpreter_foreign_trust);
+        append_f64s(material, &self.foreign.interpreter_local_trust);
+        append_f64s(material, &self.foreign.interpreter_cultural_knowledge);
+        append_u32s(material, &self.relations.organization_a);
+        append_u32s(material, &self.relations.organization_b);
+        append_u8s(material, &self.relations.status);
+        append_f64s(material, &self.relations.rivalry_memory);
+        append_f64s(material, &self.relations.hostility_memory);
+        append_f64s(material, &self.relations.cooperation_memory);
+        append_f64s(material, &self.relations.updated_at);
+        append_f64s(material, &self.relations.last_interaction_at);
+        append_u8s(material, &self.relations.has_last_interaction);
         for event in self.scheduler.events_sorted() {
             encode_event(material, &event);
         }
@@ -983,6 +1490,28 @@ impl ParticleState {
             (self.people.organization.len(), "person organization"),
             (self.people.armed_fraction.len(), "person armed fraction"),
             (self.people.community.len(), "person community"),
+            (self.people.public_behavior.len(), "person public behavior"),
+            (
+                self.people.state_legitimacy.len(),
+                "person state legitimacy",
+            ),
+            (
+                self.people.government_legitimacy.len(),
+                "person government legitimacy",
+            ),
+            (
+                self.people.political_access.len(),
+                "person political access",
+            ),
+            (self.people.displaced.len(), "person displaced"),
+            (
+                self.people.displacement_count.len(),
+                "person displacement count",
+            ),
+            (
+                self.people.origin_tie_strength.len(),
+                "person origin tie strength",
+            ),
         ] {
             if length != people_count {
                 return Err(StateError::LengthMismatch {
@@ -991,6 +1520,21 @@ impl ParticleState {
                     right: people_count,
                 });
             }
+        }
+        if self.people.expected_control.len() != people_count * 2 {
+            return Err(StateError::LengthMismatch {
+                name: "person expected control".to_string(),
+                left: self.people.expected_control.len(),
+                right: people_count * 2,
+            });
+        }
+        let organization_count = self.organizations.kind.len();
+        if self.people.insurgent_affinity.len() != people_count * organization_count {
+            return Err(StateError::LengthMismatch {
+                name: "person insurgent affinity".to_string(),
+                left: self.people.insurgent_affinity.len(),
+                right: people_count * organization_count,
+            });
         }
         for (length, name, expected) in [
             (
@@ -1008,6 +1552,11 @@ impl ParticleState {
                 "person preferences",
                 people_count * 3,
             ),
+            (
+                self.people.party_legitimacy.len(),
+                "person party legitimacy",
+                people_count * 3,
+            ),
         ] {
             if length != expected {
                 return Err(StateError::LengthMismatch {
@@ -1015,6 +1564,161 @@ impl ParticleState {
                     left: length,
                     right: expected,
                 });
+            }
+        }
+        let household_count = self.households.locality.len();
+        for (length, name) in [
+            (self.households.residence.len(), "household residence"),
+            (self.households.resources.len(), "household resources"),
+            (self.households.dependents.len(), "household dependents"),
+        ] {
+            if length != household_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: household_count,
+                });
+            }
+        }
+        if self.households.member_offsets.len() != household_count + 1 {
+            return Err(StateError::LengthMismatch {
+                name: "household member offsets".to_string(),
+                left: self.households.member_offsets.len(),
+                right: household_count + 1,
+            });
+        }
+        if self.households.member_offsets.last().copied().unwrap_or(0) as usize
+            != self.households.member_indices.len()
+        {
+            return Err(StateError::Corrupt(
+                "household member offsets do not cover member rows".to_string(),
+            ));
+        }
+        for member in &self.households.member_indices {
+            if *member as usize >= people_count {
+                return Err(StateError::Corrupt(format!(
+                    "household member id {member} is outside {people_count}"
+                )));
+            }
+        }
+        let community_count = self.communities.locality.len();
+        for (length, name) in [
+            (self.communities.cohesion.len(), "community cohesion"),
+            (
+                self.communities.government_cooperation.len(),
+                "community government cooperation",
+            ),
+            (
+                self.communities.insurgent_sympathy.len(),
+                "community insurgent sympathy",
+            ),
+        ] {
+            if length != community_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: community_count,
+                });
+            }
+        }
+        for (length, name, expected) in [
+            (
+                self.communities.language_profile.len(),
+                "community language profile",
+                community_count * 4,
+            ),
+            (
+                self.communities.member_offsets.len(),
+                "community member offsets",
+                community_count + 1,
+            ),
+            (
+                self.communities.bridge_offsets.len(),
+                "community bridge offsets",
+                community_count + 1,
+            ),
+        ] {
+            if length != expected {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: expected,
+                });
+            }
+        }
+        if self.communities.member_offsets.last().copied().unwrap_or(0) as usize
+            != self.communities.member_indices.len()
+            || self.communities.bridge_offsets.last().copied().unwrap_or(0) as usize
+                != self.communities.bridge_members.len()
+        {
+            return Err(StateError::Corrupt(
+                "community offsets do not cover member rows".to_string(),
+            ));
+        }
+        for member in self
+            .communities
+            .member_indices
+            .iter()
+            .chain(self.communities.bridge_members.iter())
+        {
+            if *member as usize >= people_count {
+                return Err(StateError::Corrupt(format!(
+                    "community member id {member} is outside {people_count}"
+                )));
+            }
+        }
+        let edge_count = self.social_edges.person_a.len();
+        for (length, name) in [
+            (
+                self.social_edges.person_b.len(),
+                "social edge second endpoint",
+            ),
+            (self.social_edges.layers.len(), "social edge layers"),
+            (self.social_edges.weight.len(), "social edge weight"),
+            (
+                self.social_edges.language_compatibility.len(),
+                "social edge language compatibility",
+            ),
+            (self.social_edges.trust.len(), "social edge trust"),
+            (
+                self.social_edges.represented_relationships.len(),
+                "social edge represented relationships",
+            ),
+        ] {
+            if length != edge_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: edge_count,
+                });
+            }
+        }
+        if self.social_edges.neighbor_offsets.len() != people_count + 1
+            || self
+                .social_edges
+                .neighbor_offsets
+                .last()
+                .copied()
+                .unwrap_or(0) as usize
+                != self.social_edges.neighbor_indices.len()
+        {
+            return Err(StateError::LengthMismatch {
+                name: "social neighbor offsets".to_string(),
+                left: self.social_edges.neighbor_offsets.len(),
+                right: people_count + 1,
+            });
+        }
+        for endpoint in self
+            .social_edges
+            .person_a
+            .iter()
+            .chain(self.social_edges.person_b.iter())
+            .chain(self.social_edges.neighbor_indices.iter())
+        {
+            if *endpoint as usize >= people_count {
+                return Err(StateError::Corrupt(format!(
+                    "social person id {endpoint} is outside {people_count}"
+                )));
             }
         }
         let zone_count = self.zones.population_share.len();
@@ -1052,7 +1756,6 @@ impl ParticleState {
                 });
             }
         }
-        let organization_count = self.organizations.kind.len();
         for (length, name) in [
             (self.organizations.active.len(), "organization active"),
             (self.organizations.capital.len(), "organization capital"),
@@ -1094,12 +1797,57 @@ impl ParticleState {
                 self.organizations.succession_count.len(),
                 "organization succession",
             ),
+            (
+                self.organizations.capital_social.len(),
+                "organization social capital",
+            ),
+            (
+                self.organizations.capital_political.len(),
+                "organization political capital",
+            ),
+            (
+                self.organizations.capital_organizational.len(),
+                "organization organizational capital",
+            ),
+            (
+                self.organizations.capital_material.len(),
+                "organization material capital",
+            ),
+            (
+                self.organizations.external_sanctuary.len(),
+                "organization sanctuary",
+            ),
+            (
+                self.organizations.adaptation_rate.len(),
+                "organization adaptation rate",
+            ),
+            (self.organizations.leader.len(), "organization leader"),
         ] {
             if length != organization_count {
                 return Err(StateError::LengthMismatch {
                     name: name.to_string(),
                     left: length,
                     right: organization_count,
+                });
+            }
+        }
+        for (length, name, expected) in [
+            (
+                self.organizations.phenotype.len(),
+                "organization phenotype",
+                organization_count * 8,
+            ),
+            (
+                self.organizations.ideology.len(),
+                "organization ideology",
+                organization_count * 2,
+            ),
+        ] {
+            if length != expected {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: expected,
                 });
             }
         }
@@ -1296,7 +2044,101 @@ impl ParticleState {
                 right: expected_belief_controls,
             });
         }
-        let organization_count = self.organizations.kind.len();
+        let zone_belief_count = self.zone_beliefs.keys.len();
+        for (length, name) in [
+            (self.zone_beliefs.estimate.len(), "zone belief estimate"),
+            (self.zone_beliefs.confidence.len(), "zone belief confidence"),
+            (self.zone_beliefs.updated_at.len(), "zone belief timestamps"),
+            (
+                self.zone_beliefs.last_reliable_observation_at.len(),
+                "zone belief reliable timestamps",
+            ),
+            (
+                self.zone_beliefs.evidence_count.len(),
+                "zone belief evidence",
+            ),
+            (
+                self.zone_beliefs.contradiction.len(),
+                "zone belief contradiction",
+            ),
+        ] {
+            if length != zone_belief_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: zone_belief_count,
+                });
+            }
+        }
+        for key in &self.zone_beliefs.keys {
+            if key.observer as usize >= organization_count || key.zone as usize >= zone_count {
+                return Err(StateError::Corrupt(format!(
+                    "zone belief key ({}, {}) is outside ({organization_count}, {zone_count})",
+                    key.observer, key.zone
+                )));
+            }
+        }
+        let leader_count = self.leaders.organization.len();
+        for (length, name) in [
+            (self.leaders.competence.len(), "leader competence"),
+            (self.leaders.charisma.len(), "leader charisma"),
+            (self.leaders.risk_tolerance.len(), "leader risk tolerance"),
+            (
+                self.leaders.ideological_rigidity.len(),
+                "leader ideological rigidity",
+            ),
+            (self.leaders.political_skill.len(), "leader political skill"),
+            (
+                self.leaders.organizational_skill.len(),
+                "leader organizational skill",
+            ),
+            (self.leaders.active.len(), "leader active"),
+        ] {
+            if length != leader_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: leader_count,
+                });
+            }
+        }
+        let command_count = self.command_edges.organization.len();
+        for (length, name) in [
+            (self.command_edges.formation.len(), "command edge formation"),
+            (
+                self.command_edges.reliability.len(),
+                "command edge reliability",
+            ),
+            (
+                self.command_edges.latency_hours.len(),
+                "command edge latency",
+            ),
+        ] {
+            if length != command_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: command_count,
+                });
+            }
+        }
+        let manpower_count = self.manpower.organization.len();
+        for (length, name) in [
+            (self.manpower.locality.len(), "manpower locality"),
+            (self.manpower.pool.len(), "manpower pool"),
+            (
+                self.manpower.supply_reserve.len(),
+                "manpower supply reserve",
+            ),
+        ] {
+            if length != manpower_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: manpower_count,
+                });
+            }
+        }
         let source_count = self.logistics.source_stock.len();
         for (length, name) in [
             (self.logistics.organization.len(), "source organization"),
