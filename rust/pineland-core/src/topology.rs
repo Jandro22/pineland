@@ -776,12 +776,10 @@ impl StaticTopology {
             .map(|(left, right, cost)| (*left as u32, *right as u32, *cost))
             .collect::<Vec<_>>();
         let locality_graph = CsrGraph::from_edges(locality_count, &locality_edge_rows, true);
-        for (left, right, cost) in adjacency_edges {
-            let first = primary_zone[left];
-            let second = primary_zone[right];
-            physical_edge_rows.push((first, second, cost));
-            road_edge_rows.push((first, second, cost));
-        }
+        // Python's physical world contains only within-locality microzone
+        // edges.  National adjacency is a separate locality graph used by
+        // movement/propagation; adding those links to the physical graph
+        // would create patrol candidates that do not exist in the oracle.
         let zone_count = microzones.len();
         let physical_graph = CsrGraph::from_edges(zone_count, &physical_edge_rows, true);
         let road_graph = CsrGraph::from_edges(zone_count, &road_edge_rows, true);

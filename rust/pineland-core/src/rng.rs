@@ -21,7 +21,7 @@ unsafe extern "C" {
     fn exp(value: f64) -> f64;
 }
 
-fn python_exp(value: f64) -> f64 {
+pub fn python_exp(value: f64) -> f64 {
     #[cfg(windows)]
     {
         // SAFETY: the Universal CRT exp function is pure for finite inputs and

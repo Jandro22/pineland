@@ -468,6 +468,14 @@ pub struct PatrolState {
     pub route_target: Vec<u32>,
     pub last_departure: Vec<f64>,
     pub next_available: Vec<f64>,
+    /// Fraction of the parent formation deployed as the mobile patrol.
+    /// Python keeps this separate from formation availability and uses it
+    /// when integrating patrol presence memory.
+    pub response_fraction: Vec<f64>,
+    /// Calendar boundary through which patrol dwell has already been
+    /// integrated. Python's None is represented by a finite negative
+    /// sentinel so the state remains a compact numeric table.
+    pub presence_accounted_at: Vec<f64>,
     pub detections: Vec<u32>,
 }
 
@@ -480,6 +488,8 @@ impl PatrolState {
             route_target: vec![0; count],
             last_departure: vec![-1.0e9; count],
             next_available: vec![0.0; count],
+            response_fraction: vec![0.3; count],
+            presence_accounted_at: vec![-1.0e300; count],
             detections: vec![0; count],
         }
     }
@@ -644,18 +654,54 @@ impl FormationState {
         }
     }
 
+    pub fn supply_fraction(&self, formation: usize) -> f64 {
+        if self.supply_capacity[formation] > 0.0 {
+            clamp01(self.supply_stock[formation] / self.supply_capacity[formation])
+        } else {
+            clamp01(self.sustainment[formation])
+        }
+    }
+
+    pub fn fatigue_adjusted_readiness(&self, formation: usize) -> f64 {
+        clamp01(self.readiness[formation] * (1.0 - 0.65 * clamp01(self.fatigue[formation])))
+    }
+
+    // Python's ArmedFormation.effective_readiness. Availability is a
+    // deployment quantity and is deliberately applied by
+    // available_personnel rather than a second time here.
     pub fn effective_readiness(&self, formation: usize) -> f64 {
+        let supply_effect = 0.2 + 0.8 * self.supply_fraction(formation);
         clamp01(
-            self.readiness[formation]
-                * self.availability[formation]
-                * (1.0 - 0.45 * self.fatigue[formation]),
+            self.fatigue_adjusted_readiness(formation)
+                * supply_effect
+                * clamp01(self.command[formation]),
         )
     }
 
+    pub fn deployable_personnel(&self, formation: usize) -> f64 {
+        if self.moving[formation] != 0
+            || self.outside_pineland[formation] != 0
+            || self.operational_status[formation] == 0
+        {
+            return 0.0;
+        }
+        self.personnel[formation].max(0.0) * clamp01(self.availability[formation])
+    }
+
+    pub fn available_personnel(&self, formation: usize) -> f64 {
+        self.deployable_personnel(formation) * self.effective_readiness(formation)
+    }
+
     pub fn effective_strength(&self, formation: usize) -> f64 {
-        self.personnel[formation]
-            * self.quality[formation].max(0.0)
-            * self.effective_readiness(formation)
+        let available = self.available_personnel(formation);
+        if available <= 0.0 {
+            0.0
+        } else {
+            available
+                * self.quality[formation]
+                * self.cohesion[formation]
+                * (0.5 + self.information[formation])
+        }
     }
 }
 
@@ -1223,6 +1269,8 @@ impl ParticleState {
         append_u32s(material, &self.patrols.route_target);
         append_f64s(material, &self.patrols.last_departure);
         append_f64s(material, &self.patrols.next_available);
+        append_f64s(material, &self.patrols.response_fraction);
+        append_f64s(material, &self.patrols.presence_accounted_at);
         append_u32s(material, &self.patrols.detections);
         append_u32s(material, &self.security_posts.organization);
         append_u32s(material, &self.security_posts.locality);
@@ -1914,6 +1962,14 @@ impl ParticleState {
             (self.patrols.route_target.len(), "patrol route target"),
             (self.patrols.last_departure.len(), "patrol departure"),
             (self.patrols.next_available.len(), "patrol availability"),
+            (
+                self.patrols.response_fraction.len(),
+                "patrol response fraction",
+            ),
+            (
+                self.patrols.presence_accounted_at.len(),
+                "patrol presence timestamp",
+            ),
             (self.patrols.detections.len(), "patrol detections"),
         ] {
             if length != formation_count {
@@ -2968,6 +3024,11 @@ impl ParticleState {
         for (values, name) in [
             (&self.patrols.last_departure, "patrol departure"),
             (&self.patrols.next_available, "patrol availability"),
+            (&self.patrols.response_fraction, "patrol response fraction"),
+            (
+                &self.patrols.presence_accounted_at,
+                "patrol presence timestamp",
+            ),
             (&self.security_posts.presence, "security post presence"),
             (
                 &self.security_posts.detection_rate,
@@ -3006,6 +3067,11 @@ impl ParticleState {
             .chain(self.formations.embeddedness.iter())
             .chain(self.formations.availability.iter())
         {
+            if !(-1e-12..=1.0 + 1e-12).contains(value) {
+                return Err(StateError::OutOfBounds(*value));
+            }
+        }
+        for value in &self.patrols.response_fraction {
             if !(-1e-12..=1.0 + 1e-12).contains(value) {
                 return Err(StateError::OutOfBounds(*value));
             }
