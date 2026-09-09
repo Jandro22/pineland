@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from math import exp, log
+import os
 import random
+import sys
 from typing import Any
 
 from .entities import (
@@ -1063,6 +1065,7 @@ class ProcessEngine:
             1.0,
         )
         belief_view = self.world.belief_view()
+        trace_all = bool(os.environ.get("PINELAND_PY_MOBILITY_TRACE")) and abs(self.world.time - 67.0) < 1e-9
         for person in self.world.persons.values():
             if person.external_state_id is not None or person.weight <= 0:
                 continue
@@ -1070,6 +1073,17 @@ class ProcessEngine:
             neighbors = self.world.adjacency[origin]
             if not neighbors:
                 continue
+            if trace_all:
+                print(
+                    "MOBILITY_BEGIN",
+                    person.person_id,
+                    origin,
+                    person.home_locality_id,
+                    int(person.displaced),
+                    person.displacement_count,
+                    person.displaced_since,
+                    file=sys.stderr,
+                )
             if person.displaced:
                 if person.home_locality_id == origin:
                     person.displaced = False
@@ -1087,7 +1101,16 @@ class ProcessEngine:
                         elapsed_days,
                         1.0,
                     )
-                    if self.rng.random() < return_probability:
+                    return_draw = self.rng.random()
+                    if trace_all:
+                        print(
+                            "MOBILITY_RETURN",
+                            person.person_id,
+                            return_draw,
+                            return_probability,
+                            file=sys.stderr,
+                        )
+                    if return_draw < return_probability:
                         route, _, _ = shortest_locality_path(
                             self.world, origin, person.home_locality_id, 1.0
                         )
@@ -1130,10 +1153,24 @@ class ProcessEngine:
                 elapsed_days,
                 1.0,
             )
-            forced = self.rng.random() < forced_probability
+            forced_draw = self.rng.random()
+            forced = forced_draw < forced_probability
+            voluntary_draw = None if forced else self.rng.random()
             voluntary = (
-                not forced and self.rng.random() < voluntary_probability
+                not forced and voluntary_draw < voluntary_probability
             )
+            if trace_all:
+                print(
+                    "MOBILITY_DECISION",
+                    person.person_id,
+                    forced_draw,
+                    forced_probability,
+                    voluntary_draw,
+                    voluntary_probability,
+                    forced,
+                    voluntary,
+                    file=sys.stderr,
+                )
             if not forced and not voluntary:
                 continue
             candidates = list(neighbors)
@@ -1154,6 +1191,15 @@ class ProcessEngine:
                 )
                 utilities.append(exp(max(-10, min(10, utility))))
             destination = self.rng.choices(candidates, weights=utilities, k=1)[0]
+            if trace_all:
+                print(
+                    "MOBILITY_CHOICE",
+                    person.person_id,
+                    destination,
+                    candidates,
+                    utilities,
+                    file=sys.stderr,
+                )
             self.world.relocate_person(person, destination)
             moved += person.weight
             if forced and destination != person.home_locality_id:

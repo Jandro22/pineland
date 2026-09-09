@@ -450,6 +450,7 @@ pub(crate) fn record_foothold_arrival(
     particle.footholds.strength[index] = particle.footholds.strength[index]
         .max(arrival_signal)
         .clamp(0.0, 1.0);
+    particle.footholds.embeddedness[index] = particle.footholds.strength[index];
     particle.footholds.raw_signal[index] = particle.footholds.raw_signal[index].max(arrival_signal);
 }
 
@@ -474,6 +475,7 @@ pub(crate) fn record_foothold_action(
     particle.footholds.cumulative_actions[index] += 1.0;
     particle.footholds.renewal_count[index] =
         particle.footholds.renewal_count[index].saturating_add(1);
+    particle.footholds.embeddedness[index] = particle.footholds.strength[index];
 }
 
 pub fn update(

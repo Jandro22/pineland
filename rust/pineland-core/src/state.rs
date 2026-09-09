@@ -219,6 +219,11 @@ pub struct PersonState {
     /// `u32::MAX` is the native sentinel for Python's missing origin ID.
     pub displacement_origin: Vec<u32>,
     pub origin_tie_strength: Vec<f64>,
+    /// Foreign-state membership; `u32::MAX` is Python's `None` sentinel.
+    pub external_state: Vec<u32>,
+    /// Python migration-status enum: resident=0, refuge=1,
+    /// temporary_flight=2, economic_migration=3, returned=4.
+    pub migration_status: Vec<u8>,
     /// Sparse affinity is dense at the native boundary because the initial
     /// registry has a fixed seven-organization codebook.  Later dynamic
     /// organizations can extend the row count without changing person order.
@@ -260,6 +265,8 @@ impl PersonState {
             displaced_since: vec![-1.0; count],
             displacement_origin: vec![u32::MAX; count],
             origin_tie_strength: vec![1.0; count],
+            external_state: vec![u32::MAX; count],
+            migration_status: vec![0; count],
             insurgent_affinity: Vec::new(),
         }
     }
@@ -556,6 +563,20 @@ pub struct ForeignSystemState {
     pub interpreter_foreign_trust: Vec<f64>,
     pub interpreter_local_trust: Vec<f64>,
     pub interpreter_cultural_knowledge: Vec<f64>,
+    /// Diaspora links are kept as insertion-ordered parallel rows so a
+    /// migration/resettlement cycle consumes exactly the same RNG positions
+    /// as Python's ordered registry.
+    pub diaspora_person: Vec<u32>,
+    pub diaspora_foreign_state: Vec<u32>,
+    pub diaspora_origin_locality: Vec<u32>,
+    pub diaspora_social_strength: Vec<f64>,
+    pub diaspora_financial_capacity: Vec<f64>,
+    pub diaspora_information_reliability: Vec<f64>,
+    pub diaspora_created_at: Vec<f64>,
+    pub support_foreign_state: Vec<u32>,
+    pub support_recipient: Vec<u32>,
+    pub support_total: Vec<f64>,
+    pub cumulative_external_remittances: f64,
 }
 
 impl ForeignSystemState {
@@ -1615,6 +1636,8 @@ impl ParticleState {
         append_f64s(material, &self.people.displaced_since);
         append_u32s(material, &self.people.displacement_origin);
         append_f64s(material, &self.people.origin_tie_strength);
+        append_u32s(material, &self.people.external_state);
+        append_u8s(material, &self.people.migration_status);
         append_f64s(material, &self.people.insurgent_affinity);
         append_u32s(material, &self.households.locality);
         append_u32s(material, &self.households.residence);
@@ -1891,6 +1914,23 @@ impl ParticleState {
         append_f64s(material, &self.foreign.interpreter_foreign_trust);
         append_f64s(material, &self.foreign.interpreter_local_trust);
         append_f64s(material, &self.foreign.interpreter_cultural_knowledge);
+        append_u32s(material, &self.foreign.diaspora_person);
+        append_u32s(material, &self.foreign.diaspora_foreign_state);
+        append_u32s(material, &self.foreign.diaspora_origin_locality);
+        append_f64s(material, &self.foreign.diaspora_social_strength);
+        append_f64s(material, &self.foreign.diaspora_financial_capacity);
+        append_f64s(material, &self.foreign.diaspora_information_reliability);
+        append_f64s(material, &self.foreign.diaspora_created_at);
+        append_u32s(material, &self.foreign.support_foreign_state);
+        append_u32s(material, &self.foreign.support_recipient);
+        append_f64s(material, &self.foreign.support_total);
+        material.extend_from_slice(
+            &self
+                .foreign
+                .cumulative_external_remittances
+                .to_bits()
+                .to_le_bytes(),
+        );
         append_u32s(material, &self.relations.organization_a);
         append_u32s(material, &self.relations.organization_b);
         append_u8s(material, &self.relations.status);
@@ -2060,6 +2100,8 @@ impl ParticleState {
                 self.people.origin_tie_strength.len(),
                 "person origin tie strength",
             ),
+            (self.people.external_state.len(), "person external state"),
+            (self.people.migration_status.len(), "person migration status"),
         ] {
             if length != people_count {
                 return Err(StateError::LengthMismatch {
@@ -3130,6 +3172,54 @@ impl ParticleState {
                 });
             }
         }
+        let diaspora_count = self.foreign.diaspora_person.len();
+        for (length, name) in [
+            (
+                self.foreign.diaspora_foreign_state.len(),
+                "diaspora foreign state",
+            ),
+            (
+                self.foreign.diaspora_origin_locality.len(),
+                "diaspora origin locality",
+            ),
+            (
+                self.foreign.diaspora_social_strength.len(),
+                "diaspora social strength",
+            ),
+            (
+                self.foreign.diaspora_financial_capacity.len(),
+                "diaspora financial capacity",
+            ),
+            (
+                self.foreign.diaspora_information_reliability.len(),
+                "diaspora information reliability",
+            ),
+            (
+                self.foreign.diaspora_created_at.len(),
+                "diaspora created timestamp",
+            ),
+        ] {
+            if length != diaspora_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: diaspora_count,
+                });
+            }
+        }
+        let support_count = self.foreign.support_foreign_state.len();
+        for (length, name) in [
+            (self.foreign.support_recipient.len(), "support recipient"),
+            (self.foreign.support_total.len(), "support total"),
+        ] {
+            if length != support_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: support_count,
+                });
+            }
+        }
         let relation_count = self.relations.organization_a.len();
         for (length, name) in [
             (
@@ -4166,6 +4256,20 @@ impl ParticleState {
                 &self.foreign.interpreter_cultural_knowledge,
                 "interpreter cultural knowledge",
             ),
+            (
+                &self.foreign.diaspora_social_strength,
+                "diaspora social strength",
+            ),
+            (
+                &self.foreign.diaspora_financial_capacity,
+                "diaspora financial capacity",
+            ),
+            (
+                &self.foreign.diaspora_information_reliability,
+                "diaspora information reliability",
+            ),
+            (&self.foreign.diaspora_created_at, "diaspora created timestamp"),
+            (&self.foreign.support_total, "support total"),
             (&self.relations.rivalry_memory, "relation rivalry memory"),
             (
                 &self.relations.hostility_memory,
