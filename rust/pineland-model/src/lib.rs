@@ -98,6 +98,18 @@ pub fn organization_name_for_particle(particle: &pineland_core::state::ParticleS
     }
 }
 
+pub fn organization_index_for_particle(
+    particle: &pineland_core::state::ParticleState,
+    name: &str,
+) -> Option<usize> {
+    for i in 0..particle.organizations.kind.len() {
+        if organization_name_for_particle(particle, i) == name {
+            return Some(i);
+        }
+    }
+    None
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ModelError {
     Config(ConfigError),

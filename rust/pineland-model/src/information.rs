@@ -926,7 +926,7 @@ fn fuse_recorded_observation(
         );
     }
     let (observer_code, kind) =
-        if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+        if recipient < 7 && recipient_name == crate::organization_name_for_particle(particle, recipient) {
             let own_target = if particle.organizations.kind.get(recipient).copied() == Some(3) {
                 crate::INSURGENT
             } else {
@@ -1003,21 +1003,27 @@ fn fuse_recorded_observation(
                 locality: locality as u32,
                 kind: 0,
             };
-            let legacy = particle.beliefs.ensure_key(legacy_key);
-            let offset = legacy * CONTROL_DIMENSIONS;
-            let source_offset = index * CONTROL_DIMENSIONS;
-            let source_control = particle.beliefs.control
-                [source_offset..source_offset + CONTROL_DIMENSIONS]
-                .to_vec();
-            particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS]
-                .copy_from_slice(&source_control);
-            particle.beliefs.presence[legacy] = particle.beliefs.presence[index];
-            particle.beliefs.confidence[legacy] = particle.beliefs.confidence[index];
-            particle.beliefs.updated_at[legacy] = particle.beliefs.updated_at[index];
-            particle.beliefs.last_reliable_observation_at[legacy] =
-                particle.beliefs.last_reliable_observation_at[index];
-            particle.beliefs.contradiction[legacy] = particle.beliefs.contradiction[index];
-            particle.beliefs.evidence_count[legacy] = particle.beliefs.evidence_count[index];
+            if let Some(legacy) = particle
+                .beliefs
+                .keys
+                .iter()
+                .position(|existing| existing == &legacy_key)
+            {
+                let offset = legacy * CONTROL_DIMENSIONS;
+                let source_offset = index * CONTROL_DIMENSIONS;
+                let source_control = particle.beliefs.control
+                    [source_offset..source_offset + CONTROL_DIMENSIONS]
+                    .to_vec();
+                particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS]
+                    .copy_from_slice(&source_control);
+                particle.beliefs.presence[legacy] = particle.beliefs.presence[index];
+                particle.beliefs.confidence[legacy] = particle.beliefs.confidence[index];
+                particle.beliefs.updated_at[legacy] = particle.beliefs.updated_at[index];
+                particle.beliefs.last_reliable_observation_at[legacy] =
+                    particle.beliefs.last_reliable_observation_at[index];
+                particle.beliefs.contradiction[legacy] = particle.beliefs.contradiction[index];
+                particle.beliefs.evidence_count[legacy] = particle.beliefs.evidence_count[index];
+            }
         }
     }
 }
@@ -2581,6 +2587,9 @@ fn post_name(particle: &ParticleState, topology: &StaticTopology, post: usize) -
 }
 
 fn dynamic_observer_code(particle: &ParticleState, topology: &StaticTopology, node: &str) -> u32 {
+    if let Some(org) = crate::organization_index_for_particle(particle, node) {
+        return org as u32;
+    }
     let organizations = particle.organizations.kind.len();
     if let Some(formation) = formation_index(particle, node) {
         return (organizations + formation) as u32;
