@@ -109,11 +109,15 @@ fn local_embeddedness(
         0.0
     };
     let offset = locality * pineland_core::state::CONTROL_DIMENSIONS;
-    let institutional_channel = ((particle.locality.insurgent_control[offset + 5]
-        + particle.locality.insurgent_control[offset + 2]
-        + particle.locality.insurgent_control[offset + 6])
-        / 3.0)
-        .clamp(0.0, 1.0);
+    let institutional_channel = if organization == crate::INSURGENT {
+        ((particle.locality.insurgent_control[offset + 5]
+            + particle.locality.insurgent_control[offset + 2]
+            + particle.locality.insurgent_control[offset + 6])
+            / 3.0)
+            .clamp(0.0, 1.0)
+    } else {
+        0.0
+    };
     let mut complement = 1.0;
     for value in [
         member_channel,
@@ -148,12 +152,12 @@ pub fn advance_footholds(
         .max(1e-9);
     let locality_count = topology.locality_count();
     for organization in 0..particle.organizations.kind.len() {
-        if particle.organizations.kind[organization] != 3 {
-            continue;
-        }
         for locality in 0..locality_count {
             let index = organization * locality_count + locality;
             if index >= particle.footholds.strength.len() {
+                continue;
+            }
+            if particle.footholds.active[index] == 0 {
                 continue;
             }
             let elapsed = (time - particle.footholds.updated_at[index]).max(0.0);
@@ -195,6 +199,29 @@ pub fn advance_footholds(
             particle.footholds.updated_at[index] = time;
         }
     }
+}
+
+/// Record a realized violent organized action as local organizational
+/// renewal.  Python applies this after the action handler, before the second
+/// same-boundary foothold advance; keeping the small mutation explicit lets
+/// callers preserve that ordering without adding a stochastic draw.
+pub(crate) fn record_foothold_action(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    organization: usize,
+    locality: usize,
+) {
+    if organization >= particle.organizations.kind.len() || locality >= topology.locality_count() {
+        return;
+    }
+    let index = organization * topology.locality_count() + locality;
+    if index >= particle.footholds.cumulative_actions.len() {
+        return;
+    }
+    particle.footholds.active[index] = 1;
+    particle.footholds.cumulative_actions[index] += 1.0;
+    particle.footholds.renewal_count[index] =
+        particle.footholds.renewal_count[index].saturating_add(1);
 }
 
 pub fn update(

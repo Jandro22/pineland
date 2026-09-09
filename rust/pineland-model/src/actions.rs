@@ -26,6 +26,16 @@ const ASSET_VIOLENCE: usize = 3;
 const COERCION: usize = 4;
 const ACCESS_RESTRICTION: usize = 5;
 
+#[derive(Clone, Copy)]
+struct HumanTarget {
+    /// `true` for a pooled manpower row and `false` for a fixed security post.
+    pooled: bool,
+    index: usize,
+    organization: usize,
+    personnel: f64,
+    available_fraction: f64,
+}
+
 fn action_organization(kind: u8) -> bool {
     // Python ACTION_ORGANIZATION_KINDS: insurgent, military, police, foreign.
     matches!(kind, 1 | 2 | 3 | 5 | 6 | 7)
@@ -71,18 +81,17 @@ fn organizations_hostile(particle: &ParticleState, first: usize, second: usize) 
     if first == second {
         return false;
     }
-    let (left, right) = if first < second {
-        (first as u32, second as u32)
-    } else {
-        (second as u32, first as u32)
-    };
     particle
         .relations
         .organization_a
         .iter()
         .zip(&particle.relations.organization_b)
         .zip(&particle.relations.status)
-        .any(|((a, b), status)| *a == left && *b == right && *status == 4)
+        .any(|((a, b), status)| {
+            ((*a as usize == first && *b as usize == second)
+                || (*a as usize == second && *b as usize == first))
+                && *status == 4
+        })
 }
 
 fn belief_control(
@@ -387,11 +396,18 @@ fn local_information(
     locality: usize,
     target: usize,
 ) -> f64 {
+    let target_is_security = matches!(
+        particle.organizations.kind.get(target).copied(),
+        Some(0 | 1 | 2 | 5)
+    );
+    let belief_target_matches = |candidate: usize| {
+        candidate == target || (target_is_security && candidate == crate::GOVERNMENT)
+    };
     let mut evidence: f64 = 0.0;
     for (index, key) in particle.beliefs.keys.iter().enumerate() {
         if key.observer as usize != organization
             || key.locality as usize != locality
-            || key.target as usize != target
+            || !belief_target_matches(key.target as usize)
             || particle
                 .beliefs
                 .evidence_count
@@ -415,7 +431,7 @@ fn local_information(
             if observer_matches_organization(particle, key.observer, organization)
                 && key.locality as usize == locality
                 && state.evidence_count.get(index).copied().unwrap_or(0) > 0
-                && key.target as usize == target
+                && belief_target_matches(key.target as usize)
             {
                 evidence = evidence.max(
                     state.confidence[index].clamp(0.0, 1.0) * state.estimate[index].clamp(0.0, 1.0),
@@ -427,6 +443,32 @@ fn local_information(
     // formation/locality observer rows without changing the action API.
     let _ = topology;
     evidence
+}
+
+fn apply_human_target_losses(
+    particle: &mut ParticleState,
+    target: HumanTarget,
+    losses: f64,
+) -> f64 {
+    let losses = losses.max(0.0).min(target.personnel);
+    if target.pooled {
+        let available = particle.manpower.pool[target.index].max(0.0);
+        let realized = losses.min(available);
+        let remaining = available - realized;
+        particle.manpower.pool[target.index] = remaining;
+        let reserve = particle.manpower.supply_reserve[target.index].max(0.0);
+        if available > 0.0 && reserve > 0.0 && realized > 0.0 {
+            let lost_supply = reserve * (realized / available);
+            particle.manpower.supply_reserve[target.index] = (reserve - lost_supply).max(0.0);
+            particle.logistics.cumulative_lost += lost_supply;
+        }
+        realized
+    } else {
+        let available = particle.security_posts.personnel[target.index].max(0.0);
+        let realized = losses.min(available);
+        particle.security_posts.personnel[target.index] = available - realized;
+        realized
+    }
 }
 
 fn local_execution_knowledge(
@@ -475,6 +517,76 @@ fn local_execution_knowledge(
     (general * local_access.clamp(0.0, 1.0))
         .sqrt()
         .clamp(0.0, 1.0)
+}
+
+fn nonfielded_human_targets(
+    particle: &ParticleState,
+    organization: usize,
+    locality: usize,
+) -> Vec<HumanTarget> {
+    let mut targets = Vec::new();
+    // Python sorts manpower-pool keys before appending fixed-post targets.
+    // Native initialization currently has no pooled rows, but sorting the
+    // numeric identity here keeps the serialization contract deterministic for
+    // later empirical/SMC configurations as well.
+    let mut pools = (0..particle.manpower.pool.len())
+        .filter(|&index| {
+            let target = particle.manpower.organization[index] as usize;
+            particle.manpower.locality[index] as usize == locality
+                && target != organization
+                && particle.manpower.pool[index] > 0.0
+                && particle.organizations.active.get(target).copied() == Some(1)
+                && organizations_hostile(particle, organization, target)
+        })
+        .collect::<Vec<_>>();
+    pools.sort_by_key(|&index| {
+        (
+            particle.manpower.organization[index] as usize,
+            particle.manpower.locality[index] as usize,
+        )
+    });
+    for index in pools {
+        let target = particle.manpower.organization[index] as usize;
+        targets.push(HumanTarget {
+            pooled: true,
+            index,
+            organization: target,
+            personnel: particle.manpower.pool[index].max(0.0),
+            available_fraction: 1.0,
+        });
+    }
+    for index in 0..particle.security_posts.organization.len() {
+        let target = particle.security_posts.organization[index] as usize;
+        if std::env::var_os("PINELAND_ACTION_TRACE").is_some()
+            && particle.security_posts.locality[index] as usize == locality
+        {
+            eprintln!(
+                "ACTION human_post index={} target={} formation={} personnel={:.17} active={} hostile={}",
+                index,
+                target,
+                particle.security_posts.formation[index],
+                particle.security_posts.personnel[index],
+                particle.organizations.active.get(target).copied().unwrap_or(0),
+                organizations_hostile(particle, organization, target),
+            );
+        }
+        if particle.security_posts.locality[index] as usize != locality
+            || particle.security_posts.formation[index] != u32::MAX
+            || particle.security_posts.personnel[index] <= 0.0
+            || particle.organizations.active.get(target).copied() != Some(1)
+            || !organizations_hostile(particle, organization, target)
+        {
+            continue;
+        }
+        targets.push(HumanTarget {
+            pooled: false,
+            index,
+            organization: target,
+            personnel: particle.security_posts.personnel[index].max(0.0),
+            available_fraction: particle.security_posts.available_fraction[index].clamp(0.0, 1.0),
+        });
+    }
+    targets
 }
 
 pub(crate) fn local_fighter_equivalents(
@@ -781,6 +893,23 @@ pub fn opportunities(
     interval_days: f64,
 ) {
     let trace = std::env::var_os("PINELAND_ACTION_TRACE").is_some();
+    if trace && organization == crate::INSURGENT && locality == 32 {
+        eprintln!(
+            "ACTION relation_debug {:?}",
+            particle
+                .relations
+                .organization_a
+                .iter()
+                .zip(&particle.relations.organization_b)
+                .zip(&particle.relations.status)
+                .filter(|((a, b), _)| {
+                    (**a as usize == organization && **b as usize == crate::POLICE)
+                        || (**b as usize == organization && **a as usize == crate::POLICE)
+                })
+                .map(|((a, b), status)| (*a, *b, *status))
+                .collect::<Vec<_>>()
+        );
+    }
     if !config.include_insurgency
         || organization >= particle.organizations.active.len()
         || locality >= topology.locality_count()
@@ -960,18 +1089,127 @@ pub fn opportunities(
     }
 
     if channel == NONFIELDED_HUMAN_TARGET {
-        // The locality draw precedes the execution-time target lookup.  In
-        // the current trajectory the selected locality has no exposed target,
-        // but preserving this boundary is essential for the next event's RNG
-        // continuation.
-        let _ = operational_target(
+        if trace {
+            eprintln!(
+                "ACTION human_enter org={} source={}",
+                organization, locality,
+            );
+        }
+        let Some(target_locality) = operational_target(
             particle,
             topology,
             organization,
             locality,
             NONFIELDED_HUMAN_TARGET,
             rng,
+        ) else {
+            return;
+        };
+        let targets = nonfielded_human_targets(particle, organization, target_locality);
+        if trace {
+            eprintln!(
+                "ACTION human_lookup org={} source={} destination={} targets={}",
+                organization,
+                locality,
+                target_locality,
+                targets.len(),
+            );
+        }
+        if targets.is_empty() {
+            return;
+        }
+        let target_weights = targets
+            .iter()
+            .map(|target| (target.personnel * target.available_fraction.clamp(0.0, 1.0)).max(1e-9))
+            .collect::<Vec<_>>();
+        let selected = match rng.choices_indices(targets.len(), Some(&target_weights), 1) {
+            Ok(values) => values[0],
+            Err(_) => return,
+        };
+        let target = targets[selected];
+        let exposed = (target.personnel * target.available_fraction.clamp(0.0, 1.0)).max(0.0);
+        let resistance = exposed / (committed + exposed).max(1e-12);
+        let demand = committed
+            * config.combat.supply_per_person_hour
+            * config.combat.interval_hours.max(0.0);
+        let available = local_supply_available(particle, organization, locality);
+        let material_fraction = if demand > 0.0 {
+            (available / demand).clamp(0.0, 1.0)
+        } else {
+            1.0
+        };
+        let total = local_fighter_equivalents(particle, organization, locality, config);
+        let scale = config
+            .organization_ecology
+            .minimum_formation_personnel
+            .max(1e-9);
+        let capacity = ((total.0 + total.1) / (total.0 + total.1 + scale)).clamp(0.0, 1.0);
+        let knowledge = local_execution_knowledge(
+            particle,
+            topology,
+            organization,
+            target_locality,
+            target.organization,
         );
+        let vulnerability = (1.0 - resistance).clamp(0.0, 1.0);
+        let probability = if capacity <= 0.0
+            || knowledge <= 0.0
+            || vulnerability <= 0.0
+            || material_fraction <= 0.0
+        {
+            0.0
+        } else {
+            (capacity * knowledge * vulnerability * material_fraction)
+                .powf(0.25)
+                .clamp(0.0, 1.0)
+        };
+        let (consumed, unmet) = consume_local_supply(particle, organization, locality, demand);
+        let execution_draw = rng.random();
+        if trace {
+            eprintln!(
+                "ACTION human org={} source={} destination={} target_org={} target_index={} pooled={} exposed={:.17} demand={:.17} available={:.17} consumed={:.17} unmet={:.17} probability={:.17} draw={:.17}",
+                organization,
+                locality,
+                target_locality,
+                target.organization,
+                target.index,
+                target.pooled,
+                exposed,
+                demand,
+                available,
+                consumed,
+                unmet,
+                probability,
+                execution_draw,
+            );
+        }
+        if execution_draw < probability {
+            let loss_fraction = config
+                .combat
+                .max_loss_fraction
+                .min(config.combat.base_attrition_rate * (1.0 + probability));
+            let losses = target.personnel.min(exposed * loss_fraction);
+            let realized = apply_human_target_losses(particle, target, losses);
+            if realized > 0.0 {
+                let intensity = (realized / exposed.max(1.0)).min(1.0);
+                particle.locality.violence[target_locality] =
+                    clamp01(particle.locality.violence[target_locality] * 0.85 + 0.25 * intensity);
+                crate::combat::update_relations(
+                    particle,
+                    organization,
+                    target.organization,
+                    intensity,
+                    _time,
+                    config,
+                );
+                crate::organizations::record_foothold_action(
+                    particle,
+                    topology,
+                    organization,
+                    locality,
+                );
+            }
+        }
         return;
     }
 

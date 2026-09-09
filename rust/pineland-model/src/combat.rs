@@ -95,18 +95,17 @@ fn organizations_hostile(particle: &ParticleState, first: usize, second: usize) 
     if first == second {
         return false;
     }
-    let (left, right) = if first < second {
-        (first as u32, second as u32)
-    } else {
-        (second as u32, first as u32)
-    };
     particle
         .relations
         .organization_a
         .iter()
         .zip(&particle.relations.organization_b)
         .zip(&particle.relations.status)
-        .any(|((a, b), status)| *a == left && *b == right && *status == 4)
+        .any(|((a, b), status)| {
+            ((*a as usize == first && *b as usize == second)
+                || (*a as usize == second && *b as usize == first))
+                && *status == 4
+        })
 }
 
 fn formation_microzone(
@@ -286,7 +285,7 @@ fn perceived_disadvantage(
         .clamp(-3.0, 3.0)
 }
 
-fn update_relations(
+pub(crate) fn update_relations(
     particle: &mut ParticleState,
     first: usize,
     second: usize,
@@ -294,17 +293,15 @@ fn update_relations(
     time: f64,
     config: &SimulationConfig,
 ) {
-    let (left, right) = if first < second {
-        (first as u32, second as u32)
-    } else {
-        (second as u32, first as u32)
-    };
     if let Some(index) = particle
         .relations
         .organization_a
         .iter()
         .zip(&particle.relations.organization_b)
-        .position(|(a, b)| *a == left && *b == right)
+        .position(|(a, b)| {
+            (*a as usize == first && *b as usize == second)
+                || (*a as usize == second && *b as usize == first)
+        })
     {
         let magnitude = clamp01(magnitude);
         particle.relations.hostility_memory[index] =
@@ -427,14 +424,24 @@ fn update_perceived_momentum(
     second: usize,
     rng: &mut PyRandomCompat,
 ) {
-    let population = particle.locality.population[locality];
-    let harm_scale = civilian_harm / population.mul_add(0.001, 0.0).max(1.0);
+    let _ = civilian_harm;
+    let trace = std::env::var_os("PINELAND_MOMENTUM_TRACE").is_some();
+    if trace {
+        eprintln!(
+            "MOMENTUM_BEGIN time-locality={} signal={:.17} first_org={} second_org={}",
+            locality,
+            signal,
+            particle.formations.organization[first],
+            particle.formations.organization[second],
+        );
+    }
     let first_insurgent =
         organization_is_insurgent(particle, particle.formations.organization[first] as usize);
     let second_insurgent =
         organization_is_insurgent(particle, particle.formations.organization[second] as usize);
-    let state_vs_insurgent =
-        (first_insurgent && !second_insurgent) || (second_insurgent && !first_insurgent);
+    let factional_insurgent_first = first_insurgent && !second_insurgent;
+    let factional_insurgent_second = second_insurgent && !first_insurgent;
+    let both_insurgent = first_insurgent && second_insurgent;
     for person in 0..particle.people.residence.len() {
         if particle.people.residence[person] as usize != locality {
             continue;
@@ -447,40 +454,68 @@ fn update_perceived_momentum(
             continue;
         }
         let interpretation = clamp01(signal + rng.normalvariate(0.0, config.reporting_error));
-        if state_vs_insurgent {
-            let discipline = particle
-                .organizations
-                .discipline
-                .get(crate::GOVERNMENT)
-                .copied()
-                .unwrap_or(0.5);
-            let attribution = harm_scale * (1.0 - discipline);
-            let offset = person * 2;
+        if factional_insurgent_first {
+            // Python treats a state-versus-insurgent engagement as a
+            // factional update: only the literal insurgent slot is present in
+            // the compact certificate projection, while the state actor's
+            // dynamic key is outside that projection.
+            let offset = person * 2 + 1;
             particle.people.expected_control[offset] = clamp01(
                 particle.people.expected_control[offset]
-                    + config.combat.momentum_learning_rate * (interpretation - 0.5)
-                    - 0.04 * attribution,
+                    + config.combat.momentum_learning_rate * (interpretation - 0.5),
             );
-            if particle
-                .organizations
-                .kind
-                .iter()
-                .enumerate()
-                .any(|(index, kind)| *kind == 3 && particle.organizations.active[index] != 0)
-            {
-                particle.people.expected_control[offset + 1] = clamp01(
-                    particle.people.expected_control[offset + 1]
-                        + config.combat.momentum_learning_rate * (0.5 - interpretation)
-                        + 0.02 * attribution,
+            if trace {
+                eprintln!(
+                    "MOMENTUM_PERSON person={} reach-pass insurgent={:.17}",
+                    person, particle.people.expected_control[offset]
                 );
             }
-        } else {
-            // The fixed-width v1 person schema has government/insurgent
-            // expected-control slots.  Factional engagements are retained as
-            // a no-op here until the dynamic organization extension is
-            // materialized; the two initial insurgency sides are the
-            // scientifically certified path.
-            let _ = (first, second);
+        } else if factional_insurgent_second {
+            let offset = person * 2 + 1;
+            particle.people.expected_control[offset] = clamp01(
+                particle.people.expected_control[offset]
+                    + config.combat.momentum_learning_rate * (0.5 - interpretation),
+            );
+            if trace {
+                eprintln!(
+                    "MOMENTUM_PERSON person={} reach-pass insurgent={:.17}",
+                    person, particle.people.expected_control[offset]
+                );
+            }
+        } else if both_insurgent {
+            // Distinct insurgent organizations use dynamic keys in Python.
+            // Preserve the literal `insurgent` slot when one participant is
+            // the canonical initial actor; splinter-only keys are intentionally
+            // outside the compact two-slot person schema.
+            let first_literal =
+                particle.formations.organization[first] as usize == crate::INSURGENT;
+            let second_literal =
+                particle.formations.organization[second] as usize == crate::INSURGENT;
+            if first_literal {
+                let offset = person * 2 + 1;
+                particle.people.expected_control[offset] = clamp01(
+                    particle.people.expected_control[offset]
+                        + config.combat.momentum_learning_rate * (interpretation - 0.5),
+                );
+                if trace {
+                    eprintln!(
+                        "MOMENTUM_PERSON person={} both-first insurgent={:.17}",
+                        person, particle.people.expected_control[offset]
+                    );
+                }
+            } else if second_literal {
+                let offset = person * 2 + 1;
+                particle.people.expected_control[offset] = clamp01(
+                    particle.people.expected_control[offset]
+                        + config.combat.momentum_learning_rate * (0.5 - interpretation),
+                );
+                if trace {
+                    eprintln!(
+                        "MOMENTUM_PERSON person={} both-second insurgent={:.17}",
+                        person, particle.people.expected_control[offset]
+                    );
+                }
+            }
         }
     }
 }
@@ -729,6 +764,12 @@ fn resolve_engagement(
         first,
         second,
         rng,
+    );
+    crate::organizations::record_foothold_action(
+        particle,
+        topology,
+        initiator_organization,
+        locality,
     );
     particle.counters.contacts = particle.counters.contacts.saturating_add(1);
     let _ = (
