@@ -412,18 +412,21 @@ pub fn opportunities(
         return;
     }
 
-    // Remaining channels are implemented in the same event boundary in the
-    // next parity slices. They intentionally do not mutate generic foothold
-    // state here; target-specific outcomes belong to their selected channel.
-    let _ = (
-        channel,
-        committed,
-        ARMED_CONFRONTATION,
-        NONFIELDED_HUMAN_TARGET,
-        ASSET_VIOLENCE,
-        COERCION,
-        ADMINISTRATIVE,
-    );
+    // Python chooses an operational locality before it checks whether the
+    // execution-time target is actually present.  Even a failed/empty target
+    // therefore consumes the same weighted-choice draw.  Preserve that RNG
+    // boundary now; the target-state mutations are handled below as their
+    // corresponding channels are certified.
+    if channel == NONFIELDED_HUMAN_TARGET || channel == ASSET_VIOLENCE {
+        let mut candidate_count = 1usize; // same-locality candidate
+        candidate_count += topology.locality_edges.neighbors(locality).count();
+        let _ = rng.choices_indices(candidate_count, None, 1);
+    }
+
+    // The remaining channels have no native state mutation in this slice, but
+    // keep their constants explicit until the process-specific transitions
+    // are ported and certified.
+    let _ = (channel, committed, ARMED_CONFRONTATION, COERCION, ADMINISTRATIVE);
 }
 
 pub fn apply_nonviolent_coercion(particle: &mut ParticleState, locality: usize, amount: f64) {
