@@ -889,6 +889,7 @@ pub fn update(
                 let material = total * 0.19;
                 let training = total * 0.14;
                 let organizational = total * 0.10;
+                let sanctuary = total * 0.12;
                 let denominator = total.max(1.0);
                 particle.organizations.capital[recipient] += financial;
                 if recipient == crate::GOVERNMENT {
@@ -915,7 +916,7 @@ pub fn update(
                     // local execution and sponsor dependence without creating
                     // personnel.
                     particle.organizations.external_sanctuary[recipient] =
-                        clamp01(particle.organizations.external_sanctuary[recipient] + 0.12);
+                        clamp01(particle.organizations.external_sanctuary[recipient] + sanctuary / denominator);
                     let phenotype = recipient * 8 + 7;
                     if phenotype < particle.organizations.phenotype.len() {
                         particle.organizations.phenotype[phenotype] =
