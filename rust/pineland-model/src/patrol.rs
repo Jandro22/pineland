@@ -528,7 +528,36 @@ fn observe_control(
     let weight = observation_confidence
         * quality
         * trust
-        * language.powf(config.information.language_fusion_weight);
+        * language.powf(config.information.language_fusion_weight)
+        * (1.0
+            + config.information.corroboration_bonus
+                * crate::information::patrol_control_corroboration(
+                    particle,
+                    topology,
+                    config,
+                    if insurgent_observer {
+                        crate::INSURGENT
+                    } else {
+                        crate::GOVERNMENT
+                    },
+                    locality,
+                    &crate::information::patrol_source_id(particle, observer_formation),
+                    time,
+                )
+                .min(3.0));
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.25 {
+        eprintln!(
+            "PATROL_CONTROL_TRACE formation={} time={:.17} quality={:.17} trust={:.17} language={:.17} confidence={:.17} weight={:.17} observed={:?}",
+            observer_formation,
+            time,
+            quality,
+            trust,
+            language,
+            observation_confidence,
+            weight,
+            observed,
+        );
+    }
     // The field node fuses the complete control vector into its own dynamic
     // control-belief row.  Python names this node by formation ID; the native
     // schema reserves codes after the seven fixed organizations for formation
