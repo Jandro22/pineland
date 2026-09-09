@@ -240,6 +240,106 @@ fn adapt_organization(
         particle.organizations.phenotype[offset + 6];
 }
 
+/// Advance the proto-formation clock before updating extant armed
+/// organizations.  Native v1 does not yet materialize the Python proto
+/// object graph, but the eligibility scan and its Bernoulli draw are part of
+/// the process RNG contract.  Keeping this boundary explicit prevents a
+/// latent proto attempt from shifting every subsequent ecology draw.
+fn consume_proto_formation_draws(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    elapsed_days: f64,
+) {
+    let reference_days = 7.0;
+    for community in 0..particle.communities.locality.len() {
+        let start = particle.communities.member_offsets[community] as usize;
+        let end = particle.communities.member_offsets[community + 1] as usize;
+        let members = &particle.communities.member_indices[start..end];
+        if members.is_empty() {
+            continue;
+        }
+        let represented = python_sum(
+            &members
+                .iter()
+                .map(|person| particle.people.represented_population[*person as usize])
+                .collect::<Vec<_>>(),
+        );
+        let mobilized = members
+            .iter()
+            .copied()
+            .map(|person| person as usize)
+            .filter(|person| {
+                particle.people.organization[*person] == u32::MAX
+                    && (matches!(particle.people.public_behavior[*person], 1 | 2 | 6)
+                        || particle.people.grievance[*person] > 0.55)
+            })
+            .collect::<Vec<_>>();
+        let mobilized_weight = python_sum(
+            &mobilized
+                .iter()
+                .map(|person| particle.people.represented_population[*person])
+                .collect::<Vec<_>>(),
+        );
+        if mobilized_weight < config.organization_ecology.minimum_proto_represented_population {
+            continue;
+        }
+        let grievance = python_sum(
+            &members
+                .iter()
+                .map(|person| {
+                    let person = *person as usize;
+                    particle.people.represented_population[person]
+                        * particle.people.grievance[person]
+                })
+                .collect::<Vec<_>>(),
+        ) / represented.max(1.0e-9);
+        let bridge_fraction = config.social_network.bridge_fraction.clamp(0.0, 1.0);
+        let bridge_weight = represented * bridge_fraction;
+        let reach = (bridge_weight / represented.max(1.0) * 5.0).min(1.0);
+        let access = python_sum(
+            &members
+                .iter()
+                .map(|person| {
+                    let person = *person as usize;
+                    particle.people.represented_population[person]
+                        * particle.people.political_access[person]
+                })
+                .collect::<Vec<_>>(),
+        ) / represented.max(1.0e-9);
+        let score = clamp01(
+            0.3 * grievance
+                + 0.3 * particle.communities.cohesion[community]
+                + 0.2 * particle.communities.insurgent_sympathy[community]
+                + 0.2 * reach
+                - config.political_order.peaceful_channel_strength * 0.25 * access,
+        );
+        let expected_repression = clamp01(
+            python_sum(
+                &mobilized
+                    .iter()
+                    .map(|person| {
+                        let person = *person as usize;
+                        particle.people.represented_population[person]
+                            * (1.0 - particle.people.expected_control[person * 2])
+                    })
+                    .collect::<Vec<_>>(),
+            ) / mobilized_weight.max(1.0e-9),
+        );
+        let hazard = 1.0
+            - python_exp(
+                -config.organization_ecology.proto_base_hazard
+                    * python_exp(2.2 * score - 1.4 * expected_repression)
+                    * elapsed_days
+                    / reference_days,
+            );
+        // ``form_proto_organizations`` draws once for every eligible
+        // community, including a failed founding attempt.
+        let _ = (topology, rng.random() < hazard);
+    }
+}
+
 /// Renew/decay the persistent locality foothold stock at the same event
 /// boundaries as Python's `advance_local_footholds`.  This transition is
 /// deterministic and must not consume an ecology/process RNG draw.
@@ -349,6 +449,7 @@ pub fn update(
     if !config.organization_ecology.enabled || elapsed_days <= 0.0 {
         return;
     }
+    consume_proto_formation_draws(particle, topology, config, rng, elapsed_days);
     let organizations = (0..particle.organizations.active.len())
         .filter(|&organization| {
             particle.organizations.active[organization] != 0
