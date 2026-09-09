@@ -29,6 +29,7 @@ pub(crate) fn certify_initialization(arguments: &Arguments) -> Result<(), String
     result.insert("scheduler", scheduler(&engine));
     if std::env::var_os("PINELAND_CERT_DEBUG").is_some() {
         result.insert("debug_beliefs", debug_beliefs(&engine));
+        result.insert("debug_zones", debug_zones(&engine));
     }
     result.insert("state_hash", JsonValue::string(engine.state_hash()));
     result.insert("decision_hash", JsonValue::string(engine.decision_hash()));
@@ -86,6 +87,7 @@ pub(crate) fn certify_trajectory(arguments: &Arguments) -> Result<(), String> {
     result.insert("scheduler", scheduler(&engine));
     if std::env::var_os("PINELAND_CERT_DEBUG").is_some() {
         result.insert("debug_beliefs", debug_beliefs(&engine));
+        result.insert("debug_zones", debug_zones(&engine));
     }
     result.insert("state_hash", JsonValue::string(engine.state_hash()));
     result.insert("decision_hash", JsonValue::string(engine.decision_hash()));
@@ -118,6 +120,32 @@ fn debug_beliefs(engine: &SimulationEngine) -> JsonValue {
             row.insert(
                 "evidence_count",
                 JsonValue::integer(beliefs.evidence_count[index] as u64),
+            );
+            values.push(row);
+        }
+    }
+    rows
+}
+
+fn debug_zones(engine: &SimulationEngine) -> JsonValue {
+    let zones = &engine.particle.zone_beliefs;
+    let mut rows = JsonValue::Array(Vec::new());
+    if let JsonValue::Array(values) = &mut rows {
+        for index in 0..zones.keys.len() {
+            let key = &zones.keys[index];
+            let mut row = JsonValue::object();
+            row.insert("observer", JsonValue::integer(key.observer as u64));
+            row.insert("zone", JsonValue::integer(key.zone as u64));
+            row.insert("estimate", JsonValue::number(zones.estimate[index]));
+            row.insert("confidence", JsonValue::number(zones.confidence[index]));
+            row.insert("updated_at", JsonValue::number(zones.updated_at[index]));
+            row.insert(
+                "contradiction",
+                JsonValue::number(zones.contradiction[index]),
+            );
+            row.insert(
+                "evidence_count",
+                JsonValue::integer(zones.evidence_count[index] as u64),
             );
             values.push(row);
         }
