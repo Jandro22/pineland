@@ -424,7 +424,6 @@ fn update_perceived_momentum(
     second: usize,
     rng: &mut PyRandomCompat,
 ) {
-    let _ = civilian_harm;
     let trace = std::env::var_os("PINELAND_MOMENTUM_TRACE").is_some();
     if trace {
         eprintln!(
@@ -439,9 +438,9 @@ fn update_perceived_momentum(
         organization_is_insurgent(particle, particle.formations.organization[first] as usize);
     let second_insurgent =
         organization_is_insurgent(particle, particle.formations.organization[second] as usize);
-    let factional_insurgent_first = first_insurgent && !second_insurgent;
-    let factional_insurgent_second = second_insurgent && !first_insurgent;
+    let state_vs_insurgent = first_insurgent != second_insurgent;
     let both_insurgent = first_insurgent && second_insurgent;
+    let harm_scale = civilian_harm / (particle.locality.population[locality] * 0.001).max(1.0);
     for person in 0..particle.people.residence.len() {
         if particle.people.residence[person] as usize != locality {
             continue;
@@ -450,36 +449,56 @@ fn update_perceived_momentum(
             0.15 + 0.55 * particle.locality.observability[locality]
                 + 0.3 * particle.people.efficacy[person],
         );
-        if rng.random() > reach {
+        let reach_draw = rng.random();
+        if reach_draw > reach {
             continue;
         }
-        let interpretation = clamp01(signal + rng.normalvariate(0.0, config.reporting_error));
-        if factional_insurgent_first {
-            // Python treats a state-versus-insurgent engagement as a
-            // factional update: only the literal insurgent slot is present in
-            // the compact certificate projection, while the state actor's
-            // dynamic key is outside that projection.
-            let offset = person * 2 + 1;
-            particle.people.expected_control[offset] = clamp01(
-                particle.people.expected_control[offset]
-                    + config.combat.momentum_learning_rate * (interpretation - 0.5),
+        let interpretation_noise = rng.normalvariate(0.0, config.reporting_error);
+        let interpretation = clamp01(signal + interpretation_noise);
+        if trace {
+            eprintln!(
+                "MOMENTUM_DETAIL person={} reach_draw={:.17} reach={:.17} noise={:.17} interpretation={:.17}",
+                person, reach_draw, reach, interpretation_noise, interpretation
             );
-            if trace {
-                eprintln!(
-                    "MOMENTUM_PERSON person={} reach-pass insurgent={:.17}",
-                    person, particle.people.expected_control[offset]
+        }
+        if state_vs_insurgent {
+            let attribution = harm_scale
+                * (1.0
+                    - particle
+                        .organizations
+                        .discipline
+                        .get(crate::GOVERNMENT)
+                        .copied()
+                        .unwrap_or(0.5));
+            let government_offset = person * 2;
+            particle.people.expected_control[government_offset] = clamp01(
+                particle.people.expected_control[government_offset]
+                    + config.combat.momentum_learning_rate * (interpretation - 0.5)
+                    - 0.04 * attribution,
+            );
+            if particle
+                .organizations
+                .kind
+                .iter()
+                .enumerate()
+                .any(|(organization, kind)| {
+                    *kind == 3
+                        && particle.organizations.active.get(organization).copied() == Some(1)
+                })
+            {
+                let insurgent_offset = person * 2 + 1;
+                particle.people.expected_control[insurgent_offset] = clamp01(
+                    particle.people.expected_control[insurgent_offset]
+                        + config.combat.momentum_learning_rate * (0.5 - interpretation)
+                        + 0.02 * attribution,
                 );
             }
-        } else if factional_insurgent_second {
-            let offset = person * 2 + 1;
-            particle.people.expected_control[offset] = clamp01(
-                particle.people.expected_control[offset]
-                    + config.combat.momentum_learning_rate * (0.5 - interpretation),
-            );
             if trace {
                 eprintln!(
-                    "MOMENTUM_PERSON person={} reach-pass insurgent={:.17}",
-                    person, particle.people.expected_control[offset]
+                    "MOMENTUM_PERSON person={} state government={:.17} insurgent={:.17}",
+                    person,
+                    particle.people.expected_control[government_offset],
+                    particle.people.expected_control[person * 2 + 1],
                 );
             }
         } else if both_insurgent {
@@ -597,6 +616,27 @@ fn resolve_engagement(
         * exposure
         * python_exp(0.45 * advantage + rng.normalvariate(0.0, config.combat.stochastic_sigma)))
     .min(config.combat.max_loss_fraction);
+    if std::env::var_os("PINELAND_COMBAT_TRACE").is_some() {
+        eprintln!(
+            "COMBAT_CORE first={} second={} locality={} microzone={} detected={} {} initiative={:.17} {:.17} cap={:.17} {:.17} advantage={:.17} obs={:.17} terrain={:.17} exposure={:.17} frac={:.17} {:.17}",
+            first,
+            second,
+            locality,
+            microzone,
+            detected_first,
+            detected_second,
+            initiative_first,
+            initiative_second,
+            capability_first,
+            capability_second,
+            advantage,
+            observability,
+            terrain,
+            exposure,
+            frac_first,
+            frac_second,
+        );
+    }
     let old_personnel_first = particle.formations.personnel[first];
     let old_personnel_second = particle.formations.personnel[second];
     let loss_first = old_personnel_first.min(old_personnel_first * frac_first);
@@ -714,6 +754,22 @@ fn resolve_engagement(
         config,
     );
     let signal = logistic((frac_second - frac_first) * 18.0 + 0.35 * advantage);
+    // Python issues a withdrawal order after a disengagement.  The order's
+    // command-reliability Bernoulli is part of the shared combat RNG stream,
+    // even when the compact native state cannot yet expose the full order
+    // archive.  Consume the draw at the same boundary until the order fields
+    // are materialized by the movement schema.
+    for disengaged_slot in disengaged {
+        if disengaged_slot {
+            let _ = rng.random();
+        }
+    }
+    if std::env::var_os("PINELAND_COMBAT_TRACE").is_some() {
+        eprintln!(
+            "COMBAT_RESULT first={} second={} signal={:.17} civilian_harm={:.17} contacts={} disengaged={:?}",
+            first, second, signal, civilian_harm, particle.counters.contacts, disengaged
+        );
+    }
     let engagement_id = format!("ENG{:010}", particle.counters.contacts + 1);
     let (first_momentum, first_harm) = crate::information::record_engagement_observation(
         particle,

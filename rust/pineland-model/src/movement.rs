@@ -125,8 +125,10 @@ pub fn civilian_mobility(
             elapsed_days,
             1.0,
         );
-        let forced = rng.random() < forced_probability;
-        let voluntary = !forced && rng.random() < voluntary_probability;
+        let forced_draw = rng.random();
+        let forced = forced_draw < forced_probability;
+        let voluntary_draw = if forced { None } else { Some(rng.random()) };
+        let voluntary = !forced && voluntary_draw.is_some_and(|draw| draw < voluntary_probability);
         if !forced && !voluntary {
             continue;
         }
@@ -151,6 +153,41 @@ pub fn civilian_mobility(
             .choices_indices(candidates.len(), Some(&utilities), 1)
             .expect("civilian mobility weighted choice failed")[0];
         let destination = candidates[selected];
+        if std::env::var_os("PINELAND_MOBILITY_TRACE").is_some() {
+            eprintln!(
+                "MOBILITY_PERSON person={} origin={}({}) destination={}({}) forced={} voluntary={} forced_draw={:.17} forced_probability={:.17} voluntary_draw={:?} voluntary_probability={:.17} candidates={:?} utilities={:?}",
+                person,
+                origin,
+                topology.locality_names.get(origin).map(String::as_str).unwrap_or("?"),
+                destination,
+                topology.locality_names.get(destination).map(String::as_str).unwrap_or("?"),
+                forced,
+                voluntary,
+                forced_draw,
+                forced_probability,
+                voluntary_draw,
+                voluntary_probability,
+                candidates,
+                utilities,
+            );
+            for (candidate, (_, edge_cost)) in candidates
+                .iter()
+                .copied()
+                .zip(topology.locality_edges.neighbors(origin))
+            {
+                eprintln!(
+                    "MOBILITY_CANDIDATE person={} locality={}({}) edge_cost={:.17}",
+                    person,
+                    candidate,
+                    topology
+                        .locality_names
+                        .get(candidate)
+                        .map(String::as_str)
+                        .unwrap_or("?"),
+                    edge_cost,
+                );
+            }
+        }
         relocate_person(particle, person, destination);
 
         let weight = particle.people.represented_population[person];
@@ -234,16 +271,40 @@ fn reference_probability(probability: f64, elapsed_days: f64, reference_days: f6
     }
 }
 
-fn person_expected_control(particle: &ParticleState, person: usize, _locality: usize) -> f64 {
+fn person_expected_control(particle: &ParticleState, person: usize, locality: usize) -> f64 {
+    let locality_count = particle.locality.population.len();
+    let mask_index = person
+        .checked_mul(locality_count)
+        .and_then(|value| value.checked_add(locality));
+    if let Some(mask_index) = mask_index {
+        let value_index = mask_index * 2;
+        if particle
+            .people
+            .expected_destination_control_present
+            .get(mask_index)
+            .copied()
+            .unwrap_or(0)
+            & 1
+            != 0
+        {
+            return particle
+                .people
+                .expected_destination_control
+                .get(value_index)
+                .copied()
+                .unwrap_or(0.5)
+                .clamp(0.0, 1.0);
+        }
+    }
     particle.people.expected_control[person * 2].clamp(0.0, 1.0)
 }
 
 fn destination_expected_control(
     particle: &ParticleState,
     person: usize,
-    _destination: usize,
+    destination: usize,
 ) -> f64 {
-    person_expected_control(particle, person, _destination)
+    person_expected_control(particle, person, destination)
 }
 
 fn relocate_person(particle: &mut ParticleState, person: usize, destination: usize) {

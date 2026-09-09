@@ -1165,6 +1165,18 @@ pub(crate) fn record_engagement_observation(
     particle.information_observations[index].reported_momentum = perceived;
     particle.information_observations[index].reported_civilian_harm = reported_harm;
     particle.information_observations[index].attributed_actor = attributed_actor as u32;
+    if std::env::var_os("PINELAND_COMBAT_TRACE").is_some() {
+        eprintln!(
+            "COMBAT_OBS engagement={} observer={} target={} signal={:.17} perceived={:.17} reported_harm={:.17} attribution={}",
+            engagement_id,
+            observer_organization,
+            target_organization,
+            signal,
+            perceived,
+            reported_harm,
+            attributed_actor,
+        );
+    }
     let _ = observation;
     (perceived, reported_harm)
 }

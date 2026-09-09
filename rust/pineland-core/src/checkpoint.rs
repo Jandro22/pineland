@@ -864,6 +864,8 @@ fn encode_people(b: &mut Vec<u8>, p: &ParticleState) {
     put_u32_vec(b, &x.community);
     put_u8_vec(b, &x.public_behavior);
     put_f64_vec(b, &x.expected_control);
+    put_f64_vec(b, &x.expected_destination_control);
+    put_u8_vec(b, &x.expected_destination_control_present);
     put_f64_vec(b, &x.state_legitimacy);
     put_f64_vec(b, &x.government_legitimacy);
     put_f64_vec(b, &x.political_access);
@@ -896,6 +898,8 @@ fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), Ch
     x.community = read_u32_vec(r)?;
     x.public_behavior = read_u8_vec(r)?;
     x.expected_control = read_f64_vec(r)?;
+    x.expected_destination_control = read_f64_vec(r)?;
+    x.expected_destination_control_present = read_u8_vec(r)?;
     x.state_legitimacy = read_f64_vec(r)?;
     x.government_legitimacy = read_f64_vec(r)?;
     x.political_access = read_f64_vec(r)?;

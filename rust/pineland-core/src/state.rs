@@ -139,6 +139,12 @@ pub struct PersonState {
     /// representative person.  This is distinct from the hidden locality
     /// control and from actor-held belief state.
     pub expected_control: Vec<f64>,
+    /// Sparse-in-Python destination expectations represented as a dense
+    /// person × locality × actor table in the native state.  The companion
+    /// mask distinguishes an absent Python mapping entry from a legitimate
+    /// zero-valued expectation.
+    pub expected_destination_control: Vec<f64>,
+    pub expected_destination_control_present: Vec<u8>,
     pub state_legitimacy: Vec<f64>,
     pub government_legitimacy: Vec<f64>,
     pub political_access: Vec<f64>,
@@ -176,6 +182,8 @@ impl PersonState {
             community: vec![u32::MAX; count],
             public_behavior: vec![0; count],
             expected_control: vec![0.0; count * 2],
+            expected_destination_control: Vec::new(),
+            expected_destination_control_present: Vec::new(),
             state_legitimacy: vec![0.65; count],
             government_legitimacy: vec![0.55; count],
             political_access: vec![0.45; count],
@@ -188,6 +196,12 @@ impl PersonState {
 
     pub fn with_organizations(mut self, organization_count: usize) -> Self {
         self.insurgent_affinity = vec![0.0; self.locality.len() * organization_count];
+        self
+    }
+
+    pub fn with_destination_localities(mut self, locality_count: usize) -> Self {
+        self.expected_destination_control = vec![0.0; self.locality.len() * locality_count * 2];
+        self.expected_destination_control_present = vec![0; self.locality.len() * locality_count];
         self
     }
 }
@@ -1343,7 +1357,9 @@ impl ParticleState {
         rng: RngStreams,
     ) -> Self {
         let mut particle = Self::new(localities, zones, organizations, formations, footholds, rng);
-        particle.people = PersonState::new(people).with_organizations(organizations);
+        particle.people = PersonState::new(people)
+            .with_organizations(organizations)
+            .with_destination_localities(localities);
         particle.social_edges = SocialEdgeState::new(people);
         particle
     }
@@ -1460,6 +1476,8 @@ impl ParticleState {
         append_u32s(material, &self.people.community);
         append_u8s(material, &self.people.public_behavior);
         append_f64s(material, &self.people.expected_control);
+        append_f64s(material, &self.people.expected_destination_control);
+        append_u8s(material, &self.people.expected_destination_control_present);
         append_f64s(material, &self.people.state_legitimacy);
         append_f64s(material, &self.people.government_legitimacy);
         append_f64s(material, &self.people.political_access);
@@ -1893,6 +1911,21 @@ impl ParticleState {
                 name: "person expected control".to_string(),
                 left: self.people.expected_control.len(),
                 right: people_count * 2,
+            });
+        }
+        let locality_count = self.locality.population.len();
+        if self.people.expected_destination_control.len() != people_count * locality_count * 2 {
+            return Err(StateError::LengthMismatch {
+                name: "person expected destination control".to_string(),
+                left: self.people.expected_destination_control.len(),
+                right: people_count * locality_count * 2,
+            });
+        }
+        if self.people.expected_destination_control_present.len() != people_count * locality_count {
+            return Err(StateError::LengthMismatch {
+                name: "person expected destination control present".to_string(),
+                left: self.people.expected_destination_control_present.len(),
+                right: people_count * locality_count,
             });
         }
         let organization_count = self.organizations.kind.len();
