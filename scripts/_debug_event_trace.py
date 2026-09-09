@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix="pineland-trace-") as directory:
             "certify-trajectory",
             "--config", str(config_path),
             "--seed", "0",
-            "--until", "30",
+            "--until", "30", "--max-events", "1880",
         ],
         cwd=root,
         env=environment,
@@ -28,6 +28,6 @@ with tempfile.TemporaryDirectory(prefix="pineland-trace-") as directory:
         check=True,
     )
 events = [line for line in completed.stderr.splitlines() if line.startswith("EVENT ")]
-for line in events:
+for line in events[-80:]:
     print(line)
 print("total", len(events))

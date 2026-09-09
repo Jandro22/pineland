@@ -629,7 +629,10 @@ fn recompute_member_population(particle: &mut ParticleState) {
     }
 }
 
-fn refresh_foothold_memberships(particle: &mut ParticleState, topology: &StaticTopology) {
+pub(crate) fn refresh_foothold_memberships(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+) {
     let locality_count = topology.locality_count();
     for organization in 0..particle.organizations.kind.len() {
         for locality in 0..locality_count {

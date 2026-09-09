@@ -485,6 +485,23 @@ pub fn command(
                 footholds.as_deref(),
                 posture,
             );
+            if std::env::var_os("PINELAND_COMMAND_CANDIDATE_TRACE").is_some()
+                && formation == 5
+                && (time - 27.0).abs() < 1.0e-12
+            {
+                eprintln!(
+                    "COMMAND_CANDIDATE destination={} score={:.17} travel_hours={:.17} distance_km={:.17} own_control={:.17} opponent_control={:.17} uncertainty={:.17}",
+                    destination,
+                    score,
+                    metric.travel_hours,
+                    metric.distance_km,
+                    belief_triplet(particle, organization, target_pair(particle, organization).0, destination, 1).1,
+                    opponent_control(particle, organization, target_pair(particle, organization).1, destination).1,
+                    1.0 - belief_triplet(particle, organization, target_pair(particle, organization).0, destination, 1).2.min(
+                        opponent_control(particle, organization, target_pair(particle, organization).1, destination).2,
+                    ),
+                );
+            }
             candidates.push(destination);
             utilities.push(python_exp(score.clamp(-8.0, 8.0)));
         }
@@ -852,7 +869,13 @@ fn issue_movement_order(
     let organization = particle.formations.organization[formation] as usize;
     let moving_personnel =
         particle.formations.personnel[formation] * particle.formations.availability[formation];
-    let restriction_multiplier = 1.0;
+    let restriction = crate::access::route_restriction_level(
+        particle,
+        &metric.route,
+        Some(organization),
+    );
+    let restriction_multiplier =
+        1.0 + config.access_restriction.hostile_movement_penalty * restriction;
     let travel_hours = metric.travel_hours * restriction_multiplier;
     let supply_cost = moving_personnel
         * metric.distance_km
@@ -867,8 +890,9 @@ fn issue_movement_order(
     };
     if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
         eprintln!(
-            "COMMAND_ORDER index={} destination={} reliability={:.17} status_draw={:.17} status={}",
-            formation, destination, reliability, command_draw, status,
+            "COMMAND_ORDER time={:.17} index={} destination={} reliability={:.17} status_draw={:.17} status={} purpose={} distance_km={:.17} travel_hours={:.17} supply_cost={:.17} route={:?}",
+            time, formation, destination, reliability, command_draw, status, purpose,
+            metric.distance_km, metric.travel_hours, supply_cost, metric.route,
         );
     }
     particle.movement_order_count = particle.movement_order_count.saturating_add(1);
