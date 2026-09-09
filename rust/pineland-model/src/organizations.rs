@@ -414,6 +414,45 @@ pub fn advance_footholds(
     }
 }
 
+/// Record the organizational renewal caused by a formation physically
+/// arriving in a locality.  Python applies this mutation immediately after
+/// movement and before the second same-boundary foothold advance.
+pub(crate) fn record_foothold_arrival(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    formation: usize,
+) {
+    if formation >= particle.formations.personnel.len()
+        || particle.formations.organization[formation] as usize != crate::INSURGENT
+    {
+        return;
+    }
+    let locality = particle.formations.locality[formation] as usize;
+    if locality >= topology.locality_count() {
+        return;
+    }
+    let index = crate::INSURGENT * topology.locality_count() + locality;
+    if index >= particle.footholds.strength.len() {
+        return;
+    }
+    particle.footholds.active[index] = 1;
+    particle.footholds.cumulative_arrivals[index] += 1.0;
+    particle.footholds.renewal_count[index] =
+        particle.footholds.renewal_count[index].saturating_add(1);
+    let minimum = config
+        .organization_ecology
+        .minimum_formation_personnel
+        .max(1.0e-9);
+    let arrival_signal = (particle.formations.personnel[formation].max(0.0) / minimum)
+        .clamp(0.0, 1.0)
+        * particle.formations.embeddedness[formation].clamp(0.0, 1.0);
+    particle.footholds.strength[index] = particle.footholds.strength[index]
+        .max(arrival_signal)
+        .clamp(0.0, 1.0);
+    particle.footholds.raw_signal[index] = particle.footholds.raw_signal[index].max(arrival_signal);
+}
+
 /// Record a realized violent organized action as local organizational
 /// renewal.  Python applies this after the action handler, before the second
 /// same-boundary foothold advance; keeping the small mutation explicit lets

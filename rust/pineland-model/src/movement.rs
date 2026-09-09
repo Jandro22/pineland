@@ -384,7 +384,23 @@ pub fn command(
         {
             continue;
         }
-        if rng.random() >= decision_probability {
+        let decision_draw = rng.random();
+        if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
+            eprintln!(
+                "COMMAND_FORMATION index={} time={:.17} decision_draw={:.17} threshold={:.17} posture_before={} locality={} availability={:.17} status={} moving={} order_status={}",
+                formation,
+                time,
+                decision_draw,
+                decision_probability,
+                particle.formations.operational_posture[formation],
+                particle.formations.locality[formation],
+                particle.formations.availability[formation],
+                particle.formations.operational_status[formation],
+                particle.formations.moving[formation],
+                particle.formations.movement_status[formation],
+            );
+        }
+        if decision_draw >= decision_probability {
             continue;
         }
 
@@ -417,6 +433,13 @@ pub fn command(
         } else {
             None
         };
+        if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
+            eprintln!(
+                "COMMAND_SELECTED index={} posture={} candidates_pending",
+                formation,
+                posture.unwrap_or(POSTURE_PORTFOLIO),
+            );
+        }
         let moving_personnel =
             particle.formations.personnel[formation] * particle.formations.availability[formation];
         let origin = particle.formations.locality[formation] as usize;
@@ -470,10 +493,20 @@ pub fn command(
         }
         let selected = rng.choices_indices(candidates.len(), Some(&utilities), 1)?[0];
         let destination = candidates[selected];
+        if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
+            eprintln!(
+                "COMMAND_DESTINATION index={} destination={} origin={} candidates={} selected={}",
+                formation,
+                destination,
+                origin,
+                candidates.len(),
+                selected,
+            );
+        }
         if destination == origin {
             continue;
         }
-        issue_reallocation_order(
+        issue_movement_order(
             particle,
             topology,
             config,
@@ -484,6 +517,7 @@ pub fn command(
             route_metrics[destination]
                 .as_ref()
                 .expect("selected movement destination has a route"),
+            0,
         );
     }
     Ok(())
@@ -801,7 +835,10 @@ fn command_metrics(particle: &ParticleState, organization: usize, formation: usi
     (particle.formations.command[formation].clamp(0.0, 1.0), 0.0)
 }
 
-fn issue_reallocation_order(
+/// Issue a movement order in the compact native order representation.
+/// `purpose == 1` is a withdrawal; all other purposes use ordinary execution
+/// eligibility at the force-movement boundary.
+fn issue_movement_order(
     particle: &mut ParticleState,
     _topology: &StaticTopology,
     config: &SimulationConfig,
@@ -810,6 +847,7 @@ fn issue_reallocation_order(
     time: f64,
     rng: &mut PyRandomCompat,
     metric: &RouteMetric,
+    purpose: u8,
 ) {
     let organization = particle.formations.organization[formation] as usize;
     let moving_personnel =
@@ -821,11 +859,18 @@ fn issue_reallocation_order(
         * config.logistics.movement_consumption_per_person_km
         * restriction_multiplier;
     let (reliability, latency_hours) = command_metrics(particle, organization, formation);
-    let status = if rng.random() <= reliability {
+    let command_draw = rng.random();
+    let status = if command_draw <= reliability {
         MOVE_PENDING
     } else {
         MOVE_FAILED_COMMAND
     };
+    if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
+        eprintln!(
+            "COMMAND_ORDER index={} destination={} reliability={:.17} status_draw={:.17} status={}",
+            formation, destination, reliability, command_draw, status,
+        );
+    }
     particle.movement_order_count = particle.movement_order_count.saturating_add(1);
     particle.formations.movement_destination[formation] = destination as u32;
     particle.formations.movement_origin[formation] = particle.formations.locality[formation];
@@ -836,13 +881,182 @@ fn issue_reallocation_order(
     particle.formations.movement_supply_cost[formation] = supply_cost;
     particle.formations.movement_order_sequence[formation] = particle.movement_order_count;
     particle.formations.movement_status[formation] = status;
-    particle.formations.movement_purpose[formation] = 0;
+    particle.formations.movement_purpose[formation] = purpose;
+}
+
+/// Reproduce Python's post-disengagement refuge choice.  The choice is
+/// deterministic conditional on the current decision state; only the final
+/// command-reliability draw is stochastic.
+pub(crate) fn issue_withdrawal_order(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    formation: usize,
+    time: f64,
+    rng: &mut PyRandomCompat,
+) -> bool {
+    if formation >= particle.formations.personnel.len()
+        || particle.formations.moving[formation] != 0
+        || particle.formations.outside_pineland[formation] != 0
+        || particle.formations.personnel[formation] <= 0.0
+        || has_active_order(particle, formation)
+    {
+        return false;
+    }
+    let origin = particle.formations.locality[formation] as usize;
+    let mobility = particle.formations.mobility[formation].max(0.05);
+    let route_metrics = all_route_metrics(particle, topology, origin, mobility);
+    let organization = particle.formations.organization[formation] as usize;
+    let footholds = local_armed_footholds(particle, topology, organization, config);
+    let (own_target, opponent_target) = target_pair(particle, organization);
+    let phenotype_offset = organization * 8;
+    let risk_tolerance = particle
+        .organizations
+        .phenotype
+        .get(phenotype_offset + 4)
+        .copied()
+        .unwrap_or(0.5)
+        .clamp(0.0, 1.0);
+    let mut best: Option<(f64, usize)> = None;
+    for destination in 0..topology.locality_count() {
+        if destination == origin {
+            continue;
+        }
+        let Some(metric) = route_metrics.get(destination).and_then(Option::as_ref) else {
+            continue;
+        };
+        let moving_personnel = particle.formations.personnel[formation]
+            * particle.formations.availability[formation].clamp(0.0, 1.0);
+        let movement_cost = moving_personnel
+            * metric.distance_km
+            * config.logistics.movement_consumption_per_person_km;
+        if movement_cost > particle.formations.supply_stock[formation] + 1.0e-12 {
+            continue;
+        }
+        let (_, own_control, own_confidence) =
+            belief_triplet(particle, organization, own_target, destination, 1);
+        let (_, opponent_adjusted, opponent_confidence) =
+            opponent_control(particle, organization, opponent_target, destination);
+        let uncertainty = 1.0 - own_confidence.min(opponent_confidence);
+        let refuge = 0.45 * own_control
+            + 0.30 * (1.0 - opponent_adjusted)
+            + 0.20 * footholds.get(destination).copied().unwrap_or(0.0)
+            + 0.05 * uncertainty;
+        let intermediate = metric
+            .route
+            .iter()
+            .skip(1)
+            .take(metric.route.len().saturating_sub(2))
+            .map(|locality| opponent_control(particle, organization, opponent_target, *locality).1)
+            .collect::<Vec<_>>();
+        let route_risk = if intermediate.is_empty() {
+            0.0
+        } else {
+            python_sum(&intermediate) / intermediate.len() as f64
+        };
+        let sanctuary = 0.0;
+        let score = 2.2 * refuge + 1.6 * sanctuary
+            - 0.04 * metric.travel_hours
+            - (1.0 - risk_tolerance) * route_risk;
+        if best
+            .map(|(best_score, best_destination)| {
+                score > best_score || (score == best_score && destination > best_destination)
+            })
+            .unwrap_or(true)
+        {
+            best = Some((score, destination));
+        }
+    }
+    let Some((_, destination)) = best else {
+        return false;
+    };
+    let metric = route_metrics[destination]
+        .as_ref()
+        .expect("selected withdrawal destination has a route");
+    issue_movement_order(
+        particle,
+        topology,
+        config,
+        formation,
+        destination,
+        time,
+        rng,
+        metric,
+        1,
+    );
+    true
+}
+
+/// Reproduce Python's deterministic reinforcement candidate selection and
+/// materialize the resulting order when the loss threshold is crossed.
+pub(crate) fn issue_reinforcement_order(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    formation: usize,
+    loss_fraction: f64,
+    time: f64,
+    rng: &mut PyRandomCompat,
+) -> bool {
+    if formation >= particle.formations.personnel.len()
+        || loss_fraction < config.combat.reinforcement_threshold
+    {
+        return false;
+    }
+    let organization = particle.formations.organization[formation] as usize;
+    let origin = particle.formations.locality[formation] as usize;
+    let mut best: Option<(f64, usize)> = None;
+    for candidate in 0..particle.formations.personnel.len() {
+        if candidate == formation
+            || particle.formations.organization[candidate] as usize != organization
+            || particle.formations.moving[candidate] != 0
+            || particle.formations.outside_pineland[candidate] != 0
+            || particle.formations.personnel[candidate] <= 0.0
+            || particle.formations.deployable_personnel(candidate) <= 0.0
+            || particle.formations.locality[candidate] as usize == origin
+            || particle.formations.operational_status[candidate] != 1
+        {
+            continue;
+        }
+        let effectiveness = particle.formations.personnel[candidate]
+            * particle.formations.availability[candidate].clamp(0.0, 1.0)
+            * particle.formations.quality[candidate]
+            * particle.formations.cohesion[candidate]
+            * particle.formations.effective_readiness(candidate);
+        if best
+            .map(|(best_effectiveness, _)| effectiveness > best_effectiveness)
+            .unwrap_or(true)
+        {
+            best = Some((effectiveness, candidate));
+        }
+    }
+    let Some((_, candidate)) = best else {
+        return false;
+    };
+    let route_metrics = all_route_metrics(
+        particle,
+        topology,
+        particle.formations.locality[candidate] as usize,
+        particle.formations.mobility[candidate],
+    );
+    let Some(metric) = route_metrics.get(origin).and_then(Option::as_ref) else {
+        return false;
+    };
+    issue_movement_order(
+        particle, topology, config, candidate, origin, time, rng, metric, 0,
+    );
+    true
 }
 
 /// Execute pending and in-flight formation orders at a force-movement
 /// boundary. No RNG is consumed: the command event owns all stochastic order
 /// selection and success draws.
-pub fn advance_movement_orders(particle: &mut ParticleState, topology: &StaticTopology, time: f64) {
+pub fn advance_movement_orders(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    time: f64,
+) -> Vec<usize> {
+    let mut arrived_formations = Vec::new();
     let mut order_indices = (0..particle.formations.personnel.len())
         .filter(|&formation| {
             matches!(
@@ -923,8 +1137,10 @@ pub fn advance_movement_orders(particle: &mut ParticleState, topology: &StaticTo
                 particle.patrols.presence_accounted_at[patrol] = time;
             }
             particle.formations.movement_status[formation] = MOVE_ARRIVED;
+            arrived_formations.push(formation);
         }
     }
+    arrived_formations
 }
 
 fn patrol_for_formation(particle: &ParticleState, formation: usize) -> Option<usize> {

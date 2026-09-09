@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import asdict
 import heapq
+import os
+import sys
 from math import exp, inf, log
 from typing import Any
 
@@ -489,7 +491,16 @@ def create_movement_order(world: WorldState, formation_id: str, destination_id: 
         * world.config.logistics.movement_consumption_per_person_km
         * restriction_multiplier
     )
-    status = "pending" if rng.random() <= reliability else "failed_command"
+    status_draw = rng.random()
+    status = "pending" if status_draw <= reliability else "failed_command"
+    if os.environ.get("PINELAND_COMMAND_TRACE") and time >= 9.99:
+        print(
+            "COMMAND_ORDER"
+            f" formation={formation_id}"
+            f" destination={destination_id} reliability={reliability:.17g}"
+            f" status_draw={status_draw:.17g} status={status}",
+            file=sys.stderr,
+        )
     order = FormationMovementOrder(
         f"MO{len(world.movement_orders) + 1:08d}", formation_id, formation.organization_id,
         formation.locality_id, destination_id, route, time, time + latency / 24,
@@ -926,7 +937,18 @@ def choose_reallocation_orders(
                 formation.deployable_personnel() <= 0 or
                 formation.formation_id in busy_formations):
             continue
-        if rng.random() >= decision_probability:
+        decision_draw = rng.random()
+        if os.environ.get("PINELAND_COMMAND_TRACE") and time >= 9.99:
+            print(
+                "COMMAND_FORMATION"
+                f" formation={formation.formation_id} time={time:.17g}"
+                f" decision_draw={decision_draw:.17g} threshold={decision_probability:.17g}"
+                f" posture_before={getattr(formation, 'operational_posture', 'portfolio')}"
+                f" locality={formation.locality_id} availability={formation.availability:.17g}"
+                f" moving={formation.moving}",
+                file=sys.stderr,
+            )
+        if decision_draw >= decision_probability:
             continue
         route_metrics = _shortest_locality_route_metrics(
             world, formation.locality_id, formation.mobility
@@ -941,6 +963,12 @@ def choose_reallocation_orders(
             posture = _select_insurgent_operational_posture(world, formation, rng)
         else:
             posture = None
+        if os.environ.get("PINELAND_COMMAND_TRACE") and time >= 9.99:
+            print(
+                "COMMAND_SELECTED"
+                f" formation={formation.formation_id} posture={posture or 'portfolio'}",
+                file=sys.stderr,
+            )
         moving_personnel = formation.personnel * formation.availability
         if world.config.logistics.reallocation_destination_scope == "adjacent":
             destination_ids = sorted({
@@ -973,6 +1001,13 @@ def choose_reallocation_orders(
             candidates.append(locality_id)
             utilities.append(exp(max(-8, min(8, components["utility"]))))
         destination = rng.choices(candidates, weights=utilities, k=1)[0]
+        if os.environ.get("PINELAND_COMMAND_TRACE") and time >= 9.99:
+            print(
+                "COMMAND_DESTINATION"
+                f" formation={formation.formation_id} destination={destination}"
+                f" origin={formation.locality_id} candidates={len(candidates)}",
+                file=sys.stderr,
+            )
         if destination == formation.locality_id:
             continue
         orders.append(create_movement_order(

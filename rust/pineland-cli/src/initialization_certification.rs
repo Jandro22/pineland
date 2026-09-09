@@ -514,6 +514,38 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
             let mut row = JsonValue::object();
             row.insert("index", JsonValue::integer(index as u64));
             row.insert(
+                "organization",
+                JsonValue::integer(particle.formations.organization[index] as u64),
+            );
+            row.insert(
+                "locality",
+                JsonValue::integer(particle.formations.locality[index] as u64),
+            );
+            row.insert(
+                "microzone",
+                JsonValue::integer(particle.formations.microzone[index] as u64),
+            );
+            row.insert(
+                "operational_status",
+                JsonValue::integer(particle.formations.operational_status[index] as u64),
+            );
+            row.insert(
+                "movement_status",
+                JsonValue::integer(particle.formations.movement_status[index] as u64),
+            );
+            row.insert(
+                "movement_destination",
+                JsonValue::integer(particle.formations.movement_destination[index] as u64),
+            );
+            row.insert(
+                "operational_posture",
+                JsonValue::integer(particle.formations.operational_posture[index] as u64),
+            );
+            row.insert(
+                "embeddedness",
+                JsonValue::number(particle.formations.embeddedness[index]),
+            );
+            row.insert(
                 "personnel",
                 JsonValue::number(particle.formations.personnel[index]),
             );
@@ -623,6 +655,19 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
     root.insert(
         "foothold_membership",
         f64_array(&particle.footholds.membership),
+    );
+    root.insert("foothold_strength", f64_array(&particle.footholds.strength));
+    root.insert(
+        "foothold_raw_signal",
+        f64_array(&particle.footholds.raw_signal),
+    );
+    root.insert(
+        "foothold_cumulative_arrivals",
+        f64_array(&particle.footholds.cumulative_arrivals),
+    );
+    root.insert(
+        "foothold_renewal_count",
+        u32_array(&particle.footholds.renewal_count),
     );
     let mut belief_keys = JsonValue::array();
     if let JsonValue::Array(rows) = &mut belief_keys {
