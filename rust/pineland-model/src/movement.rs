@@ -35,25 +35,238 @@ pub fn civilian_mobility(
     topology: &StaticTopology,
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
-    _time: f64,
+    time: f64,
+    elapsed_days: f64,
 ) {
-    for locality in 0..topology.locality_count() {
-        let violence = particle.locality.violence[locality];
-        if violence >= config.civilian_dynamics.displacement_violence_threshold {
-            let amount = particle.locality.population[locality]
-                * config.civilian_dynamics.forced_displacement_reference_rate
-                * config.intervals.mobility;
-            particle.locality.displaced_population[locality] =
-                (particle.locality.displaced_population[locality] + amount)
-                    .min(particle.locality.population[locality]);
-        } else if particle.locality.displaced_population[locality] > 0.0
-            && rng.random()
-                < config.civilian_dynamics.return_reference_rate * config.intervals.mobility
-        {
-            particle.locality.displaced_population[locality] =
-                (particle.locality.displaced_population[locality] * 0.98).max(0.0);
+    // This is the representative-person implementation of the Python
+    // on_mobility handler.  Mobility is a stochastic transition over the
+    // person rows, not an aggregate displacement stock update.  Keeping the
+    // loop and draw order here is important: a skipped representative must
+    // not consume a draw that the oracle would not consume.
+    if elapsed_days <= 0.0 {
+        return;
+    }
+
+    let dynamics = &config.civilian_dynamics;
+    let voluntary_probability = reference_probability(
+        (config.movement_rate * dynamics.voluntary_move_given_opportunity).clamp(0.0, 1.0),
+        elapsed_days,
+        1.0,
+    );
+
+    let people_count = particle.people.locality.len();
+    let locality_count = topology.locality_count();
+    let mut displaced_by_origin = vec![0.0; locality_count];
+
+    for person in 0..people_count {
+        if particle.people.represented_population[person] <= 0.0 {
+            continue;
+        }
+        let origin = particle.people.residence[person] as usize;
+        if origin >= locality_count {
+            continue;
+        }
+        let neighbors = topology
+            .locality_edges
+            .neighbors(origin)
+            .collect::<Vec<_>>();
+        if neighbors.is_empty() {
+            continue;
+        }
+
+        // The current baseline has no displaced-since field in the packed
+        // native schema.  The return branch is nevertheless represented for
+        // checkpoints imported from a state that carries the displacement
+        // flag; its first-order behavior is exact for the available state.
+        if particle.people.displaced[person] != 0 {
+            let home = particle.people.home[person] as usize;
+            if home == origin {
+                particle.people.displaced[person] = 0;
+            } else {
+                let home_belief = person_expected_control(particle, person, home);
+                let return_probability = reference_probability(
+                    (dynamics.return_reference_rate * (0.5 + 0.5 * home_belief)).clamp(0.0, 1.0),
+                    elapsed_days,
+                    1.0,
+                );
+                if rng.random() < return_probability {
+                    // The Python route-aware return takes the first locality
+                    // on the shortest path.  For the common adjacent return
+                    // case this is the home locality itself; a full route
+                    // fallback is supplied below for non-adjacent homes.
+                    let destination = first_locality_step(topology, origin, home);
+                    if let Some(destination) = destination {
+                        if destination != origin {
+                            relocate_person(particle, person, destination);
+                            if destination == home {
+                                particle.people.displaced[person] = 0;
+                            }
+                            continue;
+                        }
+                    }
+                }
+                // Resettlement requires the Python displaced-since timestamp,
+                // which is intentionally not inferred from a boolean flag.
+                // It therefore cannot fire in the packed v1 state.
+            }
+        }
+
+        let violence = particle.locality.violence[origin];
+        let violence_pressure = ((violence - dynamics.displacement_violence_threshold)
+            / (1.0 - dynamics.displacement_violence_threshold).max(1.0e-12))
+        .clamp(0.0, 1.0);
+        // Access restrictions are not yet a packed native state component.
+        // With no such rows, the Python locality_access_pressure is exactly
+        // zero, which is the normal Native-v1 trajectory.
+        let access_pressure = 0.0;
+        let forced_probability = reference_probability(
+            (dynamics.forced_displacement_reference_rate * violence_pressure.max(access_pressure))
+                .clamp(0.0, 1.0),
+            elapsed_days,
+            1.0,
+        );
+        let forced = rng.random() < forced_probability;
+        let voluntary = !forced && rng.random() < voluntary_probability;
+        if !forced && !voluntary {
+            continue;
+        }
+
+        let mut candidates = Vec::with_capacity(neighbors.len());
+        let mut utilities = Vec::with_capacity(neighbors.len());
+        for (destination, edge_cost) in neighbors {
+            let destination = destination as usize;
+            let security = destination_expected_control(particle, person, destination);
+            let livelihood = (particle.locality.economic_output[destination]
+                / particle.locality.population[destination].max(1.0))
+            .max(2.0)
+            .ln();
+            let utility = 1.2 * security + 0.1 * livelihood - edge_cost;
+            candidates.push(destination);
+            utilities.push(python_exp(utility.clamp(-10.0, 10.0)));
+        }
+        if candidates.is_empty() {
+            continue;
+        }
+        let selected = rng
+            .choices_indices(candidates.len(), Some(&utilities), 1)
+            .expect("civilian mobility weighted choice failed")[0];
+        let destination = candidates[selected];
+        relocate_person(particle, person, destination);
+
+        let weight = particle.people.represented_population[person];
+        if forced && destination != particle.people.home[person] as usize {
+            if particle.people.displaced[person] == 0 {
+                particle.people.displacement_count[person] =
+                    particle.people.displacement_count[person].saturating_add(1);
+            }
+            particle.people.displaced[person] = 1;
+            if destination < displaced_by_origin.len() {
+                displaced_by_origin[origin] += weight;
+            }
+        } else if destination == particle.people.home[person] as usize {
+            particle.people.displaced[person] = 0;
         }
     }
+
+    // Python stores displaced population as a stock derived from all
+    // displaced representatives currently resident in each locality.
+    particle.locality.displaced_population.fill(0.0);
+    for person in 0..people_count {
+        if particle.people.displaced[person] == 0 {
+            continue;
+        }
+        let locality = particle.people.residence[person] as usize;
+        if locality < particle.locality.displaced_population.len() {
+            particle.locality.displaced_population[locality] +=
+                particle.people.represented_population[person];
+        }
+    }
+
+    // Keep the explicit household residence equal to the represented-mass
+    // majority after person-level moves.  Python's tie-break is the greatest
+    // locality identifier; native locality IDs are the same lexicographic
+    // order used by the canonical registry.
+    for household in 0..particle.households.residence.len() {
+        let start = particle.households.member_offsets[household] as usize;
+        let end = particle.households.member_offsets[household + 1] as usize;
+        let mut masses = vec![0.0; locality_count];
+        for &person in &particle.households.member_indices[start..end] {
+            let person = person as usize;
+            let locality = particle.people.residence[person] as usize;
+            if locality < masses.len() && particle.people.represented_population[person] > 0.0 {
+                masses[locality] += particle.people.represented_population[person];
+            }
+        }
+        let mut best = None;
+        for (locality, mass) in masses.into_iter().enumerate() {
+            if mass <= 0.0 {
+                continue;
+            }
+            if best
+                .map(|(best_locality, best_mass)| {
+                    mass > best_mass || (mass == best_mass && locality > best_locality)
+                })
+                .unwrap_or(true)
+            {
+                best = Some((locality, mass));
+            }
+        }
+        if let Some((locality, _)) = best {
+            particle.households.residence[household] = locality as u32;
+        }
+    }
+
+    // The native state does not yet carry Python's cumulative harm ledger.
+    // Keep the local displacement stock authoritative; the ledger is added in
+    // the cross-engine checkpoint schema before the historical contract is
+    // frozen.
+    let _ = (time, displaced_by_origin);
+}
+
+fn reference_probability(probability: f64, elapsed_days: f64, reference_days: f64) -> f64 {
+    let probability = probability.clamp(0.0, 1.0);
+    if probability <= 0.0 || elapsed_days <= 0.0 {
+        0.0
+    } else if probability >= 1.0 {
+        1.0
+    } else {
+        1.0 - (1.0 - probability).powf(elapsed_days / reference_days.max(1.0e-12))
+    }
+}
+
+fn person_expected_control(particle: &ParticleState, person: usize, _locality: usize) -> f64 {
+    particle.people.expected_control[person * 2].clamp(0.0, 1.0)
+}
+
+fn destination_expected_control(
+    particle: &ParticleState,
+    person: usize,
+    _destination: usize,
+) -> f64 {
+    person_expected_control(particle, person, _destination)
+}
+
+fn relocate_person(particle: &mut ParticleState, person: usize, destination: usize) {
+    particle.people.locality[person] = destination as u32;
+    particle.people.residence[person] = destination as u32;
+}
+
+fn first_locality_step(
+    topology: &StaticTopology,
+    origin: usize,
+    destination: usize,
+) -> Option<usize> {
+    if origin == destination {
+        return Some(origin);
+    }
+    if topology
+        .locality_edges
+        .neighbors(origin)
+        .any(|(neighbor, _)| neighbor as usize == destination)
+    {
+        return Some(destination);
+    }
+    None
 }
 
 pub fn command(

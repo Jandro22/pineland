@@ -1735,6 +1735,7 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:mobility", rng);
             }
