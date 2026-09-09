@@ -399,6 +399,23 @@ fn corroboration_weight(
     config: &SimulationConfig,
     source_type: SourceType,
 ) -> f64 {
+    if std::env::var_os("PINELAND_HISTORY_TRACE").is_some()
+        && target == 0
+        && locality == 10
+        && observation_type == 1
+        && (time - 3.25).abs() < 1.0e-12
+    {
+        let rows = history
+            .iter()
+            .filter(|entry| {
+                entry.target == target as u32
+                    && entry.locality == locality as u32
+                    && entry.observation_type == observation_type
+            })
+            .map(|entry| (entry.time, entry.target, entry.locality, entry.observation_type, entry.source_identity))
+            .collect::<Vec<_>>();
+        eprintln!("HISTORY_TRACE {:?}", rows);
+    }
     let correlation = config
         .information
         .source_correlation
