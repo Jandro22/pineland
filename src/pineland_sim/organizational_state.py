@@ -21,7 +21,11 @@ def local_membership_rootedness(
     represented_local = 0.0
     home_local = 0.0
     home_district = 0.0
-    for person_id in organization.member_ids:
+    # Organizations store membership as a set for O(1) updates.  The
+    # transition equations nevertheless require a stable summation order so
+    # the oracle is independent of PYTHONHASHSEED and can be compared bitwise
+    # with the native person-index traversal.
+    for person_id in sorted(organization.member_ids):
         person = world.persons.get(person_id)
         if (
             person is None
