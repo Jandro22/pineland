@@ -1,7 +1,7 @@
 //! Conserved supply production, consumption, resupply, and readiness.
 
 use pineland_core::config::SimulationConfig;
-use pineland_core::rng::{python_sum, PyRandomCompat};
+use pineland_core::rng::{python_sum, python_sum_with_integer_prefix, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState};
 use pineland_core::topology::StaticTopology;
 
@@ -148,6 +148,8 @@ fn reconcile_source_production(
             .get(organization)
             .is_some_and(|kind| *kind == 1 || *kind == 2);
         let mut weights = Vec::with_capacity(source_indices.len());
+        let mut integer_prefix_len = 0;
+        let mut integer_prefix_open = true;
         for &source in &source_indices {
             let locality = particle.logistics.locality[source];
             let weight = if territorial {
@@ -156,7 +158,7 @@ fn reconcile_source_production(
                     .get(locality as usize)
                     .copied()
                     .unwrap_or(u32::MAX);
-                particle
+                let population = particle
                     .locality
                     .district_population
                     .get(district as usize)
@@ -167,8 +169,24 @@ fn reconcile_source_production(
                             .get(district as usize)
                             .copied()
                             .unwrap_or(0.0)
-                    })
+                    });
+                let is_integer = integer_prefix_open
+                    && particle
+                        .locality
+                        .district_population_is_integer
+                        .get(district as usize)
+                        .copied()
+                        .unwrap_or(0)
+                        != 0
+                    && population > 1.0;
+                if is_integer {
+                    integer_prefix_len += 1;
+                } else {
+                    integer_prefix_open = false;
+                }
+                population.max(1.0)
             } else {
+                integer_prefix_open = false;
                 python_sum(
                     &formation_indices
                         .iter()
@@ -181,15 +199,30 @@ fn reconcile_source_production(
             };
             weights.push(weight);
         }
-        let weight_total = python_sum(&weights);
+        let weight_total = if territorial {
+            python_sum_with_integer_prefix(&weights, integer_prefix_len)
+        } else {
+            python_sum(&weights)
+        };
         if weight_total <= 0.0 {
             weights.fill(1.0);
+            integer_prefix_len = 0;
         }
-        let total_weight = python_sum(&weights);
-        if std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some() && organization == 1 {
+        let total_weight = if territorial {
+            python_sum_with_integer_prefix(&weights, integer_prefix_len)
+        } else {
+            python_sum(&weights)
+        };
+        if std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some() {
             eprintln!(
-                "LOGISTICS_RECON organization={} personnel={:.17} requirement={:.17} weights={:?} total_weight={:.17}",
-                organization, personnel, requirement, weights, total_weight
+                "LOGISTICS_RECON organization={} personnel={:.17} personnel_bits={} requirement={:.17} requirement_bits={} weights={:?} total_weight={:.17}",
+                organization,
+                personnel,
+                personnel.to_bits(),
+                requirement,
+                requirement.to_bits(),
+                weights,
+                total_weight
             );
         }
         for (&source, &weight) in source_indices.iter().zip(weights.iter()) {
@@ -202,10 +235,16 @@ fn reconcile_source_production(
             particle.logistics.source_capacity[source] = particle.logistics.source_capacity[source]
                 .max(particle.logistics.source_stock[source])
                 .max(production / config.logistics.source_daily_production_fraction.max(1e-12));
-            if std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some() && organization == 1 {
+            if std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some() {
                 eprintln!(
-                    "LOGISTICS_SOURCE source={} weight={:.17} production={:.17} capacity={:.17}",
-                    source, weight, production, particle.logistics.source_capacity[source]
+                    "LOGISTICS_SOURCE organization={} source={} weight={:.17} weight_bits={} production={:.17} production_bits={} capacity={:.17}",
+                    organization,
+                    source,
+                    weight,
+                    weight.to_bits(),
+                    production,
+                    production.to_bits(),
+                    particle.logistics.source_capacity[source]
                 );
             }
         }

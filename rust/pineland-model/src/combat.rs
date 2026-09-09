@@ -417,6 +417,15 @@ fn apply_direct_civilian_harm(
         if let Some(population) = particle.locality.district_population.get_mut(district) {
             *population = (*population - deaths).max(0.0);
         }
+        if let Some(is_integer) = particle
+            .locality
+            .district_population_is_integer
+            .get_mut(district)
+        {
+            // civilian.py assigns float(float(population) - deaths), even
+            // when the resulting numeric value happens to be integral.
+            *is_integer = 0;
+        }
         particle.counters.deaths += deaths;
     }
     particle.counters.civilian_harm += direct_harm.max(0.0);

@@ -826,6 +826,7 @@ fn encode_locality(b: &mut Vec<u8>, p: &ParticleState) {
     ] {
         put_f64_vec(b, v)
     }
+    put_u8_vec(b, &x.district_population_is_integer);
 }
 fn decode_locality(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.locality;
@@ -843,6 +844,7 @@ fn decode_locality(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), 
     x.displaced_population = read_f64_vec(r)?;
     x.government_governance = read_f64_vec(r)?;
     x.insurgent_governance = read_f64_vec(r)?;
+    x.district_population_is_integer = read_u8_vec(r)?;
     Ok(())
 }
 fn encode_people(b: &mut Vec<u8>, p: &ParticleState) {
