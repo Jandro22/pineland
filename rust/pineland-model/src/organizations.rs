@@ -172,8 +172,8 @@ fn survival_social_base(
         {
             continue;
         }
-        let represented = particle.people.represented_population[person]
-            * particle.people.armed_fraction[person];
+        let represented =
+            particle.people.represented_population[person] * particle.people.armed_fraction[person];
         total += represented;
         *by_locality
             .entry(particle.people.residence[person])
@@ -234,8 +234,7 @@ fn adapt_organization(
         particle.organizations.phenotype[offset + dimension] =
             clamp01(value + learning * (perceived - value));
     }
-    particle.organizations.discipline[organization] =
-        particle.organizations.phenotype[offset + 5];
+    particle.organizations.discipline[organization] = particle.organizations.phenotype[offset + 5];
     particle.organizations.local_knowledge[organization] =
         particle.organizations.phenotype[offset + 6];
 }
@@ -282,7 +281,11 @@ fn consume_proto_formation_draws(
                 .map(|person| particle.people.represented_population[*person])
                 .collect::<Vec<_>>(),
         );
-        if mobilized_weight < config.organization_ecology.minimum_proto_represented_population {
+        if mobilized_weight
+            < config
+                .organization_ecology
+                .minimum_proto_represented_population
+        {
             continue;
         }
         let grievance = python_sum(
@@ -478,8 +481,7 @@ pub fn update(
                     + particle.formations.cumulative_losses[formation]
             })
             .collect::<Vec<_>>();
-        let losses = python_sum(&loss_values)
-            / python_sum(&personnel_plus_losses).max(1.0);
+        let losses = python_sum(&loss_values) / python_sum(&personnel_plus_losses).max(1.0);
 
         let mut represented_weight = 0.0;
         let mut identity_weighted = 0.0;
@@ -504,8 +506,8 @@ pub fn update(
             }
             let represented = particle.people.represented_population[person]
                 * particle.people.armed_fraction[person];
-            identity_variance += represented
-                * (particle.people.identities[person * 3 + 2] - mean_identity).powi(2);
+            identity_variance +=
+                represented * (particle.people.identities[person * 3 + 2] - mean_identity).powi(2);
         }
         identity_variance /= represented_weight.max(1e-9);
         let cycle_scale = elapsed_days / 7.0;
@@ -516,9 +518,8 @@ pub fn update(
                         - config.organization_ecology.cohesion_loss_memory * losses
                         - 0.02 * identity_variance),
         );
-        particle.organizations.capital_material[organization] = clamp01(
-            particle.organizations.capital[organization] / 150_000.0,
-        );
+        particle.organizations.capital_material[organization] =
+            clamp01(particle.organizations.capital[organization] / 150_000.0);
 
         adapt_organization(particle, config, rng, organization, elapsed_days);
         let phenotype = organization * 8;
@@ -526,15 +527,16 @@ pub fn update(
             if particle.formations.organization[formation] as usize != organization {
                 continue;
             }
-            particle.formations.embeddedness[formation] = particle.organizations.phenotype[phenotype + 6];
-            particle.formations.mobility[formation] = clamp01(
-                0.35 + 0.5 * particle.organizations.phenotype[phenotype + 3],
-            );
+            particle.formations.embeddedness[formation] =
+                particle.organizations.phenotype[phenotype + 6];
+            particle.formations.mobility[formation] =
+                clamp01(0.35 + 0.5 * particle.organizations.phenotype[phenotype + 3]);
             for edge in 0..particle.command_edges.organization.len() {
                 if particle.command_edges.organization[edge] as usize == organization
                     && particle.command_edges.formation[edge] as usize == formation
                 {
-                    let centralization = particle.organizations.phenotype[phenotype].clamp(0.0, 1.0);
+                    let centralization =
+                        particle.organizations.phenotype[phenotype].clamp(0.0, 1.0);
                     particle.command_edges.reliability[edge] = clamp01(
                         0.3 + 0.35 * centralization
                             + 0.25 * particle.organizations.institutional_quality[organization],
@@ -559,8 +561,7 @@ pub fn update(
             - python_exp(
                 -config.organization_ecology.split_base_hazard
                     * python_exp(
-                        2.0 * identity_variance
-                            + 3.0 * losses
+                        2.0 * identity_variance + 3.0 * losses
                             - 2.0 * particle.organizations.cohesion[organization],
                     )
                     * elapsed_days
@@ -570,7 +571,11 @@ pub fn update(
             >= config
                 .organization_ecology
                 .minimum_split_represented_population;
-        let split_draw = if split_eligible { Some(rng.random()) } else { None };
+        let split_draw = if split_eligible {
+            Some(rng.random())
+        } else {
+            None
+        };
         let conditioned = conditioned_active(config, organization, time);
         let _split_realized = split_draw
             .map(|draw| draw < split_hazard && !conditioned)
@@ -581,8 +586,7 @@ pub fn update(
             - python_exp(
                 -config.organization_ecology.collapse_base_hazard
                     * python_exp(
-                        2.0 * (1.0 - particle.organizations.cohesion[organization])
-                            + 2.0 * losses
+                        2.0 * (1.0 - particle.organizations.cohesion[organization]) + 2.0 * losses
                             - 3.0 * social_base
                             - 1.5 * particle.organizations.external_sanctuary[organization],
                     )

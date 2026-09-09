@@ -70,9 +70,13 @@ pub fn decay_and_propagate(
         let locality = particle.people.residence[person] as usize;
         let community = particle.people.community[person];
         for actor in [crate::GOVERNMENT, crate::INSURGENT] {
+            // Python keeps a person's community partition attached to the
+            // representative even after mobility changes residence.  The
+            // community signal is therefore selected by community identity,
+            // not by requiring that the moved person still resides in the
+            // community's original locality.
             let signal = if community != u32::MAX
                 && (community as usize) < particle.communities.locality.len()
-                && particle.communities.locality[community as usize] as usize == locality
             {
                 if actor == crate::GOVERNMENT {
                     particle.communities.government_cooperation[community as usize]
@@ -82,7 +86,9 @@ pub fn decay_and_propagate(
             } else {
                 community_signal(particle, locality, actor)
             };
-            let observed = clamp01(signal + rng.normalvariate(0.0, config.observation_noise));
+            let observed = clamp01(round_binary64(
+                signal + rng.normalvariate(0.0, config.observation_noise),
+            ));
             let trust = if actor == crate::GOVERNMENT {
                 particle.people.trust[person]
             } else {
@@ -93,7 +99,9 @@ pub fn decay_and_propagate(
             let learning = reference_probability(0.12 * trust, elapsed_days);
             let offset = person * 2 + usize::from(actor == crate::INSURGENT);
             let old = particle.people.expected_control[offset];
-            particle.people.expected_control[offset] = clamp01(old + learning * (observed - old));
+            let deviation = round_binary64(observed - old);
+            let adjustment = round_binary64(learning * deviation);
+            particle.people.expected_control[offset] = clamp01(round_binary64(old + adjustment));
 
             // Python stores destination-specific expectations for every
             // adjacent locality.  A missing entry falls back to the scalar
@@ -120,12 +128,22 @@ pub fn decay_and_propagate(
                     particle.people.expected_control[offset]
                 };
                 let destination_signal = community_signal(particle, destination, actor);
+                let deviation = round_binary64(destination_signal - prior);
+                let adjustment = round_binary64(learning * deviation);
                 particle.people.expected_destination_control[value_index] =
-                    clamp01(prior + learning * (destination_signal - prior));
+                    clamp01(round_binary64(prior + adjustment));
                 particle.people.expected_destination_control_present[mask_index] |= actor_bit;
             }
         }
     }
+}
+
+/// Keep each Python float expression at an observable binary64 boundary.  In
+/// optimized native builds LLVM may otherwise contract the multiply/add in a
+/// belief update into an FMA and move the final bit of parity-critical state.
+#[inline(never)]
+fn round_binary64(value: f64) -> f64 {
+    unsafe { std::ptr::read_volatile(&value) }
 }
 
 pub fn control_estimate(

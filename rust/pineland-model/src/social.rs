@@ -7,7 +7,7 @@
 //! reduction order.
 
 use pineland_core::config::SimulationConfig;
-use pineland_core::rng::{python_exp, PyRandomCompat};
+use pineland_core::rng::{python_exp, python_sum, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
 use pineland_core::topology::StaticTopology;
 use std::collections::BTreeMap;
@@ -83,19 +83,36 @@ fn refresh_community_aggregates(particle: &mut ParticleState) {
         let start = particle.communities.member_offsets[community] as usize;
         let end = particle.communities.member_offsets[community + 1] as usize;
         let members = &particle.communities.member_indices[start..end];
-        let mut total = 0.0;
-        let mut government = 0.0;
-        let mut insurgent = 0.0;
-        for person in members.iter().copied().map(|value| value as usize) {
-            let weight = particle.people.represented_population[person];
-            total += weight;
-            if particle.people.public_behavior[person] == BEHAVIOR_GOVERNMENT_COOPERATION {
-                government += weight;
-            }
-            if is_insurgent_behavior(particle.people.public_behavior[person]) {
-                insurgent += weight;
-            }
-        }
+        // Python uses three independent built-in ``sum`` calls here.  Keep
+        // the same member order and compensated CPython float-sum path;
+        // replacing these with native left-folds can move a community signal
+        // by one ulp and therefore alter a later stochastic branch.
+        let weights = members
+            .iter()
+            .copied()
+            .map(|value| particle.people.represented_population[value as usize])
+            .collect::<Vec<_>>();
+        let government_weights = members
+            .iter()
+            .copied()
+            .filter_map(|value| {
+                let person = value as usize;
+                (particle.people.public_behavior[person] == BEHAVIOR_GOVERNMENT_COOPERATION)
+                    .then_some(particle.people.represented_population[person])
+            })
+            .collect::<Vec<_>>();
+        let insurgent_weights = members
+            .iter()
+            .copied()
+            .filter_map(|value| {
+                let person = value as usize;
+                is_insurgent_behavior(particle.people.public_behavior[person])
+                    .then_some(particle.people.represented_population[person])
+            })
+            .collect::<Vec<_>>();
+        let total = python_sum(&weights);
+        let government = python_sum(&government_weights);
+        let insurgent = python_sum(&insurgent_weights);
         if total > 0.0 {
             particle.communities.government_cooperation[community] = government / total;
             particle.communities.insurgent_sympathy[community] = insurgent / total;

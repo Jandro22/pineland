@@ -513,17 +513,50 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         for index in 0..particle.formations.personnel.len() {
             let mut row = JsonValue::object();
             row.insert("index", JsonValue::integer(index as u64));
-            row.insert("personnel", JsonValue::number(particle.formations.personnel[index]));
-            row.insert("quality", JsonValue::number(particle.formations.quality[index]));
-            row.insert("cohesion", JsonValue::number(particle.formations.cohesion[index]));
-            row.insert("readiness", JsonValue::number(particle.formations.readiness[index]));
-            row.insert("sustainment", JsonValue::number(particle.formations.sustainment[index]));
-            row.insert("information", JsonValue::number(particle.formations.information[index]));
-            row.insert("availability", JsonValue::number(particle.formations.availability[index]));
-            row.insert("command", JsonValue::number(particle.formations.command[index]));
-            row.insert("supply_stock", JsonValue::number(particle.formations.supply_stock[index]));
-            row.insert("supply_capacity", JsonValue::number(particle.formations.supply_capacity[index]));
-            row.insert("moving", JsonValue::integer(particle.formations.moving[index] as u64));
+            row.insert(
+                "personnel",
+                JsonValue::number(particle.formations.personnel[index]),
+            );
+            row.insert(
+                "quality",
+                JsonValue::number(particle.formations.quality[index]),
+            );
+            row.insert(
+                "cohesion",
+                JsonValue::number(particle.formations.cohesion[index]),
+            );
+            row.insert(
+                "readiness",
+                JsonValue::number(particle.formations.readiness[index]),
+            );
+            row.insert(
+                "sustainment",
+                JsonValue::number(particle.formations.sustainment[index]),
+            );
+            row.insert(
+                "information",
+                JsonValue::number(particle.formations.information[index]),
+            );
+            row.insert(
+                "availability",
+                JsonValue::number(particle.formations.availability[index]),
+            );
+            row.insert(
+                "command",
+                JsonValue::number(particle.formations.command[index]),
+            );
+            row.insert(
+                "supply_stock",
+                JsonValue::number(particle.formations.supply_stock[index]),
+            );
+            row.insert(
+                "supply_capacity",
+                JsonValue::number(particle.formations.supply_capacity[index]),
+            );
+            row.insert(
+                "moving",
+                JsonValue::integer(particle.formations.moving[index] as u64),
+            );
             rows.push(row);
         }
     }
@@ -558,6 +591,51 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         "organization_phenotype_values",
         f64_array(&particle.organizations.phenotype),
     );
+    root.insert(
+        "people_organization",
+        u32_array(&particle.people.organization),
+    );
+    root.insert(
+        "people_armed_fraction",
+        f64_array(&particle.people.armed_fraction),
+    );
+    root.insert(
+        "people_expected_control",
+        f64_array(&particle.people.expected_control),
+    );
+    root.insert("people_trust", f64_array(&particle.people.trust));
+    root.insert(
+        "people_trust_insurgent",
+        f64_array(&particle.people.trust_insurgent),
+    );
+    root.insert(
+        "community_government_cooperation",
+        f64_array(&particle.communities.government_cooperation),
+    );
+    root.insert(
+        "community_insurgent_sympathy",
+        f64_array(&particle.communities.insurgent_sympathy),
+    );
+    root.insert(
+        "organization_member_population",
+        f64_array(&particle.organizations.member_population),
+    );
+    root.insert(
+        "foothold_membership",
+        f64_array(&particle.footholds.membership),
+    );
+    let mut belief_keys = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut belief_keys {
+        for key in &particle.beliefs.keys {
+            let mut row = JsonValue::object();
+            row.insert("observer", JsonValue::integer(key.observer as u64));
+            row.insert("target", JsonValue::integer(key.target as u64));
+            row.insert("locality", JsonValue::integer(key.locality as u64));
+            row.insert("kind", JsonValue::integer(key.kind as u64));
+            rows.push(row);
+        }
+    }
+    root.insert("belief_keys", belief_keys);
     root
 }
 

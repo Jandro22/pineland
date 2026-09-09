@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 8;
+pub const CHECKPOINT_VERSION: u32 = 9;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -1589,6 +1589,26 @@ fn encode_logistics(b: &mut Vec<u8>, p: &ParticleState) {
         put_f64_vec(b, v)
     }
     for v in [
+        &x.shipment_source,
+        &x.shipment_formation,
+        &x.shipment_origin_locality,
+        &x.shipment_destination_locality,
+        &x.shipment_route_offsets,
+        &x.shipment_route_nodes,
+    ] {
+        put_u32_vec(b, v)
+    }
+    for v in [
+        &x.shipment_departed_at,
+        &x.shipment_arrives_at,
+        &x.shipment_quantity_sent,
+        &x.shipment_quantity_deliverable,
+        &x.shipment_loss,
+    ] {
+        put_f64_vec(b, v)
+    }
+    put_u8_vec(b, &x.shipment_status);
+    for v in [
         x.in_transit,
         x.cumulative_produced,
         x.cumulative_consumed,
@@ -1606,6 +1626,18 @@ fn decode_logistics(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(),
     x.source_stock = read_f64_vec(r)?;
     x.source_capacity = read_f64_vec(r)?;
     x.source_production = read_f64_vec(r)?;
+    x.shipment_source = read_u32_vec(r)?;
+    x.shipment_formation = read_u32_vec(r)?;
+    x.shipment_origin_locality = read_u32_vec(r)?;
+    x.shipment_destination_locality = read_u32_vec(r)?;
+    x.shipment_route_offsets = read_u32_vec(r)?;
+    x.shipment_route_nodes = read_u32_vec(r)?;
+    x.shipment_departed_at = read_f64_vec(r)?;
+    x.shipment_arrives_at = read_f64_vec(r)?;
+    x.shipment_quantity_sent = read_f64_vec(r)?;
+    x.shipment_quantity_deliverable = read_f64_vec(r)?;
+    x.shipment_loss = read_f64_vec(r)?;
+    x.shipment_status = read_u8_vec(r)?;
     x.in_transit = r.f64()?;
     x.cumulative_produced = r.f64()?;
     x.cumulative_consumed = r.f64()?;
