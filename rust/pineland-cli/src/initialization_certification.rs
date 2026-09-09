@@ -105,6 +105,10 @@ fn debug_beliefs(engine: &SimulationEngine) -> JsonValue {
             row.insert("locality", JsonValue::integer(key.locality as u64));
             row.insert("kind", JsonValue::integer(key.kind as u64));
             row.insert("confidence", JsonValue::number(beliefs.confidence[index]));
+            row.insert(
+                "confidence_bits",
+                JsonValue::integer(beliefs.confidence[index].to_bits()),
+            );
             row.insert("updated_at", JsonValue::number(beliefs.updated_at[index]));
             row.insert("presence", JsonValue::number(beliefs.presence[index]));
             row.insert(

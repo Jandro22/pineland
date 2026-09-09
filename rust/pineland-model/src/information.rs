@@ -353,6 +353,13 @@ pub fn collect_and_fuse(
             &mut history,
         );
     }
+
+    // Background reports are fused at their collection node immediately.  The
+    // Python reference then delivers any command-network relays whose arrival
+    // clock has matured, in relay-id order, before flushing the information
+    // event.  Keep that boundary explicit: without it the native engine can
+    // generate the right reports while silently omitting headquarters beliefs.
+    deliver_due_relays(particle, topology, config, rng, time, &history);
     particle.information_history = history;
 }
 
@@ -443,6 +450,307 @@ fn source_type_from_code(code: u8) -> Option<SourceType> {
         7 => SourceType::Patrol,
         _ => return None,
     })
+}
+
+fn deliver_due_relays(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    time: f64,
+    history: &[ControlHistoryEntry],
+) {
+    // InformationRelay rows are allocated monotonically, so the vector order
+    // is the same as Python's sorted due relay identifiers.  A relay is kept
+    // after delivery in the standard/forensic state, but is never considered
+    // again.
+    let due = particle
+        .information_relays
+        .iter()
+        .enumerate()
+        .filter_map(|(index, relay)| {
+            (relay.status == 0 && relay.arrives_at <= time + 1.0e-12).then_some(index)
+        })
+        .collect::<Vec<_>>();
+    for relay_index in due {
+        let (observation_sequence, organization, destination_node, reliability) = {
+            let relay = &particle.information_relays[relay_index];
+            (
+                relay.observation,
+                relay.organization as usize,
+                relay.destination_node,
+                relay.reliability,
+            )
+        };
+        let delivered = rng.random() <= reliability;
+        let Some(observation) = particle
+            .information_observations
+            .iter()
+            .find(|observation| observation.sequence == observation_sequence)
+            .cloned()
+        else {
+            particle.information_relays[relay_index].status = 2;
+            continue;
+        };
+    if delivered {
+            let source_type = source_type_from_code(observation.source_type);
+            if let Some(source_type) = source_type {
+                let source_name = observation_source_name(particle, topology, &observation);
+                let organization_name = crate::organization_name(organization);
+                let destination_name = command_node_name(particle, topology, destination_node);
+                fuse_recorded_observation(
+                    particle,
+                    topology,
+                    config,
+                    rng,
+                    &observation,
+                    organization,
+                    &organization_name,
+                    source_type,
+                    &source_name,
+                    time,
+                    history,
+                );
+                fuse_recorded_observation(
+                    particle,
+                    topology,
+                    config,
+                    rng,
+                    &observation,
+                    organization,
+                    &destination_name,
+                    source_type,
+                    &source_name,
+                    time,
+                    history,
+                );
+                if (observation.observer as usize) < particle.organizations.kind.len() {
+                    let source_organization = observation.observer as usize;
+                    if particle.organizations.kind[source_organization] != 3
+                        && crate::GOVERNMENT < particle.organizations.kind.len()
+                    {
+                        let government_name = crate::organization_name(crate::GOVERNMENT);
+                        fuse_recorded_observation(
+                            particle,
+                            topology,
+                            config,
+                            rng,
+                            &observation,
+                            crate::GOVERNMENT,
+                            &government_name,
+                            source_type,
+                            &source_name,
+                            time,
+                            history,
+                        );
+                    }
+                }
+            }
+            particle.information_relays[relay_index].status = 1;
+            particle.information_relays[relay_index].delivered_at = time;
+        } else {
+            particle.information_relays[relay_index].status = 2;
+        }
+    }
+}
+
+fn command_node_name(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    node: u32,
+) -> String {
+    let organizations = particle.organizations.kind.len();
+    let formations = particle.formations.personnel.len();
+    let posts = particle.security_posts.organization.len();
+    let auxiliary = auxiliary_node_ids(particle, topology).len();
+    let command_start = organizations + formations + posts + auxiliary;
+    let index = node as usize - command_start;
+    let mut commands = command_node_ids(particle);
+    commands.sort();
+    commands
+        .get(index)
+        .cloned()
+        .unwrap_or_else(|| format!("CMD:{}", crate::organization_name(crate::GOVERNMENT)))
+}
+
+fn observation_source_name(
+    particle: &ParticleState,
+    _topology: &StaticTopology,
+    observation: &InformationObservation,
+) -> String {
+    if observation.source_community != INFORMATION_NONE {
+        return community_name(observation.source_community as usize);
+    }
+    if observation.source_formation != INFORMATION_NONE {
+        return formation_name(particle, observation.source_formation as usize);
+    }
+    String::new()
+}
+
+#[allow(clippy::too_many_arguments)]
+fn fuse_recorded_observation(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    _rng: &mut PyRandomCompat,
+    observation: &InformationObservation,
+    recipient: usize,
+    recipient_name: &str,
+    source_type: SourceType,
+    source_name: &str,
+    time: f64,
+    history: &[ControlHistoryEntry],
+) {
+    // Detection rows are delivered through the same reliability clock, but
+    // they update presence beliefs rather than the seven-dimensional control
+    // table.  Presence fusion is added below; never turn a zero-filled
+    // detection payload into a spurious control report.
+    if observation.observation_type != 1 || observation.target == INFORMATION_NONE {
+        return;
+    }
+    let target = observation.target as usize;
+    let locality = observation.locality as usize;
+    if target >= particle.organizations.kind.len() || locality >= topology.locality_count() {
+        return;
+    }
+    let recipient_actor = if recipient_name == crate::organization_name(recipient) {
+        recipient
+    } else {
+        observation.observer as usize
+    };
+    let trust = source_trust(
+        particle,
+        config,
+        recipient_actor,
+        source_type,
+        source_name,
+    );
+    let language = language_comprehension(
+        particle,
+        topology,
+        config,
+        recipient_actor,
+        locality,
+        source_type,
+        source_name,
+    );
+    let age_quality = python_exp(
+        -observation.decay_rate * (time - observation.time).max(0.0),
+    );
+    let corroboration = corroboration_weight(
+        history,
+        target,
+        locality,
+        observation.source_identity,
+        observation.time,
+        config,
+        source_type,
+    );
+    let weight = observation.confidence
+        * observation.quality
+        * trust
+        * language.powf(config.information.language_fusion_weight)
+        * age_quality
+        * (1.0 + config.information.corroboration_bonus * corroboration.min(3.0));
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.25 {
+        eprintln!(
+            "RELAY_CONTROL_TRACE seq={} recipient={} source_type={} observer={} source={} source_comm={} source_form={} target={} locality={} quality={:.17} trust={:.17} language={:.17} age={:.17} corr={:.17} weight={:.17}",
+            observation.sequence,
+            recipient_name,
+            observation.source_type,
+            observation.observer,
+            observation.source,
+            observation.source_community,
+            observation.source_formation,
+            target,
+            locality,
+            observation.quality,
+            trust,
+            language,
+            age_quality,
+            corroboration,
+            weight,
+        );
+    }
+    let (observer_code, kind) = if recipient_name == crate::organization_name(recipient) {
+        let own_target = if particle.organizations.kind.get(recipient).copied() == Some(3) {
+            crate::INSURGENT
+        } else {
+            crate::GOVERNMENT
+        };
+        let kind = if target == own_target { 1 } else { 2 };
+        (recipient as u32, kind)
+    } else {
+        (dynamic_observer_code(particle, topology, recipient_name), 3)
+    };
+    let key = BeliefKey {
+        observer: observer_code,
+        target: target as u32,
+        locality: locality as u32,
+        kind,
+    };
+    let index = particle.beliefs.ensure_key(key);
+    if particle.beliefs.confidence[index] == 0.0 && particle.beliefs.evidence_count[index] == 0 {
+        particle.beliefs.control[index * CONTROL_DIMENSIONS..(index + 1) * CONTROL_DIMENSIONS]
+            .fill(0.5);
+        particle.beliefs.confidence[index] = config.information.prior_confidence;
+    }
+    particle.beliefs.fuse_control(
+        index,
+        time,
+        weight,
+        &observation.control,
+        config.information.contradiction_memory_days,
+        config.information.contradiction_penalty,
+    );
+    // The destination/organization names are represented by the same native
+    // numeric observer code, so the existing zone and legacy mirrors can be
+    // updated only when the recipient is a real field formation. Headquarters
+    // rows intentionally have no zone-local mirror.
+    if let Some(formation) = formation_index(particle, recipient_name) {
+        let organization = particle.formations.organization[formation] as usize;
+        if let Some(zone_index) = zone_belief_index(
+            particle,
+            organization,
+            topology.primary_zone[locality] as usize,
+        ) {
+            fuse_zone(particle, config, zone_index, time, weight, observation.control[1]);
+        }
+    }
+    if kind != 3 {
+        let own_target = if particle.organizations.kind.get(recipient).copied() == Some(3) {
+            crate::INSURGENT
+        } else {
+            crate::GOVERNMENT
+        };
+        if target == own_target {
+            let legacy_key = BeliefKey {
+                observer: recipient as u32,
+                // The Python ActorBelief row is the shared base row.  The
+                // native compatibility key retains the historical insurgent
+                // target tag even when a government-control observation is
+                // mirrored into it.
+                target: crate::INSURGENT as u32,
+                locality: locality as u32,
+                kind: 0,
+            };
+            let legacy = particle.beliefs.ensure_key(legacy_key);
+            let offset = legacy * CONTROL_DIMENSIONS;
+            let source_offset = index * CONTROL_DIMENSIONS;
+            let source_control = particle.beliefs.control
+                [source_offset..source_offset + CONTROL_DIMENSIONS]
+                .to_vec();
+            particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS]
+                .copy_from_slice(&source_control);
+            particle.beliefs.presence[legacy] = particle.beliefs.presence[index];
+            particle.beliefs.confidence[legacy] = particle.beliefs.confidence[index];
+            particle.beliefs.updated_at[legacy] = particle.beliefs.updated_at[index];
+            particle.beliefs.last_reliable_observation_at[legacy] =
+                particle.beliefs.last_reliable_observation_at[index];
+            particle.beliefs.contradiction[legacy] = particle.beliefs.contradiction[index];
+            particle.beliefs.evidence_count[legacy] = particle.beliefs.evidence_count[index];
+        }
+    }
 }
 
 fn command_node_ids(particle: &ParticleState) -> Vec<String> {
@@ -618,6 +926,103 @@ fn publish_information_observation(
     );
 }
 
+/// Publish the control report already fused by the patrol module.
+///
+/// Patrols retain a separate hot path because their detection and local
+/// control transition is part of the Native-v1 process boundary.  The report
+/// still belongs to the common information ledger, however: Python stores it
+/// as an observation and sends it through the same command relay as every
+/// other source.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn record_patrol_control_observation(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    formation: usize,
+    locality: usize,
+    microzone: usize,
+    time: f64,
+    quality: f64,
+    confidence: f64,
+    control: [f64; CONTROL_DIMENSIONS],
+    violence: f64,
+) {
+    let observer = particle.formations.organization[formation] as usize;
+    let source_id = patrol_source_id(particle, formation);
+    let observer_node = formation_name(particle, formation);
+    publish_information_observation(
+        particle,
+        topology,
+        config,
+        observer,
+        &observer_node,
+        &source_id,
+        SourceType::Patrol,
+        1,
+        Some(control_target(observer)),
+        None,
+        locality,
+        microzone,
+        time,
+        quality,
+        confidence,
+        control,
+        violence,
+        0.0,
+        0.0,
+        0.0,
+        true,
+    );
+}
+
+/// Publish a patrol detection after the patrol module has consumed the
+/// historical detection/quality RNG draws.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn record_patrol_target_observation(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    observer_formation: usize,
+    target_actor: usize,
+    target_formation: Option<usize>,
+    locality: usize,
+    microzone: usize,
+    time: f64,
+    quality: f64,
+    confidence: f64,
+    presence: f64,
+    personnel: f64,
+    detection_probability: f64,
+    detected: bool,
+) {
+    let observer = particle.formations.organization[observer_formation] as usize;
+    let source_id = patrol_source_id(particle, observer_formation);
+    let observer_node = formation_name(particle, observer_formation);
+    publish_information_observation(
+        particle,
+        topology,
+        config,
+        observer,
+        &observer_node,
+        &source_id,
+        SourceType::Patrol,
+        0,
+        Some(target_actor),
+        target_formation,
+        locality,
+        microzone,
+        time,
+        quality,
+        confidence,
+        [0.0; CONTROL_DIMENSIONS],
+        0.0,
+        presence,
+        personnel,
+        detection_probability,
+        detected,
+    );
+}
+
 fn queue_information_relay(
     particle: &mut ParticleState,
     topology: &StaticTopology,
@@ -741,6 +1146,7 @@ fn observe_from_source(
             topology,
             config,
             rng,
+            observer,
             observer_node,
             source_id,
             source_type,
@@ -772,6 +1178,7 @@ fn observe_target(
     topology: &StaticTopology,
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
+    observer: usize,
     observer_node: &str,
     source_id: &str,
     source_type: SourceType,
@@ -779,7 +1186,7 @@ fn observe_target(
     target: usize,
     target_formation: Option<usize>,
     microzone: usize,
-    _time: f64,
+    time: f64,
 ) {
     let (present, personnel, actual_formation) =
         actual_target_presence(particle, target, locality, target_formation, microzone);
@@ -809,16 +1216,65 @@ fn observe_target(
 
     // Source quality is sampled for negative reports too.  This seemingly
     // redundant draw is part of the Python observation contract.
-    let _quality = source_quality(particle, config, rng, source_type, locality);
+    let quality = source_quality(particle, config, rng, source_type, locality);
+    let confidence = if detected {
+        config.information.positive_report_confidence
+    } else {
+        config.information.negative_report_confidence
+    };
+    let mut personnel_estimate = 0.0;
+    let mut attribution_mistake = false;
     if detected {
         if present {
-            let _estimate = personnel * (0.65 + 0.7 * rng.random());
-            let _attribution_mistake = rng.random() < config.information.attribution_error_rate;
+            personnel_estimate = personnel * (0.65 + 0.7 * rng.random());
+            attribution_mistake = rng.random() < config.information.attribution_error_rate;
         } else {
-            let _estimate = rng.uniform(20.0, 250.0).max(1.0);
+            personnel_estimate = rng.uniform(20.0, 250.0).max(1.0);
         }
     }
-    let _ = source_id;
+    let reported_target = if attribution_mistake {
+        if particle.organizations.kind.get(target).copied() == Some(3) {
+            crate::GOVERNMENT
+        } else {
+            crate::INSURGENT
+        }
+    } else {
+        target
+    };
+    let reported_formation = if attribution_mistake {
+        None
+    } else if target_formation.is_some() {
+        if present && detected {
+            actual_formation
+        } else {
+            target_formation
+        }
+    } else {
+        None
+    };
+    publish_information_observation(
+        particle,
+        topology,
+        config,
+        observer,
+        observer_node,
+        source_id,
+        source_type,
+        0,
+        Some(reported_target),
+        reported_formation,
+        locality,
+        microzone,
+        time,
+        quality,
+        confidence,
+        [0.0; CONTROL_DIMENSIONS],
+        0.0,
+        if detected { 1.0 } else { 0.0 },
+        personnel_estimate,
+        probability,
+        detected,
+    );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
 }
 
