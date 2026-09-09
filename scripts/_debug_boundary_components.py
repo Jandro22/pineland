@@ -28,7 +28,7 @@ base.update(
 with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory:
     config_path = pathlib.Path(directory) / "config.json"
     config_path.write_text(json.dumps(base))
-    for max_events in (4769,):
+    for max_events in (5899,):
         config = SimulationConfig.from_dict(base)
         world = generate_pineland(config)
         simulation = Simulation(world)
@@ -49,7 +49,6 @@ with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory
                     **__import__("os").environ,
                     "PINELAND_TRANSITION_DEBUG": "1",
                     "PINELAND_EVENT_TRACE": "1",
-                    "PINELAND_CERT_DEBUG": "1",
                 },
             check=True,
         )
