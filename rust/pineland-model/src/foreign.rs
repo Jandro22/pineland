@@ -201,6 +201,17 @@ pub fn update(
         }
     }
 
+    // Python snapshots the active insurgent recipients once, before the
+    // neighbor-state loop.  Support recipient selection is therefore based
+    // on the same live organization set for every foreign state in this
+    // event, with prior support breaking ties by organization identity.
+    let active_insurgents = (0..particle.organizations.kind.len())
+        .filter(|&organization| {
+            particle.organizations.kind[organization] == 3
+                && particle.organizations.active.get(organization).copied() == Some(1)
+        })
+        .collect::<Vec<_>>();
+
     // Diaspora remittances are resource transfers from the foreign system to
     // the represented civilian cohort.  Message draws occur after every
     // active link's transfer, exactly as in the Python registry loop.
@@ -339,18 +350,43 @@ pub fn update(
         };
         let support_selected = support_draw.is_some_and(|draw| draw < support_probability);
         if support_selected {
-            // The baseline generated world has one government-side recipient
-            // and no formations attached directly to the government actor.
-            // Keep the complete financial, institutional, and legitimacy
-            // effects here; insurgent-recipient history and formation effects
-            // are represented by the same component split below when those
-            // dynamic rows are present.
             let recipient = if particle.foreign.government_alignment[state]
                 >= particle.foreign.ideological_alignment[state]
+                || active_insurgents.is_empty()
             {
                 crate::GOVERNMENT
             } else {
-                crate::GOVERNMENT
+                active_insurgents
+                    .iter()
+                    .copied()
+                    .min_by(|left, right| {
+                        let left_support = particle
+                            .foreign
+                            .support_foreign_state
+                            .iter()
+                            .zip(&particle.foreign.support_recipient)
+                            .zip(&particle.foreign.support_total)
+                            .filter(|((foreign, candidate), _)| {
+                                **foreign as usize == state && **candidate as usize == *left
+                            })
+                            .map(|(_, total)| *total)
+                            .sum::<f64>();
+                        let right_support = particle
+                            .foreign
+                            .support_foreign_state
+                            .iter()
+                            .zip(&particle.foreign.support_recipient)
+                            .zip(&particle.foreign.support_total)
+                            .filter(|((foreign, candidate), _)| {
+                                **foreign as usize == state && **candidate as usize == *right
+                            })
+                            .map(|(_, total)| *total)
+                            .sum::<f64>();
+                        right_support
+                            .total_cmp(&left_support)
+                            .then_with(|| left.cmp(right))
+                    })
+                    .unwrap_or(crate::GOVERNMENT)
             };
             let total = particle.foreign.resources[state].min(
                 particle.foreign.resources[state]
@@ -361,26 +397,76 @@ pub fn update(
                 particle.foreign.resources[state] -= total;
                 let financial = total * 0.22;
                 let political = total * 0.08;
+                let material = total * 0.19;
                 let training = total * 0.14;
                 let organizational = total * 0.10;
                 let denominator = total.max(1.0);
                 particle.organizations.capital[recipient] += financial;
-                let learning = training + organizational;
-                let institution_count = particle.political.institution_capacity.len();
-                for capacity in &mut particle.political.institution_capacity {
-                    *capacity = clamp01(
-                        *capacity
-                            + learning / denominator * 0.02
-                                / institution_count.max(1) as f64,
+                if recipient == crate::GOVERNMENT {
+                    let learning = training + organizational;
+                    let institution_count = particle.political.institution_capacity.len();
+                    for capacity in &mut particle.political.institution_capacity {
+                        *capacity = clamp01(
+                            *capacity
+                                + learning / denominator * 0.02
+                                    / institution_count.max(1) as f64,
+                        );
+                    }
+                    for person in 0..particle.people.government_legitimacy.len() {
+                        particle.people.government_legitimacy[person] = clamp01(
+                            particle.people.government_legitimacy[person]
+                                + political / denominator
+                                    * 0.002
+                                    * (particle.people.trust[person] - 0.35),
+                        );
+                    }
+                } else if particle.organizations.kind[recipient] == 3 {
+                    // Match deliver_support's insurgent-recipient effects.
+                    // Financial support enters the ordinary organization
+                    // resource account above; these additional channels alter
+                    // local execution and sponsor dependence without creating
+                    // personnel.
+                    particle.organizations.external_sanctuary[recipient] = clamp01(
+                        particle.organizations.external_sanctuary[recipient]
+                            + 0.12,
                     );
-                }
-                for person in 0..particle.people.government_legitimacy.len() {
-                    particle.people.government_legitimacy[person] = clamp01(
-                        particle.people.government_legitimacy[person]
-                            + political / denominator
-                                * 0.002
-                                * (particle.people.trust[person] - 0.35),
+                    let phenotype = recipient * 8 + 7;
+                    if phenotype < particle.organizations.phenotype.len() {
+                        particle.organizations.phenotype[phenotype] = clamp01(
+                            particle.organizations.phenotype[phenotype] + 0.04,
+                        );
+                    }
+                    particle.organizations.capital_organizational[recipient] = clamp01(
+                        particle.organizations.capital_organizational[recipient]
+                            + organizational / denominator * 0.08,
                     );
+                    let formation_count = particle
+                        .formations
+                        .organization
+                        .iter()
+                        .filter(|owner| **owner as usize == recipient)
+                        .count()
+                        .max(1) as f64;
+                    let material_per_formation = material / formation_count;
+                    for formation in 0..particle.formations.organization.len() {
+                        if particle.formations.organization[formation] as usize != recipient {
+                            continue;
+                        }
+                        particle.formations.quality[formation] = clamp01(
+                            particle.formations.quality[formation]
+                                + training / denominator * 0.025,
+                        );
+                        particle.formations.cohesion[formation] = clamp01(
+                            particle.formations.cohesion[formation]
+                                + training / denominator * 0.015,
+                        );
+                        let accepted = material_per_formation.min(
+                            particle.formations.supply_capacity[formation]
+                                - particle.formations.supply_stock[formation],
+                        );
+                        particle.formations.supply_stock[formation] += accepted;
+                        particle.logistics.cumulative_produced += accepted;
+                    }
                 }
                 particle.foreign.cumulative_cost[state] += total;
                 particle.foreign.support_foreign_state.push(state as u32);
