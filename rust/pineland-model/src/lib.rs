@@ -1619,6 +1619,24 @@ impl SimulationEngine {
                 );
             }
             self.process_event(&event, until)?;
+            if std::env::var_os("PINELAND_BELIEF_TRACE").is_some()
+                && matches!(event.payload, EventPayload::Information)
+                && event.time >= 3.5
+            {
+                for (index, key) in self.particle.beliefs.keys.iter().enumerate() {
+                    eprintln!(
+                        "BTRACE observer={} target={} locality={} kind={} confidence={:.17} presence={:.17} control={:?}",
+                        key.observer,
+                        key.target,
+                        key.locality,
+                        key.kind,
+                        self.particle.beliefs.confidence[index],
+                        self.particle.beliefs.presence[index],
+                        &self.particle.beliefs.control[index * CONTROL_DIMENSIONS
+                            ..(index + 1) * CONTROL_DIMENSIONS]
+                    );
+                }
+            }
             if advances_footholds {
                 organizations::advance_footholds(
                     &mut self.particle,
@@ -1792,7 +1810,7 @@ impl SimulationEngine {
                 self.put_rng("process:contact", rng);
             }
             EventPayload::ForceMovement => {
-                movement::command(&mut self.particle, &self.topology, &self.config, event.time)
+                movement::advance_movement_orders(&mut self.particle, &self.topology, event.time)
             }
             EventPayload::Logistics => {
                 let mut rng = self.take_rng("process:logistics");
@@ -1807,7 +1825,17 @@ impl SimulationEngine {
                 self.put_rng("process:logistics", rng);
             }
             EventPayload::Command => {
-                movement::command(&mut self.particle, &self.topology, &self.config, event.time)
+                let mut rng = self.take_rng("process:command");
+                movement::command(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    &mut rng,
+                    event.time,
+                    event.elapsed_days,
+                )
+                .map_err(|error| ModelError::Invalid(format!("movement command: {error}")))?;
+                self.put_rng("process:command", rng);
             }
             EventPayload::Governance => governance::update(
                 &mut self.particle,
