@@ -1,12 +1,37 @@
 import json
 import os
 import pathlib
+import random
 import subprocess
 import tempfile
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
 from pineland_sim.config import SimulationConfig
 from pineland_sim.generator import generate_pineland
 from pineland_sim.simulation import Simulation
+import pineland_sim.foreign_affairs as foreign_affairs
+
+_original_foreign_belief_update = foreign_affairs._foreign_belief_update
+
+
+def _trace_foreign_belief_update(world, state, time, rng):
+    probe = random.Random()
+    probe.setstate(rng.getstate())
+    direct = random.Random()
+    direct.setstate(rng.getstate())
+    print(
+        "PY_FOREIGN_PRE",
+        state.state_id,
+        "next_random", repr(probe.random()),
+        "next_normal", repr(probe.normalvariate(0.0, 1.0)),
+        "direct_normal", repr(direct.normalvariate(0.0, 1.0)),
+    )
+    return _original_foreign_belief_update(world, state, time, rng)
+
+
+foreign_affairs._foreign_belief_update = _trace_foreign_belief_update
 
 root = pathlib.Path(__file__).resolve().parents[1]
 base = json.loads((root / "scenarios" / "baseline.json").read_text())
@@ -16,12 +41,12 @@ base.update(
     burn_in_days=0.0,
     output_mode="calibration",
     seed=0,
-    horizon_days=10.0,
+    horizon_days=30.0,
 )
 config = SimulationConfig.from_dict(base)
 world = generate_pineland(config)
 simulation = Simulation(world)
-simulation.run(until=10.0)
+simulation.run(until=30.0, max_events=1996)
 
 organization_ids = list(world.organizations)
 locality_ids = list(world.localities)
@@ -91,13 +116,15 @@ with tempfile.TemporaryDirectory(prefix="pineland-key-debug-") as directory:
     config_path.write_text(json.dumps(base))
     environment = os.environ.copy()
     environment["PINELAND_CERT_DEBUG"] = "1"
+    environment["PINELAND_FOREIGN_TRACE"] = "1"
     completed = subprocess.run(
         [
             str(root / "rust" / "target" / "release" / "pineland.exe"),
             "certify-trajectory",
             "--config", str(config_path),
             "--seed", "0",
-            "--until", "10",
+            "--until", "30",
+            "--max-events", "1996",
         ],
         cwd=root,
         env=environment,
@@ -119,10 +146,37 @@ for observer, target, locality in dynamic:
         )
     )
 native_set = set(native_keys)
-expected_set = {key for key, _ in expected_dynamic}
-missing = [(semantic, key) for key, semantic in expected_dynamic if key not in native_set]
+expected_set = set(python_keys)
+missing = sorted(expected_set - native_set)
 extras = sorted(native_set - expected_set)
-print("counts", len(python_keys), len(native_keys), "fixed", len(fixed), "dynamic", len(dynamic))
+print(
+    "events",
+    native_payload.get("events_processed"),
+    "counts",
+    len(python_keys),
+    len(native_keys),
+    "fixed",
+    len(fixed),
+    "dynamic",
+    len(dynamic),
+)
+print(
+    "python foreign",
+    [
+        (
+            key,
+            belief.government_control_estimate,
+            belief.insurgent_presence_estimate,
+            belief.confidence,
+            belief.updated_at,
+        )
+        for key, belief in world.foreign_beliefs.items()
+    ],
+)
+print("native foreign trace")
+for line in completed.stderr.splitlines():
+    if line.startswith("FOREIGN_"):
+        print(line)
 print("formation count", len(formation_ids), "post count", len(post_ids), "community count", len(community_ids))
 print("formations", list(enumerate(formation_ids)))
 print("missing count", len(missing), "missing first", missing[:25])

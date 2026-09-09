@@ -83,6 +83,13 @@ def digest_u32(values: Iterable[int]) -> str:
     return hashlib.sha256(material).hexdigest()
 
 
+def digest_u64(values: Iterable[int]) -> str:
+    material = b"".join(
+        struct.pack("<Q", int(value) & (2**64 - 1)) for value in values
+    )
+    return hashlib.sha256(material).hexdigest()
+
+
 def digest_u8(values: Iterable[int]) -> str:
     return hashlib.sha256(bytes(int(value) & 0xFF for value in values)).hexdigest()
 
@@ -134,6 +141,42 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
     posts = list(world.security_posts.values())
     post_index = {post.post_id: index for index, post in enumerate(posts)}
     patrol_by_formation = {patrol.formation_id: patrol for patrol in world.patrols.values()}
+    movement_status_codes = {
+        "pending": 1,
+        "moving": 2,
+        "failed_command": 3,
+        "blocked_unavailable": 4,
+        "blocked_supply": 5,
+        "arrived": 6,
+    }
+
+    def movement_sequence(order) -> int:
+        try:
+            return int(order.order_id[2:])
+        except (AttributeError, ValueError):
+            return 0
+
+    # Native-v1 stores the latest order fields on each formation while the
+    # Python oracle retains the complete order archive.  Canonicalize the
+    # archive to that same latest-per-formation projection for the shared
+    # semantic contract.  Keeping the projection here is important: a world
+    # hash can otherwise remain equal while a latent destination changes the
+    # next force-movement decision.
+    latest_movement_order = {}
+    for order in world.movement_orders.values():
+        sequence = movement_sequence(order)
+        previous = latest_movement_order.get(order.formation_id)
+        if previous is None or sequence > previous[0]:
+            latest_movement_order[order.formation_id] = (sequence, order)
+
+    def movement_order_for(formation):
+        item = latest_movement_order.get(formation.formation_id)
+        return item[1] if item is not None else None
+
+    def movement_field(formation, name: str, default):
+        order = movement_order_for(formation)
+        return getattr(order, name) if order is not None else default
+
     foothold_by_key = world.local_footholds
     sources = list(world.supply_sources.values())
 
@@ -539,6 +582,55 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
         "formations_active": digest_u8(int(formation.personnel > 0) for formation in formations),
         "formations_moving": digest_u8(int(formation.moving) for formation in formations),
         "formations_outside_pineland": digest_u8(int(formation.outside_pineland) for formation in formations),
+        "formations_movement_destination": digest_u32(
+            locality_index.get(
+                movement_field(formation, "destination_locality_id", None), U32_MAX
+            )
+            for formation in formations
+        ),
+        "formations_movement_origin": digest_u32(
+            locality_index.get(
+                movement_field(formation, "origin_locality_id", None), U32_MAX
+            )
+            for formation in formations
+        ),
+        "formations_movement_execute_at": digest_f64(
+            movement_field(formation, "execute_at", 0.0)
+            for formation in formations
+        ),
+        "formations_movement_arrives_at": digest_f64(
+            movement_field(formation, "arrives_at", None)
+            if movement_field(formation, "arrives_at", None) is not None
+            else -1.0
+            for formation in formations
+        ),
+        "formations_movement_travel_hours": digest_f64(
+            movement_field(formation, "travel_time_hours", 0.0)
+            for formation in formations
+        ),
+        "formations_movement_distance_km": digest_f64(
+            movement_field(formation, "distance_km", 0.0)
+            for formation in formations
+        ),
+        "formations_movement_supply_cost": digest_f64(
+            movement_field(formation, "supply_cost", 0.0)
+            for formation in formations
+        ),
+        "formations_movement_order_sequence": digest_u64(
+            movement_sequence(movement_order_for(formation))
+            for formation in formations
+        ),
+        "formations_movement_status": digest_u8(
+            movement_status_codes.get(
+                movement_field(formation, "status", None), 0
+            )
+            for formation in formations
+        ),
+        "formations_movement_purpose": digest_u8(
+            1 if movement_field(formation, "purpose", "reallocation") == "withdrawal" else 0
+            for formation in formations
+        ),
+        "movement_order_count": len(world.movement_orders),
         "security_posts_organization": digest_u32(
             organization_index[post.organization_id] for post in posts
         ),
