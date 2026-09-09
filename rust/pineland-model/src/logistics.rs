@@ -14,6 +14,17 @@ pub fn update(
     time: f64,
 ) {
     let dt = elapsed_days.max(0.0);
+    let logistics_trace = std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some();
+    if logistics_trace {
+        eprintln!(
+            "LOGISTICS_BEGIN time={:.17} dt={:.17} in_transit={:.17} in_transit_bits={} shipments={}",
+            time,
+            dt,
+            particle.logistics.in_transit,
+            particle.logistics.in_transit.to_bits(),
+            particle.logistics.shipment_source.len()
+        );
+    }
     let _expired = crate::access::decay(particle, time, dt, config);
     reconcile_source_production(particle, topology, config);
     // The Python oracle reconciles carrying capacity to current personnel at
@@ -60,6 +71,16 @@ pub fn update(
                 continue;
             }
             let deliverable = particle.logistics.shipment_quantity_deliverable[shipment];
+            if logistics_trace {
+                eprintln!(
+                    "LOGISTICS_DELIVER shipment={} time={:.17} amount={:.17} before={:.17} status={}",
+                    shipment,
+                    time,
+                    deliverable,
+                    particle.logistics.in_transit,
+                    particle.logistics.shipment_status[shipment]
+                );
+            }
             let accepted = deliverable.min(
                 particle.formations.supply_capacity[formation]
                     - particle.formations.supply_stock[formation],
@@ -69,6 +90,14 @@ pub fn update(
             particle.formations.sustainment[formation] = supply_ratio(particle, formation);
             particle.logistics.shipment_status[shipment] = SHIPMENT_DELIVERED;
             particle.logistics.in_transit -= deliverable;
+            if logistics_trace {
+                eprintln!(
+                    "LOGISTICS_DELIVERED shipment={} after={:.17} after_bits={}",
+                    shipment,
+                    particle.logistics.in_transit,
+                    particle.logistics.in_transit.to_bits()
+                );
+            }
             particle.logistics.cumulative_delivered += accepted;
             if overflow > 0.0 {
                 particle.logistics.cumulative_lost += overflow;
@@ -173,6 +202,17 @@ pub fn update(
         particle.logistics.cumulative_lost += shipment_loss;
         particle.logistics.cumulative_shipped += quantity_sent;
         particle.logistics.in_transit += quantity_deliverable;
+        if logistics_trace {
+            eprintln!(
+                "LOGISTICS_DISPATCH shipment={} time={:.17} sent={:.17} deliverable={:.17} after={:.17} after_bits={}",
+                particle.logistics.shipment_source.len(),
+                time,
+                quantity_sent,
+                quantity_deliverable,
+                particle.logistics.in_transit,
+                particle.logistics.in_transit.to_bits()
+            );
+        }
         append_shipment(
             particle,
             source,
@@ -494,7 +534,7 @@ fn reconcile_source_production(
         } else {
             python_sum(&weights)
         };
-        if std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some() {
+        if std::env::var_os("PINELAND_LOGISTICS_RECON_TRACE").is_some() {
             eprintln!(
                 "LOGISTICS_RECON organization={} personnel={:.17} personnel_bits={} requirement={:.17} requirement_bits={} weights={:?} total_weight={:.17}",
                 organization,
@@ -516,7 +556,7 @@ fn reconcile_source_production(
             particle.logistics.source_capacity[source] = particle.logistics.source_capacity[source]
                 .max(particle.logistics.source_stock[source])
                 .max(production / config.logistics.source_daily_production_fraction.max(1e-12));
-            if std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some() {
+            if std::env::var_os("PINELAND_LOGISTICS_RECON_TRACE").is_some() {
                 eprintln!(
                     "LOGISTICS_SOURCE organization={} source={} weight={:.17} weight_bits={} production={:.17} production_bits={} capacity={:.17}",
                     organization,

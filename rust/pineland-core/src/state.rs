@@ -4155,7 +4155,14 @@ impl ParticleState {
             if !value.is_finite() {
                 return Err(StateError::NonFinite(name));
             }
-            if value < 0.0 {
+            // The Python oracle accumulates shipment additions and removals
+            // in ordinary binary64 order.  A fully drained shipment ledger
+            // can therefore retain a tiny negative cancellation residue
+            // (for example -5e-12).  Preserve that exact value for parity,
+            // while still rejecting any materially negative balance.
+            let tolerated_roundoff = name == "in-transit logistics"
+                && value >= -1.0e-9;
+            if value < 0.0 && !tolerated_roundoff {
                 return Err(StateError::Corrupt(format!("{name} must be non-negative")));
             }
         }

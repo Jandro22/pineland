@@ -538,6 +538,38 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
                 JsonValue::integer(particle.formations.movement_destination[index] as u64),
             );
             row.insert(
+                "movement_origin",
+                JsonValue::integer(particle.formations.movement_origin[index] as u64),
+            );
+            row.insert(
+                "movement_travel_hours",
+                JsonValue::number(particle.formations.movement_travel_hours[index]),
+            );
+            row.insert(
+                "movement_distance_km",
+                JsonValue::number(particle.formations.movement_distance_km[index]),
+            );
+            row.insert(
+                "movement_supply_cost",
+                JsonValue::number(particle.formations.movement_supply_cost[index]),
+            );
+            row.insert(
+                "movement_execute_at",
+                JsonValue::number(particle.formations.movement_execute_at[index]),
+            );
+            row.insert(
+                "movement_arrives_at",
+                JsonValue::number(particle.formations.movement_arrives_at[index]),
+            );
+            row.insert(
+                "movement_order_sequence",
+                JsonValue::integer(particle.formations.movement_order_sequence[index]),
+            );
+            row.insert(
+                "movement_purpose",
+                JsonValue::integer(particle.formations.movement_purpose[index] as u64),
+            );
+            row.insert(
                 "operational_posture",
                 JsonValue::integer(particle.formations.operational_posture[index] as u64),
             );

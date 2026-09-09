@@ -1640,6 +1640,12 @@ impl SimulationEngine {
                 );
             }
             self.process_event(&event)?;
+            // Python's foothold membership component is a live projection of
+            // current armed membership and residence.  Civilian mobility,
+            // combat, and any future direct person transition can change it
+            // outside the recruitment handler, so refresh the compact cache
+            // after every typed transition before the state is certified.
+            recruitment::refresh_foothold_memberships(&mut self.particle, &self.topology);
             if std::env::var_os("PINELAND_BELIEF_TRACE").is_some()
                 && matches!(event.payload, EventPayload::Information)
                 && event.time >= 3.5
@@ -2004,15 +2010,90 @@ impl SimulationEngine {
         let interval = match event.payload {
             EventPayload::Patrol { patrol } => {
                 let patrol = patrol.get() as usize;
-                let travel_interval = self
+                // Python's handler writes a base interval when the patrol's
+                // formation is unavailable or moving.  Only a successfully
+                // executed patrol route can lengthen the recurrence by its
+                // travel time; reusing a stale next_available value here
+                // would move an unavailable patrol into the future.
+                let base_interval = self.config.intervals.patrol;
+                let can_execute = self
                     .particle
                     .patrols
-                    .next_available
+                    .active
                     .get(patrol)
                     .copied()
-                    .map(|available_at| (available_at - event.time).max(0.0))
-                    .unwrap_or(0.0);
-                self.config.intervals.patrol.max(travel_interval)
+                    == Some(1)
+                    && self
+                        .particle
+                        .patrols
+                        .formation
+                        .get(patrol)
+                        .copied()
+                        .and_then(|formation| {
+                            self.particle
+                                .formations
+                                .personnel
+                                .get(formation as usize)
+                                .map(|personnel| {
+                                    let invalid = *personnel <= 0.0
+                                        || self.particle.formations.active
+                                            .get(formation as usize)
+                                            .copied()
+                                            != Some(1)
+                                        || self.particle.formations.outside_pineland
+                                            .get(formation as usize)
+                                            .copied()
+                                            != Some(0)
+                                        || self.particle.formations.moving
+                                            .get(formation as usize)
+                                            .copied()
+                                            != Some(0)
+                                        || self.particle.formations.operational_status
+                                            .get(formation as usize)
+                                            .copied()
+                                            != Some(1);
+                                    !invalid
+                                })
+                        })
+                        .unwrap_or(false);
+                if !can_execute {
+                    if std::env::var_os("PINELAND_SCHED_TRACE").is_some()
+                        && (18.0..=20.0).contains(&event.time)
+                    {
+                        eprintln!(
+                            "SCHED_RESCHEDULE event_seq={} time={:.17} patrol={} can_execute=0 interval={:.17} next_available={:.17}",
+                            event.sequence,
+                            event.time,
+                            patrol,
+                            base_interval,
+                            self.particle.patrols.next_available.get(patrol).copied().unwrap_or(0.0)
+                        );
+                    }
+                    base_interval
+                } else {
+                    let travel_interval = self
+                        .particle
+                        .patrols
+                        .next_available
+                        .get(patrol)
+                        .copied()
+                        .map(|available_at| (available_at - event.time).max(0.0))
+                        .unwrap_or(0.0);
+                    let interval = base_interval.max(travel_interval);
+                    if std::env::var_os("PINELAND_SCHED_TRACE").is_some()
+                        && (18.0..=20.0).contains(&event.time)
+                    {
+                        eprintln!(
+                            "SCHED_RESCHEDULE event_seq={} time={:.17} patrol={} can_execute=1 interval={:.17} next_available={:.17}",
+                            event.sequence,
+                            event.time,
+                            patrol,
+                            interval,
+                            self.particle.patrols.next_available.get(patrol).copied().unwrap_or(0.0)
+                        );
+                    }
+                    interval
+                }
             }
             EventPayload::Information => self.config.intervals.information,
             EventPayload::Beliefs => self.config.intervals.beliefs,
