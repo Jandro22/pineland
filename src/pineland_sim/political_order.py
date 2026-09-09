@@ -158,7 +158,8 @@ def process_political_order(world, time: float, event_id: str, rng: random.Rando
         public = public_total / max(1, len(localities))
         patronage = patronage_total / max(1, len(localities))
         # Local autonomy and compliance create implementation gaps and distortion.
-        compliance = clamp(institution.compliance + rng.normalvariate(0, .08) * institution.autonomy)
+        compliance_noise = rng.normalvariate(0, .08)
+        compliance = clamp(institution.compliance + compliance_noise * institution.autonomy)
         effective_public = public * compliance
         distorted = public - effective_public
         patronage += distorted * .7
@@ -208,6 +209,18 @@ def process_political_order(world, time: float, event_id: str, rng: random.Rando
                   locality.locality_id, effective_public, "governance_production")
         quality = sum(output.values()) / len(output)
         integrity_loss = cfg.patronage_capacity_damage * patronage / max(1, public + patronage)
+        if __import__("os").environ.get("PINELAND_POLITICAL_TRACE"):
+            print(
+                "POLITICAL"
+                f" locality={locality.locality_id} institution={institution.institution_id}"
+                f" noise={compliance_noise:.17g} public={public:.17g}"
+                f" patronage={patronage:.17g} compliance={compliance:.17g}"
+                f" effective_public={effective_public:.17g} scale={(effective_public / cycle_scale) / max(1.0, locality.population * .05):.17g}"
+                f" production={(institution.capacity * institution.reach * compliance * ((effective_public / cycle_scale) / max(1.0, locality.population * .05))):.17g}"
+                f" outputs={output['security']:.17g},{output['justice']:.17g},{output['administration']:.17g},{output['services']:.17g},{output['representation']:.17g}"
+                f" quality={quality:.17g} integrity_loss={integrity_loss:.17g}",
+                file=__import__("sys").stderr,
+            )
         institution.capacity = clamp(
             institution.capacity + cycle_scale * (
                 cfg.capacity_learning_rate * quality -

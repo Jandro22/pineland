@@ -1338,6 +1338,50 @@ fn components(engine: &SimulationEngine) -> JsonValue {
         JsonValue::string(u8_digest(&particle.formations.outside_pineland)),
     );
     value.insert(
+        "formations_movement_destination",
+        JsonValue::string(u32_digest(&particle.formations.movement_destination)),
+    );
+    value.insert(
+        "formations_movement_origin",
+        JsonValue::string(u32_digest(&particle.formations.movement_origin)),
+    );
+    value.insert(
+        "formations_movement_execute_at",
+        JsonValue::string(f64_digest(&particle.formations.movement_execute_at)),
+    );
+    value.insert(
+        "formations_movement_arrives_at",
+        JsonValue::string(f64_digest(&particle.formations.movement_arrives_at)),
+    );
+    value.insert(
+        "formations_movement_travel_hours",
+        JsonValue::string(f64_digest(&particle.formations.movement_travel_hours)),
+    );
+    value.insert(
+        "formations_movement_distance_km",
+        JsonValue::string(f64_digest(&particle.formations.movement_distance_km)),
+    );
+    value.insert(
+        "formations_movement_supply_cost",
+        JsonValue::string(f64_digest(&particle.formations.movement_supply_cost)),
+    );
+    value.insert(
+        "formations_movement_order_sequence",
+        JsonValue::string(u64_digest(&particle.formations.movement_order_sequence)),
+    );
+    value.insert(
+        "formations_movement_status",
+        JsonValue::string(u8_digest(&particle.formations.movement_status)),
+    );
+    value.insert(
+        "formations_movement_purpose",
+        JsonValue::string(u8_digest(&particle.formations.movement_purpose)),
+    );
+    value.insert(
+        "movement_order_count",
+        JsonValue::integer(particle.movement_order_count),
+    );
+    value.insert(
         "security_posts_organization",
         JsonValue::string(u32_digest(&particle.security_posts.organization)),
     );
@@ -1930,6 +1974,14 @@ fn f64_digest(values: &[f64]) -> String {
 
 fn u32_digest(values: &[u32]) -> String {
     let mut bytes = Vec::with_capacity(values.len() * 4);
+    for value in values {
+        bytes.extend_from_slice(&value.to_le_bytes());
+    }
+    sha256::digest_hex(&bytes)
+}
+
+fn u64_digest(values: &[u64]) -> String {
+    let mut bytes = Vec::with_capacity(values.len() * 8);
     for value in values {
         bytes.extend_from_slice(&value.to_le_bytes());
     }

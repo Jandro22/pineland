@@ -158,6 +158,7 @@ pub struct StaticTopology {
     pub locality_economic_output: Vec<f64>,
     pub locality_infrastructure: Vec<f64>,
     pub locality_administrative_capacity: Vec<f64>,
+    pub locality_governance_leakage: Vec<f64>,
     pub locality_terrain_friction: Vec<f64>,
     pub locality_observability: Vec<f64>,
     pub district_population: Vec<f64>,
@@ -175,6 +176,7 @@ struct LocalitySeed {
     economic_output: f64,
     infrastructure: f64,
     administrative_capacity: f64,
+    governance_leakage: f64,
     terrain_friction: f64,
     observability: f64,
     x_km: f64,
@@ -409,6 +411,7 @@ impl StaticTopology {
             locality_economic_output: vec![0.0; locality_count],
             locality_infrastructure: vec![0.5; locality_count],
             locality_administrative_capacity: vec![0.5; locality_count],
+            locality_governance_leakage: vec![0.0; locality_count],
             locality_terrain_friction: vec![1.0; locality_count],
             locality_observability: vec![0.5; locality_count],
             district_population: vec![0.0; district_count],
@@ -535,7 +538,7 @@ impl StaticTopology {
                 // during world generation.  The dense native state does not
                 // yet expose that field, but the draw is still part of the
                 // frozen world-generation stream and must be consumed here.
-                let _governance_leakage = world_rng.uniform(0.05, 0.28);
+                let governance_leakage = world_rng.uniform(0.05, 0.28);
                 locality_seeds.push(LocalitySeed {
                     id: locality_id,
                     district: district_index,
@@ -549,6 +552,7 @@ impl StaticTopology {
                     economic_output,
                     infrastructure,
                     administrative_capacity: capacity,
+                    governance_leakage,
                     terrain_friction,
                     observability,
                     x_km,
@@ -879,6 +883,10 @@ impl StaticTopology {
             locality_administrative_capacity: locality_seeds
                 .iter()
                 .map(|seed| seed.administrative_capacity)
+                .collect(),
+            locality_governance_leakage: locality_seeds
+                .iter()
+                .map(|seed| seed.governance_leakage)
                 .collect(),
             locality_terrain_friction: locality_seeds
                 .iter()
