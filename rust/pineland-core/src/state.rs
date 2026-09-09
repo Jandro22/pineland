@@ -16,6 +16,10 @@ pub struct LocalityState {
     /// population separate from the rounded locality allocation; direct
     /// civilian harm decrements both stocks.
     pub district_population: Vec<f64>,
+    /// Python retains integer district populations until the first civilian
+    /// harm update.  The type boundary affects Python 3.14's mixed int/float
+    /// built-in sum path, so preserve it alongside the numeric value.
+    pub district_population_is_integer: Vec<u8>,
     pub economic_output: Vec<f64>,
     pub infrastructure: Vec<f64>,
     pub administrative_capacity: Vec<f64>,
@@ -35,6 +39,7 @@ impl LocalityState {
         Self {
             population: vec![0.0; count],
             district_population: vec![0.0; count],
+            district_population_is_integer: vec![0; count],
             economic_output: vec![0.0; count],
             infrastructure: vec![0.0; count],
             administrative_capacity: vec![0.0; count],
@@ -1493,6 +1498,7 @@ impl ParticleState {
         // distributed-equivalence certification.
         append_f64s(material, &self.locality.population);
         append_f64s(material, &self.locality.district_population);
+        append_u8s(material, &self.locality.district_population_is_integer);
         append_f64s(material, &self.locality.economic_output);
         append_f64s(material, &self.locality.infrastructure);
         append_f64s(material, &self.locality.administrative_capacity);
@@ -3412,6 +3418,23 @@ impl ParticleState {
         }
         check_nonnegative(&self.locality.population, "locality population")?;
         check_nonnegative(&self.locality.district_population, "district population")?;
+        if self.locality.district_population_is_integer.len()
+            != self.locality.district_population.len()
+        {
+            return Err(StateError::Corrupt(
+                "district population type flags have the wrong length".to_string(),
+            ));
+        }
+        if self
+            .locality
+            .district_population_is_integer
+            .iter()
+            .any(|flag| *flag > 1)
+        {
+            return Err(StateError::Corrupt(
+                "district population type flag is not boolean".to_string(),
+            ));
+        }
         check_nonnegative(&self.locality.economic_output, "economic output")?;
         check_nonnegative(&self.locality.displaced_population, "displaced population")?;
         for (values, name) in [

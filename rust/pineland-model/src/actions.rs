@@ -296,7 +296,15 @@ fn operational_target(
     let target_side_insurgent = !is_insurgent(particle, organization);
     let mut candidates = Vec::new();
     candidates.push((locality, 1.0));
-    for (destination, cost) in topology.locality_edges.neighbors(locality) {
+    let mut neighbors = topology
+        .locality_edges
+        .neighbors(locality)
+        .collect::<Vec<_>>();
+    // Python's operational_reach_candidates iterates sorted adjacency keys.
+    // The topology graph preserves generation insertion order for civilian
+    // mobility, so action targeting must sort its own view explicitly.
+    neighbors.sort_by_key(|(destination, _)| *destination);
+    for (destination, cost) in neighbors {
         candidates.push((
             destination as usize,
             locality_reach(
@@ -351,7 +359,12 @@ fn reachable_target_belief(
         channel,
     );
     let mut best = source_weight;
-    for (destination, cost) in topology.locality_edges.neighbors(locality) {
+    let mut neighbors = topology
+        .locality_edges
+        .neighbors(locality)
+        .collect::<Vec<_>>();
+    neighbors.sort_by_key(|(destination, _)| *destination);
+    for (destination, cost) in neighbors {
         let destination = destination as usize;
         if !has_target_evidence(particle, organization, target_side_insurgent, destination) {
             continue;
@@ -854,10 +867,13 @@ fn access_destination(
     } else {
         crate::INSURGENT
     };
-    let candidates = topology
+    let mut candidates = topology
         .locality_edges
         .neighbors(locality)
         .collect::<Vec<_>>();
+    // Python's access-restriction branch sorts locality IDs before drawing.
+    // Do not reuse the insertion-ordered mobility adjacency here.
+    candidates.sort_by_key(|(destination, _)| *destination);
     if candidates.is_empty() {
         return None;
     }

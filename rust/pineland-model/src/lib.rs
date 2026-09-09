@@ -330,6 +330,16 @@ impl SimulationEngine {
         } else {
             vec![0.0; self.topology.district_count()]
         };
+        self.particle.locality.district_population_is_integer = if self
+            .topology
+            .district_population
+            .iter()
+            .any(|value| *value > 0.0)
+        {
+            vec![1; self.topology.district_count()]
+        } else {
+            vec![0; self.topology.district_count()]
+        };
         let total_population: f64 = if self
             .topology
             .district_population

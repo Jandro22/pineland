@@ -508,18 +508,52 @@ pub fn seed_from_namespace(seed: u64, namespace: &str, stream: &str) -> u64 {
 /// draw is identical.  The two-term Neumaier accumulator is the algorithm used
 /// by the CPython float fast path for finite inputs.
 pub fn python_sum(values: &[f64]) -> f64 {
-    let mut hi = 0.0;
+    python_sum_with_integer_prefix(values, 0)
+}
+
+/// Match `sum(values)` when the first `integer_prefix_len` values are Python
+/// integers and the following values are Python floats.  CPython's fast path
+/// accumulates that integer prefix exactly, then starts its compensated float
+/// accumulator only after the first float has been added to the prefix.
+pub fn python_sum_with_integer_prefix(values: &[f64], integer_prefix_len: usize) -> f64 {
+    let prefix_len = integer_prefix_len.min(values.len());
+    if prefix_len == values.len() {
+        let mut total = 0.0;
+        for value in &values[..prefix_len] {
+            total = force_binary64(total + *value);
+        }
+        return total;
+    }
+
+    let mut integer_prefix = 0.0;
+    for value in &values[..prefix_len] {
+        integer_prefix = force_binary64(integer_prefix + *value);
+    }
+    let mut hi;
     let mut lo = 0.0;
-    for value in values {
-        let next = hi + *value;
+    // The first float is added to the exact integer prefix before CPython
+    // constructs the compensated-sum state.
+    hi = force_binary64(integer_prefix + values[prefix_len]);
+    for value in &values[prefix_len + 1..] {
+        let next = force_binary64(hi + *value);
         if hi.abs() >= value.abs() {
-            lo += (hi - next) + *value;
+            let correction = force_binary64(force_binary64(hi - next) + *value);
+            lo = force_binary64(lo + correction);
         } else {
-            lo += (*value - next) + hi;
+            let correction = force_binary64(force_binary64(*value - next) + hi);
+            lo = force_binary64(lo + correction);
         }
         hi = next;
     }
-    hi + lo
+    force_binary64(hi + lo)
+}
+
+/// Keep the compensated-sum operations at the same binary64 boundaries as
+/// CPython's C implementation, even when the native optimizer keeps a value
+/// in a wider intermediate register.
+#[inline(never)]
+fn force_binary64(value: f64) -> f64 {
+    unsafe { std::ptr::read_volatile(&value) }
 }
 
 const DEFAULT_STREAMS: &[&str] = &[
