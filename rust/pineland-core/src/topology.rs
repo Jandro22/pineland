@@ -955,7 +955,7 @@ impl StaticTopology {
 }
 
 fn euclidean(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
-    ((x1 - x2).powi(2) + (y1 - y2).powi(2)).sqrt()
+    (x1 - x2).hypot(y1 - y2)
 }
 
 fn clamp(value: f64, lower: f64, upper: f64) -> f64 {
