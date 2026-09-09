@@ -146,6 +146,7 @@ impl CheckpointStore {
         encode_political(&mut buffer, particle);
         encode_foreign(&mut buffer, particle);
         encode_relations(&mut buffer, particle);
+        encode_access_restrictions(&mut buffer, particle);
         encode_scheduler(&mut buffer, particle);
         encode_rng(&mut buffer, particle);
         put_u64(&mut buffer, particle.movement_order_count);
@@ -231,6 +232,8 @@ impl CheckpointStore {
         decode_political(&mut reader, &mut particle).map_err(|e| section_error("political", e))?;
         decode_foreign(&mut reader, &mut particle).map_err(|e| section_error("foreign", e))?;
         decode_relations(&mut reader, &mut particle).map_err(|e| section_error("relations", e))?;
+        decode_access_restrictions(&mut reader, &mut particle)
+            .map_err(|e| section_error("access_restrictions", e))?;
         decode_scheduler(&mut reader, &mut particle).map_err(|e| section_error("scheduler", e))?;
         decode_rng(&mut reader, &mut particle).map_err(|e| section_error("rng", e))?;
         particle.movement_order_count = reader.u64()?;
@@ -873,6 +876,8 @@ fn encode_people(b: &mut Vec<u8>, p: &ParticleState) {
     put_f64_vec(b, &x.political_access);
     put_u8_vec(b, &x.displaced);
     put_u32_vec(b, &x.displacement_count);
+    put_f64_vec(b, &x.displaced_since);
+    put_u32_vec(b, &x.displacement_origin);
     put_f64_vec(b, &x.origin_tie_strength);
     put_f64_vec(b, &x.insurgent_affinity)
 }
@@ -907,6 +912,8 @@ fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), Ch
     x.political_access = read_f64_vec(r)?;
     x.displaced = read_u8_vec(r)?;
     x.displacement_count = read_u32_vec(r)?;
+    x.displaced_since = read_f64_vec(r)?;
+    x.displacement_origin = read_u32_vec(r)?;
     x.origin_tie_strength = read_f64_vec(r)?;
     x.insurgent_affinity = read_f64_vec(r)?;
     Ok(())
@@ -1884,6 +1891,30 @@ fn decode_relations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(),
     x.updated_at = read_f64_vec(r)?;
     x.last_interaction_at = read_f64_vec(r)?;
     x.has_last_interaction = read_u8_vec(r)?;
+    Ok(())
+}
+
+fn encode_access_restrictions(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.access_restrictions;
+    put_u32_vec(b, &x.owner);
+    put_u32_vec(b, &x.first_locality);
+    put_u32_vec(b, &x.second_locality);
+    put_f64_vec(b, &x.level);
+    put_f64_vec(b, &x.cumulative_effort);
+    put_f64_vec(b, &x.updated_at);
+}
+
+fn decode_access_restrictions(
+    r: &mut ByteReader<'_>,
+    p: &mut ParticleState,
+) -> Result<(), CheckpointError> {
+    let x = &mut p.access_restrictions;
+    x.owner = read_u32_vec(r)?;
+    x.first_locality = read_u32_vec(r)?;
+    x.second_locality = read_u32_vec(r)?;
+    x.level = read_f64_vec(r)?;
+    x.cumulative_effort = read_f64_vec(r)?;
+    x.updated_at = read_f64_vec(r)?;
     Ok(())
 }
 

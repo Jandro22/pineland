@@ -4,6 +4,7 @@
 //! receive a completed boundary/result; no Python object or per-event callback
 //! is required.
 
+pub mod access;
 pub mod actions;
 pub mod beliefs;
 pub mod combat;

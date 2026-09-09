@@ -14,6 +14,7 @@ pub fn update(
     time: f64,
 ) {
     let dt = elapsed_days.max(0.0);
+    let _expired = crate::access::decay(particle, time, dt, config);
     reconcile_source_production(particle, topology, config);
     // The Python oracle reconciles carrying capacity to current personnel at
     // the start of every logistics event.  Combat, recruitment, and peace
