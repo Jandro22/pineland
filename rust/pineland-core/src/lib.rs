@@ -25,6 +25,7 @@ pub use rng::{seed_from_namespace, PyRandomCompat, RngState, RngStreams};
 pub use scheduler::{EventPayload, ScheduledEvent, Scheduler, SchedulerError};
 pub use state::{
     BeliefState, FootholdState, FormationState, LocalityState, OrganizationState, ParticleState,
-    PatrolState, PersonState, SecurityPostState, StateError, ZoneState, CONTROL_DIMENSIONS,
+    PatrolState, PersonState, PresenceKey, PresenceState, SecurityPostState, StateError, ZoneState,
+    CONTROL_DIMENSIONS,
 };
 pub use topology::{CsrGraph, StaticTopology};

@@ -803,6 +803,126 @@ pub struct BeliefState {
     pub dirty: Vec<u32>,
 }
 
+/// A scalar presence estimate held by an organization or one of its field
+/// nodes.  Presence is deliberately separate from the seven-dimensional
+/// control belief table: a negative detection is valid evidence of absence,
+/// and formation/microzone-specific rows must not overwrite an actor-level
+/// control estimate.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PresenceKey {
+    pub observer: u32,
+    pub target: u32,
+    pub locality: u32,
+    pub microzone: u32,
+    pub target_formation: u32,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct PresenceState {
+    pub keys: Vec<PresenceKey>,
+    pub estimate: Vec<f64>,
+    pub personnel: Vec<f64>,
+    pub confidence: Vec<f64>,
+    pub updated_at: Vec<f64>,
+    pub last_reliable_observation_at: Vec<f64>,
+    pub contradiction: Vec<f64>,
+    pub violence: Vec<f64>,
+    pub evidence_count: Vec<u32>,
+}
+
+impl PresenceState {
+    pub fn with_keys(keys: Vec<PresenceKey>) -> Self {
+        let count = keys.len();
+        Self {
+            keys,
+            estimate: vec![0.0; count],
+            personnel: vec![0.0; count],
+            confidence: vec![0.0; count],
+            updated_at: vec![0.0; count],
+            last_reliable_observation_at: vec![-1.0e9; count],
+            contradiction: vec![0.0; count],
+            violence: vec![0.2; count],
+            evidence_count: vec![0; count],
+        }
+    }
+
+    pub fn ensure_key(&mut self, key: PresenceKey) -> usize {
+        match self.keys.binary_search(&key) {
+            Ok(index) => index,
+            Err(index) => {
+                self.keys.insert(index, key);
+                self.estimate.insert(index, 0.0);
+                self.personnel.insert(index, 0.0);
+                self.confidence.insert(index, 0.0);
+                self.updated_at.insert(index, 0.0);
+                self.last_reliable_observation_at.insert(index, -1.0e9);
+                self.contradiction.insert(index, 0.0);
+                self.violence.insert(index, 0.2);
+                self.evidence_count.insert(index, 0);
+                index
+            }
+        }
+    }
+
+    pub fn fuse(
+        &mut self,
+        index: usize,
+        time: f64,
+        weight: f64,
+        presence: f64,
+        personnel: f64,
+        memory_days: f64,
+        penalty: f64,
+    ) {
+        if index >= self.keys.len() {
+            return;
+        }
+        let prior_confidence = self.confidence[index];
+        let prior = prior_confidence.max(0.02);
+        let denominator = prior + weight;
+        let old = self.estimate[index];
+        let observed = clamp01(presence);
+        let contradiction = self.contradiction[index]
+            * crate::rng::python_exp(
+                -(time - self.updated_at[index]).max(0.0) / memory_days.max(f64::MIN_POSITIVE),
+            )
+            + weight * (observed - old).abs();
+        self.estimate[index] = clamp01((prior * old + weight * observed) / denominator);
+        self.personnel[index] =
+            (self.personnel[index] * prior + personnel.max(0.0) * weight) / denominator;
+        self.confidence[index] = clamp01(
+            (prior + weight) / (1.0 + prior + weight)
+                * crate::rng::python_exp(-penalty * contradiction),
+        );
+        self.contradiction[index] = contradiction;
+        self.updated_at[index] = time;
+        if weight >= 0.12 {
+            self.last_reliable_observation_at[index] = time;
+        }
+        self.evidence_count[index] = self.evidence_count[index].saturating_add(1);
+    }
+
+    pub fn fuse_violence(&mut self, index: usize, weight: f64, violence: f64) {
+        if index >= self.keys.len() {
+            return;
+        }
+        let prior = self.confidence[index].max(0.02);
+        self.violence[index] =
+            clamp01((prior * self.violence[index] + weight * clamp01(violence)) / (prior + weight));
+    }
+
+    pub fn decay_confidence(&mut self, default_factor: f64, formation_factor: f64) {
+        for (index, key) in self.keys.iter().enumerate() {
+            let factor = if key.target_formation != INFORMATION_NONE {
+                formation_factor
+            } else {
+                default_factor
+            };
+            self.confidence[index] = clamp01(self.confidence[index] * factor);
+        }
+    }
+}
+
 impl BeliefState {
     pub fn with_keys(keys: Vec<BeliefKey>) -> Self {
         let count = keys.len();
@@ -1123,6 +1243,8 @@ pub struct ParticleState {
     pub security_posts: SecurityPostState,
     pub footholds: FootholdState,
     pub beliefs: BeliefState,
+    pub presence_beliefs: PresenceState,
+    pub node_presence_beliefs: PresenceState,
     pub zone_beliefs: ZoneBeliefState,
     pub logistics: LogisticsState,
     pub command_edges: CommandEdgeState,
@@ -1173,6 +1295,8 @@ impl ParticleState {
             security_posts: SecurityPostState::new(localities),
             footholds: FootholdState::new(footholds),
             beliefs: BeliefState::default(),
+            presence_beliefs: PresenceState::default(),
+            node_presence_beliefs: PresenceState::default(),
             zone_beliefs: ZoneBeliefState::default(),
             logistics: LogisticsState::new(organizations),
             command_edges: CommandEdgeState::default(),
@@ -1267,6 +1391,8 @@ impl ParticleState {
         ] {
             append_f64s(&mut material, values);
         }
+        append_presence_state(&mut material, &self.presence_beliefs);
+        append_presence_state(&mut material, &self.node_presence_beliefs);
         append_f64s(&mut material, &self.people.represented_population);
         append_f64s(&mut material, &self.people.insurgent_affinity);
         append_u8s(&mut material, &self.people.public_behavior);
@@ -1488,6 +1614,8 @@ impl ParticleState {
         append_f64s(material, &self.beliefs.source_confidence);
         append_u32s(material, &self.beliefs.evidence_count);
         append_u32s(material, &self.beliefs.dirty);
+        append_presence_state(material, &self.presence_beliefs);
+        append_presence_state(material, &self.node_presence_beliefs);
         append_u32s(material, &self.logistics.organization);
         append_u32s(material, &self.logistics.locality);
         append_f64s(material, &self.logistics.source_stock);
@@ -2320,6 +2448,68 @@ impl ParticleState {
                 left: self.beliefs.control.len(),
                 right: expected_belief_controls,
             });
+        }
+        for (name, state) in [
+            ("presence beliefs", &self.presence_beliefs),
+            ("node presence beliefs", &self.node_presence_beliefs),
+        ] {
+            let presence_count = state.keys.len();
+            for (length, field) in [
+                (state.estimate.len(), "estimate"),
+                (state.personnel.len(), "personnel"),
+                (state.confidence.len(), "confidence"),
+                (state.updated_at.len(), "timestamps"),
+                (
+                    state.last_reliable_observation_at.len(),
+                    "reliable timestamps",
+                ),
+                (state.contradiction.len(), "contradiction"),
+                (state.violence.len(), "violence"),
+                (state.evidence_count.len(), "evidence"),
+            ] {
+                if length != presence_count {
+                    return Err(StateError::LengthMismatch {
+                        name: format!("{name} {field}"),
+                        left: length,
+                        right: presence_count,
+                    });
+                }
+            }
+            for key in &state.keys {
+                if key.observer as usize >= organization_count && key.observer != INFORMATION_NONE {
+                    // Dynamic field-node observer codes are allowed after the
+                    // organization rows.  The topology-specific upper bound
+                    // is checked by the producer; checkpoint validation only
+                    // rejects wrapped numeric IDs.
+                    if key.observer >= 0x4000_0000 {
+                        return Err(StateError::Corrupt(format!(
+                            "{name} observer {} is outside the native node code range",
+                            key.observer
+                        )));
+                    }
+                }
+                if key.target as usize >= organization_count && key.target != INFORMATION_NONE {
+                    return Err(StateError::Corrupt(format!(
+                        "{name} target {} is outside {organization_count}",
+                        key.target
+                    )));
+                }
+                if key.locality as usize >= locality_count && key.locality != INFORMATION_NONE {
+                    return Err(StateError::Corrupt(format!(
+                        "{name} locality {} is outside {locality_count}",
+                        key.locality
+                    )));
+                }
+                if key.target_formation != INFORMATION_NONE
+                    && key.target_formation as usize >= self.formations.personnel.len()
+                {
+                    return Err(StateError::Corrupt(format!(
+                        "{name} formation {} is outside {}",
+                        key.target_formation,
+                        self.formations.personnel.len()
+                    )));
+                }
+            }
         }
         let zone_belief_count = self.zone_beliefs.keys.len();
         for (length, name) in [
@@ -3378,6 +3568,65 @@ impl ParticleState {
             check_finite(values, name)?;
         }
         for (values, name) in [
+            (&self.presence_beliefs.estimate, "presence estimate"),
+            (&self.presence_beliefs.personnel, "presence personnel"),
+            (&self.presence_beliefs.confidence, "presence confidence"),
+            (&self.presence_beliefs.updated_at, "presence timestamp"),
+            (
+                &self.presence_beliefs.last_reliable_observation_at,
+                "presence reliable timestamp",
+            ),
+            (
+                &self.presence_beliefs.contradiction,
+                "presence contradiction",
+            ),
+            (&self.presence_beliefs.violence, "presence violence"),
+            (
+                &self.node_presence_beliefs.estimate,
+                "node presence estimate",
+            ),
+            (
+                &self.node_presence_beliefs.personnel,
+                "node presence personnel",
+            ),
+            (
+                &self.node_presence_beliefs.confidence,
+                "node presence confidence",
+            ),
+            (
+                &self.node_presence_beliefs.updated_at,
+                "node presence timestamp",
+            ),
+            (
+                &self.node_presence_beliefs.last_reliable_observation_at,
+                "node presence reliable timestamp",
+            ),
+            (
+                &self.node_presence_beliefs.contradiction,
+                "node presence contradiction",
+            ),
+            (
+                &self.node_presence_beliefs.violence,
+                "node presence violence",
+            ),
+        ] {
+            check_finite(values, name)?;
+        }
+        for value in self
+            .presence_beliefs
+            .estimate
+            .iter()
+            .chain(self.presence_beliefs.confidence.iter())
+            .chain(self.presence_beliefs.violence.iter())
+            .chain(self.node_presence_beliefs.estimate.iter())
+            .chain(self.node_presence_beliefs.confidence.iter())
+            .chain(self.node_presence_beliefs.violence.iter())
+        {
+            if !(-1e-12..=1.0 + 1e-12).contains(value) {
+                return Err(StateError::OutOfBounds(*value));
+            }
+        }
+        for (values, name) in [
             (&self.households.resources, "household resources"),
             (&self.communities.cohesion, "community cohesion"),
             (
@@ -3666,6 +3915,25 @@ impl ParticleState {
         }
         Ok(())
     }
+}
+
+fn append_presence_state(material: &mut Vec<u8>, state: &PresenceState) {
+    material.extend_from_slice(&(state.keys.len() as u64).to_le_bytes());
+    for key in &state.keys {
+        material.extend_from_slice(&key.observer.to_le_bytes());
+        material.extend_from_slice(&key.target.to_le_bytes());
+        material.extend_from_slice(&key.locality.to_le_bytes());
+        material.extend_from_slice(&key.microzone.to_le_bytes());
+        material.extend_from_slice(&key.target_formation.to_le_bytes());
+    }
+    append_f64s(material, &state.estimate);
+    append_f64s(material, &state.personnel);
+    append_f64s(material, &state.confidence);
+    append_f64s(material, &state.updated_at);
+    append_f64s(material, &state.last_reliable_observation_at);
+    append_f64s(material, &state.contradiction);
+    append_f64s(material, &state.violence);
+    append_u32s(material, &state.evidence_count);
 }
 
 fn append_information_state(material: &mut Vec<u8>, particle: &ParticleState) {
