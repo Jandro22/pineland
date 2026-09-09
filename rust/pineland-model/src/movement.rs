@@ -82,6 +82,8 @@ pub fn civilian_mobility(
             let home = particle.people.home[person] as usize;
             if home == origin {
                 particle.people.displaced[person] = 0;
+                particle.people.displaced_since[person] = -1.0;
+                particle.people.displacement_origin[person] = u32::MAX;
             } else {
                 let home_belief = person_expected_control(particle, person, home);
                 let return_probability = reference_probability(
@@ -100,6 +102,8 @@ pub fn civilian_mobility(
                             relocate_person(particle, person, destination);
                             if destination == home {
                                 particle.people.displaced[person] = 0;
+                                particle.people.displaced_since[person] = -1.0;
+                                particle.people.displacement_origin[person] = u32::MAX;
                             }
                             continue;
                         }
@@ -115,10 +119,7 @@ pub fn civilian_mobility(
         let violence_pressure = ((violence - dynamics.displacement_violence_threshold)
             / (1.0 - dynamics.displacement_violence_threshold).max(1.0e-12))
         .clamp(0.0, 1.0);
-        // Access restrictions are not yet a packed native state component.
-        // With no such rows, the Python locality_access_pressure is exactly
-        // zero, which is the normal Native-v1 trajectory.
-        let access_pressure = 0.0;
+        let access_pressure = crate::access::locality_access_pressure(particle, topology, origin);
         let forced_probability = reference_probability(
             (dynamics.forced_displacement_reference_rate * violence_pressure.max(access_pressure))
                 .clamp(0.0, 1.0),
@@ -142,7 +143,11 @@ pub fn civilian_mobility(
                 / particle.locality.population[destination].max(1.0))
             .max(2.0)
             .ln();
-            let utility = 1.2 * security + 0.1 * livelihood - edge_cost;
+            let restriction =
+                crate::access::edge_restriction_level(particle, origin, destination, None);
+            let utility = 1.2 * security + 0.1 * livelihood
+                - edge_cost
+                - config.access_restriction.civilian_utility_penalty * restriction;
             candidates.push(destination);
             utilities.push(python_exp(utility.clamp(-10.0, 10.0)));
         }
@@ -193,6 +198,8 @@ pub fn civilian_mobility(
         let weight = particle.people.represented_population[person];
         if forced && destination != particle.people.home[person] as usize {
             if particle.people.displaced[person] == 0 {
+                particle.people.displaced_since[person] = time;
+                particle.people.displacement_origin[person] = origin as u32;
                 particle.people.displacement_count[person] =
                     particle.people.displacement_count[person].saturating_add(1);
             }
@@ -202,6 +209,8 @@ pub fn civilian_mobility(
             }
         } else if destination == particle.people.home[person] as usize {
             particle.people.displaced[person] = 0;
+            particle.people.displaced_since[person] = -1.0;
+            particle.people.displacement_origin[person] = u32::MAX;
         }
     }
 

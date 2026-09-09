@@ -155,6 +155,10 @@ pub struct PersonState {
     pub political_access: Vec<f64>,
     pub displaced: Vec<u8>,
     pub displacement_count: Vec<u32>,
+    /// `-1` is the native sentinel for Python's `None` displacement time.
+    pub displaced_since: Vec<f64>,
+    /// `u32::MAX` is the native sentinel for Python's missing origin ID.
+    pub displacement_origin: Vec<u32>,
     pub origin_tie_strength: Vec<f64>,
     /// Sparse affinity is dense at the native boundary because the initial
     /// registry has a fixed seven-organization codebook.  Later dynamic
@@ -194,6 +198,8 @@ impl PersonState {
             political_access: vec![0.45; count],
             displaced: vec![0; count],
             displacement_count: vec![0; count],
+            displaced_since: vec![-1.0; count],
+            displacement_origin: vec![u32::MAX; count],
             origin_tie_strength: vec![1.0; count],
             insurgent_affinity: Vec::new(),
         }
@@ -208,6 +214,43 @@ impl PersonState {
         self.expected_destination_control = vec![0.0; self.locality.len() * locality_count * 2];
         self.expected_destination_control_present = vec![0; self.locality.len() * locality_count];
         self
+    }
+}
+
+/// Actor-owned access restrictions on locality corridors. Python stores this
+/// as an insertion-ordered sparse map; the native vectors preserve one row
+/// per live `(owner, unordered corridor)` key and therefore remain directly
+/// serializable and deterministic.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct AccessRestrictionState {
+    pub owner: Vec<u32>,
+    pub first_locality: Vec<u32>,
+    pub second_locality: Vec<u32>,
+    pub level: Vec<f64>,
+    pub cumulative_effort: Vec<f64>,
+    pub updated_at: Vec<f64>,
+}
+
+impl AccessRestrictionState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn find(&self, owner: usize, first: usize, second: usize) -> Option<usize> {
+        let (first, second) = if first <= second {
+            (first as u32, second as u32)
+        } else {
+            (second as u32, first as u32)
+        };
+        self.owner
+            .iter()
+            .zip(&self.first_locality)
+            .zip(&self.second_locality)
+            .position(|((candidate_owner, candidate_first), candidate_second)| {
+                *candidate_owner as usize == owner
+                    && *candidate_first == first
+                    && *candidate_second == second
+            })
     }
 }
 
@@ -1282,6 +1325,7 @@ pub struct ParticleState {
     pub political: PoliticalState,
     pub foreign: ForeignSystemState,
     pub relations: OrganizationRelationState,
+    pub access_restrictions: AccessRestrictionState,
     pub scheduler: Scheduler,
     pub rng: RngStreams,
     pub counters: Counters,
@@ -1334,6 +1378,7 @@ impl ParticleState {
             political: PoliticalState::new(),
             foreign: ForeignSystemState::new(),
             relations: OrganizationRelationState::default(),
+            access_restrictions: AccessRestrictionState::new(),
             scheduler: Scheduler::new(),
             rng,
             counters: Counters::default(),
@@ -1489,6 +1534,8 @@ impl ParticleState {
         append_f64s(material, &self.people.political_access);
         append_u8s(material, &self.people.displaced);
         append_u32s(material, &self.people.displacement_count);
+        append_f64s(material, &self.people.displaced_since);
+        append_u32s(material, &self.people.displacement_origin);
         append_f64s(material, &self.people.origin_tie_strength);
         append_f64s(material, &self.people.insurgent_affinity);
         append_u32s(material, &self.households.locality);
@@ -1763,6 +1810,12 @@ impl ParticleState {
         append_f64s(material, &self.relations.updated_at);
         append_f64s(material, &self.relations.last_interaction_at);
         append_u8s(material, &self.relations.has_last_interaction);
+        append_u32s(material, &self.access_restrictions.owner);
+        append_u32s(material, &self.access_restrictions.first_locality);
+        append_u32s(material, &self.access_restrictions.second_locality);
+        append_f64s(material, &self.access_restrictions.level);
+        append_f64s(material, &self.access_restrictions.cumulative_effort);
+        append_f64s(material, &self.access_restrictions.updated_at);
         for event in self.scheduler.events_sorted() {
             encode_event(material, &event);
         }
@@ -1898,6 +1951,11 @@ impl ParticleState {
             (
                 self.people.displacement_count.len(),
                 "person displacement count",
+            ),
+            (self.people.displaced_since.len(), "person displaced since"),
+            (
+                self.people.displacement_origin.len(),
+                "person displacement origin",
             ),
             (
                 self.people.origin_tie_strength.len(),
@@ -3026,6 +3084,49 @@ impl ParticleState {
                 });
             }
         }
+        let restriction_count = self.access_restrictions.owner.len();
+        for (length, name) in [
+            (
+                self.access_restrictions.first_locality.len(),
+                "access first locality",
+            ),
+            (
+                self.access_restrictions.second_locality.len(),
+                "access second locality",
+            ),
+            (self.access_restrictions.level.len(), "access level"),
+            (
+                self.access_restrictions.cumulative_effort.len(),
+                "access cumulative effort",
+            ),
+            (
+                self.access_restrictions.updated_at.len(),
+                "access timestamp",
+            ),
+        ] {
+            if length != restriction_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: restriction_count,
+                });
+            }
+        }
+        for (values, name) in [
+            (&self.access_restrictions.level, "access level"),
+            (
+                &self.access_restrictions.cumulative_effort,
+                "access cumulative effort",
+            ),
+            (&self.access_restrictions.updated_at, "access timestamp"),
+        ] {
+            check_finite(values, name)?;
+        }
+        check_nonnegative(&self.access_restrictions.level, "access level")?;
+        check_nonnegative(
+            &self.access_restrictions.cumulative_effort,
+            "access cumulative effort",
+        )?;
         for (value, name, bound) in self
             .people
             .locality
@@ -3335,6 +3436,7 @@ impl ParticleState {
                 "person government legitimacy",
             ),
             (&self.people.political_access, "person political access"),
+            (&self.people.displaced_since, "person displaced since"),
             (
                 &self.people.origin_tie_strength,
                 "person origin tie strength",

@@ -304,6 +304,12 @@ pub(crate) fn update_relations(
         })
     {
         let magnitude = clamp01(magnitude);
+        if std::env::var_os("PINELAND_RELATION_TRACE").is_some() {
+            eprintln!(
+                "RELATION_UPDATE first={} second={} index={} magnitude={:.17}",
+                first, second, index, magnitude
+            );
+        }
         particle.relations.hostility_memory[index] =
             clamp01(1.0 - (1.0 - particle.relations.hostility_memory[index]) * (1.0 - magnitude));
         particle.relations.rivalry_memory[index] = clamp01(

@@ -997,6 +997,17 @@ pub fn opportunities(
                 organization, locality, destination, committed, capacity, demand, available, consumed, unmet, effort
             );
         }
+        if effort > 0.0 {
+            let _level = crate::access::build(
+                particle,
+                organization,
+                locality,
+                destination,
+                effort,
+                _time,
+                config,
+            );
+        }
         return;
     }
 

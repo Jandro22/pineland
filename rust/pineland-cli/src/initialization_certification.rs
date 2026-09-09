@@ -32,6 +32,10 @@ pub(crate) fn certify_initialization(arguments: &Arguments) -> Result<(), String
         result.insert("debug_presence", debug_presence(&engine));
         result.insert("debug_information", debug_information(&engine));
         result.insert("debug_zones", debug_zones(&engine));
+        result.insert("debug_transition_state", debug_transition_state(&engine));
+    }
+    if std::env::var_os("PINELAND_TRANSITION_DEBUG").is_some() {
+        result.insert("debug_transition_state", debug_transition_state(&engine));
     }
     result.insert("state_hash", JsonValue::string(engine.state_hash()));
     result.insert("decision_hash", JsonValue::string(engine.decision_hash()));
@@ -92,6 +96,10 @@ pub(crate) fn certify_trajectory(arguments: &Arguments) -> Result<(), String> {
         result.insert("debug_presence", debug_presence(&engine));
         result.insert("debug_information", debug_information(&engine));
         result.insert("debug_zones", debug_zones(&engine));
+        result.insert("debug_transition_state", debug_transition_state(&engine));
+    }
+    if std::env::var_os("PINELAND_TRANSITION_DEBUG").is_some() {
+        result.insert("debug_transition_state", debug_transition_state(&engine));
     }
     result.insert("state_hash", JsonValue::string(engine.state_hash()));
     result.insert("decision_hash", JsonValue::string(engine.decision_hash()));
@@ -255,6 +263,144 @@ fn debug_zones(engine: &SimulationEngine) -> JsonValue {
         }
     }
     rows
+}
+
+fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
+    let particle = &engine.particle;
+    let mut root = JsonValue::object();
+    let mut people = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut people {
+        for person in 0..particle.people.locality.len() {
+            if particle.people.displaced[person] == 0 {
+                continue;
+            }
+            let mut row = JsonValue::object();
+            row.insert("person", JsonValue::integer(person as u64));
+            row.insert(
+                "residence",
+                JsonValue::integer(particle.people.residence[person] as u64),
+            );
+            row.insert(
+                "home",
+                JsonValue::integer(particle.people.home[person] as u64),
+            );
+            row.insert(
+                "displaced_since",
+                JsonValue::number(particle.people.displaced_since[person]),
+            );
+            row.insert(
+                "origin",
+                JsonValue::integer(particle.people.displacement_origin[person] as u64),
+            );
+            row.insert(
+                "count",
+                JsonValue::integer(particle.people.displacement_count[person] as u64),
+            );
+            rows.push(row);
+        }
+    }
+    root.insert("displaced_people", people);
+
+    let mut restrictions = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut restrictions {
+        for index in 0..particle.access_restrictions.owner.len() {
+            let mut row = JsonValue::object();
+            row.insert(
+                "owner",
+                JsonValue::integer(particle.access_restrictions.owner[index] as u64),
+            );
+            row.insert(
+                "first",
+                JsonValue::integer(particle.access_restrictions.first_locality[index] as u64),
+            );
+            row.insert(
+                "second",
+                JsonValue::integer(particle.access_restrictions.second_locality[index] as u64),
+            );
+            row.insert(
+                "level",
+                JsonValue::number(particle.access_restrictions.level[index]),
+            );
+            row.insert(
+                "effort",
+                JsonValue::number(particle.access_restrictions.cumulative_effort[index]),
+            );
+            row.insert(
+                "updated_at",
+                JsonValue::number(particle.access_restrictions.updated_at[index]),
+            );
+            rows.push(row);
+        }
+    }
+    root.insert("access_restrictions", restrictions);
+
+    let mut relations = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut relations {
+        for index in 0..particle.relations.organization_a.len() {
+            let mut row = JsonValue::object();
+            row.insert(
+                "first",
+                JsonValue::integer(particle.relations.organization_a[index] as u64),
+            );
+            row.insert(
+                "second",
+                JsonValue::integer(particle.relations.organization_b[index] as u64),
+            );
+            row.insert(
+                "status",
+                JsonValue::integer(particle.relations.status[index] as u64),
+            );
+            row.insert(
+                "rivalry",
+                JsonValue::number(particle.relations.rivalry_memory[index]),
+            );
+            row.insert(
+                "hostility",
+                JsonValue::number(particle.relations.hostility_memory[index]),
+            );
+            row.insert(
+                "cooperation",
+                JsonValue::number(particle.relations.cooperation_memory[index]),
+            );
+            row.insert(
+                "updated_at",
+                JsonValue::number(particle.relations.updated_at[index]),
+            );
+            rows.push(row);
+        }
+    }
+    root.insert("relations", relations);
+
+    let mut logistics = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut logistics {
+        for index in 0..particle.logistics.source_stock.len() {
+            let mut row = JsonValue::object();
+            row.insert("source", JsonValue::integer(index as u64));
+            row.insert(
+                "organization",
+                JsonValue::integer(particle.logistics.organization[index] as u64),
+            );
+            row.insert(
+                "locality",
+                JsonValue::integer(particle.logistics.locality[index] as u64),
+            );
+            row.insert(
+                "production",
+                JsonValue::number(particle.logistics.source_production[index]),
+            );
+            row.insert(
+                "capacity",
+                JsonValue::number(particle.logistics.source_capacity[index]),
+            );
+            row.insert(
+                "stock",
+                JsonValue::number(particle.logistics.source_stock[index]),
+            );
+            rows.push(row);
+        }
+    }
+    root.insert("logistics", logistics);
+    root
 }
 
 fn counts(engine: &SimulationEngine) -> JsonValue {
