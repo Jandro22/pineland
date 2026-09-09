@@ -1577,6 +1577,31 @@ impl SimulationEngine {
             }
             self.particle.counters.record(event.payload.kind());
             let sequence = event.sequence;
+            // Python closes patrol presence-memory intervals before every
+            // boundary that can change a formation's strength, location,
+            // availability, or status.  The physical refresh repeats the
+            // operation idempotently, but the pre-handler pass is essential
+            // for force movement, logistics, contact, and action events.
+            let closes_patrol_memory = matches!(
+                event.payload,
+                EventPayload::PhysicalRefresh
+                    | EventPayload::ForceMovement
+                    | EventPayload::Logistics
+                    | EventPayload::Contact { .. }
+                    | EventPayload::OrganizedAction { .. }
+                    | EventPayload::Recruitment
+                    | EventPayload::OrganizationEcology
+                    | EventPayload::ForeignAffairs
+                    | EventPayload::PeaceProcess
+            );
+            if closes_patrol_memory {
+                patrol::advance_all_presence_memory(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    event.time,
+                );
+            }
             self.process_event(&event, until)?;
             self.particle.event_log.push(EventRecord {
                 time: event.time,

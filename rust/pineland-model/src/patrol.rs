@@ -187,6 +187,20 @@ fn advance_patrol_presence_memory(
         * clamp01(particle.patrols.response_fraction[patrol]);
     let normalized_strength = deployed_strength / 250.0_f64.max(population * 0.002);
     let target = config.physical.patrol_memory_gain * normalized_strength;
+    if std::env::var_os("PINELAND_PHYS_TRACE").is_some() {
+        eprintln!(
+            "PRES patrol={} time={:.17} zone={} start={:.17} duration={:.17} personnel={:.17} availability={:.17} readiness={:.17} quality={:.17} cohesion={:.17} info={:.17} command={:.17} strength={:.17} target={:.17} actor_ins={}",
+            patrol, time, zone, start, duration,
+            particle.formations.personnel[formation],
+            particle.formations.availability[formation],
+            particle.formations.readiness[formation],
+            particle.formations.quality[formation],
+            particle.formations.cohesion[formation],
+            particle.formations.information[formation],
+            particle.formations.command[formation],
+            deployed_strength, target, actor_is_insurgent
+        );
+    }
     let memory = config.physical.presence_memory_days.max(f64::MIN_POSITIVE);
     let (memory_values, updated_values) = if actor_is_insurgent {
         (
