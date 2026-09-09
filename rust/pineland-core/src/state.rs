@@ -375,6 +375,77 @@ impl CommunityState {
     }
 }
 
+/// Proto-organizations are latent, pre-formation organizational attempts.
+/// Python retains them after a successful mobilization draw and advances the
+/// same rows at each ecology tick until they collapse or mature.  Keeping the
+/// founder membership and capital vectors here makes that latent state part of
+/// the restart and cross-engine continuation contract rather than an
+/// unobservable RNG shim.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ProtoState {
+    pub community: Vec<u32>,
+    pub locality: Vec<u32>,
+    /// 1=mobilizing, 2=matured, 3=collapsed.
+    pub status: Vec<u8>,
+    pub member_offsets: Vec<u32>,
+    pub member_indices: Vec<u32>,
+    pub capital_social: Vec<f64>,
+    pub capital_political: Vec<f64>,
+    pub capital_organizational: Vec<f64>,
+    pub capital_material: Vec<f64>,
+    pub represented_membership: Vec<f64>,
+    pub ideology_reform: Vec<f64>,
+    pub ideology_separatism: Vec<f64>,
+    pub leadership_potential: Vec<f64>,
+    pub created_at: Vec<f64>,
+}
+
+impl ProtoState {
+    pub fn new() -> Self {
+        Self {
+            member_offsets: vec![0],
+            ..Self::default()
+        }
+    }
+
+    pub fn push(
+        &mut self,
+        community: u32,
+        locality: u32,
+        members: &[u32],
+        capital: [f64; 4],
+        represented_membership: f64,
+        ideology: [f64; 2],
+        leadership_potential: f64,
+        created_at: f64,
+    ) {
+        self.community.push(community);
+        self.locality.push(locality);
+        self.status.push(1);
+        self.member_indices.extend_from_slice(members);
+        self.member_offsets.push(self.member_indices.len() as u32);
+        self.capital_social.push(capital[0]);
+        self.capital_political.push(capital[1]);
+        self.capital_organizational.push(capital[2]);
+        self.capital_material.push(capital[3]);
+        self.represented_membership.push(represented_membership);
+        self.ideology_reform.push(ideology[0]);
+        self.ideology_separatism.push(ideology[1]);
+        self.leadership_potential.push(leadership_potential);
+        self.created_at.push(created_at);
+    }
+
+    pub fn count(&self) -> usize {
+        self.community.len()
+    }
+
+    pub fn members(&self, proto: usize) -> &[u32] {
+        let start = self.member_offsets[proto] as usize;
+        let end = self.member_offsets[proto + 1] as usize;
+        &self.member_indices[start..end]
+    }
+}
+
 /// Social multiplex edge table. `layers` uses bits household=1,
 /// community=2, bridge=4; this is lossless for the current Python schema
 /// because layers are a sorted set on every edge.
@@ -1403,6 +1474,7 @@ pub struct ParticleState {
     pub people: PersonState,
     pub households: HouseholdState,
     pub communities: CommunityState,
+    pub protos: ProtoState,
     pub social_edges: SocialEdgeState,
     pub organizations: OrganizationState,
     pub formations: FormationState,
@@ -1456,6 +1528,7 @@ impl ParticleState {
             people: PersonState::new(0).with_organizations(organizations),
             households: HouseholdState::new(0),
             communities: CommunityState::new(0),
+            protos: ProtoState::new(),
             social_edges: SocialEdgeState::new(0),
             organizations: OrganizationState::new(organizations),
             formations: FormationState::new(formations),
@@ -1572,6 +1645,20 @@ impl ParticleState {
         append_f64s(&mut material, &self.organizations.phenotype);
         append_f64s(&mut material, &self.organizations.ideology);
         append_f64s(&mut material, &self.communities.cohesion);
+        append_u32s(&mut material, &self.protos.community);
+        append_u32s(&mut material, &self.protos.locality);
+        append_u8s(&mut material, &self.protos.status);
+        append_u32s(&mut material, &self.protos.member_offsets);
+        append_u32s(&mut material, &self.protos.member_indices);
+        append_f64s(&mut material, &self.protos.capital_social);
+        append_f64s(&mut material, &self.protos.capital_political);
+        append_f64s(&mut material, &self.protos.capital_organizational);
+        append_f64s(&mut material, &self.protos.capital_material);
+        append_f64s(&mut material, &self.protos.represented_membership);
+        append_f64s(&mut material, &self.protos.ideology_reform);
+        append_f64s(&mut material, &self.protos.ideology_separatism);
+        append_f64s(&mut material, &self.protos.leadership_potential);
+        append_f64s(&mut material, &self.protos.created_at);
         append_f64s(&mut material, &self.social_edges.weight);
         append_f64s(&mut material, &self.zone_beliefs.estimate);
         append_information_state(&mut material, self);
@@ -1653,6 +1740,20 @@ impl ParticleState {
         append_u32s(material, &self.communities.member_indices);
         append_u32s(material, &self.communities.bridge_offsets);
         append_u32s(material, &self.communities.bridge_members);
+        append_u32s(material, &self.protos.community);
+        append_u32s(material, &self.protos.locality);
+        append_u8s(material, &self.protos.status);
+        append_u32s(material, &self.protos.member_offsets);
+        append_u32s(material, &self.protos.member_indices);
+        append_f64s(material, &self.protos.capital_social);
+        append_f64s(material, &self.protos.capital_political);
+        append_f64s(material, &self.protos.capital_organizational);
+        append_f64s(material, &self.protos.capital_material);
+        append_f64s(material, &self.protos.represented_membership);
+        append_f64s(material, &self.protos.ideology_reform);
+        append_f64s(material, &self.protos.ideology_separatism);
+        append_f64s(material, &self.protos.leadership_potential);
+        append_f64s(material, &self.protos.created_at);
         append_u32s(material, &self.social_edges.person_a);
         append_u32s(material, &self.social_edges.person_b);
         append_u8s(material, &self.social_edges.layers);
@@ -2271,6 +2372,82 @@ impl ParticleState {
             if *member as usize >= people_count {
                 return Err(StateError::Corrupt(format!(
                     "community member id {member} is outside {people_count}"
+                )));
+            }
+        }
+        let proto_count = self.protos.community.len();
+        for (length, name) in [
+            (self.protos.locality.len(), "proto locality"),
+            (self.protos.status.len(), "proto status"),
+            (self.protos.capital_social.len(), "proto social capital"),
+            (
+                self.protos.capital_political.len(),
+                "proto political capital",
+            ),
+            (
+                self.protos.capital_organizational.len(),
+                "proto organizational capital",
+            ),
+            (self.protos.capital_material.len(), "proto material capital"),
+            (
+                self.protos.represented_membership.len(),
+                "proto represented membership",
+            ),
+            (self.protos.ideology_reform.len(), "proto reform ideology"),
+            (
+                self.protos.ideology_separatism.len(),
+                "proto separatist ideology",
+            ),
+            (
+                self.protos.leadership_potential.len(),
+                "proto leadership potential",
+            ),
+            (self.protos.created_at.len(), "proto created time"),
+        ] {
+            if length != proto_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: proto_count,
+                });
+            }
+        }
+        if self.protos.member_offsets.len() != proto_count + 1
+            || self.protos.member_offsets.last().copied().unwrap_or(0) as usize
+                != self.protos.member_indices.len()
+        {
+            return Err(StateError::Corrupt(
+                "proto member offsets do not cover member rows".to_string(),
+            ));
+        }
+        for member in &self.protos.member_indices {
+            if *member as usize >= people_count {
+                return Err(StateError::Corrupt(format!(
+                    "proto member id {member} is outside {people_count}"
+                )));
+            }
+        }
+        for (community, locality, status) in self
+            .protos
+            .community
+            .iter()
+            .zip(&self.protos.locality)
+            .zip(&self.protos.status)
+            .map(|((community, locality), status)| (*community, *locality, *status))
+        {
+            if community as usize >= community_count {
+                return Err(StateError::Corrupt(format!(
+                    "proto community {community} is outside {community_count}"
+                )));
+            }
+            if locality as usize >= locality_count {
+                return Err(StateError::Corrupt(format!(
+                    "proto locality {locality} is outside {locality_count}"
+                )));
+            }
+            if !matches!(status, 1..=3) {
+                return Err(StateError::Corrupt(format!(
+                    "unknown proto status {status}"
                 )));
             }
         }
