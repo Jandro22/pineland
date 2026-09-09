@@ -121,6 +121,13 @@ fn debug_beliefs(engine: &SimulationEngine) -> JsonValue {
                 "evidence_count",
                 JsonValue::integer(beliefs.evidence_count[index] as u64),
             );
+            row.insert(
+                "control",
+                f64_array(
+                    &beliefs.control[index * pineland_core::state::CONTROL_DIMENSIONS
+                        ..(index + 1) * pineland_core::state::CONTROL_DIMENSIONS],
+                ),
+            );
             values.push(row);
         }
     }
