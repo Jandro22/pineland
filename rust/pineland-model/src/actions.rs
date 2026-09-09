@@ -940,6 +940,15 @@ pub fn opportunities(
         return;
     }
 
+    if channel == COERCION {
+        // Python realizes the compliance Bernoulli even though the current
+        // coercion contract records the outcome without mutating latent
+        // state.  Preserve that draw so the shared action stream continues
+        // at the same point for the next organized-action event.
+        let _compliance_draw = rng.random();
+        return;
+    }
+
     // The remaining channels have no native state mutation in this slice, but
     // keep their constants explicit until the process-specific transitions
     // are ported and certified.
