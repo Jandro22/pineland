@@ -1,7 +1,7 @@
 //! Foreign affairs, sanctuary/support, migration pressure, and withdrawal.
 
 use pineland_core::config::SimulationConfig;
-use pineland_core::rng::{python_exp, PyRandomCompat};
+use pineland_core::rng::{python_exp, python_sum, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState};
 use pineland_core::topology::StaticTopology;
 
@@ -791,11 +791,11 @@ pub fn update(
         let belief_indices = (0..particle.foreign.belief_foreign_state.len())
             .filter(|index| particle.foreign.belief_foreign_state[*index] as usize == state)
             .collect::<Vec<_>>();
-        let perceived_progress = belief_indices
+        let belief_values = belief_indices
             .iter()
             .map(|index| particle.foreign.belief_government_control[*index])
-            .sum::<f64>()
-            / belief_indices.len().max(1) as f64;
+            .collect::<Vec<_>>();
+        let perceived_progress = python_sum(&belief_values) / belief_indices.len().max(1) as f64;
         let cost_denominator =
             (particle.foreign.resources[state] + particle.foreign.cumulative_cost[state]).max(1.0);
         let cost_pressure = particle.foreign.cumulative_cost[state] / cost_denominator;
