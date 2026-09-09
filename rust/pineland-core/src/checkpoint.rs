@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 10;
+pub const CHECKPOINT_VERSION: u32 = 11;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -128,6 +128,7 @@ impl CheckpointStore {
         encode_people(&mut buffer, particle);
         encode_households(&mut buffer, particle);
         encode_communities(&mut buffer, particle);
+        encode_protos(&mut buffer, particle);
         encode_social_edges(&mut buffer, particle);
         encode_zones(&mut buffer, particle);
         encode_zone_beliefs(&mut buffer, particle);
@@ -206,6 +207,7 @@ impl CheckpointStore {
             .map_err(|e| section_error("households", e))?;
         decode_communities(&mut reader, &mut particle)
             .map_err(|e| section_error("communities", e))?;
+        decode_protos(&mut reader, &mut particle).map_err(|e| section_error("protos", e))?;
         decode_social_edges(&mut reader, &mut particle)
             .map_err(|e| section_error("social_edges", e))?;
         decode_zones(&mut reader, &mut particle).map_err(|e| section_error("zones", e))?;
@@ -979,6 +981,47 @@ fn decode_communities(
     x.member_indices = read_u32_vec(r)?;
     x.bridge_offsets = read_u32_vec(r)?;
     x.bridge_members = read_u32_vec(r)?;
+    Ok(())
+}
+
+fn encode_protos(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.protos;
+    put_u32_vec(b, &x.community);
+    put_u32_vec(b, &x.locality);
+    put_u8_vec(b, &x.status);
+    put_u32_vec(b, &x.member_offsets);
+    put_u32_vec(b, &x.member_indices);
+    for values in [
+        &x.capital_social,
+        &x.capital_political,
+        &x.capital_organizational,
+        &x.capital_material,
+        &x.represented_membership,
+        &x.ideology_reform,
+        &x.ideology_separatism,
+        &x.leadership_potential,
+        &x.created_at,
+    ] {
+        put_f64_vec(b, values);
+    }
+}
+
+fn decode_protos(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
+    let x = &mut p.protos;
+    x.community = read_u32_vec(r)?;
+    x.locality = read_u32_vec(r)?;
+    x.status = read_u8_vec(r)?;
+    x.member_offsets = read_u32_vec(r)?;
+    x.member_indices = read_u32_vec(r)?;
+    x.capital_social = read_f64_vec(r)?;
+    x.capital_political = read_f64_vec(r)?;
+    x.capital_organizational = read_f64_vec(r)?;
+    x.capital_material = read_f64_vec(r)?;
+    x.represented_membership = read_f64_vec(r)?;
+    x.ideology_reform = read_f64_vec(r)?;
+    x.ideology_separatism = read_f64_vec(r)?;
+    x.leadership_potential = read_f64_vec(r)?;
+    x.created_at = read_f64_vec(r)?;
     Ok(())
 }
 

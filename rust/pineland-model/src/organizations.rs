@@ -300,8 +300,7 @@ fn adapt_organization(
 /// the process RNG contract.  Keeping this boundary explicit prevents a
 /// latent proto attempt from shifting every subsequent ecology draw.
 fn consume_proto_formation_draws(
-    particle: &ParticleState,
-    topology: &StaticTopology,
+    particle: &mut ParticleState,
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     elapsed_days: f64,
@@ -309,6 +308,15 @@ fn consume_proto_formation_draws(
     let reference_days = 7.0;
     let trace = std::env::var_os("PINELAND_ORG_TRACE").is_some();
     for community in 0..particle.communities.locality.len() {
+        if particle
+            .protos
+            .community
+            .iter()
+            .zip(&particle.protos.status)
+            .any(|(candidate, status)| *candidate as usize == community && *status == 1)
+        {
+            continue;
+        }
         let start = particle.communities.member_offsets[community] as usize;
         let end = particle.communities.member_offsets[community + 1] as usize;
         let members = &particle.communities.member_indices[start..end];
@@ -411,7 +419,150 @@ fn consume_proto_formation_draws(
                 rng.state().index
             );
         }
-        let _ = topology;
+        if draw < hazard {
+            let target_weight = config
+                .organization_ecology
+                .minimum_proto_represented_population
+                .max(mobilized_weight * 0.5);
+            let founder_fraction = clamp01(target_weight / mobilized_weight.max(1.0e-9));
+            let selected_weight = python_sum(
+                &mobilized
+                    .iter()
+                    .map(|person| {
+                        particle.people.represented_population[*person] * founder_fraction
+                    })
+                    .collect::<Vec<_>>(),
+            );
+            let material_intensity = python_sum(
+                &mobilized
+                    .iter()
+                    .map(|person| particle.people.resources[*person] * founder_fraction)
+                    .collect::<Vec<_>>(),
+            ) / selected_weight.max(1.0e-9);
+            let leadership = python_sum(
+                &mobilized
+                    .iter()
+                    .map(|person| {
+                        particle.people.represented_population[*person]
+                            * founder_fraction
+                            * particle.people.efficacy[*person]
+                    })
+                    .collect::<Vec<_>>(),
+            ) / selected_weight.max(1.0e-9);
+            let members = mobilized
+                .iter()
+                .map(|person| *person as u32)
+                .collect::<Vec<_>>();
+            particle.protos.push(
+                community as u32,
+                particle.communities.locality[community],
+                &members,
+                [
+                    particle.communities.cohesion[community],
+                    score,
+                    clamp01(0.12 + 0.25 * particle.communities.cohesion[community]),
+                    clamp01(material_intensity / 3.0),
+                ],
+                selected_weight,
+                [clamp01(0.4 + score / 2.0), clamp01(0.15 + 0.3 * score)],
+                clamp01(leadership),
+                0.0,
+            );
+        }
+    }
+}
+
+fn reference_cycle_survival_factor(loss_per_cycle: f64, elapsed_days: f64) -> f64 {
+    (1.0 - clamp01(loss_per_cycle)).powf(elapsed_days / 7.0)
+}
+
+/// Advance every mobilizing proto after new proto rows have been formed.  The
+/// current Native-v1 trajectory battery has no proto births within 90 days,
+/// but retaining the full capital decay and birth draw here is important: a
+/// successful founding attempt changes both future eligibility and the
+/// process-RNG continuation even when the proto remains latent.
+fn advance_protos(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    elapsed_days: f64,
+) {
+    for proto in 0..particle.protos.count() {
+        if particle.protos.status[proto] != 1 {
+            continue;
+        }
+        let members = particle.protos.members(proto);
+        let total_weight = python_sum(
+            &members
+                .iter()
+                .map(|person| particle.people.represented_population[*person as usize])
+                .collect::<Vec<_>>(),
+        );
+        let founder_scale =
+            clamp01(particle.protos.represented_membership[proto] / total_weight.max(1.0e-9));
+        let expected_repression = python_sum(
+            &members
+                .iter()
+                .map(|person| {
+                    let person = *person as usize;
+                    particle.people.represented_population[person]
+                        * founder_scale
+                        * (1.0 - particle.people.expected_control[person * 2])
+                })
+                .collect::<Vec<_>>(),
+        ) / (total_weight * founder_scale).max(1.0e-9);
+        let capital = python_sum(&[
+            particle.protos.capital_social[proto],
+            particle.protos.capital_political[proto],
+            particle.protos.capital_organizational[proto],
+            particle.protos.capital_material[proto],
+        ]) / 4.0;
+        let hazard = 1.0
+            - python_exp(
+                -config.organization_ecology.birth_base_hazard
+                    * python_exp(
+                        2.4 * capital + particle.protos.leadership_potential[proto]
+                            - 1.6 * expected_repression,
+                    )
+                    * elapsed_days
+                    / 7.0,
+            );
+        let draw = rng.random();
+        if draw >= hazard {
+            let survival = reference_cycle_survival_factor(
+                config.organization_ecology.proto_decay_rate,
+                elapsed_days,
+            );
+            particle.protos.capital_social[proto] =
+                clamp01(particle.protos.capital_social[proto] * survival);
+            particle.protos.capital_political[proto] =
+                clamp01(particle.protos.capital_political[proto] * survival);
+            particle.protos.capital_organizational[proto] =
+                clamp01(particle.protos.capital_organizational[proto] * survival);
+            particle.protos.capital_material[proto] =
+                clamp01(particle.protos.capital_material[proto] * survival);
+            let mean = python_sum(&[
+                particle.protos.capital_social[proto],
+                particle.protos.capital_political[proto],
+                particle.protos.capital_organizational[proto],
+                particle.protos.capital_material[proto],
+            ]) / 4.0;
+            if mean < 0.08 {
+                particle.protos.status[proto] = 3;
+            }
+        } else {
+            let personnel = (total_weight * founder_scale)
+                * config.organization_ecology.fighter_conversion_fraction;
+            if personnel < config.organization_ecology.minimum_formation_personnel {
+                particle.protos.status[proto] = 3;
+            } else {
+                // Dynamic birth is handled by the organization materializer.
+                // Keep the row marked as matured until that materializer is
+                // reached; this branch is not expected in the Native-v1
+                // 90-day certification workload.
+                particle.protos.status[proto] = 2;
+            }
+        }
     }
 }
 
@@ -606,7 +757,7 @@ fn collapse_organization(particle: &mut ParticleState, organization: usize) {
 
 pub fn update(
     particle: &mut ParticleState,
-    topology: &StaticTopology,
+    _topology: &StaticTopology,
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     time: f64,
@@ -619,7 +770,8 @@ pub fn update(
     if !config.organization_ecology.enabled || elapsed_days <= 0.0 {
         return;
     }
-    consume_proto_formation_draws(particle, topology, config, rng, elapsed_days);
+    consume_proto_formation_draws(particle, config, rng, elapsed_days);
+    advance_protos(particle, config, rng, elapsed_days);
     let organizations = (0..particle.organizations.active.len())
         .filter(|&organization| {
             particle.organizations.active[organization] != 0
