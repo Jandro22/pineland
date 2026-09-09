@@ -415,7 +415,13 @@ pub fn command(
         .copied()
         .fold(0.0, f64::max);
     let formation_count = particle.formations.personnel.len();
-    for formation in 0..formation_count {
+    let mut formation_order: Vec<usize> = (0..formation_count).collect();
+    formation_order.sort_by(|&a, &b| {
+        let name_a = crate::information::formation_name(particle, a);
+        let name_b = crate::information::formation_name(particle, b);
+        name_a.cmp(&name_b)
+    });
+    for formation in formation_order {
         // This follows choose_reallocation_orders exactly.  In particular,
         // active is not an additional filter: Python's deployable_personnel
         // predicate is the authoritative availability boundary.
