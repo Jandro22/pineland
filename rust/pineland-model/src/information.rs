@@ -512,7 +512,24 @@ fn deliver_due_relays(
                 relay.reliability,
             )
         };
-        let delivered = rng.random() <= reliability;
+        let relay_draw = rng.random();
+        let delivered = relay_draw <= reliability;
+        if std::env::var_os("PINELAND_RELAY_TRACE").is_some() && time >= 3.5 {
+            let relay = &particle.information_relays[relay_index];
+            eprintln!(
+                "RELAY_TRACE time={:.17} seq={} observation={} arrives={:.17} org={} source_node={} destination_node={} reliability={:.17} draw={:.17} delivered={}",
+                time,
+                relay.sequence,
+                relay.observation,
+                relay.arrives_at,
+                relay.organization,
+                relay.source_node,
+                relay.destination_node,
+                relay.reliability,
+                relay_draw,
+                delivered,
+            );
+        }
         let Some(observation) = particle
             .information_observations
             .iter()
