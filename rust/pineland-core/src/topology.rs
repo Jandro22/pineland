@@ -984,3 +984,24 @@ fn python_round(value: f64) -> f64 {
         floor + 1.0
     }
 }
+
+#[cfg(test)]
+mod test_edge {
+    use super::*;
+
+    #[test]
+    fn test_float_edge() {
+        let x1 = -8.0;
+        let y1 = -34.0;
+        let x2 = -8.906907405299076;
+        let y2 = -15.427216164289463;
+        let t1 = 1.4853261782931404;
+        let t2 = 1.2216123648108792;
+        let h = euclidean(x1, y1, x2, y2);
+        let c = ((t1 + t2) / 2.0) * (0.65 + h / 55.0);
+        let d = 18.0 + 22.0 * c;
+        println!("Rust h: {:x} {:.17}", h.to_bits(), h);
+        println!("Rust c: {:x} {:.17}", c.to_bits(), c);
+        println!("Rust d: {:x} {:.17}", d.to_bits(), d);
+    }
+}
