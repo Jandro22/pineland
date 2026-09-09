@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 5;
+pub const CHECKPOINT_VERSION: u32 = 6;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -146,6 +146,7 @@ impl CheckpointStore {
         encode_relations(&mut buffer, particle);
         encode_scheduler(&mut buffer, particle);
         encode_rng(&mut buffer, particle);
+        put_u64(&mut buffer, particle.movement_order_count);
         encode_counters(&mut buffer, &particle.counters);
         put_u64(&mut buffer, particle.observations.len() as u64);
         for record in &particle.observations {
@@ -226,6 +227,7 @@ impl CheckpointStore {
         decode_relations(&mut reader, &mut particle).map_err(|e| section_error("relations", e))?;
         decode_scheduler(&mut reader, &mut particle).map_err(|e| section_error("scheduler", e))?;
         decode_rng(&mut reader, &mut particle).map_err(|e| section_error("rng", e))?;
+        particle.movement_order_count = reader.u64()?;
         decode_counters(&mut reader, &mut particle.counters)
             .map_err(|e| section_error("counters", e))?;
         let observation_count = bounded_count(reader.u64()?)?;
