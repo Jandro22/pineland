@@ -275,6 +275,28 @@ impl PersonState {
         self
     }
 
+    pub fn ensure_organization_capacity(&mut self, organization_count: usize) {
+        let people_count = self.locality.len();
+        let expected = people_count.saturating_mul(organization_count);
+        if self.insurgent_affinity.len() == expected {
+            return;
+        }
+        let old_count = if people_count == 0 {
+            0
+        } else {
+            self.insurgent_affinity.len() / people_count
+        };
+        let copied = old_count.min(organization_count);
+        let mut replacement = vec![0.0; expected];
+        for person in 0..people_count {
+            let old_offset = person * old_count;
+            let new_offset = person * organization_count;
+            replacement[new_offset..new_offset + copied]
+                .copy_from_slice(&self.insurgent_affinity[old_offset..old_offset + copied]);
+        }
+        self.insurgent_affinity = replacement;
+    }
+
     pub fn with_destination_localities(mut self, locality_count: usize) -> Self {
         self.expected_destination_control = vec![0.0; self.locality.len() * locality_count * 2];
         self.expected_destination_control_present = vec![0; self.locality.len() * locality_count];
@@ -658,6 +680,64 @@ impl ForeignSystemState {
     }
 }
 
+/// Runtime foreign-intervention rows.  Python creates these records lazily
+/// when a neighbour deploys an expeditionary command, so they must travel
+/// with the particle rather than being reconstructed from the current force
+/// table during restart.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ForeignInterventionState {
+    pub foreign_state: Vec<u32>,
+    pub recipient: Vec<u32>,
+    pub started_at: Vec<f64>,
+    /// 0=capacity_building, 1=substitution.
+    pub mode: Vec<u8>,
+    pub provided_capacity: Vec<f64>,
+    pub transfer_efficiency: Vec<f64>,
+    pub crowding_out: Vec<f64>,
+    pub force_formation: Vec<u32>,
+    /// 1=active, 2=withdrawing, 3=withdrawn.
+    pub status: Vec<u8>,
+    pub withdrawal_rate: Vec<f64>,
+    pub cumulative_transferred_capacity: Vec<f64>,
+    pub cumulative_retained_host_capacity: Vec<f64>,
+    pub cumulative_crowding_out: Vec<f64>,
+    pub peak_provided_capacity: Vec<f64>,
+    pub withdrawn_capacity: Vec<f64>,
+}
+
+impl ForeignInterventionState {
+    pub fn count(&self) -> usize {
+        self.foreign_state.len()
+    }
+
+    pub fn push(
+        &mut self,
+        foreign_state: u32,
+        recipient: u32,
+        started_at: f64,
+        mode: u8,
+        transfer_efficiency: f64,
+        crowding_out: f64,
+        force_formation: u32,
+    ) {
+        self.foreign_state.push(foreign_state);
+        self.recipient.push(recipient);
+        self.started_at.push(started_at);
+        self.mode.push(mode);
+        self.provided_capacity.push(0.0);
+        self.transfer_efficiency.push(transfer_efficiency);
+        self.crowding_out.push(crowding_out);
+        self.force_formation.push(force_formation);
+        self.status.push(1);
+        self.withdrawal_rate.push(0.0);
+        self.cumulative_transferred_capacity.push(0.0);
+        self.cumulative_retained_host_capacity.push(0.0);
+        self.cumulative_crowding_out.push(0.0);
+        self.peak_provided_capacity.push(0.0);
+        self.withdrawn_capacity.push(0.0);
+    }
+}
+
 /// Organization-to-organization relation rows.  Status codes are stable:
 /// allied=0, cooperative=1, neutral=2, rival=3, hostile=4, ceasefire=5.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -850,6 +930,8 @@ pub struct FormationState {
     pub movement_order_sequence: Vec<u64>,
     pub movement_status: Vec<u8>,
     pub movement_purpose: Vec<u8>,
+    /// Foreign-state membership; `u32::MAX` is Python's `None` sentinel.
+    pub external_state: Vec<u32>,
 }
 
 impl FormationState {
@@ -888,6 +970,7 @@ impl FormationState {
             movement_order_sequence: vec![0; count],
             movement_status: vec![0; count],
             movement_purpose: vec![0; count],
+            external_state: vec![u32::MAX; count],
         }
     }
 
@@ -1491,6 +1574,7 @@ pub struct ParticleState {
     pub leaders: LeaderState,
     pub political: PoliticalState,
     pub foreign: ForeignSystemState,
+    pub foreign_interventions: ForeignInterventionState,
     pub relations: OrganizationRelationState,
     pub access_restrictions: AccessRestrictionState,
     pub scheduler: Scheduler,
@@ -1545,6 +1629,7 @@ impl ParticleState {
             leaders: LeaderState::default(),
             political: PoliticalState::new(),
             foreign: ForeignSystemState::new(),
+            foreign_interventions: ForeignInterventionState::default(),
             relations: OrganizationRelationState::default(),
             access_restrictions: AccessRestrictionState::new(),
             scheduler: Scheduler::new(),
@@ -1659,6 +1744,11 @@ impl ParticleState {
         append_f64s(&mut material, &self.protos.ideology_separatism);
         append_f64s(&mut material, &self.protos.leadership_potential);
         append_f64s(&mut material, &self.protos.created_at);
+        append_u8s(&mut material, &self.foreign_interventions.status);
+        append_u32s(&mut material, &self.foreign_interventions.foreign_state);
+        append_u32s(&mut material, &self.foreign_interventions.recipient);
+        append_u32s(&mut material, &self.foreign_interventions.force_formation);
+        append_f64s(&mut material, &self.foreign_interventions.provided_capacity);
         append_f64s(&mut material, &self.social_edges.weight);
         append_f64s(&mut material, &self.zone_beliefs.estimate);
         append_information_state(&mut material, self);
@@ -1839,6 +1929,7 @@ impl ParticleState {
         append_u64s(material, &self.formations.movement_order_sequence);
         append_u8s(material, &self.formations.movement_status);
         append_u8s(material, &self.formations.movement_purpose);
+        append_u32s(material, &self.formations.external_state);
         material.extend_from_slice(&self.movement_order_count.to_le_bytes());
         append_u32s(material, &self.patrols.formation);
         append_u8s(material, &self.patrols.active);
@@ -2031,6 +2122,30 @@ impl ParticleState {
                 .to_bits()
                 .to_le_bytes(),
         );
+        append_u32s(material, &self.foreign_interventions.foreign_state);
+        append_u32s(material, &self.foreign_interventions.recipient);
+        append_f64s(material, &self.foreign_interventions.started_at);
+        append_u8s(material, &self.foreign_interventions.mode);
+        append_f64s(material, &self.foreign_interventions.provided_capacity);
+        append_f64s(material, &self.foreign_interventions.transfer_efficiency);
+        append_f64s(material, &self.foreign_interventions.crowding_out);
+        append_u32s(material, &self.foreign_interventions.force_formation);
+        append_u8s(material, &self.foreign_interventions.status);
+        append_f64s(material, &self.foreign_interventions.withdrawal_rate);
+        append_f64s(
+            material,
+            &self.foreign_interventions.cumulative_transferred_capacity,
+        );
+        append_f64s(
+            material,
+            &self.foreign_interventions.cumulative_retained_host_capacity,
+        );
+        append_f64s(
+            material,
+            &self.foreign_interventions.cumulative_crowding_out,
+        );
+        append_f64s(material, &self.foreign_interventions.peak_provided_capacity);
+        append_f64s(material, &self.foreign_interventions.withdrawn_capacity);
         append_u32s(material, &self.relations.organization_a);
         append_u32s(material, &self.relations.organization_b);
         append_u8s(material, &self.relations.status);
@@ -2710,6 +2825,10 @@ impl ParticleState {
             (
                 self.formations.movement_purpose.len(),
                 "formation movement purpose",
+            ),
+            (
+                self.formations.external_state.len(),
+                "formation external state",
             ),
         ] {
             if length != formation_count {
@@ -3399,6 +3518,98 @@ impl ParticleState {
                 });
             }
         }
+        let intervention_count = self.foreign_interventions.foreign_state.len();
+        for (length, name) in [
+            (
+                self.foreign_interventions.recipient.len(),
+                "intervention recipient",
+            ),
+            (
+                self.foreign_interventions.started_at.len(),
+                "intervention start",
+            ),
+            (self.foreign_interventions.mode.len(), "intervention mode"),
+            (
+                self.foreign_interventions.provided_capacity.len(),
+                "intervention capacity",
+            ),
+            (
+                self.foreign_interventions.transfer_efficiency.len(),
+                "intervention transfer efficiency",
+            ),
+            (
+                self.foreign_interventions.crowding_out.len(),
+                "intervention crowding out",
+            ),
+            (
+                self.foreign_interventions.force_formation.len(),
+                "intervention formation",
+            ),
+            (
+                self.foreign_interventions.status.len(),
+                "intervention status",
+            ),
+            (
+                self.foreign_interventions.withdrawal_rate.len(),
+                "intervention withdrawal rate",
+            ),
+            (
+                self.foreign_interventions
+                    .cumulative_transferred_capacity
+                    .len(),
+                "intervention transferred capacity",
+            ),
+            (
+                self.foreign_interventions
+                    .cumulative_retained_host_capacity
+                    .len(),
+                "intervention retained capacity",
+            ),
+            (
+                self.foreign_interventions.cumulative_crowding_out.len(),
+                "intervention crowding out total",
+            ),
+            (
+                self.foreign_interventions.peak_provided_capacity.len(),
+                "intervention peak capacity",
+            ),
+            (
+                self.foreign_interventions.withdrawn_capacity.len(),
+                "intervention withdrawn capacity",
+            ),
+        ] {
+            if length != intervention_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: intervention_count,
+                });
+            }
+        }
+        for (value, name, bound) in self
+            .foreign_interventions
+            .foreign_state
+            .iter()
+            .map(|value| (*value, "intervention foreign state", foreign_state_count))
+            .chain(
+                self.foreign_interventions
+                    .recipient
+                    .iter()
+                    .map(|value| (*value, "intervention recipient", organization_count)),
+            )
+            .chain(
+                self.foreign_interventions
+                    .force_formation
+                    .iter()
+                    .map(|value| (*value, "intervention formation", formation_count)),
+            )
+        {
+            if value != u32::MAX && value as usize >= bound {
+                return Err(StateError::Corrupt(format!(
+                    "{name} id {value} is outside {bound}"
+                )));
+            }
+        }
         let relation_count = self.relations.organization_a.len();
         for (length, name) in [
             (
@@ -3594,6 +3805,12 @@ impl ParticleState {
                     .map(|value| (*value, "formation home locality", locality_count)),
             )
             .chain(
+                self.formations
+                    .external_state
+                    .iter()
+                    .map(|value| (*value, "formation external state", foreign_state_count)),
+            )
+            .chain(
                 self.patrols
                     .formation
                     .iter()
@@ -3648,7 +3865,9 @@ impl ParticleState {
                     .map(|value| (*value, "foothold locality", locality_count)),
             )
         {
-            if value as usize >= bound {
+            let sentinel_allowed = value == u32::MAX
+                && matches!(name, "formation home locality" | "formation external state");
+            if value as usize >= bound && !sentinel_allowed {
                 return Err(StateError::Corrupt(format!(
                     "{name} id {value} is outside {bound}"
                 )));

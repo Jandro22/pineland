@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 11;
+pub const CHECKPOINT_VERSION: u32 = 12;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -146,6 +146,7 @@ impl CheckpointStore {
         encode_leaders(&mut buffer, particle);
         encode_political(&mut buffer, particle);
         encode_foreign(&mut buffer, particle);
+        encode_foreign_interventions(&mut buffer, particle);
         encode_relations(&mut buffer, particle);
         encode_access_restrictions(&mut buffer, particle);
         encode_scheduler(&mut buffer, particle);
@@ -233,6 +234,8 @@ impl CheckpointStore {
         decode_leaders(&mut reader, &mut particle).map_err(|e| section_error("leaders", e))?;
         decode_political(&mut reader, &mut particle).map_err(|e| section_error("political", e))?;
         decode_foreign(&mut reader, &mut particle).map_err(|e| section_error("foreign", e))?;
+        decode_foreign_interventions(&mut reader, &mut particle)
+            .map_err(|e| section_error("foreign_interventions", e))?;
         decode_relations(&mut reader, &mut particle).map_err(|e| section_error("relations", e))?;
         decode_access_restrictions(&mut reader, &mut particle)
             .map_err(|e| section_error("access_restrictions", e))?;
@@ -1234,6 +1237,7 @@ fn encode_formations(b: &mut Vec<u8>, p: &ParticleState) {
     put_u64_vec(b, &x.movement_order_sequence);
     put_u8_vec(b, &x.movement_status);
     put_u8_vec(b, &x.movement_purpose);
+    put_u32_vec(b, &x.external_state);
 }
 fn decode_formations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.formations;
@@ -1275,6 +1279,7 @@ fn decode_formations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<()
         read_u64_vec(r).map_err(|e| section_error("movement_order_sequence", e))?;
     x.movement_status = read_u8_vec(r).map_err(|e| section_error("movement_status", e))?;
     x.movement_purpose = read_u8_vec(r).map_err(|e| section_error("movement_purpose", e))?;
+    x.external_state = read_u32_vec(r).map_err(|e| section_error("external_state", e))?;
     Ok(())
 }
 fn encode_patrols(b: &mut Vec<u8>, p: &ParticleState) {
@@ -1976,6 +1981,48 @@ fn decode_foreign(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), C
     Ok(())
 }
 
+fn encode_foreign_interventions(b: &mut Vec<u8>, p: &ParticleState) {
+    let x = &p.foreign_interventions;
+    put_u32_vec(b, &x.foreign_state);
+    put_u32_vec(b, &x.recipient);
+    put_f64_vec(b, &x.started_at);
+    put_u8_vec(b, &x.mode);
+    put_f64_vec(b, &x.provided_capacity);
+    put_f64_vec(b, &x.transfer_efficiency);
+    put_f64_vec(b, &x.crowding_out);
+    put_u32_vec(b, &x.force_formation);
+    put_u8_vec(b, &x.status);
+    put_f64_vec(b, &x.withdrawal_rate);
+    put_f64_vec(b, &x.cumulative_transferred_capacity);
+    put_f64_vec(b, &x.cumulative_retained_host_capacity);
+    put_f64_vec(b, &x.cumulative_crowding_out);
+    put_f64_vec(b, &x.peak_provided_capacity);
+    put_f64_vec(b, &x.withdrawn_capacity);
+}
+
+fn decode_foreign_interventions(
+    r: &mut ByteReader<'_>,
+    p: &mut ParticleState,
+) -> Result<(), CheckpointError> {
+    let x = &mut p.foreign_interventions;
+    x.foreign_state = read_u32_vec(r)?;
+    x.recipient = read_u32_vec(r)?;
+    x.started_at = read_f64_vec(r)?;
+    x.mode = read_u8_vec(r)?;
+    x.provided_capacity = read_f64_vec(r)?;
+    x.transfer_efficiency = read_f64_vec(r)?;
+    x.crowding_out = read_f64_vec(r)?;
+    x.force_formation = read_u32_vec(r)?;
+    x.status = read_u8_vec(r)?;
+    x.withdrawal_rate = read_f64_vec(r)?;
+    x.cumulative_transferred_capacity = read_f64_vec(r)?;
+    x.cumulative_retained_host_capacity = read_f64_vec(r)?;
+    x.cumulative_crowding_out = read_f64_vec(r)?;
+    x.peak_provided_capacity = read_f64_vec(r)?;
+    x.withdrawn_capacity = read_f64_vec(r)?;
+    Ok(())
+}
+
 fn encode_relations(b: &mut Vec<u8>, p: &ParticleState) {
     let x = &p.relations;
     put_u32_vec(b, &x.organization_a);
@@ -2144,7 +2191,9 @@ mod tests {
     fn representative_particle() -> ParticleState {
         let mut particle =
             ParticleState::new(2, 4, 2, 3, 4, RngStreams::new(99, "checkpoint-test"));
-        particle.people = PersonState::new(2).with_organizations(2);
+        particle.people = PersonState::new(2)
+            .with_organizations(2)
+            .with_destination_localities(2);
         particle.people.locality = vec![0, 1];
         particle.people.party_legitimacy = vec![0.2; 6];
         particle.people.insurgent_affinity = vec![0.1; 4];

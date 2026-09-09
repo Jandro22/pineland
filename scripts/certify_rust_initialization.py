@@ -69,6 +69,7 @@ ORG_KIND_INDEX = {
     "police": 2,
     "insurgent": 3,
     "party": 4,
+    "foreign": 5,
 }
 U32_MAX = 2**32 - 1
 
@@ -577,7 +578,8 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
         "formations_supply_stock": digest_f64(formation.supply_stock for formation in formations),
         "formations_supply_capacity": digest_f64(formation.supply_capacity for formation in formations),
         "formations_home_locality": digest_u32(
-            locality_index[formation.home_locality_id] for formation in formations
+            locality_index.get(formation.home_locality_id, U32_MAX)
+            for formation in formations
         ),
         "formations_active": digest_u8(int(formation.personnel > 0) for formation in formations),
         "formations_moving": digest_u8(int(formation.moving) for formation in formations),
@@ -1039,35 +1041,24 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
         }
     )
 
-    belief_presence: list[float] = []
-    belief_control: list[float] = []
-    belief_confidence: list[float] = []
-    for organization_id in organization_ids:
-        for locality_id in locality_ids:
-            base = world.beliefs[(organization_id, locality_id)]
-            belief_presence.append(0.0)
-            belief_control.extend(
-                getattr(base.control_estimate, dimension) for dimension in CONTROL_DIMENSIONS
-            )
-            belief_confidence.append(base.confidence)
-            for target in (
-                "insurgent",
-                "insurgent" if organization_id == "insurgent" else "government",
-                "government" if organization_id == "insurgent" else "insurgent",
-            ):
-                control = world.control_beliefs[(organization_id, target, locality_id)]
-                belief_presence.append(0.0)
-                belief_control.extend(
-                    getattr(control.control_estimate, dimension) for dimension in CONTROL_DIMENSIONS
-                )
-                belief_confidence.append(control.confidence)
+    # Foreign organizations can be created during a trajectory, but the
+    # native compatibility table intentionally keeps the original seven
+    # actor-level belief rows.  Dynamic formations/posts are represented by
+    # the separate kind-3 rows below.  Derive the fixed observer set from the
+    # Python table instead of assuming every organization has actor-level
+    # beliefs.
+    fixed_observer_ids = [
+        organization_id
+        for organization_id in organization_ids
+        if all((organization_id, locality_id) in world.beliefs for locality_id in locality_ids)
+    ]
     # Native uses three rows per observer/locality (presence, control, and
     # opposing-control). The first row is the shared ActorBelief control row;
     # retain that exact ordering rather than duplicating it in the loop above.
     belief_presence = []
     belief_control = []
     belief_confidence = []
-    for organization_id in organization_ids:
+    for organization_id in fixed_observer_ids:
         for locality_id in locality_ids:
             base = world.beliefs[(organization_id, locality_id)]
             belief_presence.append(0.0)
@@ -1086,7 +1077,7 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
                 belief_confidence.append(control.confidence)
     fixed_control_keys = {
         (organization_id, target, locality_id)
-        for organization_id in organization_ids
+        for organization_id in fixed_observer_ids
         for locality_id in locality_ids
         for target in (
             "insurgent" if organization_id == "insurgent" else "government",
@@ -1146,7 +1137,7 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
             locality_index[locality_id],
             kind,
         )
-        for organization_id in organization_ids
+        for organization_id in fixed_observer_ids
         for locality_id in locality_ids
         for target, kind in (
             ("insurgent", 0),

@@ -277,6 +277,45 @@ fn shift_dynamic_code(value: &mut u32, threshold: u32) {
     }
 }
 
+/// Appending an organization moves the numeric base of every existing
+/// dynamic observer by one.  Kind-3 belief rows are the only belief rows in
+/// that namespace; actor-level rows for the existing organization registry
+/// (including observer 7, the aggregate insurgent actor) must remain fixed.
+pub(crate) fn shift_dynamic_observer_codes_after_organization(
+    particle: &mut ParticleState,
+    old_organizations: usize,
+) {
+    let threshold = old_organizations as u32;
+    for key in &mut particle.beliefs.keys {
+        if key.kind == 3 {
+            shift_dynamic_code(&mut key.observer, threshold);
+        }
+    }
+    for state in [
+        &mut particle.presence_beliefs,
+        &mut particle.node_presence_beliefs,
+    ] {
+        for key in &mut state.keys {
+            shift_dynamic_code(&mut key.observer, threshold);
+        }
+    }
+    for observation in &mut particle.information_observations {
+        shift_dynamic_code(&mut observation.source, threshold);
+        shift_dynamic_code(&mut observation.observer_node, threshold);
+        shift_dynamic_code(&mut observation.source_identity, threshold);
+    }
+    for relay in &mut particle.information_relays {
+        shift_dynamic_code(&mut relay.source_node, threshold);
+        shift_dynamic_code(&mut relay.destination_node, threshold);
+        for node in &mut relay.route {
+            shift_dynamic_code(node, threshold);
+        }
+    }
+    for entry in &mut particle.information_history {
+        shift_dynamic_code(&mut entry.source_identity, threshold);
+    }
+}
+
 /// Dynamic observer codes reserve the formation range first, followed by
 /// posts, auxiliary nodes, and command nodes. Appending a formation therefore
 /// shifts every already-materialized node after the old formation range. The
@@ -426,6 +465,7 @@ fn create_local_formation(
     particle.formations.movement_order_sequence.push(0);
     particle.formations.movement_status.push(0);
     particle.formations.movement_purpose.push(0);
+    particle.formations.external_state.push(u32::MAX);
 
     // Newly created local formations are not patrol objects in Python.
     particle.patrols.formation.push(formation as u32);
