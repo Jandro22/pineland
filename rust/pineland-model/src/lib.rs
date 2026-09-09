@@ -1826,7 +1826,19 @@ impl SimulationEngine {
                 self.put_rng("process:contact", rng);
             }
             EventPayload::ForceMovement => {
-                movement::advance_movement_orders(&mut self.particle, &self.topology, event.time)
+                let arrived = movement::advance_movement_orders(
+                    &mut self.particle,
+                    &self.topology,
+                    event.time,
+                );
+                for formation in arrived {
+                    organizations::record_foothold_arrival(
+                        &mut self.particle,
+                        &self.topology,
+                        &self.config,
+                        formation,
+                    );
+                }
             }
             EventPayload::Logistics => {
                 let mut rng = self.take_rng("process:logistics");

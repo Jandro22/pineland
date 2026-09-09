@@ -778,15 +778,28 @@ fn resolve_engagement(
         config,
     );
     let signal = logistic((frac_second - frac_first) * 18.0 + 0.35 * advantage);
-    // Python issues a withdrawal order after a disengagement.  The order's
-    // command-reliability Bernoulli is part of the shared combat RNG stream,
-    // even when the compact native state cannot yet expose the full order
-    // archive.  Consume the draw at the same boundary until the order fields
-    // are materialized by the movement schema.
-    for disengaged_slot in disengaged {
+    // Python materializes withdrawal orders before engagement observations;
+    // their command-reliability draws therefore belong to this combat RNG
+    // stream and their live state must block the next command cycle.
+    for (slot, disengaged_slot) in disengaged.iter().copied().enumerate() {
         if disengaged_slot {
-            let _ = rng.random();
+            let formation = if slot == 0 { first } else { second };
+            let _ = crate::movement::issue_withdrawal_order(
+                particle, topology, config, formation, time, rng,
+            );
         }
+    }
+    for (formation, loss) in [(first, loss_first), (second, loss_second)] {
+        let loss_fraction = loss / (particle.formations.personnel[formation] + loss).max(1.0e-12);
+        let _ = crate::movement::issue_reinforcement_order(
+            particle,
+            topology,
+            config,
+            formation,
+            loss_fraction,
+            time,
+            rng,
+        );
     }
     if std::env::var_os("PINELAND_COMBAT_TRACE").is_some() {
         eprintln!(
