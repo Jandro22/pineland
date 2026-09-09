@@ -303,8 +303,10 @@ pub fn update(
             .map(|index| particle.foreign.belief_government_control[*index])
             .sum::<f64>()
             / belief_indices.len().max(1) as f64;
-        let cost_pressure = particle.foreign.cumulative_cost[state]
-            / (1.0 + particle.foreign.resources[state] + particle.foreign.cumulative_cost[state]);
+        let cost_denominator = (particle.foreign.resources[state]
+            + particle.foreign.cumulative_cost[state])
+            .max(1.0);
+        let cost_pressure = particle.foreign.cumulative_cost[state] / cost_denominator;
         let rival_presence = (particle.foreign.rival_offsets[state + 1]
             - particle.foreign.rival_offsets[state])
             .min(1) as f64
