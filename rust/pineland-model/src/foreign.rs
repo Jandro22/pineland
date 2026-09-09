@@ -5,7 +5,7 @@ use pineland_core::rng::{python_exp, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState};
 use pineland_core::topology::StaticTopology;
 
-const FOREIGN_KIND: u8 = 5;
+pub(crate) const FOREIGN_KIND: u8 = 5;
 
 fn append_relation(
     particle: &mut ParticleState,
@@ -155,6 +155,73 @@ fn ensure_foreign_relations(particle: &mut ParticleState, organization: usize, t
     }
 }
 
+pub(crate) fn shift_dynamic_observer_codes_after_foreign_intervention(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    state: usize,
+) {
+    let old_organizations = particle.organizations.kind.len();
+    let old_formations = particle.formations.personnel.len();
+    let old_posts = particle.security_posts.locality.len();
+    let num_aux = crate::information::auxiliary_node_ids(particle, topology).len();
+
+    let formation_start = old_organizations as u32;
+    let post_start = (old_organizations + old_formations) as u32;
+    let aux_start = (old_organizations + old_formations + old_posts) as u32;
+    let command_start = aux_start + num_aux as u32;
+
+    let old_cmds = crate::information::command_node_ids(particle);
+    let new_org_name = format!("foreign-neighbor-{}", state + 1);
+    let new_cmd = format!("CMD:{new_org_name}");
+    let insert_pos = old_cmds.binary_search(&new_cmd).unwrap_or_else(|pos| pos);
+    let cmd_split_code = command_start + insert_pos as u32;
+
+    let shift_code = |code: &mut u32| {
+        if *code >= formation_start {
+            if *code < post_start {
+                *code += 1;
+            } else if *code < aux_start {
+                *code += 2;
+            } else if *code < command_start {
+                *code += 3;
+            } else if *code < cmd_split_code {
+                *code += 3;
+            } else {
+                *code += 4;
+            }
+        }
+    };
+
+    for key in &mut particle.beliefs.keys {
+        if key.kind == 3 {
+            shift_code(&mut key.observer);
+        }
+    }
+    for state in [
+        &mut particle.presence_beliefs,
+        &mut particle.node_presence_beliefs,
+    ] {
+        for key in &mut state.keys {
+            shift_code(&mut key.observer);
+        }
+    }
+    for observation in &mut particle.information_observations {
+        shift_code(&mut observation.source);
+        shift_code(&mut observation.observer_node);
+        shift_code(&mut observation.source_identity);
+    }
+    for relay in &mut particle.information_relays {
+        shift_code(&mut relay.source_node);
+        shift_code(&mut relay.destination_node);
+        for node in &mut relay.route {
+            shift_code(node);
+        }
+    }
+    for entry in &mut particle.information_history {
+        shift_code(&mut entry.source_identity);
+    }
+}
+
 fn create_foreign_intervention(
     particle: &mut ParticleState,
     topology: &StaticTopology,
@@ -171,7 +238,7 @@ fn create_foreign_intervention(
     let formation = particle.formations.personnel.len();
     let resources = particle.foreign.resources[state] * 0.02;
 
-    crate::recruitment::shift_dynamic_observer_codes_after_organization(particle, organization);
+    shift_dynamic_observer_codes_after_foreign_intervention(particle, topology, state);
     particle
         .locality
         .ensure_organization_capacity(organization + 1);
@@ -212,7 +279,7 @@ fn create_foreign_intervention(
 
     particle.formations.organization.push(organization as u32);
     particle.formations.locality.push(locality as u32);
-    particle.formations.microzone.push(zone as u32);
+    particle.formations.microzone.push(u32::MAX);
     particle.formations.personnel.push(900.0);
     particle.formations.quality.push(0.78);
     particle.formations.cohesion.push(0.76);

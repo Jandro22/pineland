@@ -1012,9 +1012,9 @@ fn fuse_recorded_observation(
     }
 }
 
-fn command_node_ids(particle: &ParticleState) -> Vec<String> {
+pub(crate) fn command_node_ids(particle: &ParticleState) -> Vec<String> {
     let mut values = (0..particle.organizations.kind.len())
-        .map(|organization| format!("CMD:{}", crate::organization_name(organization)))
+        .map(|organization| format!("CMD:{}", crate::organization_name_for_particle(particle, organization)))
         .collect::<Vec<_>>();
     values.sort();
     values
@@ -1387,7 +1387,7 @@ fn queue_information_relay(
     time: f64,
     source_type: SourceType,
 ) {
-    let destination_name = format!("CMD:{}", crate::organization_name(observer));
+    let destination_name = format!("CMD:{}", crate::organization_name_for_particle(particle, observer));
     let Some(destination_node) = command_node_code(particle, topology, &destination_name) else {
         return;
     };
@@ -2544,6 +2544,10 @@ fn formation_index(particle: &ParticleState, identifier: &str) -> Option<usize> 
 
 fn formation_name(particle: &ParticleState, formation: usize) -> String {
     let organization = particle.formations.organization[formation] as usize;
+    if particle.organizations.kind.get(organization).copied() == Some(crate::foreign::FOREIGN_KIND) {
+        let org_name = crate::organization_name_for_particle(particle, organization);
+        return format!("{}-01", org_name.to_ascii_uppercase());
+    }
     let rank = (0..=formation)
         .filter(|index| particle.formations.organization[*index] as usize == organization)
         .count();
@@ -2599,7 +2603,7 @@ fn dynamic_observer_code(particle: &ParticleState, topology: &StaticTopology, no
     base as u32 + (stable_hash_code(node) & 0x3fff_ffff)
 }
 
-fn auxiliary_node_ids(particle: &ParticleState, topology: &StaticTopology) -> Vec<String> {
+pub(crate) fn auxiliary_node_ids(particle: &ParticleState, topology: &StaticTopology) -> Vec<String> {
     let mut values = Vec::new();
     for community in 0..particle.communities.locality.len() {
         values.push(community_name(community));

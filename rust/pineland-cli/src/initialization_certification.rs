@@ -765,6 +765,10 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         "foothold_updated_at",
         f64_array(&particle.footholds.updated_at),
     );
+    root.insert(
+        "foreign_willingness",
+        f64_array(&particle.foreign.willingness),
+    );
     root
 }
 

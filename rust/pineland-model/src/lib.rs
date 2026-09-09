@@ -60,6 +60,44 @@ fn organization_name(index: usize) -> &'static str {
     }
 }
 
+pub fn organization_name_for_particle(particle: &pineland_core::state::ParticleState, index: usize) -> String {
+    match index {
+        GOVERNMENT => "government".to_string(),
+        MILITARY => "fdf".to_string(),
+        POLICE => "police".to_string(),
+        PARTY_1 => "party-1".to_string(),
+        PARTY_2 => "party-2".to_string(),
+        PARTY_3 => "party-3".to_string(),
+        INSURGENT => "insurgent".to_string(),
+        _ => {
+            for (form_org, ext_state) in particle
+                .formations
+                .organization
+                .iter()
+                .zip(&particle.formations.external_state)
+            {
+                if *form_org as usize == index && *ext_state != u32::MAX {
+                    return format!("foreign-neighbor-{}", *ext_state + 1);
+                }
+            }
+            for (intervention_idx, force_formation) in particle
+                .foreign_interventions
+                .force_formation
+                .iter()
+                .enumerate()
+            {
+                if let Some(org) = particle.formations.organization.get(*force_formation as usize) {
+                    if *org as usize == index {
+                        let state = particle.foreign_interventions.foreign_state[intervention_idx];
+                        return format!("foreign-neighbor-{}", state + 1);
+                    }
+                }
+            }
+            format!("foreign-neighbor-{}", index - 6)
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ModelError {
     Config(ConfigError),
