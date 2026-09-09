@@ -1260,8 +1260,13 @@ pub fn opportunities(
         } else {
             1.0
         };
-        let capacity = (committed
-            / (committed
+        // Match Python's execution_probability: capacity_saturation is based
+        // on the full local equipped stock, while `committed` is only the
+        // action's demand/consumption unit.
+        let total_fighters = local_fighter_equivalents(particle, organization, locality, config);
+        let total_fighters = total_fighters.0 + total_fighters.1;
+        let capacity = (total_fighters
+            / (total_fighters
                 + config
                     .organization_ecology
                     .minimum_formation_personnel

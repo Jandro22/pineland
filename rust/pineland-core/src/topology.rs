@@ -53,6 +53,45 @@ impl CsrGraph {
         }
     }
 
+    /// Build a graph while preserving the first-seen neighbor order in the
+    /// edge list.  Python's locality adjacency is an insertion-ordered dict;
+    /// that order is observable by weighted choices in mobility and action
+    /// processes, so sorting the rows would change otherwise identical RNG
+    /// continuations.  Duplicate edges retain their first position and the
+    /// minimum edge weight, matching the Python ``min`` assignment.
+    pub fn from_edges_ordered(
+        node_count: usize,
+        edges: &[(u32, u32, f64)],
+        undirected: bool,
+    ) -> Self {
+        let mut rows: Vec<Vec<(u32, f64)>> = (0..node_count).map(|_| Vec::new()).collect();
+        for &(from, to, weight) in edges {
+            if (from as usize) >= node_count || (to as usize) >= node_count || !weight.is_finite() {
+                continue;
+            }
+            insert_ordered_edge(&mut rows[from as usize], to, weight);
+            if undirected {
+                insert_ordered_edge(&mut rows[to as usize], from, weight);
+            }
+        }
+        let mut offsets = Vec::with_capacity(node_count + 1);
+        let mut neighbors = Vec::new();
+        let mut weights = Vec::new();
+        offsets.push(0);
+        for row in rows {
+            for (neighbor, weight) in row {
+                neighbors.push(neighbor);
+                weights.push(weight);
+            }
+            offsets.push(neighbors.len() as u32);
+        }
+        Self {
+            offsets,
+            neighbors,
+            weights,
+        }
+    }
+
     pub fn node_count(&self) -> usize {
         self.offsets.len().saturating_sub(1)
     }
@@ -68,6 +107,14 @@ impl CsrGraph {
                     .iter()
                     .copied(),
             )
+    }
+}
+
+fn insert_ordered_edge(row: &mut Vec<(u32, f64)>, neighbor: u32, weight: f64) {
+    if let Some((_, existing)) = row.iter_mut().find(|(candidate, _)| *candidate == neighbor) {
+        *existing = existing.min(weight);
+    } else {
+        row.push((neighbor, weight));
     }
 }
 
@@ -318,7 +365,8 @@ impl StaticTopology {
                 (locality as u32, next as u32, distance.max(1.0))
             })
             .collect::<Vec<_>>();
-        let locality_graph = CsrGraph::from_edges(locality_count, &locality_edge_rows, true);
+        let locality_graph =
+            CsrGraph::from_edges_ordered(locality_count, &locality_edge_rows, true);
         let mut physical_distances = vec![f64::INFINITY; locality_count * locality_count];
         for source in 0..locality_count {
             physical_distances[source * locality_count + source] = 0.0;
@@ -775,7 +823,8 @@ impl StaticTopology {
             .iter()
             .map(|(left, right, cost)| (*left as u32, *right as u32, *cost))
             .collect::<Vec<_>>();
-        let locality_graph = CsrGraph::from_edges(locality_count, &locality_edge_rows, true);
+        let locality_graph =
+            CsrGraph::from_edges_ordered(locality_count, &locality_edge_rows, true);
         // Python's physical world contains only within-locality microzone
         // edges.  National adjacency is a separate locality graph used by
         // movement/propagation; adding those links to the physical graph

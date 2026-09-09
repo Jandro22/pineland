@@ -57,7 +57,7 @@ fn community_signal(particle: &ParticleState, locality: usize, actor: usize) -> 
 /// locality graph is retained for the later sparse-destination extension.
 pub fn decay_and_propagate(
     particle: &mut ParticleState,
-    _topology: &StaticTopology,
+    topology: &StaticTopology,
     config: &SimulationConfig,
     rng: &mut PyRandomCompat,
     _time: f64,
@@ -94,6 +94,36 @@ pub fn decay_and_propagate(
             let offset = person * 2 + usize::from(actor == crate::INSURGENT);
             let old = particle.people.expected_control[offset];
             particle.people.expected_control[offset] = clamp01(old + learning * (observed - old));
+
+            // Python stores destination-specific expectations for every
+            // adjacent locality.  A missing entry falls back to the scalar
+            // expectation *after* this event's scalar update, then the local
+            // aggregate is blended with the same person-specific learning
+            // rate.  Keep the sparse Python semantics with a dense native
+            // table plus a two-bit presence mask.
+            let actor_bit = if actor == crate::GOVERNMENT { 1 } else { 2 };
+            for (destination, _) in topology.locality_edges.neighbors(locality) {
+                let destination = destination as usize;
+                let mask_index = person * topology.locality_count() + destination;
+                let value_index = mask_index * 2 + usize::from(actor == crate::INSURGENT);
+                if mask_index >= particle.people.expected_destination_control_present.len()
+                    || value_index >= particle.people.expected_destination_control.len()
+                {
+                    continue;
+                }
+                let prior = if particle.people.expected_destination_control_present[mask_index]
+                    & actor_bit
+                    != 0
+                {
+                    particle.people.expected_destination_control[value_index]
+                } else {
+                    particle.people.expected_control[offset]
+                };
+                let destination_signal = community_signal(particle, destination, actor);
+                particle.people.expected_destination_control[value_index] =
+                    clamp01(prior + learning * (destination_signal - prior));
+                particle.people.expected_destination_control_present[mask_index] |= actor_bit;
+            }
         }
     }
 }
