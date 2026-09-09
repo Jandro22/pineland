@@ -3866,7 +3866,12 @@ impl ParticleState {
             )
         {
             let sentinel_allowed = value == u32::MAX
-                && matches!(name, "formation home locality" | "formation external state");
+                && matches!(
+                    name,
+                    "formation home locality"
+                        | "formation external state"
+                        | "formation microzone"
+                );
             if value as usize >= bound && !sentinel_allowed {
                 return Err(StateError::Corrupt(format!(
                     "{name} id {value} is outside {bound}"
