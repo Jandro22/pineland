@@ -366,6 +366,7 @@ fn apply_direct_civilian_harm(
     particle: &mut ParticleState,
     config: &SimulationConfig,
     locality: usize,
+    district: usize,
     direct_harm: f64,
 ) -> (f64, f64) {
     let mut residents = Vec::new();
@@ -407,6 +408,9 @@ fn apply_direct_civilian_harm(
         }
         particle.locality.population[locality] =
             (particle.locality.population[locality] - deaths).max(0.0);
+        if let Some(population) = particle.locality.district_population.get_mut(district) {
+            *population = (*population - deaths).max(0.0);
+        }
         particle.counters.deaths += deaths;
     }
     particle.counters.civilian_harm += direct_harm.max(0.0);
@@ -744,7 +748,12 @@ fn resolve_engagement(
         * intensity.min(1.0)
         * exposure
         * rng.expovariate(1.0).unwrap_or(0.0);
-    let _ = apply_direct_civilian_harm(particle, config, locality, civilian_harm);
+    let district = topology
+        .locality_to_district
+        .get(locality)
+        .copied()
+        .unwrap_or(0) as usize;
+    let _ = apply_direct_civilian_harm(particle, config, locality, district, civilian_harm);
     update_relations(
         particle,
         particle.formations.organization[first] as usize,

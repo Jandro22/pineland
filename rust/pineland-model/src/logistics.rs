@@ -155,20 +155,18 @@ fn reconcile_source_production(
                     .get(locality as usize)
                     .copied()
                     .unwrap_or(u32::MAX);
-                // Python's district population is a live population stock:
-                // direct civilian harm reduces both the locality and its
-                // containing district.  The static topology stores only the
-                // opening registry, so derive the current district total from
-                // the particle-local locality stocks at each reconciliation.
-                let mut current_population = 0.0;
-                for candidate in 0..particle.locality.population.len() {
-                    if topology.locality_to_district.get(candidate).copied() == Some(district) {
-                        current_population = round_binary64(
-                            current_population + particle.locality.population[candidate].max(0.0),
-                        );
-                    }
-                }
-                current_population
+                particle
+                    .locality
+                    .district_population
+                    .get(district as usize)
+                    .copied()
+                    .unwrap_or_else(|| {
+                        topology
+                            .district_population
+                            .get(district as usize)
+                            .copied()
+                            .unwrap_or(0.0)
+                    })
             } else {
                 python_sum(
                     &formation_indices

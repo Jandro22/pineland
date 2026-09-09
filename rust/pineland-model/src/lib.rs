@@ -319,6 +319,16 @@ impl SimulationEngine {
             // certificate, but still receive a valid conserved population.
             vec![1.0; n]
         };
+        self.particle.locality.district_population = if self
+            .topology
+            .district_population
+            .iter()
+            .any(|value| *value > 0.0)
+        {
+            self.topology.district_population.clone()
+        } else {
+            vec![0.0; self.topology.district_count()]
+        };
         let total_population: f64 = if self
             .topology
             .district_population
