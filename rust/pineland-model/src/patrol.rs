@@ -457,8 +457,11 @@ fn observe_target(
     let mut personnel_estimate = 0.0;
     let mut attribution_mistake = false;
     if detected {
+        // The Python expression evaluates its positive personnel multiplier
+        // before overriding false positives with a coarse uniform estimate.
+        // Keep that draw even when no formation is actually present.
+        personnel_estimate = personnel * (0.65 + 0.7 * rng.random());
         if present {
-            personnel_estimate = personnel * (0.65 + 0.7 * rng.random());
             attribution_mistake = rng.random() < config.information.attribution_error_rate;
         } else {
             personnel_estimate = rng.uniform(20.0, 250.0).max(1.0);
