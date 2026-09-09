@@ -1377,9 +1377,15 @@ fn components(engine: &SimulationEngine) -> JsonValue {
         "formations_home_locality",
         JsonValue::string(u32_digest(&particle.formations.home_locality)),
     );
+    let formations_active: Vec<u8> = particle
+        .formations
+        .personnel
+        .iter()
+        .map(|personnel| u8::from(*personnel > 0.0))
+        .collect();
     value.insert(
         "formations_active",
-        JsonValue::string(u8_digest(&particle.formations.active)),
+        JsonValue::string(u8_digest(&formations_active)),
     );
     value.insert(
         "formations_moving",

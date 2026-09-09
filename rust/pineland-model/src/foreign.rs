@@ -5,6 +5,422 @@ use pineland_core::rng::{python_exp, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState};
 use pineland_core::topology::StaticTopology;
 
+const FOREIGN_KIND: u8 = 5;
+
+fn append_relation(
+    particle: &mut ParticleState,
+    first: usize,
+    second: usize,
+    status: u8,
+    hostility_memory: f64,
+    cooperation_memory: f64,
+    time: f64,
+) {
+    if let Some(index) = particle
+        .relations
+        .organization_a
+        .iter()
+        .zip(&particle.relations.organization_b)
+        .position(|(left, right)| {
+            (*left as usize == first && *right as usize == second)
+                || (*left as usize == second && *right as usize == first)
+        })
+    {
+        particle.relations.status[index] = status;
+        particle.relations.hostility_memory[index] = hostility_memory;
+        particle.relations.cooperation_memory[index] = cooperation_memory;
+        particle.relations.updated_at[index] = time;
+        return;
+    }
+    particle.relations.organization_a.push(first as u32);
+    particle.relations.organization_b.push(second as u32);
+    particle.relations.status.push(status);
+    particle.relations.rivalry_memory.push(0.0);
+    particle.relations.hostility_memory.push(hostility_memory);
+    particle
+        .relations
+        .cooperation_memory
+        .push(cooperation_memory);
+    particle.relations.updated_at.push(time);
+    particle.relations.last_interaction_at.push(0.0);
+    particle.relations.has_last_interaction.push(0);
+}
+
+fn append_foothold_rows(particle: &mut ParticleState, locality_count: usize, organization: usize) {
+    for locality in 0..locality_count {
+        particle.footholds.organization.push(organization as u32);
+        particle.footholds.locality.push(locality as u32);
+        particle.footholds.strength.push(0.0);
+        particle.footholds.raw_signal.push(0.0);
+        particle.footholds.membership.push(0.0);
+        particle.footholds.embeddedness.push(0.0);
+        particle.footholds.access.push(0.0);
+        particle.footholds.target_knowledge.push(0.0);
+        particle.footholds.infrastructure.push(0.0);
+        particle.footholds.sustainment.push(0.0);
+        particle.footholds.updated_at.push(0.0);
+        particle.footholds.first_activated_at.push(-1.0e9);
+        particle.footholds.last_activated_at.push(-1.0e9);
+        particle.footholds.cumulative_active_days.push(0.0);
+        particle.footholds.cumulative_arrivals.push(0.0);
+        particle.footholds.cumulative_recruits.push(0.0);
+        particle.footholds.cumulative_actions.push(0.0);
+        particle.footholds.viable_activation_count.push(0);
+        particle.footholds.renewal_count.push(0);
+        particle.footholds.active.push(0);
+    }
+}
+
+fn foreign_border(particle: &ParticleState, state: usize) -> Option<usize> {
+    (0..particle.foreign.border_foreign_state.len())
+        .filter(|index| particle.foreign.border_foreign_state[*index] as usize == state)
+        .max_by(|left, right| {
+            let left_score = particle.foreign.border_social_permeability[*left]
+                * particle.foreign.border_language_overlap[*left]
+                / particle.foreign.border_terrain_friction[*left].max(0.2);
+            let right_score = particle.foreign.border_social_permeability[*right]
+                * particle.foreign.border_language_overlap[*right]
+                / particle.foreign.border_terrain_friction[*right].max(0.2);
+            left_score
+                .total_cmp(&right_score)
+                .then_with(|| right.cmp(left))
+        })
+}
+
+fn best_border_zone(topology: &StaticTopology, locality: usize) -> usize {
+    topology
+        .zones_for_locality((locality as u32).into())
+        .max_by(|left, right| {
+            topology.zone_population_share[*left]
+                .total_cmp(&topology.zone_population_share[*right])
+                .then_with(|| right.cmp(left))
+        })
+        .unwrap_or_else(|| topology.locality_central_zone[locality] as usize)
+}
+
+fn ensure_foreign_relations(particle: &mut ParticleState, organization: usize, time: f64) {
+    // The Python relation key is lexicographically sorted by the external
+    // organization identifier.  For the fixed Native-v1 registry, only fdf
+    // sorts before "foreign-*"; every other initial identifier sorts after it.
+    let add = |particle: &mut ParticleState,
+               other: usize,
+               status: u8,
+               hostility: f64,
+               cooperation: f64| {
+        let (first, second) = if other == crate::MILITARY {
+            (other, organization)
+        } else {
+            (organization, other)
+        };
+        append_relation(
+            particle,
+            first,
+            second,
+            status,
+            hostility,
+            cooperation,
+            time,
+        );
+    };
+    add(particle, crate::GOVERNMENT, 0, 0.0, 1.0);
+    add(particle, crate::MILITARY, 0, 0.0, 1.0);
+    add(particle, crate::POLICE, 0, 0.0, 1.0);
+    let active_insurgents = (0..organization)
+        .filter(|candidate| {
+            particle.organizations.kind[*candidate] == crate::INSURGENT as u8
+                && particle.organizations.active[*candidate] != 0
+        })
+        .collect::<Vec<_>>();
+    for insurgent in active_insurgents {
+        add(particle, insurgent, 4, 1.0, 0.0);
+    }
+    // ensure_relation for all remaining organizations follows the Python
+    // insertion order and leaves their default neutral status untouched.
+    for other in 0..organization {
+        if other == crate::GOVERNMENT || other == crate::MILITARY || other == crate::POLICE {
+            continue;
+        }
+        let already_present = particle
+            .relations
+            .organization_a
+            .iter()
+            .zip(&particle.relations.organization_b)
+            .any(|(left, right)| {
+                (*left as usize == other && *right as usize == organization)
+                    || (*left as usize == organization && *right as usize == other)
+            });
+        if !already_present {
+            add(particle, other, 2, 0.0, 0.0);
+        }
+    }
+}
+
+fn create_foreign_intervention(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    state: usize,
+    time: f64,
+) {
+    let Some(border) = foreign_border(particle, state) else {
+        return;
+    };
+    let locality = particle.foreign.border_locality[border] as usize;
+    let zone = best_border_zone(topology, locality);
+    let organization = particle.organizations.kind.len();
+    let formation = particle.formations.personnel.len();
+    let resources = particle.foreign.resources[state] * 0.02;
+
+    crate::recruitment::shift_dynamic_observer_codes_after_organization(particle, organization);
+    particle
+        .locality
+        .ensure_organization_capacity(organization + 1);
+    particle
+        .people
+        .ensure_organization_capacity(organization + 1);
+    particle.organizations.kind.push(FOREIGN_KIND);
+    particle.organizations.active.push(1);
+    particle.organizations.capital.push(resources);
+    particle.organizations.cohesion.push(0.72);
+    particle.organizations.discipline.push(0.75);
+    particle.organizations.accountability.push(0.5);
+    particle.organizations.local_knowledge.push(0.15);
+    particle.organizations.persistence.push(0.65);
+    particle.organizations.mobility.push(0.7);
+    particle.organizations.institutional_quality.push(0.7);
+    particle.organizations.external_support.push(0.0);
+    particle.organizations.member_population.push(0.0);
+    particle.organizations.founded_at.push(0.0);
+    particle.organizations.succession_count.push(0);
+    particle.organizations.capital_social.push(0.0);
+    particle.organizations.capital_political.push(0.0);
+    particle.organizations.capital_organizational.push(0.0);
+    particle.organizations.capital_material.push(0.0);
+    particle
+        .organizations
+        .phenotype
+        .extend_from_slice(&[0.5; 8]);
+    particle
+        .organizations
+        .ideology
+        .extend_from_slice(&[0.5, 0.0]);
+    particle.organizations.external_sanctuary.push(0.0);
+    particle.organizations.adaptation_rate.push(0.12);
+    particle.organizations.leader.push(u32::MAX);
+
+    append_foothold_rows(particle, topology.locality_count(), organization);
+
+    particle.formations.organization.push(organization as u32);
+    particle.formations.locality.push(locality as u32);
+    particle.formations.microzone.push(zone as u32);
+    particle.formations.personnel.push(900.0);
+    particle.formations.quality.push(0.78);
+    particle.formations.cohesion.push(0.76);
+    particle.formations.readiness.push(0.82);
+    particle.formations.sustainment.push(0.9);
+    particle.formations.information.push(0.38);
+    particle.formations.mobility.push(0.72);
+    particle.formations.command.push(0.68);
+    particle.formations.embeddedness.push(0.12);
+    particle.formations.fatigue.push(0.0);
+    particle.formations.availability.push(0.85);
+    particle.formations.supply_stock.push(20_250.0);
+    particle.formations.supply_capacity.push(27_000.0);
+    particle.formations.home_locality.push(u32::MAX);
+    particle.formations.active.push(1);
+    particle.formations.moving.push(0);
+    particle.formations.operational_status.push(1);
+    particle.formations.cumulative_losses.push(0.0);
+    particle.formations.outside_pineland.push(0);
+    particle.formations.operational_posture.push(0);
+    particle.formations.movement_destination.push(u32::MAX);
+    particle.formations.movement_origin.push(u32::MAX);
+    particle.formations.movement_execute_at.push(0.0);
+    particle.formations.movement_arrives_at.push(-1.0);
+    particle.formations.movement_travel_hours.push(0.0);
+    particle.formations.movement_distance_km.push(0.0);
+    particle.formations.movement_supply_cost.push(0.0);
+    particle.formations.movement_order_sequence.push(0);
+    particle.formations.movement_status.push(0);
+    particle.formations.movement_purpose.push(0);
+    particle.formations.external_state.push(state as u32);
+
+    particle.patrols.formation.push(formation as u32);
+    particle.patrols.active.push(1);
+    particle.patrols.route_position.push(zone as u32);
+    particle.patrols.route_target.push(zone as u32);
+    particle.patrols.last_departure.push(-1.0e9);
+    particle.patrols.next_available.push(time);
+    particle.patrols.response_fraction.push(0.35);
+    particle.patrols.presence_accounted_at.push(-1.0e300);
+    particle.patrols.detections.push(0);
+
+    particle
+        .security_posts
+        .organization
+        .push(organization as u32);
+    particle.security_posts.locality.push(locality as u32);
+    particle.security_posts.microzone.push(zone as u32);
+    particle.security_posts.personnel.push(135.0);
+    particle.security_posts.presence.push(0.2);
+    particle.security_posts.available_fraction.push(0.7);
+    particle.security_posts.formation.push(formation as u32);
+    particle
+        .security_posts
+        .detection_rate
+        .push(config.information.fixed_post_report_rate);
+    particle
+        .security_posts
+        .reliability
+        .push(config.information.prior_confidence);
+    particle.security_posts.updated_at.push(0.0);
+    particle.security_posts.staffed.push(1);
+
+    particle.logistics.organization.push(organization as u32);
+    particle.logistics.locality.push(locality as u32);
+    particle.logistics.source_stock.push(12_000.0);
+    particle.logistics.source_capacity.push(18_000.0);
+    particle.logistics.source_production.push(350.0);
+    particle.logistics.cumulative_produced += 20_250.0 + 12_000.0;
+
+    particle
+        .command_edges
+        .organization
+        .push(organization as u32);
+    particle.command_edges.formation.push(formation as u32);
+    particle.command_edges.reliability.push(0.7);
+    particle.command_edges.latency_hours.push(7.0);
+
+    ensure_foreign_relations(particle, organization, time);
+    particle.foreign_interventions.push(
+        state as u32,
+        crate::GOVERNMENT as u32,
+        time,
+        if particle.foreign.humanitarian_preference[state] > 0.5 {
+            0
+        } else {
+            1
+        },
+        config.foreign_affairs.host_transfer_efficiency,
+        config.foreign_affairs.host_crowding_out,
+        formation as u32,
+    );
+}
+
+fn apply_interventions(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    time: f64,
+    elapsed_days: f64,
+) {
+    let cycle_scale = elapsed_days / 30.0;
+    let local_institutions = particle
+        .political
+        .institution_level
+        .iter()
+        .enumerate()
+        .filter(|(_, level)| matches!(**level, 1 | 2))
+        .map(|(index, _)| index)
+        .collect::<Vec<_>>();
+    for intervention in 0..particle.foreign_interventions.count() {
+        let status = particle.foreign_interventions.status[intervention];
+        if status == 1 {
+            let formation = particle.foreign_interventions.force_formation[intervention] as usize;
+            if formation >= particle.formations.personnel.len() {
+                continue;
+            }
+            let contribution = particle.formations.effective_strength(formation) / 25.0;
+            particle.foreign_interventions.provided_capacity[intervention] = contribution;
+            particle.foreign_interventions.peak_provided_capacity[intervention] =
+                particle.foreign_interventions.peak_provided_capacity[intervention]
+                    .max(contribution);
+            for institution in &local_institutions {
+                let transfer_gain = 0.002
+                    * particle.foreign_interventions.transfer_efficiency[intervention]
+                    * contribution
+                    / local_institutions.len().max(1) as f64
+                    * cycle_scale;
+                let crowding_loss = 0.002
+                    * particle.foreign_interventions.crowding_out[intervention]
+                    * contribution
+                    / local_institutions.len().max(1) as f64
+                    * cycle_scale;
+                particle.political.institution_capacity[*institution] = clamp01(
+                    particle.political.institution_capacity[*institution] + transfer_gain
+                        - crowding_loss,
+                );
+                particle
+                    .foreign_interventions
+                    .cumulative_retained_host_capacity[intervention] += transfer_gain;
+                particle.foreign_interventions.cumulative_crowding_out[intervention] +=
+                    crowding_loss;
+            }
+            particle
+                .foreign_interventions
+                .cumulative_transferred_capacity[intervention] += contribution
+                * particle.foreign_interventions.transfer_efficiency[intervention]
+                * cycle_scale;
+
+            let locality = particle.formations.locality[formation] as usize;
+            if locality < particle.locality.population.len() {
+                let benefit =
+                    contribution / (particle.locality.population[locality] * 0.001).max(1.0);
+                let harm = particle.formations.cumulative_losses[formation]
+                    / particle.formations.personnel[formation].max(1.0);
+                for person in 0..particle.people.residence.len() {
+                    if particle.people.residence[person] as usize != locality {
+                        continue;
+                    }
+                    let language_affinity = (0..4)
+                        .map(|language| particle.people.languages[person * 4 + language])
+                        .fold(0.0, f64::max);
+                    let foreignness = (1.0 - particle.people.identities[person * 3 + 2])
+                        * (1.0 - language_affinity);
+                    particle.people.government_legitimacy[person] = clamp01(
+                        particle.people.government_legitimacy[person]
+                            + cycle_scale
+                                * (0.006 * benefit * particle.people.trust[person]
+                                    - 0.004 * foreignness
+                                    - 0.008 * harm),
+                    );
+                }
+            }
+            let state = particle.foreign_interventions.foreign_state[intervention] as usize;
+            if state < particle.foreign.cumulative_casualties.len() {
+                particle.foreign.cumulative_casualties[state] = particle
+                    .foreign_interventions
+                    .force_formation
+                    .iter()
+                    .enumerate()
+                    .filter(|(candidate, _)| {
+                        particle.foreign_interventions.foreign_state[*candidate] as usize == state
+                    })
+                    .map(|(_, candidate)| {
+                        particle
+                            .formations
+                            .cumulative_losses
+                            .get(*candidate as usize)
+                            .copied()
+                            .unwrap_or(0.0)
+                    })
+                    .sum();
+            }
+            if state < particle.foreign.willingness.len()
+                && particle.foreign.willingness[state] < config.foreign_affairs.withdrawal_threshold
+            {
+                particle.foreign_interventions.status[intervention] = 2;
+                particle.foreign_interventions.withdrawal_rate[intervention] =
+                    config.foreign_affairs.withdrawal_rate;
+            }
+        }
+        // Withdrawal movement is handled by the ordinary force-movement
+        // process once its explicit order is created.  The current 90-day
+        // certification cases remain active, but preserving the status row
+        // here makes the checkpoint boundary lossless.
+        let _ = time;
+    }
+}
+
 fn logistic(value: f64) -> f64 {
     if value >= 0.0 {
         1.0 / (1.0 + python_exp(-value))
@@ -201,6 +617,14 @@ pub fn update(
                 && particle.organizations.active.get(organization).copied() == Some(1)
         })
         .collect::<Vec<_>>();
+    let active_foreign_states = particle
+        .foreign_interventions
+        .status
+        .iter()
+        .enumerate()
+        .filter(|(_, status)| **status == 1)
+        .map(|(index, _)| particle.foreign_interventions.foreign_state[index] as usize)
+        .collect::<Vec<_>>();
 
     // Diaspora remittances are resource transfers from the foreign system to
     // the represented civilian cohort.  Message draws occur after every
@@ -303,13 +727,16 @@ pub fn update(
         let cost_denominator =
             (particle.foreign.resources[state] + particle.foreign.cumulative_cost[state]).max(1.0);
         let cost_pressure = particle.foreign.cumulative_cost[state] / cost_denominator;
-        let rival_presence = (particle.foreign.rival_offsets[state + 1]
-            - particle.foreign.rival_offsets[state])
-            .min(1) as f64
-            * 0.0;
+        let rival_presence = particle.foreign.rival_indices[particle.foreign.rival_offsets[state]
+            as usize
+            ..particle.foreign.rival_offsets[state + 1] as usize]
+            .iter()
+            .filter(|rival| active_foreign_states.contains(&(**rival as usize)))
+            .count() as f64;
         let willingness = clamp01(logistic(
             1.2 * particle.foreign.stability_preference[state]
                 + particle.foreign.regional_influence[state]
+                + config.foreign_affairs.rival_reaction * rival_presence
                 + perceived_progress
                 - config.foreign_affairs.willingness_cost_weight * cost_pressure
                 - config.foreign_affairs.willingness_casualty_weight
@@ -459,9 +886,16 @@ pub fn update(
             config.foreign_affairs.interval_days,
             30.0,
         );
-        let _intervention = rng.random() < intervention_probability;
-        let _ = (_intervention, rival_presence);
+        let intervention_selected = if active_foreign_states.contains(&state) {
+            false
+        } else {
+            rng.random() < intervention_probability
+        };
+        if intervention_selected {
+            create_foreign_intervention(particle, topology, config, state, time);
+        }
     }
+    apply_interventions(particle, config, time, elapsed_days);
 }
 
 pub fn withdrawal_fraction(config: &SimulationConfig, willingness: f64) -> f64 {
