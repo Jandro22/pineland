@@ -482,7 +482,11 @@ fn local_execution_knowledge(
     target: usize,
 ) -> f64 {
     let embedded = crate::organizations::local_embeddedness(
-        particle, topology, config, organization, locality,
+        particle,
+        topology,
+        config,
+        organization,
+        locality,
     );
     let information = local_information(particle, topology, organization, locality, target);
     let persistent = if organization == crate::INSURGENT {
@@ -829,7 +833,11 @@ fn control_weights(
             ),
             governance
                 * crate::organizations::local_embeddedness(
-                    particle, topology, config, organization, locality,
+                    particle,
+                    topology,
+                    config,
+                    organization,
+                    locality,
                 ),
         )
     } else {

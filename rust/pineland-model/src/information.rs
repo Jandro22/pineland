@@ -59,6 +59,12 @@ pub fn record_patrol_control_history(
     let target = control_target(observer);
     let source_id = patrol_source_id(particle, formation);
     let source_identity = source_identity_code(particle, topology, &source_id);
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && locality == 28 && time >= 0.0 {
+        eprintln!(
+            "PATROL_ID time={:.17} formation={} source={} identity={}",
+            time, formation, source_id, source_identity
+        );
+    }
     append_history_entry(
         &mut particle.information_history,
         InformationHistoryEntry {
@@ -416,7 +422,7 @@ fn corroboration_weight(
 ) -> f64 {
     if std::env::var_os("PINELAND_HISTORY_TRACE").is_some()
         && target == 0
-        && matches!(locality, 15 | 25 | 27)
+        && (matches!(locality, 15 | 25 | 27) || (locality == 28 && (time - 8.25).abs() < 1.0e-9))
         && observation_type == 1
         && time >= 2.0
     {
@@ -1756,6 +1762,31 @@ fn observe_control(
         particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS].fill(0.5);
         particle.beliefs.confidence[index] = config.information.prior_confidence;
     }
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some()
+        && source_id == "C000069"
+        && locality == 28
+        && (time - 8.25).abs() < 1.0e-9
+    {
+        eprintln!(
+            "NATIVE_CONTROL_PRE source={} type={} observer={} node={} target={} locality={} quality={:.17} trust={:.17} language={:.17} confidence={:.17} corr={:.17} weight={:.17} observed={:?} prior_conf={:.17} prior_updated={:.17} prior_contra={:.17}",
+            source_id,
+            source_type.name(),
+            observer,
+            observer_node,
+            target,
+            locality,
+            quality,
+            trust,
+            language,
+            confidence,
+            corroboration,
+            weight,
+            observed,
+            particle.beliefs.confidence[index],
+            particle.beliefs.updated_at[index],
+            particle.beliefs.contradiction[index],
+        );
+    }
     particle.beliefs.fuse_control(
         index,
         time,
@@ -1764,6 +1795,22 @@ fn observe_control(
         config.information.contradiction_memory_days,
         config.information.contradiction_penalty,
     );
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some()
+        && source_id == "C000069"
+        && locality == 28
+        && (time - 8.25).abs() < 1.0e-9
+    {
+        eprintln!(
+            "NATIVE_CONTROL_POST source={} type={} observer={} confidence={:.17} updated={:.17} contra={:.17} evidence={}",
+            source_id,
+            source_type.name(),
+            observer,
+            particle.beliefs.confidence[index],
+            particle.beliefs.updated_at[index],
+            particle.beliefs.contradiction[index],
+            particle.beliefs.evidence_count[index],
+        );
+    }
 
     // A field formation also receives the physical-control scalar in its
     // zone-local belief. Auxiliary and fixed police-post nodes have no native
@@ -1779,6 +1826,21 @@ fn observe_control(
         }
     }
     let source_identity = source_identity_code(particle, topology, source_id);
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some()
+        && source_type != SourceType::Contact
+        && locality == 28
+        && time >= 0.0
+    {
+        eprintln!(
+            "NATIVE_CONTROL_ID time={:.17} observer={} node={} source={} type={} identity={}",
+            time,
+            observer,
+            observer_node,
+            source_id,
+            source_type.name(),
+            source_identity,
+        );
+    }
     append_history_entry(
         history,
         ControlHistoryEntry {

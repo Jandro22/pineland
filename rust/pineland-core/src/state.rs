@@ -1144,6 +1144,21 @@ pub struct LogisticsState {
     pub source_stock: Vec<f64>,
     pub source_capacity: Vec<f64>,
     pub source_production: Vec<f64>,
+    /// Historical supply-shipment rows.  Status 0 is in transit and status 1
+    /// is delivered; retaining completed rows preserves the Python audit
+    /// boundary while the active subset is selected by status.
+    pub shipment_source: Vec<u32>,
+    pub shipment_formation: Vec<u32>,
+    pub shipment_origin_locality: Vec<u32>,
+    pub shipment_destination_locality: Vec<u32>,
+    pub shipment_route_offsets: Vec<u32>,
+    pub shipment_route_nodes: Vec<u32>,
+    pub shipment_departed_at: Vec<f64>,
+    pub shipment_arrives_at: Vec<f64>,
+    pub shipment_quantity_sent: Vec<f64>,
+    pub shipment_quantity_deliverable: Vec<f64>,
+    pub shipment_loss: Vec<f64>,
+    pub shipment_status: Vec<u8>,
     pub in_transit: f64,
     pub cumulative_produced: f64,
     pub cumulative_consumed: f64,
@@ -1160,6 +1175,7 @@ impl LogisticsState {
             source_stock: vec![0.0; count],
             source_capacity: vec![0.0; count],
             source_production: vec![0.0; count],
+            shipment_route_offsets: vec![0],
             ..Self::default()
         }
     }
@@ -1708,6 +1724,18 @@ impl ParticleState {
         append_f64s(material, &self.logistics.source_stock);
         append_f64s(material, &self.logistics.source_capacity);
         append_f64s(material, &self.logistics.source_production);
+        append_u32s(material, &self.logistics.shipment_source);
+        append_u32s(material, &self.logistics.shipment_formation);
+        append_u32s(material, &self.logistics.shipment_origin_locality);
+        append_u32s(material, &self.logistics.shipment_destination_locality);
+        append_u32s(material, &self.logistics.shipment_route_offsets);
+        append_u32s(material, &self.logistics.shipment_route_nodes);
+        append_f64s(material, &self.logistics.shipment_departed_at);
+        append_f64s(material, &self.logistics.shipment_arrives_at);
+        append_f64s(material, &self.logistics.shipment_quantity_sent);
+        append_f64s(material, &self.logistics.shipment_quantity_deliverable);
+        append_f64s(material, &self.logistics.shipment_loss);
+        append_u8s(material, &self.logistics.shipment_status);
         material.extend_from_slice(&self.logistics.in_transit.to_bits().to_le_bytes());
         material.extend_from_slice(&self.logistics.cumulative_produced.to_bits().to_le_bytes());
         material.extend_from_slice(&self.logistics.cumulative_consumed.to_bits().to_le_bytes());
@@ -3090,6 +3118,63 @@ impl ParticleState {
                 });
             }
         }
+        let shipment_count = self.logistics.shipment_source.len();
+        for (length, name) in [
+            (
+                self.logistics.shipment_formation.len(),
+                "shipment formation",
+            ),
+            (
+                self.logistics.shipment_origin_locality.len(),
+                "shipment origin locality",
+            ),
+            (
+                self.logistics.shipment_destination_locality.len(),
+                "shipment destination locality",
+            ),
+            (
+                self.logistics.shipment_departed_at.len(),
+                "shipment departure",
+            ),
+            (self.logistics.shipment_arrives_at.len(), "shipment arrival"),
+            (
+                self.logistics.shipment_quantity_sent.len(),
+                "shipment quantity sent",
+            ),
+            (
+                self.logistics.shipment_quantity_deliverable.len(),
+                "shipment quantity deliverable",
+            ),
+            (self.logistics.shipment_loss.len(), "shipment loss"),
+            (self.logistics.shipment_status.len(), "shipment status"),
+        ] {
+            if length != shipment_count {
+                return Err(StateError::LengthMismatch {
+                    name: name.to_string(),
+                    left: length,
+                    right: shipment_count,
+                });
+            }
+        }
+        if self.logistics.shipment_route_offsets.len() != shipment_count + 1 {
+            return Err(StateError::LengthMismatch {
+                name: "shipment route offsets".to_string(),
+                left: self.logistics.shipment_route_offsets.len(),
+                right: shipment_count + 1,
+            });
+        }
+        if self
+            .logistics
+            .shipment_route_offsets
+            .last()
+            .copied()
+            .unwrap_or(0) as usize
+            != self.logistics.shipment_route_nodes.len()
+        {
+            return Err(StateError::Corrupt(
+                "shipment route offsets do not cover route nodes".to_string(),
+            ));
+        }
         let restriction_count = self.access_restrictions.owner.len();
         for (length, name) in [
             (
@@ -4032,6 +4117,30 @@ impl ParticleState {
         check_nonnegative(&self.logistics.source_stock, "source stock")?;
         check_nonnegative(&self.logistics.source_capacity, "source capacity")?;
         check_nonnegative(&self.logistics.source_production, "source production")?;
+        for (values, name) in [
+            (&self.logistics.shipment_departed_at, "shipment departure"),
+            (&self.logistics.shipment_arrives_at, "shipment arrival"),
+            (
+                &self.logistics.shipment_quantity_sent,
+                "shipment quantity sent",
+            ),
+            (
+                &self.logistics.shipment_quantity_deliverable,
+                "shipment quantity deliverable",
+            ),
+            (&self.logistics.shipment_loss, "shipment loss"),
+        ] {
+            check_finite(values, name)?;
+        }
+        check_nonnegative(
+            &self.logistics.shipment_quantity_sent,
+            "shipment quantity sent",
+        )?;
+        check_nonnegative(
+            &self.logistics.shipment_quantity_deliverable,
+            "shipment quantity deliverable",
+        )?;
+        check_nonnegative(&self.logistics.shipment_loss, "shipment loss")?;
         for (value, name) in [
             (self.logistics.in_transit, "in-transit logistics"),
             (self.logistics.cumulative_produced, "produced logistics"),
