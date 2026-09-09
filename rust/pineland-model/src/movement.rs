@@ -653,6 +653,9 @@ fn all_route_metrics(
                 travel[neighbor] = candidate;
                 distances[neighbor] = distances[node] + leg_distance;
                 previous[neighbor] = node;
+                if (node == 11 && neighbor == 3 || node == 3 && neighbor == 10) && std::env::var_os("PINELAND_COMMAND_TRACE").is_some() {
+                    eprintln!("LEG_DEBUG node={} neighbor={} leg_dist={:.17} bits={:x} dist_neighbor={:.17} bits={:x}", node, neighbor, leg_distance, leg_distance.to_bits(), distances[neighbor], distances[neighbor].to_bits());
+                }
             }
         }
     }
@@ -675,6 +678,13 @@ fn all_route_metrics(
             continue;
         }
         route.reverse();
+        if destination == 10 && origin == 11 && std::env::var_os("PINELAND_COMMAND_TRACE").is_some() {
+            eprintln!(
+                "DEBUG_METRIC_11_10 distance={:.17} bits={:x}",
+                distances[destination],
+                distances[destination].to_bits(),
+            );
+        }
         result[destination] = Some(RouteMetric {
             route,
             distance_km: distances[destination],
@@ -933,7 +943,7 @@ fn issue_movement_order(
     } else {
         MOVE_FAILED_COMMAND
     };
-    if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
+    if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() {
         eprintln!(
             "COMMAND_ORDER time={:.17} index={} destination={} reliability={:.17} status_draw={:.17} status={} purpose={} distance_km={:.17} travel_hours={:.17} supply_cost={:.17} route={:?}",
             time, formation, destination, reliability, command_draw, status, purpose,
