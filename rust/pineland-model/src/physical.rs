@@ -226,6 +226,16 @@ pub fn refresh(
     crate::patrol::advance_all_presence_memory(particle, topology, config, time);
 
     let zone_count = topology.microzone_count();
+    // The Python reference only recomputes insurgent-side reach when at least
+    // one insurgent organization is active.  After a collapse it deliberately
+    // leaves the last concrete/legacy physical-control values in place; those
+    // values are historical state, not a fresh zero-valued measurement.  Keep
+    // that boundary behavior explicit so a collapse cannot silently alter the
+    // next physical refresh's decision state.
+    let has_active_insurgents = (0..particle.organizations.kind.len()).any(|organization| {
+        particle.organizations.active.get(organization).copied().unwrap_or(0) != 0
+            && particle.organizations.kind[organization] == INSURGENT_KIND
+    });
     let memory_days = config.physical.presence_memory_days.max(f64::MIN_POSITIVE);
     for zone in 0..zone_count {
         let government_age = (time - particle.zones.government_presence_updated_at[zone]).max(0.0);
@@ -363,7 +373,7 @@ pub fn refresh(
                         },
             );
         }
-        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 20 {
+        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 3 {
             let zones = topology
                 .zones_for_locality(locality.into())
                 .collect::<Vec<_>>();
@@ -434,11 +444,13 @@ pub fn refresh(
             let insurgent_value =
                 clamp01(raw_insurgent[zone] * (1.0 - 0.35 * raw_government[zone]));
             particle.zones.government_control[zone] = government_value;
-            particle.zones.insurgent_control[zone] = insurgent_value;
+            if has_active_insurgents {
+                particle.zones.insurgent_control[zone] = insurgent_value;
+            }
             government += particle.zones.population_share[zone] * government_value;
             insurgent += particle.zones.population_share[zone] * insurgent_value;
         }
-        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 20 {
+        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 3 {
             eprintln!(
                 "PHYS_AGG time={:.17} locality={} government={:.17} insurgent={:.17}",
                 time, topology.locality_names[locality], government, insurgent
@@ -446,7 +458,9 @@ pub fn refresh(
         }
         let offset = locality * CONTROL_DIMENSIONS;
         particle.locality.government_control[offset + 1] = clamp01(government);
-        particle.locality.insurgent_control[offset + 1] = clamp01(insurgent);
+        if has_active_insurgents {
+            particle.locality.insurgent_control[offset + 1] = clamp01(insurgent);
+        }
     }
     if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && time >= 1.0 {
         eprintln!(

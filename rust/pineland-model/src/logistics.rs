@@ -165,6 +165,19 @@ pub fn update(
         }
         particle.formations.sustainment[formation] = supply_ratio(particle, formation);
 
+        // Python permits a previously ineffective formation to recover during
+        // a fully supplied logistics cycle.  This can matter after an
+        // organization collapse, because the next force-movement boundary
+        // sees the reactivated formation when renewing local footholds.
+        if particle.formations.operational_status[formation] == 0
+            && particle.formations.cohesion[formation]
+                > config.combat.ineffective_cohesion * 1.35
+            && particle.formations.effective_readiness(formation)
+                > config.combat.ineffective_readiness * 1.35
+        {
+            particle.formations.operational_status[formation] = 1;
+        }
+
         if particle.formations.supply_fraction(formation)
             >= config.logistics.resupply_trigger_fraction
             || active_shipment_formations[formation]

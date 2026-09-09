@@ -2000,15 +2000,12 @@ fn fuse_zone(
 }
 
 fn target_actors(particle: &ParticleState, observer: usize) -> Vec<usize> {
-    if observer >= particle.organizations.kind.len()
-        || particle
-            .organizations
-            .active
-            .get(observer)
-            .copied()
-            .unwrap_or(0)
-            == 0
-    {
+    // Python permits a stationary formation to publish through its historical
+    // organization identity even after that organization has collapsed.  The
+    // formation loop already owns the personnel/mobility eligibility check;
+    // rejecting inactive observers here would suppress the report, consume a
+    // different RNG suffix, and shift every later fusion in the event.
+    if observer >= particle.organizations.kind.len() {
         return Vec::new();
     }
     if particle.organizations.kind[observer] == 3 {

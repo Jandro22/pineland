@@ -478,6 +478,61 @@ pub(crate) fn record_foothold_action(
     particle.footholds.embeddedness[index] = particle.footholds.strength[index];
 }
 
+/// Collapse an insurgent organization at the same boundary as Python's
+/// ``collapse_organization``.  The native state uses an active bit and fixed
+/// numeric organization table where Python uses a status string and mutable
+/// object registries.  Keeping the historical row/formation slots in place
+/// preserves canonical indices while clearing the live membership, pooled
+/// manpower, and operational capacity that can affect later decisions.
+fn collapse_organization(particle: &mut ParticleState, organization: usize) {
+    let organization_count = particle.organizations.kind.len();
+    for person in 0..particle.people.locality.len() {
+        if particle.people.organization[person] as usize != organization {
+            continue;
+        }
+        let prior_fraction = particle.people.armed_fraction[person];
+        particle.people.organization[person] = u32::MAX;
+        particle.people.armed_fraction[person] = 0.0;
+        // Python retains the former franchise as latent affinity on exit.
+        if prior_fraction > 0.0 && organization < organization_count {
+            particle.people.rebel_sympathy[person] = particle.people.rebel_sympathy[person]
+                .max(prior_fraction);
+            let offset = person * organization_count + organization;
+            if offset < particle.people.insurgent_affinity.len() {
+                particle.people.insurgent_affinity[offset] = particle.people.insurgent_affinity
+                    [offset]
+                    .max(prior_fraction);
+            }
+        }
+        if particle.people.public_behavior[person] == 2 {
+            particle.people.public_behavior[person] = 1;
+        }
+    }
+    particle.organizations.active[organization] = 0;
+    particle.organizations.member_population[organization] = 0.0;
+
+    // Python removes both the unfielded manpower and its paired material
+    // reserve when a franchise collapses.  Remove rows backwards so the
+    // remaining fixed-width parallel vectors stay aligned.
+    for index in (0..particle.manpower.pool.len()).rev() {
+        if particle.manpower.organization[index] as usize != organization {
+            continue;
+        }
+        particle.manpower.organization.remove(index);
+        particle.manpower.locality.remove(index);
+        particle.manpower.pool.remove(index);
+        particle.manpower.supply_reserve.remove(index);
+    }
+
+    for formation in 0..particle.formations.personnel.len() {
+        if particle.formations.organization[formation] as usize != organization {
+            continue;
+        }
+        particle.formations.operational_status[formation] = 0;
+        particle.formations.availability[formation] = 0.0;
+    }
+}
+
 pub fn update(
     particle: &mut ParticleState,
     topology: &StaticTopology,
@@ -635,12 +690,15 @@ pub fn update(
                     / 7.0,
             );
         let collapse_draw = rng.random();
-        let _collapse_realized = !conditioned
+        let collapse_realized = !conditioned
             && (particle.organizations.capital[organization] <= 0.0
                 || particle.organizations.cohesion[organization] < 0.12
                 || represented_weight <= 1e-9
                 || collapse_draw < collapse_hazard);
-        let _ = (formation_values, _split_realized, _collapse_realized);
+        if collapse_realized {
+            collapse_organization(particle, organization);
+        }
+        let _ = (formation_values, _split_realized);
     }
 }
 

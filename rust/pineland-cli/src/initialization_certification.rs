@@ -680,6 +680,10 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         f64_array(&particle.people.insurgent_affinity),
     );
     root.insert(
+        "people_rebel_sympathy",
+        f64_array(&particle.people.rebel_sympathy),
+    );
+    root.insert(
         "people_expected_control",
         f64_array(&particle.people.expected_control),
     );
@@ -729,6 +733,19 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         "foothold_renewal_count",
         u32_array(&particle.footholds.renewal_count),
     );
+    root.insert(
+        "manpower_organization",
+        u32_array(&particle.manpower.organization),
+    );
+    root.insert(
+        "manpower_locality",
+        u32_array(&particle.manpower.locality),
+    );
+    root.insert("manpower_pool", f64_array(&particle.manpower.pool));
+    root.insert(
+        "manpower_supply_reserve",
+        f64_array(&particle.manpower.supply_reserve),
+    );
     let mut belief_keys = JsonValue::array();
     if let JsonValue::Array(rows) = &mut belief_keys {
         for key in &particle.beliefs.keys {
@@ -741,6 +758,16 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         }
     }
     root.insert("belief_keys", belief_keys);
+    root.insert(
+        "organizations_active",
+        u8_array(&particle.organizations.active),
+    );
+    root.insert(
+        "organizations_kind",
+        u8_array(&particle.organizations.kind),
+    );
+    root.insert("foothold_active", u8_array(&particle.footholds.active));
+    root.insert("foothold_updated_at", f64_array(&particle.footholds.updated_at));
     root
 }
 
