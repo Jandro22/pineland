@@ -261,11 +261,33 @@ fn adapt_organization(
         0.0
     };
     let offset = organization * 8;
+    let trace = std::env::var_os("PINELAND_ORG_TRACE").is_some();
+    if trace {
+        eprintln!(
+            "ORG_ADAPT_START org={} elapsed={:.17} sigma={:.17} rng_index={} phenotype={:?}",
+            organization,
+            elapsed_days,
+            perceived_sigma,
+            rng.state().index,
+            &particle.organizations.phenotype[offset..offset + 8]
+        );
+    }
     for dimension in 0..8 {
         let value = particle.organizations.phenotype[offset + dimension];
         let perceived = value + rng.normalvariate(0.0, perceived_sigma);
         particle.organizations.phenotype[offset + dimension] =
             clamp01(value + learning * (perceived - value));
+        if trace {
+            eprintln!(
+                "ORG_ADAPT_DRAW org={} dim={} value={:.17} perceived={:.17} output={:.17} rng_index={}",
+                organization,
+                dimension,
+                value,
+                perceived,
+                particle.organizations.phenotype[offset + dimension],
+                rng.state().index
+            );
+        }
     }
     particle.organizations.discipline[organization] = particle.organizations.phenotype[offset + 5];
     particle.organizations.local_knowledge[organization] =
@@ -285,6 +307,7 @@ fn consume_proto_formation_draws(
     elapsed_days: f64,
 ) {
     let reference_days = 7.0;
+    let trace = std::env::var_os("PINELAND_ORG_TRACE").is_some();
     for community in 0..particle.communities.locality.len() {
         let start = particle.communities.member_offsets[community] as usize;
         let end = particle.communities.member_offsets[community + 1] as usize;
@@ -372,7 +395,23 @@ fn consume_proto_formation_draws(
             );
         // ``form_proto_organizations`` draws once for every eligible
         // community, including a failed founding attempt.
-        let _ = (topology, rng.random() < hazard);
+        let draw = rng.random();
+        if trace {
+            eprintln!(
+                "ORG_PROTO community={} members={} mobilized={} represented={:.17} mobilized_weight={:.17} score={:.17} expected_repression={:.17} hazard={:.17} draw={:.17} rng_index={}",
+                community,
+                members.len(),
+                mobilized.len(),
+                represented,
+                mobilized_weight,
+                score,
+                expected_repression,
+                hazard,
+                draw,
+                rng.state().index
+            );
+        }
+        let _ = topology;
     }
 }
 
