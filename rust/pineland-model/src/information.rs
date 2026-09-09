@@ -606,7 +606,8 @@ fn deliver_due_relays(
             let source_type = source_type_from_code(observation.source_type);
             if let Some(source_type) = source_type {
                 let source_name = observation_source_name(particle, topology, &observation);
-                let organization_name = crate::organization_name(organization);
+                let organization_name =
+                    crate::organization_name_for_particle(particle, organization);
                 let destination_name = command_node_name(particle, topology, destination_node);
                 fuse_recorded_observation(
                     particle,
@@ -639,7 +640,8 @@ fn deliver_due_relays(
                     if particle.organizations.kind[source_organization] != 3
                         && crate::GOVERNMENT < particle.organizations.kind.len()
                     {
-                        let government_name = crate::organization_name(crate::GOVERNMENT);
+                        let government_name =
+                            crate::organization_name_for_particle(particle, crate::GOVERNMENT);
                         fuse_recorded_observation(
                             particle,
                             topology,
@@ -676,7 +678,12 @@ fn command_node_name(particle: &ParticleState, topology: &StaticTopology, node: 
     commands
         .get(index)
         .cloned()
-        .unwrap_or_else(|| format!("CMD:{}", crate::organization_name(crate::GOVERNMENT)))
+        .unwrap_or_else(|| {
+            format!(
+                "CMD:{}",
+                crate::organization_name_for_particle(particle, crate::GOVERNMENT)
+            )
+        })
 }
 
 fn observation_source_name(
@@ -699,7 +706,7 @@ fn presence_observer_code(
     recipient: usize,
     recipient_name: &str,
 ) -> u32 {
-    if recipient_name == crate::organization_name(recipient) {
+    if recipient_name == crate::organization_name_for_particle(particle, recipient) {
         recipient as u32
     } else {
         dynamic_observer_code(particle, topology, recipient_name)
@@ -742,11 +749,12 @@ fn fuse_presence_observation(
     if target >= particle.organizations.kind.len() || locality >= topology.locality_count() {
         return;
     }
-    let recipient_actor = if recipient_name == crate::organization_name(recipient) {
-        recipient
-    } else {
-        observation.observer as usize
-    };
+    let recipient_actor =
+        if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+            recipient
+        } else {
+            observation.observer as usize
+        };
     let trust = source_trust(particle, config, recipient_actor, source_type, source_name);
     let language = language_comprehension(
         particle,
@@ -785,7 +793,7 @@ fn fuse_presence_observation(
     } else {
         1
     };
-    let state = if recipient_name == crate::organization_name(recipient) {
+    let state = if recipient_name == crate::organization_name_for_particle(particle, recipient) {
         &mut particle.presence_beliefs
     } else {
         &mut particle.node_presence_beliefs
@@ -863,11 +871,12 @@ fn fuse_recorded_observation(
     if target >= particle.organizations.kind.len() || locality >= topology.locality_count() {
         return;
     }
-    let recipient_actor = if recipient_name == crate::organization_name(recipient) {
-        recipient
-    } else {
-        observation.observer as usize
-    };
+    let recipient_actor =
+        if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+            recipient
+        } else {
+            observation.observer as usize
+        };
     let trust = source_trust(particle, config, recipient_actor, source_type, source_name);
     let language = language_comprehension(
         particle,
@@ -916,17 +925,18 @@ fn fuse_recorded_observation(
             weight,
         );
     }
-    let (observer_code, kind) = if recipient_name == crate::organization_name(recipient) {
-        let own_target = if particle.organizations.kind.get(recipient).copied() == Some(3) {
-            crate::INSURGENT
+    let (observer_code, kind) =
+        if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+            let own_target = if particle.organizations.kind.get(recipient).copied() == Some(3) {
+                crate::INSURGENT
+            } else {
+                crate::GOVERNMENT
+            };
+            let kind = if target == own_target { 1 } else { 2 };
+            (recipient as u32, kind)
         } else {
-            crate::GOVERNMENT
+            (dynamic_observer_code(particle, topology, recipient_name), 3)
         };
-        let kind = if target == own_target { 1 } else { 2 };
-        (recipient as u32, kind)
-    } else {
-        (dynamic_observer_code(particle, topology, recipient_name), 3)
-    };
     let key = BeliefKey {
         observer: observer_code,
         target: target as u32,
@@ -953,7 +963,7 @@ fn fuse_recorded_observation(
     // rows intentionally have no zone-local mirror.
     let zone_organization = if let Some(formation) = formation_index(particle, recipient_name) {
         Some(particle.formations.organization[formation] as usize)
-    } else if recipient_name == crate::organization_name(recipient) {
+    } else if recipient_name == crate::organization_name_for_particle(particle, recipient) {
         // Python treats an organization-level relay as the organization
         // actor when updating its locality/microzone auxiliary belief.  A
         // headquarters command node is deliberately excluded because its
