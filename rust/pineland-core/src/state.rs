@@ -12,6 +12,10 @@ pub const INFORMATION_NONE: u32 = u32::MAX;
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LocalityState {
     pub population: Vec<f64>,
+    /// Mutable administrative-container population. Python keeps district
+    /// population separate from the rounded locality allocation; direct
+    /// civilian harm decrements both stocks.
+    pub district_population: Vec<f64>,
     pub economic_output: Vec<f64>,
     pub infrastructure: Vec<f64>,
     pub administrative_capacity: Vec<f64>,
@@ -30,6 +34,7 @@ impl LocalityState {
     pub fn new(count: usize) -> Self {
         Self {
             population: vec![0.0; count],
+            district_population: vec![0.0; count],
             economic_output: vec![0.0; count],
             infrastructure: vec![0.0; count],
             administrative_capacity: vec![0.0; count],
@@ -1442,6 +1447,7 @@ impl ParticleState {
         // affect a future event.  This is the hash used for restart and
         // distributed-equivalence certification.
         append_f64s(material, &self.locality.population);
+        append_f64s(material, &self.locality.district_population);
         append_f64s(material, &self.locality.economic_output);
         append_f64s(material, &self.locality.infrastructure);
         append_f64s(material, &self.locality.administrative_capacity);
@@ -3281,6 +3287,7 @@ impl ParticleState {
         }
         for (values, name) in [
             (&self.locality.population, "locality population"),
+            (&self.locality.district_population, "district population"),
             (&self.locality.economic_output, "economic output"),
             (&self.locality.infrastructure, "infrastructure"),
             (
@@ -3303,6 +3310,7 @@ impl ParticleState {
             check_finite(values, name)?;
         }
         check_nonnegative(&self.locality.population, "locality population")?;
+        check_nonnegative(&self.locality.district_population, "district population")?;
         check_nonnegative(&self.locality.economic_output, "economic output")?;
         check_nonnegative(&self.locality.displaced_population, "displaced population")?;
         for (values, name) in [

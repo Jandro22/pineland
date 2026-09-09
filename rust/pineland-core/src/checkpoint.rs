@@ -807,6 +807,7 @@ fn encode_locality(b: &mut Vec<u8>, p: &ParticleState) {
     let x = &p.locality;
     for v in [
         &x.population,
+        &x.district_population,
         &x.economic_output,
         &x.infrastructure,
         &x.administrative_capacity,
@@ -826,6 +827,7 @@ fn encode_locality(b: &mut Vec<u8>, p: &ParticleState) {
 fn decode_locality(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.locality;
     x.population = read_f64_vec(r)?;
+    x.district_population = read_f64_vec(r)?;
     x.economic_output = read_f64_vec(r)?;
     x.infrastructure = read_f64_vec(r)?;
     x.administrative_capacity = read_f64_vec(r)?;
