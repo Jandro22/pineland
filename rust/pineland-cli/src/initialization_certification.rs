@@ -769,6 +769,10 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         "foreign_willingness",
         f64_array(&particle.foreign.willingness),
     );
+    root.insert(
+        "households_resources",
+        f64_array(&particle.households.resources),
+    );
     root
 }
 
