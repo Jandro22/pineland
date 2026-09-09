@@ -818,6 +818,7 @@ fn encode_locality(b: &mut Vec<u8>, p: &ParticleState) {
         &x.observability,
         &x.government_control,
         &x.insurgent_control,
+        &x.organization_control,
         &x.violence,
         &x.disruption,
         &x.displaced_population,
@@ -839,6 +840,7 @@ fn decode_locality(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), 
     x.observability = read_f64_vec(r)?;
     x.government_control = read_f64_vec(r)?;
     x.insurgent_control = read_f64_vec(r)?;
+    x.organization_control = read_f64_vec(r)?;
     x.violence = read_f64_vec(r)?;
     x.disruption = read_f64_vec(r)?;
     x.displaced_population = read_f64_vec(r)?;

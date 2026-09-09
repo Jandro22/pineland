@@ -1,4 +1,5 @@
 import json
+import json
 import os
 import pathlib
 import random
@@ -41,12 +42,12 @@ base.update(
     burn_in_days=0.0,
     output_mode="calibration",
     seed=0,
-    horizon_days=30.0,
+    horizon_days=90.0,
 )
 config = SimulationConfig.from_dict(base)
 world = generate_pineland(config)
 simulation = Simulation(world)
-simulation.run(until=30.0, max_events=1996)
+simulation.run(until=90.0, max_events=3293)
 
 organization_ids = list(world.organizations)
 locality_ids = list(world.localities)
@@ -123,8 +124,8 @@ with tempfile.TemporaryDirectory(prefix="pineland-key-debug-") as directory:
             "certify-trajectory",
             "--config", str(config_path),
             "--seed", "0",
-            "--until", "30",
-            "--max-events", "1996",
+            "--until", "90",
+            "--max-events", "3293",
         ],
         cwd=root,
         env=environment,
@@ -179,6 +180,12 @@ for line in completed.stderr.splitlines():
         print(line)
 print("formation count", len(formation_ids), "post count", len(post_ids), "community count", len(community_ids))
 print("formations", list(enumerate(formation_ids)))
+print("python formation rows", [(index, formation_id, world.formations[formation_id].organization_id,
+                                  world.formations[formation_id].locality_id)
+                                 for index, formation_id in enumerate(formation_ids)])
+print("native formation rows", native_payload["debug_transition_state"].get("formations", []))
 print("missing count", len(missing), "missing first", missing[:25])
 print("extra count", len(extras), "extra first", extras[:25])
+print("missing dynamic identities", [item for item in expected_dynamic if item[0] in set(missing)][:25])
+print("native dynamic identities", [item for item in expected_dynamic if item[0] in set(native_keys)][:10])
 print("first order mismatch", next(((index, left, right) for index, (left, right) in enumerate(zip(python_keys, native_keys)) if left != right), None))

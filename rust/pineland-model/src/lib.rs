@@ -380,6 +380,15 @@ impl SimulationEngine {
             if self.config.include_insurgency {
                 self.particle.locality.insurgent_control[offset..offset + CONTROL_DIMENSIONS]
                     .copy_from_slice(&[0.0, 0.01, 0.0, 0.01, 0.01, 0.04, 0.08]);
+                let organization_offset =
+                    pineland_core::state::LocalityState::organization_control_offset(
+                        locality,
+                        INSURGENT,
+                        self.particle.organizations.kind.len(),
+                    );
+                self.particle.locality.organization_control
+                    [organization_offset..organization_offset + CONTROL_DIMENSIONS]
+                    .copy_from_slice(&[0.0, 0.01, 0.0, 0.01, 0.01, 0.04, 0.08]);
             } else {
                 self.particle.locality.insurgent_control[offset..offset + CONTROL_DIMENSIONS]
                     .fill(0.0);

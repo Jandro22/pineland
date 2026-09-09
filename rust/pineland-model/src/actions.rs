@@ -645,7 +645,7 @@ pub(crate) fn local_fighter_equivalents(
     (unfielded, fielded)
 }
 
-fn committed_fighter_equivalents(
+pub(crate) fn committed_fighter_equivalents(
     particle: &ParticleState,
     organization: usize,
     locality: usize,
