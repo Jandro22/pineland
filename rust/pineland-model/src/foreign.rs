@@ -715,10 +715,15 @@ pub fn update(
                 * cycle_scale,
         );
         particle.foreign.resources[state] -= amount;
-        particle.people.resources[person] += amount;
+        let updated = particle.people.resources[person] + amount;
+        let applied = updated.max(0.0) - particle.people.resources[person];
+        particle.people.resources[person] += applied;
         let household = particle.people.household[person] as usize;
         if household < particle.households.resources.len() {
-            particle.households.resources[household] += amount;
+            particle.households.resources[household] += applied;
+            if particle.households.resources[household].abs() <= 1e-9 {
+                particle.households.resources[household] = 0.0;
+            }
         }
         particle.foreign.cumulative_external_remittances += amount;
         let message_probability = reference_probability(
