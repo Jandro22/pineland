@@ -666,7 +666,11 @@ fn local_armed_footholds(
     for locality in 0..represented.len() {
         represented[locality] = clamp01(represented[locality] / scale);
         let index = organization * topology.locality_count() + locality;
-        if index < particle.footholds.strength.len() {
+        // Python's persistent local-foothold channel is insurgent-only.
+        // State-side actions can still mark a security organization's dense
+        // foothold row active for diagnostics, but that row must not become a
+        // refuge signal for military or police movement.
+        if organization == INSURGENT && index < particle.footholds.strength.len() {
             represented[locality] = represented[locality].max(particle.footholds.strength[index]);
         }
     }
@@ -982,6 +986,25 @@ pub(crate) fn issue_withdrawal_order(
         let score = 2.2 * refuge + 1.6 * sanctuary
             - 0.04 * metric.travel_hours
             - (1.0 - risk_tolerance) * route_risk;
+        if std::env::var_os("PINELAND_WITHDRAWAL_TRACE").is_some()
+            && formation == 5
+            && (time - 28.0).abs() < 1.0e-12
+        {
+            eprintln!(
+                "WITHDRAWAL_CANDIDATE destination={} score={:.17} own_control={:.17} own_confidence={:.17} opponent_control={:.17} opponent_confidence={:.17} foothold={:.17} uncertainty={:.17} route_risk={:.17} travel_hours={:.17} movement_cost={:.17}",
+                destination,
+                score,
+                own_control,
+                own_confidence,
+                opponent_adjusted,
+                opponent_confidence,
+                footholds.get(destination).copied().unwrap_or(0.0),
+                uncertainty,
+                route_risk,
+                metric.travel_hours,
+                movement_cost,
+            );
+        }
         if best
             .map(|(best_score, best_destination)| {
                 score > best_score || (score == best_score && destination > best_destination)
@@ -994,6 +1017,12 @@ pub(crate) fn issue_withdrawal_order(
     let Some((_, destination)) = best else {
         return false;
     };
+    if std::env::var_os("PINELAND_WITHDRAWAL_TRACE").is_some()
+        && formation == 5
+        && (time - 28.0).abs() < 1.0e-12
+    {
+        eprintln!("WITHDRAWAL_SELECTED destination={}", destination);
+    }
     let metric = route_metrics[destination]
         .as_ref()
         .expect("selected withdrawal destination has a route");
