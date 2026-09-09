@@ -120,9 +120,29 @@ pub fn collect_and_fuse(
     // Corroboration is part of the future-decision state.  Start each event
     // from the persisted three-day tail, including patrol reports generated
     // at an earlier scheduler event, then append this event in source order.
+    // A relay can arrive after the local observation event that created it.
+    // Python keeps the source index append-only and applies the three-day
+    // window relative to each observation's own timestamp.  Pruning solely
+    // at `time - 3` would therefore discard a boundary report (for example a
+    // report at t=0.25 delivered at t=3.5) before the relay is fused.  Keep
+    // the oldest three-day window needed by any in-flight observation, then
+    // discard history that no future local or relayed fusion can inspect.
+    let mut history_lower_bound = time - 3.0;
+    for relay in &particle.information_relays {
+        if relay.status != 0 {
+            continue;
+        }
+        if let Some(observation) = particle
+            .information_observations
+            .iter()
+            .find(|observation| observation.sequence == relay.observation)
+        {
+            history_lower_bound = history_lower_bound.min(observation.time - 3.0);
+        }
+    }
     particle
         .information_history
-        .retain(|entry| entry.time >= time - 3.0);
+        .retain(|entry| entry.time >= history_lower_bound);
     let mut history = particle.information_history.clone();
     let mut post_indices = (0..particle.security_posts.organization.len()).collect::<Vec<_>>();
     post_indices.sort_by(|left, right| {
@@ -412,7 +432,15 @@ fn corroboration_weight(
                     && entry.locality == locality as u32
                     && entry.observation_type == observation_type
             })
-            .map(|entry| (entry.time, entry.target, entry.locality, entry.observation_type, entry.source_identity))
+            .map(|entry| {
+                (
+                    entry.time,
+                    entry.target,
+                    entry.locality,
+                    entry.observation_type,
+                    entry.source_identity,
+                )
+            })
             .collect::<Vec<_>>();
         eprintln!("HISTORY_TRACE {:?}", rows);
     }
