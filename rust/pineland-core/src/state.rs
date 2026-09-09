@@ -624,6 +624,20 @@ pub struct FormationState {
     pub cumulative_losses: Vec<f64>,
     pub outside_pineland: Vec<u8>,
     pub operational_posture: Vec<u8>,
+    /// The Python reference keeps movement orders as an archive plus an
+    /// active-order index.  Native v1 stores the live order fields alongside
+    /// each formation; completed/failed status is retained so the order
+    /// sequence remains restartable without carrying a second object graph.
+    pub movement_destination: Vec<u32>,
+    pub movement_origin: Vec<u32>,
+    pub movement_execute_at: Vec<f64>,
+    pub movement_arrives_at: Vec<f64>,
+    pub movement_travel_hours: Vec<f64>,
+    pub movement_distance_km: Vec<f64>,
+    pub movement_supply_cost: Vec<f64>,
+    pub movement_order_sequence: Vec<u64>,
+    pub movement_status: Vec<u8>,
+    pub movement_purpose: Vec<u8>,
 }
 
 impl FormationState {
@@ -652,6 +666,16 @@ impl FormationState {
             cumulative_losses: vec![0.0; count],
             outside_pineland: vec![0; count],
             operational_posture: vec![0; count],
+            movement_destination: vec![u32::MAX; count],
+            movement_origin: vec![u32::MAX; count],
+            movement_execute_at: vec![0.0; count],
+            movement_arrives_at: vec![-1.0; count],
+            movement_travel_hours: vec![0.0; count],
+            movement_distance_km: vec![0.0; count],
+            movement_supply_cost: vec![0.0; count],
+            movement_order_sequence: vec![0; count],
+            movement_status: vec![0; count],
+            movement_purpose: vec![0; count],
         }
     }
 
@@ -1117,6 +1141,7 @@ pub struct ParticleState {
     pub next_information_observation_sequence: u64,
     pub next_information_relay_sequence: u64,
     pub last_information_decay_at: f64,
+    pub movement_order_count: u64,
     pub event_log: Vec<EventRecord>,
     pub weights_log: f64,
     pub ancestry: Vec<u64>,
@@ -1166,6 +1191,7 @@ impl ParticleState {
             next_information_observation_sequence: 1,
             next_information_relay_sequence: 1,
             last_information_decay_at: 0.0,
+            movement_order_count: 0,
             event_log: Vec::new(),
             weights_log: 0.0,
             ancestry: vec![0],
@@ -1395,6 +1421,17 @@ impl ParticleState {
         append_f64s(material, &self.formations.cumulative_losses);
         append_u8s(material, &self.formations.outside_pineland);
         append_u8s(material, &self.formations.operational_posture);
+        append_u32s(material, &self.formations.movement_destination);
+        append_u32s(material, &self.formations.movement_origin);
+        append_f64s(material, &self.formations.movement_execute_at);
+        append_f64s(material, &self.formations.movement_arrives_at);
+        append_f64s(material, &self.formations.movement_travel_hours);
+        append_f64s(material, &self.formations.movement_distance_km);
+        append_f64s(material, &self.formations.movement_supply_cost);
+        append_u64s(material, &self.formations.movement_order_sequence);
+        append_u8s(material, &self.formations.movement_status);
+        append_u8s(material, &self.formations.movement_purpose);
+        material.extend_from_slice(&self.movement_order_count.to_le_bytes());
         append_u32s(material, &self.patrols.formation);
         append_u8s(material, &self.patrols.active);
         append_u32s(material, &self.patrols.route_position);
@@ -2078,6 +2115,46 @@ impl ParticleState {
             (
                 self.formations.operational_posture.len(),
                 "formation posture",
+            ),
+            (
+                self.formations.movement_destination.len(),
+                "formation movement destination",
+            ),
+            (
+                self.formations.movement_origin.len(),
+                "formation movement origin",
+            ),
+            (
+                self.formations.movement_execute_at.len(),
+                "formation movement execute time",
+            ),
+            (
+                self.formations.movement_arrives_at.len(),
+                "formation movement arrival time",
+            ),
+            (
+                self.formations.movement_travel_hours.len(),
+                "formation movement travel time",
+            ),
+            (
+                self.formations.movement_distance_km.len(),
+                "formation movement distance",
+            ),
+            (
+                self.formations.movement_supply_cost.len(),
+                "formation movement supply cost",
+            ),
+            (
+                self.formations.movement_order_sequence.len(),
+                "formation movement order sequence",
+            ),
+            (
+                self.formations.movement_status.len(),
+                "formation movement status",
+            ),
+            (
+                self.formations.movement_purpose.len(),
+                "formation movement purpose",
             ),
         ] {
             if length != formation_count {
@@ -3144,6 +3221,26 @@ impl ParticleState {
                 "formation supply capacity",
             ),
             (&self.formations.cumulative_losses, "formation losses"),
+            (
+                &self.formations.movement_execute_at,
+                "formation movement execute time",
+            ),
+            (
+                &self.formations.movement_arrives_at,
+                "formation movement arrival time",
+            ),
+            (
+                &self.formations.movement_travel_hours,
+                "formation movement travel time",
+            ),
+            (
+                &self.formations.movement_distance_km,
+                "formation movement distance",
+            ),
+            (
+                &self.formations.movement_supply_cost,
+                "formation movement supply cost",
+            ),
         ] {
             check_finite(values, name)?;
         }

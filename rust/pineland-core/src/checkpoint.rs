@@ -1148,6 +1148,20 @@ fn encode_formations(b: &mut Vec<u8>, p: &ParticleState) {
     ] {
         put_u8_vec(b, v)
     }
+    put_u32_vec(b, &x.movement_destination);
+    put_u32_vec(b, &x.movement_origin);
+    for v in [
+        &x.movement_execute_at,
+        &x.movement_arrives_at,
+        &x.movement_travel_hours,
+        &x.movement_distance_km,
+        &x.movement_supply_cost,
+    ] {
+        put_f64_vec(b, v)
+    }
+    put_u64_vec(b, &x.movement_order_sequence);
+    put_u8_vec(b, &x.movement_status);
+    put_u8_vec(b, &x.movement_purpose);
 }
 fn decode_formations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.formations;
@@ -1174,6 +1188,16 @@ fn decode_formations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<()
     x.operational_status = read_u8_vec(r).map_err(|e| section_error("operational_status", e))?;
     x.outside_pineland = read_u8_vec(r).map_err(|e| section_error("outside_pineland", e))?;
     x.operational_posture = read_u8_vec(r).map_err(|e| section_error("operational_posture", e))?;
+    x.movement_destination = read_u32_vec(r).map_err(|e| section_error("movement_destination", e))?;
+    x.movement_origin = read_u32_vec(r).map_err(|e| section_error("movement_origin", e))?;
+    x.movement_execute_at = read_f64_vec(r).map_err(|e| section_error("movement_execute_at", e))?;
+    x.movement_arrives_at = read_f64_vec(r).map_err(|e| section_error("movement_arrives_at", e))?;
+    x.movement_travel_hours = read_f64_vec(r).map_err(|e| section_error("movement_travel_hours", e))?;
+    x.movement_distance_km = read_f64_vec(r).map_err(|e| section_error("movement_distance_km", e))?;
+    x.movement_supply_cost = read_f64_vec(r).map_err(|e| section_error("movement_supply_cost", e))?;
+    x.movement_order_sequence = read_u64_vec(r).map_err(|e| section_error("movement_order_sequence", e))?;
+    x.movement_status = read_u8_vec(r).map_err(|e| section_error("movement_status", e))?;
+    x.movement_purpose = read_u8_vec(r).map_err(|e| section_error("movement_purpose", e))?;
     Ok(())
 }
 fn encode_patrols(b: &mut Vec<u8>, p: &ParticleState) {
