@@ -2557,7 +2557,7 @@ fn formation_index(particle: &ParticleState, identifier: &str) -> Option<usize> 
         .find(|index| formation_name(particle, *index) == identifier)
 }
 
-fn formation_name(particle: &ParticleState, formation: usize) -> String {
+pub(crate) fn formation_name(particle: &ParticleState, formation: usize) -> String {
     let organization = particle.formations.organization[formation] as usize;
     if particle.organizations.kind.get(organization).copied() == Some(crate::foreign::FOREIGN_KIND) {
         let org_name = crate::organization_name_for_particle(particle, organization);
