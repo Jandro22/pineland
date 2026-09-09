@@ -258,13 +258,29 @@ pub fn refresh(
     let mut raw_government = vec![0.0; zone_count];
     let mut raw_insurgent = vec![0.0; zone_count];
     for locality in 0..topology.locality_count() {
-        let government_response = response_distances(particle, topology, config, locality, 0, time);
-        let insurgent_response = response_distances(particle, topology, config, locality, 1, time);
         // The locality zone count is small and fixed in Pineland.  Use a
         // temporary vector rather than a map so the fold order is explicit.
         let zones = topology
             .zones_for_locality(locality.into())
             .collect::<Vec<_>>();
+        if let Some(default_zone) = zones.iter().copied().max_by(|left, right| {
+            topology.zone_population_share[*left]
+                .total_cmp(&topology.zone_population_share[*right])
+                .then_with(|| right.cmp(left))
+        }) {
+            for formation in 0..particle.formations.personnel.len() {
+                if particle.formations.locality[formation] as usize == locality {
+                    let zone = particle.formations.microzone[formation] as usize;
+                    if zone >= zone_count
+                        || topology.microzone_to_locality[zone] as usize != locality
+                    {
+                        particle.formations.microzone[formation] = default_zone as u32;
+                    }
+                }
+            }
+        }
+        let government_response = response_distances(particle, topology, config, locality, 0, time);
+        let insurgent_response = response_distances(particle, topology, config, locality, 1, time);
         let mut post_values = vec![[0.0f64; 2]; zone_count];
         for post in 0..particle.security_posts.locality.len() {
             if particle.security_posts.locality[post] as usize != locality

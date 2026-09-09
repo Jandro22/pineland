@@ -1843,12 +1843,11 @@ fn observe_control(
         particle.beliefs.confidence[index] = config.information.prior_confidence;
     }
     if std::env::var_os("PINELAND_INFO_TRACE").is_some()
-        && source_id == "C000069"
-        && locality == 28
-        && (time - 8.25).abs() < 1.0e-9
+        && observer_node == "FOREIGN-NEIGHBOR-1-01"
     {
         eprintln!(
-            "NATIVE_CONTROL_PRE source={} type={} observer={} node={} target={} locality={} quality={:.17} trust={:.17} language={:.17} confidence={:.17} corr={:.17} weight={:.17} observed={:?} prior_conf={:.17} prior_updated={:.17} prior_contra={:.17}",
+            "FOREIGN_CONTROL_PRE values_phys={:.17} source={} type={} observer={} node={} target={} locality={} quality={:.17} trust={:.17} language={:.17} confidence={:.17} corr={:.17} weight={:.17} observed={:?} prior_conf={:.17} prior_updated={:.17} prior_contra={:.17}",
+            values[1],
             source_id,
             source_type.name(),
             observer,
