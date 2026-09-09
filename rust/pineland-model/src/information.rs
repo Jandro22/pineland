@@ -741,7 +741,7 @@ fn fuse_recorded_observation(
         if let Some(zone_index) = zone_belief_index(
             particle,
             organization,
-            topology.primary_zone[locality] as usize,
+            observation.microzone as usize,
         ) {
             fuse_zone(particle, config, zone_index, time, weight, observation.control[1]);
         }
@@ -1287,12 +1287,28 @@ fn observe_target(
     let mut personnel_estimate = 0.0;
     let mut attribution_mistake = false;
     if detected {
+        // Python evaluates the positive personnel-estimate expression before
+        // replacing it with a false-positive draw.  Preserve that seemingly
+        // redundant RNG draw: it is part of the continuation contract.
+        personnel_estimate = personnel * (0.65 + 0.7 * rng.random());
         if present {
-            personnel_estimate = personnel * (0.65 + 0.7 * rng.random());
             attribution_mistake = rng.random() < config.information.attribution_error_rate;
         } else {
             personnel_estimate = rng.uniform(20.0, 250.0).max(1.0);
         }
+    }
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
+        let mut peek = rng.clone();
+        eprintln!(
+            "INFO_TARGET_FINAL time={:.17} observer={} source={} locality={} quality={:.17} estimate={:.17} next_draw={:.17}",
+            time,
+            observer,
+            source_id,
+            locality,
+            quality,
+            personnel_estimate,
+            peek.random(),
+        );
     }
     let reported_target = if attribution_mistake {
         if particle.organizations.kind.get(target).copied() == Some(3) {
