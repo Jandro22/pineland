@@ -1567,6 +1567,14 @@ impl SimulationEngine {
         {
             let event = self.particle.scheduler.pop_next().expect("peeked event");
             self.particle.time = event.time;
+            if std::env::var_os("PINELAND_EVENT_TRACE").is_some() {
+                eprintln!(
+                    "EVENT {} time={:.17} kind={}",
+                    processed + 1,
+                    event.time,
+                    event.payload.kind()
+                );
+            }
             self.particle.counters.record(event.payload.kind());
             let sequence = event.sequence;
             self.process_event(&event, until)?;
@@ -1628,12 +1636,18 @@ impl SimulationEngine {
                 );
                 self.put_rng("process:information", rng);
             }
-            EventPayload::Beliefs => beliefs::decay_and_propagate(
-                &mut self.particle,
-                &self.topology,
-                &self.config,
-                event.time,
-            ),
+            EventPayload::Beliefs => {
+                let mut rng = self.take_rng("process:beliefs");
+                beliefs::decay_and_propagate(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    &mut rng,
+                    event.time,
+                    event.elapsed_days,
+                );
+                self.put_rng("process:beliefs", rng);
+            }
             EventPayload::SocialInfluence => {
                 let mut rng = self.take_rng("process:social_influence");
                 social::update(
@@ -1669,7 +1683,10 @@ impl SimulationEngine {
                 );
                 self.put_rng("process:recruitment", rng);
             }
-            EventPayload::OrganizedAction { .. } => {
+            EventPayload::OrganizedAction {
+                organization,
+                locality,
+            } => {
                 let mut rng = self.take_rng("process:organized_action");
                 actions::opportunities(
                     &mut self.particle,
@@ -1677,6 +1694,9 @@ impl SimulationEngine {
                     &self.config,
                     &mut rng,
                     event.time,
+                    organization.get() as usize,
+                    locality.get() as usize,
+                    event.elapsed_days,
                 );
                 self.put_rng("process:organized_action", rng);
             }
@@ -1908,7 +1928,10 @@ impl SimulationEngine {
             EventPayload::SocialInfluence => self.config.intervals.social_influence,
             EventPayload::Mobility => self.config.intervals.mobility,
             EventPayload::Recruitment => self.config.intervals.recruitment,
-            EventPayload::OrganizedAction { .. } => self.config.intervals.contact,
+            // Organized actions are one-shot realizations emitted by a
+            // contact scan. The scan owns the recurring clock; rescheduling
+            // an action here would duplicate future opportunities.
+            EventPayload::OrganizedAction { .. } => return Ok(()),
             EventPayload::ContactScan => self.config.intervals.contact,
             EventPayload::Logistics => self.config.intervals.logistics,
             EventPayload::ForceMovement => self.config.intervals.force_movement,
