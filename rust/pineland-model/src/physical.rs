@@ -363,7 +363,7 @@ pub fn refresh(
                         },
             );
         }
-        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 26 {
+        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 20 {
             let zones = topology
                 .zones_for_locality(locality.into())
                 .collect::<Vec<_>>();
@@ -438,7 +438,7 @@ pub fn refresh(
             government += particle.zones.population_share[zone] * government_value;
             insurgent += particle.zones.population_share[zone] * insurgent_value;
         }
-        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 26 {
+        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 20 {
             eprintln!(
                 "PHYS_AGG time={:.17} locality={} government={:.17} insurgent={:.17}",
                 time, topology.locality_names[locality], government, insurgent

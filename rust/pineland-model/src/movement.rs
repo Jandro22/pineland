@@ -932,7 +932,12 @@ fn patrol_for_formation(particle: &ParticleState, formation: usize) -> Option<us
         .patrols
         .formation
         .iter()
-        .position(|&candidate| candidate as usize == formation)
+        .enumerate()
+        .find(|(patrol, candidate)| {
+            **candidate as usize == formation
+                && particle.patrols.active.get(*patrol).copied().unwrap_or(0) != 0
+        })
+        .map(|(patrol, _)| patrol)
 }
 
 fn modal_zone(topology: &StaticTopology, locality: usize) -> usize {

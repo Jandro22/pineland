@@ -182,7 +182,10 @@ fn advance_patrol_presence_memory(
     let organization = particle.formations.organization[formation] as usize;
     let actor_is_insurgent = organization < particle.organizations.kind.len()
         && particle.organizations.kind[organization] == INSURGENT_KIND;
-    let population = topology.locality_population[locality];
+    // Locality population is a live stock: civilian harm can reduce it after
+    // initialization.  Python's patrol-memory normalization reads the live
+    // locality population, not the immutable topology snapshot.
+    let population = particle.locality.population[locality];
     let deployed_strength = particle.formations.effective_strength(formation)
         * clamp01(particle.patrols.response_fraction[patrol]);
     let normalized_strength = deployed_strength / 250.0_f64.max(population * 0.002);
