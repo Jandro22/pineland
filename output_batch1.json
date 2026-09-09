@@ -1,0 +1,103 @@
+{
+  "binary": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\rust\\target\\release\\pineland.exe",
+  "certificate_sha256": "80f936d962b71f32e4cc65f614ea01ff31f1ba018e16ad2ccd9088ae09474327",
+  "completed_cases": 7,
+  "horizons_days": [
+    90.0
+  ],
+  "max_events": null,
+  "mismatch_count": 4,
+  "requested_cases": 7,
+  "results": [
+    {
+      "first_component_difference": "belief_confidence",
+      "first_count_difference": "belief_state",
+      "first_difference": "belief_confidence",
+      "horizon_days": 90.0,
+      "native_decision_hash": "938ed2c9edc383571cef5e9d2eaf63909b7adaafac7d4d561bcc6771bfe82e8f",
+      "native_state_hash": "b4f913bc7bdbb7945a9bdbfd9d4fdb6b71ba839960053b3e4093c16c42b15308",
+      "python_component_value": "24d475ff5279b850e40a5a18b669c2754d6b61e9df0f90213e5b3e4bdcb80868",
+      "python_count_value": 1238,
+      "python_value": "24d475ff5279b850e40a5a18b669c2754d6b61e9df0f90213e5b3e4bdcb80868",
+      "rust_component_value": "e4582163a60e00e2686df35846945f74e2246727d97026b7432b45a679c72767",
+      "rust_count_value": 1221,
+      "rust_value": "e4582163a60e00e2686df35846945f74e2246727d97026b7432b45a679c72767",
+      "seed": 3,
+      "status": "failed"
+    },
+    {
+      "first_component_difference": "belief_confidence",
+      "first_count_difference": "belief_state",
+      "first_difference": "belief_confidence",
+      "horizon_days": 90.0,
+      "native_decision_hash": "1512831967c7cfde9856b46759e7c4afc8ab5e1e1a9f6e1eda4d08eef70f3153",
+      "native_state_hash": "277f14a2870f6ef33b3830031a42a0dd970a09749b0d3fe006c98244b16defaf",
+      "python_component_value": "7c1ea1d82e20f0f2660c71e501f2db9165ee77cee22a0c8b0eec8ef372de4c27",
+      "python_count_value": 1218,
+      "python_value": "7c1ea1d82e20f0f2660c71e501f2db9165ee77cee22a0c8b0eec8ef372de4c27",
+      "rust_component_value": "a73c6042ffd553dced527d515f0fd5a4b776a137f7dd89801d2ddd7916b7f04a",
+      "rust_count_value": 1219,
+      "rust_value": "a73c6042ffd553dced527d515f0fd5a4b776a137f7dd89801d2ddd7916b7f04a",
+      "seed": 4,
+      "status": "failed"
+    },
+    {
+      "first_difference": "belief_confidence",
+      "horizon_days": 90.0,
+      "native_decision_hash": "2ea3aa260421c0ba8c03e5406df24955a1914e043b64a8fe4dc119054ea5eb2b",
+      "native_state_hash": "c1470d8fabbc8b5d38fabd25258791cc1d126a1cf906561c73456f26cb2c10ac",
+      "python_value": "7fbba695c177315ab5ec563e33789a6204776f94e95fb840326f485ff6e96a69",
+      "rust_value": "67ac5688a8420f68ae7f47b68ca46171923d251a86120c586ee573a1c8da4b96",
+      "seed": 5,
+      "status": "failed"
+    },
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "9a9a926091716ccb9a450ca81d16625e561af8f71f41c1d65e49c02e3ce4a678",
+      "native_state_hash": "7ba72af96053043fbf2f34106184d5efb5c92a6cbcd74a80964d62ae4d675cc5",
+      "seed": 7,
+      "status": "passed"
+    },
+    {
+      "first_component_difference": "belief_confidence",
+      "first_count_difference": "belief_state",
+      "first_difference": "belief_confidence",
+      "horizon_days": 90.0,
+      "native_decision_hash": "b7947ff98b36df488b681902891eaba2b9f2d54b2bf964a71557dc2b515c8be5",
+      "native_state_hash": "2f68b7cdba3b06abd99b3098d8e77cd55d55a9bed8e56657f11b543b50c63cb0",
+      "python_component_value": "d68792e9c4e2c1ba48037f4a7e9c19a06600f7ad9251bc28160a894a214082ce",
+      "python_count_value": 1226,
+      "python_value": "d68792e9c4e2c1ba48037f4a7e9c19a06600f7ad9251bc28160a894a214082ce",
+      "rust_component_value": "57651aa089f2869fc2f087fe2c2cbac0c16c1872506312715ae06b6d64bfa6de",
+      "rust_count_value": 1233,
+      "rust_value": "57651aa089f2869fc2f087fe2c2cbac0c16c1872506312715ae06b6d64bfa6de",
+      "seed": 11,
+      "status": "failed"
+    },
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "e8405d6ae11bacd618588fd73675fe485227c53e8f76954396dfafeb47eb2d52",
+      "native_state_hash": "257f8439a1955738e3205df13de976f6030cf2c04569049d2d618a3fe58834a7",
+      "seed": 99,
+      "status": "passed"
+    },
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "44020189327a8ea6760669d0d38d3042d6d404b38df213d926645a8842154a0a",
+      "native_state_hash": "f71590a412ea181bcb16a80b2062f902874b724380402d9dc8424b27ae657e5a",
+      "seed": 123,
+      "status": "passed"
+    }
+  ],
+  "schema": "pineland-rust-trajectory-certification-v1",
+  "seeds": [
+    3,
+    4,
+    5,
+    7,
+    11,
+    99,
+    123
+  ],
+  "status": "failed"
+}

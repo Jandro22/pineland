@@ -1,0 +1,25 @@
+{
+  "binary": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\rust\\target\\release\\pineland.exe",
+  "certificate_sha256": "3c4dff5d9a70f2e2a2fb9a17eac2ddbafa5649fc837a37fbd36fea270df827bc",
+  "completed_cases": 1,
+  "horizons_days": [
+    90.0
+  ],
+  "max_events": 5500,
+  "mismatch_count": 0,
+  "requested_cases": 1,
+  "results": [
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "8c16190a30963fd7836b1c6ff46aa6f18b9abeb8ee6780302c2f11f5a713d58b",
+      "native_state_hash": "2a35c941bcc9b07ec555e86202c0a6272f7f5c2b6cfe38a047589cefeedb0efd",
+      "seed": 18446744073709551615,
+      "status": "passed"
+    }
+  ],
+  "schema": "pineland-rust-trajectory-certification-v1",
+  "seeds": [
+    18446744073709551615
+  ],
+  "status": "passed"
+}

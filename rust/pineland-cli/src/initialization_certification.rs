@@ -96,6 +96,7 @@ pub(crate) fn certify_trajectory(arguments: &Arguments) -> Result<(), String> {
         result.insert("debug_presence", debug_presence(&engine));
         result.insert("debug_information", debug_information(&engine));
         result.insert("debug_zones", debug_zones(&engine));
+        result.insert("debug_footholds", debug_footholds(&engine));
         result.insert("debug_transition_state", debug_transition_state(&engine));
     }
     if std::env::var_os("PINELAND_TRANSITION_DEBUG").is_some() {
@@ -259,6 +260,20 @@ fn debug_zones(engine: &SimulationEngine) -> JsonValue {
                 "evidence_count",
                 JsonValue::integer(zones.evidence_count[index] as u64),
             );
+            values.push(row);
+        }
+    }
+    rows
+}
+
+fn debug_footholds(engine: &SimulationEngine) -> JsonValue {
+    let footholds = &engine.particle.footholds;
+    let mut rows = JsonValue::Array(Vec::new());
+    if let JsonValue::Array(values) = &mut rows {
+        for index in 0..footholds.raw_signal.len() {
+            let mut row = JsonValue::object();
+            row.insert("raw_signal", JsonValue::number(footholds.raw_signal[index]));
+            row.insert("strength", JsonValue::number(footholds.strength[index]));
             values.push(row);
         }
     }

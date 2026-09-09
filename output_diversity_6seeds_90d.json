@@ -1,0 +1,65 @@
+{
+  "binary": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\rust\\target\\release\\pineland.exe",
+  "certificate_sha256": "f6c4051b2f41b51b2fdb5ca555ff1136c627638910a320d83a73b2847237841f",
+  "completed_cases": 6,
+  "horizons_days": [
+    90.0
+  ],
+  "max_events": null,
+  "mismatch_count": 0,
+  "requested_cases": 6,
+  "results": [
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "68b32d64b000a97bde372e0a16497142781c46e1797b1205f2713c9b7282e461",
+      "native_state_hash": "efbb324e170d8f8ad39c2c3c9b5fe464d3bb3885b8f811f986f8a86adb82ec8a",
+      "seed": 0,
+      "status": "passed"
+    },
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "0ed3097d5016577d74decb6f39b8af06c0806124c3ed4154f2fb71f737cd2db3",
+      "native_state_hash": "0e9f51a087317e9339363d8089e6f11d339b145f388342f28293b9246dda0f24",
+      "seed": 1,
+      "status": "passed"
+    },
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "a66b733cb07ef99d00fc18391f967891159845f56a463411c4bf4370fba8ee33",
+      "native_state_hash": "16e2e019b2105bcf210619578e035fd3899922dc56881015acc285a90e33023c",
+      "seed": 2,
+      "status": "passed"
+    },
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "f2d9b4d25717dda691196aa5b4dad3d8dc15a3e7f5e605c3571df7b5bab89229",
+      "native_state_hash": "3d04f034d0fd72c298da9ce3ce301056b9e30146cf2cdebcffde55230b126dec",
+      "seed": 42,
+      "status": "passed"
+    },
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "51a87cb178bb1d27a2ef4084fdad85cc32f41473be65491889530fa90b8f6d5b",
+      "native_state_hash": "0f6c665eb2ea25e748234aaedece1dcd502af84fa5e3c17ca61b57122d8eae74",
+      "seed": 9223372036854775807,
+      "status": "passed"
+    },
+    {
+      "horizon_days": 90.0,
+      "native_decision_hash": "678592dc1c725554d61fc5922618b9d1a0a381230aae34377e24b7697e1ac364",
+      "native_state_hash": "ed57eb67837d3bba9229283c5462f71e79887cfb1569c2eed7fa01c7cdc96b7c",
+      "seed": 18446744073709551615,
+      "status": "passed"
+    }
+  ],
+  "schema": "pineland-rust-trajectory-certification-v1",
+  "seeds": [
+    0,
+    1,
+    2,
+    42,
+    9223372036854775807,
+    18446744073709551615
+  ],
+  "status": "passed"
+}

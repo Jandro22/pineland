@@ -92,19 +92,22 @@ pub(crate) fn local_embeddedness(
                 && particle.formations.operational_status[formation] == 1
         })
         .collect::<Vec<_>>();
-    let fielded = formation_indices
+    let personnel_values = formation_indices
         .iter()
         .map(|&formation| particle.formations.personnel[formation].max(0.0))
-        .sum::<f64>();
+        .collect::<Vec<_>>();
+    let fielded = python_sum(&personnel_values);
     let formation_channel = if fielded > 0.0 {
-        let weighted = formation_indices
+        let weighted_values = formation_indices
             .iter()
             .map(|&formation| {
                 particle.formations.personnel[formation].max(0.0)
                     * particle.formations.embeddedness[formation].clamp(0.0, 1.0)
             })
-            .sum::<f64>();
-        (fielded / threshold).clamp(0.0, 1.0) * weighted / fielded
+            .collect::<Vec<_>>();
+        let weighted = python_sum(&weighted_values);
+        let mean_embeddedness = weighted / fielded;
+        (fielded / threshold).clamp(0.0, 1.0) * mean_embeddedness
     } else {
         0.0
     };
