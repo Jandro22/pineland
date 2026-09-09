@@ -554,6 +554,10 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         }
     }
     root.insert("command_edges", command_edges);
+    root.insert(
+        "organization_phenotype_values",
+        f64_array(&particle.organizations.phenotype),
+    );
     root
 }
 

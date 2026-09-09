@@ -1,7 +1,7 @@
 //! Endogenous organization ecology over the fixed numeric organization table.
 
 use pineland_core::config::SimulationConfig;
-use pineland_core::rng::{python_exp, PyRandomCompat};
+use pineland_core::rng::{python_exp, python_sum, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState};
 use pineland_core::topology::StaticTopology;
 
@@ -130,6 +130,116 @@ pub(crate) fn local_embeddedness(
     (1.0 - complement).clamp(0.0, 1.0)
 }
 
+fn reference_cycle_probability(probability_per_cycle: f64, interval_days: f64) -> f64 {
+    let probability = clamp01(probability_per_cycle);
+    if probability <= 0.0 || interval_days <= 0.0 {
+        0.0
+    } else if probability >= 1.0 {
+        1.0
+    } else {
+        1.0 - (1.0 - probability).powf(interval_days / 7.0)
+    }
+}
+
+fn conditioned_active(config: &SimulationConfig, organization: usize, time: f64) -> bool {
+    let organization_id = crate::organization_name(organization);
+    config
+        .organization_ecology
+        .observed_active_intervals
+        .get(organization_id)
+        .map(|ranges| {
+            ranges
+                .iter()
+                .any(|range| range[0] <= time && time <= range[1])
+        })
+        .unwrap_or(false)
+}
+
+fn survival_social_base(
+    particle: &ParticleState,
+    config: &SimulationConfig,
+    organization: usize,
+) -> f64 {
+    let scale = config
+        .organization_ecology
+        .minimum_proto_represented_population
+        .max(1e-9);
+    let mut total = 0.0;
+    let mut by_locality = std::collections::BTreeMap::<u32, f64>::new();
+    for person in 0..particle.people.locality.len() {
+        if particle.people.organization[person] as usize != organization
+            || particle.people.armed_fraction[person] <= 0.0
+        {
+            continue;
+        }
+        let represented = particle.people.represented_population[person]
+            * particle.people.armed_fraction[person];
+        total += represented;
+        *by_locality
+            .entry(particle.people.residence[person])
+            .or_default() += represented;
+    }
+    let saturating = |quantity: f64| {
+        if quantity > 0.0 {
+            quantity / (quantity + scale)
+        } else {
+            0.0
+        }
+    };
+    let represented_base = saturating(total);
+    let local_depth = by_locality
+        .values()
+        .copied()
+        .map(saturating)
+        .fold(0.0, f64::max);
+    clamp01(
+        0.50 * represented_base
+            + 0.25 * local_depth
+            + 0.125 * particle.organizations.capital_social[organization]
+            + 0.125 * particle.organizations.phenotype[organization * 8 + 6],
+    )
+}
+
+fn adapt_organization(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    organization: usize,
+    elapsed_days: f64,
+) {
+    // The Python ecology always applies the innovation draw, even when no
+    // observable peer exists.  The single initial insurgent therefore still
+    // consumes eight normalvariate calls around its own phenotype.
+    let reference_learning = clamp01(
+        particle.organizations.adaptation_rate[organization]
+            * (0.4 + 0.6 * particle.organizations.institutional_quality[organization]),
+    );
+    let learning = reference_cycle_probability(reference_learning, elapsed_days);
+    let perceived_sigma = if learning > 0.0 && reference_learning > 0.0 {
+        let phi_reference = 1.0 - reference_learning;
+        let phi_interval = 1.0 - learning;
+        let reference_state_variance =
+            (reference_learning * config.organization_ecology.mutation_sigma).powi(2);
+        let denominator = (1.0 - phi_reference.powi(2)).max(1e-15);
+        let interval_state_variance =
+            reference_state_variance * (1.0 - phi_interval.powi(2)) / denominator;
+        interval_state_variance.max(0.0).sqrt() / learning
+    } else {
+        0.0
+    };
+    let offset = organization * 8;
+    for dimension in 0..8 {
+        let value = particle.organizations.phenotype[offset + dimension];
+        let perceived = value + rng.normalvariate(0.0, perceived_sigma);
+        particle.organizations.phenotype[offset + dimension] =
+            clamp01(value + learning * (perceived - value));
+    }
+    particle.organizations.discipline[organization] =
+        particle.organizations.phenotype[offset + 5];
+    particle.organizations.local_knowledge[organization] =
+        particle.organizations.phenotype[offset + 6];
+}
+
 /// Renew/decay the persistent locality foothold stock at the same event
 /// boundaries as Python's `advance_local_footholds`.  This transition is
 /// deterministic and must not consume an ecology/process RNG draw.
@@ -239,79 +349,152 @@ pub fn update(
     if !config.organization_ecology.enabled || elapsed_days <= 0.0 {
         return;
     }
-    for organization in 0..particle.organizations.active.len() {
-        if particle.organizations.active[organization] == 0 {
-            continue;
+    let organizations = (0..particle.organizations.active.len())
+        .filter(|&organization| {
+            particle.organizations.active[organization] != 0
+                && particle.organizations.kind[organization] == 3
+        })
+        .collect::<Vec<_>>();
+    for organization in organizations {
+        let formation_values = (0..particle.formations.personnel.len())
+            .filter(|&formation| {
+                particle.formations.organization[formation] as usize == organization
+            })
+            .map(|formation| particle.formations.personnel[formation])
+            .collect::<Vec<_>>();
+        let loss_values = (0..particle.formations.personnel.len())
+            .filter(|&formation| {
+                particle.formations.organization[formation] as usize == organization
+            })
+            .map(|formation| particle.formations.cumulative_losses[formation])
+            .collect::<Vec<_>>();
+        let personnel_plus_losses = (0..particle.formations.personnel.len())
+            .filter(|&formation| {
+                particle.formations.organization[formation] as usize == organization
+            })
+            .map(|formation| {
+                particle.formations.personnel[formation]
+                    + particle.formations.cumulative_losses[formation]
+            })
+            .collect::<Vec<_>>();
+        let losses = python_sum(&loss_values)
+            / python_sum(&personnel_plus_losses).max(1.0);
+
+        let mut represented_weight = 0.0;
+        let mut identity_weighted = 0.0;
+        for person in 0..particle.people.locality.len() {
+            if particle.people.organization[person] as usize != organization
+                || particle.people.armed_fraction[person] <= 0.0
+            {
+                continue;
+            }
+            let represented = particle.people.represented_population[person]
+                * particle.people.armed_fraction[person];
+            represented_weight += represented;
+            identity_weighted += represented * particle.people.identities[person * 3 + 2];
         }
-        let adaptation = config.organization_ecology.adaptation_rate * 0.01;
+        let mean_identity = identity_weighted / represented_weight.max(1e-9);
+        let mut identity_variance = 0.0;
+        for person in 0..particle.people.locality.len() {
+            if particle.people.organization[person] as usize != organization
+                || particle.people.armed_fraction[person] <= 0.0
+            {
+                continue;
+            }
+            let represented = particle.people.represented_population[person]
+                * particle.people.armed_fraction[person];
+            identity_variance += represented
+                * (particle.people.identities[person * 3 + 2] - mean_identity).powi(2);
+        }
+        identity_variance /= represented_weight.max(1e-9);
+        let cycle_scale = elapsed_days / 7.0;
         particle.organizations.cohesion[organization] = clamp01(
             particle.organizations.cohesion[organization]
-                + adaptation * (0.6 - particle.organizations.cohesion[organization]),
+                + cycle_scale
+                    * (0.025 * particle.organizations.capital_social[organization]
+                        - config.organization_ecology.cohesion_loss_memory * losses
+                        - 0.02 * identity_variance),
         );
-        particle.organizations.capital[organization] = (particle.organizations.capital
-            [organization]
-            + particle.organizations.external_support[organization] * 0.01)
-            .max(0.0);
-        if rng.random()
-            < config.organization_ecology.succession_base_hazard
-                * config.organization_ecology.interval_days
-        {
+        particle.organizations.capital_material[organization] = clamp01(
+            particle.organizations.capital[organization] / 150_000.0,
+        );
+
+        adapt_organization(particle, config, rng, organization, elapsed_days);
+        let phenotype = organization * 8;
+        for formation in 0..particle.formations.personnel.len() {
+            if particle.formations.organization[formation] as usize != organization {
+                continue;
+            }
+            particle.formations.embeddedness[formation] = particle.organizations.phenotype[phenotype + 6];
+            particle.formations.mobility[formation] = clamp01(
+                0.35 + 0.5 * particle.organizations.phenotype[phenotype + 3],
+            );
+            for edge in 0..particle.command_edges.organization.len() {
+                if particle.command_edges.organization[edge] as usize == organization
+                    && particle.command_edges.formation[edge] as usize == formation
+                {
+                    let centralization = particle.organizations.phenotype[phenotype].clamp(0.0, 1.0);
+                    particle.command_edges.reliability[edge] = clamp01(
+                        0.3 + 0.35 * centralization
+                            + 0.25 * particle.organizations.institutional_quality[organization],
+                    );
+                    particle.command_edges.latency_hours[edge] =
+                        10.0 * (1.0 - centralization) + 1.0;
+                }
+            }
+        }
+
+        let succession_probability = reference_cycle_probability(
+            config.organization_ecology.succession_base_hazard
+                * (1.4 - particle.organizations.cohesion[organization]),
+            elapsed_days,
+        );
+        if rng.random() < succession_probability {
             particle.organizations.succession_count[organization] =
                 particle.organizations.succession_count[organization].saturating_add(1);
-            particle.organizations.persistence[organization] =
-                clamp01(particle.organizations.persistence[organization] + 0.02);
         }
-    }
 
-    // Python rewires every active insurgent formation after adaptation on
-    // each positive ecology boundary.  The command edge is a derived native
-    // representation of that Python CommandEdge object, so refresh both
-    // values here even when the formation itself has not moved.  Government
-    // and police command links are owned by their own processes and are not
-    // touched by organization ecology.
-    for edge in 0..particle.command_edges.organization.len() {
-        let organization = particle.command_edges.organization[edge] as usize;
-        if organization >= particle.organizations.kind.len()
-            || particle.organizations.kind[organization] != 3
-        {
-            continue;
-        }
-        let phenotype = organization * 8;
-        let centralization = particle.organizations.phenotype[phenotype].clamp(0.0, 1.0);
-        particle.command_edges.reliability[edge] = clamp01(
-            0.3 + 0.35 * centralization
-                + 0.25 * particle.organizations.institutional_quality[organization],
-        );
-        particle.command_edges.latency_hours[edge] =
-            10.0 * (1.0 - centralization) + 1.0;
-    }
-
-    let n = topology.locality_count();
-    for locality in 0..n {
-        let index = crate::INSURGENT * n + locality;
-        let age = (time - particle.footholds.updated_at[index]).max(0.0);
-        let recent = (-age
-            / config
+        let split_hazard = 1.0
+            - python_exp(
+                -config.organization_ecology.split_base_hazard
+                    * python_exp(
+                        2.0 * identity_variance
+                            + 3.0 * losses
+                            - 2.0 * particle.organizations.cohesion[organization],
+                    )
+                    * elapsed_days
+                    / 7.0,
+            );
+        let split_eligible = represented_weight
+            >= config
                 .organization_ecology
-                .local_foothold_memory_days
-                .max(f64::MIN_POSITIVE))
-        .exp();
-        particle.footholds.sustainment[index] =
-            clamp01(particle.footholds.sustainment[index] * (0.98 + 0.02 * recent));
-        if particle.footholds.strength[index]
-            > config.organization_ecology.minimum_formation_personnel
-        {
-            particle.footholds.viable_activation_count[index] =
-                particle.footholds.viable_activation_count[index].saturating_add(1);
-        }
-        if rng.random()
-            < config.organization_ecology.collapse_base_hazard
-                * config.organization_ecology.interval_days
-                * (1.0 - particle.footholds.sustainment[index])
-        {
-            particle.footholds.active[index] = 0;
-            particle.footholds.strength[index] *= 0.5;
-        }
+                .minimum_split_represented_population;
+        let split_draw = if split_eligible { Some(rng.random()) } else { None };
+        let conditioned = conditioned_active(config, organization, time);
+        let _split_realized = split_draw
+            .map(|draw| draw < split_hazard && !conditioned)
+            .unwrap_or(false);
+
+        let social_base = survival_social_base(particle, config, organization);
+        let collapse_hazard = 1.0
+            - python_exp(
+                -config.organization_ecology.collapse_base_hazard
+                    * python_exp(
+                        2.0 * (1.0 - particle.organizations.cohesion[organization])
+                            + 2.0 * losses
+                            - 3.0 * social_base
+                            - 1.5 * particle.organizations.external_sanctuary[organization],
+                    )
+                    * elapsed_days
+                    / 7.0,
+            );
+        let collapse_draw = rng.random();
+        let _collapse_realized = !conditioned
+            && (particle.organizations.capital[organization] <= 0.0
+                || particle.organizations.cohesion[organization] < 0.12
+                || represented_weight <= 1e-9
+                || collapse_draw < collapse_hazard);
+        let _ = (formation_values, _split_realized, _collapse_realized);
     }
 }
 
