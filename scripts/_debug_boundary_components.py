@@ -50,6 +50,7 @@ with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory
                     "PINELAND_TRANSITION_DEBUG": "1",
                     "PINELAND_EVENT_TRACE": "1",
                     "PINELAND_ACTION_TRACE": "1",
+                    "PINELAND_ORG_TRACE": "1",
                 },
             check=True,
         )
@@ -258,6 +259,11 @@ with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory
                 flush=True,
             )
         print("EVENT_TAIL", completed.stderr.splitlines()[-12:], flush=True)
+        print(
+            "ORG_TRACE",
+            [line for line in completed.stderr.splitlines() if line.startswith(("ORG_ADAPT", "ORG_PROTO"))],
+            flush=True,
+        )
         print(
             "ACTION_TRACE_TAIL",
             [line for line in completed.stderr.splitlines() if "ACTION" in line][-80:],
