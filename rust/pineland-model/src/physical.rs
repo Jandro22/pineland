@@ -363,6 +363,66 @@ pub fn refresh(
                         },
             );
         }
+        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 26 {
+            let zones = topology
+                .zones_for_locality(locality.into())
+                .collect::<Vec<_>>();
+            eprintln!(
+                "PHYS_DETAIL time={:.17} locality={} zones={:?} gov_response={:?} ins_response={:?}",
+                time,
+                topology.locality_names[locality],
+                zones
+                    .iter()
+                    .map(|zone| topology.microzone_names[*zone].as_str())
+                    .collect::<Vec<_>>(),
+                zones
+                    .iter()
+                    .map(|zone| government_response[*zone])
+                    .collect::<Vec<_>>(),
+                zones
+                    .iter()
+                    .map(|zone| insurgent_response[*zone])
+                    .collect::<Vec<_>>(),
+            );
+            for zone in zones {
+                eprintln!(
+                    "PHYS_ZONE time={:.17} zone={} raw_g={:.17} raw_i={:.17} mem_g={:.17} mem_i={:.17} post_g={:.17} post_i={:.17} form_g={:.17} form_i={:.17}",
+                    time,
+                    topology.microzone_names[zone],
+                    raw_government[zone],
+                    raw_insurgent[zone],
+                    particle.zones.government_presence[zone],
+                    particle.zones.insurgent_presence[zone],
+                    post_values[zone][0],
+                    post_values[zone][1],
+                    formation_values[zone][0],
+                    formation_values[zone][1],
+                );
+            }
+            for formation in 0..particle.formations.personnel.len() {
+                if particle.formations.locality[formation] as usize == locality
+                    && particle.formations.microzone[formation] as usize == 127
+                {
+                    eprintln!(
+                        "PHYS_FORM time={:.17} formation={} personnel={:.17} quality={:.17} cohesion={:.17} readiness={:.17} sustainment={:.17} information={:.17} availability={:.17} command={:.17} supply={:.17} capacity={:.17} effective_readiness={:.17} effective_strength={:.17}",
+                        time,
+                        formation,
+                        particle.formations.personnel[formation],
+                        particle.formations.quality[formation],
+                        particle.formations.cohesion[formation],
+                        particle.formations.readiness[formation],
+                        particle.formations.sustainment[formation],
+                        particle.formations.information[formation],
+                        particle.formations.availability[formation],
+                        particle.formations.command[formation],
+                        particle.formations.supply_stock[formation],
+                        particle.formations.supply_capacity[formation],
+                        particle.formations.effective_readiness(formation),
+                        particle.formations.effective_strength(formation),
+                    );
+                }
+            }
+        }
     }
 
     for locality in 0..topology.locality_count() {
@@ -377,6 +437,12 @@ pub fn refresh(
             particle.zones.insurgent_control[zone] = insurgent_value;
             government += particle.zones.population_share[zone] * government_value;
             insurgent += particle.zones.population_share[zone] * insurgent_value;
+        }
+        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 26 {
+            eprintln!(
+                "PHYS_AGG time={:.17} locality={} government={:.17} insurgent={:.17}",
+                time, topology.locality_names[locality], government, insurgent
+            );
         }
         let offset = locality * CONTROL_DIMENSIONS;
         particle.locality.government_control[offset + 1] = clamp01(government);
