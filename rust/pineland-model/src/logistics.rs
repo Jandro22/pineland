@@ -15,6 +15,19 @@ pub fn update(
 ) {
     let dt = elapsed_days.max(0.0);
     reconcile_source_production(particle, topology, config);
+    // The Python oracle reconciles carrying capacity to current personnel at
+    // the start of every logistics event.  Combat, recruitment, and peace
+    // transitions can change personnel without changing the materiel already
+    // carried; preserve that stock while shrinking/growing the doctrinal
+    // capacity to the current force size.
+    for formation in 0..particle.formations.personnel.len() {
+        let doctrinal_capacity = (particle.formations.personnel[formation]
+            * config.logistics.formation_supply_days)
+            .max(0.0);
+        particle.formations.supply_capacity[formation] =
+            doctrinal_capacity.max(particle.formations.supply_stock[formation]);
+        particle.formations.sustainment[formation] = supply_ratio(particle, formation);
+    }
     for source in 0..particle.logistics.source_stock.len() {
         let production = particle.logistics.source_production[source] * dt;
         let available_capacity = (particle.logistics.source_capacity[source]
@@ -137,12 +150,25 @@ fn reconcile_source_production(
         for &source in &source_indices {
             let locality = particle.logistics.locality[source];
             let weight = if territorial {
-                topology
+                let district = topology
                     .locality_to_district
                     .get(locality as usize)
-                    .and_then(|district| topology.district_population.get(*district as usize))
                     .copied()
-                    .unwrap_or(0.0)
+                    .unwrap_or(u32::MAX);
+                // Python's district population is a live population stock:
+                // direct civilian harm reduces both the locality and its
+                // containing district.  The static topology stores only the
+                // opening registry, so derive the current district total from
+                // the particle-local locality stocks at each reconciliation.
+                let mut current_population = 0.0;
+                for candidate in 0..particle.locality.population.len() {
+                    if topology.locality_to_district.get(candidate).copied() == Some(district) {
+                        current_population = round_binary64(
+                            current_population + particle.locality.population[candidate].max(0.0),
+                        );
+                    }
+                }
+                current_population
             } else {
                 python_sum(
                     &formation_indices
@@ -161,6 +187,12 @@ fn reconcile_source_production(
             weights.fill(1.0);
         }
         let total_weight = python_sum(&weights);
+        if std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some() && organization == 1 {
+            eprintln!(
+                "LOGISTICS_RECON organization={} personnel={:.17} requirement={:.17} weights={:?} total_weight={:.17}",
+                organization, personnel, requirement, weights, total_weight
+            );
+        }
         for (&source, &weight) in source_indices.iter().zip(weights.iter()) {
             // Keep the two Python operations (multiply, then divide) as two
             // observable IEEE-754 boundaries; otherwise an optimized native
@@ -171,6 +203,12 @@ fn reconcile_source_production(
             particle.logistics.source_capacity[source] = particle.logistics.source_capacity[source]
                 .max(particle.logistics.source_stock[source])
                 .max(production / config.logistics.source_daily_production_fraction.max(1e-12));
+            if std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some() && organization == 1 {
+                eprintln!(
+                    "LOGISTICS_SOURCE source={} weight={:.17} production={:.17} capacity={:.17}",
+                    source, weight, production, particle.logistics.source_capacity[source]
+                );
+            }
         }
     }
 }
