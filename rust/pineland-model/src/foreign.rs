@@ -176,8 +176,13 @@ pub(crate) fn shift_dynamic_observer_codes_after_foreign_intervention(
     let insert_pos = old_cmds.binary_search(&new_cmd).unwrap_or_else(|pos| pos);
     let cmd_split_code = command_start + insert_pos as u32;
 
+    let total_command_codes = command_start + old_cmds.len() as u32;
     let shift_code = |code: &mut u32| {
-        if *code >= formation_start {
+        if *code != u32::MAX
+            && *code < 0x2000_0000
+            && *code >= formation_start
+            && *code < total_command_codes
+        {
             if *code < post_start {
                 *code += 1;
             } else if *code < aux_start {
