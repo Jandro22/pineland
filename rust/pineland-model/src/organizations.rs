@@ -130,6 +130,32 @@ pub(crate) fn local_embeddedness(
     (1.0 - complement).clamp(0.0, 1.0)
 }
 
+/// Return the persistent local organizational stock used by Python's
+/// action-choice contract.  A foothold is available to decision rules only
+/// after at least one renewal boundary; the initial embeddedness projection
+/// alone is not a post-movement memory stock.
+pub(crate) fn local_foothold_strength(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    organization: usize,
+    locality: usize,
+) -> f64 {
+    if organization != crate::INSURGENT || locality >= topology.locality_count() {
+        return 0.0;
+    }
+    let index = organization * topology.locality_count() + locality;
+    if particle.footholds.renewal_count.get(index).copied().unwrap_or(0) == 0 {
+        return 0.0;
+    }
+    particle
+        .footholds
+        .strength
+        .get(index)
+        .copied()
+        .unwrap_or(0.0)
+        .clamp(0.0, 1.0)
+}
+
 fn reference_cycle_probability(probability_per_cycle: f64, interval_days: f64) -> f64 {
     let probability = clamp01(probability_per_cycle);
     if probability <= 0.0 || interval_days <= 0.0 {

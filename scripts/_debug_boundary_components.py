@@ -21,14 +21,14 @@ base.update(
     locality_count=34,
     burn_in_days=0.0,
     output_mode="calibration",
-    seed=0,
+        seed=1,
     horizon_days=90.0,
 )
 
 with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory:
     config_path = pathlib.Path(directory) / "config.json"
     config_path.write_text(json.dumps(base))
-    for max_events in (5899,):
+    for max_events in (924,):
         config = SimulationConfig.from_dict(base)
         world = generate_pineland(config)
         simulation = Simulation(world)
@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory
                 str(root / "rust" / "target" / "release" / "pineland.exe"),
                 "certify-trajectory",
                 "--config", str(config_path),
-                "--seed", "0", "--until", "90",
+                "--seed", "1", "--until", "90",
                 "--max-events", str(max_events),
             ],
             cwd=root,
@@ -49,11 +49,38 @@ with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory
                     **__import__("os").environ,
                     "PINELAND_TRANSITION_DEBUG": "1",
                     "PINELAND_EVENT_TRACE": "1",
+                    "PINELAND_ACTION_TRACE": "1",
                 },
             check=True,
         )
         native = json.loads(completed.stdout)
         debug = native["debug_transition_state"]
+        native_formations = {int(row["index"]): row for row in debug.get("formations", [])}
+        formation_diffs = []
+        for index, (formation_id, formation) in enumerate(world.formations.items()):
+            row = native_formations.get(index)
+            if row is None:
+                formation_diffs.append((formation_id, "missing", None))
+                continue
+            expected_formation = {
+                "locality": list(world.localities).index(formation.locality_id),
+                "availability": formation.availability,
+                "personnel": formation.personnel,
+                "quality": formation.quality,
+                "cohesion": formation.cohesion,
+                "readiness": formation.readiness,
+                "sustainment": formation.sustainment,
+                "information": formation.information,
+                "command": formation.command,
+                "supply_stock": formation.supply_stock,
+                "supply_capacity": formation.supply_capacity,
+                "moving": int(formation.moving),
+            }
+            for field, expected_value in expected_formation.items():
+                actual_value = row.get(field)
+                if expected_value != actual_value:
+                    formation_diffs.append((formation_id, field, expected_value, actual_value))
+        print("FORMATION_DIFFS", len(formation_diffs), formation_diffs[:80], flush=True)
         native_zones = {
             (int(row["observer"]), int(row["zone"])): row
             for row in native.get("debug_zones", [])
@@ -197,6 +224,11 @@ with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory
                 flush=True,
             )
         print("EVENT_TAIL", completed.stderr.splitlines()[-12:], flush=True)
+        print(
+            "ACTION_TRACE_TAIL",
+            [line for line in completed.stderr.splitlines() if "ACTION" in line][-80:],
+            flush=True,
+        )
         print("PHYS_TRACE", [line for line in completed.stderr.splitlines() if line.startswith("PHYS_")], flush=True)
         print(
             "RNG_BELIEFS",

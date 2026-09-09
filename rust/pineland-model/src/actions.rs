@@ -816,6 +816,23 @@ fn control_weights(
     let governance = particle.organizations.phenotype[organization * 8 + 2].clamp(0.0, 1.0);
     let fielded_share = (fielded / total).clamp(0.0, 1.0);
     let (human_target_belief, asset_weight, coercion_weight) = if insurgent {
+        // Python's action-choice contract lets persistent local foothold
+        // memory supplement current embeddedness.  This affects only the
+        // channel weights; it does not create fighters or alter the
+        // execution-capacity calculation.
+        let embedded = crate::organizations::local_embeddedness(
+            particle,
+            topology,
+            config,
+            organization,
+            locality,
+        )
+        .max(crate::organizations::local_foothold_strength(
+            particle,
+            topology,
+            organization,
+            locality,
+        ));
         (
             reachable_target_belief(
                 particle,
@@ -831,14 +848,7 @@ fn control_weights(
                 locality,
                 ASSET_VIOLENCE,
             ),
-            governance
-                * crate::organizations::local_embeddedness(
-                    particle,
-                    topology,
-                    config,
-                    organization,
-                    locality,
-                ),
+            governance * embedded,
         )
     } else {
         (((physical + social) / 2.0).clamp(0.0, 1.0), 0.0, 0.0)
