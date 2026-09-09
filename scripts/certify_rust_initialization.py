@@ -559,10 +559,10 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
             organization_index[formation.organization_id] for formation in formations
         ),
         "formations_locality": digest_u32(
-            locality_index[formation.locality_id] for formation in formations
+            locality_index.get(formation.locality_id, U32_MAX) for formation in formations
         ),
         "formations_microzone": digest_u32(
-            zone_index[formation.current_microzone_id] for formation in formations
+            zone_index.get(formation.current_microzone_id, U32_MAX) for formation in formations
         ),
         "formations_personnel": digest_f64(formation.personnel for formation in formations),
         "formations_quality": digest_f64(formation.quality for formation in formations),
@@ -1089,6 +1089,8 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
     # not exist at initialization.  Native reserves observer codes after the
     # fixed organization table for these formation observers.
     def dynamic_observer_code(observer_id: str) -> int:
+        if observer_id in organization_index:
+            return organization_index[observer_id]
         if observer_id in formation_index:
             return len(organization_ids) + formation_index[observer_id]
         if observer_id in post_index:

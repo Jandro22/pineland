@@ -954,8 +954,66 @@ impl StaticTopology {
     }
 }
 
+struct DoubleLength {
+    hi: f64,
+    lo: f64,
+}
+
+#[inline(always)]
+fn dl_fast_sum(a: f64, b: f64) -> DoubleLength {
+    let x = a + b;
+    let y = (a - x) + b;
+    DoubleLength { hi: x, lo: y }
+}
+
+#[inline(always)]
+fn dl_mul(x: f64, y: f64) -> DoubleLength {
+    let z = x * y;
+    let zz = x.mul_add(y, -z);
+    DoubleLength { hi: z, lo: zz }
+}
+
+/// Matches CPython 3.8+ math.hypot / vector_norm exact precision.
+pub fn py_hypot(mut a: f64, mut b: f64) -> f64 {
+    a = a.abs();
+    b = b.abs();
+    let max = a.max(b);
+    if max.is_infinite() {
+        return max;
+    }
+    if a.is_nan() || b.is_nan() {
+        return f64::NAN;
+    }
+    if max == 0.0 {
+        return 0.0;
+    }
+    let raw_exp = ((max.to_bits() >> 52) & 0x7ff) as i32;
+    let max_e = raw_exp - 1022;
+    let scale = 2.0_f64.powi(-max_e);
+    let mut csum = 1.0;
+    let mut frac1 = 0.0;
+    let mut frac2 = 0.0;
+    for &val in &[a, b] {
+        let x = val * scale;
+        let pr = dl_mul(x, x);
+        let sm = dl_fast_sum(csum, pr.hi);
+        csum = sm.hi;
+        frac1 += pr.lo;
+        frac2 += sm.lo;
+    }
+    let mut h = (csum - 1.0 + (frac1 + frac2)).sqrt();
+    let pr = dl_mul(-h, h);
+    let sm = dl_fast_sum(csum, pr.hi);
+    csum = sm.hi;
+    frac1 += pr.lo;
+    frac2 += sm.lo;
+    let x = csum - 1.0 + (frac1 + frac2);
+    h += x / (2.0 * h);
+    h / scale
+}
+
 fn euclidean(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
-    (x1 - x2).hypot(y1 - y2)
+    py_hypot(x1 - x2, y1 - y2)
 }
 
 fn clamp(value: f64, lower: f64, upper: f64) -> f64 {
@@ -982,26 +1040,5 @@ fn python_round(value: f64) -> f64 {
         floor
     } else {
         floor + 1.0
-    }
-}
-
-#[cfg(test)]
-mod test_edge {
-    use super::*;
-
-    #[test]
-    fn test_float_edge() {
-        let x1 = -8.0;
-        let y1 = -34.0;
-        let x2 = -8.906907405299076;
-        let y2 = -15.427216164289463;
-        let t1 = 1.4853261782931404;
-        let t2 = 1.2216123648108792;
-        let h = euclidean(x1, y1, x2, y2);
-        let c = ((t1 + t2) / 2.0) * (0.65 + h / 55.0);
-        let d = 18.0 + 22.0 * c;
-        println!("Rust h: {:x} {:.17}", h.to_bits(), h);
-        println!("Rust c: {:x} {:.17}", c.to_bits(), c);
-        println!("Rust d: {:x} {:.17}", d.to_bits(), d);
     }
 }
