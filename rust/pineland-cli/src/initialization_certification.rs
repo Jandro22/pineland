@@ -456,6 +456,104 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         }
     }
     root.insert("security_posts", security_posts);
+
+    root.insert(
+        "government_control",
+        f64_array(&particle.locality.government_control),
+    );
+    root.insert(
+        "insurgent_control",
+        f64_array(&particle.locality.insurgent_control),
+    );
+
+    let mut patrols = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut patrols {
+        for index in 0..particle.patrols.formation.len() {
+            let mut row = JsonValue::object();
+            row.insert("index", JsonValue::integer(index as u64));
+            row.insert(
+                "formation",
+                JsonValue::integer(particle.patrols.formation[index] as u64),
+            );
+            row.insert(
+                "active",
+                JsonValue::integer(particle.patrols.active[index] as u64),
+            );
+            row.insert(
+                "route_position",
+                JsonValue::integer(particle.patrols.route_position[index] as u64),
+            );
+            row.insert(
+                "route_target",
+                JsonValue::integer(particle.patrols.route_target[index] as u64),
+            );
+            row.insert(
+                "next_available",
+                JsonValue::number(particle.patrols.next_available[index]),
+            );
+            row.insert(
+                "last_departure",
+                JsonValue::number(particle.patrols.last_departure[index]),
+            );
+            row.insert(
+                "response_fraction",
+                JsonValue::number(particle.patrols.response_fraction[index]),
+            );
+            row.insert(
+                "presence_accounted_at",
+                JsonValue::number(particle.patrols.presence_accounted_at[index]),
+            );
+            rows.push(row);
+        }
+    }
+    root.insert("patrols", patrols);
+
+    let mut formations = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut formations {
+        for index in 0..particle.formations.personnel.len() {
+            let mut row = JsonValue::object();
+            row.insert("index", JsonValue::integer(index as u64));
+            row.insert("personnel", JsonValue::number(particle.formations.personnel[index]));
+            row.insert("quality", JsonValue::number(particle.formations.quality[index]));
+            row.insert("cohesion", JsonValue::number(particle.formations.cohesion[index]));
+            row.insert("readiness", JsonValue::number(particle.formations.readiness[index]));
+            row.insert("sustainment", JsonValue::number(particle.formations.sustainment[index]));
+            row.insert("information", JsonValue::number(particle.formations.information[index]));
+            row.insert("availability", JsonValue::number(particle.formations.availability[index]));
+            row.insert("command", JsonValue::number(particle.formations.command[index]));
+            row.insert("supply_stock", JsonValue::number(particle.formations.supply_stock[index]));
+            row.insert("supply_capacity", JsonValue::number(particle.formations.supply_capacity[index]));
+            row.insert("moving", JsonValue::integer(particle.formations.moving[index] as u64));
+            rows.push(row);
+        }
+    }
+    root.insert("formations", formations);
+
+    let mut command_edges = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut command_edges {
+        for index in 0..particle.command_edges.organization.len() {
+            let mut row = JsonValue::object();
+            row.insert("index", JsonValue::integer(index as u64));
+            row.insert(
+                "organization",
+                JsonValue::integer(particle.command_edges.organization[index] as u64),
+            );
+            row.insert(
+                "formation",
+                JsonValue::integer(particle.command_edges.formation[index] as u64),
+            );
+            row.insert(
+                "reliability",
+                JsonValue::number(particle.command_edges.reliability[index]),
+            );
+            row.insert(
+                "latency_hours",
+                JsonValue::number(particle.command_edges.latency_hours[index]),
+            );
+            rows.push(row);
+        }
+    }
+    root.insert("command_edges", command_edges);
     root
 }
 

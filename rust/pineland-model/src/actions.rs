@@ -391,17 +391,6 @@ fn reachable_target_belief(
     clamp01(best)
 }
 
-fn local_embeddedness(particle: &ParticleState, organization: usize, locality: usize) -> f64 {
-    let locality_count = particle.locality.population.len().max(1);
-    particle
-        .footholds
-        .embeddedness
-        .get(organization * locality_count + locality)
-        .copied()
-        .unwrap_or(0.0)
-        .clamp(0.0, 1.0)
-}
-
 fn local_information(
     particle: &ParticleState,
     topology: &StaticTopology,
@@ -487,11 +476,14 @@ fn apply_human_target_losses(
 fn local_execution_knowledge(
     particle: &ParticleState,
     topology: &StaticTopology,
+    config: &SimulationConfig,
     organization: usize,
     locality: usize,
     target: usize,
 ) -> f64 {
-    let embedded = local_embeddedness(particle, organization, locality);
+    let embedded = crate::organizations::local_embeddedness(
+        particle, topology, config, organization, locality,
+    );
     let information = local_information(particle, topology, organization, locality, target);
     let persistent = if organization == crate::INSURGENT {
         let count = particle.locality.population.len().max(1);
@@ -835,7 +827,10 @@ fn control_weights(
                 locality,
                 ASSET_VIOLENCE,
             ),
-            governance * local_embeddedness(particle, organization, locality),
+            governance
+                * crate::organizations::local_embeddedness(
+                    particle, topology, config, organization, locality,
+                ),
         )
     } else {
         (((physical + social) / 2.0).clamp(0.0, 1.0), 0.0, 0.0)
@@ -1174,6 +1169,7 @@ pub fn opportunities(
         let knowledge = local_execution_knowledge(
             particle,
             topology,
+            config,
             organization,
             target_locality,
             target.organization,
@@ -1302,6 +1298,7 @@ pub fn opportunities(
         let knowledge = local_execution_knowledge(
             particle,
             topology,
+            config,
             organization,
             target_locality,
             crate::GOVERNMENT,

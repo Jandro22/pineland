@@ -5,7 +5,7 @@ use pineland_core::rng::{python_exp, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState};
 use pineland_core::topology::StaticTopology;
 
-fn local_embeddedness(
+pub(crate) fn local_embeddedness(
     particle: &ParticleState,
     topology: &StaticTopology,
     config: &SimulationConfig,
@@ -262,6 +262,30 @@ pub fn update(
                 clamp01(particle.organizations.persistence[organization] + 0.02);
         }
     }
+
+    // Python rewires every active insurgent formation after adaptation on
+    // each positive ecology boundary.  The command edge is a derived native
+    // representation of that Python CommandEdge object, so refresh both
+    // values here even when the formation itself has not moved.  Government
+    // and police command links are owned by their own processes and are not
+    // touched by organization ecology.
+    for edge in 0..particle.command_edges.organization.len() {
+        let organization = particle.command_edges.organization[edge] as usize;
+        if organization >= particle.organizations.kind.len()
+            || particle.organizations.kind[organization] != 3
+        {
+            continue;
+        }
+        let phenotype = organization * 8;
+        let centralization = particle.organizations.phenotype[phenotype].clamp(0.0, 1.0);
+        particle.command_edges.reliability[edge] = clamp01(
+            0.3 + 0.35 * centralization
+                + 0.25 * particle.organizations.institutional_quality[organization],
+        );
+        particle.command_edges.latency_hours[edge] =
+            10.0 * (1.0 - centralization) + 1.0;
+    }
+
     let n = topology.locality_count();
     for locality in 0..n {
         let index = crate::INSURGENT * n + locality;
