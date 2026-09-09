@@ -17,7 +17,7 @@ from pineland_sim.config import SimulationConfig
 from pineland_sim.generator import generate_pineland
 from pineland_sim.simulation import Simulation
 
-for limit in (1995,):
+for limit in (1998,):
     config = SimulationConfig.from_dict(base)
     world = generate_pineland(config)
     simulation = Simulation(world)
@@ -48,3 +48,18 @@ for limit in (1995,):
     print("RS", limit, "controls", [(i, repr(rs[i])) for i in range(len(rs)) if rs[i] != 0.0][:12])
     print("RS_DELTA", limit, [(i, repr(rs[i])) for i in range(len(rs)) if i >= 34 * 7 - 30])
     print("DIFF", limit, [(i, repr(py[i]), repr(rs[i])) for i in range(min(len(py), len(rs))) if py[i] != rs[i]][:30])
+    print("PY_INS", [
+        [getattr(world.localities[locality_id].control.get("insurgent"), dimension, 0.0)
+         for dimension in ("formal", "physical", "administrative", "legal", "fiscal", "social", "expected")]
+        for locality_id in sorted(world.localities)
+    ][:5])
+    print("RS_INS", [native["insurgent_control"][index * 7:(index + 1) * 7] for index in range(5)])
+    py_ins = [
+        getattr(world.localities[locality_id].control.get("insurgent"), dimension, 0.0)
+        for locality_id in sorted(world.localities)
+        for dimension in ("formal", "physical", "administrative", "legal", "fiscal", "social", "expected")
+    ]
+    rs_ins = native["insurgent_control"]
+    print("INS_DIFF", [(i, repr(left), repr(right)) for i, (left, right) in enumerate(zip(py_ins, rs_ins)) if left != right])
+    print("RS_ORG_CONTROL", native.get("organization_control", [])[:34 * 7 * 7])
+    print("RS_CAPITAL", native.get("organization_capital"))

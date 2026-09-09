@@ -27,6 +27,11 @@ pub struct LocalityState {
     pub observability: Vec<f64>,
     pub government_control: Vec<f64>,
     pub insurgent_control: Vec<f64>,
+    /// Organization-specific control vectors, stored locality-major then
+    /// organization-major.  Python creates these rows lazily as franchise
+    /// governance is observed; keeping them explicitly prevents the native
+    /// aggregate insurgent view from becoming a lossy substitute.
+    pub organization_control: Vec<f64>,
     pub violence: Vec<f64>,
     pub disruption: Vec<f64>,
     pub displaced_population: Vec<f64>,
@@ -47,6 +52,7 @@ impl LocalityState {
             observability: vec![0.5; count],
             government_control: vec![0.0; count * CONTROL_DIMENSIONS],
             insurgent_control: vec![0.0; count * CONTROL_DIMENSIONS],
+            organization_control: Vec::new(),
             violence: vec![0.0; count],
             disruption: vec![0.0; count],
             displaced_population: vec![0.0; count],
@@ -78,6 +84,54 @@ impl LocalityState {
         } else {
             numerator / denominator
         }
+    }
+
+    pub fn with_organizations(mut self, organization_count: usize) -> Self {
+        self.organization_control = vec![
+            0.0;
+            self.population
+                .len()
+                .saturating_mul(organization_count)
+                .saturating_mul(CONTROL_DIMENSIONS)
+        ];
+        self
+    }
+
+    pub fn ensure_organization_capacity(&mut self, organization_count: usize) {
+        let locality_count = self.population.len();
+        let expected = locality_count
+            .saturating_mul(organization_count)
+            .saturating_mul(CONTROL_DIMENSIONS);
+        if self.organization_control.len() == expected {
+            return;
+        }
+        let old_count = if locality_count == 0 {
+            0
+        } else {
+            self.organization_control.len() / (locality_count * CONTROL_DIMENSIONS)
+        };
+        let mut replacement = vec![0.0; expected];
+        let copied = old_count.min(organization_count);
+        for locality in 0..locality_count {
+            for organization in 0..copied {
+                let old_offset =
+                    (locality * old_count + organization) * CONTROL_DIMENSIONS;
+                let new_offset =
+                    (locality * organization_count + organization) * CONTROL_DIMENSIONS;
+                replacement[new_offset..new_offset + CONTROL_DIMENSIONS].copy_from_slice(
+                    &self.organization_control[old_offset..old_offset + CONTROL_DIMENSIONS],
+                );
+            }
+        }
+        self.organization_control = replacement;
+    }
+
+    pub fn organization_control_offset(
+        locality: usize,
+        organization: usize,
+        organization_count: usize,
+    ) -> usize {
+        (locality * organization_count + organization) * CONTROL_DIMENSIONS
     }
 }
 
@@ -1377,7 +1431,7 @@ impl ParticleState {
             logical_id: 0,
             lineage: "root.0".to_string(),
             time: 0.0,
-            locality: LocalityState::new(localities),
+            locality: LocalityState::new(localities).with_organizations(organizations),
             zones: ZoneState::new(zones),
             people: PersonState::new(0).with_organizations(organizations),
             households: HouseholdState::new(0),
@@ -1476,6 +1530,7 @@ impl ParticleState {
         for values in [
             &self.locality.government_control,
             &self.locality.insurgent_control,
+            &self.locality.organization_control,
             &self.locality.violence,
             &self.locality.disruption,
             &self.formations.personnel,
@@ -1522,6 +1577,7 @@ impl ParticleState {
         append_f64s(material, &self.locality.observability);
         append_f64s(material, &self.locality.government_control);
         append_f64s(material, &self.locality.insurgent_control);
+        append_f64s(material, &self.locality.organization_control);
         append_f64s(material, &self.locality.violence);
         append_f64s(material, &self.locality.disruption);
         append_f64s(material, &self.locality.displaced_population);
@@ -1947,6 +2003,15 @@ impl ParticleState {
                     right: expected_controls,
                 });
             }
+        }
+        let expected_organization_controls = expected_controls
+            .saturating_mul(self.organizations.kind.len());
+        if self.locality.organization_control.len() != expected_organization_controls {
+            return Err(StateError::LengthMismatch {
+                name: "organization-specific locality control".to_string(),
+                left: self.locality.organization_control.len(),
+                right: expected_organization_controls,
+            });
         }
         let people_count = self.people.locality.len();
         for (length, name) in [
@@ -3490,6 +3555,10 @@ impl ParticleState {
             (&self.locality.observability, "observability"),
             (&self.locality.government_control, "government control"),
             (&self.locality.insurgent_control, "insurgent control"),
+            (
+                &self.locality.organization_control,
+                "organization-specific locality control",
+            ),
             (&self.locality.violence, "violence"),
             (&self.locality.disruption, "disruption"),
             (&self.locality.displaced_population, "displaced population"),
