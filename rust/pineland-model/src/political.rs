@@ -24,9 +24,8 @@ pub fn update(
     // Keep its operation order aligned with Python: the political event is a
     // decision-state transition, not merely a small control increment.
     let cycle_scale = elapsed_days / 30.0;
-    let decay_factor = python_exp(
-        -config.political_order.patronage_decay_rate * elapsed_days / 365.0,
-    );
+    let decay_factor =
+        python_exp(-config.political_order.patronage_decay_rate * elapsed_days / 365.0);
     for patronage in &mut particle.political.branch_patronage {
         *patronage *= decay_factor;
     }
@@ -99,13 +98,8 @@ pub fn update(
         let services = production * particle.locality.infrastructure[locality];
         let representation =
             production * (0.5 + 0.5 * particle.political.institution_autonomy[institution]);
-        let quality = python_sum(&[
-            security,
-            justice,
-            administration,
-            services,
-            representation,
-        ]) / 5.0;
+        let quality =
+            python_sum(&[security, justice, administration, services, representation]) / 5.0;
         let integrity_loss = config.political_order.patronage_capacity_damage * patronage
             / (public + patronage).max(1.0);
 
@@ -140,8 +134,7 @@ pub fn update(
                         - integrity_loss),
         );
         particle.political.institution_integrity[institution] = clamp01(
-            particle.political.institution_integrity[institution]
-                - cycle_scale * integrity_loss,
+            particle.political.institution_integrity[institution] - cycle_scale * integrity_loss,
         );
         // Python spends the institution's temporary allocation completely on
         // the local service output. Preserve the same post-event zero account
@@ -149,29 +142,21 @@ pub fn update(
         particle.political.institution_resources[institution] -= effective_public;
 
         let offset = locality * CONTROL_DIMENSIONS;
-        particle.locality.government_control[offset] = clamp01(
-            particle.locality.government_control[offset]
-                + 0.0,
-        );
+        particle.locality.government_control[offset] =
+            clamp01(particle.locality.government_control[offset] + 0.0);
         particle.locality.government_control[offset + 2] = clamp01(
-            particle.locality.government_control[offset + 2]
-                + 0.004 * administration * cycle_scale,
+            particle.locality.government_control[offset + 2] + 0.004 * administration * cycle_scale,
         );
         particle.locality.government_control[offset + 3] = clamp01(
-            particle.locality.government_control[offset + 3]
-                + 0.004 * justice * cycle_scale,
+            particle.locality.government_control[offset + 3] + 0.004 * justice * cycle_scale,
         );
         particle.locality.government_control[offset + 5] = clamp01(
-            particle.locality.government_control[offset + 5]
-                + 0.003 * services * cycle_scale,
+            particle.locality.government_control[offset + 5] + 0.003 * services * cycle_scale,
         );
-        particle.locality.government_control[offset + 5] = clamp01(
-            particle.locality.government_control[offset + 5]
-                + 0.0,
-        );
+        particle.locality.government_control[offset + 5] =
+            clamp01(particle.locality.government_control[offset + 5] + 0.0);
         particle.locality.government_control[offset + 6] = clamp01(
-            particle.locality.government_control[offset + 6]
-                + 0.003 * representation * cycle_scale,
+            particle.locality.government_control[offset + 6] + 0.003 * representation * cycle_scale,
         );
 
         let patronage_reach = {
@@ -191,8 +176,7 @@ pub fn update(
                     + 0.04 * (experience - 0.35) * cycle_scale,
             );
             particle.people.state_legitimacy[person] = clamp01(
-                particle.people.state_legitimacy[person]
-                    + 0.01 * (justice - 0.25) * cycle_scale,
+                particle.people.state_legitimacy[person] + 0.01 * (justice - 0.25) * cycle_scale,
             );
             particle.people.political_access[person] = clamp01(
                 particle.people.political_access[person]
@@ -204,9 +188,7 @@ pub fn update(
                     let party_offset = person * 3 + party_slot;
                     particle.people.party_legitimacy[party_offset] = clamp01(
                         particle.people.party_legitimacy[party_offset]
-                            + cycle_scale
-                                * (0.025 * patronage_reach
-                                    - 0.015 * (1.0 - fairness)),
+                            + cycle_scale * (0.025 * patronage_reach - 0.015 * (1.0 - fairness)),
                     );
                     for other in 0..3 {
                         if other != party_slot {
@@ -264,10 +246,9 @@ fn run_election(
         let total = python_sum(&utilities);
         if total > 0.0 {
             for slot in 0..3 {
-                votes[slot] += particle.people.represented_population[person]
-                    * turnout
-                    * utilities[slot]
-                    / total;
+                votes[slot] +=
+                    particle.people.represented_population[person] * turnout * utilities[slot]
+                        / total;
             }
         }
     }
@@ -284,13 +265,11 @@ fn run_election(
     }
     for index in 0..particle.political.branch_party.len() {
         if particle.political.branch_party[index] == winner {
-            particle.political.branch_institutional_influence[index] = clamp01(
-                particle.political.branch_institutional_influence[index] + 0.08,
-            );
+            particle.political.branch_institutional_influence[index] =
+                clamp01(particle.political.branch_institutional_influence[index] + 0.08);
         } else {
-            particle.political.branch_institutional_influence[index] = clamp01(
-                particle.political.branch_institutional_influence[index] - 0.02,
-            );
+            particle.political.branch_institutional_influence[index] =
+                clamp01(particle.political.branch_institutional_influence[index] - 0.02);
         }
     }
     let _ = topology;

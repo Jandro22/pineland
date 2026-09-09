@@ -233,7 +233,13 @@ pub fn refresh(
     // that boundary behavior explicit so a collapse cannot silently alter the
     // next physical refresh's decision state.
     let has_active_insurgents = (0..particle.organizations.kind.len()).any(|organization| {
-        particle.organizations.active.get(organization).copied().unwrap_or(0) != 0
+        particle
+            .organizations
+            .active
+            .get(organization)
+            .copied()
+            .unwrap_or(0)
+            != 0
             && particle.organizations.kind[organization] == INSURGENT_KIND
     });
     let memory_days = config.physical.presence_memory_days.max(f64::MIN_POSITIVE);

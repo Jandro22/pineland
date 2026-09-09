@@ -225,6 +225,7 @@ fn opponent_presence_belief(
 fn locality_reach(
     particle: &ParticleState,
     topology: &StaticTopology,
+    config: &SimulationConfig,
     organization: usize,
     source: usize,
     destination: usize,
@@ -254,7 +255,11 @@ fn locality_reach(
         .unwrap_or(0.5);
     let speed = 42.0 * mobility.max(0.15) * infrastructure.max(0.2) / terrain_cost.max(0.5);
     let travel_hours = distance_km / speed.max(f64::MIN_POSITIVE);
-    python_exp(-travel_hours / 24.0)
+    let restriction =
+        crate::access::edge_restriction_level(particle, source, destination, Some(organization));
+    let adjusted_hours =
+        travel_hours * (1.0 + config.access_restriction.hostile_movement_penalty * restriction);
+    python_exp(-adjusted_hours.max(0.0) / 24.0)
 }
 
 fn target_belief_weight(
@@ -288,6 +293,7 @@ fn target_belief_weight(
 fn operational_target(
     particle: &ParticleState,
     topology: &StaticTopology,
+    config: &SimulationConfig,
     organization: usize,
     locality: usize,
     channel: usize,
@@ -310,6 +316,7 @@ fn operational_target(
             locality_reach(
                 particle,
                 topology,
+                config,
                 organization,
                 locality,
                 destination as usize,
@@ -346,6 +353,7 @@ fn operational_target(
 fn reachable_target_belief(
     particle: &ParticleState,
     topology: &StaticTopology,
+    config: &SimulationConfig,
     organization: usize,
     locality: usize,
     channel: usize,
@@ -372,6 +380,7 @@ fn reachable_target_belief(
         let reach = locality_reach(
             particle,
             topology,
+            config,
             organization,
             locality,
             destination,
@@ -837,6 +846,7 @@ fn control_weights(
             reachable_target_belief(
                 particle,
                 topology,
+                config,
                 organization,
                 locality,
                 NONFIELDED_HUMAN_TARGET,
@@ -844,6 +854,7 @@ fn control_weights(
             risk * reachable_target_belief(
                 particle,
                 topology,
+                config,
                 organization,
                 locality,
                 ASSET_VIOLENCE,
@@ -1138,6 +1149,7 @@ pub fn opportunities(
         let Some(target_locality) = operational_target(
             particle,
             topology,
+            config,
             organization,
             locality,
             NONFIELDED_HUMAN_TARGET,
@@ -1258,6 +1270,7 @@ pub fn opportunities(
         let Some(target_locality) = operational_target(
             particle,
             topology,
+            config,
             organization,
             locality,
             ASSET_VIOLENCE,

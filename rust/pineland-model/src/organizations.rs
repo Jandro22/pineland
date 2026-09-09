@@ -144,7 +144,14 @@ pub(crate) fn local_foothold_strength(
         return 0.0;
     }
     let index = organization * topology.locality_count() + locality;
-    if particle.footholds.renewal_count.get(index).copied().unwrap_or(0) == 0 {
+    if particle
+        .footholds
+        .renewal_count
+        .get(index)
+        .copied()
+        .unwrap_or(0)
+        == 0
+    {
         return 0.0;
     }
     particle
@@ -521,13 +528,12 @@ fn collapse_organization(particle: &mut ParticleState, organization: usize) {
         particle.people.armed_fraction[person] = 0.0;
         // Python retains the former franchise as latent affinity on exit.
         if prior_fraction > 0.0 && organization < organization_count {
-            particle.people.rebel_sympathy[person] = particle.people.rebel_sympathy[person]
-                .max(prior_fraction);
+            particle.people.rebel_sympathy[person] =
+                particle.people.rebel_sympathy[person].max(prior_fraction);
             let offset = person * organization_count + organization;
             if offset < particle.people.insurgent_affinity.len() {
-                particle.people.insurgent_affinity[offset] = particle.people.insurgent_affinity
-                    [offset]
-                    .max(prior_fraction);
+                particle.people.insurgent_affinity[offset] =
+                    particle.people.insurgent_affinity[offset].max(prior_fraction);
             }
         }
         if particle.people.public_behavior[person] == 2 {

@@ -28,7 +28,7 @@ base.update(
 with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory:
     config_path = pathlib.Path(directory) / "config.json"
     config_path.write_text(json.dumps(base))
-    for max_events in (2000,):
+    for max_events in (3843,):
         config = SimulationConfig.from_dict(base)
         world = generate_pineland(config)
         simulation = Simulation(world)
@@ -178,6 +178,40 @@ with tempfile.TemporaryDirectory(prefix="pineland-boundary-debug-") as directory
             flush=True,
         )
         print("CONTROL_DIFFS", control_diffs[:40], flush=True)
+        rust_armed = debug.get("people_armed_fraction", [])
+        armed_diffs = [
+            (index, persons[index].person_id, person.armed_fraction, rust_armed[index])
+            for index, person in enumerate(persons)
+            if index < len(rust_armed) and person.armed_fraction != rust_armed[index]
+        ]
+        print("ARMED_DIFFS", len(armed_diffs), armed_diffs[:40], flush=True)
+        python_phenotype = [
+            value
+            for organization in world.organizations.values()
+            for value in organization.phenotype.values()
+        ]
+        print(
+            "PHENOTYPE",
+            [(index, left, right) for index, (left, right) in enumerate(
+                zip(python_phenotype, debug.get("organization_phenotype_values", []))
+            ) if left != right][:40],
+            flush=True,
+        )
+        print(
+            "COMMAND_EDGE_DIFFS",
+            [
+                (index, edge.reliability, edge.latency_hours,
+                 debug.get("command_edges", [])[index].get("reliability"),
+                 debug.get("command_edges", [])[index].get("latency_hours"))
+                for index, edge in enumerate(world.command_edges.values())
+                if index < len(debug.get("command_edges", []))
+                and (
+                    edge.reliability != debug["command_edges"][index].get("reliability")
+                    or edge.latency_hours != debug["command_edges"][index].get("latency_hours")
+                )
+            ][:40],
+            flush=True,
+        )
         if max_events == 4768:
             local_ids = sorted(world.localities)
             python_insurgent = [

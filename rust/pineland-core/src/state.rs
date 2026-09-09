@@ -114,8 +114,7 @@ impl LocalityState {
         let copied = old_count.min(organization_count);
         for locality in 0..locality_count {
             for organization in 0..copied {
-                let old_offset =
-                    (locality * old_count + organization) * CONTROL_DIMENSIONS;
+                let old_offset = (locality * old_count + organization) * CONTROL_DIMENSIONS;
                 let new_offset =
                     (locality * organization_count + organization) * CONTROL_DIMENSIONS;
                 replacement[new_offset..new_offset + CONTROL_DIMENSIONS].copy_from_slice(
@@ -2044,8 +2043,8 @@ impl ParticleState {
                 });
             }
         }
-        let expected_organization_controls = expected_controls
-            .saturating_mul(self.organizations.kind.len());
+        let expected_organization_controls =
+            expected_controls.saturating_mul(self.organizations.kind.len());
         if self.locality.organization_control.len() != expected_organization_controls {
             return Err(StateError::LengthMismatch {
                 name: "organization-specific locality control".to_string(),
@@ -2101,7 +2100,10 @@ impl ParticleState {
                 "person origin tie strength",
             ),
             (self.people.external_state.len(), "person external state"),
-            (self.people.migration_status.len(), "person migration status"),
+            (
+                self.people.migration_status.len(),
+                "person migration status",
+            ),
         ] {
             if length != people_count {
                 return Err(StateError::LengthMismatch {
@@ -4268,7 +4270,10 @@ impl ParticleState {
                 &self.foreign.diaspora_information_reliability,
                 "diaspora information reliability",
             ),
-            (&self.foreign.diaspora_created_at, "diaspora created timestamp"),
+            (
+                &self.foreign.diaspora_created_at,
+                "diaspora created timestamp",
+            ),
             (&self.foreign.support_total, "support total"),
             (&self.relations.rivalry_memory, "relation rivalry memory"),
             (
@@ -4333,8 +4338,7 @@ impl ParticleState {
             // can therefore retain a tiny negative cancellation residue
             // (for example -5e-12).  Preserve that exact value for parity,
             // while still rejecting any materially negative balance.
-            let tolerated_roundoff = name == "in-transit logistics"
-                && value >= -1.0e-9;
+            let tolerated_roundoff = name == "in-transit logistics" && value >= -1.0e-9;
             if value < 0.0 && !tolerated_roundoff {
                 return Err(StateError::Corrupt(format!("{name} must be non-negative")));
             }
