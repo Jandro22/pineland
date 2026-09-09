@@ -855,14 +855,18 @@ impl BeliefState {
         let age = (time - self.updated_at[index]).max(0.0);
         let decay = crate::rng::python_exp(-age / memory_days.max(f64::MIN_POSITIVE));
         let offset = index * CONTROL_DIMENSIONS;
-        let mut contradiction = self.contradiction[index] * decay;
+        let mut contradiction = self.contradiction[index];
         let mut confidence = prior_confidence;
         for (dimension, observed_value) in observed.iter().enumerate() {
             let value = clamp01(*observed_value);
             let old = self.control[offset + dimension];
             self.control[offset + dimension] =
                 clamp01((prior * old + weight * value) / denominator);
-            contradiction += weight * (value - old).abs();
+            // Python's scalar compatibility path decays the running
+            // contradiction before each control dimension, not once for the
+            // complete vector. Preserve that order because positive-time
+            // confidence depends on it.
+            contradiction = contradiction * decay + weight * (value - old).abs();
             confidence = clamp01(scale * crate::rng::python_exp(-penalty * contradiction));
         }
         self.confidence[index] = confidence;

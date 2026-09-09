@@ -27,6 +27,9 @@ pub(crate) fn certify_initialization(arguments: &Arguments) -> Result<(), String
     result.insert("diagnostics", diagnostics(&engine));
     result.insert("rng_streams", rng_streams(&engine));
     result.insert("scheduler", scheduler(&engine));
+    if std::env::var_os("PINELAND_CERT_DEBUG").is_some() {
+        result.insert("debug_beliefs", debug_beliefs(&engine));
+    }
     result.insert("state_hash", JsonValue::string(engine.state_hash()));
     result.insert("decision_hash", JsonValue::string(engine.decision_hash()));
     println!("{}", result.to_pretty());
@@ -81,10 +84,41 @@ pub(crate) fn certify_trajectory(arguments: &Arguments) -> Result<(), String> {
     result.insert("diagnostics", diagnostics(&engine));
     result.insert("rng_streams", rng_streams(&engine));
     result.insert("scheduler", scheduler(&engine));
+    if std::env::var_os("PINELAND_CERT_DEBUG").is_some() {
+        result.insert("debug_beliefs", debug_beliefs(&engine));
+    }
     result.insert("state_hash", JsonValue::string(engine.state_hash()));
     result.insert("decision_hash", JsonValue::string(engine.decision_hash()));
     println!("{}", result.to_pretty());
     Ok(())
+}
+
+fn debug_beliefs(engine: &SimulationEngine) -> JsonValue {
+    let beliefs = &engine.particle.beliefs;
+    let mut rows = JsonValue::Array(Vec::new());
+    if let JsonValue::Array(values) = &mut rows {
+        for index in 0..beliefs.keys.len() {
+            let key = &beliefs.keys[index];
+            let mut row = JsonValue::object();
+            row.insert("observer", JsonValue::integer(key.observer as u64));
+            row.insert("target", JsonValue::integer(key.target as u64));
+            row.insert("locality", JsonValue::integer(key.locality as u64));
+            row.insert("kind", JsonValue::integer(key.kind as u64));
+            row.insert("confidence", JsonValue::number(beliefs.confidence[index]));
+            row.insert("updated_at", JsonValue::number(beliefs.updated_at[index]));
+            row.insert("presence", JsonValue::number(beliefs.presence[index]));
+            row.insert(
+                "contradiction",
+                JsonValue::number(beliefs.contradiction[index]),
+            );
+            row.insert(
+                "evidence_count",
+                JsonValue::integer(beliefs.evidence_count[index] as u64),
+            );
+            values.push(row);
+        }
+    }
+    rows
 }
 
 fn counts(engine: &SimulationEngine) -> JsonValue {

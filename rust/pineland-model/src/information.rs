@@ -45,7 +45,7 @@ pub fn record_patrol_control_history(
 ) {
     let observer = particle.formations.organization[formation] as usize;
     let target = control_target(observer);
-    let source_id = format!("PATROL-{}", formation_name(particle, formation));
+    let source_id = patrol_source_id(particle, formation);
     particle.information_history.push(InformationHistoryEntry {
         target: target as u32,
         locality: locality as u32,
@@ -53,6 +53,10 @@ pub fn record_patrol_control_history(
         time,
         source_identity: source_identity_code(particle, topology, &source_id),
     });
+}
+
+pub(crate) fn patrol_source_id(particle: &ParticleState, formation: usize) -> String {
+    format!("PATROL-{}", formation_name(particle, formation))
 }
 
 impl SourceType {
@@ -388,6 +392,30 @@ fn corroboration_weight(
         }
     }
     weight
+}
+
+/// Return the independent-source corroboration multiplier for a patrol
+/// control report before that report is appended to the history. Patrols own
+/// their local fusion transition, but they share the same three-day source
+/// index as background information in the Python reference.
+pub(crate) fn patrol_control_corroboration(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    target: usize,
+    locality: usize,
+    source_id: &str,
+    time: f64,
+) -> f64 {
+    corroboration_weight(
+        &particle.information_history,
+        target,
+        locality,
+        source_identity_code(particle, topology, source_id),
+        time,
+        config,
+        SourceType::Patrol,
+    )
 }
 
 fn source_type_code(source_type: SourceType) -> u8 {
