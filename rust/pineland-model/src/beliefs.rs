@@ -93,11 +93,9 @@ pub fn decay_and_propagate(
             let learning = reference_probability(0.12 * trust, elapsed_days);
             let offset = person * 2 + usize::from(actor == crate::INSURGENT);
             let old = particle.people.expected_control[offset];
-            particle.people.expected_control[offset] =
-                clamp01(old + learning * (observed - old));
+            particle.people.expected_control[offset] = clamp01(old + learning * (observed - old));
         }
     }
-
 }
 
 pub fn control_estimate(

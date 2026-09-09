@@ -1602,7 +1602,31 @@ impl SimulationEngine {
                     event.time,
                 );
             }
+            let advances_footholds = matches!(
+                event.payload,
+                EventPayload::ForceMovement
+                    | EventPayload::OrganizedAction { .. }
+                    | EventPayload::Recruitment
+                    | EventPayload::OrganizationEcology
+                    | EventPayload::PhysicalRefresh
+            );
+            if advances_footholds {
+                organizations::advance_footholds(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    event.time,
+                );
+            }
             self.process_event(&event, until)?;
+            if advances_footholds {
+                organizations::advance_footholds(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    event.time,
+                );
+            }
             self.particle.event_log.push(EventRecord {
                 time: event.time,
                 sequence,
@@ -1785,24 +1809,20 @@ impl SimulationEngine {
             EventPayload::Command => {
                 movement::command(&mut self.particle, &self.topology, &self.config, event.time)
             }
-            EventPayload::Governance => {
-                governance::update(
-                    &mut self.particle,
-                    &self.topology,
-                    &self.config,
-                    event.time,
-                    event.elapsed_days,
-                )
-            }
-            EventPayload::Economy => {
-                economy::update(
-                    &mut self.particle,
-                    &self.topology,
-                    &self.config,
-                    event.time,
-                    event.elapsed_days,
-                )
-            }
+            EventPayload::Governance => governance::update(
+                &mut self.particle,
+                &self.topology,
+                &self.config,
+                event.time,
+                event.elapsed_days,
+            ),
+            EventPayload::Economy => economy::update(
+                &mut self.particle,
+                &self.topology,
+                &self.config,
+                event.time,
+                event.elapsed_days,
+            ),
             EventPayload::OrganizationEcology => {
                 let mut rng = self.take_rng("process:organization_ecology");
                 organizations::update(

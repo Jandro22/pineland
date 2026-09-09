@@ -7,7 +7,7 @@
 //! loop over every locality when handling one scheduled action.
 
 use pineland_core::config::SimulationConfig;
-use pineland_core::rng::PyRandomCompat;
+use pineland_core::rng::{python_exp, PyRandomCompat};
 use pineland_core::scheduler::EventPayload;
 use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
 use pineland_core::topology::StaticTopology;
@@ -29,6 +29,26 @@ const ACCESS_RESTRICTION: usize = 5;
 fn action_organization(kind: u8) -> bool {
     // Python ACTION_ORGANIZATION_KINDS: insurgent, military, police, foreign.
     matches!(kind, 1 | 2 | 3 | 5 | 6 | 7)
+}
+
+fn is_insurgent(particle: &ParticleState, organization: usize) -> bool {
+    organization == crate::INSURGENT
+        || particle.organizations.kind.get(organization).copied() == Some(3)
+}
+
+fn target_matches_side(
+    particle: &ParticleState,
+    target: usize,
+    target_side_insurgent: bool,
+) -> bool {
+    if target_side_insurgent {
+        return target == crate::INSURGENT
+            || particle.organizations.kind.get(target).copied() == Some(3);
+    }
+    matches!(
+        particle.organizations.kind.get(target).copied(),
+        Some(0 | 1 | 2 | 5)
+    )
 }
 
 fn belief_control(
@@ -54,6 +74,358 @@ fn belief_control(
     .unwrap_or(0.5)
 }
 
+fn has_target_evidence(
+    particle: &ParticleState,
+    observer: usize,
+    target_side_insurgent: bool,
+    locality: usize,
+) -> bool {
+    particle
+        .beliefs
+        .keys
+        .iter()
+        .enumerate()
+        .any(|(index, key)| {
+            key.observer as usize == observer
+                && key.locality as usize == locality
+                && key.kind <= 3
+                && particle
+                    .beliefs
+                    .evidence_count
+                    .get(index)
+                    .copied()
+                    .unwrap_or(0)
+                    > 0
+                && target_matches_side(particle, key.target as usize, target_side_insurgent)
+        })
+}
+
+fn evidenced_hostile_physical(
+    particle: &ParticleState,
+    observer: usize,
+    target_side_insurgent: bool,
+    locality: usize,
+) -> Option<f64> {
+    particle
+        .beliefs
+        .keys
+        .iter()
+        .enumerate()
+        .filter(|(index, key)| {
+            key.observer as usize == observer
+                && key.locality as usize == locality
+                && key.kind == BELIEF_KIND_CONTROL
+                && particle
+                    .beliefs
+                    .evidence_count
+                    .get(*index)
+                    .copied()
+                    .unwrap_or(0)
+                    > 0
+                && target_matches_side(particle, key.target as usize, target_side_insurgent)
+        })
+        .map(|(index, _)| particle.beliefs.control[index * CONTROL_DIMENSIONS + PHYSICAL])
+        .max_by(f64::total_cmp)
+}
+
+fn opponent_presence_belief(
+    particle: &ParticleState,
+    observer: usize,
+    target_side_insurgent: bool,
+    locality: usize,
+) -> f64 {
+    // Presence rows are kept separate from the control vector.  Once such a
+    // row has evidence, its estimate is authoritative even when it is zero;
+    // otherwise use the actor's physical-control prior as Python does.
+    let mut evidenced = None;
+    for (index, key) in particle.beliefs.keys.iter().enumerate() {
+        if key.observer as usize == observer
+            && key.locality as usize == locality
+            && key.kind == 0
+            && particle
+                .beliefs
+                .evidence_count
+                .get(index)
+                .copied()
+                .unwrap_or(0)
+                > 0
+            && target_matches_side(particle, key.target as usize, target_side_insurgent)
+        {
+            let value = clamp01(particle.beliefs.presence[index]);
+            evidenced = Some(evidenced.map_or(value, |old: f64| old.max(value)));
+        }
+    }
+    evidenced.unwrap_or_else(|| {
+        belief_control(
+            particle,
+            observer,
+            if target_side_insurgent {
+                crate::INSURGENT
+            } else {
+                crate::GOVERNMENT
+            },
+            locality,
+            PHYSICAL,
+        )
+    })
+}
+
+fn locality_reach(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    organization: usize,
+    source: usize,
+    destination: usize,
+    edge_cost: f64,
+) -> f64 {
+    if source == destination {
+        return 1.0;
+    }
+    let infrastructure = (topology
+        .locality_infrastructure
+        .get(source)
+        .copied()
+        .unwrap_or(0.5)
+        + topology
+            .locality_infrastructure
+            .get(destination)
+            .copied()
+            .unwrap_or(0.5))
+        / 2.0;
+    let terrain_cost = edge_cost.max(0.0);
+    let distance_km = 18.0 + 22.0 * terrain_cost;
+    let mobility = particle
+        .organizations
+        .mobility
+        .get(organization)
+        .copied()
+        .unwrap_or(0.5);
+    let speed = 42.0 * mobility.max(0.15) * infrastructure.max(0.2) / terrain_cost.max(0.5);
+    let travel_hours = distance_km / speed.max(f64::MIN_POSITIVE);
+    python_exp(-travel_hours / 24.0)
+}
+
+fn target_belief_weight(
+    particle: &ParticleState,
+    observer: usize,
+    target_side_insurgent: bool,
+    locality: usize,
+    channel: usize,
+) -> f64 {
+    let target = if target_side_insurgent {
+        crate::INSURGENT
+    } else {
+        crate::GOVERNMENT
+    };
+    match channel {
+        NONFIELDED_HUMAN_TARGET => {
+            (belief_control(particle, observer, target, locality, 0)
+                + belief_control(particle, observer, target, locality, PHYSICAL))
+                / 2.0
+        }
+        ASSET_VIOLENCE => {
+            (belief_control(particle, observer, target, locality, ADMINISTRATIVE)
+                + belief_control(particle, observer, target, locality, 3)
+                + belief_control(particle, observer, target, locality, FISCAL))
+                / 3.0
+        }
+        _ => 0.0,
+    }
+}
+
+fn operational_target(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    organization: usize,
+    locality: usize,
+    channel: usize,
+    rng: &mut PyRandomCompat,
+) -> Option<usize> {
+    let target_side_insurgent = !is_insurgent(particle, organization);
+    let mut candidates = Vec::new();
+    candidates.push((locality, 1.0));
+    for (destination, cost) in topology.locality_edges.neighbors(locality) {
+        candidates.push((
+            destination as usize,
+            locality_reach(
+                particle,
+                topology,
+                organization,
+                locality,
+                destination as usize,
+                cost,
+            ),
+        ));
+    }
+    let mut weights = Vec::with_capacity(candidates.len());
+    for (index, (destination, reach)) in candidates.iter().copied().enumerate() {
+        let available = index == 0
+            || has_target_evidence(particle, organization, target_side_insurgent, destination);
+        weights.push(if available {
+            reach
+                * target_belief_weight(
+                    particle,
+                    organization,
+                    target_side_insurgent,
+                    destination,
+                    channel,
+                )
+        } else {
+            0.0
+        });
+    }
+    if weights.iter().sum::<f64>() <= 0.0 {
+        return Some(locality);
+    }
+    let selected = rng
+        .choices_indices(candidates.len(), Some(&weights), 1)
+        .ok()?[0];
+    Some(candidates[selected].0)
+}
+
+fn reachable_target_belief(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    organization: usize,
+    locality: usize,
+    channel: usize,
+) -> f64 {
+    let target_side_insurgent = !is_insurgent(particle, organization);
+    let source_weight = target_belief_weight(
+        particle,
+        organization,
+        target_side_insurgent,
+        locality,
+        channel,
+    );
+    let mut best = source_weight;
+    for (destination, cost) in topology.locality_edges.neighbors(locality) {
+        let destination = destination as usize;
+        if !has_target_evidence(particle, organization, target_side_insurgent, destination) {
+            continue;
+        }
+        let reach = locality_reach(
+            particle,
+            topology,
+            organization,
+            locality,
+            destination,
+            cost,
+        );
+        best = best.max(
+            reach
+                * target_belief_weight(
+                    particle,
+                    organization,
+                    target_side_insurgent,
+                    destination,
+                    channel,
+                ),
+        );
+    }
+    clamp01(best)
+}
+
+fn local_embeddedness(particle: &ParticleState, organization: usize, locality: usize) -> f64 {
+    let locality_count = particle.locality.population.len().max(1);
+    particle
+        .footholds
+        .embeddedness
+        .get(organization * locality_count + locality)
+        .copied()
+        .unwrap_or(0.0)
+        .clamp(0.0, 1.0)
+}
+
+fn local_information(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    organization: usize,
+    locality: usize,
+    target: usize,
+) -> f64 {
+    let mut evidence: f64 = 0.0;
+    for (index, key) in particle.beliefs.keys.iter().enumerate() {
+        if key.observer as usize != organization
+            || key.locality as usize != locality
+            || key.target as usize != target
+            || particle
+                .beliefs
+                .evidence_count
+                .get(index)
+                .copied()
+                .unwrap_or(0)
+                == 0
+        {
+            continue;
+        }
+        if key.kind == BELIEF_KIND_CONTROL {
+            let offset = index * CONTROL_DIMENSIONS;
+            let signal = particle.beliefs.control[offset]
+                .max(particle.beliefs.control[offset + PHYSICAL])
+                .max(particle.beliefs.control[offset + ADMINISTRATIVE]);
+            evidence = evidence.max(particle.beliefs.confidence[index].clamp(0.0, 1.0) * signal);
+        } else if key.kind == 0 {
+            evidence = evidence.max(
+                particle.beliefs.confidence[index].clamp(0.0, 1.0)
+                    * particle.beliefs.presence[index].clamp(0.0, 1.0),
+            );
+        }
+    }
+    // `topology` is part of the signature so this helper can later include
+    // formation/locality observer rows without changing the action API.
+    let _ = topology;
+    evidence
+}
+
+fn local_execution_knowledge(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    organization: usize,
+    locality: usize,
+    target: usize,
+) -> f64 {
+    let embedded = local_embeddedness(particle, organization, locality);
+    let information = local_information(particle, topology, organization, locality, target);
+    let persistent = if organization == crate::INSURGENT {
+        let count = particle.locality.population.len().max(1);
+        let index = organization * count + locality;
+        if particle
+            .footholds
+            .renewal_count
+            .get(index)
+            .copied()
+            .unwrap_or(0)
+            > 0
+        {
+            particle
+                .footholds
+                .strength
+                .get(index)
+                .copied()
+                .unwrap_or(0.0)
+        } else {
+            0.0
+        }
+    } else {
+        0.0
+    };
+    let local_access = 1.0
+        - (1.0 - embedded.clamp(0.0, 1.0))
+            * (1.0 - information.clamp(0.0, 1.0))
+            * (1.0 - persistent.clamp(0.0, 1.0));
+    let general = particle
+        .organizations
+        .local_knowledge
+        .get(organization)
+        .copied()
+        .unwrap_or(0.0)
+        .clamp(0.0, 1.0);
+    (general * local_access.clamp(0.0, 1.0))
+        .sqrt()
+        .clamp(0.0, 1.0)
+}
+
 fn local_fighter_equivalents(
     particle: &ParticleState,
     organization: usize,
@@ -66,10 +438,19 @@ fn local_fighter_equivalents(
     let mut pooled = 0.0;
     let mut reserve = 0.0;
     for index in 0..particle.manpower.pool.len() {
-        if particle.manpower.organization.get(index).copied().unwrap_or(u32::MAX)
-                as usize
+        if particle
+            .manpower
+            .organization
+            .get(index)
+            .copied()
+            .unwrap_or(u32::MAX) as usize
             == organization
-            && particle.manpower.locality.get(index).copied().unwrap_or(u32::MAX) as usize
+            && particle
+                .manpower
+                .locality
+                .get(index)
+                .copied()
+                .unwrap_or(u32::MAX) as usize
                 == locality
         {
             pooled += particle.manpower.pool[index].max(0.0);
@@ -138,18 +519,14 @@ pub fn action_attempt_probability(
     locality: usize,
     interval_days: f64,
 ) -> f64 {
-    let hazard = action_attempt_hazard(particle, config, organization, locality)
-        * interval_days.max(0.0);
+    let hazard =
+        action_attempt_hazard(particle, config, organization, locality) * interval_days.max(0.0);
     // `expm1` is evaluated at the negative hazard: 1 - exp(-h) is
     // numerically stable for both very small and very large exposures.
     clamp01(-(-hazard).exp_m1())
 }
 
-fn local_supply_available(
-    particle: &ParticleState,
-    organization: usize,
-    locality: usize,
-) -> f64 {
+fn local_supply_available(particle: &ParticleState, organization: usize, locality: usize) -> f64 {
     let formations = (0..particle.formations.personnel.len())
         .filter(|&formation| {
             particle.formations.organization[formation] as usize == organization
@@ -240,6 +617,7 @@ fn consume_local_supply(
 
 fn control_weights(
     particle: &ParticleState,
+    topology: &StaticTopology,
     config: &SimulationConfig,
     organization: usize,
     locality: usize,
@@ -250,28 +628,41 @@ fn control_weights(
     if total <= 0.0 {
         return [1.0, 0.0, 0.0, 0.0, 0.0, 0.0];
     }
-    let kind = particle.organizations.kind[organization];
-    let target = if kind as usize == crate::INSURGENT {
+    let insurgent = is_insurgent(particle, organization);
+    let target = if insurgent {
         crate::GOVERNMENT
     } else {
         crate::INSURGENT
     };
     let physical = belief_control(particle, organization, target, locality, PHYSICAL);
     let social = belief_control(particle, organization, target, locality, SOCIAL);
-    // Presence is a separate Python belief table. A zero-valued but evidenced
-    // presence row suppresses armed confrontation even when the control table
-    // still has its neutral physical prior; the native presence table is
-    // completed in the information parity slice, so preserve that zero at the
-    // current boundary rather than substituting the control prior.
-    let perceived_presence = 0.0;
+    let perceived_presence = opponent_presence_belief(particle, organization, !insurgent, locality)
+        .max(
+            evidenced_hostile_physical(particle, organization, !insurgent, locality).unwrap_or(0.0),
+        );
     let risk = particle.organizations.phenotype[organization * 8 + 4].clamp(0.0, 1.0);
     let governance = particle.organizations.phenotype[organization * 8 + 2].clamp(0.0, 1.0);
     let fielded_share = (fielded / total).clamp(0.0, 1.0);
-    let human_target_belief = if kind as usize == crate::INSURGENT {
-        // Reachable target evidence is zero in the no-evidence fallback.
-        0.0
+    let (human_target_belief, asset_weight, coercion_weight) = if insurgent {
+        (
+            reachable_target_belief(
+                particle,
+                topology,
+                organization,
+                locality,
+                NONFIELDED_HUMAN_TARGET,
+            ),
+            risk * reachable_target_belief(
+                particle,
+                topology,
+                organization,
+                locality,
+                ASSET_VIOLENCE,
+            ),
+            governance * local_embeddedness(particle, organization, locality),
+        )
     } else {
-        ((physical + social) / 2.0).clamp(0.0, 1.0)
+        (((physical + social) / 2.0).clamp(0.0, 1.0), 0.0, 0.0)
     };
     let access_weight = if config.access_restriction.enabled {
         (0.35 + 0.65 * governance) * fielded_share * (0.5 + 0.5 * risk)
@@ -282,8 +673,8 @@ fn control_weights(
         1.0,
         risk * fielded_share * perceived_presence,
         risk * human_target_belief,
-        0.0,
-        0.0,
+        asset_weight,
+        coercion_weight,
         access_weight,
     ]
 }
@@ -300,7 +691,10 @@ fn access_destination(
     } else {
         crate::INSURGENT
     };
-    let candidates = topology.locality_edges.neighbors(locality).collect::<Vec<_>>();
+    let candidates = topology
+        .locality_edges
+        .neighbors(locality)
+        .collect::<Vec<_>>();
     if candidates.is_empty() {
         return None;
     }
@@ -315,7 +709,9 @@ fn access_destination(
             (strategic - *cost).clamp(-8.0, 8.0).exp()
         })
         .collect::<Vec<_>>();
-    let selected = rng.choices_indices(candidates.len(), Some(&weights), 1).ok()?[0];
+    let selected = rng
+        .choices_indices(candidates.len(), Some(&weights), 1)
+        .ok()?[0];
     Some(candidates[selected].0 as usize)
 }
 
@@ -347,7 +743,8 @@ pub fn opportunities(
     if total <= 0.0 {
         return;
     }
-    let probability = action_attempt_probability(particle, config, organization, locality, interval_days);
+    let probability =
+        action_attempt_probability(particle, config, organization, locality, interval_days);
     let attempt_draw = rng.random();
     if trace {
         eprintln!(
@@ -366,7 +763,15 @@ pub fn opportunities(
         return;
     }
 
-    let mut weights = control_weights(particle, config, organization, locality, unfielded, fielded);
+    let mut weights = control_weights(
+        particle,
+        topology,
+        config,
+        organization,
+        locality,
+        unfielded,
+        fielded,
+    );
     if topology.locality_edges.neighbors(locality).next().is_none() {
         weights[ACCESS_RESTRICTION] = 0.0;
     }
@@ -375,7 +780,10 @@ pub fn opportunities(
         Err(_) => WAIT,
     };
     if trace {
-        eprintln!("ACTION choice org={} loc={} weights={:?} channel={}", organization, locality, weights, channel);
+        eprintln!(
+            "ACTION choice org={} loc={} weights={:?} channel={}",
+            organization, locality, weights, channel
+        );
     }
     if channel == WAIT {
         return;
@@ -412,21 +820,136 @@ pub fn opportunities(
         return;
     }
 
-    // Python chooses an operational locality before it checks whether the
-    // execution-time target is actually present.  Even a failed/empty target
-    // therefore consumes the same weighted-choice draw.  Preserve that RNG
-    // boundary now; the target-state mutations are handled below as their
-    // corresponding channels are certified.
-    if channel == NONFIELDED_HUMAN_TARGET || channel == ASSET_VIOLENCE {
-        let mut candidate_count = 1usize; // same-locality candidate
-        candidate_count += topology.locality_edges.neighbors(locality).count();
-        let _ = rng.choices_indices(candidate_count, None, 1);
+    if channel == NONFIELDED_HUMAN_TARGET {
+        // The locality draw precedes the execution-time target lookup.  In
+        // the current trajectory the selected locality has no exposed target,
+        // but preserving this boundary is essential for the next event's RNG
+        // continuation.
+        let _ = operational_target(
+            particle,
+            topology,
+            organization,
+            locality,
+            NONFIELDED_HUMAN_TARGET,
+            rng,
+        );
+        return;
+    }
+
+    if channel == ASSET_VIOLENCE {
+        let Some(target_locality) = operational_target(
+            particle,
+            topology,
+            organization,
+            locality,
+            ASSET_VIOLENCE,
+            rng,
+        ) else {
+            return;
+        };
+        let target_indices = (0..particle.political.institution_locality.len())
+            .filter(|&index| {
+                particle.political.institution_locality[index] as usize == target_locality
+                    && particle.political.institution_capacity[index] > 0.0
+                    && particle.political.institution_reach[index] > 0.0
+            })
+            .collect::<Vec<_>>();
+        if target_indices.is_empty() {
+            return;
+        }
+        let target_weights = target_indices
+            .iter()
+            .map(|&index| {
+                (particle.political.institution_capacity[index]
+                    * particle.political.institution_reach[index])
+                    .max(1e-9)
+            })
+            .collect::<Vec<_>>();
+        let selected = match rng.choices_indices(target_indices.len(), Some(&target_weights), 1) {
+            Ok(values) => values[0],
+            Err(_) => return,
+        };
+        let target = target_indices[selected];
+        let hardness = (particle.political.institution_capacity[target]
+            + particle.political.institution_integrity[target]
+            + particle.political.institution_reach[target])
+            / 3.0;
+        let demand = committed
+            * config.combat.supply_per_person_hour
+            * config.combat.interval_hours.max(0.0);
+        let available = local_supply_available(particle, organization, locality);
+        let material_fraction = if demand > 0.0 {
+            (available / demand).clamp(0.0, 1.0)
+        } else {
+            1.0
+        };
+        let capacity = (committed
+            / (committed
+                + config
+                    .organization_ecology
+                    .minimum_formation_personnel
+                    .max(1e-12)))
+        .clamp(0.0, 1.0);
+        let knowledge = local_execution_knowledge(
+            particle,
+            topology,
+            organization,
+            target_locality,
+            crate::GOVERNMENT,
+        );
+        let vulnerability = (1.0 - hardness).clamp(0.0, 1.0);
+        let probability = if capacity <= 0.0
+            || knowledge <= 0.0
+            || vulnerability <= 0.0
+            || material_fraction <= 0.0
+        {
+            0.0
+        } else {
+            (capacity * knowledge * vulnerability * material_fraction)
+                .powf(0.25)
+                .clamp(0.0, 1.0)
+        };
+        let (consumed, unmet) = consume_local_supply(particle, organization, locality, demand);
+        let execution_draw = rng.random();
+        if trace {
+            eprintln!(
+                "ACTION asset org={} source={} destination={} target={} demand={:.17} available={:.17} consumed={:.17} unmet={:.17} probability={:.17} draw={:.17}",
+                organization,
+                locality,
+                target_locality,
+                target,
+                demand,
+                available,
+                consumed,
+                unmet,
+                probability,
+                execution_draw,
+            );
+        }
+        if execution_draw < probability {
+            let damage = (config.combat.base_attrition_rate * probability).clamp(0.0, 1.0);
+            particle.political.institution_capacity[target] =
+                clamp01(particle.political.institution_capacity[target] * (1.0 - damage));
+            particle.political.institution_integrity[target] =
+                clamp01(particle.political.institution_integrity[target] * (1.0 - damage));
+            particle.political.institution_reach[target] =
+                clamp01(particle.political.institution_reach[target] * (1.0 - damage));
+            particle.locality.violence[target_locality] =
+                clamp01(particle.locality.violence[target_locality] * 0.85 + 0.25 * damage);
+        }
+        return;
     }
 
     // The remaining channels have no native state mutation in this slice, but
     // keep their constants explicit until the process-specific transitions
     // are ported and certified.
-    let _ = (channel, committed, ARMED_CONFRONTATION, COERCION, ADMINISTRATIVE);
+    let _ = (
+        channel,
+        committed,
+        ARMED_CONFRONTATION,
+        COERCION,
+        ADMINISTRATIVE,
+    );
 }
 
 pub fn apply_nonviolent_coercion(particle: &mut ParticleState, locality: usize, amount: f64) {
