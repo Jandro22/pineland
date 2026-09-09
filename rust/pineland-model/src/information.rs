@@ -99,8 +99,7 @@ pub fn collect_and_fuse(
     let elapsed = (time - particle.last_information_decay_at).max(0.0);
     if elapsed > 0.0 {
         let default_factor = python_exp(-config.information.default_decay_rate * elapsed);
-        let formation_factor =
-            python_exp(-config.information.formation_decay_rate * elapsed);
+        let formation_factor = python_exp(-config.information.formation_decay_rate * elapsed);
         for confidence in &mut particle.beliefs.confidence {
             *confidence = clamp01(*confidence * default_factor);
         }
@@ -511,7 +510,7 @@ fn deliver_due_relays(
             particle.information_relays[relay_index].status = 2;
             continue;
         };
-    if delivered {
+        if delivered {
             let source_type = source_type_from_code(observation.source_type);
             if let Some(source_type) = source_type {
                 let source_name = observation_source_name(particle, topology, &observation);
@@ -573,11 +572,7 @@ fn deliver_due_relays(
     }
 }
 
-fn command_node_name(
-    particle: &ParticleState,
-    topology: &StaticTopology,
-    node: u32,
-) -> String {
+fn command_node_name(particle: &ParticleState, topology: &StaticTopology, node: u32) -> String {
     let organizations = particle.organizations.kind.len();
     let formations = particle.formations.personnel.len();
     let posts = particle.security_posts.organization.len();
@@ -637,13 +632,7 @@ fn fuse_recorded_observation(
     } else {
         observation.observer as usize
     };
-    let trust = source_trust(
-        particle,
-        config,
-        recipient_actor,
-        source_type,
-        source_name,
-    );
+    let trust = source_trust(particle, config, recipient_actor, source_type, source_name);
     let language = language_comprehension(
         particle,
         topology,
@@ -653,9 +642,7 @@ fn fuse_recorded_observation(
         source_type,
         source_name,
     );
-    let age_quality = python_exp(
-        -observation.decay_rate * (time - observation.time).max(0.0),
-    );
+    let age_quality = python_exp(-observation.decay_rate * (time - observation.time).max(0.0));
     let corroboration = corroboration_weight(
         history,
         target,
@@ -738,12 +725,17 @@ fn fuse_recorded_observation(
         None
     };
     if let Some(organization) = zone_organization {
-        if let Some(zone_index) = zone_belief_index(
-            particle,
-            organization,
-            observation.microzone as usize,
-        ) {
-            fuse_zone(particle, config, zone_index, time, weight, observation.control[1]);
+        if let Some(zone_index) =
+            zone_belief_index(particle, organization, observation.microzone as usize)
+        {
+            fuse_zone(
+                particle,
+                config,
+                zone_index,
+                time,
+                weight,
+                observation.control[1],
+            );
         }
     }
     if kind != 3 {
@@ -1133,7 +1125,8 @@ fn observe_from_source(
     history: &mut Vec<ControlHistoryEntry>,
 ) {
     let targets = target_actors(particle, observer);
-    let report_probability = report_probability(particle, config, observer, source_type, source_id, locality);
+    let report_probability =
+        report_probability(particle, config, observer, source_type, source_id, locality);
     let report_draw = rng.random();
     if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
         eprintln!(

@@ -53,7 +53,10 @@ fn behavior_score(behavior: u8) -> (f64, f64) {
 }
 
 fn is_insurgent_behavior(behavior: u8) -> bool {
-    matches!(behavior, BEHAVIOR_INSURGENT_SYMPATHY | BEHAVIOR_ARMED_PARTICIPATION)
+    matches!(
+        behavior,
+        BEHAVIOR_INSURGENT_SYMPATHY | BEHAVIOR_ARMED_PARTICIPATION
+    )
 }
 
 /// Social edges are already canonicalized by world generation. Build a
@@ -71,9 +74,8 @@ fn edge_lookup(particle: &ParticleState) -> BTreeMap<(usize, usize), usize> {
 
 fn set_insurgent_control(particle: &mut ParticleState, locality: usize, delta: f64) {
     let offset = locality * CONTROL_DIMENSIONS;
-    particle.locality.insurgent_control[offset + 5] = clamp01(
-        particle.locality.insurgent_control[offset + 5] + delta,
-    );
+    particle.locality.insurgent_control[offset + 5] =
+        clamp01(particle.locality.insurgent_control[offset + 5] + delta);
 }
 
 fn refresh_community_aggregates(particle: &mut ParticleState) {
@@ -101,6 +103,14 @@ fn refresh_community_aggregates(particle: &mut ParticleState) {
     }
 }
 
+fn sync_legacy_rebel_sympathy(particle: &mut ParticleState, person: usize) {
+    let organization_count = particle.organizations.kind.len();
+    if crate::INSURGENT < organization_count {
+        particle.people.rebel_sympathy[person] =
+            particle.people.insurgent_affinity[person * organization_count + crate::INSURGENT];
+    }
+}
+
 /// Advance one social-influence event.
 pub fn update(
     particle: &mut ParticleState,
@@ -124,10 +134,8 @@ pub fn update(
         .collect::<Vec<_>>();
     active_insurgents.sort_unstable();
     let insurgent_available = !active_insurgents.is_empty();
-    let behavior_probability = reference_probability(
-        config.social_network.behavior_update_rate,
-        elapsed_days,
-    );
+    let behavior_probability =
+        reference_probability(config.social_network.behavior_update_rate, elapsed_days);
     let edges = edge_lookup(particle);
 
     let mut locality_government_shift = vec![0.0; topology.locality_count()];
@@ -231,6 +239,7 @@ pub fn update(
                 }
             }
         }
+        sync_legacy_rebel_sympathy(particle, person);
 
         // Python consumes exactly one gate draw for every person, including a
         // person whose chosen behavior remains unchanged.
@@ -282,14 +291,16 @@ pub fn update(
             armed_membership_utility + grievance + exposure_weight * insurgent_signal
                 - fear
                 - peaceful_channel_strength * political_access,
-            (if particle.people.displaced[person] != 0 { 1.4 } else { -0.8 })
-                + fear
+            (if particle.people.displaced[person] != 0 {
+                1.4
+            } else {
+                -0.8
+            }) + fear
                 - expected_government,
         ];
         if !insurgent_available {
             choices.retain(|choice| {
-                *choice != BEHAVIOR_INSURGENT_SYMPATHY
-                    && *choice != BEHAVIOR_ARMED_PARTICIPATION
+                *choice != BEHAVIOR_INSURGENT_SYMPATHY && *choice != BEHAVIOR_ARMED_PARTICIPATION
             });
             utilities = choices
                 .iter()
@@ -303,15 +314,14 @@ pub fn update(
                     BEHAVIOR_PARTY_PARTICIPATION => {
                         party_affinity + efficacy + political_access - 0.5 * fear
                     }
-                    BEHAVIOR_CIVIL_SOCIETY => {
-                        0.5 + efficacy + 0.6 * political_access - 0.3 * fear
-                    }
-                    BEHAVIOR_PROTEST => {
-                        1.2 * grievance + efficacy + 0.25 * political_access - fear
-                    }
+                    BEHAVIOR_CIVIL_SOCIETY => 0.5 + efficacy + 0.6 * political_access - 0.3 * fear,
+                    BEHAVIOR_PROTEST => 1.2 * grievance + efficacy + 0.25 * political_access - fear,
                     BEHAVIOR_MIGRATION => {
-                        (if particle.people.displaced[person] != 0 { 1.4 } else { -0.8 })
-                            + fear
+                        (if particle.people.displaced[person] != 0 {
+                            1.4
+                        } else {
+                            -0.8
+                        }) + fear
                             - expected_government
                     }
                     _ => 0.0,
@@ -365,6 +375,7 @@ pub fn update(
                     .fill(0.0);
             }
         }
+        sync_legacy_rebel_sympathy(particle, person);
 
         let affinity_shares = |values: &[f64], behavior: u8| -> Vec<(usize, f64)> {
             let mut total = 0.0;
@@ -404,8 +415,8 @@ pub fn update(
                 .unwrap_or(0.0);
             let old_specific = old_insurgent * old_share;
             let new_specific = new_insurgent * new_share;
-            let specific_shift = particle.people.represented_population[person]
-                * (new_specific - old_specific);
+            let specific_shift =
+                particle.people.represented_population[person] * (new_specific - old_specific);
             if specific_shift != 0.0 {
                 *locality_franchise_shift
                     .entry((locality, organization))
