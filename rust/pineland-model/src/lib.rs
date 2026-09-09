@@ -1618,7 +1618,7 @@ impl SimulationEngine {
                     event.time,
                 );
             }
-            self.process_event(&event, until)?;
+            self.process_event(&event)?;
             if std::env::var_os("PINELAND_BELIEF_TRACE").is_some()
                 && matches!(event.payload, EventPayload::Information)
                 && event.time >= 3.5
@@ -1671,7 +1671,7 @@ impl SimulationEngine {
         Ok(processed)
     }
 
-    fn process_event(&mut self, event: &ScheduledEvent, horizon: f64) -> Result<(), ModelError> {
+    fn process_event(&mut self, event: &ScheduledEvent) -> Result<(), ModelError> {
         match &event.payload {
             EventPayload::Patrol { .. } => {
                 let mut rng = self.take_rng("process:patrol");
@@ -1769,14 +1769,8 @@ impl SimulationEngine {
             }
             EventPayload::ContactScan => {
                 let mut rng = self.take_rng("process:contact_scan");
-                let exposure_days = self
-                    .config
-                    .intervals
-                    .contact
-                    .min((horizon - event.time).max(0.0));
-                if exposure_days > 0.0
-                    && self.config.combat.organized_action_architecture == "multichannel_v5"
-                {
+                let exposure_days = self.config.intervals.contact;
+                if self.config.combat.organized_action_architecture == "multichannel_v5" {
                     self.schedule_organized_actions(event.time + exposure_days, exposure_days)?;
                 } else {
                     combat::schedule_contacts(
@@ -1949,22 +1943,13 @@ impl SimulationEngine {
                 continue;
             }
             for locality in 0..locality_count {
-                let has_capacity = (0..self.particle.formations.personnel.len()).any(|formation| {
-                    self.particle.formations.active[formation] != 0
-                        && self.particle.formations.organization[formation] as usize == organization
-                        && self.particle.formations.locality[formation] as usize == locality
-                        && self.particle.formations.personnel[formation] > 0.0
-                        && self.particle.formations.moving[formation] == 0
-                        && self.particle.formations.outside_pineland[formation] == 0
-                        && self.particle.formations.operational_status[formation] == 1
-                });
-                let has_manpower = (0..self.particle.manpower.pool.len()).any(|index| {
-                    self.particle.manpower.organization[index] as usize == organization
-                        && self.particle.manpower.locality[index] as usize == locality
-                        && self.particle.manpower.pool[index] > 0.0
-                        && self.particle.manpower.supply_reserve[index] > 0.0
-                });
-                if !(has_capacity || has_manpower) {
+                let (unfielded, fielded) = actions::local_fighter_equivalents(
+                    &self.particle,
+                    organization,
+                    locality,
+                    &self.config,
+                );
+                if unfielded + fielded <= 0.0 {
                     continue;
                 }
                 self.particle.scheduler.schedule_with_elapsed(

@@ -25,6 +25,7 @@ enum SourceType {
     PoliticalElite,
     Interpreter,
     Patrol,
+    Contact,
 }
 
 type ControlHistoryEntry = InformationHistoryEntry;
@@ -70,6 +71,7 @@ impl SourceType {
             Self::PoliticalElite => "political_elite",
             Self::Interpreter => "interpreter",
             Self::Patrol => "patrol",
+            Self::Contact => "contact",
         }
     }
 
@@ -461,6 +463,7 @@ fn source_type_code(source_type: SourceType) -> u8 {
         SourceType::PoliticalElite => 5,
         SourceType::Interpreter => 6,
         SourceType::Patrol => 7,
+        SourceType::Contact => 8,
     }
 }
 
@@ -474,6 +477,7 @@ fn source_type_from_code(code: u8) -> Option<SourceType> {
         5 => SourceType::PoliticalElite,
         6 => SourceType::Interpreter,
         7 => SourceType::Patrol,
+        8 => SourceType::Contact,
         _ => return None,
     })
 }
@@ -1081,6 +1085,9 @@ fn publish_information_observation(
         personnel: personnel.max(0.0),
         detection_probability: clamp01(detection_probability),
         detected: u8::from(detected),
+        reported_momentum: 0.0,
+        reported_civilian_harm: 0.0,
+        attributed_actor: INFORMATION_NONE,
     };
     particle.information_observations.push(observation.clone());
     queue_information_relay(
@@ -1095,6 +1102,71 @@ fn publish_information_observation(
         source_type,
     );
     observation
+}
+
+/// Record one of the two noisy reports emitted by an armed engagement.
+///
+/// Engagement outcomes are intentionally retained as execution records but
+/// are not fused into the presence/control tables: that is the Python
+/// contract for `observation_type == "engagement_outcome"`.  The report still
+/// enters the command relay so later delivery consumes the same reliability
+/// clock and continuation state as the reference engine.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn record_engagement_observation(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    observer_formation: usize,
+    target_formation: usize,
+    engagement_id: &str,
+    locality: usize,
+    microzone: usize,
+    time: f64,
+    signal: f64,
+    civilian_harm: f64,
+) -> (f64, f64) {
+    let observer_organization = particle.formations.organization[observer_formation] as usize;
+    let target_organization = particle.formations.organization[target_formation] as usize;
+    let noise = config.reporting_error;
+    let perceived = clamp01(signal + rng.normalvariate(0.0, noise));
+    let attributed_actor = if rng.random() < config.information.attribution_error_rate {
+        observer_organization
+    } else {
+        target_organization
+    };
+    let reported_harm = (civilian_harm * rng.uniform(1.0 - noise, 1.0 + noise)).max(0.0);
+    let source_id = format!("ENGAGEMENT:{engagement_id}");
+    let observer_node = formation_name(particle, observer_formation);
+    let observation = publish_information_observation(
+        particle,
+        topology,
+        config,
+        observer_organization,
+        &observer_node,
+        &source_id,
+        SourceType::Contact,
+        2,
+        Some(target_organization),
+        Some(target_formation),
+        locality,
+        microzone,
+        time,
+        0.9,
+        0.84,
+        [0.0; CONTROL_DIMENSIONS],
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        true,
+    );
+    let index = particle.information_observations.len().saturating_sub(1);
+    particle.information_observations[index].reported_momentum = perceived;
+    particle.information_observations[index].reported_civilian_harm = reported_harm;
+    particle.information_observations[index].attributed_actor = attributed_actor as u32;
+    let _ = observation;
+    (perceived, reported_harm)
 }
 
 /// Publish the control report already fused by the patrol module.
@@ -2003,6 +2075,7 @@ fn report_probability(
         SourceType::FixedPost => config.information.fixed_post_report_rate,
         SourceType::Interpreter => config.information.interpreter_report_rate,
         SourceType::Patrol => config.information.patrol_report_rate,
+        SourceType::Contact => 0.0,
     };
     if source_type == SourceType::Administrative {
         probability *= 0.35 + 0.95 * clamp01(particle.locality.administrative_capacity[locality]);

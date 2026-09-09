@@ -1140,6 +1140,13 @@ pub struct InformationObservation {
     pub personnel: f64,
     pub detection_probability: f64,
     pub detected: u8,
+    /// Engagement-outcome reports carry a noisy momentum signal and a noisy
+    /// civilian-harm estimate.  They are deliberately separate from the
+    /// presence/control payload because the Python reference does not fuse
+    /// this observation type into either belief table.
+    pub reported_momentum: f64,
+    pub reported_civilian_harm: f64,
+    pub attributed_actor: u32,
 }
 
 impl InformationObservation {
@@ -1168,6 +1175,9 @@ impl InformationObservation {
             personnel: 0.0,
             detection_probability: 0.0,
             detected: 0,
+            reported_momentum: 0.0,
+            reported_civilian_harm: 0.0,
+            attributed_actor: INFORMATION_NONE,
         }
     }
 }
@@ -3977,6 +3987,9 @@ fn append_information_state(material: &mut Vec<u8>, particle: &ParticleState) {
             material.extend_from_slice(&value.to_bits().to_le_bytes());
         }
         material.push(observation.detected);
+        material.extend_from_slice(&observation.reported_momentum.to_bits().to_le_bytes());
+        material.extend_from_slice(&observation.reported_civilian_harm.to_bits().to_le_bytes());
+        material.extend_from_slice(&observation.attributed_actor.to_le_bytes());
     }
     material.extend_from_slice(&(particle.information_relays.len() as u64).to_le_bytes());
     for relay in &particle.information_relays {
