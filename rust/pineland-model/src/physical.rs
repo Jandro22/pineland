@@ -382,6 +382,26 @@ pub fn refresh(
         particle.locality.government_control[offset + 1] = clamp01(government);
         particle.locality.insurgent_control[offset + 1] = clamp01(insurgent);
     }
+    if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && time >= 1.0 {
+        eprintln!(
+            "PHYS locality0 gphys={:.17} iphys={:.17} z0g={:.17} z0i={:.17} memg={:.17} memi={:.17}",
+            particle.locality.government_control[1],
+            particle.locality.insurgent_control[1],
+            particle.zones.government_control[0],
+            particle.zones.insurgent_control[0],
+            particle.zones.government_presence[0],
+            particle.zones.insurgent_presence[0]
+        );
+        let nonzero = particle
+            .zones
+            .government_presence
+            .iter()
+            .enumerate()
+            .filter(|(_, value)| **value > 0.0)
+            .map(|(zone, value)| format!("{}:{:.17}", zone, value))
+            .collect::<Vec<_>>();
+        eprintln!("PHYS memories {}", nonzero.join(","));
+    }
 }
 
 pub fn record_presence(
