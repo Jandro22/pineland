@@ -72,8 +72,7 @@ pub fn decay_and_propagate(
     // fields updated at the boundary, so decide it once before the person
     // loop rather than inferring it from stale per-person affiliation.
     let insurgent_perceived = (0..particle.organizations.kind.len()).any(|organization| {
-        particle.organizations.active[organization] != 0
-            && organization == crate::INSURGENT
+        particle.organizations.active[organization] != 0 && organization == crate::INSURGENT
     });
     for person in 0..particle.people.locality.len() {
         let locality = particle.people.residence[person] as usize;

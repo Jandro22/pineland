@@ -21,11 +21,9 @@ fn reference_probability(probability: f64, elapsed_days: f64, reference_days: f6
     } else if probability >= 1.0 {
         1.0
     } else {
-        1.0
-            - python_exp(
-                (elapsed_days / reference_days.max(f64::MIN_POSITIVE))
-                    * (1.0 - probability).ln(),
-            )
+        1.0 - python_exp(
+            (elapsed_days / reference_days.max(f64::MIN_POSITIVE)) * (1.0 - probability).ln(),
+        )
     }
 }
 
@@ -58,18 +56,13 @@ fn interpreter_channel_quality(
 ) -> f64 {
     let capacity = clamp01(
         language_overlap
-            * (0.45
-                + 0.35 * clamp01(social_permeability)
-                + 0.20 * clamp01(kinship_overlap)),
+            * (0.45 + 0.35 * clamp01(social_permeability) + 0.20 * clamp01(kinship_overlap)),
     );
     if capacity <= 0.0 || locality >= particle.locality.population.len() {
         return 0.0;
     }
-    let demographic_quality = clamp01(
-        0.35
-            + 0.35 * clamp01(social_permeability)
-            + 0.30 * clamp01(kinship_overlap),
-    );
+    let demographic_quality =
+        clamp01(0.35 + 0.35 * clamp01(social_permeability) + 0.30 * clamp01(kinship_overlap));
     let mut broker_quality: f64 = 0.0;
     for index in 0..particle.foreign.interpreter_person.len() {
         if particle.foreign.interpreter_foreign_state[index] as usize != foreign_state
@@ -117,27 +110,21 @@ pub fn update(
                 locality_count,
             );
             let safety_gain =
-                (1.0 - perceived_home_security)
-                    - (1.0 - particle.foreign.opportunity[state]) * 0.2;
+                (1.0 - perceived_home_security) - (1.0 - particle.foreign.opportunity[state]) * 0.2;
             let reference_hazard = clamp01(
                 config.foreign_affairs.return_rate
                     * logistic(-2.0 * safety_gain + particle.people.state_legitimacy[person]),
             );
-            let hazard = reference_probability(
-                reference_hazard,
-                config.foreign_affairs.interval_days,
-                30.0,
-            );
+            let hazard =
+                reference_probability(reference_hazard, config.foreign_affairs.interval_days, 30.0);
             if rng.random() < hazard {
                 particle.people.external_state[person] = u32::MAX;
                 particle.people.migration_status[person] = 4;
-                particle.people.origin_tie_strength[person] = clamp01(
-                    particle.people.origin_tie_strength[person] + 0.15,
-                );
+                particle.people.origin_tie_strength[person] =
+                    clamp01(particle.people.origin_tie_strength[person] + 0.15);
             } else {
-                particle.people.origin_tie_strength[person] *= python_exp(
-                    -0.02 * config.foreign_affairs.interval_days / 30.0,
-                );
+                particle.people.origin_tie_strength[person] *=
+                    python_exp(-0.02 * config.foreign_affairs.interval_days / 30.0);
                 for link in 0..particle.foreign.diaspora_person.len() {
                     if particle.foreign.diaspora_person[link] as usize == person {
                         particle.foreign.diaspora_social_strength[link] =
@@ -168,35 +155,38 @@ pub fn update(
             + particle.foreign.border_language_overlap[border]
             - particle.foreign.border_terrain_friction[border]
                 * (1.0 - particle.foreign.border_legal_permeability[border]);
-        let reference_hazard = clamp01(
-            config.foreign_affairs.migration_rate * logistic(pressure + attraction - 1.6),
-        );
-        let hazard = reference_probability(
-            reference_hazard,
-            config.foreign_affairs.interval_days,
-            30.0,
-        );
+        let reference_hazard =
+            clamp01(config.foreign_affairs.migration_rate * logistic(pressure + attraction - 1.6));
+        let hazard =
+            reference_probability(reference_hazard, config.foreign_affairs.interval_days, 30.0);
         if rng.random() < hazard {
             particle.people.external_state[person] = state as u32;
-            particle.people.migration_status[person] = if particle.locality.violence[locality] > 0.25 {
-                1
-            } else if particle.people.fear[person] > 0.55 {
-                2
-            } else {
-                3
-            };
+            particle.people.migration_status[person] =
+                if particle.locality.violence[locality] > 0.25 {
+                    1
+                } else if particle.people.fear[person] > 0.55 {
+                    2
+                } else {
+                    3
+                };
             particle.people.origin_tie_strength[person] = 1.0;
             particle.foreign.diaspora_person.push(person as u32);
             particle.foreign.diaspora_foreign_state.push(state as u32);
-            particle.foreign.diaspora_origin_locality
+            particle
+                .foreign
+                .diaspora_origin_locality
                 .push(particle.people.home[person]);
             particle.foreign.diaspora_social_strength.push(1.0);
-            particle.foreign
+            particle
+                .foreign
                 .diaspora_financial_capacity
                 .push(particle.people.resources[person] * 0.2);
-            particle.foreign.diaspora_information_reliability.push(clamp01(
-                0.35 + 0.5 * particle.foreign.border_language_overlap[border],
-            ));
+            particle
+                .foreign
+                .diaspora_information_reliability
+                .push(clamp01(
+                    0.35 + 0.5 * particle.foreign.border_language_overlap[border],
+                ));
             particle.foreign.diaspora_created_at.push(time);
         }
     }
@@ -267,19 +257,15 @@ pub fn update(
             // not realized locality control.  This is the same
             // `belief_view("government").locality_control(..., "government")`
             // boundary used by Python.
-            let host_estimate = crate::beliefs::control_estimate(
-                particle,
-                crate::GOVERNMENT,
-                locality,
-            )[1];
+            let host_estimate =
+                crate::beliefs::control_estimate(particle, crate::GOVERNMENT, locality)[1];
             let noise = config.foreign_affairs.belief_noise
                 * (1.0 - config.foreign_affairs.interpreter_effect * interpreter_quality);
             if let Some(belief) = (0..particle.foreign.belief_foreign_state.len()).find(|index| {
                 particle.foreign.belief_foreign_state[*index] as usize == state
                     && particle.foreign.belief_locality[*index] as usize == locality
             }) {
-                let government =
-                    clamp01(host_estimate + rng.normalvariate(0.0, noise));
+                let government = clamp01(host_estimate + rng.normalvariate(0.0, noise));
                 let insurgent = clamp01(1.0 - government + rng.normalvariate(0.0, noise));
                 particle.foreign.belief_government_control[belief] = government;
                 particle.foreign.belief_insurgent_presence[belief] = insurgent;
@@ -314,9 +300,8 @@ pub fn update(
             .map(|index| particle.foreign.belief_government_control[*index])
             .sum::<f64>()
             / belief_indices.len().max(1) as f64;
-        let cost_denominator = (particle.foreign.resources[state]
-            + particle.foreign.cumulative_cost[state])
-            .max(1.0);
+        let cost_denominator =
+            (particle.foreign.resources[state] + particle.foreign.cumulative_cost[state]).max(1.0);
         let cost_pressure = particle.foreign.cumulative_cost[state] / cost_denominator;
         let rival_presence = (particle.foreign.rival_offsets[state + 1]
             - particle.foreign.rival_offsets[state])
@@ -408,8 +393,7 @@ pub fn update(
                     for capacity in &mut particle.political.institution_capacity {
                         *capacity = clamp01(
                             *capacity
-                                + learning / denominator * 0.02
-                                    / institution_count.max(1) as f64,
+                                + learning / denominator * 0.02 / institution_count.max(1) as f64,
                         );
                     }
                     for person in 0..particle.people.government_legitimacy.len() {
@@ -426,15 +410,12 @@ pub fn update(
                     // resource account above; these additional channels alter
                     // local execution and sponsor dependence without creating
                     // personnel.
-                    particle.organizations.external_sanctuary[recipient] = clamp01(
-                        particle.organizations.external_sanctuary[recipient]
-                            + 0.12,
-                    );
+                    particle.organizations.external_sanctuary[recipient] =
+                        clamp01(particle.organizations.external_sanctuary[recipient] + 0.12);
                     let phenotype = recipient * 8 + 7;
                     if phenotype < particle.organizations.phenotype.len() {
-                        particle.organizations.phenotype[phenotype] = clamp01(
-                            particle.organizations.phenotype[phenotype] + 0.04,
-                        );
+                        particle.organizations.phenotype[phenotype] =
+                            clamp01(particle.organizations.phenotype[phenotype] + 0.04);
                     }
                     particle.organizations.capital_organizational[recipient] = clamp01(
                         particle.organizations.capital_organizational[recipient]
@@ -453,8 +434,7 @@ pub fn update(
                             continue;
                         }
                         particle.formations.quality[formation] = clamp01(
-                            particle.formations.quality[formation]
-                                + training / denominator * 0.025,
+                            particle.formations.quality[formation] + training / denominator * 0.025,
                         );
                         particle.formations.cohesion[formation] = clamp01(
                             particle.formations.cohesion[formation]
@@ -475,9 +455,7 @@ pub fn update(
             }
         }
         let intervention_probability = reference_probability(
-            clamp01(
-                config.foreign_affairs.intervention_base_hazard * willingness,
-            ),
+            clamp01(config.foreign_affairs.intervention_base_hazard * willingness),
             config.foreign_affairs.interval_days,
             30.0,
         );

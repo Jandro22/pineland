@@ -170,8 +170,7 @@ pub fn update(
         // organization collapse, because the next force-movement boundary
         // sees the reactivated formation when renewing local footholds.
         if particle.formations.operational_status[formation] == 0
-            && particle.formations.cohesion[formation]
-                > config.combat.ineffective_cohesion * 1.35
+            && particle.formations.cohesion[formation] > config.combat.ineffective_cohesion * 1.35
             && particle.formations.effective_readiness(formation)
                 > config.combat.ineffective_readiness * 1.35
         {

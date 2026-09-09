@@ -11,11 +11,7 @@ use pineland_core::topology::StaticTopology;
 
 const FISCAL: usize = 4;
 
-fn organization_control(
-    particle: &ParticleState,
-    locality: usize,
-    organization: usize,
-) -> f64 {
+fn organization_control(particle: &ParticleState, locality: usize, organization: usize) -> f64 {
     if organization == crate::INSURGENT {
         return particle.locality.insurgent_control[locality * CONTROL_DIMENSIONS + FISCAL];
     }
@@ -56,13 +52,12 @@ pub fn update(
         let offset = locality * CONTROL_DIMENSIONS;
         let security = particle.locality.government_control[offset + 1];
         let access_pressure = crate::access::locality_access_pressure(particle, topology, locality);
-        let reference_net_fraction =
-            (0.002 + 0.004 * particle.locality.infrastructure[locality])
-                * (0.5 + 0.5 * security)
-                - (0.003 * particle.locality.violence[locality]
-                    + 0.002 * particle.locality.disruption[locality])
-                - config.access_restriction.economic_penalty * access_pressure
-                - 0.001;
+        let reference_net_fraction = (0.002 + 0.004 * particle.locality.infrastructure[locality])
+            * (0.5 + 0.5 * security)
+            - (0.003 * particle.locality.violence[locality]
+                + 0.002 * particle.locality.disruption[locality])
+            - config.access_restriction.economic_penalty * access_pressure
+            - 0.001;
         let base = (1.0 + reference_net_fraction).max(0.0);
         let growth_factor = if base == 0.0 {
             0.0

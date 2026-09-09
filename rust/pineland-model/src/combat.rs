@@ -379,6 +379,7 @@ fn apply_direct_civilian_harm(
     let mut civilian_masses = Vec::new();
     for person in 0..particle.people.residence.len() {
         if particle.people.residence[person] as usize != locality
+            || particle.people.external_state[person] != u32::MAX
             || particle.people.represented_population[person] <= 0.0
         {
             continue;

@@ -737,10 +737,7 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         "manpower_organization",
         u32_array(&particle.manpower.organization),
     );
-    root.insert(
-        "manpower_locality",
-        u32_array(&particle.manpower.locality),
-    );
+    root.insert("manpower_locality", u32_array(&particle.manpower.locality));
     root.insert("manpower_pool", f64_array(&particle.manpower.pool));
     root.insert(
         "manpower_supply_reserve",
@@ -762,12 +759,12 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         "organizations_active",
         u8_array(&particle.organizations.active),
     );
-    root.insert(
-        "organizations_kind",
-        u8_array(&particle.organizations.kind),
-    );
+    root.insert("organizations_kind", u8_array(&particle.organizations.kind));
     root.insert("foothold_active", u8_array(&particle.footholds.active));
-    root.insert("foothold_updated_at", f64_array(&particle.footholds.updated_at));
+    root.insert(
+        "foothold_updated_at",
+        f64_array(&particle.footholds.updated_at),
+    );
     root
 }
 

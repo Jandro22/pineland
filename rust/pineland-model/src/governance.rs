@@ -35,11 +35,8 @@ fn continuous_capacity_update(
     let reference_days = reference_days.max(1.0e-12);
     let gain_probability = clamp01(gain_probability);
     let decay_probability = clamp01(decay_probability);
-    let gain_hazard = -(1.0 - gain_probability)
-        .max(1.0e-15)
-        .ln()
-        / reference_days
-        * clamp01(support);
+    let gain_hazard =
+        -(1.0 - gain_probability).max(1.0e-15).ln() / reference_days * clamp01(support);
     let decay_hazard = -(1.0 - decay_probability).max(1.0e-15).ln() / reference_days;
     let total_hazard = gain_hazard + decay_hazard;
     if total_hazard <= 0.0 {
@@ -47,8 +44,7 @@ fn continuous_capacity_update(
     }
     let equilibrium = gain_hazard / total_hazard;
     clamp01(
-        equilibrium
-            + (clamp01(current) - equilibrium) * python_exp(-total_hazard * elapsed_days),
+        equilibrium + (clamp01(current) - equilibrium) * python_exp(-total_hazard * elapsed_days),
     )
 }
 
@@ -69,8 +65,8 @@ fn local_membership_rootedness(
         {
             continue;
         }
-        let represented = particle.people.represented_population[person]
-            * particle.people.armed_fraction[person];
+        let represented =
+            particle.people.represented_population[person] * particle.people.armed_fraction[person];
         if represented <= 0.0 {
             continue;
         }
@@ -100,7 +96,11 @@ fn local_membership_rootedness(
     }
 }
 
-fn aggregate_insurgent_control(particle: &mut ParticleState, locality: usize, dimensions: &[usize]) {
+fn aggregate_insurgent_control(
+    particle: &mut ParticleState,
+    locality: usize,
+    dimensions: &[usize],
+) {
     let organization_count = particle.organizations.kind.len();
     let locality_offset = locality * CONTROL_DIMENSIONS;
     let active_insurgents = (0..organization_count)
@@ -116,13 +116,15 @@ fn aggregate_insurgent_control(particle: &mut ParticleState, locality: usize, di
     // locality vector is also the legacy aggregate row.  The oracle therefore
     // exposes the same row directly rather than taking a complement over a
     // second actor-specific entry.
-    if active_insurgents.iter().any(|organization| *organization == crate::INSURGENT) {
-        let organization_offset =
-            pineland_core::state::LocalityState::organization_control_offset(
-                locality,
-                crate::INSURGENT,
-                organization_count,
-            );
+    if active_insurgents
+        .iter()
+        .any(|organization| *organization == crate::INSURGENT)
+    {
+        let organization_offset = pineland_core::state::LocalityState::organization_control_offset(
+            locality,
+            crate::INSURGENT,
+            organization_count,
+        );
         for &dimension in dimensions {
             particle.locality.insurgent_control[locality_offset + dimension] = particle
                 .locality
@@ -200,8 +202,7 @@ pub fn update(
                 + 0.006 * production * cycle_scale,
         );
         particle.locality.government_control[offset + LEGAL] = clamp01(
-            particle.locality.government_control[offset + LEGAL]
-                + 0.004 * production * cycle_scale,
+            particle.locality.government_control[offset + LEGAL] + 0.004 * production * cycle_scale,
         );
         particle.locality.government_control[offset + FISCAL] = clamp01(
             particle.locality.government_control[offset + FISCAL]
@@ -287,25 +288,20 @@ pub fn update(
                 .unwrap_or(0.0)
                 .clamp(0.0, 1.0);
             let support = clamp01(
-                local_capacity
-                    * (0.5 + 0.5 * rooted_share)
-                    * institutional_capacity
-                    * investment,
+                local_capacity * (0.5 + 0.5 * rooted_share) * institutional_capacity * investment,
             );
-            let control_offset =
-                pineland_core::state::LocalityState::organization_control_offset(
-                    locality,
-                    organization,
-                    organization_count,
-                );
+            let control_offset = pineland_core::state::LocalityState::organization_control_offset(
+                locality,
+                organization,
+                organization_count,
+            );
             for dimension in [ADMINISTRATIVE, LEGAL, FISCAL, EXPECTED] {
-                let effective_support = if local_capacity
-                    >= config.nonstate_governance.minimum_local_capacity
-                {
-                    support
-                } else {
-                    0.0
-                };
+                let effective_support =
+                    if local_capacity >= config.nonstate_governance.minimum_local_capacity {
+                        support
+                    } else {
+                        0.0
+                    };
                 let old = particle.locality.organization_control[control_offset + dimension];
                 particle.locality.organization_control[control_offset + dimension] =
                     continuous_capacity_update(

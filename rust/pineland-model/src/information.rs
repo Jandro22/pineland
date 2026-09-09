@@ -1460,9 +1460,7 @@ fn observe_from_source(
     let report_probability =
         report_probability(particle, config, observer, source_type, source_id, locality);
     let report_draw = rng.random();
-    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
-        && (time - 49.0).abs() < 1.0e-9
-    {
+    if std::env::var_os("PINELAND_PRF17_TRACE").is_some() && (time - 49.0).abs() < 1.0e-9 {
         eprintln!(
             "SOURCE_TRACE source={} time={:.17} observer={} type={} locality={} draw={:.17} probability={:.17} targets={:?}",
             source_id,
@@ -1567,9 +1565,7 @@ fn trace_source_end(
     locality: usize,
     time: f64,
 ) {
-    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
-        && (time - 49.0).abs() < 1.0e-9
-    {
+    if std::env::var_os("PINELAND_PRF17_TRACE").is_some() && (time - 49.0).abs() < 1.0e-9 {
         let mut probe = rng.clone();
         eprintln!(
             "SOURCE_END source={} type={} locality={} next={:.17}",
@@ -1630,11 +1626,7 @@ fn observe_target(
     {
         eprintln!(
             "TARGET_C038 present={} personnel={:.17} probability={:.17} draw={:.17} detected={}",
-            present,
-            personnel,
-            probability,
-            detection_draw,
-            detected,
+            present, personnel, probability, detection_draw, detected,
         );
     }
     if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {

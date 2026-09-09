@@ -2063,13 +2063,7 @@ impl SimulationEngine {
                 // travel time; reusing a stale next_available value here
                 // would move an unavailable patrol into the future.
                 let base_interval = self.config.intervals.patrol;
-                let can_execute = self
-                    .particle
-                    .patrols
-                    .active
-                    .get(patrol)
-                    .copied()
-                    == Some(1)
+                let can_execute = self.particle.patrols.active.get(patrol).copied() == Some(1)
                     && self
                         .particle
                         .patrols
@@ -2083,19 +2077,31 @@ impl SimulationEngine {
                                 .get(formation as usize)
                                 .map(|personnel| {
                                     let invalid = *personnel <= 0.0
-                                        || self.particle.formations.active
+                                        || self
+                                            .particle
+                                            .formations
+                                            .active
                                             .get(formation as usize)
                                             .copied()
                                             != Some(1)
-                                        || self.particle.formations.outside_pineland
+                                        || self
+                                            .particle
+                                            .formations
+                                            .outside_pineland
                                             .get(formation as usize)
                                             .copied()
                                             != Some(0)
-                                        || self.particle.formations.moving
+                                        || self
+                                            .particle
+                                            .formations
+                                            .moving
                                             .get(formation as usize)
                                             .copied()
                                             != Some(0)
-                                        || self.particle.formations.operational_status
+                                        || self
+                                            .particle
+                                            .formations
+                                            .operational_status
                                             .get(formation as usize)
                                             .copied()
                                             != Some(1);

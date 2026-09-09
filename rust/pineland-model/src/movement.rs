@@ -57,8 +57,8 @@ pub fn civilian_mobility(
     let people_count = particle.people.locality.len();
     let locality_count = topology.locality_count();
     let mut displaced_by_origin = vec![0.0; locality_count];
-    let trace_all = std::env::var_os("PINELAND_MOBILITY_TRACE_ALL").is_some()
-        && (time - 67.0).abs() < 1.0e-9;
+    let trace_all =
+        std::env::var_os("PINELAND_MOBILITY_TRACE_ALL").is_some() && (time - 67.0).abs() < 1.0e-9;
 
     for person in 0..people_count {
         if particle.people.external_state[person] != u32::MAX
@@ -917,11 +917,8 @@ fn issue_movement_order(
     let organization = particle.formations.organization[formation] as usize;
     let moving_personnel =
         particle.formations.personnel[formation] * particle.formations.availability[formation];
-    let restriction = crate::access::route_restriction_level(
-        particle,
-        &metric.route,
-        Some(organization),
-    );
+    let restriction =
+        crate::access::route_restriction_level(particle, &metric.route, Some(organization));
     let restriction_multiplier =
         1.0 + config.access_restriction.hostile_movement_penalty * restriction;
     let travel_hours = metric.travel_hours * restriction_multiplier;
