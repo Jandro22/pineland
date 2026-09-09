@@ -890,7 +890,8 @@ fn encode_people(b: &mut Vec<u8>, p: &ParticleState) {
     put_f64_vec(b, &x.origin_tie_strength);
     put_u32_vec(b, &x.external_state);
     put_u8_vec(b, &x.migration_status);
-    put_f64_vec(b, &x.insurgent_affinity)
+    put_f64_vec(b, &x.insurgent_affinity);
+    put_f64_vec(b, &x.social_exposure);
 }
 fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
     let x = &mut p.people;
@@ -929,6 +930,7 @@ fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), Ch
     x.external_state = read_u32_vec(r)?;
     x.migration_status = read_u8_vec(r)?;
     x.insurgent_affinity = read_f64_vec(r)?;
+    x.social_exposure = read_f64_vec(r)?;
     Ok(())
 }
 
@@ -2197,6 +2199,7 @@ mod tests {
         particle.people.locality = vec![0, 1];
         particle.people.party_legitimacy = vec![0.2; 6];
         particle.people.insurgent_affinity = vec![0.1; 4];
+        particle.people.social_exposure = vec![0.05; 4];
         particle.households = HouseholdState::new(1);
         particle.households.locality[0] = 0;
         particle.households.residence[0] = 1;

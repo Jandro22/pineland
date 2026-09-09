@@ -227,6 +227,9 @@ pub struct PersonState {
     /// registry has a fixed seven-organization codebook.  Later dynamic
     /// organizations can extend the row count without changing person order.
     pub insurgent_affinity: Vec<f64>,
+    /// Persistent social exposure by organization, stored person-major then
+    /// organization-major. This mirrors Python's `person.social_exposure`.
+    pub social_exposure: Vec<f64>,
 }
 
 impl PersonState {
@@ -267,34 +270,51 @@ impl PersonState {
             external_state: vec![u32::MAX; count],
             migration_status: vec![0; count],
             insurgent_affinity: Vec::new(),
+            social_exposure: Vec::new(),
         }
     }
 
     pub fn with_organizations(mut self, organization_count: usize) -> Self {
         self.insurgent_affinity = vec![0.0; self.locality.len() * organization_count];
+        self.social_exposure = vec![0.0; self.locality.len() * organization_count];
         self
     }
 
     pub fn ensure_organization_capacity(&mut self, organization_count: usize) {
         let people_count = self.locality.len();
         let expected = people_count.saturating_mul(organization_count);
-        if self.insurgent_affinity.len() == expected {
-            return;
+        if self.insurgent_affinity.len() != expected {
+            let old_count = if people_count == 0 {
+                0
+            } else {
+                self.insurgent_affinity.len() / people_count
+            };
+            let copied = old_count.min(organization_count);
+            let mut replacement = vec![0.0; expected];
+            for person in 0..people_count {
+                let old_offset = person * old_count;
+                let new_offset = person * organization_count;
+                replacement[new_offset..new_offset + copied]
+                    .copy_from_slice(&self.insurgent_affinity[old_offset..old_offset + copied]);
+            }
+            self.insurgent_affinity = replacement;
         }
-        let old_count = if people_count == 0 {
-            0
-        } else {
-            self.insurgent_affinity.len() / people_count
-        };
-        let copied = old_count.min(organization_count);
-        let mut replacement = vec![0.0; expected];
-        for person in 0..people_count {
-            let old_offset = person * old_count;
-            let new_offset = person * organization_count;
-            replacement[new_offset..new_offset + copied]
-                .copy_from_slice(&self.insurgent_affinity[old_offset..old_offset + copied]);
+        if self.social_exposure.len() != expected {
+            let old_count = if people_count == 0 {
+                0
+            } else {
+                self.social_exposure.len() / people_count
+            };
+            let copied = old_count.min(organization_count);
+            let mut replacement = vec![0.0; expected];
+            for person in 0..people_count {
+                let old_offset = person * old_count;
+                let new_offset = person * organization_count;
+                replacement[new_offset..new_offset + copied]
+                    .copy_from_slice(&self.social_exposure[old_offset..old_offset + copied]);
+            }
+            self.social_exposure = replacement;
         }
-        self.insurgent_affinity = replacement;
     }
 
     pub fn with_destination_localities(mut self, locality_count: usize) -> Self {
@@ -1815,6 +1835,7 @@ impl ParticleState {
         append_u32s(material, &self.people.external_state);
         append_u8s(material, &self.people.migration_status);
         append_f64s(material, &self.people.insurgent_affinity);
+        append_f64s(material, &self.people.social_exposure);
         append_u32s(material, &self.households.locality);
         append_u32s(material, &self.households.residence);
         append_f64s(material, &self.households.resources);
@@ -2356,6 +2377,13 @@ impl ParticleState {
             return Err(StateError::LengthMismatch {
                 name: "person insurgent affinity".to_string(),
                 left: self.people.insurgent_affinity.len(),
+                right: people_count * organization_count,
+            });
+        }
+        if self.people.social_exposure.len() != people_count * organization_count {
+            return Err(StateError::LengthMismatch {
+                name: "person social exposure".to_string(),
+                left: self.people.social_exposure.len(),
                 right: people_count * organization_count,
             });
         }
@@ -4112,6 +4140,7 @@ impl ParticleState {
                 "person origin tie strength",
             ),
             (&self.people.insurgent_affinity, "person insurgent affinity"),
+            (&self.people.social_exposure, "person social exposure"),
         ] {
             check_finite(values, name)?;
         }
@@ -4127,6 +4156,7 @@ impl ParticleState {
             .chain(self.people.efficacy.iter())
             .chain(self.people.trust.iter())
             .chain(self.people.rebel_sympathy.iter())
+            .chain(self.people.social_exposure.iter())
         {
             if !(-1e-12..=1.0 + 1e-12).contains(value) {
                 return Err(StateError::OutOfBounds(*value));
