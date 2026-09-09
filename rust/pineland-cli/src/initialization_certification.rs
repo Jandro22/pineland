@@ -29,6 +29,8 @@ pub(crate) fn certify_initialization(arguments: &Arguments) -> Result<(), String
     result.insert("scheduler", scheduler(&engine));
     if std::env::var_os("PINELAND_CERT_DEBUG").is_some() {
         result.insert("debug_beliefs", debug_beliefs(&engine));
+        result.insert("debug_presence", debug_presence(&engine));
+        result.insert("debug_information", debug_information(&engine));
         result.insert("debug_zones", debug_zones(&engine));
     }
     result.insert("state_hash", JsonValue::string(engine.state_hash()));
@@ -87,6 +89,8 @@ pub(crate) fn certify_trajectory(arguments: &Arguments) -> Result<(), String> {
     result.insert("scheduler", scheduler(&engine));
     if std::env::var_os("PINELAND_CERT_DEBUG").is_some() {
         result.insert("debug_beliefs", debug_beliefs(&engine));
+        result.insert("debug_presence", debug_presence(&engine));
+        result.insert("debug_information", debug_information(&engine));
         result.insert("debug_zones", debug_zones(&engine));
     }
     result.insert("state_hash", JsonValue::string(engine.state_hash()));
@@ -128,6 +132,99 @@ fn debug_beliefs(engine: &SimulationEngine) -> JsonValue {
                         ..(index + 1) * pineland_core::state::CONTROL_DIMENSIONS],
                 ),
             );
+            values.push(row);
+        }
+    }
+    rows
+}
+
+fn debug_presence(engine: &SimulationEngine) -> JsonValue {
+    let mut containers = JsonValue::object();
+    for (name, state) in [
+        ("organization", &engine.particle.presence_beliefs),
+        ("node", &engine.particle.node_presence_beliefs),
+    ] {
+        let mut rows = JsonValue::Array(Vec::new());
+        if let JsonValue::Array(values) = &mut rows {
+            for index in 0..state.keys.len() {
+                let key = &state.keys[index];
+                let mut row = JsonValue::object();
+                row.insert("observer", JsonValue::integer(key.observer as u64));
+                row.insert("target", JsonValue::integer(key.target as u64));
+                row.insert("locality", JsonValue::integer(key.locality as u64));
+                row.insert("microzone", JsonValue::integer(key.microzone as u64));
+                row.insert(
+                    "target_formation",
+                    JsonValue::integer(key.target_formation as u64),
+                );
+                row.insert("estimate", JsonValue::number(state.estimate[index]));
+                row.insert("personnel", JsonValue::number(state.personnel[index]));
+                row.insert("confidence", JsonValue::number(state.confidence[index]));
+                row.insert("updated_at", JsonValue::number(state.updated_at[index]));
+                row.insert(
+                    "reliable_at",
+                    JsonValue::number(state.last_reliable_observation_at[index]),
+                );
+                row.insert(
+                    "contradiction",
+                    JsonValue::number(state.contradiction[index]),
+                );
+                row.insert(
+                    "evidence_count",
+                    JsonValue::integer(state.evidence_count[index] as u64),
+                );
+                values.push(row);
+            }
+        }
+        containers.insert(name, rows);
+    }
+    containers
+}
+
+fn debug_information(engine: &SimulationEngine) -> JsonValue {
+    let mut rows = JsonValue::Array(Vec::new());
+    if let JsonValue::Array(values) = &mut rows {
+        for observation in &engine.particle.information_observations {
+            let mut row = JsonValue::object();
+            row.insert("sequence", JsonValue::integer(observation.sequence));
+            row.insert("observer", JsonValue::integer(observation.observer as u64));
+            row.insert(
+                "observer_node",
+                JsonValue::integer(observation.observer_node as u64),
+            );
+            row.insert("source", JsonValue::integer(observation.source as u64));
+            row.insert(
+                "source_identity",
+                JsonValue::integer(observation.source_identity as u64),
+            );
+            row.insert(
+                "source_type",
+                JsonValue::integer(observation.source_type as u64),
+            );
+            row.insert(
+                "observation_type",
+                JsonValue::integer(observation.observation_type as u64),
+            );
+            row.insert("target", JsonValue::integer(observation.target as u64));
+            row.insert(
+                "target_formation",
+                JsonValue::integer(observation.target_formation as u64),
+            );
+            row.insert("locality", JsonValue::integer(observation.locality as u64));
+            row.insert(
+                "microzone",
+                JsonValue::integer(observation.microzone as u64),
+            );
+            row.insert("time", JsonValue::number(observation.time));
+            row.insert("quality", JsonValue::number(observation.quality));
+            row.insert("confidence", JsonValue::number(observation.confidence));
+            row.insert("presence", JsonValue::number(observation.presence));
+            row.insert("personnel", JsonValue::number(observation.personnel));
+            row.insert(
+                "detection_probability",
+                JsonValue::number(observation.detection_probability),
+            );
+            row.insert("detected", JsonValue::integer(observation.detected as u64));
             values.push(row);
         }
     }
@@ -1431,6 +1528,14 @@ fn diagnostics(engine: &SimulationEngine) -> JsonValue {
     value.insert(
         "formation_locality",
         u32_array(&particle.formations.locality),
+    );
+    value.insert(
+        "formation_organization",
+        u32_array(&particle.formations.organization),
+    );
+    value.insert(
+        "formation_microzone",
+        u32_array(&particle.formations.microzone),
     );
     value.insert("formation_fatigue", f64_array(&particle.formations.fatigue));
     value.insert(

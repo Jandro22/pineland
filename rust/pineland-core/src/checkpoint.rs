@@ -11,7 +11,7 @@ use crate::sha256;
 use crate::state::{
     decode_event, encode_event, BeliefKey, ByteReader, Counters, EventRecord,
     InformationHistoryEntry, InformationObservation, InformationRelay, ObservationRecord,
-    ParticleState, StateError,
+    ParticleState, PresenceKey, PresenceState, StateError,
 };
 use std::collections::BTreeMap;
 use std::fmt;
@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 6;
+pub const CHECKPOINT_VERSION: u32 = 7;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -137,6 +137,8 @@ impl CheckpointStore {
         encode_security_posts(&mut buffer, particle);
         encode_footholds(&mut buffer, particle);
         encode_beliefs(&mut buffer, particle);
+        encode_presence_state(&mut buffer, &particle.presence_beliefs);
+        encode_presence_state(&mut buffer, &particle.node_presence_beliefs);
         encode_logistics(&mut buffer, particle);
         encode_command_edges(&mut buffer, particle);
         encode_manpower(&mut buffer, particle);
@@ -217,6 +219,10 @@ impl CheckpointStore {
             .map_err(|e| section_error("security_posts", e))?;
         decode_footholds(&mut reader, &mut particle).map_err(|e| section_error("footholds", e))?;
         decode_beliefs(&mut reader, &mut particle).map_err(|e| section_error("beliefs", e))?;
+        decode_presence_state(&mut reader, &mut particle.presence_beliefs)
+            .map_err(|e| section_error("presence_beliefs", e))?;
+        decode_presence_state(&mut reader, &mut particle.node_presence_beliefs)
+            .map_err(|e| section_error("node_presence_beliefs", e))?;
         decode_logistics(&mut reader, &mut particle).map_err(|e| section_error("logistics", e))?;
         decode_command_edges(&mut reader, &mut particle)
             .map_err(|e| section_error("command_edges", e))?;
@@ -1359,6 +1365,56 @@ fn decode_beliefs(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), C
     p.beliefs.source_confidence = read_f64_vec(r)?;
     p.beliefs.evidence_count = read_u32_vec(r)?;
     p.beliefs.dirty = read_u32_vec(r)?;
+    Ok(())
+}
+
+fn encode_presence_state(b: &mut Vec<u8>, x: &PresenceState) {
+    put_u64(b, x.keys.len() as u64);
+    for key in &x.keys {
+        put_u32(b, key.observer);
+        put_u32(b, key.target);
+        put_u32(b, key.locality);
+        put_u32(b, key.microzone);
+        put_u32(b, key.target_formation);
+    }
+    for values in [
+        &x.estimate,
+        &x.personnel,
+        &x.confidence,
+        &x.updated_at,
+        &x.last_reliable_observation_at,
+        &x.contradiction,
+        &x.violence,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.evidence_count);
+}
+
+fn decode_presence_state(
+    r: &mut ByteReader<'_>,
+    x: &mut PresenceState,
+) -> Result<(), CheckpointError> {
+    let count = bounded_count(r.u64()?)?;
+    let mut keys = Vec::with_capacity(count);
+    for _ in 0..count {
+        keys.push(PresenceKey {
+            observer: r.u32()?,
+            target: r.u32()?,
+            locality: r.u32()?,
+            microzone: r.u32()?,
+            target_formation: r.u32()?,
+        });
+    }
+    x.keys = keys;
+    x.estimate = read_f64_vec(r)?;
+    x.personnel = read_f64_vec(r)?;
+    x.confidence = read_f64_vec(r)?;
+    x.updated_at = read_f64_vec(r)?;
+    x.last_reliable_observation_at = read_f64_vec(r)?;
+    x.contradiction = read_f64_vec(r)?;
+    x.violence = read_f64_vec(r)?;
+    x.evidence_count = read_u32_vec(r)?;
     Ok(())
 }
 

@@ -36,6 +36,22 @@ fn is_insurgent(particle: &ParticleState, organization: usize) -> bool {
         || particle.organizations.kind.get(organization).copied() == Some(3)
 }
 
+fn observer_matches_organization(
+    particle: &ParticleState,
+    observer_code: u32,
+    organization: usize,
+) -> bool {
+    if observer_code as usize == organization {
+        return true;
+    }
+    let formation = observer_code as usize;
+    let formation_start = particle.organizations.kind.len();
+    let formation_index = formation.checked_sub(formation_start);
+    formation_index
+        .filter(|index| *index < particle.formations.organization.len())
+        .is_some_and(|index| particle.formations.organization[index] as usize == organization)
+}
+
 fn target_matches_side(
     particle: &ParticleState,
     target: usize,
@@ -80,7 +96,7 @@ fn has_target_evidence(
     target_side_insurgent: bool,
     locality: usize,
 ) -> bool {
-    particle
+    let control_evidence = particle
         .beliefs
         .keys
         .iter()
@@ -88,7 +104,7 @@ fn has_target_evidence(
         .any(|(index, key)| {
             key.observer as usize == observer
                 && key.locality as usize == locality
-                && key.kind <= 3
+                && matches!(key.kind, 1 | 2)
                 && particle
                     .beliefs
                     .evidence_count
@@ -97,6 +113,19 @@ fn has_target_evidence(
                     .unwrap_or(0)
                     > 0
                 && target_matches_side(particle, key.target as usize, target_side_insurgent)
+        });
+    if control_evidence {
+        return true;
+    }
+    [&particle.presence_beliefs, &particle.node_presence_beliefs]
+        .iter()
+        .any(|state| {
+            state.keys.iter().enumerate().any(|(index, key)| {
+                observer_matches_organization(particle, key.observer, observer)
+                    && key.locality as usize == locality
+                    && state.evidence_count.get(index).copied().unwrap_or(0) > 0
+                    && target_matches_side(particle, key.target as usize, target_side_insurgent)
+            })
         })
 }
 
@@ -134,25 +163,21 @@ fn opponent_presence_belief(
     target_side_insurgent: bool,
     locality: usize,
 ) -> f64 {
-    // Presence rows are kept separate from the control vector.  Once such a
+    // Presence rows are kept separate from the control vector. Once such a
     // row has evidence, its estimate is authoritative even when it is zero;
-    // otherwise use the actor's physical-control prior as Python does.
+    // otherwise use the actor's physical-control prior as Python does. Both
+    // organization and field-node observations are decision-visible.
     let mut evidenced = None;
-    for (index, key) in particle.beliefs.keys.iter().enumerate() {
-        if key.observer as usize == observer
-            && key.locality as usize == locality
-            && key.kind == 0
-            && particle
-                .beliefs
-                .evidence_count
-                .get(index)
-                .copied()
-                .unwrap_or(0)
-                > 0
-            && target_matches_side(particle, key.target as usize, target_side_insurgent)
-        {
-            let value = clamp01(particle.beliefs.presence[index]);
-            evidenced = Some(evidenced.map_or(value, |old: f64| old.max(value)));
+    for state in [&particle.presence_beliefs, &particle.node_presence_beliefs] {
+        for (index, key) in state.keys.iter().enumerate() {
+            if observer_matches_organization(particle, key.observer, observer)
+                && key.locality as usize == locality
+                && state.evidence_count.get(index).copied().unwrap_or(0) > 0
+                && target_matches_side(particle, key.target as usize, target_side_insurgent)
+            {
+                let value = clamp01(state.estimate[index]);
+                evidenced = Some(evidenced.map_or(value, |old: f64| old.max(value)));
+            }
         }
     }
     evidenced.unwrap_or_else(|| {
@@ -365,11 +390,19 @@ fn local_information(
                 .max(particle.beliefs.control[offset + PHYSICAL])
                 .max(particle.beliefs.control[offset + ADMINISTRATIVE]);
             evidence = evidence.max(particle.beliefs.confidence[index].clamp(0.0, 1.0) * signal);
-        } else if key.kind == 0 {
-            evidence = evidence.max(
-                particle.beliefs.confidence[index].clamp(0.0, 1.0)
-                    * particle.beliefs.presence[index].clamp(0.0, 1.0),
-            );
+        }
+    }
+    for state in [&particle.presence_beliefs, &particle.node_presence_beliefs] {
+        for (index, key) in state.keys.iter().enumerate() {
+            if observer_matches_organization(particle, key.observer, organization)
+                && key.locality as usize == locality
+                && state.evidence_count.get(index).copied().unwrap_or(0) > 0
+                && key.target as usize == target
+            {
+                evidence = evidence.max(
+                    state.confidence[index].clamp(0.0, 1.0) * state.estimate[index].clamp(0.0, 1.0),
+                );
+            }
         }
     }
     // `topology` is part of the signature so this helper can later include

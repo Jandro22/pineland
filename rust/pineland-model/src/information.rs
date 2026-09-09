@@ -11,7 +11,7 @@ use pineland_core::config::SimulationConfig;
 use pineland_core::rng::{python_exp, PyRandomCompat};
 use pineland_core::state::{
     clamp01, BeliefKey, InformationHistoryEntry, InformationObservation, InformationRelay,
-    ParticleState, CONTROL_DIMENSIONS, INFORMATION_NONE,
+    ParticleState, PresenceKey, CONTROL_DIMENSIONS, INFORMATION_NONE,
 };
 use pineland_core::topology::StaticTopology;
 
@@ -106,6 +106,12 @@ pub fn collect_and_fuse(
         for confidence in &mut particle.zone_beliefs.confidence {
             *confidence = clamp01(*confidence * formation_factor);
         }
+        particle
+            .presence_beliefs
+            .decay_confidence(default_factor, formation_factor);
+        particle
+            .node_presence_beliefs
+            .decay_confidence(default_factor, formation_factor);
         particle.last_information_decay_at = time;
     }
 
@@ -385,6 +391,7 @@ fn corroboration_weight(
     history: &[ControlHistoryEntry],
     target: usize,
     locality: usize,
+    observation_type: u8,
     source_identity: u32,
     time: f64,
     config: &SimulationConfig,
@@ -404,7 +411,7 @@ fn corroboration_weight(
         }
         if entry.target == target as u32
             && entry.locality == locality as u32
-            && entry.observation_type == 1
+            && entry.observation_type == observation_type
             && entry.source_identity != source_identity
             && (entry.time - time).abs() <= 3.0
             && !sources.contains(&entry.source_identity)
@@ -436,6 +443,7 @@ pub(crate) fn patrol_control_corroboration(
         &particle.information_history,
         target,
         locality,
+        1,
         source_identity_code(particle, topology, source_id),
         time,
         config,
@@ -601,12 +609,36 @@ fn observation_source_name(
     String::new()
 }
 
-#[allow(clippy::too_many_arguments)]
-fn fuse_recorded_observation(
+fn presence_observer_code(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    recipient: usize,
+    recipient_name: &str,
+) -> u32 {
+    if recipient_name == crate::organization_name(recipient) {
+        recipient as u32
+    } else {
+        dynamic_observer_code(particle, topology, recipient_name)
+    }
+}
+
+fn record_presence_history(particle: &mut ParticleState, observation: &InformationObservation) {
+    if observation.target == INFORMATION_NONE {
+        return;
+    }
+    particle.information_history.push(InformationHistoryEntry {
+        target: observation.target,
+        locality: observation.locality,
+        observation_type: observation.observation_type,
+        time: observation.time,
+        source_identity: observation.source_identity,
+    });
+}
+
+fn fuse_presence_observation(
     particle: &mut ParticleState,
     topology: &StaticTopology,
     config: &SimulationConfig,
-    _rng: &mut PyRandomCompat,
     observation: &InformationObservation,
     recipient: usize,
     recipient_name: &str,
@@ -615,11 +647,7 @@ fn fuse_recorded_observation(
     time: f64,
     history: &[ControlHistoryEntry],
 ) {
-    // Detection rows are delivered through the same reliability clock, but
-    // they update presence beliefs rather than the seven-dimensional control
-    // table.  Presence fusion is added below; never turn a zero-filled
-    // detection payload into a spurious control report.
-    if observation.observation_type != 1 || observation.target == INFORMATION_NONE {
+    if observation.observation_type != 0 || observation.target == INFORMATION_NONE {
         return;
     }
     let target = observation.target as usize;
@@ -647,6 +675,128 @@ fn fuse_recorded_observation(
         history,
         target,
         locality,
+        observation.observation_type,
+        observation.source_identity,
+        observation.time,
+        config,
+        source_type,
+    );
+    let weight = observation.confidence
+        * observation.quality
+        * trust
+        * language.powf(config.information.language_fusion_weight)
+        * age_quality
+        * (1.0 + config.information.corroboration_bonus * corroboration.min(3.0));
+    let observer = presence_observer_code(particle, topology, recipient, recipient_name);
+    let targets = if observation.target_formation != INFORMATION_NONE {
+        [observation.target_formation, INFORMATION_NONE]
+    } else {
+        [INFORMATION_NONE, INFORMATION_NONE]
+    };
+    let target_count = if observation.target_formation != INFORMATION_NONE {
+        2
+    } else {
+        1
+    };
+    let state = if recipient_name == crate::organization_name(recipient) {
+        &mut particle.presence_beliefs
+    } else {
+        &mut particle.node_presence_beliefs
+    };
+    let mut wildcard_index = None;
+    for target_formation in targets.into_iter().take(target_count) {
+        let index = state.ensure_key(PresenceKey {
+            observer,
+            target: observation.target,
+            locality: observation.locality,
+            microzone: observation.microzone,
+            target_formation,
+        });
+        if state.confidence[index] == 0.0 && state.evidence_count[index] == 0 {
+            state.confidence[index] = config.information.prior_confidence;
+        }
+        state.fuse(
+            index,
+            time,
+            weight,
+            observation.presence,
+            observation.personnel,
+            config.information.contradiction_memory_days,
+            config.information.contradiction_penalty,
+        );
+        if target_formation == INFORMATION_NONE {
+            wildcard_index = Some(index);
+        }
+    }
+    if let Some(index) = wildcard_index {
+        state.fuse_violence(index, weight, observation.violence);
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn fuse_recorded_observation(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    _rng: &mut PyRandomCompat,
+    observation: &InformationObservation,
+    recipient: usize,
+    recipient_name: &str,
+    source_type: SourceType,
+    source_name: &str,
+    time: f64,
+    history: &[ControlHistoryEntry],
+) {
+    if !matches!(observation.observation_type, 0 | 1) {
+        return;
+    }
+    if observation.observation_type == 0 {
+        fuse_presence_observation(
+            particle,
+            topology,
+            config,
+            observation,
+            recipient,
+            recipient_name,
+            source_type,
+            source_name,
+            time,
+            history,
+        );
+        return;
+    }
+    // Control rows are delivered through the reliability clock and update the
+    // seven-dimensional control table. Detection rows take the branch above;
+    // never turn a zero-filled detection payload into a spurious control row.
+    if observation.target == INFORMATION_NONE {
+        return;
+    }
+    let target = observation.target as usize;
+    let locality = observation.locality as usize;
+    if target >= particle.organizations.kind.len() || locality >= topology.locality_count() {
+        return;
+    }
+    let recipient_actor = if recipient_name == crate::organization_name(recipient) {
+        recipient
+    } else {
+        observation.observer as usize
+    };
+    let trust = source_trust(particle, config, recipient_actor, source_type, source_name);
+    let language = language_comprehension(
+        particle,
+        topology,
+        config,
+        recipient_actor,
+        locality,
+        source_type,
+        source_name,
+    );
+    let age_quality = python_exp(-observation.decay_rate * (time - observation.time).max(0.0));
+    let corroboration = corroboration_weight(
+        history,
+        target,
+        locality,
+        observation.observation_type,
         observation.source_identity,
         observation.time,
         config,
@@ -896,7 +1046,7 @@ fn publish_information_observation(
     personnel: f64,
     detection_probability: f64,
     detected: bool,
-) {
+) -> InformationObservation {
     let sequence = particle.next_information_observation_sequence;
     particle.next_information_observation_sequence = sequence.saturating_add(1);
     let observer_node_code = dynamic_observer_code(particle, topology, observer_node);
@@ -907,33 +1057,32 @@ fn publish_information_observation(
     let target_formation_code = target_formation
         .map(|value| value as u32)
         .unwrap_or(INFORMATION_NONE);
-    particle
-        .information_observations
-        .push(InformationObservation {
-            sequence,
-            observer: observer as u32,
-            observer_node: observer_node_code,
-            source,
-            source_identity,
-            source_community,
-            source_formation,
-            source_type: source_type_code(source_type),
-            observation_type,
-            target: target_code,
-            target_formation: target_formation_code,
-            locality: locality as u32,
-            microzone: microzone as u32,
-            time,
-            quality: clamp01(quality),
-            confidence: clamp01(confidence),
-            decay_rate: information_decay_rate(config, observation_type, target_formation_code),
-            control,
-            violence: clamp01(violence),
-            presence: clamp01(presence),
-            personnel: personnel.max(0.0),
-            detection_probability: clamp01(detection_probability),
-            detected: u8::from(detected),
-        });
+    let observation = InformationObservation {
+        sequence,
+        observer: observer as u32,
+        observer_node: observer_node_code,
+        source,
+        source_identity,
+        source_community,
+        source_formation,
+        source_type: source_type_code(source_type),
+        observation_type,
+        target: target_code,
+        target_formation: target_formation_code,
+        locality: locality as u32,
+        microzone: microzone as u32,
+        time,
+        quality: clamp01(quality),
+        confidence: clamp01(confidence),
+        decay_rate: information_decay_rate(config, observation_type, target_formation_code),
+        control,
+        violence: clamp01(violence),
+        presence: clamp01(presence),
+        personnel: personnel.max(0.0),
+        detection_probability: clamp01(detection_probability),
+        detected: u8::from(detected),
+    };
+    particle.information_observations.push(observation.clone());
     queue_information_relay(
         particle,
         topology,
@@ -945,6 +1094,7 @@ fn publish_information_observation(
         time,
         source_type,
     );
+    observation
 }
 
 /// Publish the control report already fused by the patrol module.
@@ -971,7 +1121,7 @@ pub(crate) fn record_patrol_control_observation(
     let observer = particle.formations.organization[formation] as usize;
     let source_id = patrol_source_id(particle, formation);
     let observer_node = formation_name(particle, formation);
-    publish_information_observation(
+    let _observation = publish_information_observation(
         particle,
         topology,
         config,
@@ -1019,7 +1169,7 @@ pub(crate) fn record_patrol_target_observation(
     let observer = particle.formations.organization[observer_formation] as usize;
     let source_id = patrol_source_id(particle, observer_formation);
     let observer_node = formation_name(particle, observer_formation);
-    publish_information_observation(
+    let observation = publish_information_observation(
         particle,
         topology,
         config,
@@ -1042,6 +1192,20 @@ pub(crate) fn record_patrol_target_observation(
         detection_probability,
         detected,
     );
+    let history = particle.information_history.clone();
+    fuse_presence_observation(
+        particle,
+        topology,
+        config,
+        &observation,
+        observer,
+        &observer_node,
+        SourceType::Patrol,
+        &source_id,
+        time,
+        &history,
+    );
+    record_presence_history(particle, &observation);
 }
 
 fn queue_information_relay(
@@ -1191,6 +1355,7 @@ fn observe_from_source(
             target_id,
             microzone,
             time,
+            history,
         );
     }
     observe_control(
@@ -1223,6 +1388,7 @@ fn observe_target(
     target_formation: Option<usize>,
     microzone: usize,
     time: f64,
+    history: &mut Vec<ControlHistoryEntry>,
 ) {
     let (present, personnel, actual_formation) =
         actual_target_presence(particle, target, locality, target_formation, microzone);
@@ -1323,7 +1489,7 @@ fn observe_target(
     } else {
         None
     };
-    publish_information_observation(
+    let observation = publish_information_observation(
         particle,
         topology,
         config,
@@ -1346,6 +1512,25 @@ fn observe_target(
         probability,
         detected,
     );
+    fuse_presence_observation(
+        particle,
+        topology,
+        config,
+        &observation,
+        observer,
+        observer_node,
+        source_type,
+        source_id,
+        time,
+        history,
+    );
+    history.push(InformationHistoryEntry {
+        target: observation.target,
+        locality: observation.locality,
+        observation_type: observation.observation_type,
+        time: observation.time,
+        source_identity: observation.source_identity,
+    });
     particle.counters.observations = particle.counters.observations.saturating_add(1);
 }
 
@@ -1396,6 +1581,7 @@ fn observe_control(
         history,
         target,
         locality,
+        1,
         source_identity_code(particle, topology, source_id),
         time,
         config,
