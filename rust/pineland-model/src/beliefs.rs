@@ -1,88 +1,118 @@
-//! Ageing, contradiction, and spatial propagation of actor beliefs.
+//! Actor-facing social belief updates.
+//!
+//! This process is distinct from the information layer. Python updates each
+//! representative person's expected control from community signals and draws
+//! one normal variate per perceived actor; it does not decay the packed
+//! control-belief confidence table here. Keeping that distinction is required
+//! for exact event continuation.
 
 use pineland_core::config::SimulationConfig;
-use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
+use pineland_core::rng::PyRandomCompat;
+use pineland_core::state::{clamp01, ParticleState};
 use pineland_core::topology::StaticTopology;
 
+fn reference_probability(probability: f64, elapsed_days: f64) -> f64 {
+    let probability = clamp01(probability);
+    if probability <= 0.0 || elapsed_days <= 0.0 {
+        0.0
+    } else if probability >= 1.0 {
+        1.0
+    } else {
+        1.0 - (1.0 - probability).powf(elapsed_days)
+    }
+}
+
+fn community_signal(particle: &ParticleState, locality: usize, actor: usize) -> f64 {
+    let mut total = 0.0;
+    let mut weighted = 0.0;
+    for community in 0..particle.communities.locality.len() {
+        if particle.communities.locality[community] as usize != locality {
+            continue;
+        }
+        let start = particle.communities.member_offsets[community] as usize;
+        let end = particle.communities.member_offsets[community + 1] as usize;
+        let mass = particle.communities.member_indices[start..end]
+            .iter()
+            .map(|person| particle.people.represented_population[*person as usize])
+            .sum::<f64>();
+        let signal = if actor == crate::GOVERNMENT {
+            particle.communities.government_cooperation[community]
+        } else {
+            particle.communities.insurgent_sympathy[community]
+        };
+        weighted += mass * signal;
+        total += mass;
+    }
+    if total > 0.0 {
+        clamp01(weighted / total)
+    } else {
+        0.0
+    }
+}
+
+/// Advance the actor-facing expected-control state for one beliefs event.
+/// The static topology is accepted because the Python process also computes
+/// sparse destination signals from its adjacency table; the dense native
+/// person state currently stores the same-locality expectation, while the
+/// locality graph is retained for the later sparse-destination extension.
 pub fn decay_and_propagate(
     particle: &mut ParticleState,
-    topology: &StaticTopology,
+    _topology: &StaticTopology,
     config: &SimulationConfig,
-    time: f64,
+    rng: &mut PyRandomCompat,
+    _time: f64,
+    elapsed_days: f64,
 ) {
-    let decay_rate = config.information.default_decay_rate.max(0.0);
-    for index in 0..particle.beliefs.keys.len() {
-        let age = (time - particle.beliefs.updated_at[index]).max(0.0);
-        particle.beliefs.confidence[index] =
-            clamp01(particle.beliefs.confidence[index] * (-decay_rate * age).exp());
-        particle.beliefs.contradiction[index] *= (-age
-            / config
-                .information
-                .contradiction_memory_days
-                .max(f64::MIN_POSITIVE))
-        .exp();
+    if elapsed_days <= 0.0 {
+        return;
     }
-    // A bounded, deterministic one-hop propagation approximates delayed
-    // command relays without consulting world truth.  The source remains the
-    // actor's packed belief row, and all updates preserve canonical key order.
-    let snapshot = particle.beliefs.clone();
-    for index in 0..snapshot.keys.len() {
-        let key = &snapshot.keys[index];
-        if key.kind != 0 {
-            continue;
-        }
-        let locality = key.locality as usize;
-        let mut neighbor = None;
-        if locality < topology.locality_count() {
-            for (_, weight) in topology
-                .road_edges
-                .neighbors(topology.primary_zone[locality] as usize)
+    for person in 0..particle.people.locality.len() {
+        let locality = particle.people.residence[person] as usize;
+        let community = particle.people.community[person];
+        for actor in [crate::GOVERNMENT, crate::INSURGENT] {
+            let signal = if community != u32::MAX
+                && (community as usize) < particle.communities.locality.len()
+                && particle.communities.locality[community as usize] as usize == locality
             {
-                if weight.is_finite() {
-                    neighbor = Some((topology.primary_zone[locality] as usize, weight));
-                    break;
+                if actor == crate::GOVERNMENT {
+                    particle.communities.government_cooperation[community as usize]
+                } else {
+                    particle.communities.insurgent_sympathy[community as usize]
                 }
-            }
-        }
-        let Some((_, _)) = neighbor else {
-            continue;
-        };
-        let adjacent = if locality == 0 {
-            topology.locality_count().saturating_sub(1)
-        } else {
-            locality - 1
-        };
-        let other_key = snapshot.keys.iter().position(|candidate| {
-            candidate.observer == key.observer
-                && candidate.target == key.target
-                && candidate.locality == adjacent as u32
-                && candidate.kind == key.kind
-        });
-        if let Some(other) = other_key {
-            let target = particle.beliefs.ensure_key(key.clone());
-            let confidence = 0.04 * snapshot.confidence[other];
-            particle.beliefs.presence[target] = clamp01(
-                (1.0 - confidence) * particle.beliefs.presence[target]
-                    + confidence * snapshot.presence[other],
-            );
-            particle.beliefs.updated_at[target] =
-                particle.beliefs.updated_at[target].max(time - 1.0);
+            } else {
+                community_signal(particle, locality, actor)
+            };
+            let observed = clamp01(signal + rng.normalvariate(0.0, config.observation_noise));
+            let trust = if actor == crate::GOVERNMENT {
+                particle.people.trust[person]
+            } else {
+                particle.people.trust_insurgent[person]
+            };
+            // The scalar is person-specific; do not collapse it to one
+            // locality-wide learning coefficient.
+            let learning = reference_probability(0.12 * trust, elapsed_days);
+            let offset = person * 2 + usize::from(actor == crate::INSURGENT);
+            let old = particle.people.expected_control[offset];
+            particle.people.expected_control[offset] =
+                clamp01(old + learning * (observed - old));
         }
     }
-    let _ = CONTROL_DIMENSIONS;
+
 }
 
 pub fn control_estimate(
     particle: &ParticleState,
     observer: usize,
     locality: usize,
-) -> [f64; CONTROL_DIMENSIONS] {
-    let mut result = [0.0; CONTROL_DIMENSIONS];
+) -> [f64; pineland_core::state::CONTROL_DIMENSIONS] {
+    let mut result = [0.0; pineland_core::state::CONTROL_DIMENSIONS];
     if let Some(index) = particle.beliefs.keys.iter().position(|key| {
         key.observer as usize == observer && key.locality as usize == locality && key.kind == 1
     }) {
-        let offset = index * CONTROL_DIMENSIONS;
-        result.copy_from_slice(&particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS]);
+        let offset = index * pineland_core::state::CONTROL_DIMENSIONS;
+        result.copy_from_slice(
+            &particle.beliefs.control[offset..offset + pineland_core::state::CONTROL_DIMENSIONS],
+        );
     }
     result
 }
