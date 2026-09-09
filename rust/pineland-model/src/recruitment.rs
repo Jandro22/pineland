@@ -43,6 +43,7 @@ fn behavior_score(behavior: u8) -> (f64, f64) {
     }
 }
 
+#[allow(dead_code)]
 fn social_exposure(
     particle: &ParticleState,
     person: usize,
@@ -785,10 +786,6 @@ pub fn recruit(
         .max(1.0e-9);
     let mut total_recruited = 0.0;
 
-    let social_exposures = (0..particle.people.locality.len())
-        .map(|person| social_exposure(particle, person, &active_insurgents, &active_mask))
-        .collect::<Vec<_>>();
-
     for person in 0..particle.people.locality.len() {
         let locality = particle.people.residence[person] as usize;
         let current_organization = {
@@ -806,14 +803,15 @@ pub fn recruit(
             .map(|_| particle.people.armed_fraction[person])
             .unwrap_or(0.0);
         let eligible_fraction = (1.0 - current_fraction).max(0.0);
-        let exposures = &social_exposures[person];
         let mut candidates = Vec::new();
 
         if eligible_fraction > 1.0e-12 {
             for organization in active_insurgents.iter().copied().filter(|organization| {
                 current_organization.is_none_or(|current| current == *organization)
             }) {
-                let exposure = exposures[organization].clamp(0.0, 1.0);
+                let exposure = particle.people.social_exposure
+                    [person * organization_count + organization]
+                    .clamp(0.0, 1.0);
                 let formation_access = (formation_personnel[organization][locality]
                     / minimum_formation)
                     .clamp(0.0, 1.0);
@@ -1007,10 +1005,17 @@ pub fn recruit(
                     );
                     let remaining = particle.people.armed_fraction[person] - exit_fraction;
                     if remaining <= 1.0e-12 {
+                        let prior_fraction = particle.people.armed_fraction[person];
                         particle.people.organization[person] = NO_ORGANIZATION;
                         particle.people.armed_fraction[person] = 0.0;
-                        particle.people.rebel_sympathy[person] = 0.0;
-                        particle.people.public_behavior[person] = BEHAVIOR_INSURGENT_SYMPATHY;
+                        let row = &mut particle.people.insurgent_affinity
+                            [person * organization_count..(person + 1) * organization_count];
+                        row[organization] = row[organization].max(prior_fraction);
+                        particle.people.rebel_sympathy[person] =
+                            particle.people.rebel_sympathy[person].max(prior_fraction);
+                        if particle.people.public_behavior[person] == BEHAVIOR_ARMED_PARTICIPATION {
+                            particle.people.public_behavior[person] = BEHAVIOR_INSURGENT_SYMPATHY;
+                        }
                     } else {
                         set_membership(particle, person, organization, remaining);
                     }

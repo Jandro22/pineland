@@ -236,6 +236,11 @@ pub fn update(
             insurgent_signal_by_org[active_insurgents[0]] = insurgent_signal;
         }
 
+        for organization in 0..organization_count {
+            particle.people.social_exposure[person * organization_count + organization] =
+                clamp01(insurgent_signal_by_org[organization]);
+        }
+
         if std::env::var_os("PINELAND_SOCIAL_TRACE").is_some()
             && person == 214
             && (_time - 53.0).abs() < 1.0e-9
