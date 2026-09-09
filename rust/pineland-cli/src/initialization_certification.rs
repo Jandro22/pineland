@@ -301,6 +301,36 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
     }
     root.insert("displaced_people", people);
 
+    let mut residence_state = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut residence_state {
+        for person in 0..particle.people.locality.len() {
+            let mut row = JsonValue::object();
+            row.insert("person", JsonValue::integer(person as u64));
+            row.insert(
+                "locality",
+                JsonValue::integer(particle.people.locality[person] as u64),
+            );
+            row.insert(
+                "residence",
+                JsonValue::integer(particle.people.residence[person] as u64),
+            );
+            row.insert(
+                "home",
+                JsonValue::integer(particle.people.home[person] as u64),
+            );
+            row.insert(
+                "displaced",
+                JsonValue::integer(particle.people.displaced[person] as u64),
+            );
+            row.insert(
+                "count",
+                JsonValue::integer(particle.people.displacement_count[person] as u64),
+            );
+            rows.push(row);
+        }
+    }
+    root.insert("residence_state", residence_state);
+
     let mut restrictions = JsonValue::array();
     if let JsonValue::Array(rows) = &mut restrictions {
         for index in 0..particle.access_restrictions.owner.len() {
@@ -400,6 +430,32 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         }
     }
     root.insert("logistics", logistics);
+
+    let mut security_posts = JsonValue::array();
+    if let JsonValue::Array(rows) = &mut security_posts {
+        for index in 0..particle.security_posts.locality.len() {
+            let mut row = JsonValue::object();
+            row.insert("index", JsonValue::integer(index as u64));
+            row.insert(
+                "locality",
+                JsonValue::integer(particle.security_posts.locality[index] as u64),
+            );
+            row.insert(
+                "organization",
+                JsonValue::integer(particle.security_posts.organization[index] as u64),
+            );
+            row.insert(
+                "personnel",
+                JsonValue::number(particle.security_posts.personnel[index]),
+            );
+            row.insert(
+                "formation",
+                JsonValue::integer(particle.security_posts.formation[index] as u64),
+            );
+            rows.push(row);
+        }
+    }
+    root.insert("security_posts", security_posts);
     root
 }
 
