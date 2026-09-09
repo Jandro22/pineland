@@ -248,6 +248,7 @@ fn observe_patrol(
                 None,
                 locality,
                 microzone,
+                time,
             );
         } else {
             for target in targets {
@@ -261,6 +262,7 @@ fn observe_patrol(
                     Some(target),
                     locality,
                     microzone,
+                    time,
                 );
             }
         }
@@ -380,6 +382,7 @@ fn observe_target(
     target_formation: Option<usize>,
     locality: usize,
     microzone: usize,
+    time: f64,
 ) {
     let mut personnel = 0.0;
     let mut chosen = None;
@@ -443,7 +446,7 @@ fn observe_target(
     };
     let detected = rng.random() < probability;
     let observer_organization = particle.formations.organization[observer_formation] as usize;
-    let _quality = source_quality(
+    let quality = source_quality(
         particle,
         topology,
         config,
@@ -451,14 +454,58 @@ fn observe_target(
         observer_organization,
         locality,
     );
+    let mut personnel_estimate = 0.0;
+    let mut attribution_mistake = false;
     if detected {
         if present {
-            let _estimate = personnel * (0.65 + 0.7 * rng.random());
-            let _attribution_mistake = rng.random() < config.information.attribution_error_rate;
+            personnel_estimate = personnel * (0.65 + 0.7 * rng.random());
+            attribution_mistake = rng.random() < config.information.attribution_error_rate;
         } else {
-            let _estimate = rng.uniform(20.0, 250.0).max(1.0);
+            personnel_estimate = rng.uniform(20.0, 250.0).max(1.0);
         }
     }
+    let target_actor_id = target_actor.unwrap_or(crate::INSURGENT);
+    let reported_target = if attribution_mistake {
+        if particle.organizations.kind.get(target_actor_id).copied() == Some(INSURGENT_KIND) {
+            crate::GOVERNMENT
+        } else {
+            crate::INSURGENT
+        }
+    } else {
+        target_actor_id
+    };
+    let reported_formation = if attribution_mistake {
+        None
+    } else if target_formation.is_some() {
+        if present && detected {
+            chosen
+        } else {
+            target_formation
+        }
+    } else {
+        None
+    };
+    crate::information::record_patrol_target_observation(
+        particle,
+        topology,
+        config,
+        observer_formation,
+        reported_target,
+        reported_formation,
+        locality,
+        microzone,
+        time,
+        quality,
+        if detected {
+            config.information.positive_report_confidence
+        } else {
+            config.information.negative_report_confidence
+        },
+        if detected { 1.0 } else { 0.0 },
+        personnel_estimate,
+        probability,
+        detected,
+    );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
 }
 
@@ -620,6 +667,19 @@ fn observe_control(
         observer_formation,
         locality,
         time,
+    );
+    crate::information::record_patrol_control_observation(
+        particle,
+        topology,
+        config,
+        observer_formation,
+        locality,
+        microzone,
+        time,
+        quality,
+        observation_confidence,
+        observed,
+        _violence,
     );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
 }
