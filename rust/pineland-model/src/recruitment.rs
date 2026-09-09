@@ -785,6 +785,10 @@ pub fn recruit(
         .max(1.0e-9);
     let mut total_recruited = 0.0;
 
+    let social_exposures = (0..particle.people.locality.len())
+        .map(|person| social_exposure(particle, person, &active_insurgents, &active_mask))
+        .collect::<Vec<_>>();
+
     for person in 0..particle.people.locality.len() {
         let locality = particle.people.residence[person] as usize;
         let current_organization = {
@@ -802,7 +806,7 @@ pub fn recruit(
             .map(|_| particle.people.armed_fraction[person])
             .unwrap_or(0.0);
         let eligible_fraction = (1.0 - current_fraction).max(0.0);
-        let exposures = social_exposure(particle, person, &active_insurgents, &active_mask);
+        let exposures = &social_exposures[person];
         let mut candidates = Vec::new();
 
         if eligible_fraction > 1.0e-12 {
