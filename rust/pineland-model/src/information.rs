@@ -91,6 +91,25 @@ pub fn collect_and_fuse(
     _elapsed_days: f64,
     time: f64,
 ) {
+    // Python ages every actor/control confidence row once at the beginning
+    // of an information event.  This is separate from the contradiction
+    // decay applied by an individual fusion: an untouched prior still loses
+    // confidence as calendar time advances.  Keep the last boundary on the
+    // particle so restart and same-time events remain exact.
+    let elapsed = (time - particle.last_information_decay_at).max(0.0);
+    if elapsed > 0.0 {
+        let default_factor = python_exp(-config.information.default_decay_rate * elapsed);
+        let formation_factor =
+            python_exp(-config.information.formation_decay_rate * elapsed);
+        for confidence in &mut particle.beliefs.confidence {
+            *confidence = clamp01(*confidence * default_factor);
+        }
+        for confidence in &mut particle.zone_beliefs.confidence {
+            *confidence = clamp01(*confidence * formation_factor);
+        }
+        particle.last_information_decay_at = time;
+    }
+
     // Corroboration is part of the future-decision state.  Start each event
     // from the persisted three-day tail, including patrol reports generated
     // at an earlier scheduler event, then append this event in source order.
@@ -707,8 +726,18 @@ fn fuse_recorded_observation(
     // numeric observer code, so the existing zone and legacy mirrors can be
     // updated only when the recipient is a real field formation. Headquarters
     // rows intentionally have no zone-local mirror.
-    if let Some(formation) = formation_index(particle, recipient_name) {
-        let organization = particle.formations.organization[formation] as usize;
+    let zone_organization = if let Some(formation) = formation_index(particle, recipient_name) {
+        Some(particle.formations.organization[formation] as usize)
+    } else if recipient_name == crate::organization_name(recipient) {
+        // Python treats an organization-level relay as the organization
+        // actor when updating its locality/microzone auxiliary belief.  A
+        // headquarters command node is deliberately excluded because its
+        // string ID is not an organization ID.
+        Some(recipient)
+    } else {
+        None
+    };
+    if let Some(organization) = zone_organization {
         if let Some(zone_index) = zone_belief_index(
             particle,
             organization,
@@ -1104,9 +1133,23 @@ fn observe_from_source(
     history: &mut Vec<ControlHistoryEntry>,
 ) {
     let targets = target_actors(particle, observer);
-    if rng.random()
-        >= report_probability(particle, config, observer, source_type, source_id, locality)
-    {
+    let report_probability = report_probability(particle, config, observer, source_type, source_id, locality);
+    let report_draw = rng.random();
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
+        eprintln!(
+            "INFO_SOURCE_TRACE time={:.17} observer={} node={} source={} type={} locality={} draw={:.17} probability={:.17} targets={:?}",
+            time,
+            observer,
+            observer_node,
+            source_id,
+            source_type.name(),
+            locality,
+            report_draw,
+            report_probability,
+            targets,
+        );
+    }
+    if report_draw >= report_probability {
         return;
     }
     let node = observer_node.to_string();
@@ -1212,7 +1255,26 @@ fn observe_target(
             microzone,
         )
     };
-    let detected = rng.random() < probability;
+    let detection_draw = rng.random();
+    let detected = detection_draw < probability;
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
+        eprintln!(
+            "INFO_TARGET_TRACE time={:.17} observer={} node={} source={} type={} locality={} target={} target_formation={:?} present={} personnel={:.17} probability={:.17} draw={:.17} detected={}",
+            time,
+            observer,
+            observer_node,
+            source_id,
+            source_type.name(),
+            locality,
+            target,
+            target_formation,
+            present,
+            personnel,
+            probability,
+            detection_draw,
+            detected,
+        );
+    }
 
     // Source quality is sampled for negative reports too.  This seemingly
     // redundant draw is part of the Python observation contract.
