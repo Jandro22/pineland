@@ -876,7 +876,8 @@ fn fuse_recorded_observation(
         * (1.0 + config.information.corroboration_bonus * corroboration.min(3.0));
     if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.25 {
         eprintln!(
-            "RELAY_CONTROL_TRACE seq={} recipient={} source_type={} observer={} source={} source_comm={} source_form={} target={} locality={} quality={:.17} trust={:.17} language={:.17} age={:.17} corr={:.17} weight={:.17}",
+            "RELAY_CONTROL_TRACE delivery_time={:.17} seq={} recipient={} source_type={} observer={} source={} source_comm={} source_form={} target={} locality={} quality={:.17} trust={:.17} language={:.17} age={:.17} corr={:.17} weight={:.17}",
+            time,
             observation.sequence,
             recipient_name,
             observation.source_type,
