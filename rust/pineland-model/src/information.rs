@@ -30,6 +30,17 @@ enum SourceType {
 
 type ControlHistoryEntry = InformationHistoryEntry;
 
+fn append_history_entry(history: &mut Vec<ControlHistoryEntry>, entry: ControlHistoryEntry) {
+    let cutoff = entry.time - 3.0;
+    history.retain(|existing| {
+        existing.target != entry.target
+            || existing.locality != entry.locality
+            || existing.observation_type != entry.observation_type
+            || existing.time >= cutoff
+    });
+    history.push(entry);
+}
+
 /// Persist the control-report identity produced by a patrol event.
 ///
 /// Patrols execute before the first same-time background information event.
@@ -47,13 +58,17 @@ pub fn record_patrol_control_history(
     let observer = particle.formations.organization[formation] as usize;
     let target = control_target(observer);
     let source_id = patrol_source_id(particle, formation);
-    particle.information_history.push(InformationHistoryEntry {
-        target: target as u32,
-        locality: locality as u32,
-        observation_type: 1,
-        time,
-        source_identity: source_identity_code(particle, topology, &source_id),
-    });
+    let source_identity = source_identity_code(particle, topology, &source_id);
+    append_history_entry(
+        &mut particle.information_history,
+        InformationHistoryEntry {
+            target: target as u32,
+            locality: locality as u32,
+            observation_type: 1,
+            time,
+            source_identity,
+        },
+    );
 }
 
 pub(crate) fn patrol_source_id(particle: &ParticleState, formation: usize) -> String {
@@ -117,32 +132,12 @@ pub fn collect_and_fuse(
         particle.last_information_decay_at = time;
     }
 
-    // Corroboration is part of the future-decision state.  Start each event
-    // from the persisted three-day tail, including patrol reports generated
-    // at an earlier scheduler event, then append this event in source order.
-    // A relay can arrive after the local observation event that created it.
-    // Python keeps the source index append-only and applies the three-day
-    // window relative to each observation's own timestamp.  Pruning solely
-    // at `time - 3` would therefore discard a boundary report (for example a
-    // report at t=0.25 delivered at t=3.5) before the relay is fused.  Keep
-    // the oldest three-day window needed by any in-flight observation, then
-    // discard history that no future local or relayed fusion can inspect.
-    let mut history_lower_bound = time - 3.0;
-    for relay in &particle.information_relays {
-        if relay.status != 0 {
-            continue;
-        }
-        if let Some(observation) = particle
-            .information_observations
-            .iter()
-            .find(|observation| observation.sequence == relay.observation)
-        {
-            history_lower_bound = history_lower_bound.min(observation.time - 3.0);
-        }
-    }
-    particle
-        .information_history
-        .retain(|entry| entry.time >= history_lower_bound);
+    // Corroboration is part of the future-decision state.  The Python source
+    // index prunes each key when a new observation for that key is appended,
+    // rather than pruning every key at the current event clock.  In
+    // particular, a report at t=0.25 must remain available to a relay whose
+    // observation timestamp is t=3.25 even if no new local report for that
+    // key was generated at the delivery event.
     let mut history = particle.information_history.clone();
     let mut post_indices = (0..particle.security_posts.organization.len()).collect::<Vec<_>>();
     post_indices.sort_by(|left, right| {
@@ -421,9 +416,9 @@ fn corroboration_weight(
 ) -> f64 {
     if std::env::var_os("PINELAND_HISTORY_TRACE").is_some()
         && target == 0
-        && locality == 10
+        && matches!(locality, 15 | 25 | 27)
         && observation_type == 1
-        && (time - 3.25).abs() < 1.0e-12
+        && time >= 2.0
     {
         let rows = history
             .iter()
@@ -692,13 +687,16 @@ fn record_presence_history(particle: &mut ParticleState, observation: &Informati
     if observation.target == INFORMATION_NONE {
         return;
     }
-    particle.information_history.push(InformationHistoryEntry {
-        target: observation.target,
-        locality: observation.locality,
-        observation_type: observation.observation_type,
-        time: observation.time,
-        source_identity: observation.source_identity,
-    });
+    append_history_entry(
+        &mut particle.information_history,
+        InformationHistoryEntry {
+            target: observation.target,
+            locality: observation.locality,
+            observation_type: observation.observation_type,
+            time: observation.time,
+            source_identity: observation.source_identity,
+        },
+    );
 }
 
 fn fuse_presence_observation(
@@ -1671,13 +1669,16 @@ fn observe_target(
         time,
         history,
     );
-    history.push(InformationHistoryEntry {
-        target: observation.target,
-        locality: observation.locality,
-        observation_type: observation.observation_type,
-        time: observation.time,
-        source_identity: observation.source_identity,
-    });
+    append_history_entry(
+        history,
+        InformationHistoryEntry {
+            target: observation.target,
+            locality: observation.locality,
+            observation_type: observation.observation_type,
+            time: observation.time,
+            source_identity: observation.source_identity,
+        },
+    );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
 }
 
@@ -1778,13 +1779,16 @@ fn observe_control(
         }
     }
     let source_identity = source_identity_code(particle, topology, source_id);
-    history.push(ControlHistoryEntry {
-        target: target as u32,
-        locality: locality as u32,
-        observation_type: 1,
-        time,
-        source_identity,
-    });
+    append_history_entry(
+        history,
+        ControlHistoryEntry {
+            target: target as u32,
+            locality: locality as u32,
+            observation_type: 1,
+            time,
+            source_identity,
+        },
+    );
     publish_information_observation(
         particle,
         topology,
