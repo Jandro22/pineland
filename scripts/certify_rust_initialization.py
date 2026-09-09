@@ -747,7 +747,7 @@ def python_components(world, simulation: Simulation) -> dict[str, object]:
             for edge in world.command_edges.values()
         ),
         "command_edges_formation": digest_u32(
-            formation_index[edge.node_b_id]
+            formation_index.get(edge.node_b_id, formation_index.get(edge.node_a_id, U32_MAX))
             for edge in world.command_edges.values()
         ),
         "command_edges_reliability": digest_f64(
