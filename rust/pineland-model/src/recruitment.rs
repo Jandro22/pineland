@@ -228,6 +228,7 @@ fn record_foothold_recruitment(
     particle.footholds.cumulative_recruits[index] += represented_mass.max(0.0);
     particle.footholds.renewal_count[index] =
         particle.footholds.renewal_count[index].saturating_add(1);
+    particle.footholds.embeddedness[index] = particle.footholds.strength[index];
 }
 
 fn find_manpower(particle: &ParticleState, organization: usize, locality: usize) -> Option<usize> {

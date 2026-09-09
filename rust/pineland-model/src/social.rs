@@ -236,6 +236,24 @@ pub fn update(
             insurgent_signal_by_org[active_insurgents[0]] = insurgent_signal;
         }
 
+        if std::env::var_os("PINELAND_SOCIAL_TRACE").is_some()
+            && person == 214
+            && (_time - 53.0).abs() < 1.0e-9
+        {
+            let mut probe = rng.clone();
+            eprintln!(
+                "SOCIAL_TRACE person={} active={:?} old_behavior={} old_affinity={:?} government={:.17} insurgent={:.17} by_org={:?} gate={:.17}",
+                person,
+                active_insurgents,
+                particle.people.public_behavior[person],
+                old_affinity,
+                government_signal,
+                insurgent_signal,
+                insurgent_signal_by_org,
+                probe.random(),
+            );
+        }
+
         if particle.people.organization[person] == NO_ORGANIZATION
             && is_insurgent_behavior(particle.people.public_behavior[person])
         {
@@ -375,10 +393,10 @@ pub fn update(
                     .copied()
                     .map(|organization| insurgent_signal_by_org[organization])
                     .sum::<f64>();
-                let row = &mut particle.people.insurgent_affinity
-                    [person * organization_count..(person + 1) * organization_count];
-                row.fill(0.0);
                 if affinity_total > 0.0 {
+                    let row = &mut particle.people.insurgent_affinity
+                        [person * organization_count..(person + 1) * organization_count];
+                    row.fill(0.0);
                     for organization in active_insurgents.iter().copied() {
                         let value = insurgent_signal_by_org[organization];
                         if value > 0.0 {
@@ -393,6 +411,19 @@ pub fn update(
             }
         }
         sync_legacy_rebel_sympathy(particle, person);
+
+        if std::env::var_os("PINELAND_SOCIAL_TRACE").is_some()
+            && person == 214
+            && (_time - 53.0).abs() < 1.0e-9
+        {
+            eprintln!(
+                "SOCIAL_POST person={} behavior={} affinity={:?}",
+                person,
+                particle.people.public_behavior[person],
+                &particle.people.insurgent_affinity
+                    [person * organization_count..(person + 1) * organization_count],
+            );
+        }
 
         let affinity_shares = |values: &[f64], behavior: u8| -> Vec<(usize, f64)> {
             let mut total = 0.0;

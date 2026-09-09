@@ -375,6 +375,23 @@ pub fn collect_and_fuse(
         formation_name(particle, *left).cmp(&formation_name(particle, *right))
     });
     for formation in formation_indices {
+        if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+            && formation_name(particle, formation) == "PRF-17"
+            && (time - 49.0).abs() < 1.0e-9
+        {
+            eprintln!(
+                "PRF17_ELIGIBILITY time={:.17} formation={} index={} moving={} available={:.17} personnel={:.17} locality={} status={} outside={}",
+                time,
+                formation_name(particle, formation),
+                formation,
+                particle.formations.moving[formation],
+                available_personnel(particle, formation),
+                particle.formations.personnel[formation],
+                particle.formations.locality[formation],
+                particle.formations.operational_status[formation],
+                particle.formations.outside_pineland[formation],
+            );
+        }
         if particle.formations.moving[formation] != 0
             || available_personnel(particle, formation) <= 0.0
         {
@@ -1443,6 +1460,21 @@ fn observe_from_source(
     let report_probability =
         report_probability(particle, config, observer, source_type, source_id, locality);
     let report_draw = rng.random();
+    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+        && (time - 49.0).abs() < 1.0e-9
+    {
+        eprintln!(
+            "SOURCE_TRACE source={} time={:.17} observer={} type={} locality={} draw={:.17} probability={:.17} targets={:?}",
+            source_id,
+            time,
+            observer,
+            source_type.name(),
+            locality,
+            report_draw,
+            report_probability,
+            targets,
+        );
+    }
     if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
         eprintln!(
             "INFO_SOURCE_TRACE time={:.17} observer={} node={} source={} type={} locality={} draw={:.17} probability={:.17} targets={:?}",
@@ -1458,6 +1490,7 @@ fn observe_from_source(
         );
     }
     if report_draw >= report_probability {
+        trace_source_end(rng, source_id, source_type, locality, time);
         return;
     }
     let node = observer_node.to_string();
@@ -1477,6 +1510,7 @@ fn observe_from_source(
             time,
             history,
         );
+        trace_source_end(rng, source_id, source_type, locality, time);
         return;
     }
 
@@ -1523,6 +1557,28 @@ fn observe_from_source(
         time,
         history,
     );
+    trace_source_end(rng, source_id, source_type, locality, time);
+}
+
+fn trace_source_end(
+    rng: &PyRandomCompat,
+    source_id: &str,
+    source_type: SourceType,
+    locality: usize,
+    time: f64,
+) {
+    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+        && (time - 49.0).abs() < 1.0e-9
+    {
+        let mut probe = rng.clone();
+        eprintln!(
+            "SOURCE_END source={} type={} locality={} next={:.17}",
+            source_id,
+            source_type.name(),
+            locality,
+            probe.random(),
+        );
+    }
 }
 
 fn observe_target(
@@ -1567,6 +1623,20 @@ fn observe_target(
     };
     let detection_draw = rng.random();
     let detected = detection_draw < probability;
+    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+        && source_id == "C000038"
+        && observer == crate::INSURGENT
+        && (time - 49.0).abs() < 1.0e-9
+    {
+        eprintln!(
+            "TARGET_C038 present={} personnel={:.17} probability={:.17} draw={:.17} detected={}",
+            present,
+            personnel,
+            probability,
+            detection_draw,
+            detected,
+        );
+    }
     if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
         eprintln!(
             "INFO_TARGET_TRACE time={:.17} observer={} node={} source={} type={} locality={} target={} target_formation={:?} present={} personnel={:.17} probability={:.17} draw={:.17} detected={}",
@@ -1686,6 +1756,14 @@ fn observe_target(
         },
     );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
+    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+        && source_id == "C000038"
+        && observer == crate::INSURGENT
+        && (time - 49.0).abs() < 1.0e-9
+    {
+        let mut probe = rng.clone();
+        eprintln!("TARGET_C038_END next={:.17}", probe.random());
+    }
 }
 
 fn observe_control(
@@ -1875,6 +1953,14 @@ fn observe_control(
         true,
     );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
+    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+        && source_id == "C000038"
+        && observer == crate::INSURGENT
+        && (time - 49.0).abs() < 1.0e-9
+    {
+        let mut probe = rng.clone();
+        eprintln!("CONTROL_C038_END next={:.17}", probe.random());
+    }
 }
 
 fn fuse_zone(
@@ -1963,12 +2049,9 @@ fn actual_target_presence(
     for formation in 0..particle.formations.personnel.len() {
         if target_formation.is_some_and(|value| value != formation)
             || !formation_matches_target(particle, formation, target)
-            || particle.formations.active[formation] == 0
             || particle.formations.personnel[formation] <= 0.0
             || particle.formations.locality[formation] as usize != locality
             || particle.formations.moving[formation] != 0
-            || particle.formations.outside_pineland[formation] != 0
-            || particle.formations.operational_status[formation] != 1
         {
             continue;
         }
@@ -2009,7 +2092,6 @@ fn target_formations(particle: &ParticleState, target: usize, locality: usize) -
     (0..particle.formations.personnel.len())
         .filter(|formation| {
             formation_matches_target(particle, *formation, target)
-                && particle.formations.active[*formation] != 0
                 && particle.formations.personnel[*formation] > 0.0
                 && particle.formations.locality[*formation] as usize == locality
                 && particle.formations.moving[*formation] == 0

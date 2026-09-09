@@ -57,9 +57,13 @@ pub fn civilian_mobility(
     let people_count = particle.people.locality.len();
     let locality_count = topology.locality_count();
     let mut displaced_by_origin = vec![0.0; locality_count];
+    let trace_all = std::env::var_os("PINELAND_MOBILITY_TRACE_ALL").is_some()
+        && (time - 67.0).abs() < 1.0e-9;
 
     for person in 0..people_count {
-        if particle.people.represented_population[person] <= 0.0 {
+        if particle.people.external_state[person] != u32::MAX
+            || particle.people.represented_population[person] <= 0.0
+        {
             continue;
         }
         let origin = particle.people.residence[person] as usize;
@@ -72,6 +76,18 @@ pub fn civilian_mobility(
             .collect::<Vec<_>>();
         if neighbors.is_empty() {
             continue;
+        }
+
+        if trace_all {
+            eprintln!(
+                "MOBILITY_BEGIN person={} origin={} home={} displaced={} count={} since={:.17}",
+                person,
+                origin,
+                particle.people.home[person],
+                particle.people.displaced[person],
+                particle.people.displacement_count[person],
+                particle.people.displaced_since[person],
+            );
         }
 
         // The current baseline has no displaced-since field in the packed
@@ -91,12 +107,19 @@ pub fn civilian_mobility(
                     elapsed_days,
                     1.0,
                 );
-                if rng.random() < return_probability {
+                let return_draw = rng.random();
+                if trace_all {
+                    eprintln!(
+                        "MOBILITY_RETURN person={} draw={:.17} probability={:.17}",
+                        person, return_draw, return_probability
+                    );
+                }
+                if return_draw < return_probability {
                     // The Python route-aware return takes the first locality
                     // on the shortest path.  For the common adjacent return
                     // case this is the home locality itself; a full route
                     // fallback is supplied below for non-adjacent homes.
-                    let destination = first_locality_step(topology, origin, home);
+                    let destination = first_locality_step(particle, topology, origin, home);
                     if let Some(destination) = destination {
                         if destination != origin {
                             relocate_person(particle, person, destination);
@@ -130,6 +153,18 @@ pub fn civilian_mobility(
         let forced = forced_draw < forced_probability;
         let voluntary_draw = if forced { None } else { Some(rng.random()) };
         let voluntary = !forced && voluntary_draw.is_some_and(|draw| draw < voluntary_probability);
+        if trace_all {
+            eprintln!(
+                "MOBILITY_DECISION person={} forced_draw={:.17} forced_probability={:.17} voluntary_draw={:?} voluntary_probability={:.17} forced={} voluntary={}",
+                person,
+                forced_draw,
+                forced_probability,
+                voluntary_draw,
+                voluntary_probability,
+                forced,
+                voluntary,
+            );
+        }
         if !forced && !voluntary {
             continue;
         }
@@ -158,9 +193,16 @@ pub fn civilian_mobility(
             .choices_indices(candidates.len(), Some(&utilities), 1)
             .expect("civilian mobility weighted choice failed")[0];
         let destination = candidates[selected];
+        if trace_all {
+            eprintln!(
+                "MOBILITY_CHOICE person={} destination={} candidates={:?} utilities={:?}",
+                person, destination, candidates, utilities
+            );
+        }
         if std::env::var_os("PINELAND_MOBILITY_TRACE").is_some() {
             eprintln!(
-                "MOBILITY_PERSON person={} origin={}({}) destination={}({}) forced={} voluntary={} forced_draw={:.17} forced_probability={:.17} voluntary_draw={:?} voluntary_probability={:.17} candidates={:?} utilities={:?}",
+                "MOBILITY_PERSON time={:.17} person={} origin={}({}) destination={}({}) forced={} voluntary={} forced_draw={:.17} forced_probability={:.17} voluntary_draw={:?} voluntary_probability={:.17} candidates={:?} utilities={:?}",
+                time,
                 person,
                 origin,
                 topology.locality_names.get(origin).map(String::as_str).unwrap_or("?"),
@@ -218,7 +260,9 @@ pub fn civilian_mobility(
     // displaced representatives currently resident in each locality.
     particle.locality.displaced_population.fill(0.0);
     for person in 0..people_count {
-        if particle.people.displaced[person] == 0 {
+        if particle.people.external_state[person] != u32::MAX
+            || particle.people.displaced[person] == 0
+        {
             continue;
         }
         let locality = particle.people.residence[person] as usize;
@@ -239,6 +283,9 @@ pub fn civilian_mobility(
         for &person in &particle.households.member_indices[start..end] {
             let person = person as usize;
             let locality = particle.people.residence[person] as usize;
+            if particle.people.external_state[person] != u32::MAX {
+                continue;
+            }
             if locality < masses.len() && particle.people.represented_population[person] > 0.0 {
                 masses[locality] += particle.people.represented_population[person];
             }
@@ -322,6 +369,7 @@ fn relocate_person(particle: &mut ParticleState, person: usize, destination: usi
 }
 
 fn first_locality_step(
+    particle: &ParticleState,
     topology: &StaticTopology,
     origin: usize,
     destination: usize,
@@ -329,14 +377,10 @@ fn first_locality_step(
     if origin == destination {
         return Some(origin);
     }
-    if topology
-        .locality_edges
-        .neighbors(origin)
-        .any(|(neighbor, _)| neighbor as usize == destination)
-    {
-        return Some(destination);
-    }
-    None
+    all_route_metrics(particle, topology, origin, 1.0)
+        .get(destination)
+        .and_then(|metric| metric.as_ref())
+        .and_then(|metric| metric.route.get(1).copied())
 }
 
 pub fn command(

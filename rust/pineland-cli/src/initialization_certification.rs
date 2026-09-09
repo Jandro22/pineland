@@ -672,8 +672,24 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         f64_array(&particle.people.armed_fraction),
     );
     root.insert(
+        "people_public_behavior",
+        u8_array(&particle.people.public_behavior),
+    );
+    root.insert(
+        "people_insurgent_affinity",
+        f64_array(&particle.people.insurgent_affinity),
+    );
+    root.insert(
         "people_expected_control",
         f64_array(&particle.people.expected_control),
+    );
+    root.insert(
+        "people_expected_destination_control",
+        f64_array(&particle.people.expected_destination_control),
+    );
+    root.insert(
+        "people_expected_destination_control_present",
+        u8_array(&particle.people.expected_destination_control_present),
     );
     root.insert("people_trust", f64_array(&particle.people.trust));
     root.insert(
@@ -697,6 +713,10 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         f64_array(&particle.footholds.membership),
     );
     root.insert("foothold_strength", f64_array(&particle.footholds.strength));
+    root.insert(
+        "foothold_embeddedness",
+        f64_array(&particle.footholds.embeddedness),
+    );
     root.insert(
         "foothold_raw_signal",
         f64_array(&particle.footholds.raw_signal),
@@ -2417,6 +2437,15 @@ fn f64_array(values: &[f64]) -> JsonValue {
 
 fn u32_array(values: &[u32]) -> JsonValue {
     JsonValue::Array(values.iter().copied().map(JsonValue::integer).collect())
+}
+
+fn u8_array(values: &[u8]) -> JsonValue {
+    JsonValue::Array(
+        values
+            .iter()
+            .map(|value| JsonValue::integer(u64::from(*value)))
+            .collect(),
+    )
 }
 
 fn u64_array(values: &[f64]) -> JsonValue {

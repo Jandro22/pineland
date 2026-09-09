@@ -29,6 +29,25 @@ fn reference_probability(probability: f64, elapsed_days: f64, reference_days: f6
     }
 }
 
+fn expected_destination_control(
+    particle: &ParticleState,
+    person: usize,
+    locality: usize,
+    locality_count: usize,
+) -> f64 {
+    let scalar = particle.people.expected_control[person * 2];
+    let mask_index = person * locality_count + locality;
+    let value_index = mask_index * 2;
+    if mask_index < particle.people.expected_destination_control_present.len()
+        && particle.people.expected_destination_control_present[mask_index] & 1 != 0
+        && value_index < particle.people.expected_destination_control.len()
+    {
+        particle.people.expected_destination_control[value_index]
+    } else {
+        scalar
+    }
+}
+
 fn interpreter_channel_quality(
     particle: &ParticleState,
     foreign_state: usize,
@@ -84,10 +103,51 @@ pub fn update(
         return;
     }
     // Python evaluates the cross-border migration hazard for every
-    // representative person before it updates any foreign-state beliefs.
-    // Even when no person crosses a border, those draws are part of the
-    // process stream and must be consumed in the same order.
+    // representative person before it updates diaspora links or foreign
+    // beliefs.  External membership is explicit state: it changes the
+    // return branch, but still consumes exactly one draw per person.
+    let locality_count = topology.locality_count();
     for person in 0..particle.people.locality.len() {
+        if particle.people.external_state[person] != u32::MAX {
+            let state = particle.people.external_state[person] as usize;
+            let perceived_home_security = expected_destination_control(
+                particle,
+                person,
+                particle.people.home[person] as usize,
+                locality_count,
+            );
+            let safety_gain =
+                (1.0 - perceived_home_security)
+                    - (1.0 - particle.foreign.opportunity[state]) * 0.2;
+            let reference_hazard = clamp01(
+                config.foreign_affairs.return_rate
+                    * logistic(-2.0 * safety_gain + particle.people.state_legitimacy[person]),
+            );
+            let hazard = reference_probability(
+                reference_hazard,
+                config.foreign_affairs.interval_days,
+                30.0,
+            );
+            if rng.random() < hazard {
+                particle.people.external_state[person] = u32::MAX;
+                particle.people.migration_status[person] = 4;
+                particle.people.origin_tie_strength[person] = clamp01(
+                    particle.people.origin_tie_strength[person] + 0.15,
+                );
+            } else {
+                particle.people.origin_tie_strength[person] *= python_exp(
+                    -0.02 * config.foreign_affairs.interval_days / 30.0,
+                );
+                for link in 0..particle.foreign.diaspora_person.len() {
+                    if particle.foreign.diaspora_person[link] as usize == person {
+                        particle.foreign.diaspora_social_strength[link] =
+                            particle.people.origin_tie_strength[person];
+                    }
+                }
+            }
+            continue;
+        }
+
         let locality = particle.people.residence[person] as usize;
         let district = topology.locality_to_district[locality] as usize;
         let Some(border) = (0..particle.foreign.border_foreign_state.len())
@@ -116,25 +176,64 @@ pub fn update(
             config.foreign_affairs.interval_days,
             30.0,
         );
-        let _departure = rng.random() < hazard;
-        // The baseline native state does not yet expose the Python diaspora
-        // registry; retain the exact draw and state-neutral path here until
-        // the explicit cross-border rows are added to the checkpoint schema.
-        let _ = _departure;
+        if rng.random() < hazard {
+            particle.people.external_state[person] = state as u32;
+            particle.people.migration_status[person] = if particle.locality.violence[locality] > 0.25 {
+                1
+            } else if particle.people.fear[person] > 0.55 {
+                2
+            } else {
+                3
+            };
+            particle.people.origin_tie_strength[person] = 1.0;
+            particle.foreign.diaspora_person.push(person as u32);
+            particle.foreign.diaspora_foreign_state.push(state as u32);
+            particle.foreign.diaspora_origin_locality
+                .push(particle.people.home[person]);
+            particle.foreign.diaspora_social_strength.push(1.0);
+            particle.foreign
+                .diaspora_financial_capacity
+                .push(particle.people.resources[person] * 0.2);
+            particle.foreign.diaspora_information_reliability.push(clamp01(
+                0.35 + 0.5 * particle.foreign.border_language_overlap[border],
+            ));
+            particle.foreign.diaspora_created_at.push(time);
+        }
     }
 
-    if std::env::var_os("PINELAND_FOREIGN_TRACE").is_some() {
-        let mut probe = rng.clone();
-        eprintln!(
-            "FOREIGN_AFTER_MIGRATION next_random={:.17} next_normal={:.17}",
-            probe.random(),
-            probe.normalvariate(0.0, 1.0),
+    // Diaspora remittances are resource transfers from the foreign system to
+    // the represented civilian cohort.  Message draws occur after every
+    // active link's transfer, exactly as in the Python registry loop.
+    let cycle_scale = config.foreign_affairs.interval_days / 30.0;
+    for link in 0..particle.foreign.diaspora_person.len() {
+        let person = particle.foreign.diaspora_person[link] as usize;
+        if particle.people.external_state[person] == u32::MAX {
+            continue;
+        }
+        let state = particle.foreign.diaspora_foreign_state[link] as usize;
+        let amount = particle.foreign.resources[state].min(
+            particle.foreign.diaspora_financial_capacity[link]
+                * config.foreign_affairs.diaspora_remittance_rate
+                * particle.foreign.diaspora_social_strength[link]
+                * cycle_scale,
         );
+        particle.foreign.resources[state] -= amount;
+        particle.people.resources[person] += amount;
+        let household = particle.people.household[person] as usize;
+        if household < particle.households.resources.len() {
+            particle.households.resources[household] += amount;
+        }
+        particle.foreign.cumulative_external_remittances += amount;
+        let message_probability = reference_probability(
+            clamp01(
+                config.foreign_affairs.diaspora_information_rate
+                    * particle.foreign.diaspora_information_reliability[link],
+            ),
+            config.foreign_affairs.interval_days,
+            30.0,
+        );
+        let _message = rng.random() < message_probability;
     }
-
-    // No diaspora links exist in the generated baseline state.  This loop is
-    // intentionally represented by the later explicit registry port rather
-    // than inventing a synthetic draw here.
 
     for state in 0..particle.foreign.resources.len() {
         let mut border_indices = Vec::new();
@@ -180,7 +279,8 @@ pub fn update(
                 particle.foreign.belief_updated_at[belief] = time;
                 if std::env::var_os("PINELAND_FOREIGN_TRACE").is_some() {
                     eprintln!(
-                        "FOREIGN_BELIEF index={} state={} locality={} host={:.17} quality={:.17} noise={:.17} government={:.17} insurgent={:.17} confidence={:.17}",
+                        "FOREIGN_BELIEF time={:.17} index={} state={} locality={} host={:.17} quality={:.17} noise={:.17} government={:.17} insurgent={:.17} confidence={:.17}",
+                        time,
                         belief,
                         state,
                         locality,
@@ -205,6 +305,10 @@ pub fn update(
             / belief_indices.len().max(1) as f64;
         let cost_pressure = particle.foreign.cumulative_cost[state]
             / (1.0 + particle.foreign.resources[state] + particle.foreign.cumulative_cost[state]);
+        let rival_presence = (particle.foreign.rival_offsets[state + 1]
+            - particle.foreign.rival_offsets[state])
+            .min(1) as f64
+            * 0.0;
         let willingness = clamp01(logistic(
             1.2 * particle.foreign.stability_preference[state]
                 + particle.foreign.regional_influence[state]
@@ -226,7 +330,62 @@ pub fn update(
             config.foreign_affairs.interval_days,
             30.0,
         );
-        let _support = rng.random() < support_probability;
+        let support_draw = if config.foreign_affairs.support_budget_fraction > 0.0 {
+            Some(rng.random())
+        } else {
+            None
+        };
+        let support_selected = support_draw.is_some_and(|draw| draw < support_probability);
+        if support_selected {
+            // The baseline generated world has one government-side recipient
+            // and no formations attached directly to the government actor.
+            // Keep the complete financial, institutional, and legitimacy
+            // effects here; insurgent-recipient history and formation effects
+            // are represented by the same component split below when those
+            // dynamic rows are present.
+            let recipient = if particle.foreign.government_alignment[state]
+                >= particle.foreign.ideological_alignment[state]
+            {
+                crate::GOVERNMENT
+            } else {
+                crate::GOVERNMENT
+            };
+            let total = particle.foreign.resources[state].min(
+                particle.foreign.resources[state]
+                    * config.foreign_affairs.support_budget_fraction
+                    * willingness,
+            );
+            if total > 0.0 {
+                particle.foreign.resources[state] -= total;
+                let financial = total * 0.22;
+                let political = total * 0.08;
+                let training = total * 0.14;
+                let organizational = total * 0.10;
+                let denominator = total.max(1.0);
+                particle.organizations.capital[recipient] += financial;
+                let learning = training + organizational;
+                let institution_count = particle.political.institution_capacity.len();
+                for capacity in &mut particle.political.institution_capacity {
+                    *capacity = clamp01(
+                        *capacity
+                            + learning / denominator * 0.02
+                                / institution_count.max(1) as f64,
+                    );
+                }
+                for person in 0..particle.people.government_legitimacy.len() {
+                    particle.people.government_legitimacy[person] = clamp01(
+                        particle.people.government_legitimacy[person]
+                            + political / denominator
+                                * 0.002
+                                * (particle.people.trust[person] - 0.35),
+                    );
+                }
+                particle.foreign.cumulative_cost[state] += total;
+                particle.foreign.support_foreign_state.push(state as u32);
+                particle.foreign.support_recipient.push(recipient as u32);
+                particle.foreign.support_total.push(total);
+            }
+        }
         let intervention_probability = reference_probability(
             clamp01(
                 config.foreign_affairs.intervention_base_hazard * willingness,
@@ -235,7 +394,7 @@ pub fn update(
             30.0,
         );
         let _intervention = rng.random() < intervention_probability;
-        let _ = (_support, _intervention);
+        let _ = (_intervention, rival_presence);
     }
 }
 

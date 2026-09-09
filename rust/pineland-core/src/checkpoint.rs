@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 9;
+pub const CHECKPOINT_VERSION: u32 = 10;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -883,6 +883,8 @@ fn encode_people(b: &mut Vec<u8>, p: &ParticleState) {
     put_f64_vec(b, &x.displaced_since);
     put_u32_vec(b, &x.displacement_origin);
     put_f64_vec(b, &x.origin_tie_strength);
+    put_u32_vec(b, &x.external_state);
+    put_u8_vec(b, &x.migration_status);
     put_f64_vec(b, &x.insurgent_affinity)
 }
 fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
@@ -919,6 +921,8 @@ fn decode_people(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), Ch
     x.displaced_since = read_f64_vec(r)?;
     x.displacement_origin = read_u32_vec(r)?;
     x.origin_tie_strength = read_f64_vec(r)?;
+    x.external_state = read_u32_vec(r)?;
+    x.migration_status = read_u8_vec(r)?;
     x.insurgent_affinity = read_f64_vec(r)?;
     Ok(())
 }
@@ -1855,6 +1859,21 @@ fn encode_foreign(b: &mut Vec<u8>, p: &ParticleState) {
     ] {
         put_f64_vec(b, values);
     }
+    put_u32_vec(b, &x.diaspora_person);
+    put_u32_vec(b, &x.diaspora_foreign_state);
+    put_u32_vec(b, &x.diaspora_origin_locality);
+    for values in [
+        &x.diaspora_social_strength,
+        &x.diaspora_financial_capacity,
+        &x.diaspora_information_reliability,
+        &x.diaspora_created_at,
+    ] {
+        put_f64_vec(b, values);
+    }
+    put_u32_vec(b, &x.support_foreign_state);
+    put_u32_vec(b, &x.support_recipient);
+    put_f64_vec(b, &x.support_total);
+    put_f64(b, x.cumulative_external_remittances);
 }
 
 fn decode_foreign(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), CheckpointError> {
@@ -1900,6 +1919,17 @@ fn decode_foreign(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), C
     x.interpreter_foreign_trust = read_f64_vec(r)?;
     x.interpreter_local_trust = read_f64_vec(r)?;
     x.interpreter_cultural_knowledge = read_f64_vec(r)?;
+    x.diaspora_person = read_u32_vec(r)?;
+    x.diaspora_foreign_state = read_u32_vec(r)?;
+    x.diaspora_origin_locality = read_u32_vec(r)?;
+    x.diaspora_social_strength = read_f64_vec(r)?;
+    x.diaspora_financial_capacity = read_f64_vec(r)?;
+    x.diaspora_information_reliability = read_f64_vec(r)?;
+    x.diaspora_created_at = read_f64_vec(r)?;
+    x.support_foreign_state = read_u32_vec(r)?;
+    x.support_recipient = read_u32_vec(r)?;
+    x.support_total = read_f64_vec(r)?;
+    x.cumulative_external_remittances = r.f64()?;
     Ok(())
 }
 
