@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 7;
+pub const CHECKPOINT_VERSION: u32 = 8;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -1453,6 +1453,9 @@ fn encode_information_state(b: &mut Vec<u8>, p: &ParticleState) {
         put_f64(b, observation.personnel);
         put_f64(b, observation.detection_probability);
         b.push(observation.detected);
+        put_f64(b, observation.reported_momentum);
+        put_f64(b, observation.reported_civilian_harm);
+        put_u32(b, observation.attributed_actor);
     }
     put_u64(b, p.information_relays.len() as u64);
     for relay in &p.information_relays {
@@ -1517,6 +1520,9 @@ fn decode_information_state(
         observation.personnel = r.f64()?;
         observation.detection_probability = r.f64()?;
         observation.detected = r.u8()?;
+        observation.reported_momentum = r.f64()?;
+        observation.reported_civilian_harm = r.f64()?;
+        observation.attributed_actor = r.u32()?;
         p.information_observations.push(observation);
     }
     let relay_count = bounded_count(r.u64()?)?;

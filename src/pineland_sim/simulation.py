@@ -526,10 +526,14 @@ class Simulation:
             if self.policy_hook:
                 self.policy_hook(self.world, event.time)
             if event.event_type == "contact_scan":
-                exposure_days = min(
-                    float(event.payload["interval"]),
-                    max(0.0, horizon - event.time),
-                )
+                # A requested horizon is an observation boundary, not an
+                # input to the latent event transition.  Clipping the
+                # contact window to ``horizon`` makes a run stopped at day
+                # one schedule different future work from an uninterrupted
+                # run that later crosses day one, which breaks exact
+                # checkpoint continuation.  Future events may safely remain
+                # queued beyond the current boundary.
+                exposure_days = max(0.0, float(event.payload["interval"]))
                 if exposure_days > 0:
                     if self.world.config.combat.organized_action_architecture == "multichannel_v5":
                         self._schedule_organized_actions(

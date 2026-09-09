@@ -67,6 +67,24 @@ fn target_matches_side(
     )
 }
 
+fn organizations_hostile(particle: &ParticleState, first: usize, second: usize) -> bool {
+    if first == second {
+        return false;
+    }
+    let (left, right) = if first < second {
+        (first as u32, second as u32)
+    } else {
+        (second as u32, first as u32)
+    };
+    particle
+        .relations
+        .organization_a
+        .iter()
+        .zip(&particle.relations.organization_b)
+        .zip(&particle.relations.status)
+        .any(|((a, b), status)| *a == left && *b == right && *status == 4)
+}
+
 fn belief_control(
     particle: &ParticleState,
     observer: usize,
@@ -459,7 +477,7 @@ fn local_execution_knowledge(
         .clamp(0.0, 1.0)
 }
 
-fn local_fighter_equivalents(
+pub(crate) fn local_fighter_equivalents(
     particle: &ParticleState,
     organization: usize,
     locality: usize,
@@ -850,6 +868,94 @@ pub fn opportunities(
                 organization, locality, destination, committed, capacity, demand, available, consumed, unmet, effort
             );
         }
+        return;
+    }
+
+    if channel == ARMED_CONFRONTATION {
+        let mut pairs = Vec::new();
+        let local_formations = (0..particle.formations.personnel.len())
+            .filter(|&formation| particle.formations.locality[formation] as usize == locality)
+            .collect::<Vec<_>>();
+        let own = local_formations
+            .iter()
+            .copied()
+            .filter(|&formation| {
+                particle.formations.organization[formation] as usize == organization
+                    && particle.formations.personnel[formation] > 0.0
+                    && particle.formations.moving[formation] == 0
+                    && particle.formations.outside_pineland[formation] == 0
+                    && particle.formations.operational_status[formation] == 1
+            })
+            .collect::<Vec<_>>();
+        let opponents = local_formations
+            .iter()
+            .copied()
+            .filter(|&formation| {
+                let target_organization = particle.formations.organization[formation] as usize;
+                particle.formations.personnel[formation] > 0.0
+                    && particle.formations.moving[formation] == 0
+                    && particle.formations.outside_pineland[formation] == 0
+                    && particle.formations.operational_status[formation] == 1
+                    && particle
+                        .organizations
+                        .active
+                        .get(target_organization)
+                        .copied()
+                        == Some(1)
+                    && organizations_hostile(particle, organization, target_organization)
+            })
+            .collect::<Vec<_>>();
+        for actor in own {
+            for opponent in opponents.iter().copied() {
+                if particle.formations.microzone[actor] == particle.formations.microzone[opponent] {
+                    pairs.push((actor, opponent));
+                }
+            }
+        }
+        if pairs.is_empty() {
+            return;
+        }
+        let selected = match rng.choice_index(pairs.len()) {
+            Ok(index) => index,
+            Err(_) => return,
+        };
+        let (actor, opponent) = pairs[selected];
+        let opponent_organization = particle.formations.organization[opponent] as usize;
+        let defender_aware =
+            particle
+                .presence_beliefs
+                .keys
+                .iter()
+                .enumerate()
+                .any(|(index, key)| {
+                    key.observer as usize == opponent_organization
+                        && key.locality as usize == locality
+                        && particle
+                            .presence_beliefs
+                            .evidence_count
+                            .get(index)
+                            .copied()
+                            .unwrap_or(0)
+                            > 0
+                        && particle
+                            .presence_beliefs
+                            .estimate
+                            .get(index)
+                            .copied()
+                            .unwrap_or(0.0)
+                            >= 0.5
+                });
+        crate::combat::resolve_organized_engagement(
+            particle,
+            topology,
+            config,
+            rng,
+            _time,
+            actor,
+            opponent,
+            organization,
+            defender_aware,
+        );
         return;
     }
 
