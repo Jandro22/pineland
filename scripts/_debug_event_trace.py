@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix="pineland-trace-") as directory:
             "certify-trajectory",
             "--config", str(config_path),
             "--seed", "0",
-            "--until", "90", "--max-events", "4755",
+            "--until", "90", "--max-events", "4760",
         ],
         cwd=root,
         env=environment,

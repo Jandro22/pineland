@@ -1597,6 +1597,25 @@ impl SimulationEngine {
         {
             let event = self.particle.scheduler.pop_next().expect("peeked event");
             self.particle.time = event.time;
+            if std::env::var_os("PINELAND_MANPOWER_TRACE").is_some()
+                && event.time >= 69.0
+                && event.time <= 70.0
+            {
+                eprintln!(
+                    "MANPOWER_EVENT_BEGIN processed={} time={:.17} kind={} pools={:?}",
+                    processed + 1,
+                    event.time,
+                    event.payload.kind(),
+                    (0..self.particle.manpower.pool.len())
+                        .map(|index| (
+                            self.particle.manpower.organization[index],
+                            self.particle.manpower.locality[index],
+                            self.particle.manpower.pool[index],
+                            self.particle.manpower.supply_reserve[index],
+                        ))
+                        .collect::<Vec<_>>()
+                );
+            }
             if std::env::var_os("PINELAND_EVENT_TRACE").is_some() {
                 eprintln!(
                     "EVENT {} time={:.17} kind={}",
@@ -1649,6 +1668,25 @@ impl SimulationEngine {
                 );
             }
             self.process_event(&event)?;
+            if std::env::var_os("PINELAND_MANPOWER_TRACE").is_some()
+                && event.time >= 69.0
+                && event.time <= 70.0
+            {
+                eprintln!(
+                    "MANPOWER_EVENT_END processed={} time={:.17} kind={} pools={:?}",
+                    processed + 1,
+                    event.time,
+                    event.payload.kind(),
+                    (0..self.particle.manpower.pool.len())
+                        .map(|index| (
+                            self.particle.manpower.organization[index],
+                            self.particle.manpower.locality[index],
+                            self.particle.manpower.pool[index],
+                            self.particle.manpower.supply_reserve[index],
+                        ))
+                        .collect::<Vec<_>>()
+                );
+            }
             // Python's foothold membership component is a live projection of
             // current armed membership and residence.  Civilian mobility,
             // combat, and any future direct person transition can change it

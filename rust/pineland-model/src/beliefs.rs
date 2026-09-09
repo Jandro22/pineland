@@ -66,10 +66,22 @@ pub fn decay_and_propagate(
     if elapsed_days <= 0.0 {
         return;
     }
+    // Python only exposes the generic insurgent actor to representatives when
+    // at least one insurgent organization is active.  After a collapse this
+    // changes both the number of normal draws and the set of expected-control
+    // fields updated at the boundary, so decide it once before the person
+    // loop rather than inferring it from stale per-person affiliation.
+    let insurgent_perceived = (0..particle.organizations.kind.len()).any(|organization| {
+        particle.organizations.active[organization] != 0
+            && organization == crate::INSURGENT
+    });
     for person in 0..particle.people.locality.len() {
         let locality = particle.people.residence[person] as usize;
         let community = particle.people.community[person];
         for actor in [crate::GOVERNMENT, crate::INSURGENT] {
+            if actor == crate::INSURGENT && !insurgent_perceived {
+                continue;
+            }
             // Python keeps a person's community partition attached to the
             // representative even after mobility changes residence.  The
             // community signal is therefore selected by community identity,
