@@ -8,7 +8,7 @@
 //! continuation contract.
 
 use pineland_core::config::SimulationConfig;
-use pineland_core::rng::{python_exp, PyRandomCompat};
+use pineland_core::rng::{python_exp, python_sum, PyRandomCompat};
 use pineland_core::state::{
     clamp01, BeliefKey, InformationHistoryEntry, InformationObservation, InformationRelay,
     ParticleState, PresenceKey, CONTROL_DIMENSIONS, INFORMATION_NONE,
@@ -1865,6 +1865,7 @@ fn observe_control(
         locality: locality as u32,
         kind: 3,
     };
+    let target_belief_key = (key.observer, key.target, key.locality, key.kind);
     let is_new = !particle
         .beliefs
         .keys
@@ -1875,6 +1876,37 @@ fn observe_control(
         let offset = index * CONTROL_DIMENSIONS;
         particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS].fill(0.5);
         particle.beliefs.confidence[index] = config.information.prior_confidence;
+    }
+    let target_belief_trace = std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+        && ((target_belief_key.0 == 31
+            && target_belief_key.1 == crate::INSURGENT as u32
+            && target_belief_key.2 == 31)
+            || (target_belief_key.0 == 19
+                && target_belief_key.1 == crate::INSURGENT as u32
+                && target_belief_key.2 == 0));
+    if target_belief_trace {
+        eprintln!(
+            "TARGET_BELIEF_PRE time={:.17} key=({}, {}, {}, {}) source={} type={} recipient={} node={} quality={:.17} trust={:.17} language={:.17} confidence={:.17} corr={:.17} weight={:.17} observed={:?} prior_conf={:.17} prior_updated={:.17} prior_contra={:.17}",
+            time,
+            target_belief_key.0,
+            target_belief_key.1,
+            target_belief_key.2,
+            target_belief_key.3,
+            source_id,
+            source_type.name(),
+            observer,
+            observer_node,
+            quality,
+            trust,
+            language,
+            confidence,
+            corroboration,
+            weight,
+            observed,
+            particle.beliefs.confidence[index],
+            particle.beliefs.updated_at[index],
+            particle.beliefs.contradiction[index],
+        );
     }
     if std::env::var_os("PINELAND_INFO_TRACE").is_some()
         && observer_node == "FOREIGN-NEIGHBOR-1-01"
@@ -1908,6 +1940,20 @@ fn observe_control(
         config.information.contradiction_memory_days,
         config.information.contradiction_penalty,
     );
+    if target_belief_trace {
+        eprintln!(
+            "TARGET_BELIEF_POST time={:.17} key=({}, {}, {}, {}) confidence={:.17} updated={:.17} contra={:.17} evidence={}",
+            time,
+            target_belief_key.0,
+            target_belief_key.1,
+            target_belief_key.2,
+            target_belief_key.3,
+            particle.beliefs.confidence[index],
+            particle.beliefs.updated_at[index],
+            particle.beliefs.contradiction[index],
+            particle.beliefs.evidence_count[index],
+        );
+    }
     if std::env::var_os("PINELAND_INFO_TRACE").is_some()
         && source_id == "C000069"
         && locality == 28
@@ -2274,11 +2320,19 @@ fn source_quality(
         .get(source_type.name())
         .copied()
         .unwrap_or(0.4);
-    clamp01(
-        coverage
-            * (0.55 + 0.45 * particle.locality.observability[locality])
-            * (0.85 + 0.3 * rng.random()),
-    )
+    let observability = particle.locality.observability[locality];
+    let draw = rng.random();
+    let quality = clamp01(coverage * (0.55 + 0.45 * observability) * (0.85 + 0.3 * draw));
+    if std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+        && source_type == SourceType::OrganizationMember
+        && locality == 31
+    {
+        eprintln!(
+            "TARGET_BELIEF_QUALITY locality={} coverage={:.17} observability={:.17} draw={:.17} quality={:.17}",
+            locality, coverage, observability, draw, quality,
+        );
+    }
+    quality
 }
 
 fn source_trust(
@@ -2518,8 +2572,8 @@ fn local_organizational_embeddedness(
     let pool_channel = clamp01(pool.min(reserve / supply_per_fighter) / threshold)
         * clamp01(particle.organizations.local_knowledge[organization]);
 
-    let mut fielded = 0.0;
-    let mut weighted_embeddedness = 0.0;
+    let mut fielded_values = Vec::new();
+    let mut weighted_embeddedness_values = Vec::new();
     for formation in 0..particle.formations.personnel.len() {
         if particle.formations.organization[formation] as usize != organization
             || particle.formations.locality[formation] as usize != locality
@@ -2530,10 +2584,14 @@ fn local_organizational_embeddedness(
         {
             continue;
         }
-        fielded += particle.formations.personnel[formation];
-        weighted_embeddedness += particle.formations.personnel[formation]
-            * clamp01(particle.formations.embeddedness[formation]);
+        fielded_values.push(particle.formations.personnel[formation]);
+        weighted_embeddedness_values.push(
+            particle.formations.personnel[formation]
+                * clamp01(particle.formations.embeddedness[formation]),
+        );
     }
+    let fielded = python_sum(&fielded_values);
+    let weighted_embeddedness = python_sum(&weighted_embeddedness_values);
     let formation_channel = if fielded > 0.0 {
         clamp01(fielded / threshold) * clamp01(weighted_embeddedness / fielded)
     } else {
@@ -2565,7 +2623,25 @@ fn local_organizational_embeddedness(
     ] {
         complement *= 1.0 - clamp01(value);
     }
-    clamp01(1.0 - complement)
+    let result = clamp01(1.0 - complement);
+    if std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+        && organization == crate::INSURGENT
+        && locality == 31
+    {
+        eprintln!(
+            "TARGET_BELIEF_EMBEDDEDNESS organization={} locality={} member={:.17} pool={:.17} fielded={:.17} weighted={:.17} formation={:.17} institutional={:.17} result={:.17}",
+            organization,
+            locality,
+            member_channel,
+            pool_channel,
+            fielded,
+            weighted_embeddedness,
+            formation_channel,
+            institutional_channel,
+            result,
+        );
+    }
+    result
 }
 
 fn available_personnel(particle: &ParticleState, formation: usize) -> f64 {

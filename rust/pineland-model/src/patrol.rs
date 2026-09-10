@@ -663,12 +663,42 @@ fn observe_control(
         locality: locality as u32,
         kind: 3,
     };
+    let target_belief_key = (
+        dynamic_key.observer,
+        dynamic_key.target,
+        dynamic_key.locality,
+        dynamic_key.kind,
+    );
     let is_new = !particle.beliefs.keys.iter().any(|key| key == &dynamic_key);
     let dynamic_index = particle.beliefs.ensure_key(dynamic_key);
     if is_new {
         let offset = dynamic_index * CONTROL_DIMENSIONS;
         particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS].fill(0.5);
         particle.beliefs.confidence[dynamic_index] = config.information.prior_confidence;
+    }
+    let target_belief_trace = std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+        && ((target_belief_key.0 == 31
+            && target_belief_key.1 == crate::INSURGENT as u32
+            && target_belief_key.2 == 31)
+            || (target_belief_key.0 == 19
+                && target_belief_key.1 == crate::INSURGENT as u32
+                && target_belief_key.2 == 0));
+    if target_belief_trace {
+        eprintln!(
+            "TARGET_BELIEF_PRE time={:.17} key=({}, {}, {}, {}) formation={} locality={} weight={:.17} observed={:?} prior_conf={:.17} prior_updated={:.17} prior_contra={:.17}",
+            time,
+            target_belief_key.0,
+            target_belief_key.1,
+            target_belief_key.2,
+            target_belief_key.3,
+            observer_formation,
+            locality,
+            weight,
+            observed,
+            particle.beliefs.confidence[dynamic_index],
+            particle.beliefs.updated_at[dynamic_index],
+            particle.beliefs.contradiction[dynamic_index],
+        );
     }
     particle.beliefs.fuse_control(
         dynamic_index,
@@ -678,6 +708,20 @@ fn observe_control(
         config.information.contradiction_memory_days,
         config.information.contradiction_penalty,
     );
+    if target_belief_trace {
+        eprintln!(
+            "TARGET_BELIEF_POST time={:.17} key=({}, {}, {}, {}) confidence={:.17} updated={:.17} contra={:.17} evidence={}",
+            time,
+            target_belief_key.0,
+            target_belief_key.1,
+            target_belief_key.2,
+            target_belief_key.3,
+            particle.beliefs.confidence[dynamic_index],
+            particle.beliefs.updated_at[dynamic_index],
+            particle.beliefs.contradiction[dynamic_index],
+            particle.beliefs.evidence_count[dynamic_index],
+        );
+    }
     if let Some(index) = zone_belief_index(particle, observer_organization, microzone) {
         let prior_confidence = particle.zone_beliefs.confidence[index];
         let prior = prior_confidence.max(0.02);
