@@ -7,7 +7,7 @@
 //! loop over every locality when handling one scheduled action.
 
 use pineland_core::config::SimulationConfig;
-use pineland_core::rng::{python_exp, PyRandomCompat};
+use pineland_core::rng::{python_exp, python_sum, PyRandomCompat};
 use pineland_core::scheduler::EventPayload;
 use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
 use pineland_core::topology::StaticTopology;
@@ -642,7 +642,7 @@ pub(crate) fn local_fighter_equivalents(
     // Python's local_fighter_equivalents intentionally uses personnel, not
     // effective/readiness-adjusted personnel, and only excludes moving or
     // outside-Pineland formations.
-    let fielded = (0..particle.formations.personnel.len())
+    let fielded_values = (0..particle.formations.personnel.len())
         .filter(|&formation| {
             particle.formations.organization[formation] as usize == organization
                 && particle.formations.locality[formation] as usize == locality
@@ -650,7 +650,8 @@ pub(crate) fn local_fighter_equivalents(
                 && particle.formations.moving[formation] == 0
         })
         .map(|formation| particle.formations.personnel[formation].max(0.0))
-        .sum();
+        .collect::<Vec<_>>();
+    let fielded = python_sum(&fielded_values);
     (unfielded, fielded)
 }
 
@@ -759,7 +760,28 @@ fn consume_local_supply(
         let take = particle.formations.supply_stock[formation]
             .max(0.0)
             .min(remaining);
+        if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+            && formation == 7
+        {
+            eprintln!(
+                "ACTION_SUPPLY_CONSUME time=unknown formation=7 demand={:.17} remaining={:.17} take={:.17} before={:.17} bits={}",
+                demanded,
+                remaining,
+                take,
+                particle.formations.supply_stock[formation],
+                particle.formations.supply_stock[formation].to_bits()
+            );
+        }
         particle.formations.supply_stock[formation] -= take;
+        if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+            && formation == 7
+        {
+            eprintln!(
+                "ACTION_SUPPLY_CONSUMED formation=7 after={:.17} bits={}",
+                particle.formations.supply_stock[formation],
+                particle.formations.supply_stock[formation].to_bits()
+            );
+        }
         particle.formations.sustainment[formation] = particle.formations.supply_fraction(formation);
         consumed += take;
         remaining -= take;
