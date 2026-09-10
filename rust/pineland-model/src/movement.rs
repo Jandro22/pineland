@@ -817,7 +817,7 @@ fn opponent_control(
 
 fn destination_score(
     particle: &ParticleState,
-    _topology: &StaticTopology,
+    topology: &StaticTopology,
     config: &SimulationConfig,
     formation: usize,
     destination: usize,
@@ -882,10 +882,15 @@ fn destination_score(
                 _ => 0.0,
             }
         };
-        // Sanctuary is not yet represented in the dense native state. The
-        // default Pineland world has no sponsor sanctuary, so this is exactly
-        // the Python value at the current certification boundary.
-        base.clamp(0.0, 1.0)
+        let sanctuary = sanctuary_access(
+            particle,
+            topology,
+            config,
+            organization,
+            destination,
+            particle.formations.mobility[formation],
+        );
+        base.clamp(0.0, 1.0) + (1.0 - base.clamp(0.0, 1.0)) * sanctuary
     } else {
         let threatened_control = own_control * opponent_adjusted;
         let territorial_need = 1.0 - own_control * (1.0 - opponent_adjusted);
@@ -900,6 +905,71 @@ fn destination_score(
         + config.logistics.reallocation_importance_weight * importance
         - config.logistics.reallocation_travel_time_weight * metric.travel_hours
         - route_risk_penalty
+}
+
+fn sanctuary_access(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    organization: usize,
+    destination: usize,
+    mobility: f64,
+) -> f64 {
+    let external_sanctuary = particle
+        .organizations
+        .external_sanctuary
+        .get(organization)
+        .copied()
+        .unwrap_or(0.0);
+    if external_sanctuary <= 0.0 {
+        return 0.0;
+    }
+
+    let linked_states = |state: usize| {
+        particle
+            .foreign
+            .support_foreign_state
+            .iter()
+            .zip(&particle.foreign.support_recipient)
+            .any(|(foreign, recipient)| {
+                *foreign as usize == state && *recipient as usize == organization
+            })
+    };
+    let mobility = mobility.max(0.05);
+    let mut best: f64 = 0.0;
+    for border in 0..particle.foreign.border_foreign_state.len() {
+        let state = particle.foreign.border_foreign_state[border] as usize;
+        if !linked_states(state) {
+            continue;
+        }
+        let permeability = clamp01(
+            0.35 * particle.foreign.border_social_permeability[border]
+                + 0.30 * particle.foreign.border_kinship_overlap[border]
+                + 0.20 * particle.foreign.border_language_overlap[border]
+                + 0.15 * particle.foreign.border_legal_permeability[border],
+        );
+        let border_quality = clamp01(
+            permeability
+                * particle.foreign.border_infrastructure[border].max(0.1)
+                * (1.0 - particle.foreign.border_state_monitoring[border].clamp(0.0, 1.0))
+                / particle.foreign.border_terrain_friction[border].max(0.5),
+        );
+        let border_locality = particle.foreign.border_locality[border] as usize;
+        let route_metrics = all_route_metrics(
+            particle,
+            topology,
+            border_locality,
+            mobility,
+        );
+        let Some(route) = route_metrics.get(destination).and_then(|metric| metric.as_ref()) else {
+            continue;
+        };
+        let distance_access = python_exp(
+            -config.logistics.reallocation_travel_time_weight * route.travel_hours,
+        );
+        best = best.max(border_quality * distance_access);
+    }
+    clamp01(external_sanctuary * best)
 }
 
 fn command_metrics(particle: &ParticleState, organization: usize, formation: usize) -> (f64, f64) {
