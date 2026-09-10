@@ -119,6 +119,18 @@ pub(crate) fn local_embeddedness(
             + particle.locality.insurgent_control[offset + 6])
             / 3.0)
             .clamp(0.0, 1.0)
+    } else if organization >= 7 && organization < particle.organizations.kind.len() {
+        let organization_count = particle.organizations.kind.len();
+        let organization_offset = pineland_core::state::LocalityState::organization_control_offset(
+            locality,
+            organization,
+            organization_count,
+        );
+        ((particle.locality.organization_control[organization_offset + 5]
+            + particle.locality.organization_control[organization_offset + 2]
+            + particle.locality.organization_control[organization_offset + 6])
+            / 3.0)
+            .clamp(0.0, 1.0)
     } else {
         0.0
     };
@@ -523,6 +535,13 @@ fn materialize_proto_birth(
             * founder_scale;
         contributed += contribution;
         particle.people.resources[person] -= contribution;
+        let household = particle.people.household[person] as usize;
+        if household < particle.households.resources.len() {
+            particle.households.resources[household] -= contribution;
+            if particle.households.resources[household].abs() <= 1e-9 {
+                particle.households.resources[household] = 0.0;
+            }
+        }
     }
 
     // Adding an organization inserts a new numeric slot before the dynamic
