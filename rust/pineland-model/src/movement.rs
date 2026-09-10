@@ -536,8 +536,8 @@ pub fn command(
                 posture,
             );
             if std::env::var_os("PINELAND_COMMAND_CANDIDATE_TRACE").is_some()
-                && formation == 5
-                && (time - 27.0).abs() < 1.0e-12
+                && ((formation == 5 && (time - 27.0).abs() < 1.0e-12)
+                    || (formation == 18 && (time - 42.0).abs() < 1.0e-12))
             {
                 eprintln!(
                     "COMMAND_CANDIDATE destination={} score={:.17} travel_hours={:.17} distance_km={:.17} own_control={:.17} opponent_control={:.17} uncertainty={:.17}",
