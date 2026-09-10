@@ -70,6 +70,21 @@ pub fn organization_name_for_particle(particle: &pineland_core::state::ParticleS
         PARTY_3 => "party-3".to_string(),
         INSURGENT => "insurgent".to_string(),
         _ => {
+            if particle
+                .organizations
+                .kind
+                .get(index)
+                .copied()
+                == Some(3)
+            {
+                let dynamic_number = particle.organizations.kind
+                    [INSURGENT + 1..index]
+                    .iter()
+                    .filter(|kind| **kind == 3)
+                    .count()
+                    + 1;
+                return format!("armed-{dynamic_number:03}");
+            }
             for (form_org, ext_state) in particle
                 .formations
                 .organization
