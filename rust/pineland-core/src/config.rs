@@ -578,6 +578,96 @@ impl Default for PoliticalOrderConfig {
     }
 }
 
+/// Endogenous state-capacity regeneration for the post-parity Rust theory core.
+///
+/// This process is deliberately separate from generic governance output. It
+/// represents the stocks that were missing from the parity-era model:
+/// recruitment/training of replacement security personnel, rebuilding of
+/// local administrative capacity, and police/intelligence penetration of a
+/// clandestine insurgent organization.  The default is disabled so archived
+/// parity-certified configurations remain reproducible; theory-v2 experiments
+/// enable it explicitly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StateRegenerationConfig {
+    pub enabled: bool,
+    pub interval_days: f64,
+    /// Daily fraction of local population entering the state security
+    /// training pipeline before legitimacy/access gating.
+    pub security_recruitment_rate: f64,
+    /// First-order daily graduation rate from trainee to trained reserve.
+    pub security_training_rate: f64,
+    /// Daily reserve loss through aging, attrition, and non-retention.
+    pub reserve_attrition_rate: f64,
+    /// Cost charged at entry to the training pipeline.
+    pub training_cost_per_person: f64,
+    /// Cost charged when a trained replacement is assigned to a unit/post.
+    pub deployment_cost_per_person: f64,
+    /// Share of deployable replacements preferentially assigned to police.
+    pub police_allocation_share: f64,
+    /// Police target as fraction of locality population, bounded by the
+    /// canonical 15--300 post staffing envelope.
+    pub police_target_population_fraction: f64,
+    /// Multiplier on the configured national military personnel target.
+    pub military_target_multiplier: f64,
+    /// Daily rate at which damaged administrative capacity rebuilds toward
+    /// its static locality ceiling when resources and absorptive conditions
+    /// permit.
+    pub administrative_rebuild_rate: f64,
+    /// Daily conflict-driven decay of administrative capacity.
+    pub administrative_decay_rate: f64,
+    /// Capital required to restore one unit of administrative capacity for
+    /// one represented resident.
+    pub administrative_rebuild_cost: f64,
+    /// Weights controlling local absorptive capacity for rebuilding.
+    pub rebuild_security_weight: f64,
+    pub rebuild_integrity_weight: f64,
+    pub rebuild_legitimacy_weight: f64,
+    /// Daily acquisition and decay rates of state intelligence penetration.
+    pub intelligence_gain_rate: f64,
+    pub intelligence_decay_rate: f64,
+    /// Component weights for police presence, public cooperation, and local
+    /// administrative reach in the intelligence target.
+    pub intelligence_police_weight: f64,
+    pub intelligence_cooperation_weight: f64,
+    pub intelligence_administration_weight: f64,
+    /// Daily hazard by which intelligence penetration disrupts rooted armed
+    /// membership.  This acts on membership, not merely fielded formations.
+    pub underground_disruption_rate: f64,
+    /// Fraction of disrupted membership retained as latent sympathy rather
+    /// than erased from the social state.
+    pub disrupted_sympathy_retention: f64,
+}
+
+impl Default for StateRegenerationConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            interval_days: 14.0,
+            security_recruitment_rate: 2.0e-6,
+            security_training_rate: 1.0 / 90.0,
+            reserve_attrition_rate: 5.0e-4,
+            training_cost_per_person: 8.0,
+            deployment_cost_per_person: 12.0,
+            police_allocation_share: 0.55,
+            police_target_population_fraction: 0.0015,
+            military_target_multiplier: 1.0,
+            administrative_rebuild_rate: 0.0015,
+            administrative_decay_rate: 0.00015,
+            administrative_rebuild_cost: 0.20,
+            rebuild_security_weight: 0.35,
+            rebuild_integrity_weight: 0.35,
+            rebuild_legitimacy_weight: 0.30,
+            intelligence_gain_rate: 0.010,
+            intelligence_decay_rate: 0.003,
+            intelligence_police_weight: 0.45,
+            intelligence_cooperation_weight: 0.35,
+            intelligence_administration_weight: 0.20,
+            underground_disruption_rate: 0.002,
+            disrupted_sympathy_retention: 0.70,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct ForeignAffairsConfig {
     pub enabled: bool,
@@ -741,6 +831,7 @@ pub struct SimulationConfig {
     pub access_restriction: AccessRestrictionConfig,
     pub civilian_dynamics: CivilianDynamicsConfig,
     pub political_order: PoliticalOrderConfig,
+    pub state_regeneration: StateRegenerationConfig,
     pub foreign_affairs: ForeignAffairsConfig,
     pub peace_process: PeaceProcessConfig,
     pub recording: RecordingConfig,
@@ -781,6 +872,7 @@ impl Default for SimulationConfig {
             access_restriction: AccessRestrictionConfig::default(),
             civilian_dynamics: CivilianDynamicsConfig::default(),
             political_order: PoliticalOrderConfig::default(),
+            state_regeneration: StateRegenerationConfig::default(),
             foreign_affairs: ForeignAffairsConfig::default(),
             peace_process: PeaceProcessConfig::default(),
             recording: RecordingConfig::default(),
@@ -907,6 +999,9 @@ impl SimulationConfig {
         if let Some(value) = object.get("political_order") {
             apply_political(value, &mut config.political_order)?;
         }
+        if let Some(value) = object.get("state_regeneration") {
+            apply_state_regeneration(value, &mut config.state_regeneration)?;
+        }
         if let Some(value) = object.get("foreign_affairs") {
             apply_foreign(value, &mut config.foreign_affairs)?;
         }
@@ -948,6 +1043,7 @@ impl SimulationConfig {
             "access_restriction",
             "civilian_dynamics",
             "political_order",
+            "state_regeneration",
             "foreign_affairs",
             "peace_process",
             "recording",
@@ -1012,6 +1108,10 @@ impl SimulationConfig {
                 self.political_order.interval_days,
             ),
             (
+                "state_regeneration.interval_days",
+                self.state_regeneration.interval_days,
+            ),
+            (
                 "foreign_affairs.interval_days",
                 self.foreign_affairs.interval_days,
             ),
@@ -1055,10 +1155,118 @@ impl SimulationConfig {
             ("membership_exit_rate", self.membership_exit_rate),
             ("contact_rate", self.contact_rate),
             ("organized_action_rate", self.organized_action_rate),
+            (
+                "state_regeneration.security_recruitment_rate",
+                self.state_regeneration.security_recruitment_rate,
+            ),
+            (
+                "state_regeneration.security_training_rate",
+                self.state_regeneration.security_training_rate,
+            ),
+            (
+                "state_regeneration.reserve_attrition_rate",
+                self.state_regeneration.reserve_attrition_rate,
+            ),
+            (
+                "state_regeneration.training_cost_per_person",
+                self.state_regeneration.training_cost_per_person,
+            ),
+            (
+                "state_regeneration.deployment_cost_per_person",
+                self.state_regeneration.deployment_cost_per_person,
+            ),
+            (
+                "state_regeneration.police_target_population_fraction",
+                self.state_regeneration.police_target_population_fraction,
+            ),
+            (
+                "state_regeneration.military_target_multiplier",
+                self.state_regeneration.military_target_multiplier,
+            ),
+            (
+                "state_regeneration.administrative_rebuild_rate",
+                self.state_regeneration.administrative_rebuild_rate,
+            ),
+            (
+                "state_regeneration.administrative_decay_rate",
+                self.state_regeneration.administrative_decay_rate,
+            ),
+            (
+                "state_regeneration.administrative_rebuild_cost",
+                self.state_regeneration.administrative_rebuild_cost,
+            ),
+            (
+                "state_regeneration.intelligence_gain_rate",
+                self.state_regeneration.intelligence_gain_rate,
+            ),
+            (
+                "state_regeneration.intelligence_decay_rate",
+                self.state_regeneration.intelligence_decay_rate,
+            ),
+            (
+                "state_regeneration.underground_disruption_rate",
+                self.state_regeneration.underground_disruption_rate,
+            ),
         ] {
             if !value.is_finite() || value < 0.0 {
                 return Err(ConfigError::Invalid(format!(
                     "{name} must be finite and non-negative"
+                )));
+            }
+        }
+        for (name, value) in [
+            (
+                "state_regeneration.police_allocation_share",
+                self.state_regeneration.police_allocation_share,
+            ),
+            (
+                "state_regeneration.rebuild_security_weight",
+                self.state_regeneration.rebuild_security_weight,
+            ),
+            (
+                "state_regeneration.rebuild_integrity_weight",
+                self.state_regeneration.rebuild_integrity_weight,
+            ),
+            (
+                "state_regeneration.rebuild_legitimacy_weight",
+                self.state_regeneration.rebuild_legitimacy_weight,
+            ),
+            (
+                "state_regeneration.intelligence_police_weight",
+                self.state_regeneration.intelligence_police_weight,
+            ),
+            (
+                "state_regeneration.intelligence_cooperation_weight",
+                self.state_regeneration.intelligence_cooperation_weight,
+            ),
+            (
+                "state_regeneration.intelligence_administration_weight",
+                self.state_regeneration.intelligence_administration_weight,
+            ),
+            (
+                "state_regeneration.disrupted_sympathy_retention",
+                self.state_regeneration.disrupted_sympathy_retention,
+            ),
+        ] {
+            if !value.is_finite() || !(0.0..=1.0).contains(&value) {
+                return Err(ConfigError::Invalid(format!(
+                    "{name} must be finite and in [0,1]"
+                )));
+            }
+        }
+        let rebuild_weight_sum = self.state_regeneration.rebuild_security_weight
+            + self.state_regeneration.rebuild_integrity_weight
+            + self.state_regeneration.rebuild_legitimacy_weight;
+        let intelligence_weight_sum = self.state_regeneration.intelligence_police_weight
+            + self.state_regeneration.intelligence_cooperation_weight
+            + self.state_regeneration.intelligence_administration_weight;
+        for (name, sum) in [
+            ("state_regeneration rebuild weights", rebuild_weight_sum),
+            ("state_regeneration intelligence weights", intelligence_weight_sum),
+        ] {
+            if !sum.is_finite() || (sum - 1.0).abs() > 1.0e-9 {
+                return Err(ConfigError::Invalid(format!(
+                    "{name} must sum to 1.0"
                 )));
             }
         }
@@ -1129,6 +1337,7 @@ impl SimulationConfig {
         root.insert("access_restriction", self.access_restriction.to_json());
         root.insert("civilian_dynamics", self.civilian_dynamics.to_json());
         root.insert("political_order", self.political_order.to_json());
+        root.insert("state_regeneration", self.state_regeneration.to_json());
         root.insert("foreign_affairs", self.foreign_affairs.to_json());
         root.insert("peace_process", self.peace_process.to_json());
         root.insert("recording", self.recording.to_json());
@@ -1364,6 +1573,36 @@ impl CivilianDynamicsConfig {
 impl PoliticalOrderConfig {
     fn to_json(&self) -> JsonValue {
         let mut o = object_f64! {"interval_days"=>self.interval_days,"election_interval_days"=>self.election_interval_days,"federal_policy_budget"=>self.federal_policy_budget,"public_budget_share"=>self.public_budget_share,"patronage_share"=>self.patronage_share,"private_diversion_share"=>self.private_diversion_share,"capacity_learning_rate"=>self.capacity_learning_rate,"capacity_decay_rate"=>self.capacity_decay_rate,"patronage_capacity_damage"=>self.patronage_capacity_damage,"patronage_decay_rate"=>self.patronage_decay_rate,"elite_broker_share"=>self.elite_broker_share,"peaceful_channel_strength"=>self.peaceful_channel_strength,"election_turnout_sensitivity"=>self.election_turnout_sensitivity};
+        o.insert("enabled", JsonValue::Bool(self.enabled));
+        o
+    }
+}
+impl StateRegenerationConfig {
+    fn to_json(&self) -> JsonValue {
+        let mut o = object_f64! {
+            "interval_days"=>self.interval_days,
+            "security_recruitment_rate"=>self.security_recruitment_rate,
+            "security_training_rate"=>self.security_training_rate,
+            "reserve_attrition_rate"=>self.reserve_attrition_rate,
+            "training_cost_per_person"=>self.training_cost_per_person,
+            "deployment_cost_per_person"=>self.deployment_cost_per_person,
+            "police_allocation_share"=>self.police_allocation_share,
+            "police_target_population_fraction"=>self.police_target_population_fraction,
+            "military_target_multiplier"=>self.military_target_multiplier,
+            "administrative_rebuild_rate"=>self.administrative_rebuild_rate,
+            "administrative_decay_rate"=>self.administrative_decay_rate,
+            "administrative_rebuild_cost"=>self.administrative_rebuild_cost,
+            "rebuild_security_weight"=>self.rebuild_security_weight,
+            "rebuild_integrity_weight"=>self.rebuild_integrity_weight,
+            "rebuild_legitimacy_weight"=>self.rebuild_legitimacy_weight,
+            "intelligence_gain_rate"=>self.intelligence_gain_rate,
+            "intelligence_decay_rate"=>self.intelligence_decay_rate,
+            "intelligence_police_weight"=>self.intelligence_police_weight,
+            "intelligence_cooperation_weight"=>self.intelligence_cooperation_weight,
+            "intelligence_administration_weight"=>self.intelligence_administration_weight,
+            "underground_disruption_rate"=>self.underground_disruption_rate,
+            "disrupted_sympathy_retention"=>self.disrupted_sympathy_retention
+        };
         o.insert("enabled", JsonValue::Bool(self.enabled));
         o
     }
@@ -1772,6 +2011,81 @@ fn apply_political(v: &JsonValue, t: &mut PoliticalOrderConfig) -> Result<(), Co
     ] {
         if let Some(x) = o.get(k) {
             *f = required_f64(x, k)?
+        }
+    }
+    Ok(())
+}
+
+fn apply_state_regeneration(
+    v: &JsonValue,
+    t: &mut StateRegenerationConfig,
+) -> Result<(), ConfigError> {
+    let o = object(v, "state_regeneration")?;
+    if let Some(x) = o.get("enabled") {
+        t.enabled = required_bool(x, "enabled")?;
+    }
+    for (k, f) in [
+        ("interval_days", &mut t.interval_days),
+        ("security_recruitment_rate", &mut t.security_recruitment_rate),
+        ("security_training_rate", &mut t.security_training_rate),
+        ("reserve_attrition_rate", &mut t.reserve_attrition_rate),
+        ("training_cost_per_person", &mut t.training_cost_per_person),
+        ("deployment_cost_per_person", &mut t.deployment_cost_per_person),
+        ("police_allocation_share", &mut t.police_allocation_share),
+        (
+            "police_target_population_fraction",
+            &mut t.police_target_population_fraction,
+        ),
+        ("military_target_multiplier", &mut t.military_target_multiplier),
+        (
+            "administrative_rebuild_rate",
+            &mut t.administrative_rebuild_rate,
+        ),
+        (
+            "administrative_decay_rate",
+            &mut t.administrative_decay_rate,
+        ),
+        (
+            "administrative_rebuild_cost",
+            &mut t.administrative_rebuild_cost,
+        ),
+        (
+            "rebuild_security_weight",
+            &mut t.rebuild_security_weight,
+        ),
+        (
+            "rebuild_integrity_weight",
+            &mut t.rebuild_integrity_weight,
+        ),
+        (
+            "rebuild_legitimacy_weight",
+            &mut t.rebuild_legitimacy_weight,
+        ),
+        ("intelligence_gain_rate", &mut t.intelligence_gain_rate),
+        ("intelligence_decay_rate", &mut t.intelligence_decay_rate),
+        (
+            "intelligence_police_weight",
+            &mut t.intelligence_police_weight,
+        ),
+        (
+            "intelligence_cooperation_weight",
+            &mut t.intelligence_cooperation_weight,
+        ),
+        (
+            "intelligence_administration_weight",
+            &mut t.intelligence_administration_weight,
+        ),
+        (
+            "underground_disruption_rate",
+            &mut t.underground_disruption_rate,
+        ),
+        (
+            "disrupted_sympathy_retention",
+            &mut t.disrupted_sympathy_retention,
+        ),
+    ] {
+        if let Some(x) = o.get(k) {
+            *f = required_f64(x, k)?;
         }
     }
     Ok(())

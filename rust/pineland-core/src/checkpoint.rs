@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 12;
+pub const CHECKPOINT_VERSION: u32 = 13;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -829,6 +829,13 @@ fn encode_locality(b: &mut Vec<u8>, p: &ParticleState) {
         &x.displaced_population,
         &x.government_governance,
         &x.insurgent_governance,
+        &x.government_security_recruit_pipeline,
+        &x.government_security_reserve,
+        &x.government_intelligence_penetration,
+        &x.government_cumulative_security_recruits,
+        &x.government_cumulative_security_deployments,
+        &x.government_cumulative_admin_rebuild,
+        &x.government_cumulative_underground_disruption,
     ] {
         put_f64_vec(b, v)
     }
@@ -851,6 +858,13 @@ fn decode_locality(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<(), 
     x.displaced_population = read_f64_vec(r)?;
     x.government_governance = read_f64_vec(r)?;
     x.insurgent_governance = read_f64_vec(r)?;
+    x.government_security_recruit_pipeline = read_f64_vec(r)?;
+    x.government_security_reserve = read_f64_vec(r)?;
+    x.government_intelligence_penetration = read_f64_vec(r)?;
+    x.government_cumulative_security_recruits = read_f64_vec(r)?;
+    x.government_cumulative_security_deployments = read_f64_vec(r)?;
+    x.government_cumulative_admin_rebuild = read_f64_vec(r)?;
+    x.government_cumulative_underground_disruption = read_f64_vec(r)?;
     x.district_population_is_integer = read_u8_vec(r)?;
     Ok(())
 }
