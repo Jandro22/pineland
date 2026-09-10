@@ -488,6 +488,10 @@ fn debug_transition_state(engine: &SimulationEngine) -> JsonValue {
         "organization_capital",
         f64_array(&particle.organizations.capital),
     );
+    root.insert(
+        "organization_cohesion",
+        f64_array(&particle.organizations.cohesion),
+    );
 
     let mut patrols = JsonValue::array();
     if let JsonValue::Array(rows) = &mut patrols {
