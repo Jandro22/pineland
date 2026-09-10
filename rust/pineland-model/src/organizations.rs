@@ -507,6 +507,11 @@ fn materialize_proto_birth(
     let old_organizations = particle.organizations.kind.len();
     let organization = old_organizations;
     let dynamic_number = dynamic_organization_number(particle);
+    let old_command_ids = crate::information::command_node_ids(particle);
+    let new_command_id = format!("CMD:armed-{dynamic_number:03}");
+    let command_insert_position = old_command_ids
+        .binary_search(&new_command_id)
+        .unwrap_or_else(|position| position);
 
     // Python's mature_proto converts the founder slice's resources before it
     // creates any of the new registry rows. Preserve that per-person update
@@ -675,6 +680,17 @@ fn materialize_proto_birth(
 
     let old_formations = particle.formations.personnel.len();
     crate::recruitment::shift_dynamic_observer_codes(particle, old_formations);
+    let command_start = particle.organizations.kind.len()
+        + old_formations
+        + 1
+        + particle.security_posts.organization.len()
+        + crate::information::auxiliary_node_ids(particle, topology).len();
+    crate::recruitment::shift_dynamic_observer_codes_after_command_insertion(
+        particle,
+        command_start as u32,
+        old_command_ids.len(),
+        command_insert_position,
+    );
     let locality = particle.protos.locality[proto] as usize;
     let formation = old_formations;
     let zone = topology
