@@ -196,6 +196,16 @@ fn response_distances(
         }
     }
 
+    if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 0 {
+        eprintln!(
+            "PHYS_SOURCES time={:.17} locality={} actor={} sources={:?}",
+            time,
+            topology.locality_names[locality],
+            actor,
+            source_delays,
+        );
+    }
+
     let mut distances = vec![f64::INFINITY; topology.microzone_count()];
     let mut paths = Vec::with_capacity(source_delays.len());
     for (source, _) in &source_delays {
@@ -395,7 +405,7 @@ pub fn refresh(
                         },
             );
         }
-        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 3 {
+        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && (locality == 0 || locality == 3) {
             let zones = topology
                 .zones_for_locality(locality.into())
                 .collect::<Vec<_>>();
@@ -472,7 +482,7 @@ pub fn refresh(
             government += particle.zones.population_share[zone] * government_value;
             insurgent += particle.zones.population_share[zone] * insurgent_value;
         }
-        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && locality == 3 {
+        if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && (locality == 0 || locality == 3) {
             eprintln!(
                 "PHYS_AGG time={:.17} locality={} government={:.17} insurgent={:.17}",
                 time, topology.locality_names[locality], government, insurgent
@@ -486,7 +496,8 @@ pub fn refresh(
     }
     if std::env::var_os("PINELAND_PHYS_TRACE").is_some() && time >= 1.0 {
         eprintln!(
-            "PHYS locality0 gphys={:.17} iphys={:.17} z0g={:.17} z0i={:.17} memg={:.17} memi={:.17}",
+            "PHYS time={:.17} locality0 gphys={:.17} iphys={:.17} z0g={:.17} z0i={:.17} memg={:.17} memi={:.17}",
+            time,
             particle.locality.government_control[1],
             particle.locality.insurgent_control[1],
             particle.zones.government_control[0],
