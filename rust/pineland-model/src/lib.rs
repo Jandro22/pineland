@@ -22,6 +22,7 @@ pub mod political;
 pub mod recording;
 pub mod recruitment;
 pub mod social;
+pub mod state_regeneration;
 
 use pineland_core::config::{ConfigError, SimulationConfig};
 use pineland_core::json::JsonValue;
@@ -1642,6 +1643,11 @@ impl SimulationEngine {
         self.schedule(0.0, 61, EventPayload::PeaceProcess)?;
         self.schedule(0.0, 50, EventPayload::Mobility)?;
         self.schedule(0.0, 70, EventPayload::Governance)?;
+        if self.config.state_regeneration.enabled {
+            // State regeneration is a distinct causal transition between
+            // political allocation and generic governance/economy output.
+            self.schedule(0.0, 68, EventPayload::StateRegeneration)?;
+        }
         self.schedule(0.0, 80, EventPayload::Economy)?;
         self.schedule(0.0, 85, EventPayload::RecordingNoise)?;
         self.schedule(0.0, 90, EventPayload::Checkpoint)?;
@@ -2076,6 +2082,15 @@ impl SimulationEngine {
                 event.time,
                 event.elapsed_days,
             ),
+            EventPayload::StateRegeneration => {
+                state_regeneration::update(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    event.time,
+                    event.elapsed_days,
+                );
+            }
             EventPayload::Economy => economy::update(
                 &mut self.particle,
                 &self.topology,
@@ -2327,6 +2342,7 @@ impl SimulationEngine {
             EventPayload::ForceMovement => self.config.intervals.force_movement,
             EventPayload::Command => self.config.intervals.command,
             EventPayload::Governance => self.config.intervals.governance,
+            EventPayload::StateRegeneration => self.config.state_regeneration.interval_days,
             EventPayload::Economy => self.config.intervals.economy,
             EventPayload::OrganizationEcology => self.config.organization_ecology.interval_days,
             EventPayload::PoliticalOrder => self.config.political_order.interval_days,

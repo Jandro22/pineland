@@ -22,6 +22,10 @@ pub enum EventPayload {
     Recruitment,
     OrganizationEcology,
     Governance,
+    /// Post-parity endogenous government capacity production: security-force
+    /// recruitment/training, administrative rebuilding, and police/intelligence
+    /// penetration of clandestine organizations.
+    StateRegeneration,
     Economy,
     PoliticalOrder,
     ForeignAffairs,
@@ -60,6 +64,7 @@ impl EventPayload {
             Self::Recruitment => "recruitment",
             Self::OrganizationEcology => "organization_ecology",
             Self::Governance => "governance",
+            Self::StateRegeneration => "state_regeneration",
             Self::Economy => "economy",
             Self::PoliticalOrder => "political_order",
             Self::ForeignAffairs => "foreign_affairs",
@@ -95,6 +100,7 @@ impl EventPayload {
             Self::Checkpoint => 19,
             Self::OrganizedAction { .. } => 20,
             Self::Contact { .. } => 21,
+            Self::StateRegeneration => 22,
             Self::Custom { code, .. } => *code,
         }
     }

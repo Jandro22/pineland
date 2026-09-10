@@ -37,6 +37,23 @@ pub struct LocalityState {
     pub displaced_population: Vec<f64>,
     pub government_governance: Vec<f64>,
     pub insurgent_governance: Vec<f64>,
+    /// Post-parity theory-core state: civilians currently in the domestic
+    /// government security training pipeline, by locality.
+    pub government_security_recruit_pipeline: Vec<f64>,
+    /// Trained but currently unassigned domestic security personnel.
+    pub government_security_reserve: Vec<f64>,
+    /// Local state penetration of clandestine networks, in [0,1].  This is
+    /// distinct from generic observability and actor belief confidence: it is
+    /// a persistent institutional intelligence stock produced by policing,
+    /// public cooperation, and administrative reach.
+    pub government_intelligence_penetration: Vec<f64>,
+    /// Causal-accounting diagnostics retained in state so theory experiments
+    /// can distinguish recruitment, deployment, rebuilding, and underground
+    /// disruption rather than inferring them from end states.
+    pub government_cumulative_security_recruits: Vec<f64>,
+    pub government_cumulative_security_deployments: Vec<f64>,
+    pub government_cumulative_admin_rebuild: Vec<f64>,
+    pub government_cumulative_underground_disruption: Vec<f64>,
 }
 
 impl LocalityState {
@@ -58,6 +75,13 @@ impl LocalityState {
             displaced_population: vec![0.0; count],
             government_governance: vec![0.0; count],
             insurgent_governance: vec![0.0; count],
+            government_security_recruit_pipeline: vec![0.0; count],
+            government_security_reserve: vec![0.0; count],
+            government_intelligence_penetration: vec![0.0; count],
+            government_cumulative_security_recruits: vec![0.0; count],
+            government_cumulative_security_deployments: vec![0.0; count],
+            government_cumulative_admin_rebuild: vec![0.0; count],
+            government_cumulative_underground_disruption: vec![0.0; count],
         }
     }
 
@@ -1784,6 +1808,9 @@ impl ParticleState {
             &self.locality.organization_control,
             &self.locality.violence,
             &self.locality.disruption,
+            &self.locality.government_security_recruit_pipeline,
+            &self.locality.government_security_reserve,
+            &self.locality.government_intelligence_penetration,
             &self.formations.personnel,
             &self.formations.readiness,
             &self.formations.supply_stock,
@@ -1843,6 +1870,31 @@ impl ParticleState {
         append_f64s(material, &self.locality.economic_output);
         append_f64s(material, &self.locality.infrastructure);
         append_f64s(material, &self.locality.administrative_capacity);
+        append_f64s(
+            material,
+            &self.locality.government_security_recruit_pipeline,
+        );
+        append_f64s(material, &self.locality.government_security_reserve);
+        append_f64s(
+            material,
+            &self.locality.government_intelligence_penetration,
+        );
+        append_f64s(
+            material,
+            &self.locality.government_cumulative_security_recruits,
+        );
+        append_f64s(
+            material,
+            &self.locality.government_cumulative_security_deployments,
+        );
+        append_f64s(
+            material,
+            &self.locality.government_cumulative_admin_rebuild,
+        );
+        append_f64s(
+            material,
+            &self.locality.government_cumulative_underground_disruption,
+        );
         append_f64s(material, &self.locality.terrain_friction);
         append_f64s(material, &self.locality.observability);
         append_f64s(material, &self.locality.government_control);
@@ -2310,6 +2362,36 @@ impl ParticleState {
             (
                 self.locality.insurgent_governance.len(),
                 "insurgent governance",
+            ),
+            (
+                self.locality.government_security_recruit_pipeline.len(),
+                "government security recruit pipeline",
+            ),
+            (
+                self.locality.government_security_reserve.len(),
+                "government security reserve",
+            ),
+            (
+                self.locality.government_intelligence_penetration.len(),
+                "government intelligence penetration",
+            ),
+            (
+                self.locality.government_cumulative_security_recruits.len(),
+                "government cumulative security recruits",
+            ),
+            (
+                self.locality.government_cumulative_security_deployments.len(),
+                "government cumulative security deployments",
+            ),
+            (
+                self.locality.government_cumulative_admin_rebuild.len(),
+                "government cumulative administrative rebuild",
+            ),
+            (
+                self.locality
+                    .government_cumulative_underground_disruption
+                    .len(),
+                "government cumulative underground disruption",
             ),
         ] {
             if length != locality_count {
@@ -5143,6 +5225,7 @@ fn decode_payload(reader: &mut ByteReader<'_>) -> Result<EventPayload, StateErro
             locality: reader.u32()?.into(),
             microzone: reader.u32()?.into(),
         },
+        22 => EventPayload::StateRegeneration,
         other => EventPayload::Custom {
             code: other,
             value: reader.u64()?,
