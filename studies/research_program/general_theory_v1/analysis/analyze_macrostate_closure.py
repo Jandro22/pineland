@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 import argparse, hashlib, json, math
 from pathlib import Path
 import numpy as np
@@ -83,11 +83,26 @@ def adversarial(df,macro,expanded):
                 if seeds[j]!=seeds[a]: b=j; md=float(dd); break
             if b is None: continue
             ed=float(np.linalg.norm(xe[a]-xe[b])); ra,rb=rows[a],rows[b]
-            pairs.append((md,ed,int(df.loc[ra,'viable_90']!=df.loc[rb,'viable_90']),abs(float(df.loc[ra,'control_delta_90']-df.loc[rb,'control_delta_90']))))
+            pairs.append({'macro_distance':md,'expanded_distance':ed,'viability_diff':int(df.loc[ra,'viable_90']!=df.loc[rb,'viable_90']),'control_delta_absdiff':abs(float(df.loc[ra,'control_delta_90']-df.loc[rb,'control_delta_90'])),'row_a':int(ra),'row_b':int(rb)})
     if not pairs:return {'status':'no_cross_seed_pairs'}
-    a=np.array(pairs,float); mdq=float(np.quantile(a[:,0],.20)); edq=float(np.quantile(a[:,1],.75)); sel=a[(a[:,0]<=mdq)&(a[:,1]>=edq)]
-    csd=float(np.std(df.control_delta_90)); large=((sel[:,2]>0)|(sel[:,3]>(0.5*csd if csd>1e-12 else 1e-9))) if len(sel) else np.array([],bool)
-    return {'status':'ok','candidate_pairs':len(pairs),'selected_adversarial_pairs':int(len(sel)),'macro_distance_p20':mdq,'expanded_distance_p75':edq,'large_outcome_difference_rate':float(np.mean(large)) if len(large) else None}
+    mdq=float(np.quantile([x['macro_distance'] for x in pairs],.20)); edq=float(np.quantile([x['expanded_distance'] for x in pairs],.75))
+    sel=[x for x in pairs if x['macro_distance']<=mdq and x['expanded_distance']>=edq]
+    csd=float(np.std(df.control_delta_90)); thresh=(0.5*csd if csd>1e-12 else 1e-9)
+    details=[]
+    candidate_omitted=[c for c in expanded if c not in macro]
+    for x in sel:
+        arow=df.loc[x['row_a']]; brow=df.loc[x['row_b']]
+        diffs=[]
+        for c in candidate_omitted:
+            av=float(arow[c]) if pd.notna(arow[c]) else 0.0; bv=float(brow[c]) if pd.notna(brow[c]) else 0.0
+            sd=float(df[c].std(ddof=0)); z=abs(av-bv)/(sd if sd>1e-12 else 1.0)
+            diffs.append((z,c,av,bv))
+        diffs.sort(reverse=True)
+        details.append({**x,'large_outcome_difference':bool(x['viability_diff']>0 or x['control_delta_absdiff']>thresh),
+          'a':{'seed':int(arow.seed),'time':float(arow.time),'locality':int(arow.locality),'viable_90':int(arow.viable_90),'control_delta_90':float(arow.control_delta_90)},
+          'b':{'seed':int(brow.seed),'time':float(brow.time),'locality':int(brow.locality),'viable_90':int(brow.viable_90),'control_delta_90':float(brow.control_delta_90)},
+          'top_omitted_differences':[{'feature':c,'standardized_absdiff':float(z),'a':av,'b':bv} for z,c,av,bv in diffs[:12]]})
+    return {'status':'ok','candidate_pairs':len(pairs),'selected_adversarial_pairs':len(sel),'macro_distance_p20':mdq,'expanded_distance_p75':edq,'large_outcome_difference_rate':float(np.mean([x['large_outcome_difference'] for x in details])) if details else None,'pairs':details}
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('csv'); ap.add_argument('--out',required=True); ns=ap.parse_args()
