@@ -1,4 +1,4 @@
-﻿{
+{
   "schema_version": "pineland.general_theory_contract.v1",
   "status": "preregistered_theory_extraction_program_not_general_theory_result",
   "name": "Competitive Local Reproduction Theory (CLRT) v1 candidate",
@@ -6,7 +6,7 @@
   "historical_parameter_fitting": false,
   "historical_rerun_authorized": false,
   "unit_of_mechanism": "actor x locality x time",
-  "scientific_claim": "Political-security orders persist locally when organizational, coercive, informational, logistical, and institutional stocks regenerate the access and expectations required for their own continuation faster than those stocks decay or are disrupted. Movement and external support can transport or replenish capacity but are not endogenous reproduction.",
+  "scientific_claim": "Political-security orders persist locally when organizational, coercive, informational, logistical, and institutional stocks regenerate the access and expectations required for their own continuation faster than those stocks decay or are disrupted. Movement and external support can transport or replenish capacity but are not endogenous reproduction. The transition law is conditional on structural context Z; context shapes reproduction rates but is not itself counted as reproduced stock.",
   "core_state_vector": {
     "M": "embedded local membership/rooted social base",
     "F": "fielded deployable armed capacity",
@@ -29,12 +29,30 @@
     "quiet by dominance vs clandestine survival vs reporting failure"
   ],
   "primary_questions": [
-    {"id":"Q1","question":"What is the minimal macrostate sufficient for predicting local persistence, regeneration, control transition, and diffusion?"},
-    {"id":"Q2","question":"Are local reproduction inputs complementary, substitutable, thresholded, or bottlenecked?"},
-    {"id":"Q3","question":"Does a multitype endogenous reproduction operator predict extinction/persistence and geographic spread?"},
-    {"id":"Q4","question":"Can raw parameters collapse into a small set of dimensionless timescale/capacity ratios with stable phase boundaries?"},
-    {"id":"Q5","question":"Is COIN better represented as competitive reproduction of insurgent and state local orders?"},
-    {"id":"Q6","question":"Which results transport across cases without case-label coefficients or holdout refitting?"}
+    {
+      "id": "Q1",
+      "question": "What is the minimal macrostate sufficient for predicting local persistence, regeneration, control transition, and diffusion?"
+    },
+    {
+      "id": "Q2",
+      "question": "Are local reproduction inputs complementary, substitutable, thresholded, or bottlenecked?"
+    },
+    {
+      "id": "Q3",
+      "question": "Does a multitype endogenous reproduction operator predict extinction/persistence and geographic spread?"
+    },
+    {
+      "id": "Q4",
+      "question": "Can raw parameters collapse into a small set of dimensionless timescale/capacity ratios with stable phase boundaries?"
+    },
+    {
+      "id": "Q5",
+      "question": "Is COIN better represented as competitive reproduction of insurgent and state local orders?"
+    },
+    {
+      "id": "Q6",
+      "question": "Which results transport across cases without case-label coefficients or holdout refitting?"
+    }
   ],
   "forbidden_shortcuts": [
     "no event-history self-excitation added merely to match clustered violence",
@@ -45,5 +63,37 @@
     "no synthetic success described as historical validity",
     "no core equation change hidden inside performance work"
   ],
-  "promotion_rule": "A general-theory claim requires explanatory compression, synthetic identification and falsification, structural robustness, predictive value over reduced competitors, independent construct measurement, and transport to genuinely distinct cases."
+  "promotion_rule": "A general-theory claim requires explanatory compression, synthetic identification and falsification, structural robustness, predictive value over reduced competitors, independent construct measurement, and transport to genuinely distinct cases.",
+  "structural_context_Z": {
+    "P": "population scale/density",
+    "Y": "economic resource base",
+    "H": "infrastructure/connectivity",
+    "T": "terrain friction",
+    "V": "observability",
+    "N": "social/transport network structure"
+  },
+  "amendments": [
+    {
+      "id": "A1",
+      "timing": "before distributional closure/full theory promotion",
+      "reason": "separate dynamic reproductive state from structural environment and correct stochastic closure criterion"
+    }
+  ],
+  "actor_context_Theta": {
+    "organization_phenotype": [
+      "cohesion",
+      "discipline",
+      "persistence",
+      "mobility",
+      "institutional_quality",
+      "social_capital",
+      "political_capital",
+      "organizational_capital",
+      "material_capital",
+      "risk_tolerance",
+      "governance_investment"
+    ],
+    "principle": "Organization-level strategy/capability parameters condition local transition rates but are not themselves local reproduced stock unless an experiment explicitly models adaptation."
+  },
+  "transition_form": "P(X_(i,t+h) | X_(i,t), Z_i, Theta_o, exogenous intervention regime)"
 }
