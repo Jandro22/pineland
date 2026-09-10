@@ -1739,6 +1739,23 @@ impl SimulationEngine {
                 .get(7)
                 .copied()
                 .unwrap_or(0.0);
+            // Foothold membership is a deterministic projection of four
+            // mutable inputs only: person organization, person residence,
+            // person armed fraction, and locality population.  Recomputing
+            // the full organization × locality × person surface after every
+            // scheduler event is therefore redundant for the overwhelming
+            // majority of events.  Keep the Python-compatible projection at
+            // every boundary that can mutate one of those inputs (directly or
+            // through combat/ecology), and skip it elsewhere.
+            let refresh_foothold_membership = matches!(
+                event.payload,
+                EventPayload::Mobility
+                    | EventPayload::Recruitment
+                    | EventPayload::OrganizationEcology
+                    | EventPayload::ForeignAffairs
+                    | EventPayload::OrganizedAction { .. }
+                    | EventPayload::Contact { .. }
+            );
             self.process_event(&event)?;
             if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
                 && self
@@ -1779,12 +1796,15 @@ impl SimulationEngine {
                         .collect::<Vec<_>>()
                 );
             }
-            // Python's foothold membership component is a live projection of
-            // current armed membership and residence.  Civilian mobility,
-            // combat, and any future direct person transition can change it
-            // outside the recruitment handler, so refresh the compact cache
-            // after every typed transition before the state is certified.
-            recruitment::refresh_foothold_memberships(&mut self.particle, &self.topology);
+            // Keep the compact foothold projection synchronized exactly when
+            // its source state can have changed.  The mask above is audited
+            // against all runtime writes to people.organization,
+            // people.residence, people.armed_fraction, and
+            // locality.population; initialization writes occur before the
+            // event loop and are handled during world construction.
+            if refresh_foothold_membership {
+                recruitment::refresh_foothold_memberships(&mut self.particle, &self.topology);
+            }
             if std::env::var_os("PINELAND_BELIEF_TRACE").is_some()
                 && matches!(event.payload, EventPayload::Information)
                 && event.time >= 3.5
