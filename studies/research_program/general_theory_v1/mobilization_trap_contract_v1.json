@@ -1,0 +1,69 @@
+{
+  "schema_version": "pineland.mobilization_trap_contract.v1",
+  "status": "preregistered_synthetic_design_not_run",
+  "created_utc": "2026-09-10T18:58:46.328958+00:00",
+  "historical_outcomes_used": false,
+  "historical_parameter_tuning_prohibited": true,
+  "question": "Can mobilization outrun organizational resource replenishment, producing a collapse hazard despite increasing recruitment and fielded force?",
+  "isolated_system": {
+    "foreign_affairs": false,
+    "background_proto_birth_split_merger_succession": false,
+    "focal_actor": "canonical INSURGENT organization only",
+    "transition_equations": "unchanged; interventions only set recruitment rate, fighter conversion fraction, and initial focal organizational capital"
+  },
+  "design": {
+    "seeds": 8,
+    "agents": 300,
+    "localities": 34,
+    "horizon_days": 180,
+    "snapshot_days": 15,
+    "recruitment_multipliers": [
+      0.125,
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "fighter_conversion_multipliers": [
+      0.25,
+      0.5,
+      1.0,
+      2.0
+    ],
+    "initial_capital_multipliers": [
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "trajectories": 960
+  },
+  "candidate_dimensionless_strain": "sigma = recruitment_multiplier * fighter_conversion_multiplier / initial_capital_multiplier",
+  "primary_estimands": [
+    "P(focal organization active at day 180)",
+    "time to focal organization collapse",
+    "final focal organizational capital",
+    "rooted armed membership at day 180"
+  ],
+  "secondary_estimands": [
+    "fielded personnel",
+    "active footholds",
+    "cumulative recruitment",
+    "mean insurgent fiscal control"
+  ],
+  "predictions": [
+    "Survival decreases as sigma increases within matched seed/context strata.",
+    "Increasing initial capital rescues survival at fixed recruitment and fighter-conversion intensity.",
+    "Increasing fighter conversion can reduce survival when recruitment is high and capital is constrained.",
+    "Collapse should be associated with depletion of organizational capital or the ecology collapse hazard, not historical outcome matching."
+  ],
+  "falsifiers": [
+    "No reproducible negative association between sigma and survival.",
+    "Capital multiplier does not shift survival at matched recruitment/fielding settings.",
+    "Collapse occurs without capital depletion and without a compensating independently identified collapse pathway.",
+    "Results depend on historical outcomes or historical-fit tuning."
+  ],
+  "promotion_guard": "Synthetic mechanism-discovery only. A discovered strain law is a candidate theoretical mechanism, not a historical or policy claim."
+}
