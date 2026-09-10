@@ -537,7 +537,8 @@ pub fn command(
             );
             if std::env::var_os("PINELAND_COMMAND_CANDIDATE_TRACE").is_some()
                 && ((formation == 5 && (time - 27.0).abs() < 1.0e-12)
-                    || (formation == 18 && (time - 42.0).abs() < 1.0e-12))
+                    || (formation == 18 && (time - 42.0).abs() < 1.0e-12)
+                    || (formation == 23 && (42.0..=45.0).contains(&time)))
             {
                 eprintln!(
                     "COMMAND_CANDIDATE destination={} score={:.17} travel_hours={:.17} distance_km={:.17} own_control={:.17} opponent_control={:.17} uncertainty={:.17}",
@@ -1109,7 +1110,18 @@ pub(crate) fn issue_withdrawal_order(
         } else {
             python_sum(&intermediate) / intermediate.len() as f64
         };
-        let sanctuary = 0.0;
+        let sanctuary = if particle.organizations.kind.get(organization).copied() == Some(3) {
+            sanctuary_access(
+                particle,
+                topology,
+                config,
+                organization,
+                destination,
+                particle.formations.mobility[formation],
+            )
+        } else {
+            0.0
+        };
         let score = 2.2 * refuge + 1.6 * sanctuary
             - 0.04 * metric.travel_hours
             - (1.0 - risk_tolerance) * route_risk;
