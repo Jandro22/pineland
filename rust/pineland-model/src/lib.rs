@@ -261,11 +261,16 @@ impl SimulationEngine {
             SecurityPostState::new(topology.locality_count() + government_formations);
         particle.logistics = LogisticsState::new(17 + insurgent_formations);
         particle.beliefs = make_belief_state(&topology, &config);
+        let model_hash = sha256::digest_hex(if config.state_regeneration.enabled {
+            &b"pineland-native-v2-state-regeneration-core"[..]
+        } else {
+            &b"pineland-native-v1-frozen-core"[..]
+        });
         let mut engine = Self {
             config,
             topology,
             particle,
-            model_hash: sha256::digest_hex(b"pineland-native-v1-frozen-core"),
+            model_hash,
             started_at: 0.0,
             last_boundary: 0.0,
             particle_execution: false,
@@ -300,11 +305,16 @@ impl SimulationEngine {
             ));
         }
         particle.validate()?;
+        let model_hash = sha256::digest_hex(if config.state_regeneration.enabled {
+            &b"pineland-native-v2-state-regeneration-core"[..]
+        } else {
+            &b"pineland-native-v1-frozen-core"[..]
+        });
         Ok(Self {
             config,
             topology,
             particle,
-            model_hash: sha256::digest_hex(b"pineland-native-v1-frozen-core"),
+            model_hash,
             started_at: 0.0,
             last_boundary: 0.0,
             particle_execution: false,
@@ -3663,6 +3673,68 @@ mod tests {
     }
 
     #[test]
+    fn state_regeneration_scheduler_and_checkpoint_continuation_are_exact() {
+        let mut config = SimulationConfig {
+            locality_count: 4,
+            agent_count: 100,
+            burn_in_days: 0.0,
+            horizon_days: 30.0,
+            ..Default::default()
+        };
+        config.state_regeneration.enabled = true;
+        config.state_regeneration.interval_days = 5.0;
+        config.state_regeneration.security_recruitment_rate = 2.0e-5;
+        config.state_regeneration.security_training_rate = 0.08;
+        config.state_regeneration.military_target_multiplier = 0.0;
+
+        let mut continuous = SimulationEngine::new(config.clone()).unwrap();
+        for post in 0..continuous.particle.security_posts.personnel.len() {
+            if continuous.particle.security_posts.organization[post] as usize == super::POLICE {
+                continuous.particle.security_posts.personnel[post] *= 0.5;
+                continuous.particle.security_posts.presence[post] =
+                    (continuous.particle.security_posts.personnel[post] / 250.0).clamp(0.0, 1.0);
+            }
+        }
+        let starting_particle = continuous.particle.clone();
+        continuous.advance_until(30.0).unwrap();
+        assert!(
+            continuous
+                .particle
+                .counters
+                .event_counts
+                .get("state_regeneration")
+                .copied()
+                .unwrap_or(0)
+                > 0
+        );
+        assert!(
+            continuous
+                .particle
+                .locality
+                .government_cumulative_security_recruits
+                .iter()
+                .sum::<f64>()
+                > 0.0
+        );
+
+        let topology = continuous.topology.clone();
+        let mut split = SimulationEngine::from_particle(
+            config.clone(),
+            topology.clone(),
+            starting_particle,
+        )
+        .unwrap();
+        split.advance_until(15.0).unwrap();
+        let bytes = CheckpointStore::encode_particle(&split.particle).unwrap();
+        let restored_particle = CheckpointStore::decode_particle(&bytes).unwrap();
+        let mut restored =
+            SimulationEngine::from_particle(config, topology, restored_particle).unwrap();
+        restored.advance_until(30.0).unwrap();
+        assert_eq!(continuous.decision_hash(), restored.decision_hash());
+        assert_eq!(continuous.state_hash(), restored.state_hash());
+    }
+
+    #[test]
     fn every_native_process_is_reachable_from_the_typed_calendar() {
         let mut config = SimulationConfig {
             locality_count: 3,
@@ -3675,6 +3747,8 @@ mod tests {
         config.intervals.economy = 1.0;
         config.organization_ecology.interval_days = 1.0;
         config.political_order.interval_days = 1.0;
+        config.state_regeneration.enabled = true;
+        config.state_regeneration.interval_days = 1.0;
         config.foreign_affairs.interval_days = 1.0;
         config.peace_process.interval_days = 1.0;
         let mut engine = SimulationEngine::new(config).unwrap();
@@ -3694,6 +3768,7 @@ mod tests {
             "economy",
             "organization_ecology",
             "political_order",
+            "state_regeneration",
             "foreign_affairs",
             "peace_process",
             "recording_noise",

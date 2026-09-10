@@ -1337,7 +1337,12 @@ impl SimulationConfig {
         root.insert("access_restriction", self.access_restriction.to_json());
         root.insert("civilian_dynamics", self.civilian_dynamics.to_json());
         root.insert("political_order", self.political_order.to_json());
-        root.insert("state_regeneration", self.state_regeneration.to_json());
+        // Preserve the canonical JSON/hash of the archived parity-era model
+        // when the post-parity state-regeneration extension is untouched.
+        // Any non-default v2 configuration emits the complete section.
+        if self.state_regeneration != StateRegenerationConfig::default() {
+            root.insert("state_regeneration", self.state_regeneration.to_json());
+        }
         root.insert("foreign_affairs", self.foreign_affairs.to_json());
         root.insert("peace_process", self.peace_process.to_json());
         root.insert("recording", self.recording.to_json());
@@ -2185,7 +2190,7 @@ fn apply_recording(v: &JsonValue, t: &mut RecordingConfig) -> Result<(), ConfigE
 
 #[cfg(test)]
 mod tests {
-    use super::SimulationConfig;
+    use super::{SimulationConfig, StateRegenerationConfig};
     use crate::json::parse;
 
     #[test]
@@ -2207,5 +2212,27 @@ mod tests {
             parse(r#"{"agent_count":1,"locality_count":1,"future_parameter":{"v":3}}"#).unwrap();
         let config = SimulationConfig::from_json(&value).unwrap();
         assert!(config.to_json().get("future_parameter").is_some());
+    }
+
+    #[test]
+    fn default_state_regeneration_does_not_change_legacy_canonical_json() {
+        let config = SimulationConfig::default();
+        assert_eq!(config.state_regeneration, StateRegenerationConfig::default());
+        assert!(config.to_json().get("state_regeneration").is_none());
+    }
+
+    #[test]
+    fn enabled_state_regeneration_round_trips_exactly() {
+        let mut config = SimulationConfig::default();
+        config.state_regeneration.enabled = true;
+        config.state_regeneration.security_recruitment_rate = 3.5e-6;
+        config.state_regeneration.police_allocation_share = 0.63;
+        config.state_regeneration.administrative_rebuild_rate = 0.0021;
+        config.state_regeneration.intelligence_gain_rate = 0.017;
+        let encoded = config.to_json().to_compact();
+        assert!(encoded.contains("state_regeneration"));
+        let round_trip = SimulationConfig::from_json(&parse(&encoded).unwrap()).unwrap();
+        assert_eq!(round_trip, config);
+        assert_eq!(round_trip.canonical_hash(), config.canonical_hash());
     }
 }
