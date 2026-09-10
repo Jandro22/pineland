@@ -438,8 +438,10 @@ fn corroboration_weight(
     source_type: SourceType,
 ) -> f64 {
     if std::env::var_os("PINELAND_HISTORY_TRACE").is_some()
-        && target == 0
-        && (matches!(locality, 15 | 25 | 27) || (locality == 28 && (time - 8.25).abs() < 1.0e-9))
+        && (target == 0
+            && (matches!(locality, 15 | 25 | 27)
+                || (locality == 28 && (time - 8.25).abs() < 1.0e-9))
+            || target == crate::INSURGENT && (time - 61.5).abs() < 1.0e-9)
         && observation_type == 1
         && time >= 2.0
     {
@@ -1817,18 +1819,42 @@ fn observe_control(
     let confidence = clamp01(0.45 + 0.45 * trust);
     let base_weight =
         confidence * quality * trust * language.powf(config.information.language_fusion_weight);
+    let source_identity = source_identity_code(particle, topology, source_id);
     let corroboration = corroboration_weight(
         history,
         target,
         locality,
         1,
-        source_identity_code(particle, topology, source_id),
+        source_identity,
         time,
         config,
         source_type,
     );
     let weight =
         base_weight * (1.0 + config.information.corroboration_bonus * corroboration.min(3.0));
+
+    if std::env::var_os("PINELAND_INFO_TRACE").is_some()
+        && (time - 61.5).abs() < 1.0e-9
+        && target == crate::INSURGENT
+    {
+        eprintln!(
+            "NATIVE_LOCAL_CONTROL_TRACE time={:.17} observer={} node={} source={} type={} target={} locality={} quality={:.17} trust={:.17} language={:.17} confidence={:.17} identity={} corr={:.17} weight={:.17}",
+            time,
+            observer,
+            observer_node,
+            source_id,
+            source_type.name(),
+            target,
+            locality,
+            quality,
+            trust,
+            language,
+            confidence,
+            source_identity,
+            corroboration,
+            weight,
+        );
+    }
 
     let dynamic_observer = dynamic_observer_code(particle, topology, observer_node);
     let key = BeliefKey {
@@ -1910,7 +1936,6 @@ fn observe_control(
             fuse_zone(particle, config, zone_index, time, weight, observed[1]);
         }
     }
-    let source_identity = source_identity_code(particle, topology, source_id);
     if std::env::var_os("PINELAND_INFO_TRACE").is_some()
         && source_type != SourceType::Contact
         && locality == 28
