@@ -10,6 +10,17 @@ CHILD_TYPES=['M','F','G','MF','MG','FG','MFG']
 
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def rho(A,iterations=100,tol=1e-12):
+    # Nodes with no incoming or no outgoing mass cannot lie on a directed
+    # cycle and therefore contribute only zero eigenvalues. Iteratively prune
+    # them before the dense eigensolve; rho of the remaining spectral core is
+    # exactly rho of the original nonnegative matrix.
+    B=np.asarray(A,float)
+    while B.shape[0]:
+        keep=(B.sum(axis=0)>1e-15)&(B.sum(axis=1)>1e-15)
+        if bool(np.all(keep)):
+            break
+        B=B[np.ix_(keep,keep)]
+    A=B
     n=A.shape[0]
     if n==0:return 0.0
     x=np.full(n,1.0/n)
@@ -50,7 +61,7 @@ def case_table(d):
         offspring=('child','sum'), adjacent_offspring=('adjacent_origin',lambda x:0))
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('csv');ap.add_argument('--out',required=True);ap.add_argument('--bootstrap',type=int,default=1000);a=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('csv');ap.add_argument('--out',required=True);ap.add_argument('--bootstrap',type=int,default=1000);ap.add_argument('--horizon',type=float,default=None);a=ap.parse_args()
     d=pd.read_csv(a.csv)
     seeds=sorted(d.seed.unique()); origins=sorted(d.origin.unique()); destinations=sorted(d.destination.unique())
     expected=len(seeds)*len(origins)*9*(len(origins)-1)
@@ -98,13 +109,13 @@ def main():
       'input':str(Path(a.csv)),'input_sha256':sha(a.csv),'integrity':integrity,
       'parent_summary':summary,'placebo_passed':bool(placebo and placebo.get('total_offspring',1)==0),
       'child_signature_counts':sig,'trigger_counts':trig,'spatial':spatial,
-      'kernel':{'type_order':TYPES,'locality_order':[int(x) for x in locs],'shape':list(K.shape),'rho_K90':rho_hat,'rho_seed_bootstrap_ci95':ci,'bootstrap_replicates':len(boots),'row_summary':row_summary,'child_mass':child_mass},
-      'interpretation_guard':'K_90 is a finite-horizon, experimentally isolated first-generation kernel. Pure relocation/E-only viability is excluded and no-parent spontaneous ignition is subtracted. rho(K_90) is not yet promoted as a lifetime R_I; horizon convergence and replication under structural contexts are required.'
+      'kernel':{'type_order':TYPES,'locality_order':[int(x) for x in locs],'shape':list(K.shape),'horizon_days':a.horizon,'rho_K_horizon':rho_hat,'rho_seed_bootstrap_ci95':ci,'bootstrap_replicates':len(boots),'row_summary':row_summary,'child_mass':child_mass},
+      'interpretation_guard':'K_h is a finite-horizon, experimentally isolated first-generation kernel. Pure relocation/E-only viability is excluded and no-parent spontaneous ignition is subtracted. rho(K_90) is not yet promoted as a lifetime R_I; horizon convergence and replication under structural contexts are required.'
     }
     Path(a.out).write_text(json.dumps(out,indent=2)+'\n',encoding='utf-8')
     # Save matrix as compressed npz beside JSON for reproducibility.
     np.savez_compressed(str(Path(a.out).with_suffix('.npz')),K=K,types=np.array(TYPES),localities=np.array(locs))
-    print(a.out);print('integrity',integrity);print('placebo',placebo);print('rho_K90',rho_hat,'ci',ci)
+    print(a.out);print('integrity',integrity);print('placebo',placebo);print('horizon',a.horizon,'rho_K_horizon',rho_hat,'ci',ci)
     print('row summaries')
     for k,v in row_summary.items():print(k,v)
     print('signatures',sig);print('triggers',trig)

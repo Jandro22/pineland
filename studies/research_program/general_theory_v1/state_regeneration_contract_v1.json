@@ -1,0 +1,57 @@
+{
+  "schema_version": "pineland.state_regeneration_contract.v1",
+  "status": "preregistered_synthetic_design_not_run",
+  "created_utc": "2026-09-10T19:12:46.953157+00:00",
+  "historical_outcomes_used": false,
+  "question": "How rapidly can the modeled state regenerate damaged local institutional capacity from centralized resources, relative to its own no-shock trajectory?",
+  "theory_role": "State-side renewal/regeneration characterization. This is intentionally not called a state reproduction number because the current engine lacks endogenous state offspring creation.",
+  "isolation": {
+    "foreign_affairs": false,
+    "organization_ecology": false,
+    "insurgent_actor_removed_after_initialization": true,
+    "government_transition_equations": "unchanged"
+  },
+  "design": {
+    "seeds": 8,
+    "agents": 300,
+    "localities": 34,
+    "focal_localities_per_seed": 8,
+    "focal_selection": "even ranks across baseline local-institution capacity to span weak-to-strong structural contexts",
+    "central_government_capital_multipliers": [
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "institution_capacity_shock_fractions": [
+      0.1,
+      0.3,
+      0.5,
+      1.0
+    ],
+    "horizon_days": 180,
+    "snapshot_days": 15,
+    "trajectories": 1280
+  },
+  "shock": "Multiply focal local institution capacity and administrative/legal/social/expected government-control dimensions by shock fraction. Preserve structural administrative capacity, geography, population, integrity, reach, and physical/fiscal control.",
+  "primary_estimand": "Matched gap closure Q_S(t)=1-(C_control(t)-C_shock(t))/(C_control(0)-C_shock(0)), using shock_fraction=1 as the matched no-shock path at same seed/focal/capital multiplier.",
+  "secondary_estimands": [
+    "time to Q_S >= 0.5",
+    "time to Q_S >= 0.8",
+    "effective government control recovery",
+    "government capital path",
+    "heterogeneity by baseline institutional/administrative context"
+  ],
+  "predictions": [
+    "Higher central capital weakly accelerates gap closure when government budget is resource-constrained.",
+    "Local structural capacity creates heterogeneous recovery rates even under equal central resources.",
+    "No-shock controls define the moving counterfactual and must not be treated as a fixed target."
+  ],
+  "falsifiers": [
+    "Shocked paths do not systematically close gaps relative to no-shock controls.",
+    "Central resource variation has no effect even in demonstrably resource-constrained regimes.",
+    "Reported regeneration relies on foreign support or emergent insurgent dynamics."
+  ],
+  "promotion_guard": "Synthetic characterization of implemented state regeneration only; not historical evidence and not a claim that real states share this functional form."
+}
