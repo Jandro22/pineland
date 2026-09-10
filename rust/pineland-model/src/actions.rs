@@ -575,7 +575,7 @@ fn nonfielded_human_targets(
     }
     for index in 0..particle.security_posts.organization.len() {
         let target = particle.security_posts.organization[index] as usize;
-        if std::env::var_os("PINELAND_ACTION_TRACE").is_some()
+        if crate::trace_env!("PINELAND_ACTION_TRACE")
             && particle.security_posts.locality[index] as usize == locality
         {
             eprintln!(
@@ -760,7 +760,7 @@ fn consume_local_supply(
         let take = particle.formations.supply_stock[formation]
             .max(0.0)
             .min(remaining);
-        if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+        if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
             && formation == 7
         {
             eprintln!(
@@ -773,7 +773,7 @@ fn consume_local_supply(
             );
         }
         particle.formations.supply_stock[formation] -= take;
-        if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+        if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
             && formation == 7
         {
             eprintln!(
@@ -954,7 +954,7 @@ pub fn opportunities(
     locality: usize,
     interval_days: f64,
 ) {
-    let trace = std::env::var_os("PINELAND_ACTION_TRACE").is_some();
+    let trace = crate::trace_env!("PINELAND_ACTION_TRACE");
     if trace && organization == crate::INSURGENT && locality == 32 {
         eprintln!(
             "ACTION relation_debug {:?}",

@@ -103,7 +103,7 @@ pub fn update(
         let integrity_loss = config.political_order.patronage_capacity_damage * patronage
             / (public + patronage).max(1.0);
 
-        if std::env::var_os("PINELAND_POLITICAL_TRACE").is_some() {
+        if crate::trace_env!("PINELAND_POLITICAL_TRACE") {
             eprintln!(
                 "POLITICAL locality={} institution={} noise={:.17} public={:.17} patronage={:.17} compliance={:.17} effective_public={:.17} scale={:.17} production={:.17} outputs={:.17},{:.17},{:.17},{:.17},{:.17} quality={:.17} integrity_loss={:.17}",
                 locality,

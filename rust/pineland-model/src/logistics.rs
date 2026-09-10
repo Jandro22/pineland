@@ -14,8 +14,8 @@ pub fn update(
     time: f64,
 ) {
     let dt = elapsed_days.max(0.0);
-    let logistics_trace = std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some();
-    let formation_trace = std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some();
+    let logistics_trace = crate::trace_env!("PINELAND_LOGISTICS_TRACE");
+    let formation_trace = crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE");
     if formation_trace && particle.formations.supply_stock.len() > 7 {
         eprintln!(
             "LOGISTICS_FORMATION_BEGIN time={:.17} dt={:.17} formation=7 stock={:.17} bits={}",
@@ -566,7 +566,7 @@ fn reconcile_source_production(
         } else {
             python_sum(&weights)
         };
-        if std::env::var_os("PINELAND_LOGISTICS_RECON_TRACE").is_some() {
+        if crate::trace_env!("PINELAND_LOGISTICS_RECON_TRACE") {
             eprintln!(
                 "LOGISTICS_RECON organization={} personnel={:.17} personnel_bits={} requirement={:.17} requirement_bits={} weights={:?} total_weight={:.17}",
                 organization,
@@ -588,7 +588,7 @@ fn reconcile_source_production(
             particle.logistics.source_capacity[source] = particle.logistics.source_capacity[source]
                 .max(particle.logistics.source_stock[source])
                 .max(production / config.logistics.source_daily_production_fraction.max(1e-12));
-            if std::env::var_os("PINELAND_LOGISTICS_RECON_TRACE").is_some() {
+            if crate::trace_env!("PINELAND_LOGISTICS_RECON_TRACE") {
                 eprintln!(
                     "LOGISTICS_SOURCE organization={} source={} weight={:.17} weight_bits={} production={:.17} production_bits={} capacity={:.17}",
                     organization,

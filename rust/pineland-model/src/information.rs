@@ -59,7 +59,7 @@ pub fn record_patrol_control_history(
     let target = control_target(observer);
     let source_id = patrol_source_id(particle, formation);
     let source_identity = source_identity_code(particle, topology, &source_id);
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && locality == 28 && time >= 0.0 {
+    if crate::trace_env!("PINELAND_INFO_TRACE") && locality == 28 && time >= 0.0 {
         eprintln!(
             "PATROL_ID time={:.17} formation={} source={} identity={}",
             time, formation, source_id, source_identity
@@ -375,7 +375,7 @@ pub fn collect_and_fuse(
         formation_name(particle, *left).cmp(&formation_name(particle, *right))
     });
     for formation in formation_indices {
-        if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+        if crate::trace_env!("PINELAND_PRF17_TRACE")
             && formation_name(particle, formation) == "PRF-17"
             && (time - 49.0).abs() < 1.0e-9
         {
@@ -437,7 +437,7 @@ fn corroboration_weight(
     config: &SimulationConfig,
     source_type: SourceType,
 ) -> f64 {
-    if std::env::var_os("PINELAND_HISTORY_TRACE").is_some()
+    if crate::trace_env!("PINELAND_HISTORY_TRACE")
         && (target == 0
             && (matches!(locality, 15 | 25 | 27)
                 || (locality == 28 && (time - 8.25).abs() < 1.0e-9))
@@ -579,7 +579,7 @@ fn deliver_due_relays(
         };
         let relay_draw = rng.random();
         let delivered = relay_draw <= reliability;
-        if std::env::var_os("PINELAND_RELAY_TRACE").is_some() && time >= 3.5 {
+        if crate::trace_env!("PINELAND_RELAY_TRACE") && time >= 3.5 {
             let relay = &particle.information_relays[relay_index];
             eprintln!(
                 "RELAY_TRACE time={:.17} seq={} observation={} arrives={:.17} org={} source_node={} destination_node={} reliability={:.17} draw={:.17} delivered={}",
@@ -906,7 +906,7 @@ fn fuse_recorded_observation(
         * language.powf(config.information.language_fusion_weight)
         * age_quality
         * (1.0 + config.information.corroboration_bonus * corroboration.min(3.0));
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.25 {
+    if crate::trace_env!("PINELAND_INFO_TRACE") && time >= 0.25 {
         eprintln!(
             "RELAY_CONTROL_TRACE delivery_time={:.17} seq={} recipient={} source_type={} observer={} source={} source_comm={} source_form={} target={} locality={} quality={:.17} trust={:.17} language={:.17} age={:.17} corr={:.17} weight={:.17}",
             time,
@@ -1267,7 +1267,7 @@ pub(crate) fn record_engagement_observation(
     particle.information_observations[index].reported_momentum = perceived;
     particle.information_observations[index].reported_civilian_harm = reported_harm;
     particle.information_observations[index].attributed_actor = attributed_actor as u32;
-    if std::env::var_os("PINELAND_COMBAT_TRACE").is_some() {
+    if crate::trace_env!("PINELAND_COMBAT_TRACE") {
         eprintln!(
             "COMBAT_OBS engagement={} observer={} target={} signal={:.17} perceived={:.17} reported_harm={:.17} attribution={}",
             engagement_id,
@@ -1478,7 +1478,7 @@ fn observe_from_source(
     let report_probability =
         report_probability(particle, config, observer, source_type, source_id, locality);
     let report_draw = rng.random();
-    if std::env::var_os("PINELAND_PRF17_TRACE").is_some() && (time - 49.0).abs() < 1.0e-9 {
+    if crate::trace_env!("PINELAND_PRF17_TRACE") && (time - 49.0).abs() < 1.0e-9 {
         eprintln!(
             "SOURCE_TRACE source={} time={:.17} observer={} type={} locality={} draw={:.17} probability={:.17} targets={:?}",
             source_id,
@@ -1491,7 +1491,7 @@ fn observe_from_source(
             targets,
         );
     }
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
+    if crate::trace_env!("PINELAND_INFO_TRACE") && time >= 0.5 {
         eprintln!(
             "INFO_SOURCE_TRACE time={:.17} observer={} node={} source={} type={} locality={} draw={:.17} probability={:.17} targets={:?}",
             time,
@@ -1583,7 +1583,7 @@ fn trace_source_end(
     locality: usize,
     time: f64,
 ) {
-    if std::env::var_os("PINELAND_PRF17_TRACE").is_some() && (time - 49.0).abs() < 1.0e-9 {
+    if crate::trace_env!("PINELAND_PRF17_TRACE") && (time - 49.0).abs() < 1.0e-9 {
         let mut probe = rng.clone();
         eprintln!(
             "SOURCE_END source={} type={} locality={} next={:.17}",
@@ -1637,7 +1637,7 @@ fn observe_target(
     };
     let detection_draw = rng.random();
     let detected = detection_draw < probability;
-    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+    if crate::trace_env!("PINELAND_PRF17_TRACE")
         && source_id == "C000038"
         && observer == crate::INSURGENT
         && (time - 49.0).abs() < 1.0e-9
@@ -1647,7 +1647,7 @@ fn observe_target(
             present, personnel, probability, detection_draw, detected,
         );
     }
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
+    if crate::trace_env!("PINELAND_INFO_TRACE") && time >= 0.5 {
         eprintln!(
             "INFO_TARGET_TRACE time={:.17} observer={} node={} source={} type={} locality={} target={} target_formation={:?} present={} personnel={:.17} probability={:.17} draw={:.17} detected={}",
             time,
@@ -1687,7 +1687,7 @@ fn observe_target(
             personnel_estimate = rng.uniform(20.0, 250.0).max(1.0);
         }
     }
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.5 {
+    if crate::trace_env!("PINELAND_INFO_TRACE") && time >= 0.5 {
         let mut peek = rng.clone();
         eprintln!(
             "INFO_TARGET_FINAL time={:.17} observer={} source={} locality={} quality={:.17} estimate={:.17} next_draw={:.17}",
@@ -1766,7 +1766,7 @@ fn observe_target(
         },
     );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
-    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+    if crate::trace_env!("PINELAND_PRF17_TRACE")
         && source_id == "C000038"
         && observer == crate::INSURGENT
         && (time - 49.0).abs() < 1.0e-9
@@ -1833,10 +1833,10 @@ fn observe_control(
     let weight =
         base_weight * (1.0 + config.information.corroboration_bonus * corroboration.min(3.0));
 
-    if (std::env::var_os("PINELAND_INFO_TRACE").is_some()
+    if (crate::trace_env!("PINELAND_INFO_TRACE")
         && (time - 61.5).abs() < 1.0e-9
         && target == crate::INSURGENT)
-        || (std::env::var_os("PINELAND_CONTROL_TRACE").is_some()
+        || (crate::trace_env!("PINELAND_CONTROL_TRACE")
             && (time - 30.5).abs() < 1.0e-9)
     {
         eprintln!(
@@ -1877,7 +1877,7 @@ fn observe_control(
         particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS].fill(0.5);
         particle.beliefs.confidence[index] = config.information.prior_confidence;
     }
-    let target_belief_trace = std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+    let target_belief_trace = crate::trace_env!("PINELAND_TARGET_BELIEF_TRACE")
         && ((target_belief_key.0 == 31
             && target_belief_key.1 == crate::INSURGENT as u32
             && target_belief_key.2 == 31)
@@ -1908,7 +1908,7 @@ fn observe_control(
             particle.beliefs.contradiction[index],
         );
     }
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some()
+    if crate::trace_env!("PINELAND_INFO_TRACE")
         && observer_node == "FOREIGN-NEIGHBOR-1-01"
     {
         eprintln!(
@@ -1954,7 +1954,7 @@ fn observe_control(
             particle.beliefs.evidence_count[index],
         );
     }
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some()
+    if crate::trace_env!("PINELAND_INFO_TRACE")
         && source_id == "C000069"
         && locality == 28
         && (time - 8.25).abs() < 1.0e-9
@@ -1984,7 +1984,7 @@ fn observe_control(
             fuse_zone(particle, config, zone_index, time, weight, observed[1]);
         }
     }
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some()
+    if crate::trace_env!("PINELAND_INFO_TRACE")
         && source_type != SourceType::Contact
         && locality == 28
         && time >= 0.0
@@ -2033,7 +2033,7 @@ fn observe_control(
         true,
     );
     particle.counters.observations = particle.counters.observations.saturating_add(1);
-    if std::env::var_os("PINELAND_PRF17_TRACE").is_some()
+    if crate::trace_env!("PINELAND_PRF17_TRACE")
         && source_id == "C000038"
         && observer == crate::INSURGENT
         && (time - 49.0).abs() < 1.0e-9
@@ -2323,7 +2323,7 @@ fn source_quality(
     let observability = particle.locality.observability[locality];
     let draw = rng.random();
     let quality = clamp01(coverage * (0.55 + 0.45 * observability) * (0.85 + 0.3 * draw));
-    if std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+    if crate::trace_env!("PINELAND_TARGET_BELIEF_TRACE")
         && source_type == SourceType::OrganizationMember
         && locality == 31
     {
@@ -2624,7 +2624,7 @@ fn local_organizational_embeddedness(
         complement *= 1.0 - clamp01(value);
     }
     let result = clamp01(1.0 - complement);
-    if std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+    if crate::trace_env!("PINELAND_TARGET_BELIEF_TRACE")
         && organization == crate::INSURGENT
         && locality == 31
     {

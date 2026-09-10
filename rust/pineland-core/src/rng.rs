@@ -648,6 +648,30 @@ impl RngStreams {
         self.streams.get(stream)
     }
 
+    /// Temporarily move a process stream out of the registry without cloning
+    /// its 624-word MT19937 state. The caller must return it with
+    /// `put_owned`. This is intended for simulation event handlers, which
+    /// require simultaneous mutable access to particle state and one RNG
+    /// stream but never inspect the registry while that handler is running.
+    pub fn take_owned(&mut self, stream: &str) -> (String, PyRandomCompat) {
+        if !self.streams.contains_key(stream) {
+            let generator = PyRandomCompat::from_seed(seed_from_namespace(
+                self.root_seed,
+                &self.namespace,
+                stream,
+            ));
+            self.streams.insert(stream.to_string(), generator);
+        }
+        self.streams
+            .remove_entry(stream)
+            .expect("RNG stream inserted before owned take")
+    }
+
+    pub fn put_owned(&mut self, key: String, generator: PyRandomCompat) {
+        let replaced = self.streams.insert(key, generator);
+        debug_assert!(replaced.is_none(), "returned RNG stream already present");
+    }
+
     /// Create deterministic, branch-scoped future streams without consulting
     /// a worker, thread, or MPI rank.  A forecast branch is a new stochastic
     /// continuation of the current state.  Include the complete current

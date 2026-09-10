@@ -304,7 +304,7 @@ pub(crate) fn update_relations(
         })
     {
         let magnitude = clamp01(magnitude);
-        if std::env::var_os("PINELAND_RELATION_TRACE").is_some() {
+        if crate::trace_env!("PINELAND_RELATION_TRACE") {
             eprintln!(
                 "RELATION_UPDATE first={} second={} index={} magnitude={:.17}",
                 first, second, index, magnitude
@@ -444,7 +444,7 @@ fn update_perceived_momentum(
     second: usize,
     rng: &mut PyRandomCompat,
 ) {
-    let trace = std::env::var_os("PINELAND_MOMENTUM_TRACE").is_some();
+    let trace = crate::trace_env!("PINELAND_MOMENTUM_TRACE");
     if trace {
         eprintln!(
             "MOMENTUM_BEGIN time-locality={} signal={:.17} first_org={} second_org={}",
@@ -636,7 +636,7 @@ fn resolve_engagement(
         * exposure
         * python_exp(0.45 * advantage + rng.normalvariate(0.0, config.combat.stochastic_sigma)))
     .min(config.combat.max_loss_fraction);
-    if std::env::var_os("PINELAND_COMBAT_TRACE").is_some() {
+    if crate::trace_env!("PINELAND_COMBAT_TRACE") {
         eprintln!(
             "COMBAT_CORE first={} second={} locality={} microzone={} detected={} {} initiative={:.17} {:.17} cap={:.17} {:.17} advantage={:.17} obs={:.17} terrain={:.17} exposure={:.17} frac={:.17} {:.17}",
             first,
@@ -802,7 +802,7 @@ fn resolve_engagement(
             rng,
         );
     }
-    if std::env::var_os("PINELAND_COMBAT_TRACE").is_some() {
+    if crate::trace_env!("PINELAND_COMBAT_TRACE") {
         eprintln!(
             "COMBAT_RESULT first={} second={} signal={:.17} civilian_harm={:.17} contacts={} disengaged={:?}",
             first, second, signal, civilian_harm, particle.counters.contacts, disengaged
