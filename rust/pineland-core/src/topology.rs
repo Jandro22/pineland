@@ -164,6 +164,7 @@ pub struct StaticTopology {
     pub district_population: Vec<f64>,
     pub district_connectivity: Vec<f64>,
     pub district_urbanization: Vec<f64>,
+    pub sorted_locality_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -379,6 +380,17 @@ impl StaticTopology {
                 }
             }
         }
+        let mut sorted_locality_ids = (0..locality_count)
+            .map(|locality| {
+                let zone = primary_zone[locality] as usize;
+                microzone_names
+                    .get(zone)
+                    .and_then(|name| name.split_once("-Z").map(|(id, _)| id.to_string()))
+                    .unwrap_or_else(|| format!("L{:03}", locality + 1))
+            })
+            .collect::<Vec<_>>();
+        sorted_locality_ids.sort();
+        sorted_locality_ids.dedup();
         Self {
             localities,
             microzones,
@@ -417,6 +429,7 @@ impl StaticTopology {
             district_population: vec![0.0; district_count],
             district_connectivity: vec![0.5; district_count],
             district_urbanization: vec![0.35; district_count],
+            sorted_locality_ids,
         }
     }
 
@@ -846,6 +859,17 @@ impl StaticTopology {
                 }
             }
         }
+        let mut sorted_locality_ids = (0..locality_count)
+            .map(|locality| {
+                let zone = primary_zone[locality] as usize;
+                microzone_names
+                    .get(zone)
+                    .and_then(|name| name.split_once("-Z").map(|(id, _)| id.to_string()))
+                    .unwrap_or_else(|| format!("L{:03}", locality + 1))
+            })
+            .collect::<Vec<_>>();
+        sorted_locality_ids.sort();
+        sorted_locality_ids.dedup();
         let topology = StaticTopology {
             localities,
             microzones,
@@ -899,6 +923,7 @@ impl StaticTopology {
             district_population: DISTRICTS.iter().map(|row| row.2).collect(),
             district_connectivity: DISTRICTS.iter().map(|row| row.7).collect(),
             district_urbanization: DISTRICTS.iter().map(|row| row.3).collect(),
+            sorted_locality_ids,
         };
         PinelandTopologyGeneration {
             topology,
@@ -906,6 +931,17 @@ impl StaticTopology {
             geography_rng,
             physical_rng,
         }
+    }
+
+    pub fn sorted_locality_rank(&self, id: &str) -> Option<usize> {
+        self.sorted_locality_ids
+            .binary_search_by(|probe| probe.as_str().cmp(id))
+            .ok()
+    }
+
+    pub fn sorted_police_post_rank(&self, name: &str) -> Option<usize> {
+        let id = name.strip_prefix("POST-")?.strip_suffix("-POLICE")?;
+        self.sorted_locality_rank(id)
     }
 
     pub fn locality_count(&self) -> usize {

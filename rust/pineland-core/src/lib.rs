@@ -16,6 +16,19 @@ pub mod sha256;
 pub mod state;
 pub mod topology;
 
+/// Cache parity/debug environment flags at their call site.
+///
+/// Trace configuration is a launch-time concern. Re-querying the Windows
+/// process environment from inner loops adds shared runtime overhead when many
+/// particles execute concurrently, so each literal flag is resolved once.
+#[macro_export]
+macro_rules! trace_env {
+    ($name:literal) => {{
+        static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        *ENABLED.get_or_init(|| std::env::var_os($name).is_some())
+    }};
+}
+
 pub use checkpoint::{CheckpointError, CheckpointManifest, CheckpointStore};
 pub use config::{ConfigError, SimulationConfig};
 pub use ids::*;

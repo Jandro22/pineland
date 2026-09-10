@@ -286,20 +286,32 @@ impl NativeParticleFilter {
         let (resampled, parents) = if normalized.ess < threshold {
             let parents = systematic_resample(&normalized.normalized_weights, &mut self.rng)
                 .map_err(FilterError::Weight)?;
-            let old = self.particles.clone();
-            let mut next = Vec::with_capacity(old.len());
+            let old = std::mem::take(&mut self.particles);
+            let old_len = old.len();
+            let mut next = Vec::with_capacity(old_len);
             for (child, parent) in parents.iter().enumerate() {
-                let mut engine = old[*parent].clone();
-                let lineage = format!("{}.{}", old[*parent].particle.lineage, child);
-                engine.particle = old[*parent].particle.clone_for_child(child as u64, lineage);
+                let source_engine = &old[*parent];
+                let lineage = format!("{}.{}", source_engine.particle.lineage, child);
                 // Resampled siblings must not share future stochastic
                 // trajectories.  The identity is canonical and independent
                 // of the Rayon worker or MPI rank that executes the child.
-                engine.particle.rng = old[*parent].particle.rng.fork(&format!(
+                let rng = source_engine.particle.rng.fork(&format!(
                     "filter-boundary-{target_boundary}:child-{child}:parent-{parent}"
                 ));
-                engine.particle.weights_log = -(old.len() as f64).ln();
-                engine.particle.filter_boundary = target_boundary;
+                let mut child_particle = source_engine
+                    .particle
+                    .clone_for_child_with_rng(child as u64, lineage, rng);
+                child_particle.weights_log = -(old_len as f64).ln();
+                child_particle.filter_boundary = target_boundary;
+                let engine = SimulationEngine {
+                    config: source_engine.config.clone(),
+                    topology: source_engine.topology.clone(),
+                    particle: child_particle,
+                    model_hash: source_engine.model_hash.clone(),
+                    started_at: source_engine.started_at,
+                    last_boundary: source_engine.last_boundary,
+                    particle_execution: source_engine.particle_execution,
+                };
                 next.push(engine);
             }
             self.particles = next;

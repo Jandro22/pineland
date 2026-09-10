@@ -1313,7 +1313,7 @@ impl BeliefState {
         let scale = denominator / (1.0 + denominator);
         let age = (time - self.updated_at[index]).max(0.0);
         let decay = crate::rng::python_exp(-age / memory_days.max(f64::MIN_POSITIVE));
-        let target_belief_trace = std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+        let target_belief_trace = crate::trace_env!("PINELAND_TARGET_BELIEF_TRACE")
             && ((self.keys[index].observer == 31
                 && self.keys[index].target == 6
                 && self.keys[index].locality == 31
@@ -1738,6 +1738,21 @@ impl ParticleState {
         clone
     }
 
+    pub fn clone_for_child_with_rng(
+        &self,
+        child_id: u64,
+        child_lineage: impl Into<String>,
+        rng: crate::rng::RngStreams,
+    ) -> Self {
+        let child_lineage = child_lineage.into();
+        let mut clone = self.clone();
+        clone.logical_id = child_id;
+        clone.lineage = child_lineage;
+        clone.rng = rng;
+        clone.ancestry.push(self.logical_id);
+        clone
+    }
+
     pub fn gather(states: &[Self], parents: &[usize]) -> Result<Vec<Self>, StateError> {
         let mut result = Vec::with_capacity(parents.len());
         for (child_id, parent) in parents.iter().copied().enumerate() {
@@ -1745,10 +1760,10 @@ impl ParticleState {
                 .get(parent)
                 .ok_or(StateError::ParentOutOfBounds(parent))?;
             let lineage = format!("{}.{}", source.lineage, child_id);
-            let mut child = source.clone_for_child(child_id as u64, lineage);
-            child.rng = source
+            let rng = source
                 .rng
                 .fork(&format!("gather-child-{child_id}:parent-{parent}"));
+            let child = source.clone_for_child_with_rng(child_id as u64, lineage, rng);
             result.push(child);
         }
         Ok(result)

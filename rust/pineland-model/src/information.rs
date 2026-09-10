@@ -672,7 +672,7 @@ fn command_node_name(particle: &ParticleState, topology: &StaticTopology, node: 
     let organizations = particle.organizations.kind.len();
     let formations = particle.formations.personnel.len();
     let posts = particle.security_posts.organization.len();
-    let auxiliary = auxiliary_node_ids(particle, topology).len();
+    let auxiliary = auxiliary_node_count(particle, topology);
     let command_start = organizations + formations + posts + auxiliary;
     let index = node as usize - command_start;
     let mut commands = command_node_ids(particle);
@@ -1038,17 +1038,82 @@ pub(crate) fn command_node_ids(particle: &ParticleState) -> Vec<String> {
     values
 }
 
+pub(crate) fn auxiliary_node_count(particle: &ParticleState, topology: &StaticTopology) -> usize {
+    3 * topology.locality_count() + 2 * particle.communities.locality.len()
+}
+
+pub(crate) fn auxiliary_node_position(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    identifier: &str,
+) -> Option<usize> {
+    let locality_count = topology.locality_count();
+    let community_count = particle.communities.locality.len();
+
+    // Group 1: ADMIN:{id}
+    if let Some(id) = identifier.strip_prefix("ADMIN:") {
+        let pos = topology.sorted_locality_rank(id)?;
+        return Some(pos);
+    }
+    // Group 2: C{community:06}
+    if identifier.starts_with('C') && !identifier.starts_with("CMD:") {
+        if let Ok(community) = identifier[1..].parse::<usize>() {
+            if community < community_count {
+                return Some(locality_count + community);
+            }
+        }
+    }
+    // Group 3: ELITE-CAP:{id}
+    if let Some(id) = identifier.strip_prefix("ELITE-CAP:") {
+        let pos = topology.sorted_locality_rank(id)?;
+        return Some(locality_count + community_count + pos);
+    }
+    // Group 4: ELITE:C{community:06}
+    if let Some(comm_str) = identifier.strip_prefix("ELITE:C") {
+        if let Ok(community) = comm_str.parse::<usize>() {
+            if community < community_count {
+                return Some(2 * locality_count + community_count + community);
+            }
+        }
+    }
+    // Group 5: INTERPRETER-CAP:{id}
+    if let Some(id) = identifier.strip_prefix("INTERPRETER-CAP:") {
+        let pos = topology.sorted_locality_rank(id)?;
+        return Some(2 * locality_count + 2 * community_count + pos);
+    }
+    None
+}
+
+fn post_position(particle: &ParticleState, topology: &StaticTopology, node: &str) -> Option<usize> {
+    if !node.starts_with("POST-") {
+        return None;
+    }
+    let localities = topology.locality_count();
+    let total_posts = particle.security_posts.organization.len();
+    if total_posts == localities {
+        return topology.sorted_police_post_rank(node);
+    }
+    let mut posts = (0..total_posts)
+        .map(|index| post_name(particle, topology, index))
+        .collect::<Vec<_>>();
+    posts.sort();
+    posts.iter().position(|name| name == node)
+}
+
 fn command_node_code(
     particle: &ParticleState,
     topology: &StaticTopology,
     node: &str,
 ) -> Option<u32> {
+    if !node.starts_with("CMD:") {
+        return None;
+    }
     let mut commands = command_node_ids(particle);
     let position = commands.iter().position(|value| value == node)?;
     let base = particle.organizations.kind.len()
         + particle.formations.personnel.len()
         + particle.security_posts.organization.len()
-        + auxiliary_node_ids(particle, topology).len();
+        + auxiliary_node_count(particle, topology);
     commands.shrink_to_fit();
     Some((base + position) as u32)
 }
@@ -1067,21 +1132,14 @@ fn source_id_code(particle: &ParticleState, topology: &StaticTopology, source_id
     if let Some(formation) = formation_index(particle, source_id) {
         return (organizations + formation) as u32;
     }
-    let mut posts = (0..particle.security_posts.organization.len())
-        .map(|index| (post_name(particle, topology, index), index))
-        .collect::<Vec<_>>();
-    posts.sort_by(|left, right| left.0.cmp(&right.0));
-    if let Some(position) = posts.iter().position(|(name, _)| name == source_id) {
-        return (organizations + particle.formations.personnel.len() + position) as u32;
+    let posts_len = particle.security_posts.organization.len();
+    if source_id.starts_with("POST-") {
+        if let Some(position) = post_position(particle, topology, source_id) {
+            return (organizations + particle.formations.personnel.len() + position) as u32;
+        }
     }
-    let mut auxiliary = auxiliary_node_ids(particle, topology);
-    auxiliary.sort();
-    if let Some(position) = auxiliary
-        .iter()
-        .position(|identifier| identifier == source_id)
-    {
-        return (organizations + particle.formations.personnel.len() + posts.len() + position)
-            as u32;
+    if let Some(position) = auxiliary_node_position(particle, topology, source_id) {
+        return (organizations + particle.formations.personnel.len() + posts_len + position) as u32;
     }
     0x4000_0000u32 | stable_hash_code(source_id)
 }
@@ -1158,7 +1216,11 @@ fn publish_information_observation(
     let observer_node_code = dynamic_observer_code(particle, topology, observer_node);
     let (source, source_community, source_formation) =
         information_observation_codebook(particle, topology, source_id);
-    let source_identity = source_identity_code(particle, topology, source_id);
+    let source_identity = if source_id.starts_with("PATROL-") {
+        0x2000_0000u32 | stable_hash_code(source_id)
+    } else {
+        source
+    };
     let target_code = target.map(|value| value as u32).unwrap_or(INFORMATION_NONE);
     let target_formation_code = target_formation
         .map(|value| value as u32)
@@ -1509,7 +1571,6 @@ fn observe_from_source(
         trace_source_end(rng, source_id, source_type, locality, time);
         return;
     }
-    let node = observer_node.to_string();
     if targets.is_empty() {
         let target = control_target(observer);
         observe_control(
@@ -1518,7 +1579,7 @@ fn observe_from_source(
             config,
             rng,
             observer,
-            &node,
+            observer_node,
             source_id,
             source_type,
             locality,
@@ -1565,7 +1626,7 @@ fn observe_from_source(
         config,
         rng,
         observer,
-        &node,
+        observer_node,
         source_id,
         source_type,
         locality,
@@ -2714,33 +2775,32 @@ fn dynamic_observer_code(particle: &ParticleState, topology: &StaticTopology, no
     if let Some(formation) = formation_index(particle, node) {
         return (organizations + formation) as u32;
     }
-    let mut posts = (0..particle.security_posts.organization.len())
-        .map(|index| (post_name(particle, topology, index), index))
-        .collect::<Vec<_>>();
-    posts.sort_by(|left, right| left.0.cmp(&right.0));
-    if let Some(position) = posts.iter().position(|(name, _)| name == node) {
-        return (organizations + particle.formations.personnel.len() + position) as u32;
+    let posts_len = particle.security_posts.organization.len();
+    if node.starts_with("POST-") {
+        if let Some(position) = post_position(particle, topology, node) {
+            return (organizations + particle.formations.personnel.len() + position) as u32;
+        }
     }
-    let mut auxiliary = auxiliary_node_ids(particle, topology);
-    auxiliary.sort();
-    if let Some(position) = auxiliary.iter().position(|identifier| identifier == node) {
-        return (organizations + particle.formations.personnel.len() + posts.len() + position)
-            as u32;
+    if let Some(position) = auxiliary_node_position(particle, topology, node) {
+        return (organizations + particle.formations.personnel.len() + posts_len + position) as u32;
     }
-    if let Some(code) = command_node_code(particle, topology, node) {
-        return code;
+    if node.starts_with("CMD:") {
+        if let Some(code) = command_node_code(particle, topology, node) {
+            return code;
+        }
     }
     // All internally generated nodes are in one of the registries above. The
     // deterministic fallback keeps externally supplied diagnostic nodes from
     // aliasing the first auxiliary node.
     let base = organizations
         + particle.formations.personnel.len()
-        + posts.len()
-        + auxiliary.len()
-        + command_node_ids(particle).len();
+        + posts_len
+        + auxiliary_node_count(particle, topology)
+        + particle.organizations.kind.len();
     base as u32 + (stable_hash_code(node) & 0x3fff_ffff)
 }
 
+#[allow(dead_code)]
 pub(crate) fn auxiliary_node_ids(particle: &ParticleState, topology: &StaticTopology) -> Vec<String> {
     let mut values = Vec::new();
     for community in 0..particle.communities.locality.len() {
@@ -2850,4 +2910,53 @@ fn reference_probability(probability: f64, elapsed_days: f64, reference_days: f6
         return 1.0;
     }
     1.0 - (1.0 - probability).powf(elapsed_days / reference_days)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pineland_core::config::SimulationConfig;
+
+    #[test]
+    fn test_auxiliary_node_position_exact_parity() {
+        let config = SimulationConfig {
+            agent_count: 80,
+            locality_count: 17,
+            ..Default::default()
+        };
+        let engine = crate::SimulationEngine::new(config).unwrap();
+        let particle = &engine.particle;
+        let topology = &engine.topology;
+
+        let legacy_aux = auxiliary_node_ids(particle, topology);
+        assert_eq!(legacy_aux.len(), auxiliary_node_count(particle, topology));
+
+        for (expected_pos, id) in legacy_aux.iter().enumerate() {
+            let fast_pos = auxiliary_node_position(particle, topology, id);
+            assert_eq!(
+                fast_pos,
+                Some(expected_pos),
+                "Mismatch for auxiliary node id: {id}"
+            );
+        }
+
+        let mut legacy_posts = (0..particle.security_posts.organization.len())
+            .map(|index| post_name(particle, topology, index))
+            .collect::<Vec<_>>();
+        legacy_posts.sort();
+        for (expected_pos, name) in legacy_posts.iter().enumerate() {
+            let fast_pos = post_position(particle, topology, name);
+            assert_eq!(
+                fast_pos,
+                Some(expected_pos),
+                "Mismatch for post name: {name}"
+            );
+        }
+
+        assert_eq!(auxiliary_node_position(particle, topology, "NON_EXISTENT"), None);
+        assert_eq!(auxiliary_node_position(particle, topology, "ADMIN:INVALID"), None);
+        assert_eq!(auxiliary_node_position(particle, topology, "C999999"), None);
+        assert_eq!(post_position(particle, topology, "NON_EXISTENT"), None);
+        assert_eq!(post_position(particle, topology, "POST-INVALID"), None);
+    }
 }
