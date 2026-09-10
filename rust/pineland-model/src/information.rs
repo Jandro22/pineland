@@ -1833,9 +1833,11 @@ fn observe_control(
     let weight =
         base_weight * (1.0 + config.information.corroboration_bonus * corroboration.min(3.0));
 
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some()
+    if (std::env::var_os("PINELAND_INFO_TRACE").is_some()
         && (time - 61.5).abs() < 1.0e-9
-        && target == crate::INSURGENT
+        && target == crate::INSURGENT)
+        || (std::env::var_os("PINELAND_CONTROL_TRACE").is_some()
+            && (time - 30.5).abs() < 1.0e-9)
     {
         eprintln!(
             "NATIVE_LOCAL_CONTROL_TRACE time={:.17} observer={} node={} source={} type={} target={} locality={} quality={:.17} trust={:.17} language={:.17} confidence={:.17} identity={} corr={:.17} weight={:.17}",
