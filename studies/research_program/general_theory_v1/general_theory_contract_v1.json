@@ -1,0 +1,49 @@
+﻿{
+  "schema_version": "pineland.general_theory_contract.v1",
+  "status": "preregistered_theory_extraction_program_not_general_theory_result",
+  "name": "Competitive Local Reproduction Theory (CLRT) v1 candidate",
+  "historical_outcomes_used_to_choose_contract": false,
+  "historical_parameter_fitting": false,
+  "historical_rerun_authorized": false,
+  "unit_of_mechanism": "actor x locality x time",
+  "scientific_claim": "Political-security orders persist locally when organizational, coercive, informational, logistical, and institutional stocks regenerate the access and expectations required for their own continuation faster than those stocks decay or are disrupted. Movement and external support can transport or replenish capacity but are not endogenous reproduction.",
+  "core_state_vector": {
+    "M": "embedded local membership/rooted social base",
+    "F": "fielded deployable armed capacity",
+    "L": "local sustainment/logistics readiness",
+    "K": "local operational knowledge/information quality",
+    "E": "persistent local organizational/institutional embeddedness",
+    "C": "actor-resolved multidimensional local control",
+    "X": "civilian expectations and political-access state",
+    "S": "state-side local institutional/security reproduction",
+    "U": "exogenous replenishment from sanctuary/foreign support"
+  },
+  "required_distinctions": [
+    "persistence vs reproduction",
+    "reproduction vs relocation",
+    "endogenous reproduction vs exogenous replenishment",
+    "latent activity vs recorded activity",
+    "violence vs control",
+    "physical presence vs embedded organization",
+    "national manpower vs locality-specific deployable capacity",
+    "quiet by dominance vs clandestine survival vs reporting failure"
+  ],
+  "primary_questions": [
+    {"id":"Q1","question":"What is the minimal macrostate sufficient for predicting local persistence, regeneration, control transition, and diffusion?"},
+    {"id":"Q2","question":"Are local reproduction inputs complementary, substitutable, thresholded, or bottlenecked?"},
+    {"id":"Q3","question":"Does a multitype endogenous reproduction operator predict extinction/persistence and geographic spread?"},
+    {"id":"Q4","question":"Can raw parameters collapse into a small set of dimensionless timescale/capacity ratios with stable phase boundaries?"},
+    {"id":"Q5","question":"Is COIN better represented as competitive reproduction of insurgent and state local orders?"},
+    {"id":"Q6","question":"Which results transport across cases without case-label coefficients or holdout refitting?"}
+  ],
+  "forbidden_shortcuts": [
+    "no event-history self-excitation added merely to match clustered violence",
+    "no case/place/faction coefficient selected from holdout fit",
+    "no reporting probability tuned to repair latent process failure",
+    "no omniscient policy access to hidden state in efficacy claims",
+    "no scalar reproduction number promoted when pathway risk sets are incompatible",
+    "no synthetic success described as historical validity",
+    "no core equation change hidden inside performance work"
+  ],
+  "promotion_rule": "A general-theory claim requires explanatory compression, synthetic identification and falsification, structural robustness, predictive value over reduced competitors, independent construct measurement, and transport to genuinely distinct cases."
+}

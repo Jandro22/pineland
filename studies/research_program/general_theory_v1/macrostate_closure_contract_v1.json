@@ -1,0 +1,27 @@
+﻿{
+  "schema_version": "pineland.macrostate_closure_contract.v1",
+  "status": "preregistered_synthetic_reduction_contract",
+  "historical_outcomes_used": false,
+  "candidate_macrostates": {
+    "minimal_4": ["M","F","E","C"],
+    "operational_7": ["M","F","L","K","E","C","X"],
+    "competitive_9": ["M","F","L","K","E","C","X","S","U"]
+  },
+  "full_state_reference": "expanded scientifically relevant snapshot features; RNG/scheduler identifiers excluded as substantive predictors",
+  "targets": ["30d foothold viability","30d action count","30d recruitment mass","30d control change","90d foothold survival","90d endogenous offspring count","90d state-control durability"],
+  "tests": [
+    "grouped holdout by simulation seed",
+    "macrostate vs expanded-state vs simple baseline predictors",
+    "permutation importance and within-macrostate ablation",
+    "adversarial nearest-neighbor pairs close in macrostate but far in omitted state",
+    "matched perturbations preserving macrostate approximately while altering omitted microstructure",
+    "separate calibration and discrimination for binary targets"
+  ],
+  "provisional_acceptance": {
+    "binary_logloss_regret_vs_full_state": "<=0.05 absolute and <=10% relative when denominator stable",
+    "continuous_normalized_rmse_regret_vs_full_state": "<=0.10",
+    "directional_effect_retention": ">=0.90",
+    "adversarial_pair_large_effect_rate": "<=0.10"
+  },
+  "interpretation": "Passing licenses an approximately closed synthetic macrostate over tested horizons/regimes, not exact Markov sufficiency or historical truth."
+}
