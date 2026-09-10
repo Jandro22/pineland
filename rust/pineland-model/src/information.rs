@@ -2108,10 +2108,27 @@ fn formation_matches_target(particle: &ParticleState, formation: usize, target: 
     if target == crate::INSURGENT {
         particle.organizations.kind.get(organization).copied() == Some(3)
     } else if target == crate::GOVERNMENT {
-        matches!(
+        if matches!(
             particle.organizations.kind.get(organization).copied(),
             Some(0 | 1 | 2)
-        )
+        ) {
+            return true;
+        }
+        // The Python reference also treats explicitly allied/cooperative
+        // organizations (for example a foreign partner) as part of the
+        // aggregate government target. Relation status 0/1 are the stable
+        // allied/cooperative codes in the shared state schema.
+        particle
+            .relations
+            .organization_a
+            .iter()
+            .zip(&particle.relations.organization_b)
+            .zip(&particle.relations.status)
+            .any(|((left, right), status)| {
+                ((*left as usize == organization && *right as usize == crate::GOVERNMENT)
+                    || (*left as usize == crate::GOVERNMENT && *right as usize == organization))
+                    && matches!(*status, 0 | 1)
+            })
     } else {
         organization == target
     }
