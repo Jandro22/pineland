@@ -15,6 +15,16 @@ pub fn update(
 ) {
     let dt = elapsed_days.max(0.0);
     let logistics_trace = std::env::var_os("PINELAND_LOGISTICS_TRACE").is_some();
+    let formation_trace = std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some();
+    if formation_trace && particle.formations.supply_stock.len() > 7 {
+        eprintln!(
+            "LOGISTICS_FORMATION_BEGIN time={:.17} dt={:.17} formation=7 stock={:.17} bits={}",
+            time,
+            dt,
+            particle.formations.supply_stock[7],
+            particle.formations.supply_stock[7].to_bits()
+        );
+    }
     if logistics_trace {
         eprintln!(
             "LOGISTICS_BEGIN time={:.17} dt={:.17} in_transit={:.17} in_transit_bits={} shipments={}",
@@ -191,13 +201,15 @@ pub fn update(
         ) else {
             continue;
         };
-        let desired_delivery = round_binary64(
-            (round_binary64(
-                particle.formations.supply_capacity[formation]
-                    * config.logistics.resupply_target_fraction,
-            ) - particle.formations.supply_stock[formation])
-                .max(0.0),
-        );
+        // Keep the Python expression's operation order: multiply the target
+        // capacity, subtract current stock, then clamp at zero.  The
+        // explicit volatile boundaries used by integer-style reductions are
+        // not part of this scalar CPython recurrence and can move the final
+        // stock by one ulp on a dispatch boundary.
+        let desired_delivery = (particle.formations.supply_capacity[formation]
+            * config.logistics.resupply_target_fraction
+            - particle.formations.supply_stock[formation])
+            .max(0.0);
         let base_efficiency =
             python_exp(-config.logistics.shipment_loss_per_travel_hour * travel_hours);
         // Route interdiction is an optional extension of the same dispatch
@@ -242,6 +254,14 @@ pub fn update(
     }
     // Shipment and movement-order state is added below as the portable state
     // boundary grows; do not synthesize a different demand model here.
+    if formation_trace && particle.formations.supply_stock.len() > 7 {
+        eprintln!(
+            "LOGISTICS_FORMATION_END time={:.17} formation=7 stock={:.17} bits={}",
+            time,
+            particle.formations.supply_stock[7],
+            particle.formations.supply_stock[7].to_bits()
+        );
+    }
     let _ = rng;
     let _ = time;
 }

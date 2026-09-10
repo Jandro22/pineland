@@ -1282,7 +1282,28 @@ pub fn advance_movement_orders(
             let consumed = cost
                 .max(0.0)
                 .min(particle.formations.supply_stock[formation]);
+            if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+                && formation == 7
+            {
+                eprintln!(
+                    "MOVEMENT_SUPPLY_CONSUME time={:.17} formation=7 cost={:.17} before={:.17} bits={}",
+                    time,
+                    cost,
+                    particle.formations.supply_stock[formation],
+                    particle.formations.supply_stock[formation].to_bits()
+                );
+            }
             particle.formations.supply_stock[formation] -= consumed;
+            if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+                && formation == 7
+            {
+                eprintln!(
+                    "MOVEMENT_SUPPLY_CONSUMED time={:.17} formation=7 after={:.17} bits={}",
+                    time,
+                    particle.formations.supply_stock[formation],
+                    particle.formations.supply_stock[formation].to_bits()
+                );
+            }
             particle.formations.sustainment[formation] =
                 particle.formations.supply_fraction(formation);
             particle.logistics.cumulative_consumed += consumed;
