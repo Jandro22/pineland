@@ -614,7 +614,7 @@ fn observe_control(
                 .min(3.0));
     if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.25 {
         eprintln!(
-            "PATROL_CONTROL_TRACE formation={} time={:.17} quality={:.17} trust={:.17} language={:.17} confidence={:.17} weight={:.17} observed={:?}",
+            "PATROL_CONTROL_TRACE formation={} time={:.17} quality={:.17} trust={:.17} language={:.17} confidence={:.17} weight={:.17} truth={:?} observed={:?}",
             observer_formation,
             time,
             quality,
@@ -622,6 +622,7 @@ fn observe_control(
             language,
             observation_confidence,
             weight,
+            values[offset..offset + CONTROL_DIMENSIONS].to_vec(),
             observed,
         );
     }
