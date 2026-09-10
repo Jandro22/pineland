@@ -353,6 +353,56 @@ pub(crate) fn shift_dynamic_observer_codes(particle: &mut ParticleState, old_for
     }
 }
 
+/// Insert a command node into the lexically sorted command range.  Registry
+/// growth shifts the numeric base of the old commands, but inserting the new
+/// organization also shifts the commands at and after its sorted position.
+pub(crate) fn shift_dynamic_observer_codes_after_command_insertion(
+    particle: &mut ParticleState,
+    command_start: u32,
+    old_command_count: usize,
+    insert_position: usize,
+) {
+    let split = command_start.saturating_add(insert_position as u32);
+    let old_end = command_start.saturating_add(old_command_count as u32);
+    let shift = |value: &mut u32| {
+        if *value != u32::MAX
+            && *value >= split
+            && *value < old_end
+            && *value < 0x2000_0000
+        {
+            *value = value.saturating_add(1);
+        }
+    };
+    for key in &mut particle.beliefs.keys {
+        if key.kind == 3 {
+            shift(&mut key.observer);
+        }
+    }
+    for state in [
+        &mut particle.presence_beliefs,
+        &mut particle.node_presence_beliefs,
+    ] {
+        for key in &mut state.keys {
+            shift(&mut key.observer);
+        }
+    }
+    for observation in &mut particle.information_observations {
+        shift(&mut observation.source);
+        shift(&mut observation.observer_node);
+        shift(&mut observation.source_identity);
+    }
+    for relay in &mut particle.information_relays {
+        shift(&mut relay.source_node);
+        shift(&mut relay.destination_node);
+        for node in &mut relay.route {
+            shift(node);
+        }
+    }
+    for entry in &mut particle.information_history {
+        shift(&mut entry.source_identity);
+    }
+}
+
 fn create_local_formation(
     particle: &mut ParticleState,
     topology: &StaticTopology,
