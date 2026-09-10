@@ -1313,6 +1313,30 @@ impl BeliefState {
         let scale = denominator / (1.0 + denominator);
         let age = (time - self.updated_at[index]).max(0.0);
         let decay = crate::rng::python_exp(-age / memory_days.max(f64::MIN_POSITIVE));
+        let target_belief_trace = std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+            && ((self.keys[index].observer == 31
+                && self.keys[index].target == 6
+                && self.keys[index].locality == 31
+                && self.keys[index].kind == 3)
+                || (self.keys[index].observer == 19
+                    && self.keys[index].target == 6
+                    && self.keys[index].locality == 0
+                    && self.keys[index].kind == 3));
+        if target_belief_trace {
+            eprintln!(
+                "TARGET_BELIEF_PRE time={:.17} key=({}, {}, {}, {}) weight={:.17} observed={:?} prior_conf={:.17} prior_updated={:.17} prior_contra={:.17}",
+                time,
+                self.keys[index].observer,
+                self.keys[index].target,
+                self.keys[index].locality,
+                self.keys[index].kind,
+                weight,
+                observed,
+                self.confidence[index],
+                self.updated_at[index],
+                self.contradiction[index],
+            );
+        }
         let offset = index * CONTROL_DIMENSIONS;
         let mut contradiction = self.contradiction[index];
         let mut confidence = prior_confidence;
@@ -1335,6 +1359,20 @@ impl BeliefState {
         }
         self.evidence_count[index] = self.evidence_count[index].saturating_add(1);
         self.contradiction[index] = contradiction;
+        if target_belief_trace {
+            eprintln!(
+                "TARGET_BELIEF_POST time={:.17} key=({}, {}, {}, {}) confidence={:.17} updated={:.17} contra={:.17} evidence={}",
+                time,
+                self.keys[index].observer,
+                self.keys[index].target,
+                self.keys[index].locality,
+                self.keys[index].kind,
+                self.confidence[index],
+                self.updated_at[index],
+                self.contradiction[index],
+                self.evidence_count[index],
+            );
+        }
         self.source_confidence[index] = self.source_confidence[index].max(weight);
         self.dirty.push(index as u32);
     }
