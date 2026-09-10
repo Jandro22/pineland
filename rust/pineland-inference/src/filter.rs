@@ -79,6 +79,7 @@ impl NativeParticleFilter {
                 &format!("particle-{index}"),
             );
             let mut particle = SimulationEngine::new(particle_config)?;
+            particle.configure_particle_execution();
             particle.particle.logical_id = index as u64;
             particle.particle.lineage = format!("root.{index}");
             particle.particle.ancestry = vec![index as u64];
@@ -89,12 +90,15 @@ impl NativeParticleFilter {
 
     pub fn from_engines(
         config: SimulationConfig,
-        particles: Vec<SimulationEngine>,
+        mut particles: Vec<SimulationEngine>,
     ) -> Result<Self, FilterError> {
         if particles.is_empty() {
             return Err(FilterError::Invalid(
                 "particle count must be positive".to_string(),
             ));
+        }
+        for particle in &mut particles {
+            particle.configure_particle_execution();
         }
         let expected = filter_config_hash(&config);
         if particles

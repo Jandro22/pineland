@@ -168,6 +168,15 @@ pub struct SimulationEngine {
     pub model_hash: String,
     pub started_at: f64,
     pub last_boundary: f64,
+    /// Runtime-only execution policy used by SMC/ensemble propagation.
+    ///
+    /// This mirrors Python's ``execution_profile == "particle"`` contract:
+    /// output-only archives, false-record generation, scheduled checkpoints,
+    /// and expensive end-boundary invariant scans are omitted while latent
+    /// transition state and RNG streams remain unchanged.  The default is
+    /// false so reference/certification execution preserves the full audit
+    /// surface.
+    pub particle_execution: bool,
 }
 
 impl SimulationEngine {
@@ -245,6 +254,7 @@ impl SimulationEngine {
             model_hash: sha256::digest_hex(b"pineland-native-v1-frozen-core"),
             started_at: 0.0,
             last_boundary: 0.0,
+            particle_execution: false,
         };
         engine.initialize_world(
             government_formations,
@@ -283,7 +293,17 @@ impl SimulationEngine {
             model_hash: sha256::digest_hex(b"pineland-native-v1-frozen-core"),
             started_at: 0.0,
             last_boundary: 0.0,
+            particle_execution: false,
         })
+    }
+
+    /// Select the same bookkeeping-light execution contract used by Python
+    /// particle propagation.  This is deliberately runtime-only: it does not
+    /// alter scientific configuration, model hashes, or transition equations.
+    pub fn configure_particle_execution(&mut self) {
+        self.particle_execution = true;
+        self.particle.event_log.clear();
+        self.particle.counters.event_counts.clear();
     }
 
     fn materialize_households(&mut self) {
@@ -1689,7 +1709,9 @@ impl SimulationEngine {
                     event.payload.kind()
                 );
             }
-            self.particle.counters.record(event.payload.kind());
+            if !self.particle_execution {
+                self.particle.counters.record(event.payload.kind());
+            }
             let sequence = event.sequence;
             // Python closes patrol presence-memory intervals before every
             // boundary that can change a formation's strength, location,
@@ -1831,13 +1853,15 @@ impl SimulationEngine {
                     event.time,
                 );
             }
-            self.particle.event_log.push(EventRecord {
-                time: event.time,
-                sequence,
-                kind: event.payload.kind().to_string(),
-                locality: event_locality(&event),
-                value: 1.0,
-            });
+            if !self.particle_execution {
+                self.particle.event_log.push(EventRecord {
+                    time: event.time,
+                    sequence,
+                    kind: event.payload.kind().to_string(),
+                    locality: event_locality(&event),
+                    value: 1.0,
+                });
+            }
             self.reschedule_recurring(&event)?;
             processed += 1;
         }
@@ -1853,7 +1877,9 @@ impl SimulationEngine {
             self.particle.time = until;
         }
         self.last_boundary = until;
-        self.particle.validate()?;
+        if !self.particle_execution {
+            self.particle.validate()?;
+        }
         Ok(processed)
     }
 
@@ -2093,6 +2119,9 @@ impl SimulationEngine {
                 self.put_rng("process:peace_process", rng);
             }
             EventPayload::RecordingNoise => {
+                if self.particle_execution {
+                    return Ok(());
+                }
                 let mut rng = self.take_rng("process:recording_noise");
                 recording::update(
                     &mut self.particle,
@@ -2105,8 +2134,10 @@ impl SimulationEngine {
                 self.put_rng("process:recording_noise", rng);
             }
             EventPayload::Checkpoint => {
-                self.particle.counters.checkpoints =
-                    self.particle.counters.checkpoints.saturating_add(1);
+                if !self.particle_execution {
+                    self.particle.counters.checkpoints =
+                        self.particle.counters.checkpoints.saturating_add(1);
+                }
             }
             EventPayload::Custom { .. } => {}
         }
@@ -2166,6 +2197,14 @@ impl SimulationEngine {
     }
 
     fn reschedule_recurring(&mut self, event: &ScheduledEvent) -> Result<(), ModelError> {
+        if self.particle_execution
+            && matches!(
+                event.payload,
+                EventPayload::RecordingNoise | EventPayload::Checkpoint
+            )
+        {
+            return Ok(());
+        }
         let interval = match event.payload {
             EventPayload::Patrol { patrol } => {
                 let patrol = patrol.get() as usize;
