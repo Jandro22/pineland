@@ -1,0 +1,50 @@
+{
+  "schema_version": "pineland.nonlocal_reproduction_confirmation_contract.v1",
+  "status": "preregistered_before_fresh_seed_confirmation",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "motivation": "Exploratory isolated-parent results showed that most established offspring were non-adjacent and that almost all non-adjacent first-generation offspring first appeared on recruitment events. Source audit shows recruitment requires local access and, before a daughter exists, social exposure is the only access channel that can be nonlocal. This contract tests that mechanism on untouched synthetic seeds.",
+  "fresh_seed_base": 2026102000,
+  "seed_count": 8,
+  "agents": 300,
+  "localities": 17,
+  "horizon_days": 180,
+  "threads": 16,
+  "rooted_parent_types": ["M", "MF", "MG", "MFG"],
+  "comparison_parent_types_retained_in_raw_output": ["none", "E", "F", "G", "FG"],
+  "kernel_features": {
+    "geographic": [
+      "adjacent_origin",
+      "euclidean_distance_km",
+      "locality_graph_hops",
+      "locality_graph_path_cost"
+    ],
+    "social": [
+      "parent_social_exposure_potential",
+      "parent_social_min_hops",
+      "cross_locality_social_influence"
+    ],
+    "hybrid": "geographic plus social features"
+  },
+  "social_exposure_definition": "Before continuation, for each destination person, compute the share of social-neighbor influence attributable to planted insurgent members, using the same edge influence weight*trust*represented_relationships and planted armed fraction used by the native social-influence process; average by represented destination population.",
+  "evaluation_horizons_days": [30, 90, 180],
+  "prediction_protocol": "Seed-grouped cross-validation on rooted parent types. Compare intercept, adjacency-only, Euclidean-only, locality-graph, social, geographic-combined, and hybrid logistic models. No destination/origin fixed effects in the primary comparison.",
+  "primary_confirmation_gates": {
+    "nonadjacent_fraction_180d": "> 0.50 among positive rooted-parent offspring",
+    "recruitment_trigger_share_nonadjacent_180d": ">= 0.80",
+    "social_kernel_direction": "At both 90d and 180d, the social model must not have worse log loss than adjacency-only by more than 0.005.",
+    "social_kernel_material_gain": "At at least one of 90d or 180d, social or hybrid must improve on adjacency-only by >=0.01 absolute log loss OR >=0.05 AUC.",
+    "seed_robustness": "At least 6 of 8 seeds must individually have >0.50 non-adjacent fraction among positive rooted-parent offspring when positives exist."
+  },
+  "interpretation": {
+    "all_gates_pass": "NETWORK_MEDIATED_NONLOCAL_REPRODUCTION_SUPPORTED",
+    "nonlocal_and_recruitment_pass_but_social_prediction_fails": "NONLOCAL_RECRUITMENT_CONFIRMED_KERNEL_UNRESOLVED",
+    "nonlocal_gate_fails": "NONLOCAL_REPRODUCTION_NOT_CONFIRMED"
+  },
+  "guardrails": [
+    "No historical data are used.",
+    "No threshold or feature-set changes after fresh-seed outcomes are viewed.",
+    "This tests the isolated first-generation reproduction mechanism, not historical transport or a universal spatial law.",
+    "A social-kernel result does not imply physical distance is irrelevant; conditional hybrid performance must be reported."
+  ]
+}
