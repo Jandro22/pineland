@@ -1,0 +1,21 @@
+﻿{
+  "schema_version": "pineland.multitype_reproduction_operator_contract.v1",
+  "status": "preregistered_synthetic_identification_contract",
+  "historical_outcomes_used": false,
+  "parent_types": ["member_foothold","fielded_force_foothold","governance_foothold"],
+  "offspring_pathways": ["local_member_deepening","local_force_generation","social_network_seeded","migrating_member_seeded","formation_seeded_local_recruitment","organizational_split_offspring"],
+  "excluded_from_endogenous_offspring": ["initial_condition","pure_formation_relocation","sanctuary_external_seeded","foreign_state_replenishment","unresolved_parentage"],
+  "operator": "K[(i,a),(j,b)] = expected endogenous viable child mass within fixed horizon per eligible complete-followup parent",
+  "stationary_threshold": "rho(K)",
+  "time_varying_extension": "gamma_T=(1/T) log ||K_T K_(T-1)...K_1||, conditional on local linear/branching approximation validity",
+  "open_system": "x_(t+1)=K_t x_t + u_t; u_t is exogenous replenishment and never counted as endogenous offspring",
+  "validations": [
+    "recover planted parentage under multi-parent ambiguity",
+    "pure relocation gives zero endogenous offspring",
+    "external injection changes u without being counted in K",
+    "right censoring is not extinction",
+    "topology permutation destroys edge-mediated parentage",
+    "estimated growth sign predicts long-run endogenous fate",
+    "near-critical uncertainty is allowed to remain unresolved"
+  ]
+}

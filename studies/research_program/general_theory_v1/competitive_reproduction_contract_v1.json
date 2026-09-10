@@ -1,0 +1,16 @@
+﻿{
+  "schema_version": "pineland.competitive_reproduction_contract.v1",
+  "status": "preregistered_state_side_theory_extension",
+  "historical_outcomes_used": false,
+  "insurgent_side": "endogenous viable organizational descendants, deepening, and survival",
+  "state_side_components": ["local security continuity","indigenous administrative/legal/fiscal capacity retention","local information continuity","population political access/legitimacy support","capacity persistence after foreign support removal"],
+  "candidate_state_quantity": "G_S(locality,horizon)=retained or newly self-sustaining indigenous security-governance capacity at horizon per baseline local-capacity unit; contemporaneous foreign substitution excluded",
+  "competitive_margin": "Gamma=log(G_S+eps)-log(G_I+eps), only when horizons/accounting are compatible",
+  "prediction": "persistent positive state-side margin should precede durable control and lower insurgent endogenous regeneration; force superiority without state reproduction should be fragile after withdrawal",
+  "falsifiers": [
+    "foreign force stock alone predicts claimed indigenous reproduction",
+    "state metric rises when indigenous institutional/security continuity is removed",
+    "post-withdrawal durability is unrelated to pre-withdrawal state reproduction after contemporaneous force stock is accounted",
+    "insurgent endogenous reproduction remains supercritical under durable state-side margin without identified exogenous replenishment"
+  ]
+}
