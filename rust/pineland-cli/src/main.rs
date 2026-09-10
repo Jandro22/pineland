@@ -952,10 +952,138 @@ fn hash_state(arguments: &Arguments) -> Result<(), String> {
 
 fn benchmark(arguments: &Arguments) -> Result<(), String> {
     let mut config = config(arguments)?;
+    let threads = thread_count(arguments)?;
+
+    if arguments.value("branches").is_some() || arguments.value("weekly-boundaries").is_some() {
+        let particles = arguments.usize("particles", 32)?;
+        let weeks = arguments.usize("weekly-boundaries", 8)?;
+        let branches = arguments.usize("branches", 3)?;
+        let total_start = Instant::now();
+        let init_start = Instant::now();
+
+        let mut filter = NativeParticleFilter::new(config.clone(), particles)
+            .map_err(|error| error.to_string())?;
+        filter.set_threads(threads);
+        let initialization_seconds = init_start.elapsed().as_secs_f64();
+
+        let propagation_start = Instant::now();
+        let mut rng = pineland_core::rng::PyRandomCompat::from_seed(
+            config.seed.wrapping_add(17_003),
+        );
+
+        for week in 0..weeks {
+            let target_time = (week + 1) as f64 * 7.0;
+            // 1. For each parent particle, fork B descendant branches
+            let mut branch_jobs: Vec<(usize, usize, SimulationEngine)> =
+                Vec::with_capacity(particles * branches);
+            for (p_idx, engine) in filter.particles.iter().enumerate() {
+                for b in 0..branches {
+                    let mut b_engine = engine.clone();
+                    let identity = format!("week-{week}:parent-{p_idx}:branch-{b}");
+                    b_engine.particle.rng = engine.particle.rng.fork(&identity);
+                    b_engine.particle.lineage = format!("{}.{}", engine.particle.lineage, b);
+                    branch_jobs.push((p_idx, b, b_engine));
+                }
+            }
+
+            // 2. Parallel propagate all P * B branches to target_time
+            pineland_inference::parallel::for_each_mut(
+                &mut branch_jobs,
+                threads,
+                |(_p_idx, _b, engine)| engine.advance_until(target_time),
+            )
+            .map_err(|error| error.to_string())?;
+
+            // 3. For each parent, select continuing descendant branch
+            for (p_idx, engine) in filter.particles.iter_mut().enumerate() {
+                let parent_branches: Vec<&SimulationEngine> = branch_jobs
+                    .iter()
+                    .filter(|(p, _, _)| *p == p_idx)
+                    .map(|(_, _, b_eng)| b_eng)
+                    .collect();
+                let selected = (rng.random() * parent_branches.len() as f64) as usize;
+                let selected_engine = parent_branches[selected.min(parent_branches.len() - 1)];
+                *engine = selected_engine.clone();
+            }
+
+            // 4. Boundary ESS check and resampling
+            let ess_threshold = particles as f64 * 0.5;
+            let weights = vec![1.0 / particles as f64; particles];
+            if (particles as f64) < ess_threshold {
+                let parents =
+                    pineland_inference::resampling::systematic_resample(&weights, &mut rng)
+                        .map_err(|e| e.to_string())?;
+                let old = std::mem::take(&mut filter.particles);
+                let old_len = old.len();
+                let mut next = Vec::with_capacity(old_len);
+                for (child, parent) in parents.iter().enumerate() {
+                    let src = &old[*parent];
+                    let lineage = format!("{}.{}", src.particle.lineage, child);
+                    let fork_rng = src.particle.rng.fork(&format!(
+                        "nested-boundary-{week}:child-{child}:parent-{parent}"
+                    ));
+                    let child_p =
+                        src.particle.clone_for_child_with_rng(child as u64, lineage, fork_rng);
+                    let mut eng = src.clone();
+                    eng.particle = child_p;
+                    next.push(eng);
+                }
+                filter.particles = next;
+            }
+        }
+
+        let propagation_seconds = propagation_start.elapsed().as_secs_f64().max(1e-12);
+        let end_to_end_seconds = total_start.elapsed().as_secs_f64().max(1e-12);
+        let workload_pwb = (particles * weeks * branches) as f64;
+
+        let hash_input = filter
+            .particles
+            .iter()
+            .flat_map(|engine| engine.state_hash().into_bytes())
+            .collect::<Vec<_>>();
+        let mut result = JsonValue::object();
+        result.insert("workload_pwb", JsonValue::number(workload_pwb));
+        result.insert(
+            "initialization_seconds",
+            JsonValue::number(initialization_seconds),
+        );
+        result.insert(
+            "propagation_seconds",
+            JsonValue::number(propagation_seconds),
+        );
+        result.insert(
+            "end_to_end_seconds",
+            JsonValue::number(end_to_end_seconds),
+        );
+        result.insert("wall_seconds", JsonValue::number(propagation_seconds));
+        result.insert(
+            "pwb_per_second",
+            JsonValue::number(workload_pwb / propagation_seconds),
+        );
+        result.insert(
+            "end_to_end_pwb_per_second",
+            JsonValue::number(workload_pwb / end_to_end_seconds),
+        );
+        result.insert("particles", JsonValue::integer(particles as u64));
+        result.insert("weekly_boundaries", JsonValue::integer(weeks as u64));
+        result.insert("branches", JsonValue::integer(branches as u64));
+        result.insert("threads", JsonValue::integer(threads as u64));
+        result.insert("backend", JsonValue::string("rayon"));
+        result.insert("benchmark_mode", JsonValue::string("nested_branches"));
+        result.insert(
+            "state_hash",
+            JsonValue::string(sha256::digest_hex(&hash_input)),
+        );
+        if let Some(path) = arguments.value("output") {
+            write_json(path, &result).map_err(|error| error.to_string())?;
+        }
+        println!("{}", result.to_pretty());
+        return Ok(());
+    }
+
     let particles = arguments.usize("particles", 768)?;
     let days = arguments.f64("days", 7.0)?;
     config.horizon_days = days;
-    let threads = thread_count(arguments)?;
     let total_start = Instant::now();
     let init_start = Instant::now();
     let mut filter =

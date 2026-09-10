@@ -167,7 +167,7 @@ pub(crate) fn shift_dynamic_observer_codes_after_foreign_intervention(
     let old_organizations = particle.organizations.kind.len();
     let old_formations = particle.formations.personnel.len();
     let old_posts = particle.security_posts.locality.len();
-    let num_aux = crate::information::auxiliary_node_ids(particle, topology).len();
+    let num_aux = crate::information::auxiliary_node_count(particle, topology);
 
     let formation_start = old_organizations as u32;
     let post_start = (old_organizations + old_formations) as u32;

@@ -703,7 +703,7 @@ fn materialize_proto_birth(
         + old_formations
         + 1
         + particle.security_posts.organization.len()
-        + crate::information::auxiliary_node_ids(particle, topology).len();
+        + crate::information::auxiliary_node_count(particle, topology);
     crate::recruitment::shift_dynamic_observer_codes_after_command_insertion(
         particle,
         command_start as u32,
