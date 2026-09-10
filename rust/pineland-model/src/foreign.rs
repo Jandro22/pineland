@@ -7,7 +7,7 @@ use pineland_core::topology::StaticTopology;
 
 pub(crate) const FOREIGN_KIND: u8 = 5;
 
-fn append_relation(
+pub(crate) fn append_relation(
     particle: &mut ParticleState,
     first: usize,
     second: usize,
@@ -46,7 +46,11 @@ fn append_relation(
     particle.relations.has_last_interaction.push(0);
 }
 
-fn append_foothold_rows(particle: &mut ParticleState, locality_count: usize, organization: usize) {
+pub(crate) fn append_foothold_rows(
+    particle: &mut ParticleState,
+    locality_count: usize,
+    organization: usize,
+) {
     for locality in 0..locality_count {
         particle.footholds.organization.push(organization as u32);
         particle.footholds.locality.push(locality as u32);

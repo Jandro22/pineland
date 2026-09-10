@@ -323,7 +323,7 @@ pub(crate) fn shift_dynamic_observer_codes_after_organization(
 /// Python certificate recomputes that canonical code from the final registry;
 /// native continuation state must perform the same re-indexing at the append
 /// boundary.
-fn shift_dynamic_observer_codes(particle: &mut ParticleState, old_formations: usize) {
+pub(crate) fn shift_dynamic_observer_codes(particle: &mut ParticleState, old_formations: usize) {
     let threshold = (particle.organizations.kind.len() + old_formations) as u32;
     for key in &mut particle.beliefs.keys {
         shift_dynamic_code(&mut key.observer, threshold);
