@@ -1,0 +1,27 @@
+{
+  "schema_version": "pineland.reduced_theory_holdout_contract.v2",
+  "status": "preregistered_before_holdout_generation",
+  "historical_outcomes_used": false,
+  "candidate_freeze": "reduced_theory_candidate_freeze_v2.json",
+  "holdout_seed_base": 2026101000,
+  "holdout_seed_count": 8,
+  "agents": 300,
+  "localities": 34,
+  "panel_horizon_days": 120,
+  "panel_step_days": 30,
+  "evaluation_horizons_days": [30, 90],
+  "primary_continuous_states": ["M", "log1p_F_effective", "E", "C"],
+  "primary_binary_state": "local foothold viability E >= 0.20",
+  "metrics": [
+    "MAE",
+    "RMSE",
+    "NRMSE using heldout truth SD",
+    "R2",
+    "locality-level balanced accuracy for foothold viability"
+  ],
+  "strict_stage1_gate": {
+    "all_primary_state_nrmse_each_horizon": "<= 0.50",
+    "viability_balanced_accuracy_each_horizon": ">= 0.80"
+  },
+  "interpretation": "Passing is only an untouched-seed same-family validation. It does not establish intervention, topology-family, or parameter-regime transport; those require later holdouts. Failure demotes the current ODE to qualitative hypothesis status without changing the native ABM findings."
+}

@@ -1,0 +1,95 @@
+{
+  "schema_version": "pineland.general_theory_hardening_contract.v2",
+  "status": "amended_before_official_stratified_distributional_closure_run",
+  "created_local": "2026-09-10T17:37:00-04:00",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "purpose": "Convert promising synthetic mechanism findings into defensible theory claims by testing distributional closure, genuine held-out reduced-model fidelity, structural phase boundaries, and invariance without historical tuning.",
+  "preserved_v1_findings": [
+    "native execution parity certificate",
+    "isolated rooted-membership reproduction assay",
+    "mobilization-resource factorial and scalar-strain falsification",
+    "state-regeneration shock assay",
+    "predictive macrostate compression results",
+    "competitive-dynamics predictive comparisons"
+  ],
+  "claims_explicitly_not_yet_licensed": [
+    "exact or approximate Markov sufficiency of (M,F,E,C)",
+    "universal six-regime phase diagram",
+    "transcritical or saddle-node bifurcation labels",
+    "Gamma as a universal territorial-control order parameter",
+    "95 percent continuous trajectory fidelity of the 15-parameter ODE",
+    "cross-topology or scale universality"
+  ],
+  "distributional_closure": {
+    "design": "Hold initialization_seed and locality fixed, generate distinct dynamic microstates with different process seeds, greedily select near-matched same-locality states, then rekey both inherited full states to identical future RNG branch panels.",
+    "candidate_states": {
+      "minimal4": ["M", "log1p(F_effective)", "E", "C"],
+      "core5": ["M", "log1p(F_effective)", "E", "C", "log1p(K_o)"],
+      "core6spatial": ["M", "log1p(F_effective)", "E", "C", "log1p(K_o)", "neighbor_mean_M"],
+      "operational9": ["M", "log1p(F_effective)", "E", "C", "log1p(K_o)", "neighbor_mean_M", "L", "K_intel", "X"],
+      "competitive11": ["M", "log1p(F_effective)", "E", "C", "log1p(K_o)", "neighbor_mean_M", "L", "K_intel", "X", "S", "U"]
+    },
+    "pair_stratification": {
+      "activity_score": "M + E + log1p(F)/(1+log1p(F)); monotone bounded composite using only pre-continuation activity variables",
+      "low_mid_high": "rank tertiles of activity_score in the pre-continuation candidate pool; deterministic rank tie-breaking may split exact ties so each activity band remains populated",
+      "allocation": "approximately equal pair counts per low/mid/high activity tertile, with best remaining near-matches used only if a tertile is exhausted"
+    },
+    "default_anchor_days": 60,
+    "horizons_days": [30, 90],
+    "pool_dynamic_seeds": 24,
+    "matched_pairs_per_candidate": 24,
+    "common_rng_branches_per_pair": 32,
+    "primary_outcomes": [
+      "foothold viability",
+      "log1p action increment",
+      "log1p recruit increment",
+      "final M",
+      "final log1p F",
+      "final E",
+      "control change",
+      "final C",
+      "final state control"
+    ],
+    "practical_effect_thresholds": {
+      "binary_risk_difference": 0.15,
+      "continuous_standardized_mean_difference": 0.25,
+      "continuous_normalized_wasserstein": 0.25
+    },
+    "multiplicity": "Benjamini-Hochberg q <= 0.05 over pair-outcome tests within each candidate/horizon assay.",
+    "pass_gate": "At most 10 percent of matched pairs may contain any multiplicity-significant practically large primary-outcome difference overall, and no activity stratum may exceed 20 percent. Report raw practical-large rates separately. Passing licenses approximate closure only over tested synthetic context/horizons.",
+    "amendment_note": "An exploratory minimal4 run was already in flight when audit identified two preregistration omissions: the reduced theory itself includes global K_o, and unconstrained nearest-neighbor matching can overselect dormant localities. A subsequent 6-pair smoke test showed the original fixed activity cutoffs left the intermediate stratum empty, so the official design uses outcome-blind pre-continuation activity tertiles. Neither exploratory run is used as the official gate. This amendment was frozen before any official 24-pair result was observed."
+  },
+  "reduced_model_validation": {
+    "rule": "Derive/fix equations and parameters on training regimes only, hash/freeze them, then evaluate untouched dynamic seeds, parameter cells, topologies, and intervention conditions.",
+    "required_metrics": [
+      "continuous MAE and NRMSE for M,F,E,C",
+      "distributional distance for stochastic outcomes",
+      "survival/collapse Brier and balanced accuracy",
+      "critical-boundary location error",
+      "intervention response sign retention"
+    ],
+    "forbidden_metric": "Do not call an arithmetic mean of coarse classification accuracies trajectory fidelity."
+  },
+  "phase_mapping": {
+    "rule": "Regimes and boundaries must be inferred from sampled outcomes rather than hand-coded from prior result summaries.",
+    "minimum_structural_axes": [
+      "rooted reproduction intensity",
+      "resource burn/replenishment decomposition",
+      "state security/institutional pressure",
+      "external support",
+      "network connectivity/topology"
+    ],
+    "bifurcation_labels": "No named mathematical bifurcation is permitted without continuation/local-stability evidence supporting that bifurcation type."
+  },
+  "invariance": {
+    "required": [
+      "dynamic seed replication",
+      "agent-resolution replication",
+      "topology-family replication",
+      "time-resolution or event-scheduling sensitivity",
+      "structural-context replication"
+    ]
+  },
+  "promotion_rule": "Only claims passing their corresponding v2 hardening assay may be promoted from candidate mechanism/hypothesis to robust synthetic law. Historical transport remains a later, separately frozen protocol."
+}
