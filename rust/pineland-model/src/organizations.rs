@@ -805,8 +805,8 @@ pub fn update(
             .collect::<Vec<_>>();
         let losses = python_sum(&loss_values) / python_sum(&personnel_plus_losses).max(1.0);
 
-        let mut represented_weight = 0.0;
-        let mut identity_weighted = 0.0;
+        let mut represented_values = Vec::new();
+        let mut identity_weighted_values = Vec::new();
         for person in 0..particle.people.locality.len() {
             if particle.people.organization[person] as usize != organization
                 || particle.people.armed_fraction[person] <= 0.0
@@ -815,11 +815,15 @@ pub fn update(
             }
             let represented = particle.people.represented_population[person]
                 * particle.people.armed_fraction[person];
-            represented_weight += represented;
-            identity_weighted += represented * particle.people.identities[person * 3 + 2];
+            represented_values.push(represented);
+            identity_weighted_values.push(
+                represented * particle.people.identities[person * 3 + 2],
+            );
         }
+        let represented_weight = python_sum(&represented_values);
+        let identity_weighted = python_sum(&identity_weighted_values);
         let mean_identity = identity_weighted / represented_weight.max(1e-9);
-        let mut identity_variance = 0.0;
+        let mut identity_variance_values = Vec::new();
         for person in 0..particle.people.locality.len() {
             if particle.people.organization[person] as usize != organization
                 || particle.people.armed_fraction[person] <= 0.0
@@ -828,18 +832,39 @@ pub fn update(
             }
             let represented = particle.people.represented_population[person]
                 * particle.people.armed_fraction[person];
-            identity_variance +=
-                represented * (particle.people.identities[person * 3 + 2] - mean_identity).powi(2);
+            identity_variance_values.push(
+                represented * (particle.people.identities[person * 3 + 2] - mean_identity).powi(2),
+            );
         }
-        identity_variance /= represented_weight.max(1e-9);
+        let identity_variance =
+            python_sum(&identity_variance_values) / represented_weight.max(1e-9);
         let cycle_scale = elapsed_days / 7.0;
-        particle.organizations.cohesion[organization] = clamp01(
-            particle.organizations.cohesion[organization]
+        let prior_cohesion = particle.organizations.cohesion[organization];
+        let updated_cohesion = clamp01(
+            prior_cohesion
                 + cycle_scale
                     * (0.025 * particle.organizations.capital_social[organization]
                         - config.organization_ecology.cohesion_loss_memory * losses
                         - 0.02 * identity_variance),
         );
+        if std::env::var_os("PINELAND_ORG_TRACE").is_some() {
+            eprintln!(
+                "ORG_COHESION_TRACE time={:.17} org={} elapsed={:.17} prior={:.17} losses={:.17} represented={:.17} mean_identity={:.17} identity_variance={:.17} cycle_scale={:.17} capital_social={:.17} updated={:.17} rng_index={}",
+                time,
+                organization,
+                elapsed_days,
+                prior_cohesion,
+                losses,
+                represented_weight,
+                mean_identity,
+                identity_variance,
+                cycle_scale,
+                particle.organizations.capital_social[organization],
+                updated_cohesion,
+                rng.state().index,
+            );
+        }
+        particle.organizations.cohesion[organization] = updated_cohesion;
         particle.organizations.capital_material[organization] =
             clamp01(particle.organizations.capital[organization] / 150_000.0);
 
