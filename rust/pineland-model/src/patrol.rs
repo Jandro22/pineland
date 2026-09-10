@@ -119,7 +119,7 @@ pub fn advance(
     let consumed = demand
         .max(0.0)
         .min(particle.formations.supply_stock[formation]);
-    if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+    if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
         && formation == 7
     {
         eprintln!(
@@ -132,7 +132,7 @@ pub fn advance(
     }
     let shortfall = (demand.max(0.0) - consumed).max(0.0);
     particle.formations.supply_stock[formation] -= consumed;
-    if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+    if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
         && formation == 7
     {
         eprintln!(
@@ -211,7 +211,7 @@ fn advance_patrol_presence_memory(
         * clamp01(particle.patrols.response_fraction[patrol]);
     let normalized_strength = deployed_strength / 250.0_f64.max(population * 0.002);
     let target = config.physical.patrol_memory_gain * normalized_strength;
-    if std::env::var_os("PINELAND_PHYS_TRACE").is_some() {
+    if crate::trace_env!("PINELAND_PHYS_TRACE") {
         eprintln!(
             "PRES patrol={} time={:.17} zone={} start={:.17} duration={:.17} personnel={:.17} availability={:.17} readiness={:.17} quality={:.17} cohesion={:.17} info={:.17} command={:.17} strength={:.17} target={:.17} actor_ins={}",
             patrol, time, zone, start, duration,
@@ -633,7 +633,7 @@ fn observe_control(
                     time,
                 )
                 .min(3.0));
-    if std::env::var_os("PINELAND_INFO_TRACE").is_some() && time >= 0.25 {
+    if crate::trace_env!("PINELAND_INFO_TRACE") && time >= 0.25 {
         eprintln!(
             "PATROL_CONTROL_TRACE formation={} time={:.17} quality={:.17} trust={:.17} language={:.17} confidence={:.17} weight={:.17} truth={:?} observed={:?}",
             observer_formation,
@@ -676,7 +676,7 @@ fn observe_control(
         particle.beliefs.control[offset..offset + CONTROL_DIMENSIONS].fill(0.5);
         particle.beliefs.confidence[dynamic_index] = config.information.prior_confidence;
     }
-    let target_belief_trace = std::env::var_os("PINELAND_TARGET_BELIEF_TRACE").is_some()
+    let target_belief_trace = crate::trace_env!("PINELAND_TARGET_BELIEF_TRACE")
         && ((target_belief_key.0 == 31
             && target_belief_key.1 == crate::INSURGENT as u32
             && target_belief_key.2 == 31)

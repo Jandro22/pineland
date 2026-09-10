@@ -36,6 +36,19 @@ use pineland_core::state::{
 use pineland_core::topology::StaticTopology;
 use std::fmt;
 
+/// Cache parity/debug environment flags at their call site.
+///
+/// Trace configuration is a launch-time concern. Re-querying the Windows
+/// process environment from inner loops adds shared runtime overhead when many
+/// particles execute concurrently, so each literal flag is resolved once.
+#[macro_export]
+macro_rules! trace_env {
+    ($name:literal) => {{
+        static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        *ENABLED.get_or_init(|| std::env::var_os($name).is_some())
+    }};
+}
+
 pub const GOVERNMENT: usize = 0;
 pub const MILITARY: usize = 1;
 pub const POLICE: usize = 2;
@@ -1682,7 +1695,7 @@ impl SimulationEngine {
         {
             let event = self.particle.scheduler.pop_next().expect("peeked event");
             self.particle.time = event.time;
-            if std::env::var_os("PINELAND_MANPOWER_TRACE").is_some()
+            if crate::trace_env!("PINELAND_MANPOWER_TRACE")
                 && event.time >= 69.0
                 && event.time <= 70.0
             {
@@ -1701,7 +1714,7 @@ impl SimulationEngine {
                         .collect::<Vec<_>>()
                 );
             }
-            if std::env::var_os("PINELAND_EVENT_TRACE").is_some() {
+            if crate::trace_env!("PINELAND_EVENT_TRACE") {
                 eprintln!(
                     "EVENT {} time={:.17} kind={}",
                     processed + 1,
@@ -1779,7 +1792,7 @@ impl SimulationEngine {
                     | EventPayload::Contact { .. }
             );
             self.process_event(&event)?;
-            if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+            if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
                 && self
                     .particle
                     .formations
@@ -1799,7 +1812,7 @@ impl SimulationEngine {
                     self.particle.formations.supply_stock[7].to_bits()
                 );
             }
-            if std::env::var_os("PINELAND_MANPOWER_TRACE").is_some()
+            if crate::trace_env!("PINELAND_MANPOWER_TRACE")
                 && event.time >= 69.0
                 && event.time <= 70.0
             {
@@ -1827,7 +1840,7 @@ impl SimulationEngine {
             if refresh_foothold_membership {
                 recruitment::refresh_foothold_memberships(&mut self.particle, &self.topology);
             }
-            if std::env::var_os("PINELAND_BELIEF_TRACE").is_some()
+            if crate::trace_env!("PINELAND_BELIEF_TRACE")
                 && matches!(event.payload, EventPayload::Information)
                 && event.time >= 3.5
             {
@@ -1886,7 +1899,7 @@ impl SimulationEngine {
     fn process_event(&mut self, event: &ScheduledEvent) -> Result<(), ModelError> {
         match &event.payload {
             EventPayload::Patrol { .. } => {
-                let mut rng = self.take_rng("process:patrol");
+                let (rng_key, mut rng) = self.take_rng("process:patrol");
                 patrol::advance(
                     &mut self.particle,
                     &self.topology,
@@ -1898,13 +1911,13 @@ impl SimulationEngine {
                     },
                     event.time,
                 );
-                self.put_rng("process:patrol", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::PhysicalRefresh => {
                 physical::refresh(&mut self.particle, &self.topology, &self.config, event.time)
             }
             EventPayload::Information => {
-                let mut rng = self.take_rng("process:information");
+                let (rng_key, mut rng) = self.take_rng("process:information");
                 information::collect_and_fuse(
                     &mut self.particle,
                     &self.topology,
@@ -1913,10 +1926,10 @@ impl SimulationEngine {
                     event.elapsed_days,
                     event.time,
                 );
-                self.put_rng("process:information", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::Beliefs => {
-                let mut rng = self.take_rng("process:beliefs");
+                let (rng_key, mut rng) = self.take_rng("process:beliefs");
                 beliefs::decay_and_propagate(
                     &mut self.particle,
                     &self.topology,
@@ -1925,10 +1938,10 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:beliefs", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::SocialInfluence => {
-                let mut rng = self.take_rng("process:social_influence");
+                let (rng_key, mut rng) = self.take_rng("process:social_influence");
                 social::update(
                     &mut self.particle,
                     &self.topology,
@@ -1937,10 +1950,10 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:social_influence", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::Mobility => {
-                let mut rng = self.take_rng("process:mobility");
+                let (rng_key, mut rng) = self.take_rng("process:mobility");
                 movement::civilian_mobility(
                     &mut self.particle,
                     &self.topology,
@@ -1949,10 +1962,10 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:mobility", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::Recruitment => {
-                let mut rng = self.take_rng("process:recruitment");
+                let (rng_key, mut rng) = self.take_rng("process:recruitment");
                 recruitment::recruit(
                     &mut self.particle,
                     &self.topology,
@@ -1961,13 +1974,13 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:recruitment", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::OrganizedAction {
                 organization,
                 locality,
             } => {
-                let mut rng = self.take_rng("process:organized_action");
+                let (rng_key, mut rng) = self.take_rng("process:organized_action");
                 actions::opportunities(
                     &mut self.particle,
                     &self.topology,
@@ -1978,10 +1991,10 @@ impl SimulationEngine {
                     locality.get() as usize,
                     event.elapsed_days,
                 );
-                self.put_rng("process:organized_action", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::ContactScan => {
-                let mut rng = self.take_rng("process:contact_scan");
+                let (rng_key, mut rng) = self.take_rng("process:contact_scan");
                 let exposure_days = self.config.intervals.contact;
                 if self.config.combat.organized_action_architecture == "multichannel_v5" {
                     self.schedule_organized_actions(event.time + exposure_days, exposure_days)?;
@@ -1994,7 +2007,7 @@ impl SimulationEngine {
                         event.time,
                     )?;
                 }
-                self.put_rng("process:contact_scan", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::Contact {
                 first,
@@ -2002,7 +2015,7 @@ impl SimulationEngine {
                 locality,
                 microzone,
             } => {
-                let mut rng = self.take_rng("process:contact");
+                let (rng_key, mut rng) = self.take_rng("process:contact");
                 combat::resolve_contact(
                     &mut self.particle,
                     &self.topology,
@@ -2014,7 +2027,7 @@ impl SimulationEngine {
                     locality.get() as usize,
                     microzone.get() as usize,
                 );
-                self.put_rng("process:contact", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::ForceMovement => {
                 let arrived = movement::advance_movement_orders(
@@ -2032,7 +2045,7 @@ impl SimulationEngine {
                 }
             }
             EventPayload::Logistics => {
-                let mut rng = self.take_rng("process:logistics");
+                let (rng_key, mut rng) = self.take_rng("process:logistics");
                 logistics::update(
                     &mut self.particle,
                     &self.topology,
@@ -2041,10 +2054,10 @@ impl SimulationEngine {
                     event.elapsed_days,
                     event.time,
                 );
-                self.put_rng("process:logistics", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::Command => {
-                let mut rng = self.take_rng("process:command");
+                let (rng_key, mut rng) = self.take_rng("process:command");
                 movement::command(
                     &mut self.particle,
                     &self.topology,
@@ -2054,7 +2067,7 @@ impl SimulationEngine {
                     event.elapsed_days,
                 )
                 .map_err(|error| ModelError::Invalid(format!("movement command: {error}")))?;
-                self.put_rng("process:command", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::Governance => governance::update(
                 &mut self.particle,
@@ -2071,7 +2084,7 @@ impl SimulationEngine {
                 event.elapsed_days,
             ),
             EventPayload::OrganizationEcology => {
-                let mut rng = self.take_rng("process:organization_ecology");
+                let (rng_key, mut rng) = self.take_rng("process:organization_ecology");
                 organizations::update(
                     &mut self.particle,
                     &self.topology,
@@ -2080,10 +2093,10 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:organization_ecology", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::PoliticalOrder => {
-                let mut rng = self.take_rng("process:political_order");
+                let (rng_key, mut rng) = self.take_rng("process:political_order");
                 political::update(
                     &mut self.particle,
                     &self.topology,
@@ -2092,10 +2105,10 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:political_order", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::ForeignAffairs => {
-                let mut rng = self.take_rng("process:foreign_affairs");
+                let (rng_key, mut rng) = self.take_rng("process:foreign_affairs");
                 foreign::update(
                     &mut self.particle,
                     &self.topology,
@@ -2104,10 +2117,10 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:foreign_affairs", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::PeaceProcess => {
-                let mut rng = self.take_rng("process:peace_process");
+                let (rng_key, mut rng) = self.take_rng("process:peace_process");
                 peace::update(
                     &mut self.particle,
                     &self.topology,
@@ -2116,13 +2129,13 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:peace_process", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::RecordingNoise => {
                 if self.particle_execution {
                     return Ok(());
                 }
-                let mut rng = self.take_rng("process:recording_noise");
+                let (rng_key, mut rng) = self.take_rng("process:recording_noise");
                 recording::update(
                     &mut self.particle,
                     &self.topology,
@@ -2131,7 +2144,7 @@ impl SimulationEngine {
                     event.time,
                     event.elapsed_days,
                 );
-                self.put_rng("process:recording_noise", rng);
+                self.put_rng(rng_key, rng);
             }
             EventPayload::Checkpoint => {
                 if !self.particle_execution {
@@ -2261,7 +2274,7 @@ impl SimulationEngine {
                         })
                         .unwrap_or(false);
                 if !can_execute {
-                    if std::env::var_os("PINELAND_SCHED_TRACE").is_some()
+                    if crate::trace_env!("PINELAND_SCHED_TRACE")
                         && (18.0..=20.0).contains(&event.time)
                     {
                         eprintln!(
@@ -2284,7 +2297,7 @@ impl SimulationEngine {
                         .map(|available_at| (available_at - event.time).max(0.0))
                         .unwrap_or(0.0);
                     let interval = base_interval.max(travel_interval);
-                    if std::env::var_os("PINELAND_SCHED_TRACE").is_some()
+                    if crate::trace_env!("PINELAND_SCHED_TRACE")
                         && (18.0..=20.0).contains(&event.time)
                     {
                         eprintln!(
@@ -2337,15 +2350,15 @@ impl SimulationEngine {
         Ok(())
     }
 
-    fn take_rng(&mut self, name: &str) -> PyRandomCompat {
+    fn take_rng(&mut self, name: &str) -> (String, PyRandomCompat) {
         // Use the stream registry's namespace-derived lazy path for every
         // process.  Falling back directly to config.seed would give
         // resampled siblings identical future draws for a stream that had not
         // yet been touched before the branch.
-        self.particle.rng.get_mut(name).clone()
+        self.particle.rng.take_owned(name)
     }
-    fn put_rng(&mut self, name: &str, rng: PyRandomCompat) {
-        self.particle.rng.streams.insert(name.to_string(), rng);
+    fn put_rng(&mut self, key: String, rng: PyRandomCompat) {
+        self.particle.rng.put_owned(key, rng);
     }
 
     pub fn run(&mut self) -> Result<JsonValue, ModelError> {

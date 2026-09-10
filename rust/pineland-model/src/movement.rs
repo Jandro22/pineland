@@ -58,7 +58,7 @@ pub fn civilian_mobility(
     let locality_count = topology.locality_count();
     let mut displaced_by_origin = vec![0.0; locality_count];
     let trace_all =
-        std::env::var_os("PINELAND_MOBILITY_TRACE_ALL").is_some() && (time - 67.0).abs() < 1.0e-9;
+        crate::trace_env!("PINELAND_MOBILITY_TRACE_ALL") && (time - 67.0).abs() < 1.0e-9;
 
     for person in 0..people_count {
         if particle.people.external_state[person] != u32::MAX
@@ -199,7 +199,7 @@ pub fn civilian_mobility(
                 person, destination, candidates, utilities
             );
         }
-        if std::env::var_os("PINELAND_MOBILITY_TRACE").is_some() {
+        if crate::trace_env!("PINELAND_MOBILITY_TRACE") {
             eprintln!(
                 "MOBILITY_PERSON time={:.17} person={} origin={}({}) destination={}({}) forced={} voluntary={} forced_draw={:.17} forced_probability={:.17} voluntary_draw={:?} voluntary_probability={:.17} candidates={:?} utilities={:?}",
                 time,
@@ -435,7 +435,7 @@ pub fn command(
             continue;
         }
         let decision_draw = rng.random();
-        if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
+        if crate::trace_env!("PINELAND_COMMAND_TRACE") && time >= 9.99 {
             eprintln!(
                 "COMMAND_FORMATION index={} time={:.17} decision_draw={:.17} threshold={:.17} posture_before={} locality={} availability={:.17} status={} moving={} order_status={}",
                 formation,
@@ -483,7 +483,7 @@ pub fn command(
         } else {
             None
         };
-        if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
+        if crate::trace_env!("PINELAND_COMMAND_TRACE") && time >= 9.99 {
             eprintln!(
                 "COMMAND_SELECTED index={} posture={} candidates_pending",
                 formation,
@@ -535,7 +535,7 @@ pub fn command(
                 footholds.as_deref(),
                 posture,
             );
-            if std::env::var_os("PINELAND_COMMAND_CANDIDATE_TRACE").is_some()
+            if crate::trace_env!("PINELAND_COMMAND_CANDIDATE_TRACE")
                 && ((formation == 5 && (time - 27.0).abs() < 1.0e-12)
                     || (formation == 18 && (time - 42.0).abs() < 1.0e-12)
                     || (formation == 23 && (42.0..=45.0).contains(&time)))
@@ -561,7 +561,7 @@ pub fn command(
         }
         let selected = rng.choices_indices(candidates.len(), Some(&utilities), 1)?[0];
         let destination = candidates[selected];
-        if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() && time >= 9.99 {
+        if crate::trace_env!("PINELAND_COMMAND_TRACE") && time >= 9.99 {
             eprintln!(
                 "COMMAND_DESTINATION index={} destination={} origin={} candidates={} selected={}",
                 formation,
@@ -660,7 +660,7 @@ fn all_route_metrics(
                 travel[neighbor] = candidate;
                 distances[neighbor] = distances[node] + leg_distance;
                 previous[neighbor] = node;
-                if (node == 11 && neighbor == 3 || node == 3 && neighbor == 10) && std::env::var_os("PINELAND_COMMAND_TRACE").is_some() {
+                if (node == 11 && neighbor == 3 || node == 3 && neighbor == 10) && crate::trace_env!("PINELAND_COMMAND_TRACE") {
                     eprintln!("LEG_DEBUG node={} neighbor={} leg_dist={:.17} bits={:x} dist_neighbor={:.17} bits={:x}", node, neighbor, leg_distance, leg_distance.to_bits(), distances[neighbor], distances[neighbor].to_bits());
                 }
             }
@@ -685,7 +685,7 @@ fn all_route_metrics(
             continue;
         }
         route.reverse();
-        if destination == 10 && origin == 11 && std::env::var_os("PINELAND_COMMAND_TRACE").is_some() {
+        if destination == 10 && origin == 11 && crate::trace_env!("PINELAND_COMMAND_TRACE") {
             eprintln!(
                 "DEBUG_METRIC_11_10 distance={:.17} bits={:x}",
                 distances[destination],
@@ -1020,7 +1020,7 @@ fn issue_movement_order(
     } else {
         MOVE_FAILED_COMMAND
     };
-    if std::env::var_os("PINELAND_COMMAND_TRACE").is_some() {
+    if crate::trace_env!("PINELAND_COMMAND_TRACE") {
         eprintln!(
             "COMMAND_ORDER time={:.17} index={} destination={} reliability={:.17} status_draw={:.17} status={} purpose={} distance_km={:.17} travel_hours={:.17} supply_cost={:.17} route={:?}",
             time, formation, destination, reliability, command_draw, status, purpose,
@@ -1125,7 +1125,7 @@ pub(crate) fn issue_withdrawal_order(
         let score = 2.2 * refuge + 1.6 * sanctuary
             - 0.04 * metric.travel_hours
             - (1.0 - risk_tolerance) * route_risk;
-        if std::env::var_os("PINELAND_WITHDRAWAL_TRACE").is_some()
+        if crate::trace_env!("PINELAND_WITHDRAWAL_TRACE")
             && formation == 5
             && (time - 28.0).abs() < 1.0e-12
         {
@@ -1156,7 +1156,7 @@ pub(crate) fn issue_withdrawal_order(
     let Some((_, destination)) = best else {
         return false;
     };
-    if std::env::var_os("PINELAND_WITHDRAWAL_TRACE").is_some()
+    if crate::trace_env!("PINELAND_WITHDRAWAL_TRACE")
         && formation == 5
         && (time - 28.0).abs() < 1.0e-12
     {
@@ -1282,7 +1282,7 @@ pub fn advance_movement_orders(
             let consumed = cost
                 .max(0.0)
                 .min(particle.formations.supply_stock[formation]);
-            if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+            if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
                 && formation == 7
             {
                 eprintln!(
@@ -1294,7 +1294,7 @@ pub fn advance_movement_orders(
                 );
             }
             particle.formations.supply_stock[formation] -= consumed;
-            if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+            if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
                 && formation == 7
             {
                 eprintln!(

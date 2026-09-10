@@ -241,7 +241,7 @@ pub fn update(
                 clamp01(insurgent_signal_by_org[organization]);
         }
 
-        if std::env::var_os("PINELAND_SOCIAL_TRACE").is_some()
+        if crate::trace_env!("PINELAND_SOCIAL_TRACE")
             && person == 214
             && (_time - 53.0).abs() < 1.0e-9
         {
@@ -417,7 +417,7 @@ pub fn update(
         }
         sync_legacy_rebel_sympathy(particle, person);
 
-        if std::env::var_os("PINELAND_SOCIAL_TRACE").is_some()
+        if crate::trace_env!("PINELAND_SOCIAL_TRACE")
             && person == 214
             && (_time - 53.0).abs() < 1.0e-9
         {

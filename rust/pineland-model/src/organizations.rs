@@ -282,7 +282,7 @@ fn adapt_organization(
         0.0
     };
     let offset = organization * 8;
-    let trace = std::env::var_os("PINELAND_ORG_TRACE").is_some();
+    let trace = crate::trace_env!("PINELAND_ORG_TRACE");
     if trace {
         eprintln!(
             "ORG_ADAPT_START org={} elapsed={:.17} sigma={:.17} rng_index={} phenotype={:?}",
@@ -327,7 +327,7 @@ fn consume_proto_formation_draws(
     elapsed_days: f64,
 ) {
     let reference_days = 7.0;
-    let trace = std::env::var_os("PINELAND_ORG_TRACE").is_some();
+    let trace = crate::trace_env!("PINELAND_ORG_TRACE");
     for community in 0..particle.communities.locality.len() {
         if particle
             .protos
@@ -782,7 +782,7 @@ fn materialize_proto_birth(
 
     particle.protos.status[proto] = 2;
 
-    if std::env::var_os("PINELAND_ORG_TRACE").is_some() {
+    if crate::trace_env!("PINELAND_ORG_TRACE") {
         eprintln!(
             "ORG_BIRTH organization=armed-{dynamic_number:03} proto={} locality={} personnel={:.17} contributed={:.17} stock={:.17} rng_index={}",
             proto,
@@ -1167,7 +1167,7 @@ pub fn update(
                         - config.organization_ecology.cohesion_loss_memory * losses
                         - 0.02 * identity_variance),
         );
-        if std::env::var_os("PINELAND_ORG_TRACE").is_some() {
+        if crate::trace_env!("PINELAND_ORG_TRACE") {
             eprintln!(
                 "ORG_COHESION_TRACE time={:.17} org={} elapsed={:.17} prior={:.17} losses={:.17} represented={:.17} mean_identity={:.17} identity_variance={:.17} cycle_scale={:.17} capital_social={:.17} updated={:.17} rng_index={}",
                 time,

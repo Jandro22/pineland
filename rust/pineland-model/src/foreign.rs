@@ -779,7 +779,7 @@ pub fn update(
                         + 0.2 * particle.foreign.border_language_overlap[border],
                 );
                 particle.foreign.belief_updated_at[belief] = time;
-                if std::env::var_os("PINELAND_FOREIGN_TRACE").is_some() {
+                if crate::trace_env!("PINELAND_FOREIGN_TRACE") {
                     eprintln!(
                         "FOREIGN_BELIEF time={:.17} index={} state={} locality={} host={:.17} quality={:.17} noise={:.17} government={:.17} insurgent={:.17} confidence={:.17}",
                         time,
