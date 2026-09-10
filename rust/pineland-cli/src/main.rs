@@ -956,14 +956,18 @@ fn benchmark(arguments: &Arguments) -> Result<(), String> {
     let days = arguments.f64("days", 7.0)?;
     config.horizon_days = days;
     let threads = thread_count(arguments)?;
-    let start = Instant::now();
+    let total_start = Instant::now();
+    let init_start = Instant::now();
     let mut filter =
         NativeParticleFilter::new(config, particles).map_err(|error| error.to_string())?;
+    let initialization_seconds = init_start.elapsed().as_secs_f64();
     filter.set_threads(threads);
+    let propagation_start = Instant::now();
     filter
         .update(days, None)
         .map_err(|error| error.to_string())?;
-    let elapsed = start.elapsed().as_secs_f64().max(1e-12);
+    let propagation_seconds = propagation_start.elapsed().as_secs_f64().max(1e-12);
+    let end_to_end_seconds = total_start.elapsed().as_secs_f64().max(1e-12);
     let hash_input = filter
         .particles
         .iter()
@@ -972,8 +976,31 @@ fn benchmark(arguments: &Arguments) -> Result<(), String> {
     let mut result = JsonValue::object();
     let workload_pwb = particles as f64 * days / 7.0;
     result.insert("workload_pwb", JsonValue::number(workload_pwb));
-    result.insert("wall_seconds", JsonValue::number(elapsed));
-    result.insert("pwb_per_second", JsonValue::number(workload_pwb / elapsed));
+    // Historical Phase-A PWB measurements begin after particle/world
+    // construction. Keep the comparable throughput separate from true
+    // end-to-end latency so initialization is not silently charged to Rust
+    // while omitted from the legacy baseline.
+    result.insert(
+        "initialization_seconds",
+        JsonValue::number(initialization_seconds),
+    );
+    result.insert(
+        "propagation_seconds",
+        JsonValue::number(propagation_seconds),
+    );
+    result.insert(
+        "end_to_end_seconds",
+        JsonValue::number(end_to_end_seconds),
+    );
+    result.insert("wall_seconds", JsonValue::number(propagation_seconds));
+    result.insert(
+        "pwb_per_second",
+        JsonValue::number(workload_pwb / propagation_seconds),
+    );
+    result.insert(
+        "end_to_end_pwb_per_second",
+        JsonValue::number(workload_pwb / end_to_end_seconds),
+    );
     result.insert("particles", JsonValue::integer(particles as u64));
     result.insert("days", JsonValue::number(days));
     result.insert("threads", JsonValue::integer(threads as u64));
