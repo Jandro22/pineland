@@ -13,7 +13,6 @@ from scipy.integrate import solve_ivp
 from sklearn.metrics import balanced_accuracy_score, r2_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_macrostate_closure_v1 import compute_spatial_weights
 from simulate_reduced_theory import ReducedInsurgencyCOINSystem
 
 
@@ -37,9 +36,33 @@ def metrics(y: np.ndarray, pred: np.ndarray) -> dict:
     }
 
 
+def native_spatial_weights(edges: pd.DataFrame, seed: int, locality_count: int = 34) -> np.ndarray:
+    g = edges[edges.seed == seed]
+    if g.empty:
+        raise SystemExit(f"native topology edge list has no rows for seed {seed}")
+    W = np.zeros((locality_count, locality_count), dtype=float)
+    for row in g.itertuples(index=False):
+        i = int(row.from_locality)
+        j = int(row.to_locality)
+        if not (0 <= i < locality_count and 0 <= j < locality_count):
+            raise SystemExit(f"native topology edge out of range for seed {seed}: {i}->{j}")
+        if i == j:
+            raise SystemExit(f"native topology contains self edge for seed {seed}: {i}->{j}")
+        W[i, j] = 1.0
+    degree = W.sum(axis=1)
+    if np.any(degree <= 0.0):
+        missing = np.where(degree <= 0.0)[0].tolist()
+        raise SystemExit(f"native topology has isolated localities for seed {seed}: {missing}")
+    # The frozen reduced equation uses mean neighbor pressure, matching the
+    # native closure observable rather than geography-edge cost weights.
+    W /= degree[:, None]
+    return W
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("panel")
+    ap.add_argument("--topology", required=True)
     ap.add_argument("--freeze", required=True)
     ap.add_argument("--out", required=True)
     ns = ap.parse_args()
@@ -47,10 +70,16 @@ def main() -> None:
     freeze = json.loads(Path(ns.freeze).read_text(encoding="utf-8"))
     params = freeze["parameters"]
     df = pd.read_csv(ns.panel)
+    edges = pd.read_csv(ns.topology)
     expected_seeds = set(range(2026101000, 2026101008))
     actual_seeds = set(int(x) for x in df.seed.unique())
     if actual_seeds != expected_seeds:
         raise SystemExit(f"holdout seed contract mismatch: expected {sorted(expected_seeds)}, got {sorted(actual_seeds)}")
+    topology_seeds = set(int(x) for x in edges.seed.unique())
+    if topology_seeds != expected_seeds:
+        raise SystemExit(
+            f"topology seed contract mismatch: expected {sorted(expected_seeds)}, got {sorted(topology_seeds)}"
+        )
 
     results = {}
     strict_pass = True
@@ -65,7 +94,7 @@ def main() -> None:
             gh = g[g.time == horizon].sort_values("locality")
             if len(g0) != 34 or len(gh) != 34:
                 raise SystemExit(f"seed {seed} lacks 34 rows at t0/t{horizon:g}")
-            W = compute_spatial_weights(34, seed=int(seed))
+            W = native_spatial_weights(edges, int(seed), locality_count=34)
             system = ReducedInsurgencyCOINSystem(params, W)
             M0 = g0.m_member_depth.to_numpy(float)
             F0 = np.log1p(g0.f_effective_strength.clip(lower=0).to_numpy(float))
@@ -119,6 +148,8 @@ def main() -> None:
         "historical_outcomes_used": False,
         "panel": ns.panel,
         "panel_sha256": sha256(ns.panel),
+        "topology": ns.topology,
+        "topology_sha256": sha256(ns.topology),
         "candidate_freeze": ns.freeze,
         "candidate_freeze_sha256": sha256(ns.freeze),
         "holdout_seeds": sorted(actual_seeds),

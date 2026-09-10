@@ -9,6 +9,7 @@
   "localities": 34,
   "panel_horizon_days": 120,
   "panel_step_days": 30,
+  "topology_source": "native locality-edge lists emitted from the same reserved seeds as the holdout panel; W is the row-normalized binary native adjacency (mean-neighbor pressure). No Python topology reconstruction and no fallback topology are permitted.",
   "evaluation_horizons_days": [30, 90],
   "primary_continuous_states": ["M", "log1p_F_effective", "E", "C"],
   "primary_binary_state": "local foothold viability E >= 0.20",
