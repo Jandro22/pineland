@@ -1717,7 +1717,34 @@ impl SimulationEngine {
                     event.time,
                 );
             }
+            let formation7_stock_before_event = self
+                .particle
+                .formations
+                .supply_stock
+                .get(7)
+                .copied()
+                .unwrap_or(0.0);
             self.process_event(&event)?;
+            if std::env::var_os("PINELAND_LOGISTICS_FORMATION_TRACE").is_some()
+                && self
+                    .particle
+                    .formations
+                    .supply_stock
+                    .get(7)
+                    .copied()
+                    .unwrap_or(0.0)
+                    != formation7_stock_before_event
+            {
+                eprintln!(
+                    "EVENT_FORMATION7_SUPPLY time={:.17} kind={} before={:.17} after={:.17} before_bits={} after_bits={}",
+                    event.time,
+                    event.payload.kind(),
+                    formation7_stock_before_event,
+                    self.particle.formations.supply_stock[7],
+                    formation7_stock_before_event.to_bits(),
+                    self.particle.formations.supply_stock[7].to_bits()
+                );
+            }
             if std::env::var_os("PINELAND_MANPOWER_TRACE").is_some()
                 && event.time >= 69.0
                 && event.time <= 70.0
