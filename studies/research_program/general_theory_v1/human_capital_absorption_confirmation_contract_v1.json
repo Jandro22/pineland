@@ -1,0 +1,58 @@
+﻿{
+    "schema_version":  "pineland.human_capital_absorption_confirmation_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "development_source":  "human_capital_absorption_results_v1.json",
+    "question":  "Does faster replacement throughput recover military headcount while increasing the veterancy-specific capability deficit at the same realized headcount?",
+    "design":  {
+                   "seed_base":  2026117000,
+                   "seeds":  16,
+                   "agents":  300,
+                   "localities":  34,
+                   "shock_personnel_fraction":  0.5,
+                   "pre_shock_experience":  0.9,
+                   "replacement_experience":  0.1,
+                   "horizon_days":  360,
+                   "checkpoints_days":  [
+                                            0,
+                                            30,
+                                            90,
+                                            180,
+                                            360
+                                        ],
+                   "recruitment_multipliers":  [
+                                                   0.5,
+                                                   1,
+                                                   2,
+                                                   4
+                                               ],
+                   "training_multipliers":  [
+                                                0.5,
+                                                1,
+                                                2,
+                                                4
+                                            ],
+                   "capital":  "abundant/nonbinding",
+                   "police_allocation_share":  0,
+                   "foreign_affairs":  false,
+                   "organization_ecology":  false
+               },
+    "primary_endpoint":  {
+                             "name":  "veterancy_specific_capability_deficit_at_same_headcount",
+                             "formula":  "1-(0.75+0.50*E_actual)/(0.75+0.50*E_baseline)",
+                             "rationale":  "Holds realized personnel fixed and isolates only the production combat-capability penalty from experience dilution."
+                         },
+    "primary_contrast":  "4x recruitment + 4x training versus 0.5x recruitment + 0.5x training at day 360",
+    "gates":  {
+                  "fast_minus_slow_headcount_recovery_min":  0.2,
+                  "fast_minus_slow_veterancy_deficit_min":  0.05,
+                  "fast_mean_experience_must_be_lower":  true
+              },
+    "secondary":  [
+                      "Report the full 4x4 throughput surface without promotion testing.",
+                      "Check whether the diagonal 0.5x,1x,2x,4x shows monotone headcount recovery and monotone veterancy-specific deficit.",
+                      "Report time path at 30/90/180/360d."
+                  ],
+    "status_rule":  "All primary gates =\u003e QUANTITY_QUALITY_REGENERATION_TRADEOFF_CONFIRMED_ON_SYNTHETIC_SUPPORT; otherwise preserve measured effect without promotion.",
+    "guard":  "This is a synthetic formation-memory mechanism. It does not license empirical replacement-quality coefficients for real militaries."
+}
