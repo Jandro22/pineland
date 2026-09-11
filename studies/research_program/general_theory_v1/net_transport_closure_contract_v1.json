@@ -1,0 +1,39 @@
+﻿{
+  "schema_version": "pineland.net_transport_closure_contract.v1",
+  "registered_before_confirmation_outcomes": true,
+  "historical_outcomes_used": false,
+  "question": "Does signed expected internal force flux close the residual high-activity fielded-force divergence better than gross inbound transport pressure?",
+  "motivation_locked_from_prior_support": {
+    "prior_support": "confirm_transport12v2_36x24x32_30d_v1",
+    "residual": "2/24 multiplicity-significant practically-large pairs, both high-activity and both final_logF only",
+    "mechanistic_hypothesis": "Local fielded force follows a continuity decomposition with local source/sink terms plus signed internal transport flux; gross inbound pressure omits expected departures."
+  },
+  "fresh_design": {
+    "dynamic_seed_base": 2026107000,
+    "initialization_seed": 2026106900,
+    "pool_seeds": 36,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "matched_pairs": 24,
+    "branches_per_pair": 32,
+    "common_random_future": "gt-closure-v3 candidate-invariant namespace"
+  },
+  "candidates": {
+    "transport12v2": ["competitive11v2", "log1p gross inbound expected insurgent effective-strength transport"],
+    "nettransport12v2": ["competitive11v2", "signed expected insurgent effective-strength net transport flux"],
+    "transportnet13v2": ["competitive11v2", "gross inbound transport", "signed net transport flux"]
+  },
+  "signed_flux_definition": "Expected incoming effective strength minus expected outgoing effective strength over the next command opportunity. Internal relocation is conservative by construction: sum_i T_i = 0 up to roundoff.",
+  "primary_gate": {
+    "overall_multiplicity_significant_and_large_pair_rate_max": 0.10,
+    "each_activity_stratum_rate_max": 0.20
+  },
+  "selection_rule": "Prefer the lowest-dimensional candidate that passes every preregistered gate. If multiple equal-dimensional candidates pass, prefer lower raw practically-large pair rate, then lower median match distance. Do not change thresholds after seeing outcomes.",
+  "interpretation": {
+    "net_single_pass": "Signed transport flux is a sufficient transport coordinate on tested support; gross inbound flow is not required.",
+    "both_only_pass": "Inbound and outbound information are independently relevant; transport requires at least two coarse coordinates or an improved flux representation.",
+    "all_fail": "Force-flow closure requires an additional source/sink or movement-state coordinate; do not claim Markov closure."
+  }
+}
