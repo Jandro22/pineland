@@ -1,0 +1,48 @@
+{
+  "schema_version": "pineland.v2_reduced_state_compression_contract.v1",
+  "status": "PREREGISTERED_BEFORE_FRESH_CONFIRMATION_SUPPORT",
+  "created_utc": "2026-09-11T12:05:00Z",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "motivation": "Independent common-random-number omitted-state stress assays found that police professionalism, government formation veterancy, and insurgent formation veterancy are causally active at the mechanism level but produced zero preregistered practically-large macro-outcome states over the 30-day closure horizon. The prior candidate-specific matching comparison nevertheless improved from competitive11v2 to competitive14v2 on one synthetic support. This contract determines on untouched support whether the three tactical/micro-memory variables are actually required in the reduced macrostate or whether that apparent closure gain was matching/support variation.",
+  "evidence_available_before_registration": {
+    "police_professionalism_stress": "NOT_DETECTED_IN_TESTED_SUPPORT; 0/24 significant-and-large macro states",
+    "government_veterancy_stress": "NOT_DETECTED_IN_TESTED_SUPPORT; 0/9 significant-and-large macro states",
+    "insurgent_veterancy_stress": "NOT_DETECTED_IN_TESTED_SUPPORT; 0/9 significant-and-large macro states",
+    "old_support_closure": "competitive11v2 4/24 failures; competitive14v2 2/24 failures",
+    "reaction_transport_screening_baseline_seen": "competitive14v2 happened to produce 0/12 multiplicity-significant failures on the smaller 2026103000 screening support; no competitive11v2 outcome on that support was examined before this contract."
+  },
+  "theory_principle": "A variable can be causally real inside the micro-mechanism while still being screened off by a lower-dimensional macrostate at a specified horizon. Reduced theory should retain only variables whose omission measurably breaks distributional closure.",
+  "candidate_models": {
+    "competitive11v2": "M, logF, E, C, logKo, neighbor-member pressure, L, Kintel, X, S, U",
+    "competitive14v2": "competitive11v2 + police professionalism + government veterancy + insurgent veterancy",
+    "transport12v2": "competitive11v2 + inbound insurgent transport pressure T",
+    "reaction_transport14v2": "competitive11v2 + local renewal potential R + organization persistence P + inbound transport pressure T"
+  },
+  "fresh_confirmation_design": {
+    "dynamic_seed_base": 2026105000,
+    "shared_initialization_seed": 2026104900,
+    "pool_seeds": 36,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "matched_pairs": 24,
+    "branches_per_pair": 32,
+    "threads": 16,
+    "analysis": "unchanged distributional-closure v2 analyzer"
+  },
+  "promotion_thresholds": {
+    "overall_multiplicity_significant_and_large_pair_rate_max": 0.10,
+    "each_activity_stratum_rate_max": 0.20
+  },
+  "selection_rule": "Among candidates that pass the same preregistered closure threshold, prefer the lowest-dimensional candidate. If dimensions tie, prefer lower multiplicity-significant failure rate, then lower raw practically-large rate, then lower median normalized match distance.",
+  "interpretation": {
+    "competitive11_passes": "TACTICAL_MICROSTATES_SCREENED_OFF_AT_30D; professionalism/veterancy remain mechanistic ABM state but are removed from the reduced macrostate.",
+    "competitive11_fails_competitive14_passes": "TACTICAL_MICROSTATES_REQUIRED_OR_PROXYING_MISSING_STATE; retain provisionally and investigate which omitted-state intervention lacks support.",
+    "transport12_passes_when_competitive11_fails": "SPATIAL_TRANSPORT_REPLACES_TACTICAL_MICROSTATE_AUGMENTATION as the parsimonious closure repair.",
+    "reaction_transport14_needed": "Local renewal-memory and transport both survive the dimensional reduction gate.",
+    "none_pass": "CURRENT_REDUCED_ARCHITECTURE_NOT_CLOSED; diagnose omitted state rather than adding variables by intuition."
+  },
+  "guard": "No historical data may be consulted to choose among these candidates. Police professionalism and veterancy are not deleted from the production ABM regardless of macrostate compression outcome."
+}
