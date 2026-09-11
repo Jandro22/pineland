@@ -1167,6 +1167,103 @@ pub fn inbound_transport_pressure(
         .unwrap_or(0.0)
 }
 
+/// Pure expected *net* insurgent transport flux over one command opportunity.
+///
+/// Positive entries are expected incoming effective strength and negative
+/// entries are expected outgoing effective strength. Internal relocation is
+/// therefore conservative by construction: apart from roundoff, the vector
+/// sums to zero. This is a theory diagnostic, not a new causal mechanism.
+/// Committed orders contribute their full current effective strength; eligible
+/// uncommitted formations contribute the same posture-integrated production
+/// movement probabilities used by `inbound_transport_pressures`.
+pub fn insurgent_transport_net_pressures(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+) -> Vec<f64> {
+    let locality_count = topology.locality_count();
+    let mut net = vec![0.0; locality_count];
+    let maximum_population = topology
+        .locality_population
+        .iter()
+        .copied()
+        .fold(0.0, f64::max);
+    let decision_probability = reference_probability(
+        config.logistics.reallocation_rate,
+        config.intervals.command,
+        1.0,
+    );
+    for formation in 0..particle.formations.personnel.len() {
+        let organization = particle.formations.organization[formation] as usize;
+        if organization != INSURGENT
+            || particle.formations.outside_pineland[formation] != 0
+            || particle.formations.personnel[formation] <= 0.0
+            || particle.formations.operational_status[formation] != 1
+        {
+            continue;
+        }
+        let strength = transport_strength_if_present(particle, formation);
+        if strength <= 0.0 {
+            continue;
+        }
+        let origin = particle.formations.locality[formation] as usize;
+        if origin >= locality_count {
+            continue;
+        }
+        if has_active_order(particle, formation) {
+            let destination = particle.formations.movement_destination[formation] as usize;
+            if destination < locality_count && destination != origin {
+                net[origin] -= strength;
+                net[destination] += strength;
+            }
+            continue;
+        }
+        if particle.formations.moving[formation] != 0
+            || particle.formations.deployable_personnel(formation) <= 0.0
+        {
+            continue;
+        }
+        let posture_probabilities =
+            insurgent_posture_probabilities(particle, config, organization, formation);
+        let postures = [
+            POSTURE_FRONTIER,
+            POSTURE_FOOTHOLD,
+            POSTURE_STRONGHOLD,
+            POSTURE_EXPLORATION,
+        ];
+        let mut destination_probabilities = vec![0.0; locality_count];
+        for (posture, posture_probability) in postures.into_iter().zip(posture_probabilities) {
+            if posture_probability <= 0.0 {
+                continue;
+            }
+            let conditional = destination_probabilities_given_posture(
+                particle,
+                topology,
+                config,
+                formation,
+                posture,
+                maximum_population,
+            );
+            for locality in 0..locality_count {
+                destination_probabilities[locality] += posture_probability * conditional[locality];
+            }
+        }
+        for destination in 0..locality_count {
+            if destination == origin {
+                continue;
+            }
+            let moved = strength
+                * decision_probability
+                * destination_probabilities[destination].clamp(0.0, 1.0);
+            if moved > 0.0 {
+                net[origin] -= moved;
+                net[destination] += moved;
+            }
+        }
+    }
+    net
+}
+
 fn sanctuary_access(
     particle: &ParticleState,
     topology: &StaticTopology,
