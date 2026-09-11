@@ -1,0 +1,48 @@
+﻿{
+    "schema_version":  "pineland.human_capital_absorptive_capacity_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "Can security-force personnel recover faster than experience-adjusted combat capability because replacements dilute veterancy?",
+    "fresh_design":  {
+                         "seed_base":  2026114000,
+                         "seeds":  16,
+                         "agents":  300,
+                         "localities":  34,
+                         "shock_personnel_fraction":  0.5,
+                         "pre_shock_experience":  0.9,
+                         "replacement_experience":  0.1,
+                         "horizon_days":  360,
+                         "checkpoints_days":  [
+                                                  0,
+                                                  30,
+                                                  90,
+                                                  180,
+                                                  360
+                                              ],
+                         "security_recruitment_multipliers":  [
+                                                                  0.5,
+                                                                  1,
+                                                                  2,
+                                                                  4
+                                                              ],
+                         "security_training_multipliers":  [
+                                                               0.5,
+                                                               1,
+                                                               2,
+                                                               4
+                                                           ],
+                         "police_allocation_share":  0,
+                         "government_capital":  "abundant/nonbinding",
+                         "foreign_affairs":  false,
+                         "organization_ecology":  false
+                     },
+    "primary_metrics":  [
+                            "military personnel recovery fraction",
+                            "formation experience",
+                            "experience-adjusted combat-capability recovery fraction",
+                            "headcount minus capability recovery gap"
+                        ],
+    "primary_prediction":  "Faster recruitment/training accelerates headcount recovery but creates a positive headcount-capability gap because inexperienced replacements dilute veterancy; the gap is largest during rapid replacement and closes only through later combat/service learning.",
+    "analytic_basis":  "Combat capability contains P^0.72*(0.75+0.50E), while replacements enter at E=0.10 and mix by personnel-weighted average.",
+    "guard":  "Synthetic mechanism test. This does not imply that real militaries have the same experience coefficient or replacement quality."
+}
