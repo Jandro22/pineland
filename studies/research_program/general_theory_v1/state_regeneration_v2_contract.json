@@ -1,0 +1,60 @@
+{
+  "schema_version": "pineland.state_regeneration_contract.v2",
+  "status": "AMENDED_AFTER_ACTIVATION_SMOKE_BEFORE_OFFICIAL_V2_OUTCOMES",
+  "created_utc": "2026-09-11T00:35:00Z",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "engine_requirement": "state_regeneration.enabled=true",
+  "supersedes_for_v2_inference": "state_regeneration_results_v1.json",
+  "preservation_note": "The v1 result remains a valid negative result for the passive-state engine. It is not overwritten or reinterpreted as evidence about the v2 regeneration mechanism.",
+  "purpose": "Test whether the implemented hierarchical state-regeneration loop can restore induced local institutional damage, and determine which internal stocks mediate recovery, without historical tuning.",
+  "design": {
+    "agents": 300,
+    "localities": 34,
+    "dynamic_seeds": 8,
+    "focal_localities_per_seed": 8,
+    "horizon_days": 180,
+    "observation_step_days": 15,
+    "foreign_affairs": false,
+    "organization_ecology": false,
+    "insurgent_activity": "neutralized for the pure regeneration assay",
+    "capital_multipliers": [0.25, 0.5, 1.0, 2.0, 4.0],
+    "shock_fractions": [0.1, 0.3, 0.5, 1.0],
+    "matched_control": "shock_fraction=1.0 at identical seed, focal locality, capital multiplier, and time",
+    "shock_targets": [
+      "local political institution capacity",
+      "persistent locality administrative capacity",
+      "local police personnel/presence",
+      "local government military personnel where present",
+      "government administrative/legal/social/expected control dimensions"
+    ]
+  },
+  "amendment_record": {
+    "exploratory_smoke_file": "../state_regeneration_v2_smoke.csv",
+    "official_gate_uses_smoke": false,
+    "reason": "The inherited v1 shock damaged institution/control outputs but left the persistent administrative stock at its ceiling and left security headcount intact. The v2 repair pathways therefore had no structural administrative gap or personnel vacancy to repair. The official assay now shocks the causal stocks themselves. This amendment is an activation correction, not an outcome-driven parameter change."
+  },
+  "primary_estimands": [
+    "matched institutional-capacity gap closure Q_capacity at 180 days",
+    "fraction of shocked trajectories reaching Q_capacity >= 0.50",
+    "fraction of shocked trajectories reaching Q_capacity >= 0.80",
+    "matched effective-control gap closure at 180 days"
+  ],
+  "mechanism_diagnostics": [
+    "security recruit pipeline",
+    "trained security reserve",
+    "cumulative security recruitment",
+    "cumulative security deployment",
+    "cumulative administrative rebuild",
+    "intelligence penetration",
+    "police professionalism",
+    "government military experience"
+  ],
+  "falsifiers": {
+    "mechanism_not_engaged": "No shocked trajectory exhibits positive cumulative administrative rebuild or positive security regeneration flow while the v2 process is enabled.",
+    "fiscal_shortcut": "Central capital alone restores institutional capacity with no realized security/admin pathway flow.",
+    "instantaneous_repair": "Severe shocks are erased on the first update independent of local absorptive conditions.",
+    "state_reproduction_claim": "This assay does not license an offspring-style state reproduction number; it estimates hierarchical recovery dynamics only."
+  },
+  "promotion_rule": "A positive v2 recovery result licenses only a synthetic state-regeneration mechanism claim. A robust competitive-state law still requires interaction with active insurgent reproduction, topology/scale invariance, and held-out reduced-model validation."
+}

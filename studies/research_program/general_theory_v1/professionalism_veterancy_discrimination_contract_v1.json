@@ -1,0 +1,40 @@
+{
+  "schema_version": "pineland.professionalism_veterancy_discrimination_contract.v1",
+  "status": "PREREGISTERED_BEFORE_OUTCOMES",
+  "created_utc": "2026-09-11T00:35:00Z",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "purpose": "Determine whether police professionalism and formation veterancy are dynamically distinct theory states rather than decorative aliases for headcount, institutional quality, or formation quality.",
+  "police_assay": {
+    "design": "Matched synthetic locality states with common initialization and no historical data. Manipulate initial local police professionalism and staffing independently while holding parent police institutional quality, discipline, and accountability fixed. Allow the v2 professionalism stock to converge endogenously and measure persistence into security/intelligence outcomes.",
+    "professionalism_levels": [0.1, 0.5, 0.9],
+    "staffing_multipliers": [0.5, 1.0, 1.5],
+    "horizons_days": [14, 28, 56, 112],
+    "primary_outcomes": [
+      "police professionalism",
+      "government intelligence penetration",
+      "rooted insurgent membership disrupted"
+    ],
+    "distinct_state_signature": "At fixed staffing and fixed parent institutional variables, different initial professionalism values produce different future outcomes for at least one positive horizon and the difference decays as professionalism converges.",
+    "redundancy_signature": "Initial professionalism is immediately screened off by fixed staffing and parent institutional variables at all positive horizons."
+  },
+  "veterancy_assay": {
+    "design": "Construct government formations with different (quality, experience) pairs having the same instantaneous multiplicative combat factor quality*(0.75+0.50*experience). Under common random numbers they should be tactically equivalent before turnover. Then impose equal personnel turnover, refill with green replacements through the v2 state replacement mechanism, and repeat the common-RNG combat assay.",
+    "instantaneously_equivalent_pairs": [
+      {"quality": 0.9375, "experience": 0.1},
+      {"quality": 0.75, "experience": 0.5},
+      {"quality": 0.625, "experience": 0.9}
+    ],
+    "common_instantaneous_factor": 0.75,
+    "turnover_fractions": [0.0, 0.2, 0.4, 0.6],
+    "replacement_experience": 0.1,
+    "primary_outcomes": [
+      "post-replacement experience",
+      "post-replacement instantaneous capability factor",
+      "common-RNG combat loss fractions"
+    ],
+    "distinct_state_signature": "Equivalent quality-experience pairs are indistinguishable before turnover but diverge after equal green replacement because experience is a memory stock while quality is not.",
+    "redundancy_signature": "Equivalent pairs remain indistinguishable after turnover, implying experience adds no dynamic state information beyond quality under the implemented replacement process."
+  },
+  "interpretation_guard": "These are synthetic structural-identification tests of the implemented theory. They do not establish empirical magnitudes, elite-unit effects, or historical police/military effectiveness."
+}
