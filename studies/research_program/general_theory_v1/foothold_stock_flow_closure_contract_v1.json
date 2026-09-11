@@ -1,0 +1,63 @@
+{
+  "schema_version": "pineland.foothold_stock_flow_closure_contract.v1",
+  "status": "PREREGISTERED_BEFORE_AUGMENTED_CANDIDATE_OUTCOMES",
+  "created_utc": "2026-09-11T11:12:00Z",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "motivation": "The first official theory-v2 distributional-closure comparison reduced multiplicity-significant pair failures from 4/24 under competitive11v2 to 2/24 under competitive14v2, but the remaining failures were concentrated in future foothold strength/viability. Engine inspection shows foothold strength is a persistent max-envelope whose transition depends separately on organization persistence and contemporaneous local embeddedness. Therefore equal current foothold stock need not imply equal future foothold dynamics.",
+  "theory_claim_under_test": "A reduced theory of local insurgent reproduction requires a stock-flow decomposition of foothold persistence: current foothold stock E, current endogenous renewal potential R, and organizational memory/persistence P are distinct state/trait inputs. E alone is not generically Markov-sufficient.",
+  "engine_identity": {
+    "theory_v2_required": true,
+    "foothold_transition": "E_next = max(E_previous * exp(-dt / [base_memory * (0.5 + organization_persistence)]), local_embeddedness)",
+    "renewal_potential_definition": "the exact current local_embeddedness function used by the production engine, evaluated without mutation",
+    "memory_trait_definition": "insurgent organization persistence in [0,1]"
+  },
+  "candidate_models": {
+    "competitive14v2": "existing 11-variable competitive macrostate + police professionalism + government veterancy + insurgent veterancy",
+    "renewal15v2": "competitive14v2 + exact current local embeddedness / renewal potential R",
+    "memory15v2": "competitive14v2 + insurgent organization persistence P",
+    "regenerative16v2": "competitive14v2 + R + P"
+  },
+  "screening_design": {
+    "purpose": "Structural discrimination among the three augmentations, not a promotion gate.",
+    "dynamic_seed_base": 2026103000,
+    "shared_initialization_seed": 2026102900,
+    "pool_seeds": 18,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "matched_pairs": 12,
+    "branches_per_pair": 16,
+    "stratification": "equal low/mid/high activity quotas using the pre-existing activity score",
+    "analysis": "unchanged distributional-closure v2 analyzer and thresholds"
+  },
+  "selection_rule": {
+    "primary": "Prefer the lowest-dimensional augmented candidate with a lower multiplicity-significant-and-large pair rate than competitive14v2 on the independent screening support.",
+    "tie_breaker_1": "Lower raw practically-large pair rate.",
+    "tie_breaker_2": "Lower median normalized matching distance.",
+    "guard": "If neither R nor P improves closure, do not add them merely because they are mechanistically interpretable. Diagnose a different omitted state."
+  },
+  "confirmation_design": {
+    "dynamic_seed_base": 2026105000,
+    "shared_initialization_seed": 2026104900,
+    "pool_seeds": 36,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "matched_pairs": 24,
+    "branches_per_pair": 32,
+    "promotion_thresholds": {
+      "overall_multiplicity_significant_and_large_pair_rate_max": 0.10,
+      "each_activity_stratum_rate_max": 0.20
+    }
+  },
+  "falsifiers": {
+    "stock_flow_redundancy": "regenerative16v2 does not improve closure relative to competitive14v2 on independent support",
+    "renewal_only_sufficiency": "renewal15v2 performs at least as well as regenerative16v2, making P unnecessary at this horizon/support",
+    "memory_only_sufficiency": "memory15v2 performs at least as well as regenerative16v2, making R unnecessary at this horizon/support",
+    "full_stock_flow_failure": "regenerative16v2 still exceeds a closure failure threshold on confirmation support"
+  },
+  "interpretation_guard": "A closure PASS would establish approximate synthetic coarse-graining for the tested initialization family and 30-day horizon only. It would not establish historical validity, universal timescale invariance, or empirical parameter magnitudes."
+}
