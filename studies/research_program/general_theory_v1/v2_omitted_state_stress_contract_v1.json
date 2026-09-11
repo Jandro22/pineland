@@ -1,0 +1,63 @@
+{
+  "schema_version": "pineland.v2_omitted_state_stress_contract.v1",
+  "status": "PREREGISTERED_BEFORE_STRESS_OUTCOMES",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "purpose": "Test whether the v1 competitive11 macrostate omits dynamically relevant memory carried by police professionalism or government/insurgent formation veterancy.",
+  "engine": {
+    "state_regeneration_enabled": true,
+    "reference_architecture": "pineland-native-v2-competitive-reproduction-core"
+  },
+  "causal_design": {
+    "base_state": "Advance a synthetic v2 engine to a 60-day anchor.",
+    "paired_clone_rule": "Clone the identical anchored full state twice and modify only the nominated hidden-state block. All competitive11 variables, scheduler contents, topology, personnel, quality, readiness, logistics, control, beliefs, and capital remain identical at the intervention instant.",
+    "future_rng": "Rekey both clones to the identical fresh common-random-number branch stream before continuation.",
+    "low_value": 0.1,
+    "high_value": 0.9,
+    "blocks": {
+      "police_professionalism": "Set professionalism of all staffed local police posts to low versus high while preserving headcount and every competitive11 state variable.",
+      "government_veterancy": "Set experience of active local government military formations to low versus high while preserving formation quality, personnel, readiness, supply, and competitive11 state variables.",
+      "insurgent_veterancy": "Set experience of active local insurgent formations to low versus high while preserving formation quality, personnel, readiness, supply, and competitive11 state variables."
+    }
+  },
+  "official_design": {
+    "dynamic_seeds": 8,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "focal_localities_per_seed_per_block": 3,
+    "horizons_days": [30, 90],
+    "common_rng_branches": 32,
+    "focal_selection": "For each block and seed, select evenly spaced low/mid/high activity localities among localities where the relevant police post or formation exists."
+  },
+  "smoke_design": {
+    "gate_eligible": false,
+    "dynamic_seeds": 2,
+    "focals_per_seed": 2,
+    "horizon_days": 30,
+    "common_rng_branches": 8
+  },
+  "primary_outcomes": [
+    "foothold viability",
+    "log1p organized-action increment",
+    "log1p recruit increment",
+    "final M",
+    "final log1p F",
+    "final E",
+    "control change",
+    "final C",
+    "final state control"
+  ],
+  "practical_effect_thresholds": {
+    "binary_risk_difference": 0.15,
+    "continuous_standardized_mean_difference": 0.25,
+    "continuous_normalized_wasserstein": 0.25
+  },
+  "multiplicity": "Benjamini-Hochberg q <= 0.05 over state-outcome tests within each block/horizon.",
+  "decision_rule": {
+    "macrostate_relevant": "At least one tested base state exhibits a multiplicity-significant practically large future-outcome difference between high and low hidden-state clones.",
+    "not_detected": "No tested base state exhibits such a difference. This screens the block off only over the tested support/horizons and does not erase its mechanism-level causal distinctness."
+  },
+  "falsifier": "If high and low hidden-state clones remain distributionally indistinguishable across all tested base states and both horizons, the claim that this block must be retained in the reduced macrostate is rejected for the tested synthetic support.",
+  "interpretation_guard": "This is a synthetic omitted-state necessity stress test, not an empirical effect-size estimate. Direct low/high interventions establish sensitivity of the implemented system, not historical prevalence of such contrasts."
+}
