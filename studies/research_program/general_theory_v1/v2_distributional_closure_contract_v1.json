@@ -1,0 +1,70 @@
+{
+  "schema_version": "pineland.v2_distributional_closure_contract.v1",
+  "status": "PREREGISTERED_BEFORE_V2_CLOSURE_OUTCOMES",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "engine": {
+    "state_regeneration_enabled": true,
+    "checkpoint_schema": 14,
+    "reference_architecture": "pineland-native-v2-competitive-reproduction-core"
+  },
+  "purpose": "Determine whether the v1 competitive11 macrostate remains approximately distributionally closed after adding police professionalism and formation veterancy, and whether explicitly retaining those new memory stocks improves closure.",
+  "candidate_states": {
+    "competitive11v2": ["M", "log1p(F_effective)", "E", "C", "log1p(K_o)", "neighbor_mean_M", "L", "K_intel", "X", "S", "U"],
+    "professionalism12v2": ["M", "log1p(F_effective)", "E", "C", "log1p(K_o)", "neighbor_mean_M", "L", "K_intel", "X", "S", "U", "P_police"],
+    "veterancy13v2": ["M", "log1p(F_effective)", "E", "C", "log1p(K_o)", "neighbor_mean_M", "L", "K_intel", "X", "S", "U", "V_government", "V_insurgent"],
+    "competitive14v2": ["M", "log1p(F_effective)", "E", "C", "log1p(K_o)", "neighbor_mean_M", "L", "K_intel", "X", "S", "U", "P_police", "V_government", "V_insurgent"]
+  },
+  "feature_definitions": {
+    "P_police": "personnel-weighted professionalism of staffed local police posts",
+    "V_government": "personnel-weighted experience of active local government military formations",
+    "V_insurgent": "personnel-weighted experience of active local insurgent formations"
+  },
+  "official_design": {
+    "common_initialization_seed": 2026091900,
+    "dynamic_pool_seeds": 36,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizons_days": [30, 90],
+    "matched_pairs_per_candidate": 24,
+    "common_rng_branches_per_pair": 32,
+    "activity_strata": ["low", "mid", "high"],
+    "pairing": "same-locality greedy non-reuse matching within activity tertiles after scale-normalized candidate-state distance",
+    "future_rng": "identical fresh branch streams on both sides of each pair; inherited scheduler and hidden microstate remain distinct"
+  },
+  "smoke_design": {
+    "gate_eligible": false,
+    "dynamic_pool_seeds": 12,
+    "matched_pairs": 6,
+    "branches": 8,
+    "horizon_days": 30,
+    "candidates": ["competitive11v2", "competitive14v2"],
+    "purpose": "Detect implementation, matching-support, or schema failures before official execution."
+  },
+  "primary_outcomes": [
+    "foothold viability",
+    "log1p organized-action increment",
+    "log1p recruit increment",
+    "final M",
+    "final log1p F",
+    "final E",
+    "control change",
+    "final C",
+    "final state control"
+  ],
+  "practical_effect_thresholds": {
+    "binary_risk_difference": 0.15,
+    "continuous_standardized_mean_difference": 0.25,
+    "continuous_normalized_wasserstein": 0.25
+  },
+  "multiplicity": "Benjamini-Hochberg q <= 0.05 over pair-outcome tests within each candidate/horizon assay.",
+  "closure_pass_gate": "At most 10 percent of matched pairs may contain any multiplicity-significant practically large primary-outcome difference overall, and no activity stratum may exceed 20 percent.",
+  "decision_logic": {
+    "11_fail_14_pass": "The new professionalism/veterancy block carries macrostate-relevant predictive memory in the tested v2 synthetic family.",
+    "11_pass_14_pass": "The new states are causally distinct at mechanism level but are screened off by competitive11 at the tested macro scale/horizons; do not automatically retain them in the reduced theory.",
+    "11_fail_14_fail": "The augmented 14-state candidate is still not approximately closed; search for omitted state rather than promote a reduced theory.",
+    "11_pass_14_fail": "Treat as a matching/support warning unless repeated with comparable match distances; adding dimensions cannot be interpreted as causally worsening true sufficiency from one finite matching sample."
+  },
+  "interpretation_guard": "Closure evidence is synthetic and local to the tested initialization family, horizons, activity support, and outcome set. It does not establish historical validity, exact Markov sufficiency, or universal necessity of any state variable."
+}
