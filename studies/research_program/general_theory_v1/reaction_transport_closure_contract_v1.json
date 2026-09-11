@@ -1,0 +1,66 @@
+{
+  "schema_version": "pineland.reaction_transport_closure_contract.v1",
+  "status": "PREREGISTERED_AFTER_EXISTING_V2_CLOSURE_DIAGNOSIS_BEFORE_TRANSPORT_CANDIDATE_OUTCOMES",
+  "created_utc": "2026-09-11T11:28:00Z",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "diagnostic_basis": {
+    "source": "v2_distributional_closure_competitive14_36x24x32_30d_results_v1.json and its already-completed synthetic CSV",
+    "finding": "The two multiplicity-significant closure failures both show zero local membership, zero local recruitment, and zero local organized action while future fielded force and foothold strength appear on only one side. This is a transport/arrival signature rather than local endogenous reproduction.",
+    "guard": "This diagnosis uses no historical outcomes and is explicitly treated as synthetic theory development, not confirmation."
+  },
+  "theory_claim_under_test": "Local insurgent dynamics require three causally distinct terms: endogenous local reaction/reproduction R, internal spatial transport T of already-existing capacity, and exogenous immigration/support U. Mobility can create local presence without creating system-level insurgent capacity and therefore must not be counted as reproduction.",
+  "reduced_form": {
+    "conceptual_equation": "x_i(t+dt) = Reaction_i[x(t)] + sum_j Transport_ji[x(t)] + External_i(t)",
+    "reproduction_interpretation": "Reaction creates or renews local organizational capacity from locally embedded stocks.",
+    "transport_interpretation": "Transport relocates pre-existing formations/capacity between localities and conserves system-level capacity apart from movement attrition/costs.",
+    "external_interpretation": "External support/sanctuary injects or sustains capacity from outside the modeled endogenous local reproduction loop."
+  },
+  "transport_state_definition": {
+    "name": "inbound_transport_pressure",
+    "scope": "insurgent formations whose current origin can route to the focal locality under the production movement rules",
+    "committed_component": "effective strength of insurgent formations already pending or moving toward the focal locality",
+    "prospective_component": "sum over currently eligible insurgent formations of effective_strength * one-command decision probability * exact expected probability of choosing the focal locality, integrating over the production posture-retention/posture-selection distribution and the production destination softmax",
+    "combination": "log1p(committed_component + prospective_component)",
+    "purity_requirement": "The diagnostic must consume no RNG and mutate no state. It must call or reproduce the production movement scoring logic exactly inside the movement module."
+  },
+  "candidate_models": {
+    "competitive14v2": "current v2 candidate",
+    "transport15v2": "competitive14v2 + inbound transport pressure T",
+    "regenerative16v2": "competitive14v2 + local renewal potential R_local + organization persistence P",
+    "reaction_transport17v2": "competitive14v2 + R_local + P + T"
+  },
+  "screening_design": {
+    "dynamic_seed_base": 2026103000,
+    "shared_initialization_seed": 2026102900,
+    "pool_seeds": 18,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "matched_pairs": 12,
+    "branches_per_pair": 16,
+    "analysis": "unchanged distributional-closure v2 analyzer and thresholds",
+    "selection_rule": "Prefer the lowest-dimensional candidate that minimizes multiplicity-significant-and-large pair failures; ties are broken by raw practically-large pair rate, then median match distance."
+  },
+  "confirmation_design": {
+    "dynamic_seed_base": 2026105000,
+    "shared_initialization_seed": 2026104900,
+    "pool_seeds": 36,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "matched_pairs": 24,
+    "branches_per_pair": 32,
+    "overall_failure_rate_max": 0.10,
+    "per_stratum_failure_rate_max": 0.20
+  },
+  "falsifiers": {
+    "transport_redundant": "transport15v2 does not improve closure over competitive14v2 on independent screening support",
+    "transport_only_sufficient": "transport15v2 performs at least as well as reaction_transport17v2, so renewal-memory variables are unnecessary at this horizon/support",
+    "reaction_transport_insufficient": "reaction_transport17v2 fails the preregistered confirmation closure threshold",
+    "conservation_failure": "The proposed transport diagnostic predicts apparent system-level creation rather than relocation when tested in a transport-only conservation assay"
+  },
+  "interpretation_guard": "A synthetic closure pass licenses only a reduced reaction-transport state representation on the tested support. It does not establish historical validity or empirical transport magnitudes."
+}
