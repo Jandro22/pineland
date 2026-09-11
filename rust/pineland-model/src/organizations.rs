@@ -6,7 +6,11 @@ use pineland_core::rng::{python_exp, python_sum, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
 use pineland_core::topology::StaticTopology;
 
-pub(crate) fn local_embeddedness(
+/// Current local organizational renewal potential before foothold memory is
+/// applied.  This is public for theory diagnostics/coarse-graining assays;
+/// callers must treat it as a pure read of the production transition, not as
+/// a second implementation of the mechanism.
+pub fn local_embeddedness(
     particle: &ParticleState,
     topology: &StaticTopology,
     config: &SimulationConfig,
