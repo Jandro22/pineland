@@ -152,6 +152,7 @@ fn formation_microzone(
 fn capability(
     particle: &ParticleState,
     topology: &StaticTopology,
+    config: &SimulationConfig,
     formation: usize,
     microzone: usize,
     initiative: f64,
@@ -173,12 +174,21 @@ fn capability(
     let mobility = (particle.formations.mobility[formation] / terrain.max(0.35)).clamp(0.15, 1.0);
     let observation = 0.35 + 0.65 * observability;
     let embedded = 0.55 + 0.45 * particle.formations.embeddedness[formation].clamp(0.0, 1.0);
+    // V2 separates accumulated field experience from structural quality.
+    // At 0.5 experience the multiplier is exactly one; the extension is
+    // gated so parity-era runs retain their historical capability equation.
+    let experience = if config.state_regeneration.enabled {
+        0.75 + 0.50 * particle.formations.experience[formation].clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
     (particle
         .formations
         .available_personnel(formation)
         .max(0.0)
         .powf(0.72)
         * particle.formations.quality[formation]
+        * experience
         * particle.formations.cohesion[formation].max(0.05)
         * observation
         * mobility.powf(0.35)
@@ -612,8 +622,8 @@ fn resolve_engagement(
         } else {
             0.0
         };
-    let capability_first = capability(particle, topology, first, microzone, initiative_first);
-    let capability_second = capability(particle, topology, second, microzone, initiative_second);
+    let capability_first = capability(particle, topology, config, first, microzone, initiative_first);
+    let capability_second = capability(particle, topology, config, second, microzone, initiative_second);
     let advantage = capability_first.ln() - capability_second.ln();
     let observability = particle
         .zones
@@ -693,6 +703,20 @@ fn resolve_engagement(
         particle.formations.readiness[second]
             - config.combat.readiness_cost_multiplier * realized_second,
     );
+
+    // Surviving a real engagement creates formation-level learning even when
+    // the tactical outcome is poor.  Losses do not themselves erase the
+    // experience of survivors; later replacement flow dilutes the stock.
+    if config.state_regeneration.enabled {
+        for formation in [first, second] {
+            let current = particle.formations.experience[formation].clamp(0.0, 1.0);
+            let learning = config.combat.momentum_learning_rate
+                * 0.025
+                * exposure
+                * (1.0 - current);
+            particle.formations.experience[formation] = clamp01(current + learning);
+        }
+    }
 
     let mut disengaged = [false, false];
     for (slot, (formation, opponent, realized)) in [

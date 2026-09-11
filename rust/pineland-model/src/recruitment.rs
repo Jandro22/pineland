@@ -432,6 +432,11 @@ fn create_local_formation(
     } else {
         mean(&particle.formations.quality)
     };
+    let experience = if peer_indices.is_empty() {
+        0.15
+    } else {
+        mean(&particle.formations.experience)
+    };
     let cohesion = if peer_indices.is_empty() {
         particle.organizations.cohesion[organization]
     } else {
@@ -481,6 +486,7 @@ fn create_local_formation(
     particle.formations.microzone.push(zone as u32);
     particle.formations.personnel.push(personnel);
     particle.formations.quality.push(quality);
+    particle.formations.experience.push(experience);
     particle.formations.cohesion.push(cohesion);
     particle.formations.readiness.push(readiness);
     particle.formations.sustainment.push(if capacity > 0.0 {
@@ -546,7 +552,7 @@ fn create_local_formation(
         .push(10.0 * (1.0 - centralization) + 1.0);
 }
 
-fn apply_local_fighter_change(
+pub(crate) fn apply_local_fighter_change(
     particle: &mut ParticleState,
     topology: &StaticTopology,
     config: &SimulationConfig,
@@ -598,6 +604,21 @@ fn apply_local_fighter_change(
             let amount = room.min(particle.manpower.pool[key]).min(equipped);
             if amount > 0.0 {
                 let supply = amount * supply_per_fighter;
+                if config.state_regeneration.enabled {
+                    let old_personnel = particle.formations.personnel[formation].max(0.0);
+                    let old_experience = particle.formations.experience[formation].clamp(0.0, 1.0);
+                    let new_personnel = old_personnel + amount;
+                    // Newly fielded recruits are trained/organized enough to
+                    // enter the formation but are not veterans.  This mirrors
+                    // the state replacement rule so both sides pay a turnover
+                    // cost in accumulated field experience.
+                    particle.formations.experience[formation] = if new_personnel > 1.0e-12 {
+                        ((old_personnel * old_experience + amount * 0.10) / new_personnel)
+                            .clamp(0.0, 1.0)
+                    } else {
+                        old_experience
+                    };
+                }
                 particle.formations.personnel[formation] += amount;
                 particle.formations.supply_stock[formation] += supply;
                 particle.manpower.pool[key] -= amount;

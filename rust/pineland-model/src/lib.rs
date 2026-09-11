@@ -262,7 +262,7 @@ impl SimulationEngine {
         particle.logistics = LogisticsState::new(17 + insurgent_formations);
         particle.beliefs = make_belief_state(&topology, &config);
         let model_hash = sha256::digest_hex(if config.state_regeneration.enabled {
-            &b"pineland-native-v2-state-regeneration-core"[..]
+            &b"pineland-native-v2-competitive-reproduction-core"[..]
         } else {
             &b"pineland-native-v1-frozen-core"[..]
         });
@@ -306,7 +306,7 @@ impl SimulationEngine {
         }
         particle.validate()?;
         let model_hash = sha256::digest_hex(if config.state_regeneration.enabled {
-            &b"pineland-native-v2-state-regeneration-core"[..]
+            &b"pineland-native-v2-competitive-reproduction-core"[..]
         } else {
             &b"pineland-native-v1-frozen-core"[..]
         });
@@ -1010,6 +1010,11 @@ impl SimulationEngine {
                 self.config.information.fixed_post_report_rate;
             self.particle.security_posts.reliability[locality] =
                 self.config.information.prior_confidence;
+            self.particle.security_posts.professionalism[locality] = clamp01(
+                0.40 * self.particle.organizations.institutional_quality[POLICE]
+                    + 0.30 * self.particle.organizations.discipline[POLICE]
+                    + 0.30 * self.particle.organizations.accountability[POLICE],
+            );
             self.particle.security_posts.staffed[locality] = 1;
         }
         for formation in 0..government_formations {
@@ -1029,6 +1034,11 @@ impl SimulationEngine {
                 self.config.information.fixed_post_report_rate;
             self.particle.security_posts.reliability[post] =
                 self.config.information.prior_confidence;
+            self.particle.security_posts.professionalism[post] = clamp01(
+                0.40 * self.particle.organizations.institutional_quality[MILITARY]
+                    + 0.30 * self.particle.organizations.discipline[MILITARY]
+                    + 0.30 * self.particle.organizations.accountability[MILITARY],
+            );
             self.particle.security_posts.staffed[post] = 1;
         }
 
@@ -1592,6 +1602,7 @@ impl SimulationEngine {
         f.personnel[index] = personnel;
         if organization == INSURGENT {
             f.quality[index] = 0.45;
+            f.experience[index] = 0.45;
             f.cohesion[index] = 0.70;
             f.readiness[index] = 0.75;
             f.sustainment[index] = 0.65;
@@ -1601,6 +1612,7 @@ impl SimulationEngine {
             f.embeddedness[index] = 0.75;
         } else {
             f.quality[index] = 0.72;
+            f.experience[index] = 0.55;
             f.cohesion[index] = 0.75;
             f.readiness[index] = 0.82;
             f.sustainment[index] = 0.90;
@@ -2432,8 +2444,19 @@ impl SimulationEngine {
         gov /= n as f64;
         ins /= n as f64;
         let mut o = JsonValue::object();
-        o.insert("engine", JsonValue::string("pineland-native-v1"));
+        o.insert(
+            "engine",
+            JsonValue::string(if self.config.state_regeneration.enabled {
+                "pineland-native-v2-theory"
+            } else {
+                "pineland-native-v1-compatible"
+            }),
+        );
         o.insert("model_hash", JsonValue::string(&self.model_hash));
+        o.insert(
+            "state_regeneration_enabled",
+            JsonValue::Bool(self.config.state_regeneration.enabled),
+        );
         o.insert("time_days", JsonValue::number(self.particle.time));
         o.insert("localities", JsonValue::number(n as f64));
         o.insert(
@@ -2446,6 +2469,86 @@ impl SimulationEngine {
         );
         o.insert("government_control", JsonValue::number(gov));
         o.insert("insurgent_control", JsonValue::number(ins));
+        if self.config.state_regeneration.enabled {
+            let mean = |values: &[f64]| {
+                if values.is_empty() {
+                    0.0
+                } else {
+                    values.iter().sum::<f64>() / values.len() as f64
+                }
+            };
+            let weighted_formation_experience = |organization: usize| {
+                let mut numerator = 0.0;
+                let mut denominator = 0.0;
+                for formation in 0..self.particle.formations.personnel.len() {
+                    if self.particle.formations.organization[formation] as usize != organization {
+                        continue;
+                    }
+                    let weight = self.particle.formations.personnel[formation].max(0.0);
+                    numerator += weight * self.particle.formations.experience[formation];
+                    denominator += weight;
+                }
+                if denominator > 1.0e-12 {
+                    numerator / denominator
+                } else {
+                    0.0
+                }
+            };
+            let mut police_prof_num = 0.0;
+            let mut police_prof_den = 0.0;
+            for post in 0..self.particle.security_posts.personnel.len() {
+                if self.particle.security_posts.organization[post] as usize != POLICE {
+                    continue;
+                }
+                let weight = self.particle.security_posts.personnel[post].max(0.0);
+                police_prof_num += weight * self.particle.security_posts.professionalism[post];
+                police_prof_den += weight;
+            }
+            o.insert(
+                "state_security_recruit_pipeline_mean",
+                JsonValue::number(mean(&self.particle.locality.government_security_recruit_pipeline)),
+            );
+            o.insert(
+                "state_security_reserve_mean",
+                JsonValue::number(mean(&self.particle.locality.government_security_reserve)),
+            );
+            o.insert(
+                "state_intelligence_penetration_mean",
+                JsonValue::number(mean(&self.particle.locality.government_intelligence_penetration)),
+            );
+            o.insert(
+                "police_professionalism_mean",
+                JsonValue::number(if police_prof_den > 1.0e-12 {
+                    police_prof_num / police_prof_den
+                } else {
+                    0.0
+                }),
+            );
+            o.insert(
+                "government_military_experience_mean",
+                JsonValue::number(weighted_formation_experience(MILITARY)),
+            );
+            o.insert(
+                "insurgent_formation_experience_mean",
+                JsonValue::number(weighted_formation_experience(INSURGENT)),
+            );
+            o.insert(
+                "state_cumulative_security_recruits",
+                JsonValue::number(self.particle.locality.government_cumulative_security_recruits.iter().sum::<f64>()),
+            );
+            o.insert(
+                "state_cumulative_security_deployments",
+                JsonValue::number(self.particle.locality.government_cumulative_security_deployments.iter().sum::<f64>()),
+            );
+            o.insert(
+                "state_cumulative_admin_rebuild",
+                JsonValue::number(self.particle.locality.government_cumulative_admin_rebuild.iter().sum::<f64>()),
+            );
+            o.insert(
+                "state_cumulative_underground_disruption",
+                JsonValue::number(self.particle.locality.government_cumulative_underground_disruption.iter().sum::<f64>()),
+            );
+        }
         o.insert(
             "contacts",
             JsonValue::number(self.particle.counters.contacts as f64),
@@ -3647,6 +3750,31 @@ mod tests {
         changed_initialization.initialization_seed = Some(44);
         let c = SimulationEngine::new(changed_initialization).unwrap();
         assert_ne!(a.particle.people.grievance, c.particle.people.grievance);
+    }
+
+    #[test]
+    fn theory_v2_has_distinct_identity_and_exposes_new_theory_state() {
+        let legacy_config = SimulationConfig {
+            locality_count: 4,
+            agent_count: 100,
+            ..Default::default()
+        };
+        let legacy = SimulationEngine::new(legacy_config.clone()).unwrap();
+        let mut theory_config = legacy_config;
+        theory_config.state_regeneration.enabled = true;
+        let theory = SimulationEngine::new(theory_config).unwrap();
+        assert_ne!(legacy.model_hash, theory.model_hash);
+        let summary = theory.summary();
+        for key in [
+            "state_security_recruit_pipeline_mean",
+            "state_security_reserve_mean",
+            "state_intelligence_penetration_mean",
+            "police_professionalism_mean",
+            "government_military_experience_mean",
+            "insurgent_formation_experience_mean",
+        ] {
+            assert!(summary.get(key).is_some(), "missing theory-v2 summary key {key}");
+        }
     }
 
     #[test]
