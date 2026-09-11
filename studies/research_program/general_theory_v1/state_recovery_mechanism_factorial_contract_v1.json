@@ -1,0 +1,61 @@
+﻿{
+    "schema_version":  "pineland.state_recovery_mechanism_factorial_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "Which implemented state-side loop governs post-shock institutional-capacity recovery: explicit state regeneration, political-order institutional learning/decay/patronage, or their interaction?",
+    "design":  {
+                   "seed_base":  2026119000,
+                   "seeds":  8,
+                   "agents":  300,
+                   "localities":  34,
+                   "focals_per_seed":  4,
+                   "horizon_days":  180,
+                   "step_days":  15,
+                   "capital_multiplier":  1,
+                   "shock_fraction":  0.1,
+                   "foreign_affairs":  false,
+                   "organization_ecology":  false,
+                   "insurgent_neutralized":  true,
+                   "cells":  [
+                                 {
+                                     "state_regeneration":  false,
+                                     "political_capacity_evolution":  "active",
+                                     "label":  "political_only"
+                                 },
+                                 {
+                                     "state_regeneration":  true,
+                                     "political_capacity_evolution":  "active",
+                                     "label":  "full_v2"
+                                 },
+                                 {
+                                     "state_regeneration":  false,
+                                     "political_capacity_evolution":  "frozen",
+                                     "label":  "neither_capacity_loop"
+                                 },
+                                 {
+                                     "state_regeneration":  true,
+                                     "political_capacity_evolution":  "frozen",
+                                     "label":  "regeneration_only"
+                                 }
+                             ]
+               },
+    "political_capacity_frozen_definition":  "Keep political_order enabled and its spending/service/control outputs active, but set capacity_learning_rate=0, capacity_decay_rate=0, patronage_capacity_damage=0. Do not disable the whole political-order process.",
+    "primary_outcomes":  [
+                             "Q_institution_capacity_180",
+                             "Q_structural_admin_180",
+                             "government_effective_control_delta_180"
+                         ],
+    "primary_contrasts":  {
+                              "regeneration_effect_when_political_active":  "full_v2 - political_only",
+                              "political_capacity_evolution_effect_when_regeneration_active":  "full_v2 - regeneration_only",
+                              "regeneration_effect_when_political_frozen":  "regeneration_only - neither_capacity_loop",
+                              "interaction":  "(full_v2-political_only)-(regeneration_only-neither_capacity_loop)"
+                          },
+    "promotion_rules":  [
+                            "If full_v2 minus regeneration_only is materially negative for institutional Q while structural-admin Q remains similar, political institutional evolution is a net erosion channel on this shock support.",
+                            "If regeneration_only materially improves institutional Q over neither_capacity_loop, explicit state regeneration is a positive institutional recovery channel.",
+                            "Do not call either contribution universal; report exact support and interaction."
+                        ],
+    "materiality_threshold_abs_Q":  0.02,
+    "guard":  "Synthetic mechanism discrimination only. Factorial interventions isolate implemented equations; they are not claims about empirical state-building coefficients."
+}

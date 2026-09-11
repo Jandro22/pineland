@@ -1,0 +1,53 @@
+﻿{
+    "schema_version":  "pineland.reproduction_hazard_kernel_confirmation_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "development_source":  "reproduction_first_hazard_exploratory_results_v1.json",
+    "question":  "Does destination-specific early recruitment hazard provide reproducible predictive information about nonlocal offspring establishment beyond static geographic/social structure?",
+    "design":  {
+                   "seed_base":  2026118000,
+                   "seeds":  12,
+                   "agents":  300,
+                   "localities":  17,
+                   "horizon_days":  180,
+                   "parent_types":  [
+                                        "M",
+                                        "MF",
+                                        "MG",
+                                        "MFG"
+                                    ],
+                   "outcome_horizons_days":  [
+                                                 30,
+                                                 90,
+                                                 180
+                                             ],
+                   "grouped_cv":  "leave-one-seed-out",
+                   "static_hybrid":  [
+                                         "adjacency",
+                                         "euclidean distance",
+                                         "locality graph hops/path cost",
+                                         "parent social exposure potential",
+                                         "social min hops",
+                                         "cross-locality social influence"
+                                     ],
+                   "dynamic_coordinate":  "log1p first nonzero recruitment hazard mass by destination"
+               },
+    "primary_gates":  [
+                          {
+                              "horizon":  90,
+                              "hybrid_plus_hazard_logloss_gain_vs_static_min":  0.005,
+                              "hybrid_plus_hazard_auc_gain_vs_static_min":  0.02
+                          },
+                          {
+                              "horizon":  180,
+                              "hybrid_plus_hazard_logloss_gain_vs_static_min":  0.005,
+                              "hybrid_plus_hazard_auc_gain_vs_static_min":  0.02
+                          }
+                      ],
+    "secondary_gates":  {
+                            "at_30d_first_hazard_auc_gain_vs_adjacency_min":  0.05,
+                            "at_30d_first_hazard_logloss_gain_vs_adjacency_min":  0.005
+                        },
+    "status_rule":  "Primary gates at both 90d and 180d =\u003e DYNAMIC_RECRUITMENT_HAZARD_KERNEL_SUPPORTED_ON_SYNTHETIC_SUPPORT. Secondary gate is descriptive and not required for promotion.",
+    "guard":  "Hazard is an endogenous model propensity and may summarize several mechanisms. Confirmation would establish predictive state relevance, not a universal real-world network law or causal social-network coefficient."
+}

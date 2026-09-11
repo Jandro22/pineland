@@ -1,0 +1,46 @@
+﻿{
+    "schema_version":  "pineland.membership_transport_closure_confirmation_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "development_source":  [
+                               "dev_rootedstock11v3_results_v1.json",
+                               "dev_rootedstock_hazard12v3_results_v1.json",
+                               "dev_rootedstock_social12v3_results_v1.json",
+                               "confirm_nettransport12v2_36x24x32_30d_v1.csv"
+                           ],
+    "question":  "Does strategic distributional closure improve when source-faithful rooted membership stock and social priming are combined with independently identified signed insurgent transport flux?",
+    "design":  {
+                   "dynamic_seed_base":  2026116000,
+                   "initialization_seed":  2026115900,
+                   "pool_seeds":  48,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_days":  60,
+                   "horizon_days":  30,
+                   "pairs":  24,
+                   "branches_per_pair":  32,
+                   "common_random_number_future":  true,
+                   "candidates":  [
+                                      "rootedstock_social12v3",
+                                      "rootedstock_net12v3",
+                                      "rootedstock_social_net13v3"
+                                  ]
+               },
+    "state_definitions":  {
+                              "rootedstock_social12v3":  "M* + social exposure + prior competitive coordinates excluding clipped M",
+                              "rootedstock_net12v3":  "M* + signed log1p net transport flux + prior competitive coordinates excluding clipped M",
+                              "rootedstock_social_net13v3":  "M* + social exposure + signed log1p net transport flux + prior competitive coordinates excluding clipped M"
+                          },
+    "future_coordinate_rule":  "Every candidate must be tested on its own future state coordinates in addition to common outcomes. Net-transport candidates therefore include final_net_transport_pressure as a closure target.",
+    "primary_gate":  {
+                         "overall_multiplicity_significant_and_large_pair_rate_max":  0.1,
+                         "each_activity_stratum_rate_max":  0.2
+                     },
+    "matching_quality":  {
+                             "qualified_if_median_distance_le":  0.2,
+                             "qualified_if_max_distance_le":  0.5,
+                             "rule":  "A nominal closure PASS outside either matching bound is PROVISIONAL_MATCHING_LIMITED rather than certified."
+                         },
+    "selection_rule":  "Among qualified candidates passing the primary gate, prefer the lowest-dimensional state. If equal dimension, prefer lower multiplicity-significant-and-large rate, then lower raw practically-large rate. No candidate may be added after fresh outcomes are inspected.",
+    "interpretation_guard":  "This is synthetic closure on one initialization family and 30-day horizon only. PASS does not establish exact Markov sufficiency, cross-scale universality, or historical transport."
+}
