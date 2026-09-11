@@ -1,0 +1,37 @@
+﻿{
+  "schema_version": "pineland.mobilization_resource_flow_contract.v1",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "theory": "In the closed focal-insurgent assay, liquid organizational capital obeys the event-level stock-flow identity K(t)=K0+Y(t)-B(t), where Y is cumulative positive capital flow and B cumulative negative capital flow. The fitted recruitment/fielding multiplier boundary is treated as a proxy for this resource metabolism, not a fundamental law.",
+  "fresh_design": {
+    "seed_base": 2026108000,
+    "seeds": 8,
+    "agents": 300,
+    "localities": 34,
+    "horizon_days": 180,
+    "snapshot_step_days": 15,
+    "recruitment_mult": [0.125, 0.25, 0.5, 1.0, 2.0, 4.0],
+    "fielding_mult": [0.25, 0.5, 1.0, 2.0],
+    "capital_mult": [0.25, 0.5, 1.0, 2.0, 4.0],
+    "foreign_affairs": false,
+    "organization_birth_split_merger_succession": false
+  },
+  "measurement": {
+    "method": "Advance exactly one scheduled event at a time using advance_until_limited(..., Some(1)); measure focal insurgent liquid capital immediately before and after every event.",
+    "positive_flow_Y": "sum of positive event-level capital deltas",
+    "negative_flow_B": "sum of absolute negative event-level capital deltas",
+    "accounting_residual": "K - (K0 + Y - B)",
+    "pathwise_load": "Lambda_K=B/(K0+Y)",
+    "early_window_days": 30,
+    "early_net_burn_rate": "(B30-Y30)/30",
+    "early_runway_days": "K30/max(early_net_burn_rate, epsilon) when net burn is positive; +infinity otherwise",
+    "parameter_free_180d_prediction": "collapse predicted when early_runway_days < 150"
+  },
+  "primary_tests": {
+    "conservation": "maximum absolute accounting residual <= 1e-8 * max(1,K0,Y,B)",
+    "capital_exhaustion_consistency": "for trajectories whose organization deactivates with K<=numerical tolerance, Lambda_K reaches 1 within numerical tolerance at the exhaustion boundary",
+    "early_runway_discrimination": "leave-one-seed-out AUC for -early_runway_days predicting 180d collapse >= 0.95",
+    "mechanistic_compression": "AUC regret of early runway relative to a leave-one-seed-out logistic model using log recruitment_mult, log fielding_mult, log capital_mult <= 0.03"
+  },
+  "interpretation_guard": "The stock-flow identity is exact by construction only for this closed synthetic assay. Predictive transport of an early-window runway rule across topology, scale, organization phenotype, and historical cases must be separately tested."
+}
