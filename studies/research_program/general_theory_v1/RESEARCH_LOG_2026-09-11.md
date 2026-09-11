@@ -128,6 +128,22 @@ future transport contract.
   >.20 or max >.50 is explicitly `PROVISIONAL_MATCHING_LIMITED`.
 - Probe changes compiled after `cargo fmt`; 6/6 native-probe tests pass.
 
+### 18:45 — First untouched closure result
+
+- `rootedstock_social12v3` completed on the frozen fresh confirmation block and
+  **FAILED** the preregistered distributional-closure gate despite acceptable
+  matching quality.
+- 24 pairs; median match distance `0.15417`, max `0.48312` (inside frozen
+  matching-quality bounds).
+- Raw practically-large pair rate `0.70833`; multiplicity-significant + large
+  pair rate `0.25` versus required `<=0.10`.
+- By activity stratum: low `0/8` significant+large, mid `3/8` (`0.375`), high
+  `3/8` (`0.375`).
+- Interpretation: rooted membership stock plus social exposure does **not**
+  close the 30-day strategic system on fresh support. The prior development
+  PASS was a hypothesis-selection result and did not transport. Do not promote
+  this candidate as the reduced macrostate.
+
 ## Standing scientific guards
 
 - Synthetic mechanism results are not historical effect-size claims.
