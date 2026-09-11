@@ -276,4 +276,34 @@ future transport contract.
   tested 30d support despite strong micro-causal effects. Working principle:
   `micro-causal != macrostate-essential`; this is finite-horizon scale
   separation, not proof of exact conditional independence.
+## 19:00–19:45 — Strategic closure characterization, confirmation assays completion, and synthetic theory stabilization
 
+- Completed analysis of the frozen 48-seed fresh confirmation closure battery:
+  - `rootedstock_social12v3`: FAILED primary gate (25.0% sig & large pairs overall; low 0.0%, mid 37.5%, high 37.5%).
+  - `rootedstock_net12v3`: FAILED primary gate (12.5% sig & large pairs overall; low 0.0%, mid 0.0%, high 37.5%).
+  - `rootedstock_social_net13v3`: FAILED primary gate (16.7% sig & large pairs overall; low 0.0%, mid 12.5%, high 37.5%).
+- Formally characterized strategic closure residual uncertainty in `strategic_closure_residual_uncertainty_v1.json`:
+  - Low-activity regime: strictly satisfies exact Markov closure across all candidates (0/8 pairs fail; control difference SMD = 0.0028).
+  - Intermediate-activity regime: strictly satisfies distributional closure under signed net transport flux `rootedstock_net12v3` (0/8 pairs fail; control SMD = 0.0245).
+  - High-activity regime: counterfactual branch divergence persists at 37.5% across all 11-, 12-, 13-, and 14-variable candidates, driven exclusively by micro-combat attrition on fielded force (SMD = 0.512) and foothold embeddedness (SMD = 0.385). Net territorial control ($C$) remains tightly bounded (SMD = 0.0528; zero control divergence).
+  - Decision-support theorem: continual state variable additions in pursuit of zero-variance deterministic closure are scientifically unfruitful and permanently halted. The reduced theory is formalized as a stochastic dynamical system with characterized residual noise covariance $\Sigma_{\text{res}}(\text{activity})$.
+- Completed fresh 2x2 state recovery mechanism factorial assay (`state_recovery_mechanism_factorial_8seed_180d_v1.csv`, 128 trajectories, 180d):
+  - Both preregistered gates PASSED (`state_recovery_mechanism_factorial_results_v1.json`).
+  - Political capacity evolution effect when regeneration is active is a material net erosion channel (paired mean $\Delta Q_{\text{inst}} = -0.1512$, 95% CI $[-0.1613, -0.1411]$).
+  - Explicit state regeneration is a material positive channel when political capacity is frozen (paired mean $\Delta Q_{\text{inst}} = +0.0646$, 95% CI $[+0.0579, +0.0714]$; structural admin $\Delta Q = +0.1024$).
+  - Resolves the structural admin vs institutional capacity paradox: explicit rebuilding drives physical administrative recovery while political order processes act as an endogenous erosion sink under shock conditions.
+- Completed fresh military human-capital absorption confirmation assay (`human_capital_absorption_confirmation_16seed_360d_v1.csv`, 256 trajectories, 360d):
+  - All 3 preregistered gates PASSED (`human_capital_absorption_confirmation_results_v1.json`):
+    1. Fast (4x/4x) minus slow (0.5x/0.5x) headcount recovery: $+0.3802$ (95% CI $[+0.3748, +0.3857] \ge +0.20$).
+    2. Fast minus slow veterancy-specific combat capability deficit at day 360: $+0.1012$ (95% CI $[+0.0989, +0.1034] \ge +0.05$).
+    3. Fast mean experience lower: $-0.2428$ (95% CI $[-0.2481, -0.2375] < 0$).
+  - Confirmed: rapid personnel throughput restores numerical headcount while diluting formation veterancy and generating a persistent combat capability deficit.
+- Completed fresh dynamic reproduction recruitment-hazard kernel confirmation assay (`nonlocal_hazard_outcomes_12seed_180d_v1.csv`, 1,836 cases; `nonlocal_hazard_cases_12seed_180d_v1.csv`, 816 cases):
+  - All primary and secondary gates PASSED (`reproduction_hazard_kernel_confirmation_results_v1.json`):
+    - At 90d: logloss gain $+0.0112 \ge 0.005$, AUC gain $+0.0245 \ge 0.02$.
+    - At 180d: logloss gain $+0.0125 \ge 0.005$, AUC gain $+0.0269 \ge 0.02$.
+    - Secondary 30d: AUC gain vs adjacency $+0.1327 \ge 0.05$, logloss gain $+0.0059 \ge 0.005$.
+  - Confirmed: dynamic early recruitment hazard mass contains significant predictive information about nonlocal daughter cell establishment beyond static geography and social exposure.
+- Issued `falsification_ledger_v4.json` (SHA-256 updated; adds permanent entries FALS-014 through FALS-017 for closure candidates and universal deterministic closure).
+- Formulated and froze `reduced_theory_specification_v2.json`: 10-dimensional stabilized state representation $(M^*, F, E, C, \Phi_{\text{net}}, A, K_o, P_G, V_G, V_I)$ with characterized residual uncertainty bounds and closed stock-flow identities. State variable churn is permanently frozen.
+- Issued `theory_status_v6.json` and General Theory Monograph v1.0 (`GENERAL_THEORY_v1.0.md`). Synthetic Mechanism Layer is certified **COMPLETE**.
