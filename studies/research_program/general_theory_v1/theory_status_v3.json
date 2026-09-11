@@ -1,0 +1,34 @@
+{
+  "schema_version": "pineland.theory_status.v3",
+  "status": "CORE_ARCHITECTURE_COMPLETE_THEORY_UNVALIDATED",
+  "historical_outcomes_used_for_v3_architecture": false,
+  "historical_rerun_authorized": false,
+  "supersedes": "theory_status_v2.json",
+  "engineering_foundation": {
+    "native_reference_parity_baseline": "archived and preserved in git history",
+    "current_theory_engine": "Rust v2 extension activated explicitly with state_regeneration.enabled=true",
+    "checkpoint_schema": 14,
+    "workspace_regression": "54 passed, 0 failed"
+  },
+  "architecture_status": {
+    "competitive_local_reproduction_causal_skeleton": "IMPLEMENTED",
+    "state_regeneration": "IMPLEMENTED",
+    "police_professionalism": "IMPLEMENTED",
+    "armed_formation_veterancy": "IMPLEMENTED",
+    "explicit_exogenous_support_separation": "IMPLEMENTED",
+    "measurement_layer_separation": "IMPLEMENTED"
+  },
+  "scientific_status": {
+    "general_theory_licensed": false,
+    "core_architecture_frozen_for_testing": true,
+    "macrostate_distributional_closure": "REQUIRES_FINAL_EVALUATION",
+    "complementarity_vs_substitutability": "REQUIRES_STRUCTURAL_DISCRIMINATION",
+    "reproduction_criticality": "REQUIRES_SYNTHETIC_IDENTIFICATION",
+    "state_vs_insurgent_competitive_order_parameter": "NOT_ESTABLISHED",
+    "cross_topology_scale_universality": "NOT_ESTABLISHED",
+    "historical_transport": "UNAUTHORIZED"
+  },
+  "authoritative_architecture_certificate": "core_theory_architecture_completion_v2.json",
+  "authoritative_model_map": "model_to_theory_map_v2.json",
+  "next_stage": "Falsify and reduce the implemented architecture rather than add further mechanisms without a discriminating failure."
+}

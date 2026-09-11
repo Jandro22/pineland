@@ -21,7 +21,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 13;
+pub const CHECKPOINT_VERSION: u32 = 14;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -1214,6 +1214,7 @@ fn encode_formations(b: &mut Vec<u8>, p: &ParticleState) {
     for v in [
         &x.personnel,
         &x.quality,
+        &x.experience,
         &x.cohesion,
         &x.readiness,
         &x.sustainment,
@@ -1262,6 +1263,7 @@ fn decode_formations(r: &mut ByteReader<'_>, p: &mut ParticleState) -> Result<()
     x.microzone = read_u32_vec(r).map_err(|e| section_error("microzone", e))?;
     x.personnel = read_f64_vec(r).map_err(|e| section_error("personnel", e))?;
     x.quality = read_f64_vec(r).map_err(|e| section_error("quality", e))?;
+    x.experience = read_f64_vec(r).map_err(|e| section_error("experience", e))?;
     x.cohesion = read_f64_vec(r).map_err(|e| section_error("cohesion", e))?;
     x.readiness = read_f64_vec(r).map_err(|e| section_error("readiness", e))?;
     x.sustainment = read_f64_vec(r).map_err(|e| section_error("sustainment", e))?;
@@ -1334,6 +1336,7 @@ fn encode_security_posts(b: &mut Vec<u8>, p: &ParticleState) {
     put_u32_vec(b, &x.formation);
     put_f64_vec(b, &x.detection_rate);
     put_f64_vec(b, &x.reliability);
+    put_f64_vec(b, &x.professionalism);
     put_f64_vec(b, &x.updated_at);
     put_u8_vec(b, &x.staffed)
 }
@@ -1351,6 +1354,7 @@ fn decode_security_posts(
     x.formation = read_u32_vec(r)?;
     x.detection_rate = read_f64_vec(r)?;
     x.reliability = read_f64_vec(r)?;
+    x.professionalism = read_f64_vec(r)?;
     x.updated_at = read_f64_vec(r)?;
     x.staffed = read_u8_vec(r)?;
     Ok(())

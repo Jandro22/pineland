@@ -1,0 +1,88 @@
+{
+  "schema_version": "pineland.core_theory_architecture_completion.v2",
+  "issued_utc": "2026-09-11T00:09:00Z",
+  "status": "CORE_ARCHITECTURE_IMPLEMENTED",
+  "scope_definition": "Minimal causal architecture required to express and falsify Competitive Local Reproduction Theory in the native Rust engine; excludes empirical validation, parameter identification, historical transport, and optional realism.",
+  "historical_outcomes_used_to_select_or_tune_architecture": false,
+  "scientific_validation_complete": false,
+  "architecture_completion": {
+    "insurgent_rooted_membership_and_recruitment": true,
+    "insurgent_fielded_force_and_action_capacity": true,
+    "persistent_local_footholds": true,
+    "logistics_and_material_constraint": true,
+    "local_information_and_actor_beliefs": true,
+    "mobility_and_spatial_access": true,
+    "multidimensional_control": true,
+    "civilian_expectations_and_political_alternatives": true,
+    "government_security_recruitment_pipeline": true,
+    "government_trained_reserve_and_replacement_flow": true,
+    "government_administrative_regeneration": true,
+    "government_intelligence_penetration": true,
+    "rooted_membership_disruption_distinct_from_fielded_force_destruction": true,
+    "police_professionalism_distinct_from_headcount": true,
+    "armed_formation_experience_distinct_from_quality": true,
+    "experience_learning_and_replacement_dilution": true,
+    "foreign_support_and_exogenous_replenishment": true,
+    "checkpoint_restart_and_distributed_state_ownership": true,
+    "research_summary_exposes_theory_v2_state": true
+  },
+  "new_v2_state": {
+    "police_professionalism": {
+      "rust_state": "SecurityPostState.professionalism",
+      "range": [0.0, 1.0],
+      "meaning": "Local professional standard: training, procedural discipline, investigative competence, and institutional behavior independent of staffing.",
+      "downstream_effects": [
+        "effective local security",
+        "fixed-post information source quality",
+        "intelligence/reliability feedback"
+      ],
+      "not_equivalent_to": ["headcount", "equipment", "tactical specialization", "readiness"]
+    },
+    "formation_experience": {
+      "rust_state": "FormationState.experience",
+      "range": [0.0, 1.0],
+      "meaning": "Accumulated formation-level field experience/veterancy independent of structural quality.",
+      "acquisition": ["combat survival", "operational patrol service"],
+      "dilution": ["inexperienced replacement inflow"],
+      "downstream_effects": ["combat capability in theory-v2 execution"],
+      "applies_to": ["government", "insurgent", "foreign armed formations"]
+    }
+  },
+  "core_invariants": [
+    "Mobility is relocation, not endogenous reproduction.",
+    "External support may sustain an endogenously subcritical organization and is tracked separately from endogenous reproduction.",
+    "Police quantity and police professionalism are distinct causal dimensions.",
+    "Formation quality and formation experience are distinct causal dimensions.",
+    "Replacing personnel can restore headcount while reducing unit veterancy.",
+    "Intelligence penetration can damage the reproductive underground without instantaneously deleting already-fielded coercive capacity.",
+    "State regeneration is hierarchical and fiscal-institutional rather than a symmetric copy of insurgent reproduction.",
+    "The state-regeneration extension defaults off; theory-v2 activation is explicit."
+  ],
+  "engineering_certificate": {
+    "rust_workspace_test_command": "cargo test --workspace",
+    "rust_workspace_tests_passed": 54,
+    "rust_workspace_tests_failed": 0,
+    "targeted_state_regeneration_tests_passed": 9,
+    "checkpoint_schema_version": 14,
+    "theory_v2_model_hash_label": "pineland-native-v2-competitive-reproduction-core",
+    "enabled_checkpoint_continuation": "exact decision_hash and state_hash equality tested",
+    "default_state_regeneration": false,
+    "theory_v2_activation_profile": "theory_v2_activation_config.json",
+    "model_to_theory_map": "model_to_theory_map_v2.json"
+  },
+  "checkpoint_compatibility_policy": {
+    "current_decoder_accepts_schema": 14,
+    "automatic_legacy_checkpoint_migration": false,
+    "reason": "Do not silently reinterpret archived continuation state after adding theory-relevant stocks. Legacy checkpoints remain reproducible under their matching archived git revision; an explicit migration tool can be added only if scientifically required."
+  },
+  "remaining_work_is_not_core_architecture": [
+    "synthetic structural-form discrimination",
+    "macrostate closure/coarse-graining",
+    "criticality and phase-boundary identification",
+    "parameter/estimand identification",
+    "resolution and topology transport",
+    "historical measurement-operator identification",
+    "historical predictive competition and cross-case transport"
+  ],
+  "promotion_rule": "CORE_ARCHITECTURE_IMPLEMENTED does not license a general-theory claim. Promotion requires the surviving synthetic and historical falsification gates defined by the research program."
+}

@@ -152,6 +152,16 @@ pub fn advance(
         clamp01(particle.formations.fatigue[formation] + 0.0008 * travel_hours);
     particle.formations.readiness[formation] =
         clamp01(particle.formations.readiness[formation] - 0.0003 * travel_hours);
+    if config.state_regeneration.enabled {
+        let current_experience = particle.formations.experience[formation].clamp(0.0, 1.0);
+        let operational_days = (travel_hours / 24.0).max(0.0);
+        let learning = config.combat.momentum_learning_rate
+            * 0.01
+            * operational_days
+            * (1.0 - current_experience);
+        particle.formations.experience[formation] =
+            clamp01(current_experience + learning);
+    }
 }
 
 /// Integrate one patrol's dwell interval, matching the reference physical

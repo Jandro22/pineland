@@ -843,6 +843,13 @@ pub struct SecurityPostState {
     pub formation: Vec<u32>,
     pub detection_rate: Vec<f64>,
     pub reliability: Vec<f64>,
+    /// Local professional standard of the post: training, procedural
+    /// discipline, investigative competence, and institutional behavior.
+    /// This is distinct from reliability (whether information is trusted)
+    /// and from raw staffing/presence.  It lets a lightly institutionalized
+    /// constabulary and a highly professional police unit have different
+    /// effects at equal headcount.
+    pub professionalism: Vec<f64>,
     pub updated_at: Vec<f64>,
     pub staffed: Vec<u8>,
 }
@@ -859,6 +866,7 @@ impl SecurityPostState {
             formation: vec![u32::MAX; count],
             detection_rate: vec![0.5; count],
             reliability: vec![0.5; count],
+            professionalism: vec![0.5; count],
             updated_at: vec![0.0; count],
             staffed: vec![1; count],
         }
@@ -942,6 +950,11 @@ pub struct FormationState {
     pub microzone: Vec<u32>,
     pub personnel: Vec<f64>,
     pub quality: Vec<f64>,
+    /// Accumulated formation-level field experience/veterancy.  Quality is
+    /// the unit's training/equipment/tactical standard; experience is a
+    /// persistent learning stock acquired through service and combat and
+    /// diluted when inexperienced replacements enter the formation.
+    pub experience: Vec<f64>,
     pub cohesion: Vec<f64>,
     pub readiness: Vec<f64>,
     pub sustainment: Vec<f64>,
@@ -986,6 +999,7 @@ impl FormationState {
             microzone: vec![0; count],
             personnel: vec![0.0; count],
             quality: vec![0.5; count],
+            experience: vec![0.5; count],
             cohesion: vec![0.5; count],
             readiness: vec![1.0; count],
             sustainment: vec![1.0; count],
@@ -1812,8 +1826,10 @@ impl ParticleState {
             &self.locality.government_security_reserve,
             &self.locality.government_intelligence_penetration,
             &self.formations.personnel,
+            &self.formations.experience,
             &self.formations.readiness,
             &self.formations.supply_stock,
+            &self.security_posts.professionalism,
             &self.footholds.strength,
             &self.beliefs.presence,
             &self.beliefs.control,
@@ -2027,6 +2043,7 @@ impl ParticleState {
         append_u32s(material, &self.formations.microzone);
         append_f64s(material, &self.formations.personnel);
         append_f64s(material, &self.formations.quality);
+        append_f64s(material, &self.formations.experience);
         append_f64s(material, &self.formations.cohesion);
         append_f64s(material, &self.formations.readiness);
         append_f64s(material, &self.formations.sustainment);
@@ -2075,6 +2092,7 @@ impl ParticleState {
         append_u32s(material, &self.security_posts.formation);
         append_f64s(material, &self.security_posts.detection_rate);
         append_f64s(material, &self.security_posts.reliability);
+        append_f64s(material, &self.security_posts.professionalism);
         append_f64s(material, &self.security_posts.updated_at);
         append_u8s(material, &self.security_posts.staffed);
         append_u32s(material, &self.footholds.organization);
@@ -2919,6 +2937,7 @@ impl ParticleState {
             (self.formations.microzone.len(), "formation microzone"),
             (self.formations.personnel.len(), "formation personnel"),
             (self.formations.quality.len(), "formation quality"),
+            (self.formations.experience.len(), "formation experience"),
             (self.formations.cohesion.len(), "formation cohesion"),
             (self.formations.readiness.len(), "formation readiness"),
             (self.formations.sustainment.len(), "formation sustainment"),
@@ -3057,6 +3076,10 @@ impl ParticleState {
             (
                 self.security_posts.reliability.len(),
                 "security post reliability",
+            ),
+            (
+                self.security_posts.professionalism.len(),
+                "security post professionalism",
             ),
             (
                 self.security_posts.updated_at.len(),
@@ -4384,6 +4407,7 @@ impl ParticleState {
         for (values, name) in [
             (&self.formations.personnel, "formation personnel"),
             (&self.formations.quality, "formation quality"),
+            (&self.formations.experience, "formation experience"),
             (&self.formations.cohesion, "formation cohesion"),
             (&self.formations.readiness, "formation readiness"),
             (&self.formations.sustainment, "formation sustainment"),
@@ -4446,6 +4470,10 @@ impl ParticleState {
                 &self.security_posts.reliability,
                 "security post reliability",
             ),
+            (
+                &self.security_posts.professionalism,
+                "security post professionalism",
+            ),
             (&self.security_posts.updated_at, "security post timestamp"),
         ] {
             check_finite(values, name)?;
@@ -4457,6 +4485,7 @@ impl ParticleState {
             .iter()
             .chain(self.security_posts.detection_rate.iter())
             .chain(self.security_posts.reliability.iter())
+            .chain(self.security_posts.professionalism.iter())
         {
             if !(-1e-12..=1.0 + 1e-12).contains(value) {
                 return Err(StateError::OutOfBounds(*value));
@@ -4466,6 +4495,7 @@ impl ParticleState {
             .formations
             .quality
             .iter()
+            .chain(self.formations.experience.iter())
             .chain(self.formations.cohesion.iter())
             .chain(self.formations.readiness.iter())
             .chain(self.formations.sustainment.iter())

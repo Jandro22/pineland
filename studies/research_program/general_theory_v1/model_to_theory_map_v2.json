@@ -1,0 +1,162 @@
+{
+  "schema_version": "pineland.model_theory_map.v2",
+  "status": "implemented_source_mapping_not_empirical_validation",
+  "historical_outcomes_used_for_architecture": false,
+  "theory_core": "competitive_local_reproduction",
+  "mapping": [
+    {
+      "symbol": "M_I",
+      "construct": "rooted insurgent membership and local social base",
+      "rust_state": [
+        "PersonState.organization",
+        "PersonState.armed_fraction",
+        "PersonState.represented_population",
+        "PersonState.home",
+        "PersonState.residence",
+        "PersonState.social_exposure",
+        "ManpowerState.pool"
+      ],
+      "transitions": ["recruitment.rs", "social.rs", "organizations.rs", "state_regeneration.rs"]
+    },
+    {
+      "symbol": "F_I/F_G",
+      "construct": "fielded armed capacity",
+      "rust_state": [
+        "FormationState.personnel",
+        "FormationState.quality",
+        "FormationState.cohesion",
+        "FormationState.readiness",
+        "FormationState.sustainment",
+        "FormationState.command",
+        "FormationState.availability"
+      ],
+      "transitions": ["combat.rs", "movement.rs", "logistics.rs", "recruitment.rs", "state_regeneration.rs"]
+    },
+    {
+      "symbol": "V",
+      "construct": "formation experience and veterancy",
+      "rust_state": ["FormationState.experience"],
+      "transitions": [
+        "combat.rs engagement learning",
+        "patrol.rs operational learning",
+        "state_regeneration.rs replacement dilution",
+        "recruitment.rs formation inheritance",
+        "organizations.rs green formation birth"
+      ],
+      "interpretation": "Experience is accumulated field learning, distinct from training/equipment quality."
+    },
+    {
+      "symbol": "P_G",
+      "construct": "local police/security professionalism",
+      "rust_state": ["SecurityPostState.professionalism"],
+      "transitions": [
+        "state_regeneration.rs institutional convergence and personnel mixing",
+        "information.rs fixed-post source quality"
+      ],
+      "interpretation": "Professionalism represents procedural discipline, training standard, investigative competence and institutional behavior independent of headcount."
+    },
+    {
+      "symbol": "E_I",
+      "construct": "persistent local insurgent embeddedness",
+      "rust_state": [
+        "FootholdState.strength",
+        "FootholdState.renewal_count",
+        "FormationState.embeddedness",
+        "organization-specific local control",
+        "rooted membership"
+      ],
+      "transitions": ["organizations.rs", "recruitment.rs", "movement.rs", "actions.rs"]
+    },
+    {
+      "symbol": "L",
+      "construct": "local sustainment and logistics",
+      "rust_state": [
+        "FormationState.supply_stock",
+        "FormationState.supply_capacity",
+        "ManpowerState.supply_reserve",
+        "LogisticsState.source_stock",
+        "LogisticsState.source_capacity"
+      ],
+      "transitions": ["logistics.rs", "actions.rs", "combat.rs", "movement.rs"]
+    },
+    {
+      "symbol": "K_I/K_G",
+      "construct": "operational knowledge and information quality",
+      "rust_state": [
+        "BeliefState",
+        "PresenceState",
+        "ZoneBeliefState",
+        "FormationState.information",
+        "LocalityState.government_intelligence_penetration"
+      ],
+      "transitions": ["information.rs", "beliefs.rs", "patrol.rs", "state_regeneration.rs"]
+    },
+    {
+      "symbol": "A_G",
+      "construct": "state administrative and institutional capacity",
+      "rust_state": [
+        "LocalityState.administrative_capacity",
+        "PoliticalState.institution_capacity",
+        "PoliticalState.institution_integrity",
+        "PoliticalState.institution_reach"
+      ],
+      "transitions": ["political.rs", "governance.rs", "state_regeneration.rs"]
+    },
+    {
+      "symbol": "Q_G",
+      "construct": "state security regeneration capacity",
+      "rust_state": [
+        "LocalityState.government_security_recruit_pipeline",
+        "LocalityState.government_security_reserve",
+        "SecurityPostState.personnel",
+        "FormationState.personnel"
+      ],
+      "transitions": ["state_regeneration.rs"]
+    },
+    {
+      "symbol": "C",
+      "construct": "multidimensional competitive political-security control",
+      "rust_state": [
+        "LocalityState.government_control[7]",
+        "LocalityState.insurgent_control[7]",
+        "LocalityState.organization_control[7]",
+        "ZoneState government/insurgent control"
+      ],
+      "transitions": ["physical.rs", "governance.rs", "social.rs", "political.rs", "actions.rs", "combat.rs"]
+    },
+    {
+      "symbol": "X",
+      "construct": "civilian expectations, legitimacy and political response",
+      "rust_state": [
+        "PersonState.expected_control",
+        "PersonState.state_legitimacy",
+        "PersonState.government_legitimacy",
+        "PersonState.political_access",
+        "PersonState.grievance",
+        "PersonState.fear",
+        "PersonState.public_behavior"
+      ],
+      "transitions": ["beliefs.rs", "social.rs", "political.rs", "combat.rs", "movement.rs"]
+    },
+    {
+      "symbol": "U",
+      "construct": "exogenous support and replenishment",
+      "rust_state": [
+        "ForeignSystemState",
+        "ForeignInterventionState",
+        "OrganizationState.external_support",
+        "OrganizationState.external_sanctuary"
+      ],
+      "transitions": ["foreign.rs", "logistics.rs", "movement.rs"]
+    }
+  ],
+  "architectural_claims": [
+    "Mobility and exogenous replenishment are not endogenous reproduction.",
+    "Police headcount and professionalism are distinct state variables.",
+    "Formation quality and accumulated experience are distinct state variables.",
+    "Replacement flow can restore personnel while reducing unit veterancy.",
+    "Intelligence penetration attacks rooted membership without automatically deleting fielded force.",
+    "State regeneration is hierarchical and fiscal-institutional rather than a symmetric copy of insurgent reproduction."
+  ],
+  "scientific_status": "architecture_only; claims require synthetic falsification and later authorized historical transport"
+}

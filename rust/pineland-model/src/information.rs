@@ -2375,12 +2375,35 @@ fn source_quality(
     source_type: SourceType,
     locality: usize,
 ) -> f64 {
-    let coverage = config
+    let mut coverage = config
         .information
         .source_coverage
         .get(source_type.name())
         .copied()
         .unwrap_or(0.4);
+    if config.state_regeneration.enabled && source_type == SourceType::FixedPost {
+        let mut weighted = 0.0;
+        let mut total = 0.0;
+        for post in 0..particle.security_posts.locality.len() {
+            if particle.security_posts.locality[post] as usize != locality
+                || particle.security_posts.staffed[post] == 0
+            {
+                continue;
+            }
+            let personnel = particle.security_posts.personnel[post].max(0.0);
+            if personnel <= 0.0 {
+                continue;
+            }
+            weighted += personnel * particle.security_posts.professionalism[post].clamp(0.0, 1.0);
+            total += personnel;
+        }
+        let professionalism = if total > 1.0e-12 {
+            (weighted / total).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        coverage *= 0.50 + 0.50 * professionalism;
+    }
     let observability = particle.locality.observability[locality];
     let draw = rng.random();
     let quality = clamp01(coverage * (0.55 + 0.45 * observability) * (0.85 + 0.3 * draw));

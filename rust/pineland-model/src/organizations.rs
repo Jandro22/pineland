@@ -729,6 +729,7 @@ fn materialize_proto_birth(
     particle.formations.microzone.push(zone as u32);
     particle.formations.personnel.push(personnel);
     particle.formations.quality.push(0.35);
+    particle.formations.experience.push(0.12);
     particle.formations.cohesion.push(cohesion);
     particle.formations.readiness.push(0.55);
     particle.formations.sustainment.push(if capacity > 0.0 {

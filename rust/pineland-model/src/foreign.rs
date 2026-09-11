@@ -291,6 +291,7 @@ fn create_foreign_intervention(
     particle.formations.microzone.push(u32::MAX);
     particle.formations.personnel.push(900.0);
     particle.formations.quality.push(0.78);
+    particle.formations.experience.push(0.65);
     particle.formations.cohesion.push(0.76);
     particle.formations.readiness.push(0.82);
     particle.formations.sustainment.push(0.9);
@@ -349,6 +350,11 @@ fn create_foreign_intervention(
         .security_posts
         .reliability
         .push(config.information.prior_confidence);
+    particle.security_posts.professionalism.push(clamp01(
+        0.40 * particle.organizations.institutional_quality[organization]
+            + 0.30 * particle.organizations.discipline[organization]
+            + 0.30 * particle.organizations.accountability[organization],
+    ));
     particle.security_posts.updated_at.push(0.0);
     particle.security_posts.staffed.push(1);
 
