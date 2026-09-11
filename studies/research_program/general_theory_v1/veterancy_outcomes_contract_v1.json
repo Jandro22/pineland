@@ -1,0 +1,73 @@
+﻿{
+    "schema_version":  "pineland.veterancy_outcomes_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "How much does formation experience causally and predictively affect tactical success and survival for government and insurgent formations?",
+    "controlled":  {
+                       "seed_base":  2026110000,
+                       "replicates":  1024,
+                       "experience_levels":  [
+                                                 0.1,
+                                                 0.3,
+                                                 0.5,
+                                                 0.7,
+                                                 0.9
+                                             ],
+                       "opponent_experience":  0.5,
+                       "quality":  0.75,
+                       "personnel":  300,
+                       "readiness":  1,
+                       "cohesion":  0.9,
+                       "availability":  1,
+                       "command":  0.8,
+                       "mobility":  0.5,
+                       "embeddedness":  0.5,
+                       "information":  0.5,
+                       "ample_supply":  true,
+                       "engagements":  12,
+                       "common_random_numbers_across_experience":  true,
+                       "sides":  [
+                                     "government",
+                                     "insurgent"
+                                 ],
+                       "primary_outcomes":  [
+                                                "single_engagement_loss_fraction",
+                                                "single_engagement_opponent_loss_fraction",
+                                                "single_engagement_tactical_win",
+                                                "campaign_combat_effective_survival",
+                                                "campaign_loss_exchange_ratio",
+                                                "campaign_final_personnel_fraction"
+                                            ]
+                   },
+    "naturalistic":  {
+                         "seed_base":  2026111000,
+                         "seeds":  32,
+                         "agents":  300,
+                         "localities":  34,
+                         "anchor_day":  60,
+                         "horizon_day":  180,
+                         "sides":  [
+                                       "government",
+                                       "insurgent"
+                                   ],
+                         "predictor":  "formation experience at day 60",
+                         "outcomes":  [
+                                          "combat_effective_at_180",
+                                          "personnel_survival_fraction",
+                                          "future_cumulative_loss_fraction"
+                                      ],
+                         "controls":  [
+                                          "quality",
+                                          "log_personnel",
+                                          "readiness",
+                                          "cohesion",
+                                          "supply_fraction",
+                                          "command",
+                                          "embeddedness",
+                                          "availability"
+                                      ],
+                         "analysis":  "side-specific unadjusted association plus leave-one-seed-out adjusted logistic/linear models; report incremental predictive value of experience beyond controls"
+                     },
+    "causal_interpretation":  "Only controlled common-random-number contrasts license a causal veterancy effect. Naturalistic results are predictive/associational because prior combat both raises experience and selects survivors.",
+    "guard":  "Synthetic model mechanism only; no real-world combat-effect magnitude claim."
+}
