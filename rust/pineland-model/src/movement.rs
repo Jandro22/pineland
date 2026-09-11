@@ -908,6 +908,265 @@ fn destination_score(
         - route_risk_penalty
 }
 
+fn transport_strength_if_present(particle: &ParticleState, formation: usize) -> f64 {
+    if formation >= particle.formations.personnel.len()
+        || particle.formations.outside_pineland[formation] != 0
+        || particle.formations.personnel[formation] <= 0.0
+        || particle.formations.operational_status[formation] != 1
+    {
+        return 0.0;
+    }
+    let personnel = particle.formations.personnel[formation].max(0.0);
+    let available = personnel
+        * particle.formations.availability[formation].clamp(0.0, 1.0)
+        * particle.formations.effective_readiness(formation);
+    if available <= 0.0 {
+        0.0
+    } else {
+        available
+            * particle.formations.quality[formation]
+            * particle.formations.cohesion[formation]
+            * (0.5 + particle.formations.information[formation])
+    }
+}
+
+fn insurgent_posture_probabilities(
+    particle: &ParticleState,
+    config: &SimulationConfig,
+    organization: usize,
+    formation: usize,
+) -> [f64; 4] {
+    let weights = [
+        config.logistics.insurgent_frontier_weight.max(0.0),
+        config.logistics.insurgent_foothold_weight.max(0.0),
+        config.logistics.insurgent_stronghold_weight.max(0.0),
+        config.logistics.reallocation_exploration_weight.max(0.0),
+    ];
+    let total = python_sum(&weights);
+    let mut probabilities = if total > 0.0 {
+        [
+            weights[0] / total,
+            weights[1] / total,
+            weights[2] / total,
+            weights[3] / total,
+        ]
+    } else {
+        [0.25; 4]
+    };
+    let current = particle
+        .formations
+        .operational_posture
+        .get(formation)
+        .copied()
+        .unwrap_or(POSTURE_PORTFOLIO);
+    if matches!(
+        current,
+        POSTURE_FRONTIER | POSTURE_FOOTHOLD | POSTURE_STRONGHOLD | POSTURE_EXPLORATION
+    ) {
+        let persistence = particle
+            .organizations
+            .persistence
+            .get(organization)
+            .copied()
+            .unwrap_or(0.0)
+            .clamp(0.0, 1.0);
+        for value in &mut probabilities {
+            *value *= 1.0 - persistence;
+        }
+        let current_index = match current {
+            POSTURE_FRONTIER => 0,
+            POSTURE_FOOTHOLD => 1,
+            POSTURE_STRONGHOLD => 2,
+            POSTURE_EXPLORATION => 3,
+            _ => unreachable!(),
+        };
+        probabilities[current_index] += persistence;
+    }
+    probabilities
+}
+
+fn destination_probabilities_given_posture(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    formation: usize,
+    posture: u8,
+    maximum_population: f64,
+) -> Vec<f64> {
+    let locality_count = topology.locality_count();
+    let mut probabilities = vec![0.0; locality_count];
+    if formation >= particle.formations.personnel.len() {
+        return probabilities;
+    }
+    let organization = particle.formations.organization[formation] as usize;
+    let origin = particle.formations.locality[formation] as usize;
+    if origin >= locality_count {
+        return probabilities;
+    }
+    let route_metrics = all_route_metrics(
+        particle,
+        topology,
+        origin,
+        particle.formations.mobility[formation],
+    );
+    let footholds = local_armed_footholds(particle, topology, organization, config);
+    let mut destinations = Vec::new();
+    if config.logistics.reallocation_destination_scope == "adjacent" {
+        destinations.push(origin);
+        destinations.extend(
+            topology
+                .locality_edges
+                .neighbors(origin)
+                .map(|(neighbor, _)| neighbor as usize),
+        );
+        destinations.sort_unstable();
+        destinations.dedup();
+    } else {
+        destinations.extend(0..topology.locality_count());
+    }
+
+    let moving_personnel = particle.formations.personnel[formation]
+        * particle.formations.availability[formation].clamp(0.0, 1.0);
+    let mut weights = vec![0.0; locality_count];
+    let mut total_weight = 0.0;
+    for candidate in destinations {
+        let Some(metric) = route_metrics.get(candidate).and_then(Option::as_ref) else {
+            continue;
+        };
+        let movement_cost = moving_personnel
+            * metric.distance_km
+            * config.logistics.movement_consumption_per_person_km;
+        if candidate != origin
+            && movement_cost > particle.formations.supply_stock[formation] + 1.0e-12
+        {
+            continue;
+        }
+        let score = destination_score(
+            particle,
+            topology,
+            config,
+            formation,
+            candidate,
+            metric,
+            maximum_population,
+            Some(&footholds),
+            Some(posture),
+        );
+        let weight = python_exp(score.clamp(-8.0, 8.0));
+        weights[candidate] = weight;
+        total_weight += weight;
+    }
+    if total_weight > 0.0 {
+        for (candidate, weight) in weights.into_iter().enumerate() {
+            probabilities[candidate] = (weight / total_weight).clamp(0.0, 1.0);
+        }
+    }
+    probabilities
+}
+
+/// Pure coarse-graining diagnostic for expected insurgent capacity arriving
+/// at one locality through spatial relocation rather than local reproduction.
+///
+/// The committed component counts effective strength already pending/moving
+/// toward the destination.  The prospective component integrates the exact
+/// production posture-selection distribution and destination softmax for the
+/// next command opportunity, multiplied by the command decision probability.
+/// No RNG is consumed and no model state is mutated.
+pub fn inbound_transport_pressures(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+) -> Vec<f64> {
+    let locality_count = topology.locality_count();
+    let mut pressures = vec![0.0; locality_count];
+    let maximum_population = topology
+        .locality_population
+        .iter()
+        .copied()
+        .fold(0.0, f64::max);
+    let decision_probability = reference_probability(
+        config.logistics.reallocation_rate,
+        config.intervals.command,
+        1.0,
+    );
+    for formation in 0..particle.formations.personnel.len() {
+        let organization = particle.formations.organization[formation] as usize;
+        if organization != INSURGENT
+            || particle.formations.outside_pineland[formation] != 0
+            || particle.formations.personnel[formation] <= 0.0
+            || particle.formations.operational_status[formation] != 1
+        {
+            continue;
+        }
+        let strength = transport_strength_if_present(particle, formation);
+        if strength <= 0.0 {
+            continue;
+        }
+        if has_active_order(particle, formation) {
+            let destination = particle.formations.movement_destination[formation] as usize;
+            if destination < locality_count {
+                pressures[destination] += strength;
+            }
+            continue;
+        }
+        if particle.formations.moving[formation] != 0
+            || particle.formations.deployable_personnel(formation) <= 0.0
+        {
+            continue;
+        }
+        let posture_probabilities =
+            insurgent_posture_probabilities(particle, config, organization, formation);
+        let postures = [
+            POSTURE_FRONTIER,
+            POSTURE_FOOTHOLD,
+            POSTURE_STRONGHOLD,
+            POSTURE_EXPLORATION,
+        ];
+        let mut destination_probabilities = vec![0.0; locality_count];
+        for (posture, posture_probability) in postures.into_iter().zip(posture_probabilities) {
+            if posture_probability <= 0.0 {
+                continue;
+            }
+            let conditional = destination_probabilities_given_posture(
+                particle,
+                topology,
+                config,
+                formation,
+                posture,
+                maximum_population,
+            );
+            for locality in 0..locality_count {
+                destination_probabilities[locality] += posture_probability * conditional[locality];
+            }
+        }
+        let origin = particle.formations.locality[formation] as usize;
+        for destination in 0..locality_count {
+            if destination == origin {
+                continue;
+            }
+            pressures[destination] += strength
+                * decision_probability
+                * destination_probabilities[destination].clamp(0.0, 1.0);
+        }
+    }
+    for value in &mut pressures {
+        *value = value.max(0.0);
+    }
+    pressures
+}
+
+pub fn inbound_transport_pressure(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    destination: usize,
+) -> f64 {
+    inbound_transport_pressures(particle, topology, config)
+        .get(destination)
+        .copied()
+        .unwrap_or(0.0)
+}
+
 fn sanctuary_access(
     particle: &ParticleState,
     topology: &StaticTopology,
