@@ -1,6 +1,6 @@
 {
   "schema_version": "pineland.v2_omitted_state_stress_contract.v1",
-  "status": "PREREGISTERED_BEFORE_STRESS_OUTCOMES",
+  "status": "AMENDED_AFTER_NON_GATING_ACTIVATION_SMOKE_BEFORE_OFFICIAL_STRESS_OUTCOMES",
   "historical_outcomes_used": false,
   "historical_rerun_authorized": false,
   "purpose": "Test whether the v1 competitive11 macrostate omits dynamically relevant memory carried by police professionalism or government/insurgent formation veterancy.",
@@ -28,7 +28,7 @@
     "focal_localities_per_seed_per_block": 3,
     "horizons_days": [30, 90],
     "common_rng_branches": 32,
-    "focal_selection": "For each block and seed, select evenly spaced low/mid/high activity localities among localities where the relevant police post or formation exists."
+    "focal_selection": "For police professionalism, select evenly spaced low/mid/high activity localities with a staffed police post. For either veterancy block, require the focal formation and an active opposing armed formation to be co-located so combat exposure is structurally possible, then select evenly spaced low/mid/high activity localities from that eligible set."
   },
   "smoke_design": {
     "gate_eligible": false,
@@ -48,6 +48,21 @@
     "final C",
     "final state control"
   ],
+  "secondary_activation_diagnostics": [
+    "change in government intelligence penetration",
+    "incremental rooted-membership disruption",
+    "incremental local government formation losses",
+    "incremental local insurgent formation losses",
+    "final realized hidden-state value"
+  ],
+  "amendment_record": {
+    "non_gating_smoke_files": [
+      "v2_stress_smoke_police.csv",
+      "v2_stress_smoke_govvet.csv",
+      "v2_stress_smoke_insvet.csv"
+    ],
+    "reason": "The first smoke confirmed exact competitive11 preservation but showed that formation existence alone does not guarantee the combat exposure required for veterancy to enter the transition law; selected veterancy cells produced exactly zero outcome response. The official design therefore requires co-located opposition for veterancy cells. Secondary proximal diagnostics are added to distinguish mechanism non-activation from genuine macro-level screening-off. Primary macrostate reduction outcomes and practical-effect thresholds are unchanged."
+  },
   "practical_effect_thresholds": {
     "binary_risk_difference": 0.15,
     "continuous_standardized_mean_difference": 0.25,
