@@ -1,0 +1,49 @@
+{
+  "schema_version": "pineland.state_regeneration_long_horizon_contract.v1",
+  "status": "PREREGISTERED_AFTER_180D_SYNTHETIC_RESULT_BEFORE_LONG_HORIZON_OUTCOMES",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "motivation": "The preregistered 180-day v2 assay established pathway engagement but only about 6.1 percent mean matched institutional-gap closure and no Q50 crossings. That result is insufficient to identify a recovery time constant or long-run functional form. This second-stage synthetic assay is designed explicitly to identify or reject such a timescale claim.",
+  "engine": {
+    "state_regeneration_enabled": true,
+    "foreign_affairs": false,
+    "organization_ecology": false,
+    "insurgent_activity": "neutralized to isolate hierarchical state recovery"
+  },
+  "design": {
+    "agents": 300,
+    "localities": 34,
+    "dynamic_seeds": 4,
+    "focal_localities_per_seed": 4,
+    "horizon_days": 1440,
+    "observation_step_days": 30,
+    "capital_multipliers": [0.25, 0.5, 1.0, 2.0, 4.0],
+    "shock_fractions": [0.1, 0.3, 0.5, 1.0],
+    "matched_control": "shock_fraction=1.0 at identical seed, focal, capital multiplier, and time",
+    "shock_definition": "same corrected causal-stock shock as state_regeneration_v2_contract.json"
+  },
+  "primary_estimands": [
+    "mean and median Q_capacity at 180, 360, 720, 1080, and 1440 days",
+    "fraction reaching Q_capacity >= 0.50 by each milestone",
+    "fraction reaching Q_capacity >= 0.80 by each milestone",
+    "first-passage time to Q50 and Q80 among trajectories that cross",
+    "matched effective-control gap closure at each milestone"
+  ],
+  "functional_form_discrimination": {
+    "candidate_models": [
+      "linear Q(t)=a*t over the observed support",
+      "single-asymptote exponential Q(t)=A*(1-exp(-t/tau))"
+    ],
+    "fit_scope": "each shocked trajectory separately using only post-shock long-horizon synthetic observations",
+    "comparison": "AIC plus held-out late-time RMSE using early 70 percent of time points for fit and final 30 percent for temporal validation",
+    "single_timescale_promotion_gate": "Do not report a characteristic tau as a theory quantity unless the exponential form beats linear AIC in at least 70 percent of eligible trajectories, improves held-out late-time RMSE in at least 70 percent, at least half of shocked trajectories reach Q50, and fitted tau has coefficient of variation <= 0.50 within each shock stratum.",
+    "failure_interpretation": "If the gate fails, state recovery is retained as multi-timescale/context-dependent and no scalar tau_state enters the reduced theory."
+  },
+  "resource_saturation_test": {
+    "hypothesis_source": "motivated by the already-observed 180-day synthetic result, not historical evidence",
+    "question": "Does increasing central capital above a modest threshold cease to improve recovery because absorptive, personnel, and institutional throughput rather than cash are binding?",
+    "estimand": "matched Q_capacity contrasts across capital multipliers within seed/focal/shock strata over time",
+    "guard": "A flat capital response in this synthetic implementation is not an empirical claim about real-world aid or budgets."
+  },
+  "interpretation_guard": "This experiment may identify a timescale only for the implemented pure-recovery synthetic system. Competitive insurgent pressure, topology transport, scale invariance, and historical validation remain separate gates."
+}

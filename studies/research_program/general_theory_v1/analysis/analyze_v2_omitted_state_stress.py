@@ -40,6 +40,14 @@ PRE11 = [
     "pre_U",
 ]
 
+SECONDARY = [
+    "intelligence_delta",
+    "underground_disruption_delta",
+    "government_formation_losses_delta",
+    "insurgent_formation_losses_delta",
+    "final_hidden_value",
+]
+
 DOMAIN_SCALE_FLOOR = {
     "log1p_actions_delta": 0.75,
     "log1p_recruits_delta": 0.75,
@@ -105,7 +113,7 @@ def analyze(csv_path: str, out_path: str) -> None:
         "assigned_hidden_value",
         "realized_hidden_value",
         "viable",
-    } | set(PRE11) | set(CONTINUOUS)
+    } | set(PRE11) | set(CONTINUOUS) | set(SECONDARY)
     missing = sorted(required - set(df.columns))
     if missing:
         raise SystemExit(f"missing columns: {missing}")
@@ -119,6 +127,7 @@ def analyze(csv_path: str, out_path: str) -> None:
     rng = np.random.default_rng(20261003)
     tests: list[dict] = []
     states: dict[tuple[int, int], dict] = {}
+    secondary_by_state: dict[tuple[int, int], dict[str, float]] = {}
     max_pre11_abs_difference = 0.0
     hidden_separations = []
 
@@ -141,6 +150,10 @@ def analyze(csv_path: str, out_path: str) -> None:
             "stratum": str(g.stratum.iloc[0]),
         }
         states[(int(seed), int(locality))] = meta
+        secondary_by_state[(int(seed), int(locality))] = {
+            column: float(high[column].mean() - low[column].mean())
+            for column in SECONDARY
+        }
 
         lv = low.viable.to_numpy(float)
         hv = high.viable.to_numpy(float)
@@ -195,6 +208,7 @@ def analyze(csv_path: str, out_path: str) -> None:
         state_results.append(
             {
                 **states[key],
+                "secondary_high_minus_low": secondary_by_state[key],
                 "any_practically_large": any(x["practically_large"] for x in subset),
                 "any_significant_and_large": any(x["significant_and_large"] for x in subset),
                 "large_outcomes": [x["outcome"] for x in subset if x["practically_large"]],
@@ -207,6 +221,36 @@ def analyze(csv_path: str, out_path: str) -> None:
     raw_rate = float(np.mean([x["any_practically_large"] for x in state_results]))
     sig_rate = float(np.mean([x["any_significant_and_large"] for x in state_results]))
     relevant = any(x["any_significant_and_large"] for x in state_results)
+    secondary_summary = {
+        column: {
+            "max_abs_high_minus_low": float(
+                max(abs(secondary_by_state[key][column]) for key in secondary_by_state)
+            ),
+            "mean_high_minus_low": float(
+                np.mean([secondary_by_state[key][column] for key in secondary_by_state])
+            ),
+            "fraction_nonzero": float(
+                np.mean(
+                    [
+                        abs(secondary_by_state[key][column]) > 1.0e-12
+                        for key in secondary_by_state
+                    ]
+                )
+            ),
+        }
+        for column in SECONDARY
+    }
+    if str(df.block.iloc[0]) in {"government_veterancy", "insurgent_veterancy"}:
+        loss_columns = [
+            "government_formation_losses_delta",
+            "insurgent_formation_losses_delta",
+        ]
+        combat_exposure = []
+        for (seed, locality), g in df.groupby(["seed", "locality"], sort=True):
+            combat_exposure.append(
+                any(float(g[column].max()) > 1.0e-12 for column in loss_columns)
+            )
+        secondary_summary["combat_exposure_fraction"] = float(np.mean(combat_exposure))
     strata = {}
     for stratum in sorted(set(x["stratum"] for x in state_results)):
         sub = [x for x in state_results if x["stratum"] == stratum]
@@ -247,6 +291,7 @@ def analyze(csv_path: str, out_path: str) -> None:
             "significant_and_large_state_rate": sig_rate,
             "strata": strata,
         },
+        "secondary_activation_diagnostics": secondary_summary,
         "states": state_results,
         "tests": tests,
         "interpretation_guard": (
@@ -265,6 +310,7 @@ def analyze(csv_path: str, out_path: str) -> None:
                 "states": result["state_count"],
                 "branches": result["branches_per_state"],
                 "pre11_max_abs_difference": max_pre11_abs_difference,
+                "secondary_activation": secondary_summary,
                 **result["summary"],
             },
             indent=2,
