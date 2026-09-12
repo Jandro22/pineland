@@ -377,7 +377,7 @@ fn first_locality_step(
     if origin == destination {
         return Some(origin);
     }
-    all_route_metrics(particle, topology, origin, 1.0)
+    all_route_metrics(particle, topology, origin, 1.0, 1.0)
         .get(destination)
         .and_then(|metric| metric.as_ref())
         .and_then(|metric| metric.route.get(1).copied())
@@ -460,6 +460,7 @@ pub fn command(
             topology,
             particle.formations.locality[formation] as usize,
             particle.formations.mobility[formation],
+            equipment_terrain_exponent(particle, config, formation),
         );
         let insurgent = particle.organizations.kind.get(organization).copied() == Some(3);
         let footholds = if insurgent {
@@ -516,7 +517,8 @@ pub fn command(
             };
             let movement_cost = moving_personnel
                 * metric.distance_km
-                * config.logistics.movement_consumption_per_person_km;
+                * config.logistics.movement_consumption_per_person_km
+                * equipment_supply_burden(particle, config, formation);
             // The commander checks feasibility before issuing. The force
             // movement event checks again after command latency.
             if destination != origin
@@ -596,12 +598,37 @@ fn has_active_order(particle: &ParticleState, formation: usize) -> bool {
         || particle.formations.movement_status.get(formation).copied() == Some(MOVE_MOVING)
 }
 
+fn equipment_terrain_exponent(
+    particle: &ParticleState,
+    config: &SimulationConfig,
+    formation: usize,
+) -> f64 {
+    if particle.formations.organization[formation] as usize == crate::MILITARY {
+        1.0 + config.combat.government_terrain_mobility_penalty.max(0.0)
+    } else {
+        1.0
+    }
+}
+
+fn equipment_supply_burden(
+    particle: &ParticleState,
+    config: &SimulationConfig,
+    formation: usize,
+) -> f64 {
+    if particle.formations.organization[formation] as usize == crate::MILITARY {
+        config.combat.government_supply_burden_multiplier
+    } else {
+        1.0
+    }
+}
+
 fn locality_leg(
     particle: &ParticleState,
     topology: &StaticTopology,
     first: usize,
     second: usize,
     mobility: f64,
+    terrain_exponent: f64,
 ) -> Option<(f64, f64)> {
     let terrain_cost = topology
         .locality_edges
@@ -610,7 +637,12 @@ fn locality_leg(
     let infrastructure =
         (particle.locality.infrastructure[first] + particle.locality.infrastructure[second]) / 2.0;
     let distance_km = 18.0 + 22.0 * terrain_cost;
-    let speed_kmh = 42.0 * mobility.max(0.15) * infrastructure.max(0.2) / terrain_cost.max(0.5);
+    let terrain_denominator = if terrain_exponent == 1.0 {
+        terrain_cost.max(0.5)
+    } else {
+        terrain_cost.max(0.5).powf(terrain_exponent)
+    };
+    let speed_kmh = 42.0 * mobility.max(0.15) * infrastructure.max(0.2) / terrain_denominator;
     Some((distance_km, distance_km / speed_kmh))
 }
 
@@ -619,6 +651,7 @@ fn all_route_metrics(
     topology: &StaticTopology,
     origin: usize,
     mobility: f64,
+    terrain_exponent: f64,
 ) -> Vec<Option<RouteMetric>> {
     let count = topology.locality_count();
     let mut travel = vec![f64::INFINITY; count];
@@ -651,7 +684,7 @@ fn all_route_metrics(
         for (neighbor, _) in topology.locality_edges.neighbors(node) {
             let neighbor = neighbor as usize;
             let Some((leg_distance, leg_hours)) =
-                locality_leg(particle, topology, node, neighbor, mobility)
+                locality_leg(particle, topology, node, neighbor, mobility, terrain_exponent)
             else {
                 continue;
             };
@@ -1008,6 +1041,7 @@ fn destination_probabilities_given_posture(
         topology,
         origin,
         particle.formations.mobility[formation],
+        equipment_terrain_exponent(particle, config, formation),
     );
     let footholds = local_armed_footholds(particle, topology, organization, config);
     let mut destinations = Vec::new();
@@ -1035,7 +1069,8 @@ fn destination_probabilities_given_posture(
         };
         let movement_cost = moving_personnel
             * metric.distance_km
-            * config.logistics.movement_consumption_per_person_km;
+            * config.logistics.movement_consumption_per_person_km
+            * equipment_supply_burden(particle, config, formation);
         if candidate != origin
             && movement_cost > particle.formations.supply_stock[formation] + 1.0e-12
         {
@@ -1317,6 +1352,7 @@ fn sanctuary_access(
             topology,
             border_locality,
             mobility,
+            1.0,
         );
         let Some(route) = route_metrics.get(destination).and_then(|metric| metric.as_ref()) else {
             continue;
@@ -1368,7 +1404,8 @@ fn issue_movement_order(
     let supply_cost = moving_personnel
         * metric.distance_km
         * config.logistics.movement_consumption_per_person_km
-        * restriction_multiplier;
+        * restriction_multiplier
+        * equipment_supply_burden(particle, config, formation);
     let (reliability, latency_hours) = command_metrics(particle, organization, formation);
     let command_draw = rng.random();
     let status = if command_draw <= reliability {
@@ -1417,7 +1454,13 @@ pub(crate) fn issue_withdrawal_order(
     }
     let origin = particle.formations.locality[formation] as usize;
     let mobility = particle.formations.mobility[formation].max(0.05);
-    let route_metrics = all_route_metrics(particle, topology, origin, mobility);
+    let route_metrics = all_route_metrics(
+        particle,
+        topology,
+        origin,
+        mobility,
+        equipment_terrain_exponent(particle, config, formation),
+    );
     let organization = particle.formations.organization[formation] as usize;
     let footholds = local_armed_footholds(particle, topology, organization, config);
     let (own_target, opponent_target) = target_pair(particle, organization);
@@ -1441,7 +1484,8 @@ pub(crate) fn issue_withdrawal_order(
             * particle.formations.availability[formation].clamp(0.0, 1.0);
         let movement_cost = moving_personnel
             * metric.distance_km
-            * config.logistics.movement_consumption_per_person_km;
+            * config.logistics.movement_consumption_per_person_km
+            * equipment_supply_burden(particle, config, formation);
         if movement_cost > particle.formations.supply_stock[formation] + 1.0e-12 {
             continue;
         }
@@ -1586,6 +1630,7 @@ pub(crate) fn issue_reinforcement_order(
         topology,
         particle.formations.locality[candidate] as usize,
         particle.formations.mobility[candidate],
+        equipment_terrain_exponent(particle, config, candidate),
     );
     let Some(metric) = route_metrics.get(origin).and_then(Option::as_ref) else {
         return false;
