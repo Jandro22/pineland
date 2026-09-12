@@ -5,6 +5,88 @@ use pineland_core::rng::{python_exp, python_sum, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
 use pineland_core::topology::StaticTopology;
 
+fn public_allocation_weights(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+) -> Option<Vec<f64>> {
+    let mode = config.political_order.public_allocation_mode.as_str();
+    if mode == "equal_locality" {
+        // Preserve the archived/parity arithmetic path exactly.
+        return None;
+    }
+    let locality_count = topology.locality_count();
+    let locality_institution_start = 6 + topology.district_count();
+    let mut weights = Vec::with_capacity(locality_count);
+    for locality in 0..locality_count {
+        let population = particle.locality.population[locality].max(0.0);
+        let administrative = particle.locality.administrative_capacity[locality].clamp(0.0, 1.0);
+        let institution = locality_institution_start + locality;
+        let capacity = particle
+            .political
+            .institution_capacity
+            .get(institution)
+            .copied()
+            .unwrap_or(0.0)
+            .clamp(0.0, 1.0);
+        let reach = particle
+            .political
+            .institution_reach
+            .get(institution)
+            .copied()
+            .unwrap_or(0.0)
+            .clamp(0.0, 1.0);
+        let compliance = particle
+            .political
+            .institution_compliance
+            .get(institution)
+            .copied()
+            .unwrap_or(0.0)
+            .clamp(0.0, 1.0);
+        let integrity = particle
+            .political
+            .institution_integrity
+            .get(institution)
+            .copied()
+            .unwrap_or(0.0)
+            .clamp(0.0, 1.0);
+        let autonomy = particle
+            .political
+            .institution_autonomy
+            .get(institution)
+            .copied()
+            .unwrap_or(0.0)
+            .clamp(0.0, 1.0);
+        let infrastructure = particle.locality.infrastructure[locality].clamp(0.0, 1.0);
+        let weight = match mode {
+            "per_capita" => population,
+            "threat_weighted" => {
+                population * (0.05 + particle.locality.effective_control(locality, 1))
+            }
+            "need_weighted" => population * (0.05 + 1.0 - administrative),
+            "marginal_return" => {
+                // Low-dose, population-weighted marginal service output from
+                // the existing political-order production equation.  The
+                // population denominator in `scale` cancels when the social
+                // objective weights service by residents, leaving the local
+                // institutional conversion terms.  Use stored compliance for
+                // both allocation and production; the event's later sampled
+                // compliance noise remains untouched.
+                let service_factor = ((0.8 + 0.2 * infrastructure)
+                    + integrity
+                    + capacity
+                    + infrastructure
+                    + (0.5 + 0.5 * autonomy))
+                    / 5.0;
+                0.01 + capacity * reach * compliance * compliance * service_factor
+            }
+            _ => 1.0,
+        };
+        weights.push(weight.max(0.0));
+    }
+    Some(weights)
+}
+
 pub fn update(
     particle: &mut ParticleState,
     topology: &StaticTopology,
@@ -41,9 +123,22 @@ pub fn update(
 
     let district_count = topology.district_count();
     let locality_institution_start = 6 + district_count;
+    let public_weights = public_allocation_weights(particle, topology, config);
+    let public_weight_total = public_weights
+        .as_ref()
+        .map(|weights| python_sum(weights))
+        .unwrap_or(0.0);
     for locality in 0..topology.locality_count() {
         let institution = locality_institution_start + locality;
-        let public = public_total / topology.locality_count().max(1) as f64;
+        let public = if let Some(weights) = &public_weights {
+            if public_weight_total > 1.0e-12 {
+                public_total * weights[locality] / public_weight_total
+            } else {
+                public_total / topology.locality_count().max(1) as f64
+            }
+        } else {
+            public_total / topology.locality_count().max(1) as f64
+        };
         let mut patronage = patronage_total / topology.locality_count().max(1) as f64;
         let compliance_noise = rng.normalvariate(0.0, 0.08);
         let compliance = clamp01(

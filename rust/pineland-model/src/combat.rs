@@ -171,7 +171,18 @@ fn capability(
         .copied()
         .or_else(|| topology.zone_observability.get(microzone).copied())
         .unwrap_or(0.5);
-    let mobility = (particle.formations.mobility[formation] / terrain.max(0.35)).clamp(0.15, 1.0);
+    let formation_org = particle.formations.organization[formation] as usize;
+    let mobility = if formation_org == crate::MILITARY
+        && config.combat.government_terrain_mobility_penalty > 0.0
+    {
+        (particle.formations.mobility[formation]
+            / terrain
+                .max(0.35)
+                .powf(1.0 + config.combat.government_terrain_mobility_penalty))
+        .clamp(0.15, 1.0)
+    } else {
+        (particle.formations.mobility[formation] / terrain.max(0.35)).clamp(0.15, 1.0)
+    };
     let observation = 0.35 + 0.65 * observability;
     let embedded = 0.55 + 0.45 * particle.formations.embeddedness[formation].clamp(0.0, 1.0);
     // V2 separates accumulated field experience from structural quality.
@@ -179,6 +190,11 @@ fn capability(
     // gated so parity-era runs retain their historical capability equation.
     let experience = if config.state_regeneration.enabled {
         0.75 + 0.50 * particle.formations.experience[formation].clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+    let firepower = if formation_org == crate::MILITARY {
+        config.combat.government_firepower_multiplier
     } else {
         1.0
     };
@@ -193,7 +209,8 @@ fn capability(
         * observation
         * mobility.powf(0.35)
         * embedded
-        * initiative)
+        * initiative
+        * firepower)
         .max(1.0e-9)
 }
 
@@ -210,6 +227,22 @@ fn consume_formation_supply(
     particle.formations.sustainment[formation] = particle.formations.supply_fraction(formation);
     particle.logistics.cumulative_consumed += consumed;
     (consumed, demanded - consumed)
+}
+
+fn government_air_support_level(
+    particle: &ParticleState,
+    config: &SimulationConfig,
+    formation: usize,
+    detected_opponent: bool,
+) -> f64 {
+    if config.combat.government_air_support_intensity <= 0.0
+        || !detected_opponent
+        || particle.formations.organization[formation] as usize != crate::MILITARY
+    {
+        return 0.0;
+    }
+    config.combat.government_air_support_intensity
+        * (0.5 + 0.5 * particle.formations.information[formation].clamp(0.0, 1.0))
 }
 
 fn presence_personnel(
@@ -622,8 +655,32 @@ fn resolve_engagement(
         } else {
             0.0
         };
-    let capability_first = capability(particle, topology, config, first, microzone, initiative_first);
-    let capability_second = capability(particle, topology, config, second, microzone, initiative_second);
+    let air_first = government_air_support_level(particle, config, first, detected_first);
+    let air_second = government_air_support_level(particle, config, second, detected_second);
+    let air_multiplier_first = 1.0 + air_first * config.combat.government_air_support_firepower_bonus;
+    let air_multiplier_second =
+        1.0 + air_second * config.combat.government_air_support_firepower_bonus;
+    let capability_first = capability(
+        particle,
+        topology,
+        config,
+        first,
+        microzone,
+        initiative_first * air_multiplier_first,
+    );
+    let capability_second = capability(
+        particle,
+        topology,
+        config,
+        second,
+        microzone,
+        initiative_second * air_multiplier_second,
+    );
+    if air_first > 0.0 || air_second > 0.0 {
+        let cost = (air_first + air_second) * config.combat.government_air_support_cost_per_contact;
+        particle.organizations.capital[crate::GOVERNMENT] =
+            (particle.organizations.capital[crate::GOVERNMENT] - cost).max(0.0);
+    }
     let advantage = capability_first.ln() - capability_second.ln();
     let observability = particle
         .zones
@@ -638,14 +695,26 @@ fn resolve_engagement(
         .copied()
         .unwrap_or(1.0);
     let exposure = (observability / terrain.max(0.55)).clamp(0.2, 1.35);
-    let frac_first = (config.combat.base_attrition_rate
+    let mut frac_first = (config.combat.base_attrition_rate
         * exposure
         * python_exp(-0.45 * advantage + rng.normalvariate(0.0, config.combat.stochastic_sigma)))
     .min(config.combat.max_loss_fraction);
-    let frac_second = (config.combat.base_attrition_rate
+    let mut frac_second = (config.combat.base_attrition_rate
         * exposure
         * python_exp(0.45 * advantage + rng.normalvariate(0.0, config.combat.stochastic_sigma)))
     .min(config.combat.max_loss_fraction);
+    if particle.formations.organization[first] as usize == crate::MILITARY
+        && config.combat.government_protection_multiplier != 1.0
+    {
+        frac_first = (frac_first / config.combat.government_protection_multiplier)
+            .min(config.combat.max_loss_fraction);
+    }
+    if particle.formations.organization[second] as usize == crate::MILITARY
+        && config.combat.government_protection_multiplier != 1.0
+    {
+        frac_second = (frac_second / config.combat.government_protection_multiplier)
+            .min(config.combat.max_loss_fraction);
+    }
     if crate::trace_env!("PINELAND_COMBAT_TRACE") {
         eprintln!(
             "COMBAT_CORE first={} second={} locality={} microzone={} detected={} {} initiative={:.17} {:.17} cap={:.17} {:.17} advantage={:.17} obs={:.17} terrain={:.17} exposure={:.17} frac={:.17} {:.17}",
@@ -726,11 +795,19 @@ fn resolve_engagement(
     .into_iter()
     .enumerate()
     {
+        let equipment_supply_burden = if particle.formations.organization[formation] as usize
+            == crate::MILITARY
+        {
+            config.combat.government_supply_burden_multiplier
+        } else {
+            1.0
+        };
         let demand = particle.formations.personnel[formation].max(0.0)
             * particle.formations.availability[formation].clamp(0.0, 1.0)
             * config.combat.interval_hours
             * config.combat.supply_per_person_hour
             * (0.7 + 0.3 * exposure);
+        let demand = demand * equipment_supply_burden;
         let (_, shortfall) = consume_formation_supply(particle, formation, demand);
         if shortfall > 0.0 {
             particle.formations.readiness[formation] = clamp01(
@@ -777,6 +854,8 @@ fn resolve_engagement(
         (frac_first + frac_second) / (2.0 * config.combat.base_attrition_rate).max(0.001);
     particle.locality.violence[locality] =
         clamp01(particle.locality.violence[locality] * 0.85 + 0.25 * intensity.min(1.0));
+    let air_harm_factor = 1.0
+        + air_first.max(air_second) * config.combat.government_air_support_civilian_harm_multiplier;
     let civilian_harm = particle.locality.population[locality]
         * particle
             .zones
@@ -787,6 +866,7 @@ fn resolve_engagement(
         * config.combat.civilian_exposure_rate
         * intensity.min(1.0)
         * exposure
+        * air_harm_factor
         * rng.expovariate(1.0).unwrap_or(0.0);
     let district = topology
         .locality_to_district

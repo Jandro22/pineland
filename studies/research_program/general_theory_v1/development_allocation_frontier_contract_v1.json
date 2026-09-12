@@ -1,0 +1,56 @@
+﻿{
+    "schema_version":  "pineland.development_allocation_frontier_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "scope":  "Synthetic, budget-neutral public-development allocation experiment only.",
+    "question":  "At a fixed total government public-development budget, which spatial allocation rule yields the largest durable reduction in insurgent regenerative state and the largest government-control/institution gains?",
+    "design":  {
+                   "seed_base":  2026121000,
+                   "seeds":  16,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_days":  60,
+                   "intervention_end_day":  240,
+                   "final_day":  360,
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "federal_policy_budget_multiplier":  1,
+                   "public_budget_share":  0.9,
+                   "patronage_share":  0.08,
+                   "private_diversion_share":  0.02,
+                   "modes":  [
+                                 "equal_locality",
+                                 "per_capita",
+                                 "threat_weighted",
+                                 "need_weighted",
+                                 "marginal_return"
+                             ]
+               },
+    "mode_definitions":  {
+                             "equal_locality":  "Equal nominal public allocation per locality (existing baseline rule).",
+                             "per_capita":  "Public allocation proportional to locality population.",
+                             "threat_weighted":  "Population-weighted allocation increasing with current insurgent effective control.",
+                             "need_weighted":  "Population-weighted allocation increasing as structural administrative capacity falls.",
+                             "marginal_return":  "Allocation proportional to the low-dose, population-weighted marginal service-production terms implied by Pineland political-order equations: institution capacity, reach, compliance, integrity/autonomy, and infrastructure."
+                         },
+    "primary_outcomes":  [
+                             "rooted_armed_membership_mass",
+                             "fielded_force_personnel",
+                             "foothold_strength_sum",
+                             "recruitment_hazard_mass",
+                             "population_weighted_insurgent_control",
+                             "population_weighted_government_control",
+                             "mean_government_legitimacy",
+                             "mean_local_institution_capacity",
+                             "population_loss_since_anchor",
+                             "displaced_population_fraction"
+                         ],
+    "analysis_rules":  [
+                           "Use within-seed contrasts against equal_locality at intervention end and final day.",
+                           "Total political/public budget is held fixed by design; compare outcomes without dividing by differing total spend unless realized capital scarcity causes actual spending divergence.",
+                           "Report Pareto frontier; do not combine outcomes into one utility score.",
+                           "A mode is called durable for an outcome only if \u003e=50% of its intervention-end improvement versus equal_locality remains at final day."
+                       ],
+    "selection_guard":  "No allocation rule or formula may be changed after fresh outcomes are inspected. Any hybrid rule requires a new seed block.",
+    "interpretation_guard":  "Synthetic state-building allocation result only. Does not prescribe real-world aid/development targeting."
+}

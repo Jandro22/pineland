@@ -1,0 +1,60 @@
+﻿{
+    "schema_version":  "pineland.air_support_frontier_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "scope":  "Stylized synthetic air-support operator; not an empirical sortie-effect model.",
+    "question":  "How much durable insurgent suppression does information-conditioned air support add per unit of government resource cost, and how does the frontier change as civilian-harm sensitivity rises?",
+    "design":  {
+                   "seed_base":  2026123000,
+                   "seeds":  12,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_days":  60,
+                   "intervention_end_day":  240,
+                   "final_day":  360,
+                   "foreign_affairs":  false,
+                   "intensities":  [
+                                       0,
+                                       0.25,
+                                       0.5,
+                                       0.75,
+                                       1
+                                   ],
+                   "civilian_harm_multipliers":  [
+                                                     0,
+                                                     0.5,
+                                                     1
+                                                 ],
+                   "firepower_bonus_at_full_information":  0.5,
+                   "cost_per_full_support_contact":  600
+               },
+    "internal_cost_scale":  "600 capital units equals 0.5% of the default 120,000 monthly federal policy-budget ceiling. This is an internal model opportunity-cost scale, not a real-dollar estimate.",
+    "mechanism":  [
+                      "Domestic military support is available only when that formation detects its opponent.",
+                      "Effective support level = intensity*(0.5+0.5*formation information).",
+                      "Capability multiplier = 1 + support_level*0.50.",
+                      "Government capital cost = support_level*600 per supported contact.",
+                      "Civilian harm is multiplied by 1 + support_level*specified harm multiplier.",
+                      "No additional RNG is consumed; intensity zero follows the baseline branch."
+                  ],
+    "primary_outcomes":  [
+                             "rooted_armed_membership_mass",
+                             "fielded_force_personnel",
+                             "foothold_strength_sum",
+                             "recruitment_hazard_mass",
+                             "insurgent_control",
+                             "government_losses",
+                             "civilian_population_loss",
+                             "displacement",
+                             "gross_air_support_cost"
+                         ],
+    "analysis_rules":  [
+                           "Use intensity0 as baseline within each seed.",
+                           "Report suppression per 100,000 capital spent separately by insurgent outcome.",
+                           "Report Pareto frontier across suppression, government losses, civilian harm/displacement, and cost.",
+                           "Estimate diminishing returns across support intensity.",
+                           "Do not collapse civilian harm and suppression into one utility score."
+                       ],
+    "selection_guard":  "All 15 cells frozen before fresh outcomes. Any alternate firepower coefficient/cost scale requires new seeds.",
+    "interpretation_guard":  "Synthetic support tradeoff only; not an operational airpower recommendation."
+}

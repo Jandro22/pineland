@@ -125,9 +125,17 @@ pub fn update(
             continue;
         }
         let personnel = particle.formations.personnel[formation].max(0.0);
+        let equipment_supply_burden = if particle.formations.organization[formation] as usize
+            == crate::MILITARY
+        {
+            config.combat.government_supply_burden_multiplier
+        } else {
+            1.0
+        };
         let demand = personnel
             * particle.formations.availability[formation]
             * config.logistics.presence_consumption_per_person_day
+            * equipment_supply_burden
             * dt;
         let consumed = demand.min(particle.formations.supply_stock[formation]);
         let shortfall = (demand - consumed).max(0.0);
@@ -491,8 +499,17 @@ fn reconcile_source_production(
             personnel =
                 round_binary64(personnel + particle.formations.personnel[formation].max(0.0));
         }
+        let equipment_supply_burden = if organization == crate::MILITARY {
+            config.combat.government_supply_burden_multiplier
+        } else {
+            1.0
+        };
         let requirement = round_binary64(
-            round_binary64(personnel * config.logistics.presence_consumption_per_person_day)
+            round_binary64(
+                personnel
+                    * config.logistics.presence_consumption_per_person_day
+                    * equipment_supply_burden,
+            )
                 * config.logistics.organization_sustainment_coverage,
         );
         let territorial = particle

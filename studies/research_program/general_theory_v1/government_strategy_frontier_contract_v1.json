@@ -1,0 +1,143 @@
+﻿{
+    "schema_version":  "pineland.government_strategy_frontier_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "scope":  "Synthetic Pineland domestic-government policy comparison only; not a real-world operational prescription.",
+    "question":  "Which priced government policy packages produce the largest durable reduction in insurgent regenerative capacity and control per unit of actual government resource expenditure, and which packages are Pareto dominated?",
+    "design":  {
+                   "seed_base":  2026120000,
+                   "seeds":  12,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_days":  60,
+                   "intervention_days":  180,
+                   "post_intervention_days":  120,
+                   "intervention_end_day":  240,
+                   "final_day":  360,
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "common_random_number_anchor_clones":  true
+               },
+    "strategies":  [
+                       {
+                           "id":  "baseline",
+                           "description":  "Unmodified v2 domestic policy."
+                       },
+                       {
+                           "id":  "clean_governance",
+                           "description":  "Same federal policy budget; shift political allocation toward public spending and away from patronage/private diversion.",
+                           "public_budget_share":  0.88,
+                           "patronage_share":  0.1,
+                           "private_diversion_share":  0.02
+                       },
+                       {
+                           "id":  "spending_surge",
+                           "description":  "Double federal policy budget with baseline allocation shares.",
+                           "federal_policy_budget_multiplier":  2
+                       },
+                       {
+                           "id":  "clean_spending_surge",
+                           "description":  "Double federal policy budget and use clean-governance allocation.",
+                           "federal_policy_budget_multiplier":  2,
+                           "public_budget_share":  0.88,
+                           "patronage_share":  0.1,
+                           "private_diversion_share":  0.02
+                       },
+                       {
+                           "id":  "security_expansion",
+                           "description":  "Double security recruitment and training throughput while raising military target modestly.",
+                           "security_recruitment_multiplier":  2,
+                           "security_training_multiplier":  2,
+                           "military_target_multiplier":  1.25
+                       },
+                       {
+                           "id":  "police_first",
+                           "description":  "Double security recruitment/training, prioritize police deployment, and raise police target.",
+                           "security_recruitment_multiplier":  2,
+                           "security_training_multiplier":  2,
+                           "police_allocation_share":  0.85,
+                           "police_target_multiplier":  1.5
+                       },
+                       {
+                           "id":  "military_first",
+                           "description":  "Double security recruitment/training, prioritize military deployment, and raise military target.",
+                           "security_recruitment_multiplier":  2,
+                           "security_training_multiplier":  2,
+                           "police_allocation_share":  0.2,
+                           "military_target_multiplier":  1.5
+                       },
+                       {
+                           "id":  "admin_first",
+                           "description":  "Increase administrative rebuild throughput and modestly improve public allocation without increasing the federal policy budget.",
+                           "administrative_rebuild_multiplier":  2,
+                           "public_budget_share":  0.8,
+                           "patronage_share":  0.15,
+                           "private_diversion_share":  0.05
+                       },
+                       {
+                           "id":  "integrated",
+                           "description":  "Moderate simultaneous reform, security regeneration, and administrative rebuilding.",
+                           "federal_policy_budget_multiplier":  1.5,
+                           "public_budget_share":  0.82,
+                           "patronage_share":  0.13,
+                           "private_diversion_share":  0.05,
+                           "security_recruitment_multiplier":  1.5,
+                           "security_training_multiplier":  1.5,
+                           "police_allocation_share":  0.65,
+                           "police_target_multiplier":  1.25,
+                           "military_target_multiplier":  1.15,
+                           "administrative_rebuild_multiplier":  1.5
+                       },
+                       {
+                           "id":  "patronage_heavy",
+                           "description":  "Budget-neutral stress strategy with more patronage/private diversion and less public spending.",
+                           "public_budget_share":  0.4,
+                           "patronage_share":  0.4,
+                           "private_diversion_share":  0.2
+                       }
+                   ],
+    "cost_accounting":  {
+                            "method":  "Event-level government organizational-capital ledger during intervention only.",
+                            "categories":  [
+                                               "political_order",
+                                               "governance",
+                                               "state_regeneration",
+                                               "other"
+                                           ],
+                            "inflows":  "Positive capital changes retained separately; cost is gross negative capital outflow, not net balance."
+                        },
+    "outcomes":  {
+                     "insurgent":  [
+                                       "rooted_armed_membership_mass",
+                                       "fielded_force_personnel",
+                                       "foothold_strength_sum",
+                                       "recruitment_hazard_mass",
+                                       "population_weighted_insurgent_control",
+                                       "cumulative_insurgent_actions_since_anchor"
+                                   ],
+                     "government":  [
+                                        "population_weighted_government_control",
+                                        "mean_government_legitimacy",
+                                        "mean_state_legitimacy",
+                                        "mean_local_institution_capacity",
+                                        "government_military_losses_since_anchor"
+                                    ],
+                     "externalities":  [
+                                           "population_loss_since_anchor",
+                                           "displaced_population_fraction"
+                                       ],
+                     "times":  [
+                                   "anchor",
+                                   "intervention_end",
+                                   "final_post_intervention"
+                               ]
+                 },
+    "primary_analysis":  [
+                             "Within-seed contrasts against baseline at intervention end and final day.",
+                             "Identify Pareto-nondominated strategies jointly on durable insurgent reduction, government control/legitimacy/institution capacity, government losses, civilian population loss/displacement, and gross intervention resource outflow.",
+                             "Report cost-effectiveness separately for each insurgent outcome; do not collapse to a single utility score.",
+                             "A strategy is not called durable if more than half of its intervention-end improvement in a given insurgent outcome has disappeared by final day."
+                         ],
+    "selection_guard":  "No strategy may be added, removed, or have coefficients changed after fresh outcomes are inspected. Follow-up continuous optimization must use a new seed block and contract.",
+    "interpretation_guard":  "Results characterize Pineland mechanism interactions. They do not establish real-world COIN effectiveness or recommend real-world force/employment decisions."
+}

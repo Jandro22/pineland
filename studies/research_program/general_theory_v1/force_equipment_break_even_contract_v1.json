@@ -1,0 +1,86 @@
+﻿{
+    "schema_version":  "pineland.force_equipment_break_even_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "scope":  "Stylized synthetic equipment-mechanism envelope. Profiles are not empirical specifications of real armored or light units.",
+    "question":  "At what combination of firepower/protection benefit and logistics/terrain burden does a heavier government combat-force profile outperform a light baseline in durable insurgent suppression, and where does the ranking reverse?",
+    "design":  {
+                   "seed_base":  2026122000,
+                   "seeds":  12,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_days":  60,
+                   "intervention_end_day":  240,
+                   "final_day":  360,
+                   "foreign_affairs":  false,
+                   "benefit_levels":  [
+                                          {
+                                              "id":  "B0",
+                                              "firepower":  1,
+                                              "protection":  1
+                                          },
+                                          {
+                                              "id":  "B1",
+                                              "firepower":  1.15,
+                                              "protection":  1.1
+                                          },
+                                          {
+                                              "id":  "B2",
+                                              "firepower":  1.3,
+                                              "protection":  1.2
+                                          },
+                                          {
+                                              "id":  "B3",
+                                              "firepower":  1.5,
+                                              "protection":  1.3
+                                          }
+                                      ],
+                   "burden_levels":  [
+                                         {
+                                             "id":  "C0",
+                                             "supply_burden":  1,
+                                             "terrain_mobility_penalty":  0
+                                         },
+                                         {
+                                             "id":  "C1",
+                                             "supply_burden":  1.2,
+                                             "terrain_mobility_penalty":  0.1
+                                         },
+                                         {
+                                             "id":  "C2",
+                                             "supply_burden":  1.5,
+                                             "terrain_mobility_penalty":  0.25
+                                         },
+                                         {
+                                             "id":  "C3",
+                                             "supply_burden":  2,
+                                             "terrain_mobility_penalty":  0.5
+                                         }
+                                     ]
+               },
+    "mechanism":  {
+                      "firepower":  "Multiplicative domestic-military combat capability.",
+                      "protection":  "Divides domestic-military fractional combat loss before cohesion/readiness consequences.",
+                      "supply_burden":  "Multiplies domestic-military movement and contact supply demand.",
+                      "terrain_mobility_penalty":  "Raises terrain-friction exponent for domestic-military combat mobility and route travel time."
+                  },
+    "primary_outcomes":  [
+                             "rooted_armed_membership_mass",
+                             "fielded_force_personnel",
+                             "foothold_strength_sum",
+                             "recruitment_hazard_mass",
+                             "population_weighted_insurgent_control",
+                             "government_military_losses",
+                             "population_loss",
+                             "displacement"
+                         ],
+    "analysis_rules":  [
+                           "Use B0C0 as light-mechanism baseline.",
+                           "Estimate within-seed benefit-cost response surface; identify cells that improve durable insurgent outcomes without increasing government military losses or civilian harm.",
+                           "Report break-even burden by benefit level rather than selecting one universal heavy profile.",
+                           "B2C2 may be described only as a stylized heavy/mechanized analogue, never as an empirical armored-unit specification.",
+                           "Report post-intervention retention at day360."
+                       ],
+    "selection_guard":  "All 16 cells frozen before fresh outcomes. No coefficient changes on seed block 2026122000.",
+    "interpretation_guard":  "Synthetic mechanism experiment; external military force-structure implications require empirical calibration/transport."
+}

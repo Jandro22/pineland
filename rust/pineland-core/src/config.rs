@@ -361,6 +361,19 @@ pub struct CombatConfig {
     pub accidental_contact_fraction: f64,
     pub contact_opportunity_model: String,
     pub organized_action_architecture: String,
+    /// Post-baseline stylized government equipment effects. Neutral defaults
+    /// preserve the certified combat/movement equations exactly. These are
+    /// mechanism axes, not empirical claims about any named platform class.
+    pub government_firepower_multiplier: f64,
+    pub government_protection_multiplier: f64,
+    pub government_supply_burden_multiplier: f64,
+    pub government_terrain_mobility_penalty: f64,
+    /// Stylized expected air-support intensity for domestic military contacts.
+    /// Zero disables the mechanism and preserves the baseline event/RNG path.
+    pub government_air_support_intensity: f64,
+    pub government_air_support_firepower_bonus: f64,
+    pub government_air_support_cost_per_contact: f64,
+    pub government_air_support_civilian_harm_multiplier: f64,
 }
 
 impl Default for CombatConfig {
@@ -385,6 +398,14 @@ impl Default for CombatConfig {
             accidental_contact_fraction: 0.05,
             contact_opportunity_model: "directional_pairwise".to_string(),
             organized_action_architecture: "multichannel_v5".to_string(),
+            government_firepower_multiplier: 1.0,
+            government_protection_multiplier: 1.0,
+            government_supply_burden_multiplier: 1.0,
+            government_terrain_mobility_penalty: 0.0,
+            government_air_support_intensity: 0.0,
+            government_air_support_firepower_bonus: 0.5,
+            government_air_support_cost_per_contact: 0.0,
+            government_air_support_civilian_harm_multiplier: 0.0,
         }
     }
 }
@@ -546,6 +567,10 @@ pub struct PoliticalOrderConfig {
     pub interval_days: f64,
     pub election_interval_days: f64,
     pub federal_policy_budget: f64,
+    /// Spatial rule for allocating the public share of the federal policy
+    /// budget. `equal_locality` is the parity/default behavior.  Other modes
+    /// are post-parity policy experiments and must not alter archived runs.
+    pub public_allocation_mode: String,
     pub public_budget_share: f64,
     pub patronage_share: f64,
     pub private_diversion_share: f64,
@@ -564,6 +589,7 @@ impl Default for PoliticalOrderConfig {
             interval_days: 30.0,
             election_interval_days: 1460.0,
             federal_policy_budget: 120000.0,
+            public_allocation_mode: "equal_locality".to_string(),
             public_budget_share: 0.68,
             patronage_share: 0.22,
             private_diversion_share: 0.10,
@@ -1091,6 +1117,20 @@ impl SimulationConfig {
                 self.output_mode
             )));
         }
+        if ![
+            "equal_locality",
+            "per_capita",
+            "threat_weighted",
+            "need_weighted",
+            "marginal_return",
+        ]
+        .contains(&self.political_order.public_allocation_mode.as_str())
+        {
+            return Err(ConfigError::Invalid(format!(
+                "unsupported political_order.public_allocation_mode {}",
+                self.political_order.public_allocation_mode
+            )));
+        }
         for (name, value) in self.intervals.as_pairs() {
             if !value.is_finite() || value <= 0.0 {
                 return Err(ConfigError::Invalid(format!(
@@ -1156,6 +1196,34 @@ impl SimulationConfig {
             ("contact_rate", self.contact_rate),
             ("organized_action_rate", self.organized_action_rate),
             (
+                "combat.government_firepower_multiplier",
+                self.combat.government_firepower_multiplier,
+            ),
+            (
+                "combat.government_protection_multiplier",
+                self.combat.government_protection_multiplier,
+            ),
+            (
+                "combat.government_supply_burden_multiplier",
+                self.combat.government_supply_burden_multiplier,
+            ),
+            (
+                "combat.government_terrain_mobility_penalty",
+                self.combat.government_terrain_mobility_penalty,
+            ),
+            (
+                "combat.government_air_support_firepower_bonus",
+                self.combat.government_air_support_firepower_bonus,
+            ),
+            (
+                "combat.government_air_support_cost_per_contact",
+                self.combat.government_air_support_cost_per_contact,
+            ),
+            (
+                "combat.government_air_support_civilian_harm_multiplier",
+                self.combat.government_air_support_civilian_harm_multiplier,
+            ),
+            (
                 "state_regeneration.security_recruitment_rate",
                 self.state_regeneration.security_recruitment_rate,
             ),
@@ -1212,6 +1280,32 @@ impl SimulationConfig {
                 return Err(ConfigError::Invalid(format!(
                     "{name} must be finite and non-negative"
                 )));
+            }
+        }
+        if !self.combat.government_air_support_intensity.is_finite()
+            || !(0.0..=1.0).contains(&self.combat.government_air_support_intensity)
+        {
+            return Err(ConfigError::Invalid(
+                "combat.government_air_support_intensity must be finite and in [0,1]"
+                    .to_string(),
+            ));
+        }
+        for (name, value) in [
+            (
+                "combat.government_firepower_multiplier",
+                self.combat.government_firepower_multiplier,
+            ),
+            (
+                "combat.government_protection_multiplier",
+                self.combat.government_protection_multiplier,
+            ),
+            (
+                "combat.government_supply_burden_multiplier",
+                self.combat.government_supply_burden_multiplier,
+            ),
+        ] {
+            if value <= 0.0 {
+                return Err(ConfigError::Invalid(format!("{name} must be positive")));
             }
         }
         for (name, value) in [
@@ -1478,7 +1572,7 @@ impl ForceStructureConfig {
 }
 impl CombatConfig {
     fn to_json(&self) -> JsonValue {
-        let mut o = object_f64! {"interval_hours"=>self.interval_hours,"base_attrition_rate"=>self.base_attrition_rate,"stochastic_sigma"=>self.stochastic_sigma,"max_loss_fraction"=>self.max_loss_fraction,"cohesion_loss_multiplier"=>self.cohesion_loss_multiplier,"readiness_cost_multiplier"=>self.readiness_cost_multiplier,"supply_per_person_hour"=>self.supply_per_person_hour,"ineffective_cohesion"=>self.ineffective_cohesion,"ineffective_readiness"=>self.ineffective_readiness,"disengagement_base"=>self.disengagement_base,"surprise_initiative"=>self.surprise_initiative,"civilian_exposure_rate"=>self.civilian_exposure_rate,"momentum_learning_rate"=>self.momentum_learning_rate,"reinforcement_threshold"=>self.reinforcement_threshold,"contact_ammunition_floor"=>self.contact_ammunition_floor,"accidental_contact_fraction"=>self.accidental_contact_fraction};
+        let mut o = object_f64! {"interval_hours"=>self.interval_hours,"base_attrition_rate"=>self.base_attrition_rate,"stochastic_sigma"=>self.stochastic_sigma,"max_loss_fraction"=>self.max_loss_fraction,"cohesion_loss_multiplier"=>self.cohesion_loss_multiplier,"readiness_cost_multiplier"=>self.readiness_cost_multiplier,"supply_per_person_hour"=>self.supply_per_person_hour,"ineffective_cohesion"=>self.ineffective_cohesion,"ineffective_readiness"=>self.ineffective_readiness,"disengagement_base"=>self.disengagement_base,"surprise_initiative"=>self.surprise_initiative,"civilian_exposure_rate"=>self.civilian_exposure_rate,"momentum_learning_rate"=>self.momentum_learning_rate,"reinforcement_threshold"=>self.reinforcement_threshold,"contact_ammunition_floor"=>self.contact_ammunition_floor,"accidental_contact_fraction"=>self.accidental_contact_fraction,"government_firepower_multiplier"=>self.government_firepower_multiplier,"government_protection_multiplier"=>self.government_protection_multiplier,"government_supply_burden_multiplier"=>self.government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>self.government_terrain_mobility_penalty,"government_air_support_intensity"=>self.government_air_support_intensity,"government_air_support_firepower_bonus"=>self.government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>self.government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>self.government_air_support_civilian_harm_multiplier};
         o.insert(
             "contact_supply_rule",
             JsonValue::string(&self.contact_supply_rule),
@@ -1579,6 +1673,10 @@ impl PoliticalOrderConfig {
     fn to_json(&self) -> JsonValue {
         let mut o = object_f64! {"interval_days"=>self.interval_days,"election_interval_days"=>self.election_interval_days,"federal_policy_budget"=>self.federal_policy_budget,"public_budget_share"=>self.public_budget_share,"patronage_share"=>self.patronage_share,"private_diversion_share"=>self.private_diversion_share,"capacity_learning_rate"=>self.capacity_learning_rate,"capacity_decay_rate"=>self.capacity_decay_rate,"patronage_capacity_damage"=>self.patronage_capacity_damage,"patronage_decay_rate"=>self.patronage_decay_rate,"elite_broker_share"=>self.elite_broker_share,"peaceful_channel_strength"=>self.peaceful_channel_strength,"election_turnout_sensitivity"=>self.election_turnout_sensitivity};
         o.insert("enabled", JsonValue::Bool(self.enabled));
+        o.insert(
+            "public_allocation_mode",
+            JsonValue::string(&self.public_allocation_mode),
+        );
         o
     }
 }
@@ -1824,7 +1922,7 @@ fn apply_information(v: &JsonValue, t: &mut InformationConfig) -> Result<(), Con
 fn apply_combat(v: &JsonValue, t: &mut CombatConfig) -> Result<(), ConfigError> {
     let o = object(v, "combat")?;
     macro_rules! ff{($($k:literal=>$f:ident),*$(,)?)=>{$(if let Some(x)=o.get($k){t.$f=required_f64(x,$k)?})*}}
-    ff!("interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction);
+    ff!("interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction,"government_firepower_multiplier"=>government_firepower_multiplier,"government_protection_multiplier"=>government_protection_multiplier,"government_supply_burden_multiplier"=>government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>government_terrain_mobility_penalty,"government_air_support_intensity"=>government_air_support_intensity,"government_air_support_firepower_bonus"=>government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>government_air_support_civilian_harm_multiplier);
     for (k, f) in [
         ("contact_supply_rule", &mut t.contact_supply_rule),
         (
@@ -1989,6 +2087,9 @@ fn apply_political(v: &JsonValue, t: &mut PoliticalOrderConfig) -> Result<(), Co
     let o = object(v, "political_order")?;
     if let Some(x) = o.get("enabled") {
         t.enabled = required_bool(x, "enabled")?
+    }
+    if let Some(x) = o.get("public_allocation_mode") {
+        t.public_allocation_mode = required_string(x, "public_allocation_mode")?;
     }
     for (k, f) in [
         ("interval_days", &mut t.interval_days),
