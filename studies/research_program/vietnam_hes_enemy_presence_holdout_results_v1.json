@@ -1,0 +1,43 @@
+{
+  "schema_version": "pineland.vietnam_hes_enemy_presence_holdout_results.v1",
+  "status": "INDEPENDENT_PRESENCE_SIGNAL_NOT_CONFIRMED_ON_1971_HOLDOUT",
+  "latent_state_estimation": false,
+  "historical_parameter_fitting_to_pineland": false,
+  "panel_rows": 1477,
+  "train_rows": 660,
+  "test_rows": 417,
+  "train_month_range": [
+    "1969-10-01",
+    "1970-12-01"
+  ],
+  "test_month_range": [
+    "1971-01-01",
+    "1971-12-01"
+  ],
+  "baseline_test": {
+    "rmse": 0.6287154642875136,
+    "mae": 0.4675991854753426,
+    "spearman": 0.9124384668006568
+  },
+  "enhanced_test": {
+    "rmse": 0.6371051158362924,
+    "mae": 0.47450241650775554,
+    "spearman": 0.9109291064875862
+  },
+  "heldout_rmse_relative_reduction": -0.013344115144815627,
+  "heldout_spearman_gain": -0.0015093603130705846,
+  "training_presence_coefficient": -0.10363041211445534,
+  "heldout_presence_burden_quartiles": {
+    "q25": 0.21138211382113822,
+    "q75": 0.7053291536050157,
+    "mean_future3_bottom_quartile": 25.669811320754718,
+    "mean_future3_top_quartile": 145.6095238095238,
+    "top_to_bottom_future_activity_ratio": 5.672403353108976
+  },
+  "gates": {
+    "heldout_rmse_relative_reduction_ge_0_02": false,
+    "heldout_spearman_gain_ge_0_02": false,
+    "training_presence_coefficient_positive": false
+  },
+  "guard": "Independent historical presence-to-future-activity test only; HES is not equated to Pineland M_star or territorial control."
+}

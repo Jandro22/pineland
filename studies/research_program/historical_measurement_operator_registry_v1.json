@@ -1,0 +1,176 @@
+{
+  "schema_version": "pineland.historical_measurement_operator_registry.v1",
+  "status": "FROZEN_EMPIRICAL_INTERFACE_DEVELOPMENT",
+  "theory_version": "studies/research_program/general_theory_v1/reduced_theory_specification_v2.json",
+  "principle": "Historical archives measure observables, not Pineland latent states. Operators are licensed only at the narrowest construct level supported by source semantics and independent evidence.",
+  "global_prohibitions": [
+    "violence event counts must not be treated as territorial control",
+    "violence event counts must not be treated as rooted membership mass",
+    "armed-group presence must not be treated as membership magnitude",
+    "security-force headcount must not be treated as veterancy or professionalism",
+    "aid or budget expenditure must not be treated as administrative capacity",
+    "source silence outside an explicit coverage frame must not be treated as a true zero",
+    "HES letter ratings must not be treated as interval-scale quantities without a separately frozen monotone/ordinal operator"
+  ],
+  "latent_coordinates": {
+    "M_star": {
+      "name": "rooted civilian membership mass",
+      "quantitative_operator_status": "NOT_IDENTIFIED",
+      "licensed_observable_operators": [
+        {
+          "operator_id": "presence_lower_bound",
+          "meaning": "independent evidence that an organized armed/political structure was present in a locality/time interval",
+          "does_not_mean": "membership count or rootedness magnitude",
+          "cases": {
+            "nepal_2001_2006": "sparse adjudicated Maoist shadow-governance/presence observations",
+            "vietnam_1955_1975": "HES enemy military/political presence distributions",
+            "colombia_1984_2016": "CNMH DAV presence evidence is currently predominantly paramilitary and is not licensed as a FARC M_star operator"
+          }
+        }
+      ]
+    },
+    "F": {
+      "name": "fielded combatant force",
+      "quantitative_operator_status": "NOT_IDENTIFIED",
+      "licensed_observable_operators": [
+        {
+          "operator_id": "activity_incident_process",
+          "meaning": "mapped conflict/incident activity involving a named actor",
+          "does_not_mean": "force strength",
+          "cases": ["afghanistan_2004_2021", "nepal_2001_2006", "colombia_1984_2016", "iraq_2003_2011", "vietnam_1955_1975"]
+        }
+      ]
+    },
+    "E": {
+      "name": "embedded foothold sanctuary",
+      "quantitative_operator_status": "NOT_IDENTIFIED",
+      "licensed_observable_operators": [],
+      "next_requirement": "independent infrastructure/base/sanctuary observations with dated local coverage"
+    },
+    "C": {
+      "name": "net territorial governance control margin",
+      "quantitative_operator_status": "PARTIAL_ORDINAL_OR_DIRECTIONAL_ONLY",
+      "licensed_observable_operators": [
+        {
+          "operator_id": "afghanistan_sig_control_category",
+          "case": "afghanistan_2004_2021",
+          "source": "SIGAR district control/influence assessment",
+          "license": "ordinal/directional external validation",
+          "limitation": "sparse report periods and source-specific category construction"
+        },
+        {
+          "operator_id": "vietnam_hamla_population_control_shares",
+          "case": "vietnam_1955_1975",
+          "source": "HAMLA government/VC/neither-or-both population-control fields",
+          "license": "directional population-control observation",
+          "limitation": "HES/HAMLA is an historical measurement system with known reporting/construct limitations; cleaned extract direct-row parity remains pending"
+        },
+        {
+          "operator_id": "nepal_sparse_control_presence",
+          "case": "nepal_2001_2006",
+          "source": "adjudicated independent evidence",
+          "license": "qualitative/sparse directional validation",
+          "limitation": "not a dense panel and not a quantitative control scale"
+        },
+        {
+          "operator_id": "iraq_rusafa_anchor",
+          "case": "iraq_2003_2011",
+          "source": "SIGIR Rusafa case study",
+          "license": "local anchor only",
+          "limitation": "must not be generalized nationally"
+        }
+      ]
+    },
+    "Phi_net": {
+      "name": "signed net transport flux",
+      "quantitative_operator_status": "NOT_IDENTIFIED",
+      "licensed_observable_operators": [],
+      "next_requirement": "dated actor-resolved movement/redeployment observations rather than event displacement inference"
+    },
+    "A": {
+      "name": "structural administrative capacity",
+      "quantitative_operator_status": "PARTIAL_ORDINAL_ONLY",
+      "licensed_observable_operators": [
+        {
+          "operator_id": "vietnam_hes_administration_distribution",
+          "case": "vietnam_1955_1975",
+          "source": "HES administration submodel category distribution",
+          "license": "ordinal distributional measurement development",
+          "limitation": "not equated to Pineland A and no interval scale assumed"
+        },
+        {
+          "operator_id": "iraq_sigir_governance_anchor",
+          "case": "iraq_2003_2011",
+          "license": "qualitative anchor"
+        }
+      ]
+    },
+    "K_o": {
+      "name": "central liquid organizational capital",
+      "quantitative_operator_status": "NOT_IDENTIFIED",
+      "licensed_observable_operators": [],
+      "next_requirement": "actor-level resource inflow/outflow or finance series with stock-flow consistency"
+    },
+    "P_G": {
+      "name": "police professionalism",
+      "quantitative_operator_status": "NOT_IDENTIFIED",
+      "licensed_observable_operators": [
+        {
+          "operator_id": "vietnam_police_quantity_quality_pair",
+          "case": "vietnam_1955_1975",
+          "status": "CANDIDATE_NOT_YET_CERTIFIED",
+          "inputs": ["NAPE police headcount by administrative unit/function", "HES law-enforcement submodel distribution"],
+          "purpose": "test quantity-quality divergence without treating headcount as professionalism"
+        }
+      ]
+    },
+    "V_G": {
+      "name": "government formation veterancy",
+      "quantitative_operator_status": "NOT_IDENTIFIED",
+      "licensed_observable_operators": [
+        {
+          "operator_id": "vietnam_territorial_force_quantity_readiness_pair",
+          "case": "vietnam_1955_1975",
+          "status": "CANDIDATE_NOT_YET_CERTIFIED",
+          "inputs": ["TFES/TFARS personnel/training/readiness fields"],
+          "purpose": "test whether personnel recovery and readiness/training quality diverge"
+        }
+      ]
+    },
+    "V_I": {
+      "name": "insurgent formation veterancy",
+      "quantitative_operator_status": "NOT_IDENTIFIED",
+      "licensed_observable_operators": []
+    }
+  },
+  "mechanism_level_tests": {
+    "nonlocal_reproduction": {
+      "preferred_empirical_strategy": "test observable propagation implications directly; do not infer M_star from violence",
+      "event_only_test": "historical_nonlocal_reproduction_contract_v1.json",
+      "event_only_result": "historical_nonlocal_reproduction_results_v1.json",
+      "status": "EVENT_PRESSURE_ANALOGUE_FAILED_CROSS_CASE_GATE",
+      "next": "use independent presence/access observations where available"
+    },
+    "human_capital_turnover_learning": {
+      "preferred_empirical_strategy": "pair quantity and independently measured quality/readiness streams",
+      "best_current_case": "vietnam_1955_1975",
+      "status": "DIRECT_ARCHIVAL_INPUTS_IDENTIFIED_OPERATOR_PENDING"
+    },
+    "state_capacity_dual_channel": {
+      "preferred_empirical_strategy": "separate administrative/service capacity observations from political/security control observations; test divergence rather than collapse into one index",
+      "best_current_case": "vietnam_1955_1975",
+      "status": "ORDINAL_DISTRIBUTION_OPERATOR_READY_FOR_IDENTIFICATION_TEST"
+    },
+    "organizational_resource_runway": {
+      "preferred_empirical_strategy": "stock-flow accounting from actor finance/resource series",
+      "status": "NO_CASE_CURRENTLY_LICENSED_FOR_CONFIRMATORY TEST"
+    }
+  },
+  "measurement_error_policy": {
+    "source_detection_probability": "UNIDENTIFIED",
+    "false_positive_probability": "UNIDENTIFIED",
+    "spatial_error_distribution": "UNIDENTIFIED",
+    "temporal_error_distribution": "UNIDENTIFIED",
+    "consequence": "No latent-state posterior or source-error correction may be learned from predictive fit. Use direct observable tests, ordinal/directional claims, sensitivity bounds, and independent-source replication instead."
+  }
+}

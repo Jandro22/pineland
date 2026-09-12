@@ -1,0 +1,59 @@
+{
+  "schema_version": "pineland.vietnam_hes_enemy_presence_holdout_contract.v1",
+  "status": "FROZEN_BEFORE_PREDICTIVE_SCORE_COMPUTATION",
+  "latent_state_estimation": false,
+  "historical_parameter_fitting_to_pineland": false,
+  "question": "Does an independent HES observation of enemy military presence contain forward predictive information about later enemy-initiated activity beyond recent incident history?",
+  "theory_link": "Tests an observable implication of the confirmed synthetic reproduction/access mechanism after the event-only cross-case analogue failed. It does not identify M_star or a recruitment coefficient.",
+  "sources": {
+    "predictor": "HES70 enemy military presence submodel, standardized auxiliary construct hes_enemy_military_presence_submodel",
+    "outcome": "cleaned MACV/NARA ground-combat archival extract, standardized events actor_a == 'Enemy'",
+    "source_independence": "HES observation system is distinct from the ground-combat incident extract",
+    "documentation": [
+      "NARA HES 1969-1973 Command Manual: enemy military presence derives from observations of enemy forces, base areas, staging areas, supply caches, defensive works, etc.",
+      "NARA/CIA documentation establishes ordered HES category designators with A representing better GVN/security conditions than later letters; HES is not treated here as direct territorial control."
+    ]
+  },
+  "measurement_operator": {
+    "name": "ordinal_enemy_presence_burden",
+    "formula": "(count_C + count_D + count_E + count_V) / (count_A + count_B + count_C + count_D + count_E + count_V)",
+    "missing_codes": ["N", "blank", "unknown"],
+    "why_this_form": "Uses only the documented ordering and a coarse upper/lower partition; it does not assume equal interval spacing among letter grades.",
+    "direction": "larger = worse HES enemy-presence environment from the GVN perspective"
+  },
+  "prediction_design": {
+    "spatial_unit": "historical HES province/autonomous city",
+    "anchor_time": "month",
+    "outcome": "log(1 + enemy-initiated event count during the next 3 calendar months)",
+    "training_anchors": "1969-07 through 1970-12",
+    "heldout_test_anchors": "1971-01 through 1971-12",
+    "baseline_features": [
+      "province fixed effects",
+      "log(1 + focal-province enemy events in preceding 3 months)",
+      "log(1 + national enemy events in preceding 3 months)",
+      "month-of-year sine",
+      "month-of-year cosine"
+    ],
+    "enhanced_features": "baseline + ordinal_enemy_presence_burden",
+    "estimator": "ordinary least squares / sklearn LinearRegression; no regularization or hyperparameter selection",
+    "future_information_forbidden": true
+  },
+  "primary_gates": {
+    "heldout_rmse_relative_reduction_min": 0.02,
+    "heldout_spearman_gain_min": 0.02,
+    "training_presence_coefficient_positive": true,
+    "status_if_all_pass": "INDEPENDENT_PRESENCE_SIGNAL_ADDS_HELDOUT_PREDICTIVE_INFORMATION",
+    "status_otherwise": "INDEPENDENT_PRESENCE_SIGNAL_NOT_CONFIRMED_ON_1971_HOLDOUT"
+  },
+  "secondary": [
+    "heldout MAE change",
+    "heldout top-vs-bottom presence-burden quartile future activity ratio",
+    "coverage by province/month",
+    "sensitivity excluding province fixed effects (descriptive only)"
+  ],
+  "guards": [
+    "Do not interpret a pass as proof of recruitment, membership, or territorial control.",
+    "Do not alter HES ordinal cutpoints after observing the holdout result.",
+    "Direct NARA row/layout parity remains a provenance limitation of the cleaned HES extract and must stay in claim language."
+  ]
+}

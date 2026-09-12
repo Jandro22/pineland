@@ -1,0 +1,69 @@
+{
+  "schema_version": "pineland.historical_falsification_ledger.v1",
+  "status": "ACTIVE_PERMANENT_NEGATIVE_RESULT_LEDGER",
+  "rules": [
+    "Negative historical transport results are never deleted after a revised observable is proposed.",
+    "A failed proxy does not automatically falsify the latent synthetic mechanism; the exact tested observable implication must be named.",
+    "Post-result thresholds or case exclusions require a new contract/version and cannot rewrite the original verdict."
+  ],
+  "entries": [
+    {
+      "id": "HFALS-001",
+      "hypothesis": "A simple historical event-pressure analogue of nonlocal recruitment hazard, using the preceding 3 months of principal-insurgent event activity and a geography-only exponential kernel, will outperform distance to the nearest recently active unit after a 12-month local quiet period across independent conflicts.",
+      "contract": "historical_nonlocal_reproduction_contract_v1.json",
+      "contract_sha256": "B45BE4E436FA978EFC25373FBF1709D7682887F8D5A69466DF072655C7328C96",
+      "result": "historical_nonlocal_reproduction_results_v1.json",
+      "verdict": "HISTORICAL_OBSERVABLE_IMPLICATION_NOT_TRANSPORTED",
+      "evidence": {
+        "scored_cases": 4,
+        "cases_with_positive_90d_auc_gain": 3,
+        "median_90d_auc_gain": 0.00890314805147957,
+        "cases_with_gain_le_minus_0_02": 1,
+        "nepal_90d_auc_gain": -0.1259509721048182,
+        "afghanistan_90d_auc_gain": 0.01150613201047257,
+        "colombia_90d_auc_gain": 0.006300164092486571,
+        "iraq_90d_auc_gain": 0.012782678067077224
+      },
+      "scientific_consequence": "Do not operationalize recruitment/reproductive potential as a smoothed violence-event field. The synthetic hazard contains access/rootedness/social susceptibility information that event intensity does not identify. Subsequent historical tests must use independent presence/access/infrastructure observations where possible.",
+      "does_not_falsify": "The synthetically identified nonlocal reproduction mechanism itself; this result falsifies the chosen event-only historical observable analogue."
+    },
+    {
+      "id": "HFALS-002",
+      "hypothesis": "Independent HES enemy-military-presence burden will add held-out 1971 predictive information for next-3-month enemy-initiated ground activity beyond province fixed effects, recent focal incident history, recent national incident history, and seasonality.",
+      "contract": "vietnam_hes_enemy_presence_holdout_contract_v1.json",
+      "contract_sha256": "B7775912D03FCF4AF61110E2A9892C8594D04143DF203EE8D1DF3D9DD8A324B6",
+      "result": "vietnam_hes_enemy_presence_holdout_results_v1.json",
+      "verdict": "INDEPENDENT_PRESENCE_SIGNAL_NOT_CONFIRMED_ON_1971_HOLDOUT",
+      "evidence": {
+        "baseline_test_rmse": 0.6287154642875136,
+        "enhanced_test_rmse": 0.6371051158362924,
+        "heldout_rmse_relative_reduction": -0.013344115144815627,
+        "baseline_test_spearman": 0.9124384668006568,
+        "enhanced_test_spearman": 0.9109291064875862,
+        "heldout_spearman_gain": -0.0015093603130705846,
+        "training_presence_coefficient": -0.10363041211445534,
+        "heldout_top_to_bottom_presence_quartile_future_activity_ratio": 5.672403353108976
+      },
+      "scientific_consequence": "HES enemy presence is strongly associated with incident intensity in raw cross-sectional/temporal state comparisons, but it does not provide forecast innovation beyond recent incident history and province baseline at the tested province-month scale. Treat presence as a potentially meaningful state marker, not automatically as a superior incident-forecast feature.",
+      "does_not_falsify": "The possibility that political/military presence states carry mechanism-relevant information at finer hamlet scale or for state transitions rather than incident-count forecasting."
+    },
+    {
+      "id": "HFALS-003",
+      "hypothesis": "Among HES hamlets with three consecutive months of low enemy military presence, persistent high enemy political presence will add substantial heldout discrimination/calibration for transition to high enemy military presence during the next three months.",
+      "contract": "vietnam_hes_political_to_military_transition_contract_v1.json",
+      "result": "vietnam_hes_political_to_military_transition_results_v1.json",
+      "verdict": "POLITICAL_TO_MILITARY_TRANSITION_NOT_CONFIRMED",
+      "evidence": {
+        "heldout_auc_gain": 0.0017794159226282025,
+        "heldout_logloss_gain": 0.00041731885756790543,
+        "training_political_presence_coefficient": 0.631237284410463,
+        "heldout_unadjusted_risk_ratio_ge_2_of_3_vs_zero": 3.2250250085023366,
+        "unexposed_90d_transition_risk": 0.06677744544145342,
+        "fully_exposed_90d_transition_risk": 0.3123359580052493,
+        "heldout_rows": 45936
+      },
+      "scientific_consequence": "Political penetration is strongly associated with subsequent military deterioration, but it adds little incremental forecast information once current military-state depth, province, and seasonality are known. HES presence variables are better treated as candidate state measurements than as automatically superior forecasting features.",
+      "does_not_falsify": "The directional state relationship itself or the synthetic distinction between embedded organizational stock and fielded force. The failed claim is the preregistered incremental-prediction threshold."
+    }
+  ]
+}

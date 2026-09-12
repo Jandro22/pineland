@@ -1,0 +1,93 @@
+{
+  "schema_version": "pineland.vietnam_tfes_quality_survival_contract.v1",
+  "status": "FROZEN_BEFORE_QUALITY_PERFORMANCE_SCORE_COMPUTATION",
+  "historical_parameter_fitting_to_pineland": false,
+  "latent_veterancy_estimation": false,
+  "question": "Conditional on reported enemy contact exposure, does current independently recorded TFES unit quality add heldout information about next-month friendly casualty risk beyond personnel quantity, manning, prior contact/casualty history, unit type, province, and seasonality?",
+  "theory_link": "Historical analogue of the frozen synthetic result that capability memory/quality affects losses and survival beyond headcount. TFES quality is broader than Pineland veterancy V_G and is not called V_G.",
+  "sources": {
+    "state_quality_and_personnel": "direct NARA TFES unit records, parsed by studies/vietnam_1955_1975/scripts/parse_tfes_direct_v1.py",
+    "future_performance": "direct NARA VNUS monthly RF/PF records, parsed by studies/vietnam_1955_1975/scripts/parse_vnus_direct_v1.py",
+    "identity_crosswalk": "studies/vietnam_1955_1975/data/derived/tfes_vnus_linkage_audit_v1.json",
+    "identity_rule": "TFES district_id + unit_type + unit_series == VNUS district_id + unit_type + unit_id_3",
+    "identity_selection_guard": "The identity rule was selected only by same-month identifier overlap (98.86% VNUS match), before performance effects were computed."
+  },
+  "pre_result_exposure_disclosure": {
+    "inspected": [
+      "TFES/VNUS record layouts and example records",
+      "TFES ordered evaluation-question semantics",
+      "TFES measurement completeness",
+      "TFES source anomaly rate present-for-duty > assigned",
+      "identifier-only TFES/VNUS linkage rates"
+    ],
+    "not_inspected": [
+      "quality-casualty correlations",
+      "heldout casualty-risk AUC/logloss",
+      "quality coefficient sign in the frozen model",
+      "quality-stratified future casualty risks"
+    ]
+  },
+  "quality_operator": {
+    "name": "TFES core adequacy fraction",
+    "included_questions": ["A", "B", "C", "D", "E", "G", "H", "I", "K", "L"],
+    "excluded_questions": {
+      "F": "category 5 means not measurable under current mission",
+      "J": "shortage type is categorical, not ordinal",
+      "M-T": "not required for the minimal documented core operator"
+    },
+    "formula": "fraction of the 10 included questions rated 1 or 2",
+    "primary_completeness_rule": "all 10 included questions must have documented values 1-4",
+    "scale_claim": "ordinal threshold only; no equal interval spacing among ratings is assumed",
+    "direction": "higher = more TFES dimensions rated good/satisfactory"
+  },
+  "primary_risk_set": {
+    "anchor_months_training": "1971-07 through 1971-12",
+    "anchor_months_heldout": "1972-01 through 1972-06",
+    "tfes_status": "stat_code == '0'",
+    "identity": "exact frozen crosswalk key; ambiguous duplicate TFES key-months excluded",
+    "quality": "all 10 core evaluation questions known",
+    "personnel": "assigned_total > 0 AND present_total <= assigned_total",
+    "vnus_history": "valid current-month VNUS row exists",
+    "vnus_future": "valid next-calendar-month VNUS row exists for same unit",
+    "contact_exposure": "next-month day_night_operations_with_contact >= 1"
+  },
+  "primary_outcome": {
+    "name": "next-month friendly casualty incidence conditional on contact",
+    "definition": "1 if VNUS next-month friendly KIA + WIA + MIA > 0, else 0",
+    "interpretation": "survival/loss-risk observable conditional on reported contact exposure, not unit destruction"
+  },
+  "baseline_model": {
+    "estimator": "unregularized logistic regression; no hyperparameter tuning",
+    "numeric_features": [
+      "log1p(TFES assigned_total at anchor)",
+      "TFES manning_ratio at anchor",
+      "log1p(current-month VNUS friendly KIA+WIA+MIA)",
+      "log1p(current-month VNUS contact operations)",
+      "log1p(next-month VNUS contact operations) as realized exposure adjustment",
+      "month-of-year sine",
+      "month-of-year cosine"
+    ],
+    "categorical_features": ["TFES unit_type", "TFES province_code"]
+  },
+  "enhanced_model": "baseline + TFES core adequacy fraction",
+  "primary_gates": {
+    "heldout_auc_gain_min": 0.015,
+    "heldout_logloss_gain_min": 0.003,
+    "training_quality_coefficient_negative": true,
+    "status_if_all_pass": "TFES_QUALITY_ADDS_HELDOUT_SURVIVAL_INFORMATION_BEYOND_HEADCOUNT",
+    "status_otherwise": "TFES_QUALITY_SURVIVAL_INCREMENT_NOT_CONFIRMED"
+  },
+  "secondary_predeclared": {
+    "quality_quartile_casualty_risk": "report heldout raw risk by adequacy quartile; not a promotion gate",
+    "casualty_burden_per_contact": "compare log1p friendly casualties / log1p contact exposure descriptively",
+    "reported_exchange": "enemy KIA+captured versus friendly KIA+WIA+MIA is descriptive only because body-count error is source-sensitive",
+    "training_recency": "report whether any documented basic/refresher/motivational/revolutionary-development training occurred within 12 months; secondary because training-date coverage is incomplete",
+    "source_anomaly_sensitivity": "rerun descriptively including present>assigned rows, but primary result is never replaced by sensitivity output"
+  },
+  "guards": [
+    "TFES evaluation quality is not Pineland veterancy V_G.",
+    "VNUS casualties and body counts are reporting-system observations with nonidentified error.",
+    "Conditioning on realized next-month contact exposure defines a survival-under-contact estimand; it is not a total causal effect of quality on battlefield casualties.",
+    "No result from this contract may retune the synthetic theory."
+  ]
+}
