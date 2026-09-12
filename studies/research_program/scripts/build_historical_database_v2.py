@@ -243,6 +243,7 @@ def afghanistan_bundle(case_root: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.
     aux = empty_aux()
     # Preserve the independently sourced SIGAR control rows as auxiliary
     # evidence without converting them into latent control values here.
+    sources=[p/"events_2004_2021.csv",p/"province_week_panel.csv",p/"districts.csv",p/"district_centers.csv"]
     for fn in ["sigar_oct2017_control_401.csv", "sigar_oct2017_control_407.csv"]:
         q = p / fn
         if q.exists():
@@ -251,8 +252,8 @@ def afghanistan_bundle(case_root: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.
             for _,r in x.iterrows():
                 uid = str(r.get("district_id", r.get("district_code", "")))
                 rows.append({"case_id":"afghanistan_2004_2021","construct":"control_or_presence","unit_id":uid,"unit_name":str(r.get("district_name","")),"period_start":"2017-10-01","period_end":"2017-10-31","value_numeric":np.nan,"value_text":json.dumps(r.to_dict(), default=str),"source_name":"SIGAR district control assessment","source_locator":fn,"temporal_precision":"month_or_report_period","geographic_precision":"district","independence_class":"independent_of_ucdp_violence","measurement_status":"raw_reported_category","uncertainty_note":"No violence-as-control substitution; raw SIGAR coding retained."})
-            aux=pd.concat([aux,pd.DataFrame(rows)],ignore_index=True)
-    sources=[p/"events_2004_2021.csv",p/"province_week_panel.csv",p/"districts.csv",p/"district_centers.csv"]
+            aux=pd.concat([aux,pd.DataFrame(rows, columns=empty_aux().columns)],ignore_index=True)
+            sources.append(q)
     return geo,events,unit,aux,sources,{"canonical_event_unit":"province-week primary; district event mapping secondary"}
 
 
@@ -269,6 +270,7 @@ def nepal_bundle(case_root: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
     civ=w.state_one_sided_deaths_best+w.maoist_one_sided_deaths_best
     unit=pd.DataFrame({"case_id":"nepal_2001_2006","unit_id":w.district_id,"period_start":pd.to_datetime(w.week_start),"period_end":pd.to_datetime(w.week_end),"time_scale":"week","split":w.split,"exposure_days":w.exposure_days,"observation_status":np.where(counts>0,"observed_event","observed_zero"),"event_count":counts,"fatalities_best":fats,"civilian_fatalities":civ,"mapped_event_count":counts,"unmapped_event_count_case_period":0,"source_coverage":"ucdp_ged_source_frame"})
     aux=empty_aux()
+    sources=[p/"ucdp_nepal_events.csv",p/"district_week_panel.csv",p/"district_geography.csv"]
     for fn in ["nepal_eastern_control_presence_adjudicated_v1.csv","nepal_sparse_control_presence.csv"]:
         q=p/fn
         if q.exists():
@@ -278,23 +280,119 @@ def nepal_bundle(case_root: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
                 uid=str(r.get("district_id","")); name=str(r.get("district_name",""))
                 rows.append({"case_id":"nepal_2001_2006","construct":"control_or_presence","unit_id":uid,"unit_name":name,"period_start":str(r.get("date",r.get("period_start",""))),"period_end":str(r.get("date",r.get("period_end",""))),"value_numeric":pd.to_numeric(r.get("value",np.nan),errors="coerce"),"value_text":json.dumps(r.to_dict(),default=str),"source_name":"independent coded control/presence evidence","source_locator":fn,"temporal_precision":"source_specific","geographic_precision":"district","independence_class":"independent_of_primary_ucdp_scoring","measurement_status":"adjudicated_or_sparse_observation","uncertainty_note":"Original row preserved in value_text."})
             aux=pd.concat([aux,pd.DataFrame(rows)],ignore_index=True)
-    sources=[p/"ucdp_nepal_events.csv",p/"district_week_panel.csv",p/"district_geography.csv"]
+            sources.append(q)
+    insec_csv = p / "insec_district_totals.csv"
+    if insec_csv.exists():
+        x = pd.read_csv(insec_csv)
+        insec_rows = []
+        for _, r in x.iterrows():
+            uid = str(r.get("district_id", ""))
+            name = str(r.get("district_name", ""))
+            insec_rows.append({
+                "case_id": "nepal_2001_2006",
+                "construct": "civilian_harm_or_victim_total",
+                "unit_id": uid,
+                "unit_name": name,
+                "period_start": "1996-02-13",
+                "period_end": "2006-11-21",
+                "value_numeric": pd.to_numeric(r.get("victim_total_cumulative", np.nan), errors="coerce"),
+                "value_text": json.dumps(r.to_dict(), default=str),
+                "source_name": "INSEC Conflict Victims Report",
+                "source_locator": "insec_district_totals.csv",
+                "temporal_precision": "conflict_cumulative_total",
+                "geographic_precision": "district",
+                "independence_class": "independent_human_rights_monitoring_distinct_from_ucdp",
+                "measurement_status": str(r.get("source_status", "observed")),
+                "uncertainty_note": "Independent cumulative victim cross-check (1996-2006); not weekly panel-stratified.",
+            })
+        aux = pd.concat([aux, pd.DataFrame(insec_rows)], ignore_index=True)
+        sources.append(insec_csv)
     return geo,events,unit,aux,sources,{"canonical_event_unit":"district-week"}
 
 
 def colombia_aux(case_root: Path, geo: pd.DataFrame, polys: list[Any], ids: list[str]) -> pd.DataFrame:
-    p=case_root/"data/processed/cnmh_dav_control_presence_inventory.csv"
-    if not p.exists(): return empty_aux()
-    x=pd.read_csv(p,low_memory=False); tree=STRtree(polys)
-    mapped=[None]*len(x); valid=x.longitude.notna() & x.latitude.notna()
-    if valid.any():
-        idx=np.where(valid.to_numpy())[0]; pts=points(x.loc[valid,"longitude"].astype(float),x.loc[valid,"latitude"].astype(float)); pairs=tree.query(pts,predicate="within")
-        for pi,gi in zip(pairs[0],pairs[1]): mapped[int(idx[int(pi)])]=ids[int(gi)]
-    rows=[]
-    names=dict(zip(geo.unit_id,geo.unit_name))
-    for i,r in x.iterrows():
-        uid=mapped[i]
-        rows.append({"case_id":"colombia_1984_2016","construct":"control_or_presence","unit_id":uid,"unit_name":names.get(uid,""),"period_start":"","period_end":"","value_numeric":np.nan,"value_text":str(r.get("description",r.get("period","presence"))),"source_name":"CNMH DAV","source_locator":str(r.get("source_label",r.get("source_file",""))),"temporal_precision":str(r.get("date_status","reported_period")),"geographic_precision":"point_to_gadm2" if uid else "unmapped_point","independence_class":"independent_of_ucdp_violence","measurement_status":"presence_lower_bound_not_control","uncertainty_note":str(r.get("period",""))})
+    rows = []
+    names = dict(zip(geo.unit_id, geo.unit_name))
+    p = case_root / "data/processed/cnmh_dav_control_presence_inventory.csv"
+    if p.exists():
+        x = pd.read_csv(p, low_memory=False)
+        tree = STRtree(polys)
+        mapped = [None] * len(x)
+        valid = x.longitude.notna() & x.latitude.notna()
+        if valid.any():
+            idx = np.where(valid.to_numpy())[0]
+            pts = points(x.loc[valid, "longitude"].astype(float), x.loc[valid, "latitude"].astype(float))
+            pairs = tree.query(pts, predicate="within")
+            for pi, gi in zip(pairs[0], pairs[1]):
+                mapped[int(idx[int(pi)])] = ids[int(gi)]
+        for i, r in x.iterrows():
+            uid = mapped[i]
+            rows.append({
+                "case_id": "colombia_1984_2016",
+                "construct": "control_or_presence",
+                "unit_id": uid,
+                "unit_name": names.get(uid, ""),
+                "period_start": "",
+                "period_end": "",
+                "value_numeric": np.nan,
+                "value_text": str(r.get("description", r.get("period", "presence"))),
+                "source_name": "CNMH DAV",
+                "source_locator": str(r.get("source_label", r.get("source_file", ""))),
+                "temporal_precision": str(r.get("date_status", "reported_period")),
+                "geographic_precision": "point_to_gadm2" if uid else "unmapped_point",
+                "independence_class": "independent_of_ucdp_violence",
+                "measurement_status": "presence_lower_bound_not_control",
+                "uncertainty_note": str(r.get("period", "")),
+            })
+    omc_p = case_root / "data/processed/cnmh_omc_municipality_year_1984_2016.json"
+    if omc_p.exists():
+        with omc_p.open("r", encoding="utf-8") as f:
+            omc_records = json.load(f)
+        lookup = {(_norm_name(r.parent_name), _norm_name(r.unit_name)): (r.unit_id, r.unit_name) for _, r in geo.iterrows()}
+        aliases = {
+            ("NORTEDESANTANDER", "CUCUTA"): ("NORTEDESANTANDER", "SANJOSEDECUCUTA"),
+            ("PUTUMAYO", "MOCOA"): ("PUTUMAYO", "SANMIGUELDEMOCOA"),
+            ("NARINO", "PASTO"): ("NARINO", "SANJUANDEPASTO"),
+            ("NARINO", "SANANDRESDETUMACO"): ("NARINO", "TUMACO"),
+            ("META", "URIBE"): ("META", "LAURIBE"),
+            ("NORTEDESANTANDER", "LAPLAYA"): ("NORTEDESANTANDER", "LAPLAYADEBELEN"),
+            ("ANTIOQUIA", "SANVICENTEFERRER"): ("ANTIOQUIA", "SANVICENTE"),
+            ("ANTIOQUIA", "ELSANTUARIO"): ("ANTIOQUIA", "SANTUARIO"),
+            ("SUCRE", "SANJOSEDETOLUVIEJO"): ("SUCRE", "TOLUVIEJO"),
+            ("CESAR", "MANAUREBALCONDELCESAR"): ("CESAR", "MANAURE"),
+            ("CAUCA", "PIENDAMOTUNIA"): ("CAUCA", "PIENDAMO"),
+            ("CAUCA", "SOTARAPAISPAMBA"): ("CAUCA", "SOTARA"),
+            ("CHOCO", "CARMENDELDARIEN"): ("CHOCO", "ELCARMENDELDARIEN"),
+            ("CORDOBA", "LORICA"): ("CORDOBA", "SANTACRUZDELORICA"),
+        }
+        for rec in omc_records:
+            dept = rec.get("Nombre_Departamento", "")
+            mun = rec.get("Nombre_Municipio", "")
+            key = (_norm_name(dept), _norm_name(mun))
+            target_key = aliases.get(key, key)
+            matched = lookup.get(target_key)
+            uid = matched[0] if matched else None
+            uname = matched[1] if matched else str(mun)
+            year = str(rec.get("Anio_hecho", "")).strip()
+            p_start = f"{year}-01-01" if year and year.isdigit() else ""
+            p_end = f"{year}-12-31" if year and year.isdigit() else ""
+            rows.append({
+                "case_id": "colombia_1984_2016",
+                "construct": "civilian_harm_or_victim_total",
+                "unit_id": uid,
+                "unit_name": uname,
+                "period_start": p_start,
+                "period_end": p_end,
+                "value_numeric": pd.to_numeric(rec.get("victim_count", np.nan), errors="coerce"),
+                "value_text": json.dumps(rec, default=str),
+                "source_name": "CNMH Observatorio de Memoria y Conflicto",
+                "source_locator": "cnmh_omc_municipality_year_1984_2016.json",
+                "temporal_precision": "year",
+                "geographic_precision": "municipality_gadm2" if uid else "unmapped_municipality",
+                "independence_class": "independent_human_rights_monitoring_distinct_from_ucdp",
+                "measurement_status": "municipality_year_aggregate_observation" if uid else "unmapped_reported_aggregate",
+                "uncertainty_note": "Preserved CNMH OMC municipality-year civilian harm and victim record.",
+            })
     return pd.DataFrame(rows) if rows else empty_aux()
 
 
@@ -607,13 +705,23 @@ def build_case(case: str) -> dict[str,Any]:
         elif case in {"colombia_1984_2016","iraq_2003_2011"}:
             cfg={"colombia_1984_2016":("Colombia","1984-01-01","2016-12-31"),"iraq_2003_2011":("Iraq","2003-03-20","2011-12-31")}[case]
             geo,events,unit,m=standardize_ged_case(case,case_root,*cfg,level=2)
-            # Re-open geometry once for Colombia independent presence mapping.
-            gadm=m["gadm_path"]
-            with zipfile.ZipFile(gadm) as z:
-                member=next(x for x in z.namelist() if x.endswith(".json")); feats=json.load(z.open(member))["features"]
-            polys=[shape(f["geometry"]) for f in feats]; ids=[f["properties"]["GID_2"] for f in feats]
-            aux=colombia_aux(case_root,geo,polys,ids) if case.startswith("colombia") else iraq_aux(case_root)
-            sources=[m["ged_path"],m["gadm_path"]]; meta={k:v for k,v in m.items() if not isinstance(v,Path)}
+            sources=[m["ged_path"],m["gadm_path"]]
+            if case.startswith("colombia"):
+                # Re-open geometry once for Colombia independent presence mapping.
+                gadm=m["gadm_path"]
+                with zipfile.ZipFile(gadm) as z:
+                    member=next(x for x in z.namelist() if x.endswith(".json")); feats=json.load(z.open(member))["features"]
+                polys=[shape(f["geometry"]) for f in feats]; ids=[f["properties"]["GID_2"] for f in feats]
+                aux=colombia_aux(case_root,geo,polys,ids)
+                dav = case_root / "data/processed/cnmh_dav_control_presence_inventory.csv"
+                omc = case_root / "data/processed/cnmh_omc_municipality_year_1984_2016.json"
+                if dav.exists(): sources.append(dav)
+                if omc.exists(): sources.append(omc)
+            else:
+                aux=iraq_aux(case_root)
+                sig = case_root / "data/processed/sigir_rusafa_control_presence_panel.csv"
+                if sig.exists(): sources.append(sig)
+            meta={k:v for k,v in m.items() if not isinstance(v,Path)}
         elif case=="vietnam_1955_1975": geo,events,unit,aux,sources,meta=vietnam_secondary_bundle(case_root)
         else: raise ValueError(case)
 
