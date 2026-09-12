@@ -1,0 +1,64 @@
+﻿{
+    "schema_version":  "pineland.development_sequence_frontier_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "At approximately equal realized total government spending, does delaying/ramping high political-development spending preserve more durable governance production and improve final state outcomes than an immediate surge?",
+    "design":  {
+                   "seed_base":  2026130000,
+                   "seeds":  6,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_day":  60,
+                   "final_day":  240,
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "allocation_mode":  "equal_locality",
+                   "public_budget_share":  0.9,
+                   "patronage_share":  0.08,
+                   "private_diversion_share":  0.02,
+                   "schedules":  [
+                                     {
+                                         "id":  "steady5",
+                                         "segments":  [
+                                                          "60-240:5x"
+                                                      ]
+                                     },
+                                     {
+                                         "id":  "immediate20",
+                                         "segments":  [
+                                                          "60-240:20x"
+                                                      ]
+                                     },
+                                     {
+                                         "id":  "delayed20",
+                                         "segments":  [
+                                                          "60-120:1x",
+                                                          "120-240:20x"
+                                                      ]
+                                     },
+                                     {
+                                         "id":  "ramp20",
+                                         "segments":  [
+                                                          "60-90:1x",
+                                                          "90-150:5x",
+                                                          "150-240:20x"
+                                                      ]
+                                     }
+                                 ]
+               },
+    "primary":  [
+                    "total realized government outflow",
+                    "political-order outflow",
+                    "governance outflow",
+                    "day capital falls below 10% anchor",
+                    "final government legitimacy",
+                    "final institution capacity",
+                    "final government control"
+                ],
+    "analysis":  [
+                     "First compare schedules whose realized total outflow differs by \u003c=1%.",
+                     "If delayed/ramped schedules preserve more governance outflow and improve final state outcomes at approximately equal total spend, classify sequencing benefit supported.",
+                     "Do not assume steady5 is optimal; report Pareto set across spending timing and outcomes."
+                 ],
+    "guard":  "Synthetic timing mechanism only; no empirical aid schedule recommendation."
+}

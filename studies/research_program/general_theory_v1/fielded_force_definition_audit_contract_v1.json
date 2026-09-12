@@ -1,0 +1,32 @@
+﻿{
+    "schema_version":  "pineland.fielded_force_definition_audit_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "Does the existing closure coordinate F materially differ from an active-owner fielded-force definition over the 30-day strategic decision horizon?",
+    "definitions":  {
+                        "legacy_F":  "Formation personnel where canonical insurgent formation is active, operational_status=1, not outside Pineland.",
+                        "corrected_F":  "Same, but additionally canonical insurgent organization active=1."
+                    },
+    "design":  {
+                   "seed_base":  2026131000,
+                   "pool_seeds":  24,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_days":  60,
+                   "horizon_days":  30,
+                   "branches":  16,
+                   "sample_localities":  "same stratified matching logic as closure audit where feasible",
+                   "initialization_seed":  2026130900
+               },
+    "primary":  [
+                    "fraction of anchor locality states with legacy_F != corrected_F",
+                    "fraction of final locality states with legacy_F != corrected_F",
+                    "difference by low/mid/high activity stratum",
+                    "whether corrected-F changes high-stratum pair SMD classification"
+                ],
+    "decision":  [
+                     "If disagreement \u003c1% overall and no closure classification changes, definition correction is documentation-only.",
+                     "If disagreement \u003e=1% or any closure classification changes, strategic closure must be reissued under corrected F before decision-support claims."
+                 ],
+    "guard":  "Synthetic measurement audit only; does not alter archived files or frozen conclusions until audit is complete."
+}
