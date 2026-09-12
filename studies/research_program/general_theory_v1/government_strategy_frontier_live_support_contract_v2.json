@@ -1,0 +1,72 @@
+{
+  "schema_version": "pineland.government_strategy_frontier_live_support_contract.v2",
+  "registered_before_fresh_policy_outcomes": true,
+  "historical_outcomes_used": false,
+  "execution_gate": "Run only if live_insurgency_closure_recertification_results_v1.json passes its preregistered gate.",
+  "purpose": "Re-run the fixed domestic-government strategy menu on a prospectively selected persistent live-insurgency regime after correcting canonical fielded-force semantics.",
+  "challenge_support": {
+    "selection_source": "insurgent_mobilization_interior_confirmation_results_v1.json",
+    "selection_rule_source": "live_insurgency_closure_recertification_contract_v1.json",
+    "recruitment_multiplier": 0.0625,
+    "underground_disruption_multiplier": 1.0,
+    "selection_note": "0.0625 is selected because it passed the preregistered day-360 viability gate and its median runway ratio (0.393747) was closest to 0.50 among eligible candidate rates. This choice was made without policy outcomes.",
+    "interpretation": "This is an environmental challenge regime, not a government strategy lever or an empirically calibrated recruitment rate."
+  },
+  "design": {
+    "seed_base": 2026135000,
+    "seeds": 16,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 240,
+    "final_day": 360,
+    "foreign_affairs": false,
+    "state_regeneration": true,
+    "common_random_number_anchor_clones": true,
+    "minimum_live_anchor_seeds": 12,
+    "live_reproductive_definition": [
+      "canonical insurgent organization active=1",
+      "canonical insurgent liquid capital > 0",
+      "canonical rooted armed membership > 0",
+      "canonical active-owner effective fielded force > 0",
+      "canonical recruitment hazard mass > 0"
+    ],
+    "baseline_only_preflight": {
+      "strategy_profile": "baseline_only",
+      "uses_policy_contrasts": false,
+      "day60_minimum_live_worlds": 12,
+      "day240_minimum_live_worlds": 10,
+      "day360_minimum_live_worlds": 8,
+      "rationale": "The mobilization confirmation isolated metabolism with government underground disruption disabled, whereas the policy environment retains default disruption. A baseline-only persistence check is therefore required before policy contrasts so the frontier is not estimated against a floor-collapsed insurgency."
+    },
+    "failure_rule": "If the untouched baseline-only seed block misses any persistence minimum, do not run or interpret the policy menu on that challenge regime. Expand challenge support under a new preregistered baseline-only contract without inspecting policy contrasts."
+  },
+  "strategies": [
+    "baseline",
+    "clean_governance",
+    "spending_surge",
+    "clean_spending_surge",
+    "security_expansion",
+    "police_first",
+    "military_first",
+    "admin_first",
+    "integrated",
+    "patronage_heavy"
+  ],
+  "strategy_definition_source": "government_strategy_frontier_contract_v1.json",
+  "measurement_corrections": {
+    "canonical_fielded_force": "Zero whenever the canonical insurgent organization is inactive; otherwise sum only active, operational, in-country canonical insurgent formations.",
+    "ecosystem_reporting": "Report rooted membership, operational force, recruitment hazard, and active organization count over all active insurgent-kind organizations in parallel with canonical outcomes.",
+    "cost": "Gross negative changes in government organizational capital during the intervention, categorized by event family; positive inflows reported separately."
+  },
+  "primary_analysis": [
+    "Use within-seed contrasts against baseline at day 240 and day 360.",
+    "Do not combine distinct outcomes into a single utility score.",
+    "For each insurgent regenerative outcome report absolute effect, percent effect where denominator is stable, durability from intervention end to final, and effect per incremental government capital outflow.",
+    "Identify Pareto-dominated packages using durable insurgent suppression, government control, legitimacy, local institution capacity, government losses, civilian population loss/displacement, and gross government outflow.",
+    "Report canonical and whole-ecosystem insurgent outcomes side by side; a package cannot be called suppressive if the canonical organization shrinks while the active insurgent ecosystem substitutes enough to erase the effect.",
+    "Report seed-level collapse fractions and timepoint live fractions separately from continuous means."
+  ],
+  "selection_guard": "No strategy may be added, removed, or have coefficients changed after fresh live-support policy outcomes are inspected. Continuous optimization or new force-composition/air-support packages require a new contract and untouched seed block.",
+  "interpretation_guard": "Synthetic Pineland mechanism comparison only. Passing closure and this policy assay does not constitute historical validation or a real-world operational prescription."
+}
