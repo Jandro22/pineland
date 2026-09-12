@@ -1299,6 +1299,205 @@ pub fn insurgent_transport_net_pressures(
     net
 }
 
+/// Expected insurgent capacity arriving through the *next successfully
+/// executable* command opportunity.
+///
+/// This is the command-realizability counterpart to
+/// [`inbound_transport_pressures`].  Already committed orders have passed the
+/// command-reliability draw and therefore retain full weight.  Prospective
+/// orders are additionally weighted by the formation's current command-edge
+/// reliability, matching the acceptance draw in `issue_movement_order`.
+/// Command latency is deliberately not folded into this scalar: it is a delay
+/// coordinate, not a probability of eventual execution.
+///
+/// Pure diagnostic: consumes no RNG and mutates no model state.
+pub fn executable_inbound_transport_pressures(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+) -> Vec<f64> {
+    let locality_count = topology.locality_count();
+    let mut pressures = vec![0.0; locality_count];
+    let maximum_population = topology
+        .locality_population
+        .iter()
+        .copied()
+        .fold(0.0, f64::max);
+    let decision_probability = reference_probability(
+        config.logistics.reallocation_rate,
+        config.intervals.command,
+        1.0,
+    );
+    for formation in 0..particle.formations.personnel.len() {
+        let organization = particle.formations.organization[formation] as usize;
+        if organization != INSURGENT
+            || particle.formations.outside_pineland[formation] != 0
+            || particle.formations.personnel[formation] <= 0.0
+            || particle.formations.operational_status[formation] != 1
+        {
+            continue;
+        }
+        let strength = transport_strength_if_present(particle, formation);
+        if strength <= 0.0 {
+            continue;
+        }
+        if has_active_order(particle, formation) {
+            let destination = particle.formations.movement_destination[formation] as usize;
+            if destination < locality_count {
+                pressures[destination] += strength;
+            }
+            continue;
+        }
+        if particle.formations.moving[formation] != 0
+            || particle.formations.deployable_personnel(formation) <= 0.0
+        {
+            continue;
+        }
+        let (reliability, _) = command_metrics(particle, organization, formation);
+        if reliability <= 0.0 {
+            continue;
+        }
+        let posture_probabilities =
+            insurgent_posture_probabilities(particle, config, organization, formation);
+        let postures = [
+            POSTURE_FRONTIER,
+            POSTURE_FOOTHOLD,
+            POSTURE_STRONGHOLD,
+            POSTURE_EXPLORATION,
+        ];
+        let mut destination_probabilities = vec![0.0; locality_count];
+        for (posture, posture_probability) in postures.into_iter().zip(posture_probabilities) {
+            if posture_probability <= 0.0 {
+                continue;
+            }
+            let conditional = destination_probabilities_given_posture(
+                particle,
+                topology,
+                config,
+                formation,
+                posture,
+                maximum_population,
+            );
+            for locality in 0..locality_count {
+                destination_probabilities[locality] += posture_probability * conditional[locality];
+            }
+        }
+        let origin = particle.formations.locality[formation] as usize;
+        for destination in 0..locality_count {
+            if destination == origin {
+                continue;
+            }
+            pressures[destination] += strength
+                * decision_probability
+                * reliability
+                * destination_probabilities[destination].clamp(0.0, 1.0);
+        }
+    }
+    for value in &mut pressures {
+        *value = value.max(0.0);
+    }
+    pressures
+}
+
+/// Command-reliability-weighted expected *net* insurgent relocation flux.
+///
+/// This differs from [`insurgent_transport_net_pressures`] only for
+/// prospective, not-yet-issued movement orders.  Those terms are multiplied by
+/// the exact current command-reliability probability used by the causal order
+/// issuance code.  Already committed orders retain full weight.
+pub fn insurgent_executable_transport_net_pressures(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+) -> Vec<f64> {
+    let locality_count = topology.locality_count();
+    let mut net = vec![0.0; locality_count];
+    let maximum_population = topology
+        .locality_population
+        .iter()
+        .copied()
+        .fold(0.0, f64::max);
+    let decision_probability = reference_probability(
+        config.logistics.reallocation_rate,
+        config.intervals.command,
+        1.0,
+    );
+    for formation in 0..particle.formations.personnel.len() {
+        let organization = particle.formations.organization[formation] as usize;
+        if organization != INSURGENT
+            || particle.formations.outside_pineland[formation] != 0
+            || particle.formations.personnel[formation] <= 0.0
+            || particle.formations.operational_status[formation] != 1
+        {
+            continue;
+        }
+        let strength = transport_strength_if_present(particle, formation);
+        if strength <= 0.0 {
+            continue;
+        }
+        let origin = particle.formations.locality[formation] as usize;
+        if origin >= locality_count {
+            continue;
+        }
+        if has_active_order(particle, formation) {
+            let destination = particle.formations.movement_destination[formation] as usize;
+            if destination < locality_count && destination != origin {
+                net[origin] -= strength;
+                net[destination] += strength;
+            }
+            continue;
+        }
+        if particle.formations.moving[formation] != 0
+            || particle.formations.deployable_personnel(formation) <= 0.0
+        {
+            continue;
+        }
+        let (reliability, _) = command_metrics(particle, organization, formation);
+        if reliability <= 0.0 {
+            continue;
+        }
+        let posture_probabilities =
+            insurgent_posture_probabilities(particle, config, organization, formation);
+        let postures = [
+            POSTURE_FRONTIER,
+            POSTURE_FOOTHOLD,
+            POSTURE_STRONGHOLD,
+            POSTURE_EXPLORATION,
+        ];
+        let mut destination_probabilities = vec![0.0; locality_count];
+        for (posture, posture_probability) in postures.into_iter().zip(posture_probabilities) {
+            if posture_probability <= 0.0 {
+                continue;
+            }
+            let conditional = destination_probabilities_given_posture(
+                particle,
+                topology,
+                config,
+                formation,
+                posture,
+                maximum_population,
+            );
+            for locality in 0..locality_count {
+                destination_probabilities[locality] += posture_probability * conditional[locality];
+            }
+        }
+        for destination in 0..locality_count {
+            if destination == origin {
+                continue;
+            }
+            let moved = strength
+                * decision_probability
+                * reliability
+                * destination_probabilities[destination].clamp(0.0, 1.0);
+            if moved > 0.0 {
+                net[origin] -= moved;
+                net[destination] += moved;
+            }
+        }
+    }
+    net
+}
+
 fn sanctuary_access(
     particle: &ParticleState,
     topology: &StaticTopology,

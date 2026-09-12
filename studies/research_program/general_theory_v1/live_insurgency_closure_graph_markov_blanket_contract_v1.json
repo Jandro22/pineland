@@ -1,0 +1,70 @@
+{
+  "schema_version": "pineland.closure_graph_markov_blanket_contract.v1",
+  "status": "PREREGISTERED_CONTINGENT",
+  "registered_date": "2026-09-12",
+  "historical_outcomes_used": false,
+  "activation_condition": "Activate if rootedstock_execnet12v4 has one or more demonstrably non-equivalent pairs on its fresh screen.",
+  "source_basis": {
+    "movement_scope": "The default logistics.reallocation_destination_scope is adjacent. A focal locality's next-command incoming relocations can therefore be generated only by formations currently in its one-hop graph neighborhood.",
+    "current_reduced_state_gap": "The current local closure state represents the neighborhood only through mean clipped membership depth. It does not retain neighboring transportable force, rooted reservoir, or recruitment hazard.",
+    "hypothesis": "The residual is a missing spatial Markov blanket rather than temporal memory: local transition distributions become approximately closed when direct one-hop source-reservoir state is included."
+  },
+  "candidate": {
+    "name": "rootedstock_execnet_ring1_15v5",
+    "base": "rootedstock_execnet12v4",
+    "added_coordinates": [
+      "log_neighbor_transportable_strength",
+      "log_neighbor_rooted_mass",
+      "log_neighbor_recruitment_hazard"
+    ],
+    "dimension": 15,
+    "coordinate_rationale": {
+      "log_neighbor_transportable_strength": "direct one-command relocation reservoir",
+      "log_neighbor_rooted_mass": "durable one-hop insurgent stock that can replenish source formations",
+      "log_neighbor_recruitment_hazard": "current one-hop regeneration flow into that reservoir"
+    }
+  },
+  "fresh_screen": {
+    "dynamic_seed_base": 2026146000,
+    "initialization_seed": 2026145900,
+    "pool_worlds": 320,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "pairs": 24,
+    "branches": 16,
+    "threads": 14,
+    "recruitment_multiplier": 0.0625,
+    "require_live_anchor": true,
+    "max_match_distance": 1.25,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 2026146091,
+    "nomination_rule": "Zero demonstrably non-equivalent pairs required; 16 branches cannot certify closure.",
+    "falsifier": "One or more demonstrably non-equivalent pairs rejects the one-hop Markov blanket as sufficient 30d closure."
+  },
+  "fresh_confirmation": {
+    "activation": "Only if fresh_screen has zero demonstrably non-equivalent pairs.",
+    "dynamic_seed_base": 2026147000,
+    "initialization_seed": 2026146900,
+    "pool_worlds": 320,
+    "pairs": 24,
+    "branches": 32,
+    "threads": 14,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 2026147091,
+    "pass_gate": {
+      "overall_equivalent_pair_fraction_min": 0.9,
+      "each_stratum_equivalent_pair_fraction_min": 0.8,
+      "demonstrably_non_equivalent_pair_fraction_max": 0.1,
+      "all_selected_anchor_rows_live": true,
+      "maximum_match_distance_max": 1.25
+    }
+  },
+  "contingent_ring2_rule": {
+    "activation": "Only if the one-hop candidate fails and its demonstrable failures remain transport/reproduction dominated.",
+    "theory": "Over a 30d horizon repeated adjacent moves allow two-hop state to enter the focal Markov blanket indirectly. A ring-2 extension is then topologically motivated rather than ad hoc.",
+    "guard": "Do not define or test ring-2 coordinates after seeing fresh ring-1 future outcomes unless a separate contract freezes their exact aggregation first."
+  },
+  "scientific_guard": "A PASS would support graph-local synthetic closure under the tested topology and horizon. It would not imply that real insurgencies have a one-hop geographic Markov blanket."
+}

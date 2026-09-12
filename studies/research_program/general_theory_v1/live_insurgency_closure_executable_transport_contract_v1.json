@@ -1,0 +1,58 @@
+{
+  "schema_version": "pineland.closure_executable_transport_contract.v1",
+  "status": "PREREGISTERED_FRESH_MEASUREMENT_CORRECTION",
+  "registered_date": "2026-09-12",
+  "historical_outcomes_used": false,
+  "motivation": {
+    "source_audit_finding": "The existing inbound/net transport-pressure diagnostics weight prospective moves by command-decision probability and destination probability but omit the command-reliability acceptance draw used by the causal movement code. Already committed orders have passed that draw and are correctly full-weighted.",
+    "interpretation": "The existing Phi_net is an intended-order pressure, not the expected successfully executable relocation flux. This contract tests a replacement of that coordinate rather than accreting another arbitrary scalar after the residual-screen stop rule.",
+    "latency_scope": "Command latency is intentionally not folded into the replacement scalar because latency changes timing, not eventual command acceptance. It remains a separate delay hypothesis."
+  },
+  "candidate": {
+    "name": "rootedstock_execnet12v4",
+    "dimension": 12,
+    "replaces": "signed_net_transport_pressure",
+    "replacement": "signed_executable_net_transport_pressure",
+    "definition": "Committed orders contribute full transport strength. Prospective orders contribute transport_strength * command_decision_probability * command_reliability * destination_probability, with equal subtraction at origin and addition at destination.",
+    "other_coordinates_unchanged_from": "rootedstock_net12v3"
+  },
+  "fresh_screen": {
+    "dynamic_seed_base": 2026144000,
+    "initialization_seed": 2026143900,
+    "pool_worlds": 256,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "pairs": 24,
+    "branches": 16,
+    "threads": 14,
+    "recruitment_multiplier": 0.0625,
+    "require_live_anchor": true,
+    "max_match_distance": 1.25,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 2026144091,
+    "nomination_rule": "Zero demonstrably non-equivalent pairs required; 16 branches cannot certify closure.",
+    "falsifier": "One or more demonstrably non-equivalent pairs rejects command-reliability correction as sufficient closure."
+  },
+  "fresh_confirmation": {
+    "activation": "Only if fresh_screen has zero demonstrably non-equivalent pairs.",
+    "dynamic_seed_base": 2026145000,
+    "initialization_seed": 2026144900,
+    "pool_worlds": 256,
+    "pairs": 24,
+    "branches": 32,
+    "threads": 14,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 2026145091,
+    "pass_gate": {
+      "overall_equivalent_pair_fraction_min": 0.9,
+      "each_stratum_equivalent_pair_fraction_min": 0.8,
+      "demonstrably_non_equivalent_pair_fraction_max": 0.1,
+      "all_selected_anchor_rows_live": true,
+      "maximum_match_distance_max": 1.25
+    }
+  },
+  "stop_rule": "If the fresh executable-flux replacement fails, do not add command reliability as a thirteenth scalar. Move to explicit nonlocal source/network state or higher-order spatial closure.",
+  "scientific_guard": "This is a correction to a synthetic coarse-graining diagnostic. It changes no causal model dynamics and makes no empirical claim about real insurgent command systems."
+}

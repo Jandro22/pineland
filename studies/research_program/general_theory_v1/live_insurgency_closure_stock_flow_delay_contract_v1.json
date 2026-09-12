@@ -1,0 +1,112 @@
+{
+  "schema_version": "pineland.closure_stock_flow_delay_contract.v1",
+  "status": "PREREGISTERED_CONTINGENT",
+  "registered_date": "2026-09-12",
+  "historical_outcomes_used": false,
+  "registration_note": "Registered while the final gross-transport scalar candidate of the fresh residual screen was still running. The hazard candidate had already failed. This contract activates only if every preregistered one-coordinate residual candidate has at least one demonstrably non-equivalent pair.",
+  "activation_condition": {
+    "screen_contract": "live_insurgency_closure_residual_screen_contract_v1.json",
+    "required_condition": "rootedstock_net12v3, rootedstock_social_net13v3, rootedstock_hazard_net13v3, and rootedstock_transport_net13v3 each have >0 demonstrably non-equivalent pairs under the frozen 16-branch screen",
+    "if_not_met": "Do not activate this contract; follow the scalar-screen confirmation rule instead."
+  },
+  "hypothesis": {
+    "name": "stock_flow_delay_closure",
+    "claim": "The remaining closure residual is caused materially by committed-but-unrealized organizational throughput, especially movement orders whose effective strength is represented in current transport pressure but whose arrival/departure timing is omitted.",
+    "mechanistic_basis": [
+      "inbound_transport_pressures and insurgent_transport_net_pressures count committed movement strength but discard the ETA distribution",
+      "formation movement state retains pending/moving orders, destinations, execute times, and arrival times across an anchor",
+      "closure continuations preserve inherited scheduler and movement state while replacing future RNG streams with common random numbers",
+      "organized-action/contact one-shots are also inherited future commitments and will be measured diagnostically, but are not promoted unless separately preregistered"
+    ],
+    "falsifier": "If explicit committed movement mass plus its delay moments do not eliminate demonstrable non-equivalence on a fresh screen, the first-order stock-flow-delay hypothesis is rejected as sufficient closure."
+  },
+  "phase_1_posthoc_diagnostic": {
+    "status": "DIAGNOSTIC_ONLY_NO_CERTIFICATION",
+    "source_failure_block": "live_insurgency_closure_overlap_confirmation_144x24x32_30d_v1.csv",
+    "dynamic_seed_base": 2026137000,
+    "initialization_seed": 2026136900,
+    "pool_worlds": 144,
+    "pairs": 24,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "candidate_for_pair_selection": "rootedstock_net12v3",
+    "recruitment_multiplier": 0.0625,
+    "require_live_anchor": true,
+    "diagnostic_features": [
+      "log_pending_incoming_strength",
+      "pending_incoming_mean_eta_days",
+      "pending_incoming_min_eta_days",
+      "pending_incoming_order_count",
+      "log_pending_outgoing_strength",
+      "pending_outgoing_mean_eta_days",
+      "pending_outgoing_order_count",
+      "pending_local_insurgent_actions",
+      "pending_local_other_actions",
+      "next_local_action_delay_days",
+      "pending_local_contacts"
+    ],
+    "interpretation": "May diagnose whether failed matched pairs differ in inherited delay-line state. Results cannot rescue the observed closure block and cannot by themselves certify the fresh delay candidate."
+  },
+  "phase_2_fresh_screen": {
+    "candidate": "rootedstock_delay16v4",
+    "coordinates": [
+      "rooted_membership_stock",
+      "signed_net_transport_pressure",
+      "log_effective_fielded_force",
+      "foothold_strength",
+      "control_margin",
+      "log_organizational_liquid_capital",
+      "spatial_member_pressure",
+      "supply_fraction",
+      "intelligence_state",
+      "expected_control_margin",
+      "state_capacity",
+      "external_support_state",
+      "log_pending_incoming_strength",
+      "pending_incoming_mean_eta_days",
+      "log_pending_outgoing_strength",
+      "pending_outgoing_mean_eta_days"
+    ],
+    "dynamic_seed_base": 2026140000,
+    "initialization_seed": 2026139900,
+    "pool_worlds": 256,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "pairs": 24,
+    "branches": 16,
+    "threads": 14,
+    "recruitment_multiplier": 0.0625,
+    "require_live_anchor": true,
+    "max_match_distance": 1.25,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 2026140091,
+    "nomination_rule": "Nominate only if zero of 24 pairs are demonstrably non-equivalent. A 16-branch result never certifies closure.",
+    "stop_rule": "If one or more pairs are demonstrably non-equivalent, reject first-order delay16 as sufficient and do not accrete additional arbitrary scalar history coordinates. Move to explicit age/distributional or phase-state closure."
+  },
+  "phase_3_fresh_confirmation": {
+    "activation": "Only if phase_2 has zero demonstrably non-equivalent pairs.",
+    "dynamic_seed_base": 2026141000,
+    "initialization_seed": 2026140900,
+    "pool_worlds": 256,
+    "pairs": 24,
+    "branches": 32,
+    "threads": 14,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "recruitment_multiplier": 0.0625,
+    "require_live_anchor": true,
+    "max_match_distance": 1.25,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 2026141091,
+    "pass_gate": {
+      "overall_equivalent_pair_fraction_min": 0.9,
+      "each_stratum_equivalent_pair_fraction_min": 0.8,
+      "demonstrably_non_equivalent_pair_fraction_max": 0.1,
+      "all_selected_anchor_rows_live": true,
+      "maximum_match_distance_max": 1.25
+    }
+  },
+  "scientific_guard": "A PASS would support a first-order stock-flow-delay reduced state only in the synthetic regime tested. It would not establish historical transport-delay validity or authorize unqualified policy ranking outside validated support."
+}
