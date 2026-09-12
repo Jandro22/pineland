@@ -1,0 +1,38 @@
+{
+  "schema_version": "pineland.closure_equivalence_audit_contract.v1",
+  "registered_before_fresh_overlap_confirmation_outcomes_were_inspected": true,
+  "historical_outcomes_used": false,
+  "motivation": "The existing V3 closure gate requires a difference to be both practically large and statistically significant before counting a pair as a failure. Non-significance is not evidence of equivalence and can reward low power. Closure is an equivalence claim and therefore requires a direct equivalence audit.",
+  "input_target": "live_insurgency_closure_overlap_confirmation_144x24x32_30d_v1.csv",
+  "margins_inherited_without_change": {
+    "binary_absolute_risk_difference": 0.15,
+    "continuous_standardized_absolute_mean_difference": 0.25,
+    "continuous_normalized_wasserstein_distance": 0.25,
+    "domain_scale_floors": "Use the exact DOMAIN_SCALE_FLOOR values from analyze_distributional_closure_v3.py."
+  },
+  "uncertainty_method": {
+    "bootstrap": "Paired branch-index bootstrap within each matched microstate pair; left and right are resampled with the same branch indices to preserve common-random-number pairing.",
+    "replicates": 10000,
+    "seed": 2026137991,
+    "confidence_rule": "Use the 95th percentile as a one-sided upper confidence bound and the 5th percentile as a lower confidence bound for each nonnegative discrepancy metric.",
+    "scale_rule": "Hold each observed pair/outcome normalization scale fixed during bootstrap; do not re-estimate the practical margin per replicate."
+  },
+  "pair_classification": {
+    "equivalent": "For viability, the upper 95% bound on absolute risk difference is <=0.15. For every continuous outcome, upper 95% bounds on both standardized absolute mean difference and normalized Wasserstein distance are <=0.25.",
+    "demonstrably_non_equivalent": "For any outcome, the lower 95% bound exceeds its practical margin for absolute risk difference, standardized absolute mean difference, or normalized Wasserstein distance.",
+    "inconclusive": "Neither equivalent nor demonstrably non-equivalent."
+  },
+  "closure_gate": {
+    "overall_equivalent_pair_fraction_min": 0.90,
+    "each_stratum_equivalent_pair_fraction_min": 0.80,
+    "overall_demonstrably_non_equivalent_pair_fraction_max": 0.10,
+    "all_selected_anchors_live": true,
+    "maximum_selected_match_distance": 1.25
+  },
+  "sequential_precision_rule": {
+    "condition": "If the 32-branch fresh overlap run has zero demonstrably non-equivalent pairs but fails the equivalence gate only because too many pairs are inconclusive, branch count may be increased prospectively to 128 on the exact same matched-pair support and candidate state.",
+    "forbidden_rescue": "If any pair is demonstrably non-equivalent at 32 branches, do not use branch escalation to call the candidate closed; treat the candidate as failed and diagnose omitted state on a new contract.",
+    "branch_expansion_interpretation": "Additional branches increase precision only. Pair selection, state definition, margins, outcomes, horizons, and matching support may not change."
+  },
+  "interpretation_guard": "The legacy V3 significance gate remains reported for continuity but is no longer sufficient by itself for a scientific closure certificate. This audit applies only to the tested synthetic live-support regime and 30-day horizon."
+}
