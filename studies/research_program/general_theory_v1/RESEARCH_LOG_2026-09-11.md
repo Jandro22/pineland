@@ -337,3 +337,122 @@ future transport contract.
 - A deeper semantic audit then found that logistics can reactivate a collapsed formation's `operational_status`, while physical-presence logic excludes formations whose owning organization is inactive. Thus `operational_status==1` alone is not necessarily equivalent to effective coercive participation. This may affect the existing closure definition of F, which checks formation operational status but not owning-organization activity.
 - Preregistered `fielded_force_definition_audit_contract_v1.json` (SHA-256 `D7AA21D5A987FFAD02BF2557644FA6AABE73A0DE8E66A6F558DACA79AD1B7D21`) to compare legacy F with an active-owner F definition over the same 30d strategic horizon before revising the reduced theory. No old closure conclusion is retracted until this fresh audit is complete.
 
+## 2026-09-12 18:45 onward — Strict closure recertification overturns scalar Markov closure
+
+- The later paired-bootstrap equivalence audit is stricter than the earlier
+  significance/effect-size closure screen and supersedes the earlier claim that
+  the stabilized scalar reduced state was certified complete.  The live-support
+  overlap block produced 0/24 fully equivalent matched pairs, 12/24
+  demonstrably non-equivalent pairs, and 12/24 inconclusive pairs.  The failure
+  is not a dormant-insurgency artifact and survives the active-owner fielded-
+  force correction.
+- A fresh, preregistered four-candidate residual screen on untouched dynamic
+  seeds 2026138000+ (144 worlds, 24 live matched pairs, 16 CRN continuations per
+  pair, 30d horizon) rejected every one-coordinate scalar repair:
+  - `rootedstock_net12v3`: 11/24 demonstrably non-equivalent, 0/24 equivalent
+    (SHA-256 `8453DD596E1B0CABAD0A9A100054BD1EF7DF7F53A7F5846ECE5947C11EEA5759`).
+  - `rootedstock_social_net13v3`: 12/24 non-equivalent, 0/24 equivalent
+    (SHA-256 `C51BDCCF7685E650AAD142D20FA7405CFE97BC1EB48AFA2F70B4EBF5EDFF8CAD`).
+  - `rootedstock_hazard_net13v3`: 12/24 non-equivalent, 0/24 equivalent
+    (SHA-256 `40B4DDD0DD7EEF93B4195CAEAFDAE121C68EE7B905820A8E15146C2CA4D71EC2`).
+  - `rootedstock_transport_net13v3`: best of the four but still 10/24
+    non-equivalent, 0/24 equivalent, with all anchors live and maximum match
+    distance .7898 (SHA-256
+    `C2535D8893F91D8E85628856FF27C5A440CA71DC0EB02C8ACFB3208C4F6F3E51`).
+- The final gross-transport candidate's failures remain dominated by future net
+  transport pressure (8 failing pairs), with additional future rooted-stock
+  failures (4), inbound-transport failures (2), and isolated membership/fielded-
+  force failures.  One net-transport failure occurs at match distance .181 and
+  another at .164, so the result cannot be dismissed as loose matching.
+- The preregistered scalar stop rule therefore activates: no further ad hoc
+  scalar-coordinate accretion is allowed.  The tested local stock/flux state is
+  not Markov-sufficient over the 30d synthetic continuation horizon.
+- Source audit identifies a concrete structural alternative.  Production
+  transport diagnostics count the full effective strength of already committed
+  pending/moving formations but discard the distribution of execute/arrival
+  times.  Movement state retains these delays across an anchor, while closure
+  branches preserve inherited scheduler/movement contents under fresh common
+  process RNG.  Pineland is therefore a hybrid stock-flow-delay system rather
+  than necessarily a memoryless low-dimensional ODE.
+- Preregistered the contingent first-order delay candidate before the last
+  scalar result was known in
+  `live_insurgency_closure_stock_flow_delay_contract_v1.json` (SHA-256
+  `23E86B9C0AF6B342D8C7E6DA27AFE2B3FA3B7848E1B8442BCF74B5AA8AB0CBF1`).
+  `rootedstock_delay16v4` adds committed inbound/outbound transport mass and
+  strength-weighted mean ETA to the rooted-stock/net-flux state.  A fresh screen
+  requires zero demonstrably non-equivalent pairs before any 32-branch
+  confirmation is permitted.
+- Also preregistered a contingent event-phase representation in
+  `live_insurgency_closure_phase_pipeline_contract_v1.json` (SHA-256
+  `B5E99AD668356AD138617CED2ED3B46CC7E8B59477C5434065692803360822C2`).
+  If first-order mean ETA fails, committed inbound/outbound strength is binned
+  relative to the model's 0.25d force-movement tick and 1d command cycle.  This
+  tests an age/phase-structured renewal interpretation rather than continuing
+  feature fishing.
+- The hidden-residual analyzer was corrected to consume the authoritative
+  paired-equivalence classifications (`demonstrably_non_equivalent`) rather
+  than legacy significance fields.  Reanalysis reproduces the residual signal:
+  failing pairs differ especially in foothold renewals, cumulative arrivals,
+  and cumulative recruits; net-transport failures show ~6x larger cumulative-
+  recruit mismatch, ~2.22x larger social-exposure mismatch, and ~2.60x larger
+  experience mismatch than nonfailing pairs.  These are diagnostic correlations
+  only, not promoted closure coordinates.
+- The new delay probe uses the exact production transport-strength weighting
+  (personnel × availability × effective readiness × quality × cohesion ×
+  information factor) rather than generic combat effective strength.  Probe v10
+  built successfully; post-hoc delay diagnostics on the exact known failed block
+  are in progress.  They can diagnose mechanism but cannot rescue that block.
+- Separately froze a corrected mobilization-risk-frontier analysis before its
+  fresh 24-seed low-rate outcomes (`insurgent_mobilization_risk_frontier_analysis_v1.json`,
+  SHA-256 `E9A39DF7DAA41D0620FD2FF8984BEEE8E55F467F4D60371E43D22525D3677DD2`).
+  It uses Wilson collapse-risk intervals, paired adjacent-rate contrasts, and a
+  Pareto frontier instead of the obsolete analyzer's >=1.5x "high-rate" bin,
+  which was outside the preregistered 0–0.25x risk-frontier sweep.
+
+## 2026-09-12 19:10 onward — Delay falsification and graph-flux reformulation
+
+- The contingent first-order stock-flow-delay screen activated after all four
+  scalar residual candidates failed.  Fresh untouched seeds 2026140000+ used
+  256 pool worlds, 24 live matched pairs, 16 CRN continuations, and the frozen
+  30d equivalence analysis.
+- `rootedstock_delay16v4` FAILED: 0/24 fully equivalent, 9/24 demonstrably
+  non-equivalent (37.5%), 15/24 inconclusive, maximum match distance .5394.
+  Failures remain overwhelmingly future-transport failures: 8/9 include
+  `final_net_transport_pressure`; two include final fielded force, one local
+  membership, and one rooted membership stock.
+- More decisively, every one of the 48 selected fresh anchor states had exactly
+  zero pending inbound strength, pending outbound strength, and corresponding
+  ETA moments.  The exact old failed 24-pair block showed the same pattern.
+  Thus committed movement orders are absent on the observed failure support;
+  movement ETA/phase cannot be the general explanation of the closure residual.
+  The preregistered phase-pipeline assay remains documented but is deprioritized
+  unless a future support block actually contains nonzero committed pipelines.
+- Source audit then found a definition error in the coarse transport variable:
+  prospective `inbound_transport_pressures`/`insurgent_transport_net_pressures`
+  include command-decision and destination probabilities but omit the causal
+  command-reliability acceptance draw.  Already committed orders have passed
+  this draw and are correctly full-weighted.  Added pure diagnostic functions
+  `executable_inbound_transport_pressures` and
+  `insurgent_executable_transport_net_pressures` that weight only prospective
+  movement by current command reliability; causal dynamics are unchanged.
+- Before fresh outcomes, preregistered the dimension-preserving replacement
+  test `live_insurgency_closure_executable_transport_contract_v1.json`.
+  `rootedstock_execnet12v4` replaces nominal signed net pressure with signed
+  executable net pressure rather than adding another post-hoc scalar.  Fresh
+  screen seeds are 2026144000+; zero demonstrably non-equivalent pairs are
+  required to advance.
+- A deeper source-level closure identity was formalized in
+  `graph_flux_closure_identity_v1.json`.  Default relocation scope is adjacent,
+  so the focal one-step incoming flux is generated by the one-hop neighborhood:
+  `Phi_i = sum_j S_j q_{j->i} - S_i sum_k q_{i->k}`.  This map is many-to-one;
+  equal current `Phi_i` does not determine its future derivative when source
+  reservoirs and transition probabilities differ on the same flux level set.
+  The reduced problem is therefore naturally a graph-field closure problem.
+- Before inspecting the new expanded network diagnostics, preregistered
+  `live_insurgency_closure_graph_markov_blanket_contract_v1.json`.  If the
+  executable-flux replacement still fails, the exact next candidate is the
+  12D executable-flux core plus three one-hop source-reservoir coordinates:
+  neighboring transportable force, neighboring rooted mass, and neighboring
+  recruitment hazard.  This tests a causal graph Markov blanket rather than
+  arbitrary history-variable accretion.
+

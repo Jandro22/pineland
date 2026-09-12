@@ -24,6 +24,15 @@ DOMAIN_SCALE_FLOOR = {
     "final_social_exposure": 0.20,
     "final_inbound_transport_pressure": 0.75,
     "final_net_transport_pressure": 0.75,
+    "final_pending_incoming_strength": 0.75,
+    "final_pending_incoming_mean_eta_days": 1.0,
+    "final_pending_outgoing_strength": 0.75,
+    "final_pending_outgoing_mean_eta_days": 1.0,
+    "final_executable_inbound_transport_pressure": 0.75,
+    "final_executable_net_transport_pressure": 0.75,
+    "final_neighbor_transportable_strength": 0.75,
+    "final_neighbor_rooted_mass": 0.75,
+    "final_neighbor_recruitment_hazard": 0.75,
 }
 
 CANDIDATE_EXTRA = {
@@ -34,6 +43,22 @@ CANDIDATE_EXTRA = {
     "rootedstock_social_net13v3": ["final_Mstar", "final_social_exposure", "final_net_transport_pressure"],
     "rootedstock_hazard_net13v3": ["final_Mstar", "final_recruitment_hazard", "final_net_transport_pressure"],
     "rootedstock_transport_net13v3": ["final_Mstar", "final_inbound_transport_pressure", "final_net_transport_pressure"],
+    "rootedstock_delay16v4": [
+        "final_Mstar",
+        "final_net_transport_pressure",
+        "final_pending_incoming_strength",
+        "final_pending_incoming_mean_eta_days",
+        "final_pending_outgoing_strength",
+        "final_pending_outgoing_mean_eta_days",
+    ],
+    "rootedstock_execnet12v4": ["final_Mstar", "final_executable_net_transport_pressure"],
+    "rootedstock_execnet_ring1_15v5": [
+        "final_Mstar",
+        "final_executable_net_transport_pressure",
+        "final_neighbor_transportable_strength",
+        "final_neighbor_rooted_mass",
+        "final_neighbor_recruitment_hazard",
+    ],
 }
 
 BASE_CONTINUOUS = [
