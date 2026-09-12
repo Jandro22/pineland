@@ -32,6 +32,8 @@ EXTRA_BY_CANDIDATE = {
     "rootedstock_social12v3": ["final_Mstar", "final_social_exposure"],
     "rootedstock_net12v3": ["final_Mstar", "final_net_transport_pressure"],
     "rootedstock_social_net13v3": ["final_Mstar", "final_social_exposure", "final_net_transport_pressure"],
+    "rootedstock_hazard_net13v3": ["final_Mstar", "final_recruitment_hazard", "final_net_transport_pressure"],
+    "rootedstock_transport_net13v3": ["final_Mstar", "final_inbound_transport_pressure", "final_net_transport_pressure"],
 }
 
 DOMAIN_SCALE_FLOOR = {
@@ -46,6 +48,7 @@ DOMAIN_SCALE_FLOOR = {
     "final_Mstar": 0.75,
     "final_recruitment_hazard": 0.75,
     "final_social_exposure": 0.20,
+    "final_inbound_transport_pressure": 0.75,
     "final_net_transport_pressure": 0.75,
 }
 

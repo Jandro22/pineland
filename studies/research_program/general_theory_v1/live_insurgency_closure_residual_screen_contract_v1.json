@@ -1,0 +1,81 @@
+{
+  "schema_version": "pineland.live_insurgency_closure_residual_screen_contract.v1",
+  "registered_before_fresh_screen_outcomes": true,
+  "historical_outcomes_used": false,
+  "status_at_registration": "DIRECT_EQUIVALENCE_FAILED_ON_ROOTEDSTOCK_NET12V3",
+  "motivation": {
+    "source": "live_insurgency_closure_overlap_equivalence_results_v1.json",
+    "observation": "On the fresh 144-world live-support overlap block, rootedstock_net12v3 had 0/24 fully equivalent pairs, 12/24 demonstrably non-equivalent pairs, and 12/24 inconclusive pairs under the preregistered direct-equivalence audit. Demonstrable failures concentrated in future net transport pressure (8 pairs) and rooted membership stock (4 pairs).",
+    "diagnostic_only_clues": [
+      "Net-transport-failing pairs had larger anchor mismatches in social exposure and recruitment hazard than pairs without a net-transport failure.",
+      "Net transport is a signed first-moment flux; equal net flux can conceal different gross incoming/outgoing transport throughput."
+    ],
+    "guard": "These clues nominate a finite candidate screen only. They receive no confirmatory evidentiary credit from the already-inspected block."
+  },
+  "support": {
+    "recruitment_multiplier": 0.0625,
+    "state_regeneration": true,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "live_anchor_filter": [
+      "canonical insurgent organization active=1",
+      "canonical insurgent liquid capital > 0",
+      "local rooted membership stock M_star > 0",
+      "local active-owner effective fielded force > 0"
+    ]
+  },
+  "fresh_screen_design": {
+    "dynamic_seed_base": 2026138000,
+    "initialization_seed": 2026137900,
+    "pool_seeds": 144,
+    "agents": 300,
+    "localities": 34,
+    "requested_pairs": 24,
+    "branches": 16,
+    "threads": 16,
+    "maximum_selected_match_distance": 1.25,
+    "activity_strata": "live-support terciles, approximately 8 selected pairs per low/mid/high stratum"
+  },
+  "candidate_set": [
+    {
+      "name": "rootedstock_net12v3",
+      "role": "baseline",
+      "added_coordinate": "none"
+    },
+    {
+      "name": "rootedstock_social_net13v3",
+      "role": "one-coordinate addition",
+      "added_coordinate": "local social exposure"
+    },
+    {
+      "name": "rootedstock_hazard_net13v3",
+      "role": "one-coordinate addition",
+      "added_coordinate": "local recruitment hazard mass"
+    },
+    {
+      "name": "rootedstock_transport_net13v3",
+      "role": "one-coordinate addition",
+      "added_coordinate": "gross inbound transport pressure alongside signed net transport pressure"
+    }
+  ],
+  "analysis": {
+    "method": "Use the direct paired-branch bootstrap equivalence audit and the exact inherited practical margins/domain scale floors from closure_equivalence_audit_contract_v1.json.",
+    "screening_only": true,
+    "ranking_primary": "lowest demonstrably-non-equivalent pair fraction",
+    "ranking_secondary": "highest fully-equivalent pair fraction",
+    "ranking_tertiary": "lower state dimension, then lower maximum match distance",
+    "eligibility": "24 live pairs, at least 6 per activity stratum, maximum selected match distance <=1.25",
+    "no_rescue_rule": "The 16-branch screen cannot certify strategic closure even if a candidate passes nominal equivalence thresholds."
+  },
+  "confirmation_rule": {
+    "nomination": "Nominate at most one minimal candidate. It must have zero demonstrably non-equivalent pairs in the screen; otherwise no candidate is nominated and the local-scalar closure architecture is reconsidered before any further additions.",
+    "fresh_confirmation_seed_base": 2026139000,
+    "fresh_confirmation_initialization_seed": 2026138900,
+    "fresh_confirmation_pool_seeds": 144,
+    "fresh_confirmation_pairs": 24,
+    "fresh_confirmation_branches": 32,
+    "required_gate": "Apply the original direct-equivalence gate: >=0.90 equivalent overall, >=0.80 equivalent in every stratum, <=0.10 demonstrably non-equivalent overall, all anchors live, maximum match distance <=1.25.",
+    "failure_interpretation": "If no one-coordinate candidate is screen-eligible with zero demonstrable failures, stop scalar-coordinate accretion. Test whether the missing state is intrinsically spatial (a transport/reproduction field or higher moment) rather than another local scalar."
+  },
+  "policy_guard": "Government strategy ranking remains blocked throughout this screen. Only a separate fresh confirmation PASS can restore the synthetic decision-support certificate."
+}
