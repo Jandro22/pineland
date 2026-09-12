@@ -51,15 +51,15 @@ def means(df: pd.DataFrame, tp: str) -> dict:
         "political_order_outflow_intervention",
         "public_development_outflow_intervention",
     ]
-    return {m: {c: float(d[d.mode.eq(m)][c].mean()) for c in cols} for m in MODES}
+    return {m: {c: float(d[d["mode"].eq(m)][c].mean()) for c in cols} for m in MODES}
 
 
 def contrasts(df: pd.DataFrame, tp: str) -> dict:
     d = df[df.timepoint.eq(tp)]
-    base = d[d.mode.eq("equal_locality")].set_index("seed")
+    base = d[d["mode"].eq("equal_locality")].set_index("seed")
     out = {}
     for mode in MODES:
-        g = d[d.mode.eq(mode)].set_index("seed")
+        g = d[d["mode"].eq(mode)].set_index("seed")
         idx = base.index.intersection(g.index)
         b, x = base.loc[idx], g.loc[idx]
         row = {}
@@ -97,7 +97,7 @@ def main() -> None:
     expected = df.seed.nunique() * len(MODES) * 3
     if len(df) != expected:
         raise SystemExit(f"row integrity failed: {len(df)} != {expected}")
-    if set(df.mode) != set(MODES) or set(df.timepoint) != {"anchor", "intervention_end", "final"}:
+    if set(df["mode"]) != set(MODES) or set(df.timepoint) != {"anchor", "intervention_end", "final"}:
         raise SystemExit("mode/timepoint integrity failed")
     end_m, final_m = means(df, "intervention_end"), means(df, "final")
     end_c, final_c = contrasts(df, "intervention_end"), contrasts(df, "final")
