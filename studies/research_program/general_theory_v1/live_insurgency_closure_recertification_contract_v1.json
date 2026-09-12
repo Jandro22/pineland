@@ -1,0 +1,51 @@
+﻿{
+    "schema_version":  "pineland.live_insurgency_closure_recertification_contract.v1",
+    "registered_before_mobilization_confirmation_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "purpose":  "Re-certify the reduced-state closure only on a prospectively defined persistent live-insurgency support after the fielded-force semantic correction.",
+    "support_selection":  {
+                              "source":  "insurgent_mobilization_interior_confirmation_16seed_v1.csv (pending at registration)",
+                              "candidate_recruitment_multipliers":  [
+                                                                        0.03125,
+                                                                        0.0625,
+                                                                        0.125
+                                                                    ],
+                              "eligibility":  "joint viability fraction at day360 \u003e= 0.80",
+                              "selection_rule":  "Among eligible rates, choose the rate whose median runway_ratio is closest to 0.50; ties choose the lower recruitment multiplier. If no rate qualifies, closure recertification is blocked and support architecture must be revisited without running closure.",
+                              "rationale":  "Targets a nontrivial but non-exhausted resource regime without using any closure or policy-strategy outcomes."
+                          },
+    "closure_design":  {
+                           "fresh_dynamic_seed_base":  2026134000,
+                           "initialization_seed":  2026133900,
+                           "pool_seeds":  48,
+                           "agents":  300,
+                           "localities":  34,
+                           "anchor_days":  60,
+                           "horizon_days":  30,
+                           "requested_pairs":  24,
+                           "branches":  32,
+                           "candidate":  "rootedstock_net12v3",
+                           "state_regeneration":  true,
+                           "live_anchor_filter":  [
+                                                      "canonical insurgent organization active=1",
+                                                      "central insurgent liquid capital \u003e 0",
+                                                      "local rooted membership stock M_star \u003e 0",
+                                                      "local active-owner effective fielded force \u003e 0"
+                                                  ],
+                           "activity_strata":  "recomputed terciles using only eligible live-anchor states",
+                           "fielded_force_definition":  "active-owner effective force: zero whenever canonical insurgent organization is inactive",
+                           "common_random_numbers":  "candidate-independent branch streams as in gt-closure-v3"
+                       },
+    "primary_gates":  [
+                          "All selected pair anchors satisfy every live-anchor filter.",
+                          "At least 24 matched pairs are available with approximately 8 per live-support activity stratum.",
+                          "Overall significant-and-practically-large pair rate \u003c= 0.10 under corrected outcomes.",
+                          "Each activity stratum significant-and-practically-large pair rate \u003c= 0.20.",
+                          "Report owner-inactivation frequency during the 30-day continuation separately; collapse itself is a valid future event, not a reason to censor branches."
+                      ],
+    "interpretation":  [
+                           "PASS: restore strategic closure certification only for the prospectively selected live-insurgency support and corrected F semantics.",
+                           "FAIL: retain direct mechanism findings but keep reduced-state decision-support certification suspended; characterize the residual before considering any new state coordinate."
+                       ],
+    "guard":  "No historical outcomes and no government strategy outcomes may be used to choose the challenge regime, matching variables, or gates."
+}
