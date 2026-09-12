@@ -47,6 +47,10 @@ def summarize_case(g: pd.DataFrame) -> dict:
         "final_hazard": float(final.recruitment_hazard_mass),
         "final_active": int(final.organization_active),
         "final_insurgent_control": float(final.population_weighted_insurgent_control),
+        "final_ecosystem_rooted": float(final.ecosystem_rooted_membership),
+        "final_ecosystem_force": float(final.ecosystem_operational_force),
+        "final_ecosystem_hazard": float(final.ecosystem_recruitment_hazard),
+        "final_active_insurgent_organizations": int(final.active_insurgent_organizations),
     }
 
 
@@ -75,6 +79,10 @@ def main() -> None:
             "median_final_force": float(g.final_force.median()),
             "median_final_hazard": float(g.final_hazard.median()),
             "median_final_insurgent_control": float(g.final_insurgent_control.median()),
+            "median_final_ecosystem_rooted": float(g.final_ecosystem_rooted.median()),
+            "median_final_ecosystem_force": float(g.final_ecosystem_force.median()),
+            "median_final_ecosystem_hazard": float(g.final_ecosystem_hazard.median()),
+            "median_final_active_insurgent_organizations": float(g.final_active_insurgent_organizations.median()),
             "rooted_zero_fraction": float(g.first_rooted_zero_day.notna().mean()),
             "regeneration_after_zero_fraction_among_zero": (
                 float(g.loc[g.first_rooted_zero_day.notna(), "regenerated_after_zero"].mean())
@@ -93,7 +101,17 @@ def main() -> None:
     # Within-seed final contrasts, continuity - legacy.
     wide = c.pivot(index="seed", columns="variant")
     contrasts = {}
-    for metric in ["final_rooted", "final_force", "final_hazard", "final_active", "final_insurgent_control"]:
+    for metric in [
+        "final_rooted",
+        "final_force",
+        "final_hazard",
+        "final_active",
+        "final_insurgent_control",
+        "final_ecosystem_rooted",
+        "final_ecosystem_force",
+        "final_ecosystem_hazard",
+        "final_active_insurgent_organizations",
+    ]:
         d = wide[metric]["fielded_continuity"] - wide[metric]["legacy"]
         contrasts[metric] = {
             "mean": float(d.mean()),
@@ -105,6 +123,8 @@ def main() -> None:
         abs(contrasts["final_active"]["mean"]) >= 0.25
         or abs(contrasts["final_force"]["mean"]) >= 100.0
         or abs(contrasts["final_rooted"]["mean"]) >= 1000.0
+        or abs(contrasts["final_ecosystem_force"]["mean"]) >= 100.0
+        or abs(contrasts["final_ecosystem_rooted"]["mean"]) >= 1000.0
     )
     result = {
         "schema_version": "pineland.fielded_continuity_architecture_results.v1",

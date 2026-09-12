@@ -1,0 +1,44 @@
+﻿{
+    "schema_version":  "pineland.development_pacing_crowdout_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "When total realized government outflow is capital-constrained to nearly the same amount, does a higher political budget ceiling worsen state outcomes by front-loading spending and crowding out state-regeneration expenditure?",
+    "design":  {
+                   "seed_base":  2026126100,
+                   "seeds":  6,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_days":  60,
+                   "final_day":  240,
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "allocation_mode":  "equal_locality",
+                   "budget_multipliers":  [
+                                              1,
+                                              5,
+                                              10,
+                                              20
+                                          ],
+                   "snapshot_interval_days":  15,
+                   "ledger_interval_days":  15,
+                   "public_budget_share":  0.9,
+                   "patronage_share":  0.08,
+                   "private_diversion_share":  0.02
+               },
+    "primary":  [
+                    "government capital trajectory",
+                    "political-order outflow by interval",
+                    "state-regeneration outflow by interval",
+                    "other outflow by interval",
+                    "government legitimacy",
+                    "institution capacity",
+                    "government control"
+                ],
+    "tests":  [
+                  "Compare 5x versus 20x first: if cumulative total outflow differs by \u003c1% but 20x spends materially earlier and has lower state-regeneration outflow or worse final outcomes, classify as pacing/crowd-out evidence.",
+                  "Report first day government capital falls below 10% of anchor capital.",
+                  "Report fraction of total outflow consumed by political order versus state regeneration.",
+                  "Do not interpret internal capital as real dollars."
+              ],
+    "guard":  "Synthetic mechanism decomposition only. Fresh seed block; no insurgent-suppression conclusion from this assay."
+}
