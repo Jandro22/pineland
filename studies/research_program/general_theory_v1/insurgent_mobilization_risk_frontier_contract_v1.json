@@ -1,0 +1,49 @@
+{
+  "schema_version": "pineland.insurgent_mobilization_risk_frontier_contract.v1",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "motivation": "The 16-seed prospective confirmation falsified the proposed lower-rate survival advantage: zero recruitment survived 16/16. The retained result is a high-rate metabolic ceiling plus a size-versus-ruin tradeoff.",
+  "question": "How does recruitment intensity trade organizational growth against capital-exhaustion risk, and where does collapse risk begin to rise sharply on the same synthetic support?",
+  "design": {
+    "seed_base": 2026136000,
+    "seeds": 24,
+    "agents": 300,
+    "localities": 34,
+    "horizon_days": 360,
+    "threads": 16,
+    "recruitment_multipliers": [
+      0.0,
+      0.03125,
+      0.05,
+      0.0625,
+      0.075,
+      0.0875,
+      0.1,
+      0.1125,
+      0.125,
+      0.15,
+      0.2,
+      0.25
+    ],
+    "underground_disruption_rate": 0.0,
+    "collapse_requires_fielded_exhaustion": true,
+    "common_seed_block_across_rates": true
+  },
+  "primary_outcomes": [
+    "collapse_fraction and exact collapse cause by recruitment multiplier",
+    "collapse-time distribution",
+    "final rooted armed membership conditional and unconditional on survival",
+    "final active-owner operational force conditional and unconditional on survival",
+    "final liquid capital",
+    "cumulative recruitment",
+    "recruitment-linked runway ratio"
+  ],
+  "primary_inference": [
+    "Do not claim an interior survival optimum unless an interior rate has a prospectively lower collapse fraction than zero recruitment.",
+    "Estimate the size-risk frontier rather than maximizing an arbitrary scalar utility.",
+    "Report the highest tested rate with zero observed collapse separately from rates with positive collapse risk; do not call zero observed failures zero true risk.",
+    "Treat a monotone increase in growth together with a nonlinear increase in collapse probability as evidence for a mobilization leverage/ruin frontier.",
+    "Use the first rate interval showing a material collapse-frequency increase as a transition band, not an exact universal threshold."
+  ],
+  "guard": "Synthetic mechanism result only; the rate scale is not empirically calibrated and does not prescribe real insurgent behavior."
+}

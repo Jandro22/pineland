@@ -1,0 +1,55 @@
+{
+  "schema_version": "pineland.live_insurgency_closure_overlap_confirmation_contract.v1",
+  "registered_before_fresh_confirmation_outcomes": true,
+  "historical_outcomes_used": false,
+  "status_at_registration": "PRIOR_LIVE_SUPPORT_RECERTIFICATION_FAILED",
+  "motivation": {
+    "source": "live_insurgency_closure_recertification_results_v1.json",
+    "observation": "All three multiplicity-significant failing pairs were in the low-activity stratum and were the three worst low-stratum matches (distances 1.5429, 1.5998, 1.6647). The five better-matched low pairs, up through distance 1.2127, did not fail the multiplicity-significant gate.",
+    "hypothesis": "The failed recertification may be an overlap/matching-support failure rather than evidence that rootedstock_net12v3 omits a dynamically necessary coordinate on closely matched live states.",
+    "warning": "The 1.25 distance boundary below is explicitly post-hoc/model-development informed by the failed run. It receives no evidentiary credit until tested on the untouched seed block specified here."
+  },
+  "support": {
+    "recruitment_multiplier": 0.0625,
+    "state_regeneration": true,
+    "live_anchor_filter": [
+      "canonical insurgent organization active=1",
+      "canonical insurgent liquid capital > 0",
+      "local rooted membership stock M_star > 0",
+      "local active-owner effective fielded force > 0"
+    ],
+    "candidate": "rootedstock_net12v3",
+    "anchor_days": 60,
+    "horizon_days": 30
+  },
+  "fresh_design": {
+    "dynamic_seed_base": 2026137000,
+    "initialization_seed": 2026136900,
+    "agents": 300,
+    "localities": 34,
+    "requested_pairs": 24,
+    "branches": 32,
+    "threads": 16,
+    "pool_stage_1": 96,
+    "pool_stage_2_if_needed": 144,
+    "pool_expansion_rule": "First generate anchor matching only for the first 96 worlds. If fewer than 24 pairs are selected, any stratum has fewer than 8 pairs, or selected maximum match distance exceeds 1.25, expand the same untouched seed block to 144 worlds before any continuation branches are run. Do not inspect future outcomes before making this expansion decision.",
+    "overlap_gate_before_branches": {
+      "pair_count": 24,
+      "pairs_per_stratum": 8,
+      "maximum_selected_match_distance": 1.25
+    }
+  },
+  "confirmation_gates": {
+    "all_selected_anchor_rows_live": true,
+    "overall_multiplicity_significant_and_practically_large_pair_rate_max": 0.10,
+    "each_stratum_multiplicity_significant_and_practically_large_pair_rate_max": 0.20,
+    "fielded_force_semantics": "active-owner effective force",
+    "owner_collapse_during_continuation": "retained as a valid future event and reported separately"
+  },
+  "decision_rule": {
+    "pass": "License approximate strategic closure only on the prospectively confirmed live-insurgency support with selected match distance <=1.25. Do not generalize to sparse/unmatched low-activity states.",
+    "fail": "Treat rootedstock_net12v3 as dynamically insufficient even under close live-state overlap; use post-hoc residual diagnostics only to nominate coordinates, then preregister a new candidate and untouched seed block.",
+    "overlap_unavailable": "If 144 worlds cannot produce the preregistered 24 balanced pairs below distance 1.25, do not run continuations and record that this candidate/support lacks sufficient common support for the intended closure test."
+  },
+  "guard": "Synthetic closure test only. This contract does not authorize government strategy ranking, historical claims, or real-world operational prescriptions."
+}
