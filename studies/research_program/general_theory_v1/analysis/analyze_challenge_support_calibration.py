@@ -58,21 +58,38 @@ def main() -> None:
             "median_insurgent_control": float(g.population_weighted_insurgent_control.median()),
         })
     summary = pd.DataFrame(rows)
-    selected = {
-        "weak": choose(summary, 0.25),
-        "moderate": choose(summary, 0.50),
-        "strong": choose(summary, 0.75, prefer_rooted=True),
+    observed = sorted(summary.live_fraction.unique().tolist())
+    # This is a support-calibration assay, not a nearest-neighbour contest.
+    # If the frozen grid never reaches the requested persistence bands, fail
+    # closed rather than silently calling the closest all-dead/all-live cell a
+    # calibrated weak/moderate/strong regime.
+    targets = {"weak": 0.25, "moderate": 0.50, "strong": 0.75}
+    selection_represented = {
+        name: bool(((summary.live_fraction - target).abs() <= 0.25).any())
+        for name, target in targets.items()
     }
+    if all(selection_represented.values()) and summary.live_fraction.max() > summary.live_fraction.min():
+        selected = {
+            "weak": choose(summary, 0.25),
+            "moderate": choose(summary, 0.50),
+            "strong": choose(summary, 0.75, prefer_rooted=True),
+        }
+        status = "DESIGN_SUPPORT_CALIBRATED_BASELINE_ONLY"
+    else:
+        selected = None
+        status = "FROZEN_GRID_FAILED_TO_SPAN_PERSISTENCE_REGIMES"
     result = {
         "schema_version": "pineland.insurgency_challenge_support_calibration_results.v1",
-        "status": "DESIGN_SUPPORT_CALIBRATED_BASELINE_ONLY",
+        "status": status,
         "historical_outcomes_used": False,
         "input": ns.csv,
         "input_sha256": sha256(ns.csv),
         "seed_count": int(final.seed.nunique()),
         "cell_summary": summary.sort_values(["initial_insurgent_share", "resource_multiplier"]).to_dict("records"),
+        "observed_live_fractions": observed,
+        "selection_targets_represented": selection_represented,
         "selected_regimes": selected,
-        "firewall": "Selection uses baseline-policy persistence only. Policy ranking on this seed block is forbidden.",
+        "firewall": "Selection uses baseline-policy persistence only. Policy ranking on this seed block is forbidden. A failed grid must be expanded under a new preregistered contract rather than coerced into regime labels.",
     }
     Path(ns.out).write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"selected_regimes": selected}, indent=2))

@@ -65,6 +65,7 @@ def paired(df: pd.DataFrame, baseline: str, tp: str) -> dict:
 def profile_means(df: pd.DataFrame, tp: str) -> dict:
     d = df[df.timepoint.eq(tp)]
     cols = LOWER + HIGHER + [
+        "contacts_since_anchor",
         "government_capital_outflow_intervention",
         "combat_event_outflow_intervention",
         "government_capital",
@@ -102,6 +103,21 @@ def equipment_analysis(df: pd.DataFrame, out_path: str) -> None:
     final = paired(df, baseline, "final")
     means = profile_means(df, "final")
     front, dominated_by = pareto(means, include_cost=False)
+    exposure = {}
+    for p, row in means.items():
+        contacts = row["contacts_since_anchor"]
+        losses = row["government_military_losses_since_anchor"]
+        exposure[p] = {
+            "mean_contacts_since_anchor": contacts,
+            "mean_government_losses_per_contact": (
+                losses / contacts if contacts > 1.0e-12 else None
+            ),
+            "mean_fielded_insurgent_force_per_contact": (
+                row["fielded_force_personnel"] / contacts if contacts > 1.0e-12 else None
+            ),
+            "mean_military_readiness": row["mean_military_readiness"],
+            "mean_military_supply_fraction": row["mean_military_supply_fraction"],
+        }
     break_even = {}
     for benefit in ["B0", "B1", "B2", "B3"]:
         cells = [f"{benefit}{c}" for c in ["C0", "C1", "C2", "C3"]]
@@ -133,6 +149,7 @@ def equipment_analysis(df: pd.DataFrame, out_path: str) -> None:
         "paired_final": final,
         "break_even_highest_burden_with_positive_mean_improvement": break_even,
         "durability": durability,
+        "operational_exposure_diagnostics": exposure,
         "pareto_final": {"nondominated_profiles": front, "dominated_by": dominated_by},
         "guard": "Stylized equipment mechanisms only; no profile is an empirical armored/light unit specification.",
     }
@@ -147,6 +164,20 @@ def air_analysis(df: pd.DataFrame, out_path: str) -> None:
     final = paired(df, baseline, "final")
     means = profile_means(df, "final")
     front, dominated_by = pareto(means, include_cost=True)
+    exposure = {}
+    for p, row in means.items():
+        contacts = row["contacts_since_anchor"]
+        exposure[p] = {
+            "mean_contacts_since_anchor": contacts,
+            "mean_government_losses_per_contact": (
+                row["government_military_losses_since_anchor"] / contacts
+                if contacts > 1.0e-12 else None
+            ),
+            "mean_combat_support_cost_per_contact": (
+                row["combat_event_outflow_intervention"] / contacts
+                if contacts > 1.0e-12 else None
+            ),
+        }
     efficiency = {}
     for p in sorted(df.profile.unique()):
         if p.startswith("A0.00_"):
@@ -186,6 +217,7 @@ def air_analysis(df: pd.DataFrame, out_path: str) -> None:
         "paired_final": final,
         "cost_effectiveness_final": efficiency,
         "diminishing_returns": diminishing,
+        "operational_exposure_diagnostics": exposure,
         "pareto_final": {"nondominated_profiles": front, "dominated_by": dominated_by},
         "guard": "Stylized synthetic air-support operator only; not an empirical sortie-effect or operational recommendation.",
     }

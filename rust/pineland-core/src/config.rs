@@ -430,6 +430,12 @@ pub struct OrganizationEcologyConfig {
     pub fighter_conversion_fraction: f64,
     pub recruitment_subcohorts: usize,
     pub recruitment_requires_access: bool,
+    /// Legacy-off theory extension.  When enabled, exhaustion of rooted
+    /// membership alone does not deterministically collapse an insurgent
+    /// organization while it retains meaningful operational fielded force.
+    /// Capital/cohesion failure and the ordinary stochastic collapse hazard
+    /// remain active.
+    pub collapse_requires_fielded_exhaustion: bool,
     pub local_foothold_memory_days: f64,
     pub local_foothold_viability_threshold: f64,
     pub local_rootedness_weight: f64,
@@ -461,6 +467,7 @@ impl Default for OrganizationEcologyConfig {
             fighter_conversion_fraction: 0.08,
             recruitment_subcohorts: 20,
             recruitment_requires_access: true,
+            collapse_requires_fielded_exhaustion: false,
             local_foothold_memory_days: 45.0,
             local_foothold_viability_threshold: 0.20,
             local_rootedness_weight: 0.75,
@@ -1626,6 +1633,10 @@ impl OrganizationEcologyConfig {
             "recruitment_requires_access",
             JsonValue::Bool(self.recruitment_requires_access),
         );
+        o.insert(
+            "collapse_requires_fielded_exhaustion",
+            JsonValue::Bool(self.collapse_requires_fielded_exhaustion),
+        );
         let mut intervals = JsonValue::object();
         for (k, ranges) in &self.observed_active_intervals {
             let mut values = JsonValue::Array(Vec::new());
@@ -1949,6 +1960,10 @@ fn apply_ecology(v: &JsonValue, t: &mut OrganizationEcologyConfig) -> Result<(),
         (
             "recruitment_requires_access",
             &mut t.recruitment_requires_access,
+        ),
+        (
+            "collapse_requires_fielded_exhaustion",
+            &mut t.collapse_requires_fielded_exhaustion,
         ),
     ] {
         if let Some(x) = o.get(k) {
