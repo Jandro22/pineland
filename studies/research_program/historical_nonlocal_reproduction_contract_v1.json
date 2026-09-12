@@ -1,0 +1,91 @@
+{
+  "schema_version": "pineland.historical_nonlocal_reproduction_contract.v1",
+  "status": "FROZEN_BEFORE_ONSET_SCORE_COMPUTATION",
+  "theory_source": "studies/research_program/general_theory_v1/reduced_theory_specification_v2.json",
+  "synthetic_source": "studies/research_program/general_theory_v1/reproduction_hazard_kernel_confirmation_results_v1.json",
+  "historical_parameter_fitting": false,
+  "latent_state_estimation": false,
+  "question": "Across independent historical conflicts, does recent nonlocal insurgent activity carry reproducible predictive information for new/recurrent activity in administratively observed units after a one-year quiet period, beyond simple distance to the nearest recently active unit?",
+  "interpretation_boundary": "This tests an observable implication of nonlocal reproduction. It does not identify rooted membership M_star, prove recruitment caused the event, or estimate a historical recruitment-hazard coefficient.",
+  "pre_result_exposure_disclosure": {
+    "inspected_before_freeze": [
+      "case event-table row counts",
+      "principal actor label frequency tables",
+      "geography centroid completeness",
+      "source-coverage/status counts"
+    ],
+    "not_inspected_before_freeze": [
+      "quiet-period onset risk sets",
+      "nearest-active distances at risk anchors",
+      "dynamic nonlocal pressure scores",
+      "AUC/log-loss values",
+      "case-level gate outcomes"
+    ]
+  },
+  "cases": {
+    "afghanistan_2004_2021": {
+      "principal_actor_rule": "actor_a == 'Taleban' OR actor_b == 'Taleban'",
+      "interpretation": "Taliban activity"
+    },
+    "nepal_2001_2006": {
+      "principal_actor_rule": "actor_a == 'CPN-M' OR actor_b == 'CPN-M'",
+      "interpretation": "CPN-M activity"
+    },
+    "colombia_1984_2016": {
+      "principal_actor_rule": "actor field contains FARC as an exact comma-delimited actor token",
+      "interpretation": "FARC activity"
+    },
+    "iraq_2003_2011": {
+      "principal_actor_rule": "actor_a == 'IS' OR actor_b == 'IS'",
+      "interpretation": "UCDP IS/AQI-lineage activity as coded in GED 26.1"
+    },
+    "vietnam_1955_1975": {
+      "principal_actor_rule": "actor_a == 'Enemy'",
+      "interpretation": "MACV/NARA cleaned opposing-force initiated activity; actor resolution is aggregate and therefore lower-specificity than UCDP cases"
+    }
+  },
+  "risk_set": {
+    "time_unit": "calendar month",
+    "quiet_period_months": 12,
+    "quiet_definition": "zero principal-actor events in the focal unit during all 12 preceding source-covered calendar months",
+    "coverage_rule": "anchor, all quiet-period months, and all outcome-window months must be explicitly source-covered; source_gap months are excluded, never treated as zero",
+    "focal_unit_rule": "use each standardized bundle's canonical geography unit",
+    "event_rule": "all retained mapped events involving the principal actor; violence type is not used to select favorable outcomes"
+  },
+  "predictors_available_at_anchor": {
+    "recent_window_months": 3,
+    "nearest_active_distance_km": "great-circle centroid distance to the nearest OTHER unit with >=1 principal-actor event in the preceding 3 months",
+    "case_length_scale_L": "median nearest-neighbor centroid distance among all canonical geography units in the case; geography-only and outcome-independent",
+    "dynamic_nonlocal_pressure_H": "sum over OTHER units j of log(1 + principal_actor_events_j,past3) * exp(-distance_ij / L)",
+    "zero_source_rule": "if no other unit was active in the preceding 3 months, H=0 and nearest distance is set to case maximum pair distance + L"
+  },
+  "outcomes": {
+    "primary": "any principal-actor event in focal unit during months t+1..t+3 (approximately 90 days)",
+    "secondary_30d": "any principal-actor event in month t+1",
+    "secondary_365d": "any principal-actor event in months t+1..t+12"
+  },
+  "scoring": {
+    "primary_case_metric": "AUC(dynamic_nonlocal_pressure_H) - AUC(-nearest_active_distance_km) at 90d",
+    "secondary_metrics": [
+      "same AUC gain at 30d and 365d",
+      "positive-onset distance distribution relative to L",
+      "fraction of positive onsets whose nearest recent source is farther than 2L",
+      "case prevalence and risk-set size"
+    ],
+    "no_model_selection": true,
+    "no_case_specific_length_scale_tuning": true
+  },
+  "promotion_gate": {
+    "minimum_cases_with_positive_90d_auc_gain": 4,
+    "minimum_median_90d_auc_gain": 0.02,
+    "maximum_cases_with_auc_gain_le_minus_0_02": 0,
+    "status_if_pass": "HISTORICAL_OBSERVABLE_IMPLICATION_SUPPORTED_ACROSS_CASES",
+    "status_if_fail": "HISTORICAL_OBSERVABLE_IMPLICATION_NOT_TRANSPORTED"
+  },
+  "guards": [
+    "A pass does not validate Pineland coefficients or latent historical recruitment hazard.",
+    "A failure is permanent evidence against transport of this observable implication at the chosen administrative/time scales.",
+    "Nigeria 2014 is excluded and remains sealed.",
+    "No synthetic parameter or historical database row is changed as a result of this test."
+  ]
+}

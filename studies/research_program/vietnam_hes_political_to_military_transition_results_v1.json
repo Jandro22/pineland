@@ -1,0 +1,64 @@
+{
+  "schema_version": "pineland.vietnam_hes_political_to_military_transition_results.v1",
+  "status": "POLITICAL_TO_MILITARY_TRANSITION_NOT_CONFIRMED",
+  "historical_parameter_fitting_to_pineland": false,
+  "latent_state_estimation": false,
+  "risk_rows_all_years": 146727,
+  "train_rows": 42636,
+  "test_rows": 45936,
+  "train_positive_rate": 0.06553147574819401,
+  "test_positive_rate": 0.06874782305816789,
+  "baseline_test": {
+    "auc": 0.7894917168274483,
+    "logloss": 0.22193849241245406
+  },
+  "enhanced_test": {
+    "auc": 0.7912711327500765,
+    "logloss": 0.22152117355488615
+  },
+  "heldout_auc_gain": 0.0017794159226282025,
+  "heldout_logloss_gain": 0.00041731885756790543,
+  "training_political_presence_coefficient": 0.631237284410463,
+  "heldout_unexposed": {
+    "n": 45135,
+    "risk": 0.06677744544145342
+  },
+  "heldout_exposed_ge_2_of_3": {
+    "n": 599,
+    "risk": 0.21535893155258765
+  },
+  "heldout_unadjusted_risk_ratio": 3.2250250085023366,
+  "heldout_exposure_strata": [
+    {
+      "political_high_fraction": 0.0,
+      "n": 45135,
+      "transition_risk_90d": 0.06677744544145342,
+      "transition_risk_30d": 0.02822643181566412
+    },
+    {
+      "political_high_fraction": 0.3333333333333333,
+      "n": 202,
+      "transition_risk_90d": 0.07425742574257425,
+      "transition_risk_30d": 0.0049504950495049506
+    },
+    {
+      "political_high_fraction": 0.6666666666666666,
+      "n": 218,
+      "transition_risk_90d": 0.045871559633027525,
+      "transition_risk_30d": 0.0045871559633027525
+    },
+    {
+      "political_high_fraction": 1.0,
+      "n": 381,
+      "transition_risk_90d": 0.3123359580052493,
+      "transition_risk_30d": 0.1732283464566929
+    }
+  ],
+  "gates": {
+    "heldout_auc_gain_ge_0_02": false,
+    "heldout_logloss_gain_ge_0_005": false,
+    "training_political_presence_coefficient_positive": true,
+    "heldout_unadjusted_risk_ratio_ge_1_25": true
+  },
+  "guard": "Same-system HES temporal state-transition test; does not identify Pineland M_star/F or establish independent-source causality."
+}

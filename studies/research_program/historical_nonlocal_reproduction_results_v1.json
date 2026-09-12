@@ -1,0 +1,245 @@
+{
+  "schema_version": "pineland.historical_nonlocal_reproduction_results.v1",
+  "status": "HISTORICAL_OBSERVABLE_IMPLICATION_NOT_TRANSPORTED",
+  "latent_state_estimation": false,
+  "historical_parameter_fitting": false,
+  "cases": [
+    {
+      "case_id": "afghanistan_2004_2021",
+      "status": "OK",
+      "canonical_units": 435,
+      "case_length_scale_L_km": 15.293926033994541,
+      "principal_actor_event_rows": 36152,
+      "risk_rows": 654,
+      "horizons": {
+        "30d": {
+          "n": 654,
+          "positives": 44,
+          "prevalence": 0.0672782874617737,
+          "auc_nearest_active_distance": 0.4259873323397914,
+          "auc_dynamic_nonlocal_pressure": 0.4405365126676602,
+          "auc_gain_dynamic_minus_distance": 0.014549180327868783,
+          "positive_onset_share_nearest_source_farther_than_2L": 1.0,
+          "positive_onset_median_nearest_source_km": 113.8994119682023
+        },
+        "90d": {
+          "n": 654,
+          "positives": 123,
+          "prevalence": 0.18807339449541285,
+          "auc_nearest_active_distance": 0.4500252629644941,
+          "auc_dynamic_nonlocal_pressure": 0.46153139497496665,
+          "auc_gain_dynamic_minus_distance": 0.01150613201047257,
+          "positive_onset_share_nearest_source_farther_than_2L": 1.0,
+          "positive_onset_median_nearest_source_km": 103.11987499121457
+        },
+        "365d": {
+          "n": 654,
+          "positives": 326,
+          "prevalence": 0.4984709480122324,
+          "auc_nearest_active_distance": 0.44559890767619337,
+          "auc_dynamic_nonlocal_pressure": 0.45427764477031274,
+          "auc_gain_dynamic_minus_distance": 0.008678737094119371,
+          "positive_onset_share_nearest_source_farther_than_2L": 1.0,
+          "positive_onset_median_nearest_source_km": 111.9897069760949
+        }
+      },
+      "input_sha256": {
+        "geography": "eb6c8328b63db0aead24145c8d778f9b9838919435460a5f3e0a84f93b3b9ebd",
+        "events": "b3353bce0dabf97d6f5059ce946f5d58ba4f9edb1a5dda01eeec685b897e90a3",
+        "unit_time": "a34a36334e2bea82ff3719d0934ac921b317cb3df499dd2df952babc5de47403"
+      }
+    },
+    {
+      "case_id": "nepal_2001_2006",
+      "status": "OK",
+      "canonical_units": 75,
+      "case_length_scale_L_km": 33.26168710789248,
+      "principal_actor_event_rows": 4121,
+      "risk_rows": 104,
+      "horizons": {
+        "30d": {
+          "n": 104,
+          "positives": 4,
+          "prevalence": 0.038461538461538464,
+          "auc_nearest_active_distance": 0.75,
+          "auc_dynamic_nonlocal_pressure": 0.5825,
+          "auc_gain_dynamic_minus_distance": -0.16749999999999998,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.0,
+          "positive_onset_median_nearest_source_km": 34.22007154716279
+        },
+        "90d": {
+          "n": 104,
+          "positives": 13,
+          "prevalence": 0.125,
+          "auc_nearest_active_distance": 0.6956889264581572,
+          "auc_dynamic_nonlocal_pressure": 0.569737954353339,
+          "auc_gain_dynamic_minus_distance": -0.1259509721048182,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.15384615384615385,
+          "positive_onset_median_nearest_source_km": 35.95773588086392
+        },
+        "365d": {
+          "n": 104,
+          "positives": 26,
+          "prevalence": 0.25,
+          "auc_nearest_active_distance": 0.8387573964497042,
+          "auc_dynamic_nonlocal_pressure": 0.757396449704142,
+          "auc_gain_dynamic_minus_distance": -0.08136094674556216,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.07692307692307693,
+          "positive_onset_median_nearest_source_km": 32.48240721346165
+        }
+      },
+      "input_sha256": {
+        "geography": "3a18ea89db0f67d6e57885b14939f95454e7149f20e1852e716369648925baca",
+        "events": "38a22d0065661adf3a7de1875380980f8b98ccc3afb869c52de7f3466532f8fd",
+        "unit_time": "3da76ac45341829ead372104094ce754551aa5123f926fb74440c303092c139c"
+      }
+    },
+    {
+      "case_id": "colombia_1984_2016",
+      "status": "OK",
+      "canonical_units": 1119,
+      "case_length_scale_L_km": 12.595746253311368,
+      "principal_actor_event_rows": 6171,
+      "risk_rows": 382032,
+      "horizons": {
+        "30d": {
+          "n": 382032,
+          "positives": 1811,
+          "prevalence": 0.004740440591364074,
+          "auc_nearest_active_distance": 0.7530613887170978,
+          "auc_dynamic_nonlocal_pressure": 0.7594074378821369,
+          "auc_gain_dynamic_minus_distance": 0.006346049165039114,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.7896189950303699,
+          "positive_onset_median_nearest_source_km": 47.45332899485787
+        },
+        "90d": {
+          "n": 382032,
+          "positives": 5229,
+          "prevalence": 0.013687335092348285,
+          "auc_nearest_active_distance": 0.748149490226068,
+          "auc_dynamic_nonlocal_pressure": 0.7544496543185546,
+          "auc_gain_dynamic_minus_distance": 0.006300164092486571,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.795754446356856,
+          "positive_onset_median_nearest_source_km": 48.63127542510404
+        },
+        "365d": {
+          "n": 382032,
+          "positives": 18267,
+          "prevalence": 0.04781536625204171,
+          "auc_nearest_active_distance": 0.7378230964304343,
+          "auc_dynamic_nonlocal_pressure": 0.7429744482104708,
+          "auc_gain_dynamic_minus_distance": 0.0051513517800364506,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.8204959763507965,
+          "positive_onset_median_nearest_source_km": 54.52161278574951
+        }
+      },
+      "input_sha256": {
+        "geography": "10573f36547ab9a2fa783deef0edd261fdb88bc67e6053b7c7a86a528c94d431",
+        "events": "1d1b02f7d2fca9bcbb4c3393ffd6656680f6cfe8b03acb9bea14d69ea5abd558",
+        "unit_time": "27042947258fd2bd5359025e15ec4d249aac4625499cadf8a7f5fd60b51e8505"
+      }
+    },
+    {
+      "case_id": "iraq_2003_2011",
+      "status": "OK",
+      "canonical_units": 102,
+      "case_length_scale_L_km": 32.92698083841587,
+      "principal_actor_event_rows": 2530,
+      "risk_rows": 6173,
+      "horizons": {
+        "30d": {
+          "n": 6173,
+          "positives": 90,
+          "prevalence": 0.014579620929855824,
+          "auc_nearest_active_distance": 0.7025088132683069,
+          "auc_dynamic_nonlocal_pressure": 0.7170420297002575,
+          "auc_gain_dynamic_minus_distance": 0.014533216431950602,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.4888888888888889,
+          "positive_onset_median_nearest_source_km": 65.13522448324234
+        },
+        "90d": {
+          "n": 6173,
+          "positives": 263,
+          "prevalence": 0.042604892272800905,
+          "auc_nearest_active_distance": 0.6843492051237511,
+          "auc_dynamic_nonlocal_pressure": 0.6971318831908283,
+          "auc_gain_dynamic_minus_distance": 0.012782678067077224,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.5171102661596958,
+          "positive_onset_median_nearest_source_km": 68.48279458849623
+        },
+        "365d": {
+          "n": 6173,
+          "positives": 829,
+          "prevalence": 0.1342945083427831,
+          "auc_nearest_active_distance": 0.6588340959817398,
+          "auc_dynamic_nonlocal_pressure": 0.6709934323151044,
+          "auc_gain_dynamic_minus_distance": 0.012159336333364634,
+          "positive_onset_share_nearest_source_farther_than_2L": 0.5850422195416164,
+          "positive_onset_median_nearest_source_km": 72.58847528184437
+        }
+      },
+      "input_sha256": {
+        "geography": "72c4e5e6f52e45c7b23ca010e4236300332b5eab6dff1ee5f96ae487f2984595",
+        "events": "933fdd6b828ca47f9b271fa3c5b8b2d954719ad06c43a889d832848c6e03adc5",
+        "unit_time": "39a2277a7e328e750fe6ee0ae10a5ea7ab77309333b65311dc415f563f19e7a8"
+      }
+    },
+    {
+      "case_id": "vietnam_1955_1975",
+      "status": "OK",
+      "canonical_units": 50,
+      "case_length_scale_L_km": 43.19584998585211,
+      "principal_actor_event_rows": 359828,
+      "risk_rows": 580,
+      "horizons": {
+        "30d": {
+          "n": 580,
+          "positives": 0,
+          "prevalence": 0.0,
+          "auc_nearest_active_distance": null,
+          "auc_dynamic_nonlocal_pressure": null,
+          "auc_gain_dynamic_minus_distance": null,
+          "positive_onset_share_nearest_source_farther_than_2L": null,
+          "positive_onset_median_nearest_source_km": null
+        },
+        "90d": {
+          "n": 580,
+          "positives": 0,
+          "prevalence": 0.0,
+          "auc_nearest_active_distance": null,
+          "auc_dynamic_nonlocal_pressure": null,
+          "auc_gain_dynamic_minus_distance": null,
+          "positive_onset_share_nearest_source_farther_than_2L": null,
+          "positive_onset_median_nearest_source_km": null
+        },
+        "365d": {
+          "n": 580,
+          "positives": 0,
+          "prevalence": 0.0,
+          "auc_nearest_active_distance": null,
+          "auc_dynamic_nonlocal_pressure": null,
+          "auc_gain_dynamic_minus_distance": null,
+          "positive_onset_share_nearest_source_farther_than_2L": null,
+          "positive_onset_median_nearest_source_km": null
+        }
+      },
+      "input_sha256": {
+        "geography": "c895b75414df61dec9e754a07afb5c051ab53e0db7fb8f66e9fe4b510441534f",
+        "events": "f8ac91e65435ff8b4af61fe78369dfb86fbd4461ca16dfd42a24d9e4aec38d3a",
+        "unit_time": "4a716ce0f4587874d2ad09e1dc34eedf461bd8ad7afd770d4736a96e652bb317"
+      }
+    }
+  ],
+  "cross_case": {
+    "n_scored_cases": 4,
+    "cases_with_positive_90d_auc_gain": 3,
+    "cases_with_auc_gain_le_minus_0_02": 1,
+    "median_90d_auc_gain": 0.00890314805147957,
+    "gates": {
+      "cases_with_positive_90d_auc_gain_ge_4": false,
+      "median_90d_auc_gain_ge_0_02": false,
+      "cases_with_auc_gain_le_minus_0_02_eq_0": false
+    }
+  },
+  "guard": "Observable event-process confrontation only; does not estimate M_star or historical recruitment hazard."
+}

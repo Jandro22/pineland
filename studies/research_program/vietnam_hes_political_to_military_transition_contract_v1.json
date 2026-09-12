@@ -1,0 +1,57 @@
+{
+  "schema_version": "pineland.vietnam_hes_political_to_military_transition_contract.v1",
+  "status": "FROZEN_BEFORE_TRANSITION_SCORE_COMPUTATION",
+  "historical_parameter_fitting_to_pineland": false,
+  "latent_state_estimation": false,
+  "question": "Among HES hamlets with three consecutive months of low enemy military presence, does persistent enemy political presence predict transition into high enemy military presence during the next three months?",
+  "theory_link": "Observable implication of the frozen distinction between embedded/rooted organizational stock and fielded combat force. This does not equate HES political presence with M_star or HES military presence with F.",
+  "source": {
+    "dataset": "studies/vietnam_1955_1975/data/raw/vietwar_hes70.rds",
+    "political_field": "mod1h_enemy_political_presence_submodel",
+    "military_field": "mod1a_enemy_military_presence_submodel",
+    "spatial_unit": "HES hamlet (us_hamlet_id)",
+    "time_unit": "month",
+    "category_semantics": "A/B are treated as lower-adversity and C/D/E as higher-adversity using documented HES ordering; N/blank are missing/unknown and excluded. No equal interval scale is assumed."
+  },
+  "risk_set": {
+    "military_low_window_months": 3,
+    "military_low_definition": "military category in {A,B} for anchor month t and t-1,t-2",
+    "political_coverage_definition": "political category is known A-E for t,t-1,t-2",
+    "future_coverage_definition": "military category is known A-E for t+1,t+2,t+3",
+    "outcome": "any military category in {C,D,E} during t+1..t+3",
+    "exposure": "fraction of t-2..t months with political category in {C,D,E}"
+  },
+  "prediction_design": {
+    "training_anchors": "1970-01 through 1970-12",
+    "heldout_test_anchors": "1971-01 through 1971-12",
+    "baseline_features": [
+      "fraction of t-2..t military observations rated B rather than A",
+      "province fixed effects",
+      "anchor month-of-year sine",
+      "anchor month-of-year cosine"
+    ],
+    "enhanced_features": "baseline + prior-three-month high enemy political presence fraction",
+    "estimator": "unregularized logistic regression (sklearn LogisticRegression penalty=None, lbfgs); no tuning",
+    "future_information_forbidden": true
+  },
+  "primary_gates": {
+    "heldout_auc_gain_min": 0.02,
+    "heldout_logloss_gain_min": 0.005,
+    "training_political_presence_coefficient_positive": true,
+    "heldout_unadjusted_risk_ratio_min": 1.25,
+    "risk_ratio_comparison": "political exposure fraction >= 2/3 versus exactly 0",
+    "status_if_all_pass": "POLITICAL_PRESENCE_PRECEDES_MILITARY_DETERIORATION_ON_HELDOUT_HES_SUPPORT",
+    "status_otherwise": "POLITICAL_TO_MILITARY_TRANSITION_NOT_CONFIRMED"
+  },
+  "secondary": [
+    "30-day transition outcome",
+    "transition risk by exposure fraction 0, 1/3, 2/3, 1",
+    "replication by HES province",
+    "descriptive 1969 and 1972-73 estimates are forbidden until primary 1971 result is recorded"
+  ],
+  "guards": [
+    "Same-system HES measurements can share reporting bias; a pass is archival mechanism alignment, not independent-source causal validation.",
+    "No category cutpoint or date window may be changed after the 1971 result is observed.",
+    "The result may justify a presence-state historical operator but not an interval-scale latent-state mapping."
+  ]
+}
