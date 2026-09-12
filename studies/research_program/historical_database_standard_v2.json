@@ -1,0 +1,90 @@
+{
+  "schema_version": "pineland.historical_database_standard.v2",
+  "status": "FROZEN_EXPERIMENT_INTERFACE",
+  "purpose": "A compact, fail-closed, case-comparable historical observation layer for prospective verification of the frozen Pineland reduced theory. The standard separates source observations from latent model state and distinguishes observed zero from missing or unmapped data.",
+  "storage_policy": {
+    "tabular_format": "Apache Parquet",
+    "compression": "zstd",
+    "geometry_policy": "Store canonical IDs, hierarchy and centroids in the experiment bundle; retain polygons only in source/cache artifacts and reference them by SHA-256.",
+    "raw_source_policy": "One physical copy per content hash where feasible. Case-local paths may be hard links. Raw archives are not repeated in experiment bundles.",
+    "target_bundle_soft_limit_mib": 64,
+    "exception_rule": "Exceed the soft limit only when event-level evidence itself requires it; never duplicate raw source archives to satisfy the interface."
+  },
+  "required_tables": {
+    "geography.parquet": {
+      "grain": "one row per canonical analysis unit",
+      "required_columns": [
+        "case_id", "unit_id", "unit_name", "unit_level", "parent_id", "parent_name",
+        "centroid_latitude", "centroid_longitude", "source_geography_id", "valid_from", "valid_to",
+        "crosswalk_confidence", "geography_status"
+      ]
+    },
+    "events.parquet": {
+      "grain": "one row per retained source event, including events that cannot be mapped to a canonical analysis unit",
+      "required_columns": [
+        "case_id", "source_name", "source_version", "source_event_id", "event_date", "date_precision",
+        "unit_id", "mapping_status", "mapping_confidence", "latitude", "longitude", "location_precision",
+        "actor_a", "actor_b", "actor_a_id", "actor_b_id", "violence_type", "fatalities_low",
+        "fatalities_best", "fatalities_high", "civilian_fatalities", "source_row_status"
+      ]
+    },
+    "unit_time.parquet": {
+      "grain": "dense canonical unit x covered time interval",
+      "required_columns": [
+        "case_id", "unit_id", "period_start", "period_end", "time_scale", "split", "exposure_days",
+        "observation_status", "event_count", "fatalities_best", "civilian_fatalities", "mapped_event_count",
+        "unmapped_event_count_case_period", "source_coverage"
+      ],
+      "observation_status_enum": ["observed_event", "observed_zero", "source_gap", "geography_gap", "sealed_holdout"]
+    },
+    "auxiliary_observations.parquet": {
+      "grain": "one independent or supplementary observation",
+      "required_columns": [
+        "case_id", "construct", "unit_id", "unit_name", "period_start", "period_end", "value_numeric",
+        "value_text", "source_name", "source_locator", "temporal_precision", "geographic_precision",
+        "independence_class", "measurement_status", "uncertainty_note"
+      ]
+    }
+  },
+  "required_metadata": {
+    "dataset_manifest.json": [
+      "case_id", "build_timestamp_utc", "builder_sha256", "source_artifacts", "artifacts", "repository_revision",
+      "historical_target_firewall"
+    ],
+    "quality_report.json": [
+      "case_id", "license", "checks", "coverage", "mapping", "measurement_independence", "holdout_integrity",
+      "bundle_size_bytes", "blocked_reasons"
+    ],
+    "observability_map.json": [
+      "case_id", "reduced_theory_version", "coordinates", "mechanisms", "do_not_infer"
+    ]
+  },
+  "quality_rules": {
+    "event_identity": "Source event IDs must be unique within source/version or a deterministic compound ID must be supplied.",
+    "fatality_bounds": "Check fatalities_low <= fatalities_best <= fatalities_high when all are known, but never silently reorder source values. If an immutable upstream source violates its documented ordering, preserve the row, quantify the source-anomaly rate, and require downstream uncertainty code not to assume ordered bounds for those rows.",
+    "mapping": "Unmapped events are retained and counted. Mapping failures may not be silently dropped.",
+    "zero_semantics": "observed_zero is licensed only inside an explicitly covered source/time/unit frame. Missing rows are never implicitly zero.",
+    "holdout": "Temporal/geographic holdouts are assigned without using held-out outcome values. Sealed holdouts must remain unread until their reveal contract authorizes access.",
+    "independent_measurement": "Territorial control/presence, institutional capacity, and similar latent constructs may not be derived solely from the same violence outcome used for scoring unless explicitly labeled non-independent.",
+    "provenance": "Every raw and derived artifact used by the bundle is SHA-256 fingerprinted. Transformation code is fingerprinted too.",
+    "versioning": "Dataset version and retrieval/cutoff are recorded. UCDP actor/event IDs must be interpreted under the declared version family.",
+    "precision": "Date and location precision are retained rather than collapsed to false exactness."
+  },
+  "license_levels": {
+    "EXPERIMENT_READY": "Dense zero/missing semantics, valid provenance, frozen holdouts, high mapping quality, and at least one independent measurement stream for a non-violence construct relevant to the case role.",
+    "VERIFICATION_LIMITED": "Event/exposure database is scientifically usable but one or more key independent constructs, geography reconciliation, or precision gates remain limited. Use only for licensed observables.",
+    "CONSTRUCTION_ONLY": "Sources/provenance exist but the case lacks the observation coverage or reconciliation needed for confirmatory scoring.",
+    "SEALED_HOLDOUT": "The target outcome remains intentionally unread. Pre-outcome inputs and provenance may be validated; no target table is materialized."
+  },
+  "frozen_theory_interface": {
+    "reduced_theory": "studies/research_program/general_theory_v1/reduced_theory_specification_v2.json",
+    "coordinates": ["M_star", "F", "E", "C", "Phi_net", "A", "K_o", "P_G", "V_G", "V_I"],
+    "confirmed_mechanisms": [
+      "nonlocal_reproduction_recruitment_hazard",
+      "organizational_capital_stock_flow",
+      "human_capital_turnover_learning",
+      "state_capacity_dual_channel"
+    ],
+    "rule": "Historical source availability may determine which coordinates are observable in a case, but may not change the frozen synthetic theory state or equations."
+  }
+}
