@@ -1266,10 +1266,32 @@ pub fn update(
                     / 7.0,
             );
         let collapse_draw = rng.random();
+        let operational_fielded = (0..particle.formations.personnel.len())
+            .filter(|&formation| {
+                particle.formations.organization[formation] as usize == organization
+                    && particle.formations.active[formation] != 0
+                    && particle.formations.operational_status[formation] == 1
+                    && particle.formations.outside_pineland[formation] == 0
+            })
+            .map(|formation| particle.formations.personnel[formation].max(0.0))
+            .sum::<f64>();
+        let rooted_exhaustion_collapse = if config
+            .organization_ecology
+            .collapse_requires_fielded_exhaustion
+        {
+            represented_weight <= 1e-9
+                && operational_fielded
+                    < config
+                        .organization_ecology
+                        .minimum_formation_personnel
+                        .max(1.0e-9)
+        } else {
+            represented_weight <= 1e-9
+        };
         let collapse_realized = !conditioned
             && (particle.organizations.capital[organization] <= 0.0
                 || particle.organizations.cohesion[organization] < 0.12
-                || represented_weight <= 1e-9
+                || rooted_exhaustion_collapse
                 || collapse_draw < collapse_hazard);
         if collapse_realized {
             collapse_organization(particle, organization);

@@ -1,0 +1,48 @@
+﻿{
+    "schema_version":  "pineland.development_dose_response_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "scope":  "Synthetic government public-development dose response under frozen political-order equations; state-side mechanism calibration, not COIN effectiveness ranking.",
+    "question":  "Where does public-development spending transition from below-credibility to productive to saturated, and does marginal-return allocation shift that curve relative to equal-locality allocation?",
+    "design":  {
+                   "seed_base":  2026126000,
+                   "seeds":  8,
+                   "agents":  300,
+                   "localities":  34,
+                   "anchor_days":  60,
+                   "final_day":  240,
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "budget_multipliers":  [
+                                              1,
+                                              5,
+                                              10,
+                                              20,
+                                              40,
+                                              80
+                                          ],
+                   "allocation_modes":  [
+                                            "equal_locality",
+                                            "marginal_return"
+                                        ],
+                   "public_budget_share":  0.9,
+                   "patronage_share":  0.08,
+                   "private_diversion_share":  0.02
+               },
+    "primary_outcomes":  [
+                             "mean government legitimacy",
+                             "mean state legitimacy",
+                             "mean political access",
+                             "mean local institution capacity",
+                             "population-weighted government control",
+                             "government capital outflow"
+                         ],
+    "analysis":  [
+                     "Use within-seed contrasts against multiplier1 within each allocation mode.",
+                     "Report absolute gain and gain per incremental 100,000 internal capital outflow.",
+                     "Estimate discrete marginal returns between adjacent budget multipliers; do not fit a smooth curve unless monotonicity is supported.",
+                     "Report whether legitimacy/institution returns peak or flatten and whether marginal-return allocation shifts the productive range.",
+                     "Do not call any multiplier empirically optimal."
+                 ],
+    "guard":  "Internal Pineland capital units are not real dollars. This maps synthetic mechanism response only."
+}

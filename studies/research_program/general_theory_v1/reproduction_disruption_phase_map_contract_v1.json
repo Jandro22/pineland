@@ -1,0 +1,58 @@
+﻿{
+    "schema_version":  "pineland.reproduction_disruption_phase_map_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "purpose":  "Baseline-policy synthetic phase mapping of rooted-insurgency reproduction versus intelligence-led disruption. No policy ranking.",
+    "design":  {
+                   "seed_base":  2026125000,
+                   "seeds":  4,
+                   "agents":  180,
+                   "localities":  24,
+                   "horizon_days":  360,
+                   "times":  [
+                                 60,
+                                 180,
+                                 360
+                             ],
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "initial_insurgent_share":  0.001,
+                   "insurgent_resource_multiplier":  1,
+                   "recruitment_rate_multiplier":  [
+                                                       0.5,
+                                                       1,
+                                                       2,
+                                                       4,
+                                                       8
+                                                   ],
+                   "underground_disruption_rate_multiplier":  [
+                                                                  0,
+                                                                  0.125,
+                                                                  0.25,
+                                                                  0.5,
+                                                                  1
+                                                              ]
+               },
+    "primary":  {
+                    "live_reproductive":  "rooted membership \u003e0 AND recruitment hazard \u003e0 AND fielded force \u003e0 at day360",
+                    "continuous":  [
+                                       "rooted membership",
+                                       "recruitment hazard",
+                                       "fielded force",
+                                       "insurgent control",
+                                       "cumulative underground disruption"
+                                   ]
+                },
+    "analysis":  [
+                     "Map live-reproductive fraction over the frozen 5x5 grid.",
+                     "Estimate the empirical transition band in log(recruitment multiplier/disruption multiplier) where possible; disruption=0 is boundary reference, not used in ratio fit.",
+                     "Do not identify a universal reproduction number from this grid; this is support calibration and mechanism discrimination only.",
+                     "If no mixed transition cells exist, expand the grid in a new contract rather than changing this seed block."
+                 ],
+    "firewall":  [
+                     "Only baseline policy is permitted.",
+                     "No strategy ranking on seed block 2026125000.",
+                     "Any selected challenge regime must be evaluated on fresh seeds."
+                 ],
+    "guard":  "Synthetic phase mapping only; rate multipliers are not empirical COIN estimates."
+}
