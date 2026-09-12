@@ -1,0 +1,52 @@
+﻿{
+    "schema_version":  "pineland.insurgent_mobilization_metabolic_ceiling_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "Does increasing insurgent recruitment tempo shorten organizational survival by accelerating recruitment-linked capital burn faster than the organization replenishes resources?",
+    "design":  {
+                   "seed_base":  2026128000,
+                   "seeds":  8,
+                   "agents":  300,
+                   "localities":  34,
+                   "horizon_days":  180,
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "underground_disruption_rate_multiplier":  0,
+                   "collapse_requires_fielded_exhaustion":  true,
+                   "recruitment_rate_multipliers":  [
+                                                        0.25,
+                                                        0.5,
+                                                        0.75,
+                                                        1,
+                                                        1.5,
+                                                        2,
+                                                        4
+                                                    ]
+               },
+    "primary":  [
+                    "time to canonical insurgent organization inactivity",
+                    "collapse cause classified from pre-collapse deterministic conditions",
+                    "pre-collapse capital",
+                    "pre-collapse cohesion",
+                    "pre-collapse rooted membership",
+                    "pre-collapse operational fielded force",
+                    "cumulative recruitment at collapse",
+                    "recruitment-attributed capital burn",
+                    "positive capital inflow",
+                    "capital runway ratio burn/(initial capital+inflow)"
+                ],
+    "classification":  {
+                           "capital":  "pre-event capital \u003c= numerical tolerance",
+                           "cohesion":  "pre-event cohesion \u003c 0.12 when capital positive",
+                           "rooted_exhaustion":  "not applicable under fielded-continuity while operational force \u003e= minimum formation personnel",
+                           "stochastic":  "no deterministic condition true immediately before organization-ecology event that deactivates organization"
+                       },
+    "tests":  [
+                  "Report survival curve over recruitment multipliers.",
+                  "Test monotonic/non-monotonic relationship between recruitment multiplier and median collapse time without fitting a parametric law unless supported.",
+                  "If higher recruitment lowers survival and collapse is predominantly capital-triggered, classify metabolic ceiling supported.",
+                  "Compare cumulative recruitment gained per capital burned before collapse.",
+                  "Do not use government policy ranking on this seed block."
+              ],
+    "guard":  "Synthetic mechanism confirmation only. Recruitment multiplier and internal capital are not empirical estimates."
+}

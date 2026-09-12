@@ -1,0 +1,40 @@
+﻿{
+    "schema_version":  "pineland.insurgent_mobilization_interior_optimum_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "Does long-run insurgent viability exhibit an interior optimum in mobilization tempo because very slow recruitment under-replaces attrition while fast recruitment exhausts organizational capital?",
+    "design":  {
+                   "seed_base":  2026129000,
+                   "seeds":  6,
+                   "agents":  300,
+                   "localities":  34,
+                   "horizon_days":  360,
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "underground_disruption_rate_multiplier":  0,
+                   "collapse_requires_fielded_exhaustion":  true,
+                   "recruitment_rate_multipliers":  [
+                                                        0,
+                                                        0.03125,
+                                                        0.0625,
+                                                        0.125,
+                                                        0.25,
+                                                        0.5
+                                                    ]
+               },
+    "primary":  [
+                    "organization survival to day360",
+                    "rooted membership at day360",
+                    "operational fielded force at day360",
+                    "cumulative recruitment",
+                    "capital remaining",
+                    "collapse cause and time"
+                ],
+    "analysis":  [
+                     "Do not assume monotonicity. Identify whether any interior recruitment cell strictly exceeds both zero/lowest recruitment and 0.5x on joint viability.",
+                     "Joint viability requires organization active, rooted membership \u003e0, and operational fielded force \u003e0 at day360.",
+                     "Report capital runway and cumulative recruitment so survival through inactivity can be distinguished from sustainable regeneration.",
+                     "If no interior maximum appears, record monotonic low-tempo advantage rather than forcing an optimum claim."
+                 ],
+    "guard":  "Synthetic mechanism exploration on fresh seed block; no empirical mobilization recommendation."
+}

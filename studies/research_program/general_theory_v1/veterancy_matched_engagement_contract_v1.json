@@ -1,0 +1,51 @@
+﻿{
+    "schema_version":  "pineland.veterancy_matched_engagement_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "question":  "At equal headcount and equal structural unit quality, how much does formation experience change fractional losses and tactical exchange ratio for government and insurgent formations?",
+    "design":  {
+                   "seed_base":  2026132000,
+                   "base_worlds":  6,
+                   "replicates_per_world":  128,
+                   "agents":  180,
+                   "localities":  24,
+                   "government_experience":  [
+                                                 0.1,
+                                                 0.5,
+                                                 0.9
+                                             ],
+                   "insurgent_experience":  [
+                                                0.1,
+                                                0.5,
+                                                0.9
+                                            ],
+                   "personnel_each":  300,
+                   "matched_traits":  {
+                                          "quality":  0.7,
+                                          "cohesion":  0.75,
+                                          "readiness":  1,
+                                          "sustainment":  1,
+                                          "information":  0.6,
+                                          "mobility":  0.7,
+                                          "command":  0.7,
+                                          "embeddedness":  0.5,
+                                          "availability":  1
+                                      },
+                   "supply":  "full",
+                   "common_random_numbers":  "same engagement RNG seed across all 3x3 experience cells within each world-replicate"
+               },
+    "primary":  [
+                    "government fractional personnel loss",
+                    "insurgent fractional personnel loss",
+                    "insurgent-loss/government-loss exchange ratio",
+                    "probability government fractional loss \u003c insurgent fractional loss",
+                    "post-engagement operational survival"
+                ],
+    "predictions":  [
+                        "Holding insurgent experience fixed, increasing government E from .1 to .9 lowers government fractional losses and raises insurgent fractional losses.",
+                        "Holding government experience fixed, increasing insurgent E from .1 to .9 symmetrically reverses those effects.",
+                        "At equal opposing E, neither side receives an experience-only advantage; residual asymmetry may remain from actor/initiative mechanics and will be reported.",
+                        "Analytic no-cap prediction for an E=.1 to E=.9 one-sided increase: own fractional loss multiplier ~0.8332, opponent ~1.2002, exchange-ratio multiplier ~1.4404."
+                    ],
+    "guard":  "Synthetic matched-contact mechanism only; not an empirical casualty estimate."
+}
