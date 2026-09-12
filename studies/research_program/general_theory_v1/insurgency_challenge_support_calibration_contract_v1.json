@@ -1,0 +1,49 @@
+﻿{
+    "schema_version":  "pineland.insurgency_challenge_support_calibration_contract.v1",
+    "registered_before_fresh_outcomes":  true,
+    "historical_outcomes_used":  false,
+    "purpose":  "Design-support calibration only. Identify baseline-policy synthetic regimes spanning weak/moderate/resilient insurgent persistence before any policy ranking.",
+    "design":  {
+                   "seed_base":  2026124000,
+                   "seeds":  6,
+                   "agents":  300,
+                   "localities":  34,
+                   "times":  [
+                                 60,
+                                 240,
+                                 360
+                             ],
+                   "foreign_affairs":  false,
+                   "state_regeneration":  true,
+                   "initial_insurgent_share":  [
+                                                   0.0005,
+                                                   0.001,
+                                                   0.002,
+                                                   0.004
+                                               ],
+                   "resource_multiplier":  [
+                                               0.5,
+                                               1,
+                                               3,
+                                               9
+                                           ],
+                   "resource_multiplier_definition":  "Multiply initial INSURGENT liquid capital and annual external support by this factor immediately after world initialization and before any event executes."
+               },
+    "persistence_definition":  "Live reproductive insurgency at day360 iff rooted_armed_membership_mass \u003e 0, recruitment_hazard_mass \u003e 0, and fielded_force_personnel \u003e 0.",
+    "selection_rule":  {
+                           "weak":  "Cell whose day360 live-reproductive fraction is closest to 0.25.",
+                           "moderate":  "Cell whose day360 live-reproductive fraction is closest to 0.50.",
+                           "strong":  "Cell whose day360 live-reproductive fraction is closest to 0.75; if multiple tie, choose higher median rooted membership.",
+                           "tie_breakers":  [
+                                                "smaller resource multiplier",
+                                                "smaller initial insurgent share",
+                                                "lexicographic cell id"
+                                            ]
+                       },
+    "firewall":  [
+                     "Only baseline policy is run in calibration.",
+                     "No government strategy comparison is permitted on this seed block.",
+                     "Selected challenge cells must be carried unchanged to a fresh policy-evaluation seed block."
+                 ],
+    "guard":  "Synthetic support calibration only; challenge multipliers are not empirical conflict estimates."
+}
