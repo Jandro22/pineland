@@ -24,6 +24,16 @@ LOWER = [
 HIGHER = ["population_weighted_government_control", "mean_military_readiness", "mean_military_supply_fraction"]
 
 
+def lower_metrics(df: pd.DataFrame) -> list[str]:
+    metrics = list(LOWER)
+    if "cumulative_recruitment_since_anchor" in df.columns:
+        # Keep recruitment beside the other insurgent regenerative outcomes
+        # without breaking archived force/air CSVs generated before this
+        # measurement-only column was added.
+        metrics.insert(6, "cumulative_recruitment_since_anchor")
+    return metrics
+
+
 def sha256(p: str | Path) -> str:
     return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
@@ -48,7 +58,7 @@ def paired(df: pd.DataFrame, baseline: str, tp: str) -> dict:
         idx = b.index.intersection(g.index)
         bb, gg = b.loc[idx], g.loc[idx]
         row = {}
-        for m in LOWER:
+        for m in lower_metrics(df):
             row[m] = ci(bb[m] - gg[m])
         for m in HIGHER:
             row[m] = ci(gg[m] - bb[m])
@@ -64,7 +74,7 @@ def paired(df: pd.DataFrame, baseline: str, tp: str) -> dict:
 
 def profile_means(df: pd.DataFrame, tp: str) -> dict:
     d = df[df.timepoint.eq(tp)]
-    cols = LOWER + HIGHER + [
+    cols = lower_metrics(df) + HIGHER + [
         "contacts_since_anchor",
         "government_capital_outflow_intervention",
         "combat_event_outflow_intervention",
@@ -76,10 +86,10 @@ def profile_means(df: pd.DataFrame, tp: str) -> dict:
     }
 
 
-def pareto(means: dict[str, dict], include_cost: bool) -> tuple[list[str], dict[str, list[str]]]:
+def pareto(means: dict[str, dict], include_cost: bool, lower: list[str]) -> tuple[list[str], dict[str, list[str]]]:
     profiles = sorted(means)
     def vec(p: str) -> np.ndarray:
-        vals = [means[p][m] for m in LOWER]
+        vals = [means[p][m] for m in lower]
         vals += [-means[p][m] for m in HIGHER]
         if include_cost:
             vals += [means[p]["combat_event_outflow_intervention"]]
@@ -102,7 +112,8 @@ def equipment_analysis(df: pd.DataFrame, out_path: str) -> None:
     end = paired(df, baseline, "intervention_end")
     final = paired(df, baseline, "final")
     means = profile_means(df, "final")
-    front, dominated_by = pareto(means, include_cost=False)
+    lower = lower_metrics(df)
+    front, dominated_by = pareto(means, include_cost=False, lower=lower)
     exposure = {}
     for p, row in means.items():
         contacts = row["contacts_since_anchor"]
@@ -163,7 +174,8 @@ def air_analysis(df: pd.DataFrame, out_path: str) -> None:
     end = paired(df, baseline, "intervention_end")
     final = paired(df, baseline, "final")
     means = profile_means(df, "final")
-    front, dominated_by = pareto(means, include_cost=True)
+    lower = lower_metrics(df)
+    front, dominated_by = pareto(means, include_cost=True, lower=lower)
     exposure = {}
     for p, row in means.items():
         contacts = row["contacts_since_anchor"]
@@ -184,12 +196,17 @@ def air_analysis(df: pd.DataFrame, out_path: str) -> None:
             continue
         cost = final[p]["incremental_combat_event_outflow"]["mean"]
         row = {"incremental_combat_event_outflow": cost, "outcomes": {}}
-        for m in LOWER[:6]:
+        for m in lower[:7]:
             improvement = final[p][m]["mean"]
             row["outcomes"][m] = {
                 "improvement": improvement,
                 "improvement_per_100k_combat_outflow": (
                     float(improvement / cost * 100_000.0)
+                    if cost is not None and cost > 1e-12 and improvement is not None
+                    else None
+                ),
+                "improvement_per_1200_combat_outflow": (
+                    float(improvement / cost * 1_200.0)
                     if cost is not None and cost > 1e-12 and improvement is not None
                     else None
                 ),
@@ -199,7 +216,7 @@ def air_analysis(df: pd.DataFrame, out_path: str) -> None:
     for harm in [0.0, .5, 1.0]:
         profiles = [f"A{x:.2f}_H{harm:.2f}" for x in [.0, .25, .5, .75, 1.0]]
         diminishing[f"H{harm:.2f}"] = {}
-        for m in LOWER[:6]:
+        for m in lower[:7]:
             vals = [final[p][m]["mean"] for p in profiles]
             increments = [vals[i] - vals[i - 1] for i in range(1, len(vals))]
             diminishing[f"H{harm:.2f}"][m] = {
