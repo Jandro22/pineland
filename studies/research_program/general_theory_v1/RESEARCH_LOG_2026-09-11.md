@@ -456,3 +456,45 @@ future transport contract.
   recruitment hazard.  This tests a causal graph Markov blanket rather than
   arbitrary history-variable accretion.
 
+## 2026-09-12 19:50 onward — Development suppression ROI and intervention cost accounting
+
+- Froze a cross-intervention cost-effectiveness standard in
+  `policy_cost_effectiveness_framework_v1.json`.  Costed mechanisms report
+  outcome improvement per 1,200 Pineland capital, equal to 1% of the default
+  one-month 120,000 federal policy-budget ceiling.  Internal capital is not
+  treated as USD; if an external calibration later assigns B dollars to one
+  default monthly budget, then 1,200 capital corresponds to 0.01*B dollars.
+- Derived `development_recruitment_roi_identity_v1.json`: in the unsaturated
+  stored-compliance approximation, the immediate anti-recruitment return of
+  local public spending is the product of (a) recruitment hazard sensitivity
+  to political access and (b) local institutional conversion of public capital
+  into political access.  The latter is proportional to
+  `capacity * reach * compliance^2 * (0.5+0.5*autonomy) / population` until
+  production saturates.  Threat alone and absorptive capacity alone are
+  therefore both incomplete targeting statistics.
+- Completed the preregistered fresh 12-seed locality ROI map on seeds
+  2026150000+ (`development_local_recruitment_roi_12seed_v1.csv`;
+  `development_local_recruitment_roi_results_v1.json`).  For an identical
+  +1,200-capital local increment, the ROI-maximizing locality was the single
+  highest-recruitment-hazard locality in only 2/12 worlds (16.7%).  Targeting
+  the ROI maximum instead of the maximum-threat locality produced a median
+  2.35x as much immediate recruitment-hazard reduction for the same increment
+  (mean 3.13x; p10 1.02x; p90 7.46x).
+- The threat x absorption interaction is large.  High-threat/high-absorption
+  locality states averaged 0.0006215 units of immediate hazard reduction per
+  +1,200 capital, versus 0.0002071 for high-threat/low-absorption states: about
+  a 3.0x difference at equal nominal spend.  Low-threat/high-absorption states
+  still underperform the high-threat/high-absorption quadrant in absolute
+  hazard reduction, so the result is not simply "fund the best institutions".
+- Across all 408 locality states, hazard reduction correlates strongly with
+  baseline recruitment hazard (Spearman rho=.829), but only weakly with the
+  realized incremental political-access gain alone (rho=.042).  This supports
+  a multiplicative targeting logic: money is most useful where both a live
+  recruitment margin and enough institutional conversion capacity coexist.
+- A full dynamic 12-seed development suppression-efficiency assay is running
+  under the frozen `development_suppression_efficiency_contract_v1.json` with
+  only four below-normal-priority worker threads.  It tests whether the
+  first-order recruitment advantage compounds into recruits prevented, rooted
+  membership reduction, lower fielded force/actions/control, and durable
+  post-withdrawal suppression.  No dynamic result is claimed before completion.
+
