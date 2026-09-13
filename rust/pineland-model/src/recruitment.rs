@@ -781,20 +781,21 @@ pub(crate) fn refresh_foothold_memberships(
 /// configured recruitment rate. With one active insurgent organization this
 /// is the instantaneous mass-hazard field immediately before the stochastic
 /// sub-cohort draws.
-pub fn recruitment_hazard_mass_by_locality(
+fn recruitment_hazard_and_access_sensitivity_by_locality(
     particle: &ParticleState,
     topology: &StaticTopology,
     config: &SimulationConfig,
     target: usize,
-) -> Vec<f64> {
+) -> (Vec<f64>, Vec<f64>) {
     let locality_count = topology.locality_count();
     let organization_count = particle.organizations.kind.len();
     let mut result = vec![0.0; locality_count];
+    let mut access_sensitivity = vec![0.0; locality_count];
     if target >= organization_count
         || particle.organizations.active[target] == 0
         || particle.organizations.kind[target] != KIND_INSURGENT
     {
-        return result;
+        return (result, access_sensitivity);
     }
 
     let active_insurgents = (0..organization_count)
@@ -933,12 +934,54 @@ pub fn recruitment_hazard_mass_by_locality(
             base_intensity
         };
         let represented = particle.people.represented_population[person].max(0.0);
+        let access_factor = if config.organization_ecology.recruitment_requires_access {
+            access_strength
+        } else {
+            1.0
+        };
+        // Positive quantity: instantaneous recruitment-hazard mass *reduced*
+        // by a +1.0 increase in political access, holding the rest of the
+        // interval-boundary state fixed.  The recruitment logit contains
+        // `-peaceful_channel_strength * political_access`, so the derivative
+        // of logistic(logit) is exact at this boundary.
+        access_sensitivity[locality] += represented
+            * eligible_fraction
+            * config.recruitment_rate.max(0.0)
+            * access_factor
+            * config.political_order.peaceful_channel_strength.max(0.0)
+            * base_intensity
+            * (1.0 - base_intensity);
         result[locality] += represented
             * eligible_fraction
             * config.recruitment_rate.max(0.0)
             * intensity.max(0.0);
     }
-    result
+    (result, access_sensitivity)
+}
+
+/// Pure first-order recruitment hazard mass by locality for one insurgent
+/// organization. This is a theory diagnostic: it consumes no RNG and mutates
+/// no state.
+pub fn recruitment_hazard_mass_by_locality(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    target: usize,
+) -> Vec<f64> {
+    recruitment_hazard_and_access_sensitivity_by_locality(particle, topology, config, target).0
+}
+
+/// Positive first-order reduction in recruitment-hazard mass associated with
+/// a +1.0 perturbation to political access in each locality, holding all other
+/// interval-boundary state fixed.  This is a deterministic diagnostic, not a
+/// causal intervention by itself.
+pub fn recruitment_hazard_access_sensitivity_by_locality(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    target: usize,
+) -> Vec<f64> {
+    recruitment_hazard_and_access_sensitivity_by_locality(particle, topology, config, target).1
 }
 
 pub fn recruit(
