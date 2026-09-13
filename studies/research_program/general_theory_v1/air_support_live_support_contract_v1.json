@@ -1,0 +1,37 @@
+{
+  "schema_version": "pineland.air_support_live_support_contract.v1",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "purpose": "Measure marginal synthetic air-support contribution and internal cost-effectiveness on persistent live-insurgency support.",
+  "design": {
+    "seed_base": 2026156000,
+    "seeds": 12,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 240,
+    "final_day": 360,
+    "recruitment_multiplier": 0.0625,
+    "underground_disruption_multiplier": 0.0,
+    "collapse_requires_fielded_exhaustion": true,
+    "intensities": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "civilian_harm_multipliers": [0.0, 0.5, 1.0],
+    "firepower_bonus_at_full_information": 0.5,
+    "cost_per_full_support_contact": 600.0
+  },
+  "primary_questions": [
+    "What is the marginal reduction in insurgent force, footholds, recruitment hazard, actions, and control per unit of support intensity?",
+    "How much suppression is obtained per 1% of the default monthly policy-budget ceiling spent on air support?",
+    "Where do diminishing returns begin?",
+    "How does civilian-harm sensitivity alter the Pareto frontier?",
+    "How much of any suppression persists 120 days after support returns to baseline?"
+  ],
+  "analysis_rules": [
+    "Use intensity zero as the within-seed baseline.",
+    "Report incremental combat-support outflow and suppression per 1,200 capital units in addition to the existing per-100,000 scale.",
+    "Do not combine suppression and civilian harm into one utility score.",
+    "A higher intensity that adds cost without material incremental durable suppression is diminishing-return dominated."
+  ],
+  "real_dollar_guard": "600 is an internal opportunity-cost scale, not USD. If the 120,000 monthly policy budget is later anchored to B dollars, 1,200 capital is 0.01*B dollars.",
+  "interpretation_guard": "Synthetic air-support mechanism only; not a sortie, targeting, or weapons-effect recommendation."
+}

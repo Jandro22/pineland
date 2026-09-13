@@ -1,0 +1,40 @@
+{
+  "schema_version": "pineland.force_equipment_live_support_contract.v1",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "purpose": "Measure the synthetic heavy-versus-light force mechanism frontier on persistent live-insurgency support rather than default support that can floor-collapse reproductive outcomes.",
+  "design": {
+    "seed_base": 2026154000,
+    "seeds": 12,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 240,
+    "final_day": 360,
+    "recruitment_multiplier": 0.0625,
+    "underground_disruption_multiplier": 0.0,
+    "collapse_requires_fielded_exhaustion": true,
+    "profile_definition_source": "force_equipment_break_even_contract_v1.json"
+  },
+  "primary_questions": [
+    "At each logistics/terrain burden, how much additional insurgent suppression is produced by greater firepower/protection?",
+    "At each combat-benefit level, where does the ranking versus the light baseline reverse as supply burden and terrain penalty rise?",
+    "Does a heavier profile reduce government losses enough to offset readiness/supply penalties?",
+    "How much suppression remains 120 days after the equipment intervention ends?"
+  ],
+  "primary_outcomes": [
+    "rooted_armed_membership_mass",
+    "active_owner_fielded_force_personnel",
+    "foothold_strength_sum",
+    "recruitment_hazard_mass",
+    "population_weighted_insurgent_control",
+    "cumulative_insurgent_actions_since_anchor",
+    "government_military_losses_since_anchor",
+    "mean_military_readiness",
+    "mean_military_supply_fraction",
+    "population_loss_since_anchor",
+    "displacement"
+  ],
+  "analysis_guard": "Report the benefit-burden response surface and break-even frontier; do not declare one universal armored/light winner. Profiles are stylized force-mechanism analogues, not real vehicle or unit specifications.",
+  "cost_guard": "The equipment mechanism has operational supply/readiness burden but no empirically calibrated procurement-dollar model. Do not report dollar cost-effectiveness for heavy equipment from this assay."
+}
