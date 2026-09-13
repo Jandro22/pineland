@@ -1,0 +1,196 @@
+{
+  "schema_version": "pineland.insurgency_challenge_support_calibration_results.v1",
+  "status": "FROZEN_GRID_FAILED_TO_SPAN_PERSISTENCE_REGIMES",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/insurgency_challenge_support_calibration_6seed_v1.csv",
+  "input_sha256": "83380a4def69a3c6a74b196d71f5a325f3c2ef5bbe663064069245ef8ea68a11",
+  "seed_count": 6,
+  "cell_summary": [
+    {
+      "cell": "S0.0005_R0.5",
+      "initial_insurgent_share": 0.0005,
+      "resource_multiplier": 0.5,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 5929.499074036452,
+      "median_insurgent_control": 0.0284934827165991
+    },
+    {
+      "cell": "S0.0005_R1",
+      "initial_insurgent_share": 0.0005,
+      "resource_multiplier": 1.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 7413.5016224809715,
+      "median_insurgent_control": 0.03181106785173725
+    },
+    {
+      "cell": "S0.0005_R3",
+      "initial_insurgent_share": 0.0005,
+      "resource_multiplier": 3.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 14085.881869846426,
+      "median_insurgent_control": 0.04134616800411705
+    },
+    {
+      "cell": "S0.0005_R9",
+      "initial_insurgent_share": 0.0005,
+      "resource_multiplier": 9.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 34759.683028409876,
+      "median_insurgent_control": 0.05086271859195135
+    },
+    {
+      "cell": "S0.0010_R0.5",
+      "initial_insurgent_share": 0.001,
+      "resource_multiplier": 0.5,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 10219.573390517886,
+      "median_insurgent_control": 0.0306248277760029
+    },
+    {
+      "cell": "S0.0010_R1",
+      "initial_insurgent_share": 0.001,
+      "resource_multiplier": 1.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 11760.916626792252,
+      "median_insurgent_control": 0.0342812896022094
+    },
+    {
+      "cell": "S0.0010_R3",
+      "initial_insurgent_share": 0.001,
+      "resource_multiplier": 3.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 18117.323940799495,
+      "median_insurgent_control": 0.03974210100147205
+    },
+    {
+      "cell": "S0.0010_R9",
+      "initial_insurgent_share": 0.001,
+      "resource_multiplier": 9.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 38485.63317759927,
+      "median_insurgent_control": 0.050706543356764
+    },
+    {
+      "cell": "S0.0020_R0.5",
+      "initial_insurgent_share": 0.002,
+      "resource_multiplier": 0.5,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 18870.693691301232,
+      "median_insurgent_control": 0.0339183258364286
+    },
+    {
+      "cell": "S0.0020_R1",
+      "initial_insurgent_share": 0.002,
+      "resource_multiplier": 1.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 20245.970518064314,
+      "median_insurgent_control": 0.0353900512467005
+    },
+    {
+      "cell": "S0.0020_R3",
+      "initial_insurgent_share": 0.002,
+      "resource_multiplier": 3.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 26406.353149633065,
+      "median_insurgent_control": 0.04261934926024675
+    },
+    {
+      "cell": "S0.0020_R9",
+      "initial_insurgent_share": 0.002,
+      "resource_multiplier": 9.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 46429.26758069619,
+      "median_insurgent_control": 0.0536634287731618
+    },
+    {
+      "cell": "S0.0040_R0.5",
+      "initial_insurgent_share": 0.004,
+      "resource_multiplier": 0.5,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 36264.77933937454,
+      "median_insurgent_control": 0.0453393282643946
+    },
+    {
+      "cell": "S0.0040_R1",
+      "initial_insurgent_share": 0.004,
+      "resource_multiplier": 1.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 37437.05740370584,
+      "median_insurgent_control": 0.04531765187888105
+    },
+    {
+      "cell": "S0.0040_R3",
+      "initial_insurgent_share": 0.004,
+      "resource_multiplier": 3.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 43210.065965951144,
+      "median_insurgent_control": 0.047888831805763754
+    },
+    {
+      "cell": "S0.0040_R9",
+      "initial_insurgent_share": 0.004,
+      "resource_multiplier": 9.0,
+      "n": 6,
+      "live_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 60520.744144928365,
+      "median_insurgent_control": 0.05524448680200485
+    }
+  ],
+  "observed_live_fractions": [
+    0.0
+  ],
+  "selection_targets_represented": {
+    "weak": true,
+    "moderate": false,
+    "strong": false
+  },
+  "selected_regimes": null,
+  "firewall": "Selection uses baseline-policy persistence only. Policy ranking on this seed block is forbidden. A failed grid must be expanded under a new preregistered contract rather than coerced into regime labels."
+}

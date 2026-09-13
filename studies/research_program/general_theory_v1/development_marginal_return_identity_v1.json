@@ -1,0 +1,33 @@
+{
+  "schema_version": "pineland.development_marginal_return_identity.v1",
+  "historical_outcomes_used": false,
+  "source": "rust/pineland-model/src/political.rs",
+  "scope": "Implemented political-order mechanism, unsaturated low-dose regime.",
+  "definitions": {
+    "C": "local institution capacity",
+    "R": "institution reach",
+    "c": "stored compliance; used also as mean sampled-compliance approximation",
+    "I": "institution integrity",
+    "A": "institution autonomy",
+    "H": "local infrastructure",
+    "N": "local population",
+    "S": "service factor = ((0.8+0.2H)+I+C+H+(0.5+0.5A))/5",
+    "D": "nominal public-development allocation per political cycle"
+  },
+  "identities": {
+    "expected_low_dose_production": "P ? C*R*c^2*D/(0.05*N) for N*0.05>1 and before clamp saturation",
+    "local_government_legitimacy_marginal_return": "dL_G/dD ? 0.04*C*R*c^2*S*(0.5+0.5I)/(0.05*N)",
+    "population_weighted_national_government_legitimacy_marginal_return": "N*dL_G/dD ? C*R*c^2*S*(0.5+0.5I); N cancels",
+    "government_legitimacy_positive_threshold": "P > 0.7/(S*(1+I))",
+    "state_legitimacy_positive_threshold": "P > 0.25/I",
+    "political_access_positive_threshold": "P > 0.4/(1+A)"
+  },
+  "implications": [
+    "Before saturation, population-weighted marginal political return per nominal public unit is governed primarily by institutional absorptive/conversion terms rather than population size.",
+    "Need-weighting toward low administrative capacity can trade equity/need targeting against immediate conversion efficiency.",
+    "If a production threshold exceeds 1, spending alone cannot generate a positive legitimacy/access update in that cycle; institutional repair must precede or accompany scale-up.",
+    "Once local production saturates, marginal return falls to zero and efficient allocation becomes a water-filling problem across localities rather than a fixed proportional rule."
+  ],
+  "research_prediction": "A dynamic budget-neutral allocation strategy that follows current marginal conversion until local saturation should dominate simple equal-locality allocation on immediate state-production efficiency, but may or may not dominate threat/need allocation on long-run insurgent suppression. This must be tested on fresh challenge-regime seeds.",
+  "guard": "Synthetic equation identity. Compliance-squared formulas use the stored-compliance approximation to the mean sampled compliance; real-world development dollars and empirical institutional response are not identified."
+}

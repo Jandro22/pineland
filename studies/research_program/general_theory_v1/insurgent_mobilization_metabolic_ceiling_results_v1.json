@@ -1,0 +1,132 @@
+{
+  "schema_version": "pineland.insurgent_mobilization_metabolic_ceiling_results.v1",
+  "status": "MOBILIZATION_METABOLIC_CEILING_SUPPORTED",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/insurgent_mobilization_metabolic_ceiling_8seed_v1.csv",
+  "input_sha256": "cc67eb423383c34e8e1027596a7ceb1a8520f1b9aa123b5a30b05ebebffba7b9",
+  "seed_count": 8,
+  "cell_summary": [
+    {
+      "recruitment_multiplier": 0.25,
+      "n": 8,
+      "collapse_fraction": 0.125,
+      "median_collapse_time": 161.0,
+      "median_recruitment_burn": 63359.87806013228,
+      "median_capital_inflow": 4250.073348711294,
+      "median_runway_ratio": 0.7520202317331333,
+      "median_final_capital": 20893.079058261614,
+      "median_final_rooted": 130533.33229398329,
+      "median_final_operational_force": 10395.424012953301,
+      "median_final_cumulative_recruitment": 32999.93648965224,
+      "collapse_causes": {
+        "capital": 1
+      }
+    },
+    {
+      "recruitment_multiplier": 0.5,
+      "n": 8,
+      "collapse_fraction": 1.0,
+      "median_collapse_time": 126.0,
+      "median_recruitment_burn": 82972.91758768371,
+      "median_capital_inflow": 2972.917587683719,
+      "median_runway_ratio": 0.9999999999999998,
+      "median_final_capital": 0.0,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_cumulative_recruitment": 44733.24644191586,
+      "collapse_causes": {
+        "capital": 8
+      }
+    },
+    {
+      "recruitment_multiplier": 0.75,
+      "n": 8,
+      "collapse_fraction": 1.0,
+      "median_collapse_time": 91.0,
+      "median_recruitment_burn": 82121.3920899684,
+      "median_capital_inflow": 2121.392089968419,
+      "median_runway_ratio": 1.0,
+      "median_final_capital": 0.0,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_cumulative_recruitment": 46933.32213076793,
+      "collapse_causes": {
+        "capital": 8
+      }
+    },
+    {
+      "recruitment_multiplier": 1.0,
+      "n": 8,
+      "collapse_fraction": 1.0,
+      "median_collapse_time": 63.0,
+      "median_recruitment_burn": 81272.05450469887,
+      "median_capital_inflow": 1272.0545046988852,
+      "median_runway_ratio": 1.0,
+      "median_final_capital": 0.0,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_cumulative_recruitment": 49133.2258545927,
+      "collapse_causes": {
+        "capital": 8
+      }
+    },
+    {
+      "recruitment_multiplier": 1.5,
+      "n": 8,
+      "collapse_fraction": 1.0,
+      "median_collapse_time": 49.0,
+      "median_recruitment_burn": 80848.49485863998,
+      "median_capital_inflow": 848.4948586399951,
+      "median_runway_ratio": 1.0,
+      "median_final_capital": 0.0,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_cumulative_recruitment": 46199.96979710518,
+      "collapse_causes": {
+        "capital": 8
+      }
+    },
+    {
+      "recruitment_multiplier": 2.0,
+      "n": 8,
+      "collapse_fraction": 1.0,
+      "median_collapse_time": 42.0,
+      "median_recruitment_burn": 80847.91299128326,
+      "median_capital_inflow": 847.9129912832468,
+      "median_runway_ratio": 1.0,
+      "median_final_capital": 0.0,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_cumulative_recruitment": 49866.60824165334,
+      "collapse_causes": {
+        "capital": 8
+      }
+    },
+    {
+      "recruitment_multiplier": 4.0,
+      "n": 8,
+      "collapse_fraction": 1.0,
+      "median_collapse_time": 28.0,
+      "median_recruitment_burn": 80000.0,
+      "median_capital_inflow": 0.0,
+      "median_runway_ratio": 1.0,
+      "median_final_capital": 0.0,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_cumulative_recruitment": 55733.273689960406,
+      "collapse_causes": {
+        "capital": 8
+      }
+    }
+  ],
+  "aggregate_collapse_causes": {
+    "capital": 49
+  },
+  "capital_trigger_share_among_collapses": 1.0,
+  "spearman_recruitment_vs_collapse_fraction": 0.6123724356957945,
+  "spearman_recruitment_vs_median_collapse_time": -1.0,
+  "low_recruitment_mean_collapse_fraction": 0.5625,
+  "high_recruitment_mean_collapse_fraction": 1.0,
+  "support_rule": "Supported only if >50% of observed collapses are capital-triggered and high-recruitment cells collapse more often than low-recruitment cells.",
+  "guard": "Synthetic mechanism result only. Recruitment multipliers and internal capital are not empirical estimates."
+}

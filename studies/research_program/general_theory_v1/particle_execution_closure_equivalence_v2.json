@@ -1,0 +1,26 @@
+{
+  "schema_version": "pineland.particle_execution_closure_equivalence.v2",
+  "status": "PASS",
+  "historical_outcomes_used": false,
+  "purpose": "License bookkeeping-light particle execution for distributional closure continuations only.",
+  "test": "particle_execution_preserves_decision_state_for_closure_horizon",
+  "configuration": {
+    "seed": 2026092999,
+    "agents": 300,
+    "localities": 34,
+    "horizon_days": 30
+  },
+  "required_equalities": [
+    "decision_hash",
+    "all RNG streams",
+    "causal contact/action/recruitment/civilian-harm/death counters",
+    "all 11 closure features at every locality",
+    "all primary closure outcome source variables at every locality"
+  ],
+  "expected_non_equal_audit_state": [
+    "event-count bookkeeping",
+    "checkpoint-count bookkeeping",
+    "forensic output archives and measurement-only recording work"
+  ],
+  "interpretation": "Particle execution is equivalent for the latent causal state and estimands used by the distributional-closure assay. It is not a byte-for-byte forensic-output equivalent and must not be represented as such."
+}

@@ -1,0 +1,32 @@
+﻿{
+    "schema_version":  "pineland.membership_v3_development_spec.v1",
+    "status":  "EXPLORATORY_ALREADY_OBSERVED_SEED_BLOCK",
+    "historical_outcomes_used":  false,
+    "support":  {
+                    "dynamic_seed_base":  2026107000,
+                    "initialization_seed":  2026106900,
+                    "pool_seeds":  18,
+                    "agents":  300,
+                    "localities":  34,
+                    "anchor_days":  60,
+                    "horizon_days":  30,
+                    "pairs":  12,
+                    "branches":  16
+                },
+    "candidates":  [
+                       {
+                           "name":  "rootedstock11v3",
+                           "state":  "replace clipped M with unbounded rooted stock M*"
+                       },
+                       {
+                           "name":  "rootedstock_hazard12v3",
+                           "state":  "M* plus production recruitment-hazard H"
+                       },
+                       {
+                           "name":  "rootedstock_social12v3",
+                           "state":  "M* plus raw mean social exposure"
+                       }
+                   ],
+    "ranking_rule":  "Prefer lower multiplicity-significant-and-large pair rate, then lower raw practically-large rate; if effectively tied, prefer lower dimension. Candidate-specific future coordinates must also be included in closure outcomes.",
+    "guard":  "This seed block and related outcomes have already been inspected. Results select a hypothesis only; they cannot confirm it. Winner must be frozen and tested on a new untouched seed block."
+}

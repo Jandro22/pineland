@@ -1,0 +1,86 @@
+{
+  "schema_version": "pineland.theory_status.v6",
+  "status": "SYNTHETIC_MECHANISM_LAYER_COMPLETE_REDUCED_THEORY_STABILIZED",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "supersedes": "theory_status_v5.json",
+  "firewall_certification": {
+    "firewall_A_zero_historical_tuning": {
+      "status": "PASSED",
+      "details": "Zero historical data (Nepal, Afghanistan, etc.) used to tune parameters, select states, or calibrate equations."
+    },
+    "firewall_B_negative_results_permanent": {
+      "status": "PASSED",
+      "details": "All 17 negative findings permanently preserved in falsification_ledger_v4.json; zero hypotheses dropped."
+    },
+    "firewall_C_synthetic_labeling": {
+      "status": "PASSED",
+      "details": "All deliverables explicitly watermarked SYNTHETIC MECHANISM RESULT."
+    },
+    "firewall_D_claim_language_governance": {
+      "status": "PASSED",
+      "details": "Strict compliance with claim_language_contract.json Level 1 (Synthetically Identified); no empirical or universal claims."
+    },
+    "firewall_E_native_bit_parity": {
+      "status": "PASSED",
+      "details": "Native execution parity certified; all assays run through certified native probe."
+    }
+  },
+  "confirmed_synthetic_mechanisms": {
+    "rooted_membership_exclusivity_and_nonlocal_reproduction": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "nonlocal_reproduction_confirmation_results_v1.json",
+        "reproduction_hazard_kernel_confirmation_results_v1.json"
+      ],
+      "law": "Spatial reproduction requires rooted membership underground; propagation is nonlocal and predicted by early recruitment hazard (+0.027 AUC gain at 180d)."
+    },
+    "operational_capital_stock_flow_depletion": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "mobilization_resource_results_v1.json",
+        "organizational_resource_identity_v1.json"
+      ],
+      "law": "Insurgent collapse is governed by strict capital exhaustion K = K_0 + Y - B under a 3-term operational burn law, falsifying naive 1D scalar strain."
+    },
+    "military_human_capital_turnover_learning_tradeoff": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "force_discrimination_results_v1.json",
+        "human_capital_absorption_confirmation_results_v1.json"
+      ],
+      "law": "Faster replacement throughput recovers headcount (+38.0 pp) while incurring an experience dilution capability deficit (+10.1 pp) governed by dE/dt = ell*(1-E) + (I/F)*(E_r-E)."
+    },
+    "police_professionalism_institutional_persistence": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "force_discrimination_results_v1.json",
+        "v2_omitted_state_stress_police_results_v1.json"
+      ],
+      "law": "Police professionalism is an independent dynamical stock acting on intelligence and underground disruption, converging endogenously toward parent standards."
+    },
+    "state_capacity_dual_channel_divergence": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "state_regeneration_results_v2.json",
+        "state_regeneration_capital_transition_results_v1.json",
+        "state_recovery_mechanism_factorial_results_v1.json"
+      ],
+      "law": "Explicit state regeneration builds physical administrative capacity (+0.10 Q), while political institution capacity suffers endogenous erosion (-0.15 Q) from service-quality decay and patronage."
+    }
+  },
+  "strategic_closure_and_state_stabilization": {
+    "status": "STABILIZED_STOCHASTIC_CLOSURE_STATE_SPACE",
+    "deliverable": "strategic_closure_residual_uncertainty_v1.json",
+    "reduced_theory_deliverable": "reduced_theory_specification_v2.json",
+    "closure_summary": {
+      "low_activity": "0/8 pairs fail; exact Markov closure (control SMD < 0.003).",
+      "mid_activity": "0/8 pairs fail under net transport flux (rootedstock_net12v3).",
+      "high_activity": "3/8 pairs diverge due to micro-combat attrition (logF SMD=0.512), while territorial control remains stable (SMD < 0.18)."
+    },
+    "state_variable_churn": "TERMINATED_AND_FROZEN",
+    "decision_readiness": "CERTIFIED_FOR_DECISION_SUPPORT_UNDER_DECLARED_UNCERTAINTY"
+  },
+  "synthetic_layer_status": "COMPLETE",
+  "next_authoritative_stage": "Cross-scale resolution and topology invariance testing, followed by prospective observational operator definition for historical cases under frozen preregistered protocols."
+}

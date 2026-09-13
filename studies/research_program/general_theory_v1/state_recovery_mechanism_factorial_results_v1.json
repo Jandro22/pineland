@@ -1,0 +1,163 @@
+{
+  "schema_version": "pineland.state_recovery_mechanism_factorial_results.v1",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/state_recovery_mechanism_factorial_8seed_180d_v1.csv",
+  "input_sha256": "29e7fbf0598d35bc68a904026d1e6ee9b94d69888fe1e293bdb1ee384ba13a16",
+  "final_time_days": 180.0,
+  "materiality_threshold_abs_Q": 0.02,
+  "cell_summary": [
+    {
+      "cell": "full_v2",
+      "n": 32,
+      "mean_Q_institution_capacity": -0.08660467817577244,
+      "mean_Q_structural_admin": 0.10115741321565354,
+      "mean_control_delta": -0.00048470666581263994,
+      "mean_cumulative_admin_rebuild": 0.05424508997600932,
+      "mean_security_recruits": 56.30978392400607,
+      "mean_security_deployments": 32.68879482718181,
+      "mean_final_integrity": 0.5804293004785396
+    },
+    {
+      "cell": "neither_capacity_loop",
+      "n": 32,
+      "mean_Q_institution_capacity": 0.0,
+      "mean_Q_structural_admin": 0.0,
+      "mean_control_delta": -0.0014124327430369097,
+      "mean_cumulative_admin_rebuild": 0.0,
+      "mean_security_recruits": 0.0,
+      "mean_security_deployments": 0.0,
+      "mean_final_integrity": 0.619075589467021
+    },
+    {
+      "cell": "political_only",
+      "n": 32,
+      "mean_Q_institution_capacity": -0.1107229682396669,
+      "mean_Q_structural_admin": 0.0,
+      "mean_control_delta": -0.0014321297024041755,
+      "mean_cumulative_admin_rebuild": 0.0,
+      "mean_security_recruits": 0.0,
+      "mean_security_deployments": 0.0,
+      "mean_final_integrity": 0.5804293004785396
+    },
+    {
+      "cell": "regeneration_only",
+      "n": 32,
+      "mean_Q_institution_capacity": 0.06461069895943802,
+      "mean_Q_structural_admin": 0.10243716711410039,
+      "mean_control_delta": -0.00045980266104627115,
+      "mean_cumulative_admin_rebuild": 0.054920079695341864,
+      "mean_security_recruits": 56.3131383866169,
+      "mean_security_deployments": 32.689910962775855,
+      "mean_final_integrity": 0.619075589467021
+    }
+  ],
+  "paired_contrasts": {
+    "Q_institution_capacity": {
+      "regeneration_effect_when_political_active_full_minus_political": {
+        "n": 32,
+        "mean": 0.02411829006389446,
+        "ci95": [
+          0.01386098979678452,
+          0.0343755903310044
+        ]
+      },
+      "political_capacity_evolution_effect_when_regeneration_active_full_minus_regeneration_only": {
+        "n": 32,
+        "mean": -0.15121537713521047,
+        "ci95": [
+          -0.16132890307172154,
+          -0.1411018511986994
+        ]
+      },
+      "regeneration_effect_when_political_frozen_regeneration_minus_neither": {
+        "n": 32,
+        "mean": 0.06461069895943802,
+        "ci95": [
+          0.05786552373156136,
+          0.07135587418731469
+        ]
+      },
+      "interaction": {
+        "n": 32,
+        "mean": -0.040492408895543563,
+        "ci95": [
+          -0.05040853511599747,
+          -0.030576282675089654
+        ]
+      }
+    },
+    "Q_structural_admin": {
+      "regeneration_effect_when_political_active_full_minus_political": {
+        "n": 32,
+        "mean": 0.10115741321565354,
+        "ci95": [
+          0.09691066012315087,
+          0.1054041663081562
+        ]
+      },
+      "political_capacity_evolution_effect_when_regeneration_active_full_minus_regeneration_only": {
+        "n": 32,
+        "mean": -0.0012797538984468649,
+        "ci95": [
+          -0.0013262997732515775,
+          -0.0012332080236421522
+        ]
+      },
+      "regeneration_effect_when_political_frozen_regeneration_minus_neither": {
+        "n": 32,
+        "mean": 0.10243716711410039,
+        "ci95": [
+          0.09819098930551329,
+          0.1066833449226875
+        ]
+      },
+      "interaction": {
+        "n": 32,
+        "mean": -0.0012797538984468649,
+        "ci95": [
+          -0.0013262997732515775,
+          -0.0012332080236421522
+        ]
+      }
+    },
+    "control_delta": {
+      "regeneration_effect_when_political_active_full_minus_political": {
+        "n": 32,
+        "mean": 0.0009474230365915355,
+        "ci95": [
+          0.0007790963956698338,
+          0.0011157496775132372
+        ]
+      },
+      "political_capacity_evolution_effect_when_regeneration_active_full_minus_regeneration_only": {
+        "n": 32,
+        "mean": -2.4904004766368795e-05,
+        "ci95": [
+          -3.225559772650438e-05,
+          -1.7552411806233208e-05
+        ]
+      },
+      "regeneration_effect_when_political_frozen_regeneration_minus_neither": {
+        "n": 32,
+        "mean": 0.0009526300819906386,
+        "ci95": [
+          0.000784463786832323,
+          0.001120796377148954
+        ]
+      },
+      "interaction": {
+        "n": 32,
+        "mean": -5.207045399103008e-06,
+        "ci95": [
+          -5.755513440882647e-06,
+          -4.658577357323369e-06
+        ]
+      }
+    }
+  },
+  "mechanism_gates": {
+    "political_capacity_evolution_is_material_net_erosion_when_regeneration_active": true,
+    "explicit_regeneration_is_material_positive_when_political_capacity_frozen": true
+  },
+  "interpretation": "Contrasts isolate the implemented capacity-memory terms while retaining political service spending and control outputs. They diagnose this synthetic shock support only; interaction means contributions need not add linearly."
+}

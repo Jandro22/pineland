@@ -1,0 +1,37 @@
+{
+  "schema_version": "pineland.reduced_theory_candidate_freeze.v2",
+  "status": "frozen_before_v2_untouched_seed_holdout",
+  "historical_outcomes_used": false,
+  "source_candidate": "reduced_theory_results_v1.json",
+  "state_vector": ["M_i", "F_i", "E_i", "C_i", "K_o"],
+  "state_definition_corrections": {
+    "F_i": "log1p(f_effective_strength), not log1p(raw f_personnel)",
+    "K_o": "insurgent organizations.capital (emitted as org_liquid_capital), not normalized org_capital_material and not a hard-coded 80000 in validation"
+  },
+  "equations": [
+    "dM_i/dt = alpha_m*r*(1-M_i)*(M_i + beta_spat*sum_j W_ij*M_j)*sigma(C_i) - delta_m*S_i*M_i",
+    "dF_i/dt = gamma_f*f*M_i*min(1,K_o/K_crit) - (mu_f + eta_combat*S_i)*F_i",
+    "dE_i/dt = rho_e*(M_i + 0.5*F_i)*(1-E_i) - delta_e*S_i*E_i",
+    "dC_i/dt = theta_c*(E_i + 0.3*F_i - S_i)*(1-C_i^2)",
+    "dK_o/dt = sum_i tau_tax*max(0,C_i)*Y_i - (kappa_r*r + kappa_rf*r*f + kappa_f*f)"
+  ],
+  "parameters": {
+    "alpha_m": 0.038,
+    "beta_spat": 0.42,
+    "k_c": 2.0,
+    "delta_m": 0.015,
+    "gamma_f": 0.055,
+    "K_crit": 50000.0,
+    "mu_f": 0.005,
+    "eta_combat": 0.015,
+    "rho_e": 0.025,
+    "delta_e": 0.007,
+    "theta_c": 0.018,
+    "tau_tax": 0.008,
+    "kappa_r": 450.0,
+    "kappa_rf": 400.0,
+    "kappa_f": 80.0
+  },
+  "parameter_count": 15,
+  "rule": "No parameter or equation changes are permitted after viewing v2 holdout outcomes. Any later candidate must receive a new version and a new untouched holdout."
+}

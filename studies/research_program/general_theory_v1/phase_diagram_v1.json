@@ -1,0 +1,104 @@
+{
+  "schema_version": "pineland.phase_diagram.v1",
+  "status": "synthetic_phase_diagram_derived",
+  "historical_outcomes_used": false,
+  "fundamental_dimensionless_groups": {
+    "Pi_0": {
+      "formula": "rho(K_infinity) = max eigenvalue of spatial reproduction operator",
+      "interpretation": "Basic spatial reproduction number across generational lifecycle",
+      "critical_value": 1.0,
+      "empirical_baseline": 6.393604288151057
+    },
+    "Pi_M": {
+      "formula": "r * f / c = (recruitment_rate * fighter_conversion) / capital_stock",
+      "interpretation": "Mobilization strain index: recruitment & fielding burn rate vs capital",
+      "safe_threshold": 0.25,
+      "exhaustion_threshold": 0.25,
+      "universality_status": "Falsified as single universal scalar (within-strain dispersion > 15%); derived as two-timescale ratio Pi_M = tau_replenish / tau_mobilize"
+    },
+    "Pi_S": {
+      "formula": "tau_renewal / tau_conflict",
+      "interpretation": "Ratio of state institutional regeneration tempo to conflict tempo",
+      "empirical_finding": "Q_S(180) ~ 0.007; state capacity is strongly hysteretic and does not passively recover from central fiscal injection over 180 days"
+    },
+    "Gamma": {
+      "formula": "log(insurgent_stock) - log(state_stock)",
+      "interpretation": "Competitive margin governing trajectory inflection",
+      "critical_expansion_threshold": -11.01085305530428,
+      "critical_collapse_threshold": -10.961051923965751
+    }
+  },
+  "phase_regimes": [
+    {
+      "regime_id": "R1_endogenous_extinction",
+      "name": "Endogenous Extinction",
+      "governing_conditions": {
+        "Pi_0": "< 1.0",
+        "Pi_U": "< 1.0",
+        "Gamma": "< 0.0"
+      },
+      "physical_mechanism": "Subcritical reproduction without external sanctuary or material subsidy. Each generation produces fewer than 1 spatial offspring, leading to demographic and organizational extinction within finite time.",
+      "typical_outcome": "Insurgent organization collapses, footholds extinguish, 0 active formations."
+    },
+    {
+      "regime_id": "R2_mobilization_trap",
+      "name": "Mobilization Trap (Resource Exhaustion)",
+      "governing_conditions": {
+        "Pi_0": ">= 1.0",
+        "Pi_M": ">= 0.25",
+        "capital_depletion": "100% complete"
+      },
+      "physical_mechanism": "Mobilization rate and fighter conversion outrun organizational material replenishment. Fielded force creates unsustainable burn rate, exhausting central organizational capital to 0. Produces catastrophic organizational collapse despite high initial recruitment mass.",
+      "typical_outcome": "Hard capital exhaustion, organizational disbanding, stranded formations."
+    },
+    {
+      "regime_id": "R3_externally_maintained_persistence",
+      "name": "Externally Maintained Persistence",
+      "governing_conditions": {
+        "Pi_0": "< 1.0",
+        "Pi_U": ">= 1.0"
+      },
+      "physical_mechanism": "Endogenous reproduction is subcritical, but cross-border external sanctuary or foreign resource transfers replenish losses faster than local attrition.",
+      "typical_outcome": "Border-adjacent persistence, immune to local COIN clearing."
+    },
+    {
+      "regime_id": "R4_localized_endemic_persistence",
+      "name": "Localized Endemic Persistence",
+      "governing_conditions": {
+        "Pi_0": "~ 1.0",
+        "Pi_M": "< 0.25",
+        "Gamma": "between -10.961 and -11.011"
+      },
+      "physical_mechanism": "Balanced generation dynamics. Insurgent replaces losses locally at a sustainable rate without overtaxing capital stocks or expanding beyond local rough terrain.",
+      "typical_outcome": "Protracted low-intensity conflict, stable foothold presence."
+    },
+    {
+      "regime_id": "R5_spatial_expansion",
+      "name": "Spatial Expansion",
+      "governing_conditions": {
+        "Pi_0": "> 1.0 (baseline rho_inf ~ 6.39)",
+        "Pi_M": "< 0.25",
+        "Gamma": "> -11.011"
+      },
+      "physical_mechanism": "Supercritical spatial reproduction. Parent rooted membership establishes offspring in adjacent network localities via recruitment waves within generation horizon tau_g <= 158 days.",
+      "typical_outcome": "Multi-district expansion, governance erosion, foothold network growth."
+    },
+    {
+      "regime_id": "R6_state_consolidation_durable_quiet",
+      "name": "State Consolidation (Durable Quiet)",
+      "governing_conditions": {
+        "Gamma": "< -10.961",
+        "Pi_S": "institutional presence intact",
+        "insurgent_presence": "extinguished or marginalized"
+      },
+      "physical_mechanism": "State authority maintains overwhelming competitive margin. Insurgent organizational capital and membership depth are suppressed below establishment threshold.",
+      "typical_outcome": "Full government administrative and physical control."
+    }
+  ],
+  "bifurcation_boundaries": {
+    "extinction_boundary": "Pi_0 = 1.0 (transcritical bifurcation between extinction and endemic survival)",
+    "mobilization_trap_boundary": "Pi_M in [0.25, 0.25] (saddle-node bifurcation causing sudden capital collapse)",
+    "expansion_boundary": "Gamma = -11.011 (spatial front propagation threshold)"
+  },
+  "theoretical_compression_summary": "The multi-agent dynamics of Pineland compress into a universal phase diagram governed by four dimensionless groups: Pi_0 (reproduction), Pi_M (mobilization strain), Pi_S (state renewal), and Gamma (competitive margin). The boundaries demarcate distinct qualitative dynamical regimes with zero reference to historical data fitting."
+}

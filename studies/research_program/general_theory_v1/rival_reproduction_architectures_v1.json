@@ -1,0 +1,23 @@
+﻿{
+  "schema_version": "pineland.reproduction_architecture_rivals.v1",
+  "status": "preregistered_rival_theory_family",
+  "historical_outcomes_used": false,
+  "inputs": ["M membership/rootedness","F fielded embedded force","L sustainment","K local knowledge","I insurgent institutional capacity"],
+  "architectures": [
+    {"id":"OR","formula":"1 - product_k(1-z_k)","interpretation":"channels substitute","current_code_relation":"closest to organizations.rs::local_embeddedness"},
+    {"id":"MAX","formula":"max(z_k)","interpretation":"strongest channel dominates","current_code_relation":"closest to recruitment access-strength combination"},
+    {"id":"ADD","formula":"clip(sum_k w_k z_k,0,1)","interpretation":"compensatory accumulation"},
+    {"id":"PRODUCT","formula":"product_k z_k^w_k","interpretation":"weak-link complementarity"},
+    {"id":"MIN","formula":"min(z_k)","interpretation":"strict bottleneck"},
+    {"id":"THRESHOLD","formula":"sigmoid(alpha*(sum 1[z_k>tau_k]-m))","interpretation":"minimum number of functioning channels"}
+  ],
+  "discriminating_interventions": [
+    "single-channel rescue: four channels low, raise one",
+    "single-channel knockout: four high, set one low",
+    "balanced-medium vs one-high-rest-low at equal arithmetic mean",
+    "two-channel synergy grid; estimate marginal effects at low/high partner level",
+    "states matched on one candidate aggregate but separated on component vector"
+  ],
+  "primary_outcomes": ["30d local action","90d foothold survival","90d fielded-force deepening","90d endogenous child footholds","local control gain","civilian expectation shift"],
+  "selection_rule": "Prefer the simplest architecture whose preregistered qualitative signatures and held-out synthetic predictive loss survive matched interventions. Never select from historical outcome fit."
+}

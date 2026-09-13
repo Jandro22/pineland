@@ -1,0 +1,46 @@
+{
+  "schema_version": "pineland.development_recruitment_roi_identity.v1",
+  "status": "IMPLEMENTED_MODEL_FIRST_ORDER_IDENTITY",
+  "historical_outcomes_used": false,
+  "scope": "Unsaturated local public-development production under the stored-compliance approximation used by the frozen marginal-return theory diagnostic.",
+  "definitions": {
+    "H_i": "instantaneous insurgent recruitment-hazard mass in locality i",
+    "P_i": "nominal public-development capital allocated to locality i over one 30-day reference cycle",
+    "w_j": "represented population of susceptible cohort j",
+    "e_j": "eligible nonmember fraction of cohort j",
+    "lambda": "configured recruitment rate",
+    "A_j": "insurgent access-strength multiplier for cohort j",
+    "p": "political_order.peaceful_channel_strength",
+    "sigma_l_j": "logistic recruitment propensity before the access-strength multiplier",
+    "K_i": "local institution capacity",
+    "R_i": "local institution reach",
+    "c_i": "stored local institution compliance",
+    "a_i": "local institution autonomy",
+    "N_i": "locality population"
+  },
+  "identities": {
+    "recruitment_access_sensitivity": "-dH_i/dAccess_i = sum_j[w_j*e_j*lambda*A_j*p*sigma_l_j*(1-sigma_l_j)]",
+    "development_access_conversion_unsaturated": "dAccess_i/dP_i = 0.03*(0.5+0.5*a_i)*K_i*R_i*c_i^2/(0.05*N_i)",
+    "local_development_recruitment_roi": "-dH_i/dP_i = (-dH_i/dAccess_i)*(dAccess_i/dP_i)",
+    "expanded": "-dH_i/dP_i = sum_j[w_j*e_j*lambda*A_j*p*sigma_l_j*(1-sigma_l_j)] * 0.6*(0.5+0.5*a_i)*K_i*R_i*c_i^2/N_i"
+  },
+  "saturation": {
+    "production_slope": "K_i*R_i*c_i^2/(0.05*N_i)",
+    "nominal_public_for_full_production": "P_sat_i = 0.05*N_i/(K_i*R_i*c_i^2)",
+    "implication": "The first-order ROI is locally constant only below P_sat_i. Once production reaches its clamp at 1, additional public capital has zero same-cycle marginal production/access return through this channel."
+  },
+  "theoretical_implications": [
+    "Threat alone is not a sufficient development-targeting statistic. A high-threat locality with weak capacity, reach, or compliance can have low recruitment suppression per marginal public-capital unit.",
+    "Absorptive capacity alone is also insufficient. A highly capable locality where recruitment propensity is already near zero or one has low logistic elasticity sigma*(1-sigma) and therefore low immediate anti-recruitment return.",
+    "The highest first-order anti-recruitment ROI occurs where insurgent recruitment is both exposed to the peaceful-channel margin and government institutions can convert spending into political access.",
+    "Because the recruitment-sensitivity numerator often scales with represented susceptible population while development conversion divides by locality population, population can approximately cancel. Per-capita size is therefore not generically the dominant targeting variable.",
+    "The squared compliance term makes institutional compliance especially important: halving compliance quarters the low-dose development-to-access conversion before other state differences are considered.",
+    "Development targeting should be dose-dependent. The best destination for the next unit of capital changes as high-ROI localities approach P_sat_i."
+  ],
+  "cost_normalization": {
+    "default_monthly_federal_policy_budget": 120000.0,
+    "one_percent_monthly_budget": 1200.0,
+    "usd_conversion_formula": "If an external calibration later assigns B USD to the default monthly budget, then one Pineland capital unit = B/120000 USD and 1200 capital = 0.01*B USD."
+  },
+  "guard": "This is an exact/first-order identity of the implemented synthetic mechanism, not an empirical estimate of aid effectiveness or a real-world targeting recommendation."
+}

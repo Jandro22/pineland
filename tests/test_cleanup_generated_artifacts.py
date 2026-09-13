@@ -69,6 +69,26 @@ def test_disposable_paths_include_common_caches_but_not_entire_tmp(tmp_path: Pat
     assert scratch.parent not in candidates
 
 
+def test_disposable_paths_detect_cargo_targets_by_cachedir_marker(tmp_path: Path) -> None:
+    root_target = tmp_path / "target-policy-v9"
+    nested_target = tmp_path / "studies" / "theory" / "native_probe" / "target-special"
+    source_dir = tmp_path / "studies" / "theory" / "native_probe" / "src"
+    for target in (root_target, nested_target):
+        target.mkdir(parents=True)
+        (target / "CACHEDIR.TAG").write_text(
+            "Signature: 8a477f597d28d172789f06886806bc55\n",
+            encoding="utf-8",
+        )
+    source_dir.mkdir(parents=True)
+    (source_dir / "main.rs").write_text("fn main() {}\n", encoding="utf-8")
+
+    candidates = set(cleanup.disposable_paths(tmp_path))
+
+    assert root_target in candidates
+    assert nested_target in candidates
+    assert source_dir not in candidates
+
+
 def test_safe_delete_candidates_refuses_tracked_evidence(tmp_path: Path) -> None:
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     tracked_dir = tmp_path / "outputs" / "smoke"

@@ -1,0 +1,38 @@
+{
+  "schema_version": "pineland.nonlocal_reproduction_confirmation_measurement_spec.v1",
+  "status": "PREREGISTERED_OPERATIONALIZATION_BEFORE_FRESH_SEED_OUTCOMES",
+  "created_utc": "2026-09-11T11:55:00Z",
+  "parent_contract": "nonlocal_reproduction_confirmation_contract_v1.json",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "measurement_time": "Immediately after reset_insurgent_reproductive_state and plant_parent, before any continuation event or future RNG draw.",
+  "planted_parent_member_definition": "Representative persons resident in the origin locality with organization=INSURGENT, home=origin, and armed_fraction>0 immediately after plant_parent.",
+  "geographic_features": {
+    "adjacent_origin": "1 iff destination is a direct locality-graph neighbor of origin.",
+    "euclidean_distance_km": "Straight-line distance from topology x_km/y_km coordinates.",
+    "locality_graph_hops": "Unweighted shortest-path edge count from origin to destination on locality_edges; +inf only if disconnected.",
+    "locality_graph_path_cost": "Weighted shortest-path sum of the production topology locality-edge weights; +inf only if disconnected."
+  },
+  "social_features": {
+    "parent_social_exposure_potential": "For each destination person q, numerator=sum over planted parent neighbors p of edge.weight*edge.trust*edge.represented_relationships*armed_fraction[p]; denominator=sum over all social neighbors n of edge.weight*edge.trust*edge.represented_relationships. Person exposure is numerator/denominator when denominator>0, otherwise 0. The locality feature is the represented-population-weighted mean of person exposure among persons resident in the destination.",
+    "parent_social_min_hops": "Minimum unweighted person-social-graph hop count from any planted parent member to any person resident in the destination locality; a finite sentinel of people_count+1 is used for disconnected destinations before model standardization.",
+    "cross_locality_social_influence": "For each destination person q, numerator=sum of edge.weight*edge.trust*edge.represented_relationships over social neighbors resident in the parent origin locality; denominator=sum of the same influence over all q neighbors. The locality feature is the represented-population-weighted mean of this direct origin-share among destination residents. This is structural origin-destination social coupling and does not condition on which origin representatives were planted."
+  },
+  "prediction_preprocessing": {
+    "continuous_features": "Standardize using training-fold mean and standard deviation only.",
+    "binary_features": "adjacent_origin is passed unstandardized.",
+    "disconnected_social_hops": "Retain the finite people_count+1 sentinel, then standardize within the training fold.",
+    "model": "Unpenalized logistic regression when supported by the installed solver; otherwise an effectively unpenalized L2 model with C=1e6. Intercept-only prediction uses the training-fold prevalence with clipping to [1e-9,1-1e-9].",
+    "cross_validation": "Leave-one-seed-out grouped cross-validation across the eight fresh seeds."
+  },
+  "model_feature_sets": {
+    "intercept": [],
+    "adjacency_only": ["adjacent_origin"],
+    "euclidean_only": ["euclidean_distance_km"],
+    "locality_graph": ["locality_graph_hops", "locality_graph_path_cost"],
+    "social": ["parent_social_exposure_potential", "parent_social_min_hops", "cross_locality_social_influence"],
+    "geographic_combined": ["adjacent_origin", "euclidean_distance_km", "locality_graph_hops", "locality_graph_path_cost"],
+    "hybrid": ["adjacent_origin", "euclidean_distance_km", "locality_graph_hops", "locality_graph_path_cost", "parent_social_exposure_potential", "parent_social_min_hops", "cross_locality_social_influence"]
+  },
+  "guard": "This file only resolves operational definitions that were underspecified in the parent contract. It does not change any preregistered confirmation threshold or interpretation gate."
+}

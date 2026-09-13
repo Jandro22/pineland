@@ -1,0 +1,24 @@
+{
+  "artifacts": {
+    "gadm_admin1": {
+      "bytes": 111798,
+      "path": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\external_validation\\nigeria_2014\\raw\\gadm41_NGA_1.json.zip",
+      "sha256": "9fc2a23c654b1e834c4c44ce47005199b3b7916501355bd426e4c54b7d337e23"
+    },
+    "ged261": {
+      "bytes": 39122522,
+      "path": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\external_validation\\nigeria_2014\\raw\\ged261-csv.zip",
+      "sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667"
+    },
+    "worldpop_2014": {
+      "bytes": 15530698,
+      "path": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\external_validation\\nigeria_2014\\raw\\nga_ppp_2014_1km_ASCII_XYZ.zip",
+      "sha256": "d3bcb2f1ad3fdd494fa67191263697da60defc5aa9d4e81367b97f5980140092"
+    }
+  },
+  "design_sha256": "2f1b4fecfa9d94b5e5cfd88a85eb64c76e3ee23d58472fb660b33beabdd90809",
+  "exposure_certificate_sha256": "524a154390fa2839ca23d604c94b5eb95b2e9a53113111596c6431182e0dc182",
+  "ged_rows_read": false,
+  "schema_version": "pineland.nigeria_2014_case_input_acquisition.v1",
+  "target_rows_read": false
+}

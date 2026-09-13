@@ -1,0 +1,19 @@
+{
+  "schema_version": "pineland.general_theory_probe_freeze.v2",
+  "status": "frozen_synthetic_experimental_fast_core_pending_one_extreme_movement_diagnostic_bit_parity",
+  "created_utc": "2026-09-10T17:47:28.249342+00:00",
+  "git_head": "67615b9fb1609ba53085a6f6f578a76cf6d2dfc9",
+  "binary": "studies/research_program/general_theory_v1/bin/pineland-general-theory-probe-v2-experimental.exe",
+  "binary_sha256": "1096ed59cc0ef754966f9c4e61f25582714f76fb6e8da4fb247e1b14e365d009",
+  "probe_source_sha256": "0f491e344d1c707e4795d9fd5d76d78f80c7ec299dee8fe940310480fa734cf7",
+  "cargo_lock_sha256": "393335506c20ec94fc8bdff39fcb31985c8e4fd1b1207cf7b42d444983fa9952",
+  "core_parity_status": {
+    "cases_passed": 139,
+    "cases_total": 140,
+    "sole_failure": "formations_movement_distance_km at seed 16021456112345678901 horizon 90d",
+    "decision_relevance": "not asserted; certificate still fail-closed"
+  },
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "promotion_rule": "Synthetic results may guide theory design but may not be promoted as certified Native-v1 evidence until the fast core receives a clean full parity certificate."
+}

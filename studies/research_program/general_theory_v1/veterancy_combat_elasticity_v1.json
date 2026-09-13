@@ -1,0 +1,28 @@
+﻿{
+    "schema_version":  "pineland.veterancy_combat_elasticity.v1",
+    "historical_outcomes_used":  false,
+    "experience_multiplier":  "g(E)=0.75+0.50E",
+    "combat_advantage":  "a=ln(capability_self)-ln(capability_opponent)",
+    "uncapped_attrition_response":  {
+                                        "own_loss":  "L_self proportional to g(E)^(-0.45)",
+                                        "opponent_loss":  "L_opp proportional to g(E)^(+0.45)"
+                                    },
+    "contrast_E_0_1_to_0_9":  {
+                                  "g_low":  0.8,
+                                  "g_high":  1.2,
+                                  "g_ratio":  1.5,
+                                  "predicted_own_loss_ratio":  0.83321855635937869,
+                                  "predicted_own_loss_reduction":  0.16678144364062131,
+                                  "predicted_opponent_loss_ratio":  1.200165301609877,
+                                  "predicted_opponent_loss_increase":  0.200165301609877
+                              },
+    "monte_carlo_1024rep":  {
+                                "government_own_loss_low":  0.0071583776097298782,
+                                "government_own_loss_high":  0.0059644930578544256,
+                                "government_opponent_loss_low":  0.0057556046242157244,
+                                "government_opponent_loss_high":  0.0069076769597690782,
+                                "tactical_win_low":  0.353515625,
+                                "tactical_win_high":  0.5888671875
+                            },
+    "guard":  "Closed-form relationship applies to the uncapped immediate attrition equation with other capability factors fixed. Campaign outcomes additionally depend on cohesion, readiness, supply, disengagement, learning, replacement, and organizational feedback."
+}

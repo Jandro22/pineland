@@ -1,0 +1,43 @@
+{
+  "schema_version": "pineland.theory_status.v2",
+  "status": "candidate_hypothesis_system_under_hardening",
+  "historical_outcomes_used_for_v2_discovery": false,
+  "historical_rerun_authorized": false,
+  "supersedes_promotion_language_in": [
+    "theory_status_v1.json",
+    "status_v1.json",
+    "GENERAL_THEORY_CANDIDATE_v0.1.md"
+  ],
+  "engineering_foundation": {
+    "native_reference_parity": "PASS",
+    "cases": "140/140",
+    "mismatches": 0,
+    "canonical_native_speed_result": "72.15 PWB/s on the 32x8x3 nested workload at 16 threads; 9.47x vs 7.62 PWB/s legacy hybrid baseline",
+    "note": "Performance result is separate from scientific validation."
+  },
+  "current_scientific_status": {
+    "rooted_membership_reproduction": "STRONG_SYNTHETIC_RESULT",
+    "mobilization_resource_collapse": "STRONG_SYNTHETIC_RESULT",
+    "scalar_strain_rf_over_c": "FALSIFIED",
+    "state_fiscal_regeneration_over_180d": "STRONG_SYNTHETIC_RESULT_WITH_MODEL_SCOPE_GUARD",
+    "four_state_predictive_compression": "PASS_PREDICTIVE_CV",
+    "four_state_distributional_closure": "RUNNING_V2_ADVERSARIAL_TEST",
+    "Gamma_survival_discrimination": "SUPPORTED",
+    "Gamma_control_order_parameter": "NOT_ESTABLISHED",
+    "universal_phase_diagram": "NOT_ESTABLISHED",
+    "named_bifurcation_types": "NOT_ESTABLISHED",
+    "15_parameter_reduced_model": "PROMISING_QUALITATIVE_CANDIDATE",
+    "95_percent_trajectory_fidelity": "WITHDRAWN_AS_MISLEADING_METRIC",
+    "cross_topology_scale_universality": "NOT_TESTED"
+  },
+  "hardening_sequence": [
+    "GT03B common-random-number distributional closure for minimal4 and minimal5 at 30d/90d",
+    "GT07B sampled multidimensional phase map with inferred, not hand-coded, regime boundaries",
+    "GT09 resolution/topology/structural-context invariance",
+    "GT10B derive-freeze-untouched-test reduced dynamical system",
+    "GT10C issue robust synthetic theory certificate only for surviving claims",
+    "GT11 historical transport remains unauthorized until GT10C"
+  ],
+  "authoritative_audit": "SCIENTIFIC_AUDIT_v1.json",
+  "authoritative_hardening_contract": "general_theory_hardening_contract_v2.json"
+}

@@ -1,0 +1,25 @@
+﻿{
+    "schema_version":  "pineland.state_regeneration_capital_transition_audit.v1",
+    "historical_outcomes_used":  false,
+    "preregistered_result":  "CAPITAL_TRANSITION_ARCHITECTURE_NOT_CONFIRMED",
+    "preregistered_gates":  {
+                                "affordability_ceiling_fraction_nonincreasing":  true,
+                                "low_capital_material_recovery_gain_ge_0_02":  false,
+                                "recovery_plateau_0_5_to_1_abs_diff_le_0_01":  true,
+                                "plateau_affordability_ceiling_shortfall_le_0_01":  true
+                            },
+    "measured":  {
+                     "mean_Q_admin_180_capital_0_05":  0.09750298445164203,
+                     "mean_Q_admin_180_capital_0_25":  0.10397326691644621,
+                     "absolute_Q_admin_gain_0_05_to_0_25":  0.0064702824648041751,
+                     "relative_Q_admin_gain_vs_0_05":  0.066360865,
+                     "mean_Q_admin_180_capital_0_35":  0.10397326691644621,
+                     "mean_Q_admin_180_capital_0_5":  0.10397326691644621,
+                     "mean_Q_admin_180_capital_1":  0.10397326691644621,
+                     "operational_plateau_from_0_35_on_support":  true
+                 },
+    "measurement_correction":  "The prior admin_affordability_ratio compares capital against a maximum-unconstrained full-gap interval increment. It is a conservative ceiling test, not the exact condition affordable_gain \u003c desired_gain used by the production transition. Do not report its shortfall frequency as an exact finance-binding frequency.",
+    "interpretation":  "A sharp marginal-capital plateau is observed, but the strict preregistered two-regime architecture is not confirmed because removing low-capital scarcity changes 180-day administrative gap closure by only ~0.65 percentage points. Nonfinancial throughput/institutional dynamics dominate on this support.",
+    "next_test":  "Instrument production desired_gain and affordable_gain immediately before each state-regeneration event on already-observed support or a separately preregistered fresh block before quantifying exact fiscal-binding frequency.",
+    "guard":  "Do not use Afghanistan as empirical validation of the model. It is a conceptual comparator for multidimensional absorptive capacity."
+}

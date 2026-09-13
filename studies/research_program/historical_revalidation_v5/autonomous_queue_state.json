@@ -1,0 +1,70 @@
+﻿{
+    "captured_at":  "2026-09-05T17:54:19.6843781-04:00",
+    "historical_status":  {
+                              "completed_stages":  [
+                                                       "nepal_full",
+                                                       "nepal_competition",
+                                                       "afghanistan_init",
+                                                       "afghanistan_smoke",
+                                                       "afghanistan_year"
+                                                   ],
+                              "current_stage":  "afghanistan_full",
+                              "status":  "running"
+                          },
+    "nepal_verdict":  "simple_models_not_beaten_on_all_holdouts",
+    "nepal_rows":  19575,
+    "nepal_holdout_passes":  [
+                                 {
+                                     "split":  "geographic_validation",
+                                     "pass_both":  false
+                                 },
+                                 {
+                                     "split":  "strict_joint_holdout",
+                                     "pass_both":  false
+                                 },
+                                 {
+                                     "split":  "temporal_validation",
+                                     "pass_both":  false
+                                 }
+                             ],
+    "free_ram_gb":  10.4,
+    "active_processes":  [
+                             {
+                                 "ProcessId":  33904,
+                                 "ParentProcessId":  31716,
+                                 "Name":  "python.exe",
+                                 "CommandLine":  "\"C:\\Python314\\python.exe\" -u \"C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\scripts\\run_v5_historical_confrontation.py\""
+                             },
+                             {
+                                 "ProcessId":  44164,
+                                 "ParentProcessId":  31716,
+                                 "Name":  "python.exe",
+                                 "CommandLine":  "\"C:\\Python314\\python.exe\" -u \"C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\scripts\\watch_v5_historical_confrontation.py\""
+                             },
+                             {
+                                 "ProcessId":  40656,
+                                 "ParentProcessId":  33904,
+                                 "Name":  "python.exe",
+                                 "CommandLine":  "C:\\Python314\\python.exe \"C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\afghanistan_2004_2021\\scripts\\run_transfer_test.py\" --stage full --output-dir \"C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\afghanistan_2004_2021\\runs\\transfer_test_v5\\full\""
+                             },
+                             {
+                                 "ProcessId":  34384,
+                                 "ParentProcessId":  22688,
+                                 "Name":  "python.exe",
+                                 "CommandLine":  "\"C:\\Python314\\python.exe\" \"C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\afghanistan_2004_2021\\scripts\\run_transfer_test.py\" --stage full --strengths 7500 --output-dir \"C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\historical_revalidation_v5\\afghanistan_full_7500_staging\""
+                             },
+                             {
+                                 "ProcessId":  412,
+                                 "ParentProcessId":  29880,
+                                 "Name":  "python.exe",
+                                 "CommandLine":  "\"C:\\Python314\\python.exe\" \"C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\afghanistan_2004_2021\\scripts\\run_transfer_test.py\" --stage full --strengths 10000 --output-dir \"C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\historical_revalidation_v5\\afghanistan_full_10000_staging\""
+                             }
+                         ],
+    "queued_outputs":  {
+                           "afghanistan_full":  "studies/afghanistan_2004_2021/runs/transfer_test_v5/full",
+                           "spatial_factorial":  "studies/research_program/spatial_factorial_full_v5_20260905.json",
+                           "contact_challenge":  "studies/research_program/spatial_factorial_contact_challenge_full_v5_20260905.json",
+                           "final_gate":  "studies/research_program/historical_revalidation_v5/historical_confrontation_gate.json",
+                           "supervisor_log":  "studies/research_program/historical_revalidation_v5/autonomous_supervisor.log"
+                       }
+}

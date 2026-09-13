@@ -1,0 +1,1119 @@
+{
+  "schema_version": "pineland.structured_closure_analysis.v1",
+  "status": "synthetic_grouped_seed_predictive_compression",
+  "historical_outcomes_used": false,
+  "input_sha256": "4fde1254c95bbab648ffc0c729c8e64b466536ed601baf1a076f0e1ba520444b",
+  "seed_count": 16,
+  "rows": 2720,
+  "feature_sets": {
+    "scalar9": [
+      "M",
+      "F",
+      "L",
+      "K_local",
+      "E",
+      "C",
+      "X",
+      "S_state",
+      "U_ext"
+    ],
+    "scalar9_plus_Z": [
+      "M",
+      "F",
+      "L",
+      "K_local",
+      "E",
+      "C",
+      "X",
+      "S_state",
+      "U_ext",
+      "z_log_population",
+      "z_log_econ_pc",
+      "infrastructure",
+      "terrain_friction",
+      "observability",
+      "network_mean_degree",
+      "displaced_share"
+    ],
+    "structured_X": [
+      "m_member_depth",
+      "m_rooted_local_share",
+      "m_rooted_district_share",
+      "m_social_exposure",
+      "m_armed_mass",
+      "f_personnel",
+      "f_effective_strength",
+      "f_mean_readiness",
+      "f_mean_embeddedness",
+      "formation_quality",
+      "formation_command",
+      "formation_fatigue",
+      "formation_availability",
+      "l_supply_stock",
+      "l_supply_fraction",
+      "k_belief_conf",
+      "k_presence_conf",
+      "k_formation_info",
+      "k_tradecraft",
+      "e_foothold_strength",
+      "e_renewal_count",
+      "c_ins_effective",
+      "c_gov_effective",
+      "c_ins_formal",
+      "c_ins_physical",
+      "c_ins_admin",
+      "c_ins_legal",
+      "c_ins_fiscal",
+      "c_ins_social",
+      "c_ins_expected",
+      "c_gov_formal",
+      "c_gov_physical",
+      "c_gov_admin",
+      "c_gov_legal",
+      "c_gov_fiscal",
+      "c_gov_social",
+      "c_gov_expected",
+      "x_expected_gov",
+      "x_expected_ins",
+      "x_grievance",
+      "x_fear",
+      "x_political_access",
+      "x_state_legitimacy",
+      "x_government_legitimacy",
+      "x_trust_insurgent",
+      "x_insurgent_behavior_share",
+      "s_admin_capacity",
+      "s_security_per_1000",
+      "s_institution_capacity",
+      "s_institution_reach",
+      "s_government_governance",
+      "u_external_support",
+      "u_external_sanctuary",
+      "u_foreign_capacity"
+    ],
+    "structured_X_plus_Z": [
+      "m_member_depth",
+      "m_rooted_local_share",
+      "m_rooted_district_share",
+      "m_social_exposure",
+      "m_armed_mass",
+      "f_personnel",
+      "f_effective_strength",
+      "f_mean_readiness",
+      "f_mean_embeddedness",
+      "formation_quality",
+      "formation_command",
+      "formation_fatigue",
+      "formation_availability",
+      "l_supply_stock",
+      "l_supply_fraction",
+      "k_belief_conf",
+      "k_presence_conf",
+      "k_formation_info",
+      "k_tradecraft",
+      "e_foothold_strength",
+      "e_renewal_count",
+      "c_ins_effective",
+      "c_gov_effective",
+      "c_ins_formal",
+      "c_ins_physical",
+      "c_ins_admin",
+      "c_ins_legal",
+      "c_ins_fiscal",
+      "c_ins_social",
+      "c_ins_expected",
+      "c_gov_formal",
+      "c_gov_physical",
+      "c_gov_admin",
+      "c_gov_legal",
+      "c_gov_fiscal",
+      "c_gov_social",
+      "c_gov_expected",
+      "x_expected_gov",
+      "x_expected_ins",
+      "x_grievance",
+      "x_fear",
+      "x_political_access",
+      "x_state_legitimacy",
+      "x_government_legitimacy",
+      "x_trust_insurgent",
+      "x_insurgent_behavior_share",
+      "s_admin_capacity",
+      "s_security_per_1000",
+      "s_institution_capacity",
+      "s_institution_reach",
+      "s_government_governance",
+      "u_external_support",
+      "u_external_sanctuary",
+      "u_foreign_capacity",
+      "z_log_population",
+      "z_log_econ_pc",
+      "infrastructure",
+      "terrain_friction",
+      "observability",
+      "network_mean_degree",
+      "displaced_share"
+    ],
+    "structured_X_plus_Z_Theta": [
+      "m_member_depth",
+      "m_rooted_local_share",
+      "m_rooted_district_share",
+      "m_social_exposure",
+      "m_armed_mass",
+      "f_personnel",
+      "f_effective_strength",
+      "f_mean_readiness",
+      "f_mean_embeddedness",
+      "formation_quality",
+      "formation_command",
+      "formation_fatigue",
+      "formation_availability",
+      "l_supply_stock",
+      "l_supply_fraction",
+      "k_belief_conf",
+      "k_presence_conf",
+      "k_formation_info",
+      "k_tradecraft",
+      "e_foothold_strength",
+      "e_renewal_count",
+      "c_ins_effective",
+      "c_gov_effective",
+      "c_ins_formal",
+      "c_ins_physical",
+      "c_ins_admin",
+      "c_ins_legal",
+      "c_ins_fiscal",
+      "c_ins_social",
+      "c_ins_expected",
+      "c_gov_formal",
+      "c_gov_physical",
+      "c_gov_admin",
+      "c_gov_legal",
+      "c_gov_fiscal",
+      "c_gov_social",
+      "c_gov_expected",
+      "x_expected_gov",
+      "x_expected_ins",
+      "x_grievance",
+      "x_fear",
+      "x_political_access",
+      "x_state_legitimacy",
+      "x_government_legitimacy",
+      "x_trust_insurgent",
+      "x_insurgent_behavior_share",
+      "s_admin_capacity",
+      "s_security_per_1000",
+      "s_institution_capacity",
+      "s_institution_reach",
+      "s_government_governance",
+      "u_external_support",
+      "u_external_sanctuary",
+      "u_foreign_capacity",
+      "z_log_population",
+      "z_log_econ_pc",
+      "infrastructure",
+      "terrain_friction",
+      "observability",
+      "network_mean_degree",
+      "displaced_share",
+      "org_cohesion",
+      "org_discipline",
+      "org_persistence",
+      "org_mobility",
+      "org_institutional_quality",
+      "org_capital_social",
+      "org_capital_political",
+      "org_capital_organizational",
+      "org_capital_material",
+      "org_risk_tolerance",
+      "org_governance_investment"
+    ],
+    "expanded_snapshot": [
+      "m_member_depth",
+      "m_rooted_local_share",
+      "m_rooted_district_share",
+      "m_social_exposure",
+      "m_armed_mass",
+      "f_personnel",
+      "f_effective_strength",
+      "f_mean_readiness",
+      "f_mean_embeddedness",
+      "formation_quality",
+      "formation_command",
+      "formation_fatigue",
+      "formation_availability",
+      "l_supply_stock",
+      "l_supply_fraction",
+      "k_belief_conf",
+      "k_presence_conf",
+      "k_formation_info",
+      "k_tradecraft",
+      "e_foothold_strength",
+      "e_renewal_count",
+      "c_ins_effective",
+      "c_gov_effective",
+      "c_ins_formal",
+      "c_ins_physical",
+      "c_ins_admin",
+      "c_ins_legal",
+      "c_ins_fiscal",
+      "c_ins_social",
+      "c_ins_expected",
+      "c_gov_formal",
+      "c_gov_physical",
+      "c_gov_admin",
+      "c_gov_legal",
+      "c_gov_fiscal",
+      "c_gov_social",
+      "c_gov_expected",
+      "x_expected_gov",
+      "x_expected_ins",
+      "x_grievance",
+      "x_fear",
+      "x_political_access",
+      "x_state_legitimacy",
+      "x_government_legitimacy",
+      "x_trust_insurgent",
+      "x_insurgent_behavior_share",
+      "s_admin_capacity",
+      "s_security_per_1000",
+      "s_institution_capacity",
+      "s_institution_reach",
+      "s_government_governance",
+      "u_external_support",
+      "u_external_sanctuary",
+      "u_foreign_capacity",
+      "z_log_population",
+      "z_log_econ_pc",
+      "infrastructure",
+      "terrain_friction",
+      "observability",
+      "network_mean_degree",
+      "displaced_share",
+      "org_cohesion",
+      "org_discipline",
+      "org_persistence",
+      "org_mobility",
+      "org_institutional_quality",
+      "org_capital_social",
+      "org_capital_political",
+      "org_capital_organizational",
+      "org_capital_material",
+      "org_risk_tolerance",
+      "org_governance_investment",
+      "c_margin",
+      "s_security_personnel",
+      "population",
+      "economic_output",
+      "violence",
+      "disruption",
+      "access_pressure"
+    ]
+  },
+  "results": {
+    "30": {
+      "viable_30": {
+        "scores": {
+          "scalar9": {
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.2834453704596954,
+            "brier": 0.08927459670085028,
+            "auc": 0.915504949479407,
+            "baseline_logloss": 0.68725425670709
+          },
+          "scalar9_plus_Z": {
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.2917068134199424,
+            "brier": 0.09326301692529633,
+            "auc": 0.9154767400112838,
+            "baseline_logloss": 0.68725425670709
+          },
+          "structured_X": {
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.28028606510719073,
+            "brier": 0.08616590487956684,
+            "auc": 0.9239900155579491,
+            "baseline_logloss": 0.68725425670709
+          },
+          "structured_X_plus_Z": {
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.2816443309453672,
+            "brier": 0.08708406529213975,
+            "auc": 0.922542784359987,
+            "baseline_logloss": 0.68725425670709
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.2858647115454091,
+            "brier": 0.08869882077040686,
+            "auc": 0.921797370535638,
+            "baseline_logloss": 0.68725425670709
+          },
+          "expanded_snapshot": {
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.28186540848554303,
+            "brier": 0.08719262946440277,
+            "auc": 0.9228282983706895,
+            "baseline_logloss": 0.68725425670709
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "logloss",
+          "regret": 0.003999303059866066,
+          "passed": true
+        }
+      },
+      "actions_delta_30": {
+        "scores": {
+          "scalar9": {
+            "n": 2176,
+            "sd": 0.892519554320403,
+            "rmse": 0.7150774074822505,
+            "nrmse": 0.8011896255054451,
+            "r2": 0.35809518398244444,
+            "baseline_rmse": 0.892519554320403
+          },
+          "scalar9_plus_Z": {
+            "n": 2176,
+            "sd": 0.892519554320403,
+            "rmse": 0.7182579882209158,
+            "nrmse": 0.804753223326097,
+            "r2": 0.3523722495462569,
+            "baseline_rmse": 0.892519554320403
+          },
+          "structured_X": {
+            "n": 2176,
+            "sd": 0.892519554320403,
+            "rmse": 0.6989411330374793,
+            "nrmse": 0.7831101622974285,
+            "r2": 0.3867384737064953,
+            "baseline_rmse": 0.892519554320403
+          },
+          "structured_X_plus_Z": {
+            "n": 2176,
+            "sd": 0.892519554320403,
+            "rmse": 0.6999143296148672,
+            "nrmse": 0.784200554740571,
+            "r2": 0.38502948994458075,
+            "baseline_rmse": 0.892519554320403
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 2176,
+            "sd": 0.892519554320403,
+            "rmse": 0.7009182257078377,
+            "nrmse": 0.7853253436464397,
+            "r2": 0.3832641046266013,
+            "baseline_rmse": 0.892519554320403
+          },
+          "expanded_snapshot": {
+            "n": 2176,
+            "sd": 0.892519554320403,
+            "rmse": 0.700723166176021,
+            "nrmse": 0.7851067943374946,
+            "r2": 0.3836073214851027,
+            "baseline_rmse": 0.892519554320403
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": 0.00021854930894504854,
+          "passed": true
+        }
+      },
+      "recruits_delta_30": {
+        "scores": {
+          "scalar9": {
+            "n": 2176,
+            "sd": 1138.1984762101677,
+            "rmse": 1025.0693024960046,
+            "nrmse": 0.9006068132415301,
+            "r2": 0.18890736794293572,
+            "baseline_rmse": 1138.1984762101677
+          },
+          "scalar9_plus_Z": {
+            "n": 2176,
+            "sd": 1138.1984762101677,
+            "rmse": 1007.7633543106016,
+            "nrmse": 0.8854021292192616,
+            "r2": 0.216063069573998,
+            "baseline_rmse": 1138.1984762101677
+          },
+          "structured_X": {
+            "n": 2176,
+            "sd": 1138.1984762101677,
+            "rmse": 963.4600822917484,
+            "nrmse": 0.8464780988811007,
+            "r2": 0.28347482811463753,
+            "baseline_rmse": 1138.1984762101677
+          },
+          "structured_X_plus_Z": {
+            "n": 2176,
+            "sd": 1138.1984762101677,
+            "rmse": 969.1583803270438,
+            "nrmse": 0.851484517492966,
+            "r2": 0.2749741164697709,
+            "baseline_rmse": 1138.1984762101677
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 2176,
+            "sd": 1138.1984762101677,
+            "rmse": 953.5103821142286,
+            "nrmse": 0.837736477463148,
+            "r2": 0.2981975943276365,
+            "baseline_rmse": 1138.1984762101677
+          },
+          "expanded_snapshot": {
+            "n": 2176,
+            "sd": 1138.1984762101677,
+            "rmse": 962.0511749635613,
+            "nrmse": 0.8452402591214848,
+            "r2": 0.2855689043602454,
+            "baseline_rmse": 1138.1984762101677
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": -0.007503781658336761,
+          "passed": true
+        }
+      },
+      "control_delta_30": {
+        "scores": {
+          "scalar9": {
+            "n": 2176,
+            "sd": 0.011880090080765154,
+            "rmse": 0.011330592474449584,
+            "nrmse": 0.9537463434553201,
+            "r2": 0.09036791234560682,
+            "baseline_rmse": 0.011880090080765154
+          },
+          "scalar9_plus_Z": {
+            "n": 2176,
+            "sd": 0.011880090080765154,
+            "rmse": 0.011472223024901574,
+            "nrmse": 0.965668016564626,
+            "r2": 0.06748528178414126,
+            "baseline_rmse": 0.011880090080765154
+          },
+          "structured_X": {
+            "n": 2176,
+            "sd": 0.011880090080765154,
+            "rmse": 0.011272482559502342,
+            "nrmse": 0.9488549735623151,
+            "r2": 0.09967423914605844,
+            "baseline_rmse": 0.011880090080765154
+          },
+          "structured_X_plus_Z": {
+            "n": 2176,
+            "sd": 0.011880090080765154,
+            "rmse": 0.01139719815094987,
+            "nrmse": 0.9593528393697008,
+            "r2": 0.0796421295932932,
+            "baseline_rmse": 0.011880090080765154
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 2176,
+            "sd": 0.011880090080765154,
+            "rmse": 0.01135314755377569,
+            "nrmse": 0.9556449047602233,
+            "r2": 0.0867428160058239,
+            "baseline_rmse": 0.011880090080765154
+          },
+          "expanded_snapshot": {
+            "n": 2176,
+            "sd": 0.011880090080765154,
+            "rmse": 0.011282339643798867,
+            "nrmse": 0.9496846881713386,
+            "r2": 0.09809899305290748,
+            "baseline_rmse": 0.011880090080765154
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": 0.0059602165888847924,
+          "passed": true
+        }
+      },
+      "fielded_30": {
+        "scores": {
+          "scalar9": {
+            "n": 2176,
+            "sd": 578.1095980813722,
+            "rmse": 426.4114202403793,
+            "nrmse": 0.7375961611008567,
+            "r2": 0.455951903129279,
+            "baseline_rmse": 578.1095980813722
+          },
+          "scalar9_plus_Z": {
+            "n": 2176,
+            "sd": 578.1095980813722,
+            "rmse": 432.0681768936038,
+            "nrmse": 0.7473810819393933,
+            "r2": 0.4414215183591018,
+            "baseline_rmse": 578.1095980813722
+          },
+          "structured_X": {
+            "n": 2176,
+            "sd": 578.1095980813722,
+            "rmse": 432.9008057461555,
+            "nrmse": 0.7488213431897083,
+            "r2": 0.4392665959835611,
+            "baseline_rmse": 578.1095980813722
+          },
+          "structured_X_plus_Z": {
+            "n": 2176,
+            "sd": 578.1095980813722,
+            "rmse": 433.3878489043471,
+            "nrmse": 0.7496638186646147,
+            "r2": 0.43800415898518763,
+            "baseline_rmse": 578.1095980813722
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 2176,
+            "sd": 578.1095980813722,
+            "rmse": 434.20104947744903,
+            "nrmse": 0.75107047334705,
+            "r2": 0.43589314406623825,
+            "baseline_rmse": 578.1095980813722
+          },
+          "expanded_snapshot": {
+            "n": 2176,
+            "sd": 578.1095980813722,
+            "rmse": 433.62942340102046,
+            "nrmse": 0.7500816883859879,
+            "r2": 0.43737746074802586,
+            "baseline_rmse": 578.1095980813722
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": 0.000988784961062139,
+          "passed": true
+        }
+      },
+      "state_control_30": {
+        "scores": {
+          "scalar9": {
+            "n": 2176,
+            "sd": 0.048551856487999166,
+            "rmse": 0.007486300334804775,
+            "nrmse": 0.1541918450977298,
+            "r2": 0.9762248749053577,
+            "baseline_rmse": 0.048551856487999166
+          },
+          "scalar9_plus_Z": {
+            "n": 2176,
+            "sd": 0.048551856487999166,
+            "rmse": 0.007074864496197336,
+            "nrmse": 0.1457176925447963,
+            "r2": 0.9787663540794203,
+            "baseline_rmse": 0.048551856487999166
+          },
+          "structured_X": {
+            "n": 2176,
+            "sd": 0.048551856487999166,
+            "rmse": 0.0065077333534706095,
+            "nrmse": 0.13403675624801623,
+            "r2": 0.9820341479745098,
+            "baseline_rmse": 0.048551856487999166
+          },
+          "structured_X_plus_Z": {
+            "n": 2176,
+            "sd": 0.048551856487999166,
+            "rmse": 0.006542316144791489,
+            "nrmse": 0.13474904191168446,
+            "r2": 0.981842695703883,
+            "baseline_rmse": 0.048551856487999166
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 2176,
+            "sd": 0.048551856487999166,
+            "rmse": 0.006567758551671764,
+            "nrmse": 0.1352730673294677,
+            "r2": 0.9817011972552773,
+            "baseline_rmse": 0.048551856487999166
+          },
+          "expanded_snapshot": {
+            "n": 2176,
+            "sd": 0.048551856487999166,
+            "rmse": 0.006529164187801106,
+            "nrmse": 0.13447815717232062,
+            "r2": 0.9819156252435366,
+            "baseline_rmse": 0.048551856487999166
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": 0.0007949101571470829,
+          "passed": true
+        }
+      },
+      "activation_delta_30": {
+        "scores": {
+          "scalar9": {
+            "n": 2176,
+            "sd": 0.19806025635275282,
+            "rmse": 0.19937729779490698,
+            "nrmse": 1.0066497007850401,
+            "r2": -0.013343620090611186,
+            "baseline_rmse": 0.19806025635275282
+          },
+          "scalar9_plus_Z": {
+            "n": 2176,
+            "sd": 0.19806025635275282,
+            "rmse": 0.20269133839336742,
+            "nrmse": 1.0233821874509061,
+            "r2": -0.04731110159180196,
+            "baseline_rmse": 0.19806025635275282
+          },
+          "structured_X": {
+            "n": 2176,
+            "sd": 0.19806025635275282,
+            "rmse": 0.19510932687856178,
+            "nrmse": 0.9851008499709537,
+            "r2": 0.029576315386504293,
+            "baseline_rmse": 0.19806025635275282
+          },
+          "structured_X_plus_Z": {
+            "n": 2176,
+            "sd": 0.19806025635275282,
+            "rmse": 0.19597481366596575,
+            "nrmse": 0.9894706655177058,
+            "r2": 0.020947802079948175,
+            "baseline_rmse": 0.19806025635275282
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 2176,
+            "sd": 0.19806025635275282,
+            "rmse": 0.1981453106773098,
+            "nrmse": 1.0004294366074409,
+            "r2": -0.0008590576306817255,
+            "baseline_rmse": 0.19806025635275282
+          },
+          "expanded_snapshot": {
+            "n": 2176,
+            "sd": 0.19806025635275282,
+            "rmse": 0.19802754815416668,
+            "nrmse": 0.9998348573348916,
+            "r2": 0.00033025805811681685,
+            "baseline_rmse": 0.19806025635275282
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": 0.0005945792725492449,
+          "passed": true
+        }
+      }
+    },
+    "90": {
+      "viable_90": {
+        "scores": {
+          "scalar9": {
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.546566773998541,
+            "brier": 0.19674645990493755,
+            "auc": 0.7387158238125191,
+            "baseline_logloss": 0.654635215232884
+          },
+          "scalar9_plus_Z": {
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.573393139254111,
+            "brier": 0.20128679891761864,
+            "auc": 0.7663511754121622,
+            "baseline_logloss": 0.654635215232884
+          },
+          "structured_X": {
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.5674970452123075,
+            "brier": 0.2010345763693643,
+            "auc": 0.7576032417092117,
+            "baseline_logloss": 0.654635215232884
+          },
+          "structured_X_plus_Z": {
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.5790111098166837,
+            "brier": 0.20378518365637993,
+            "auc": 0.7580713585628812,
+            "baseline_logloss": 0.654635215232884
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.5718810266654527,
+            "brier": 0.20121641091900108,
+            "auc": 0.7625769832794511,
+            "baseline_logloss": 0.654635215232884
+          },
+          "expanded_snapshot": {
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.572765723795632,
+            "brier": 0.20277765944974935,
+            "auc": 0.7593403940958762,
+            "baseline_logloss": 0.654635215232884
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "logloss",
+          "regret": -0.0008846971301792461,
+          "passed": true
+        }
+      },
+      "actions_delta_90": {
+        "scores": {
+          "scalar9": {
+            "n": 1088,
+            "sd": 1.8893973984303836,
+            "rmse": 1.522400931192973,
+            "nrmse": 0.805760044158898,
+            "r2": 0.3507507512370508,
+            "baseline_rmse": 1.8893973984303836
+          },
+          "scalar9_plus_Z": {
+            "n": 1088,
+            "sd": 1.8893973984303836,
+            "rmse": 1.563744011118313,
+            "nrmse": 0.8276416662886236,
+            "r2": 0.3150092722229909,
+            "baseline_rmse": 1.8893973984303836
+          },
+          "structured_X": {
+            "n": 1088,
+            "sd": 1.8893973984303836,
+            "rmse": 1.5766844690940922,
+            "nrmse": 0.8344906531595325,
+            "r2": 0.30362534978937705,
+            "baseline_rmse": 1.8893973984303836
+          },
+          "structured_X_plus_Z": {
+            "n": 1088,
+            "sd": 1.8893973984303836,
+            "rmse": 1.5659846553922154,
+            "nrmse": 0.8288275704693765,
+            "r2": 0.3130448584298309,
+            "baseline_rmse": 1.8893973984303836
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 1088,
+            "sd": 1.8893973984303836,
+            "rmse": 1.5685132900551393,
+            "nrmse": 0.8301658991158669,
+            "r2": 0.31082457994514423,
+            "baseline_rmse": 1.8893973984303836
+          },
+          "expanded_snapshot": {
+            "n": 1088,
+            "sd": 1.8893973984303836,
+            "rmse": 1.5710336191110519,
+            "nrmse": 0.8314998318597177,
+            "r2": 0.3086080296172614,
+            "baseline_rmse": 1.8893973984303836
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": -0.001333932743850741,
+          "passed": true
+        }
+      },
+      "recruits_delta_90": {
+        "scores": {
+          "scalar9": {
+            "n": 1088,
+            "sd": 2398.3689755703585,
+            "rmse": 2218.234945381974,
+            "nrmse": 0.9248931119343108,
+            "r2": 0.14457273149646666,
+            "baseline_rmse": 2398.3689755703585
+          },
+          "scalar9_plus_Z": {
+            "n": 1088,
+            "sd": 2398.3689755703585,
+            "rmse": 2215.188744628308,
+            "nrmse": 0.9236229984594059,
+            "r2": 0.14692055671685644,
+            "baseline_rmse": 2398.3689755703585
+          },
+          "structured_X": {
+            "n": 1088,
+            "sd": 2398.3689755703585,
+            "rmse": 2067.6774606011063,
+            "nrmse": 0.8621181651623849,
+            "r2": 0.25675226929704265,
+            "baseline_rmse": 2398.3689755703585
+          },
+          "structured_X_plus_Z": {
+            "n": 1088,
+            "sd": 2398.3689755703585,
+            "rmse": 2121.7726577926805,
+            "nrmse": 0.8846731588862801,
+            "r2": 0.2173534019461708,
+            "baseline_rmse": 2398.3689755703585
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 1088,
+            "sd": 2398.3689755703585,
+            "rmse": 2114.3826306046235,
+            "nrmse": 0.8815918868787902,
+            "r2": 0.2227957449894945,
+            "baseline_rmse": 2398.3689755703585
+          },
+          "expanded_snapshot": {
+            "n": 1088,
+            "sd": 2398.3689755703585,
+            "rmse": 2129.0418082256733,
+            "nrmse": 0.8877040313279418,
+            "r2": 0.21198155276412045,
+            "baseline_rmse": 2398.3689755703585
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": -0.006112144449151646,
+          "passed": true
+        }
+      },
+      "control_delta_90": {
+        "scores": {
+          "scalar9": {
+            "n": 1088,
+            "sd": 0.014692204061843935,
+            "rmse": 0.013504647773171393,
+            "nrmse": 0.9191709913860604,
+            "r2": 0.1551246885943668,
+            "baseline_rmse": 0.014692204061843935
+          },
+          "scalar9_plus_Z": {
+            "n": 1088,
+            "sd": 0.014692204061843935,
+            "rmse": 0.013924764013261011,
+            "nrmse": 0.9477654921376986,
+            "r2": 0.10174057191298591,
+            "baseline_rmse": 0.014692204061843935
+          },
+          "structured_X": {
+            "n": 1088,
+            "sd": 0.014692204061843935,
+            "rmse": 0.013251970663824985,
+            "nrmse": 0.9019729516445203,
+            "r2": 0.18644479450167162,
+            "baseline_rmse": 0.014692204061843935
+          },
+          "structured_X_plus_Z": {
+            "n": 1088,
+            "sd": 0.014692204061843935,
+            "rmse": 0.013244549273260945,
+            "nrmse": 0.9014678272579544,
+            "r2": 0.18735575641882274,
+            "baseline_rmse": 0.014692204061843935
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 1088,
+            "sd": 0.014692204061843935,
+            "rmse": 0.013266347608533733,
+            "nrmse": 0.9029514940502908,
+            "r2": 0.18467859939234732,
+            "baseline_rmse": 0.014692204061843935
+          },
+          "expanded_snapshot": {
+            "n": 1088,
+            "sd": 0.014692204061843935,
+            "rmse": 0.013237574181314106,
+            "nrmse": 0.9009930794313195,
+            "r2": 0.18821147081686795,
+            "baseline_rmse": 0.014692204061843935
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": 0.0019584146189713936,
+          "passed": true
+        }
+      },
+      "fielded_90": {
+        "scores": {
+          "scalar9": {
+            "n": 1088,
+            "sd": 583.074877807489,
+            "rmse": 536.229423870841,
+            "nrmse": 0.9196579106395409,
+            "r2": 0.154229327398114,
+            "baseline_rmse": 583.074877807489
+          },
+          "scalar9_plus_Z": {
+            "n": 1088,
+            "sd": 583.074877807489,
+            "rmse": 563.9323713326027,
+            "nrmse": 0.9671697286172455,
+            "r2": 0.06458271604644406,
+            "baseline_rmse": 583.074877807489
+          },
+          "structured_X": {
+            "n": 1088,
+            "sd": 583.074877807489,
+            "rmse": 541.6926043744517,
+            "nrmse": 0.9290275142900252,
+            "r2": 0.136907877692097,
+            "baseline_rmse": 583.074877807489
+          },
+          "structured_X_plus_Z": {
+            "n": 1088,
+            "sd": 583.074877807489,
+            "rmse": 545.2978349820431,
+            "nrmse": 0.9352106491579654,
+            "r2": 0.12538104170153708,
+            "baseline_rmse": 583.074877807489
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 1088,
+            "sd": 583.074877807489,
+            "rmse": 540.6728952619167,
+            "nrmse": 0.927278666669683,
+            "r2": 0.14015427433929517,
+            "baseline_rmse": 583.074877807489
+          },
+          "expanded_snapshot": {
+            "n": 1088,
+            "sd": 583.074877807489,
+            "rmse": 549.1315407056497,
+            "nrmse": 0.941785629266905,
+            "r2": 0.11303982850633953,
+            "baseline_rmse": 583.074877807489
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": -0.014506962597222062,
+          "passed": true
+        }
+      },
+      "state_control_90": {
+        "scores": {
+          "scalar9": {
+            "n": 1088,
+            "sd": 0.04806441087657719,
+            "rmse": 0.006428594091529737,
+            "nrmse": 0.13374956593221302,
+            "r2": 0.9821110536129446,
+            "baseline_rmse": 0.04806441087657719
+          },
+          "scalar9_plus_Z": {
+            "n": 1088,
+            "sd": 0.04806441087657719,
+            "rmse": 0.005899021525709019,
+            "nrmse": 0.12273158909316285,
+            "r2": 0.984936957038667,
+            "baseline_rmse": 0.04806441087657719
+          },
+          "structured_X": {
+            "n": 1088,
+            "sd": 0.04806441087657719,
+            "rmse": 0.005423688374714968,
+            "nrmse": 0.11284208577199158,
+            "r2": 0.9872666636786265,
+            "baseline_rmse": 0.04806441087657719
+          },
+          "structured_X_plus_Z": {
+            "n": 1088,
+            "sd": 0.04806441087657719,
+            "rmse": 0.005493488848676863,
+            "nrmse": 0.11429431357815636,
+            "r2": 0.986936809883698,
+            "baseline_rmse": 0.04806441087657719
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 1088,
+            "sd": 0.04806441087657719,
+            "rmse": 0.005507927780588268,
+            "nrmse": 0.11459472154421846,
+            "r2": 0.9868680497942031,
+            "baseline_rmse": 0.04806441087657719
+          },
+          "expanded_snapshot": {
+            "n": 1088,
+            "sd": 0.04806441087657719,
+            "rmse": 0.005457547887230597,
+            "nrmse": 0.11354654697099756,
+            "r2": 0.987107181670963,
+            "baseline_rmse": 0.04806441087657719
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": 0.0010481745732209002,
+          "passed": true
+        }
+      },
+      "activation_delta_90": {
+        "scores": {
+          "scalar9": {
+            "n": 1088,
+            "sd": 0.33279167261455284,
+            "rmse": 0.340782803206401,
+            "nrmse": 1.0240124115157883,
+            "r2": -0.048601418938380325,
+            "baseline_rmse": 0.33279167261455284
+          },
+          "scalar9_plus_Z": {
+            "n": 1088,
+            "sd": 0.33279167261455284,
+            "rmse": 0.3314358993784866,
+            "nrmse": 0.9959260602123403,
+            "r2": 0.008131282589925681,
+            "baseline_rmse": 0.33279167261455284
+          },
+          "structured_X": {
+            "n": 1088,
+            "sd": 0.33279167261455284,
+            "rmse": 0.33194984963265567,
+            "nrmse": 0.9974704205328113,
+            "r2": 0.005052760162096437,
+            "baseline_rmse": 0.33279167261455284
+          },
+          "structured_X_plus_Z": {
+            "n": 1088,
+            "sd": 0.33279167261455284,
+            "rmse": 0.33832662579442496,
+            "nrmse": 1.0166318860576864,
+            "r2": -0.03354039174920875,
+            "baseline_rmse": 0.33279167261455284
+          },
+          "structured_X_plus_Z_Theta": {
+            "n": 1088,
+            "sd": 0.33279167261455284,
+            "rmse": 0.33789501742044237,
+            "nrmse": 1.0153349534433824,
+            "r2": -0.030905067683875798,
+            "baseline_rmse": 0.33279167261455284
+          },
+          "expanded_snapshot": {
+            "n": 1088,
+            "sd": 0.33279167261455284,
+            "rmse": 0.33625964773535244,
+            "nrmse": 1.0104208590724453,
+            "r2": -0.02095031244869827,
+            "baseline_rmse": 0.33279167261455284
+          }
+        },
+        "structured_vs_expanded": {
+          "metric": "nrmse",
+          "regret": 0.00491409437093715,
+          "passed": true
+        }
+      }
+    }
+  },
+  "all_predictive_regret_gates_passed": true,
+  "interpretation_guard": "Predictive compression is necessary but not sufficient for Markov closure. Distributional matched-state continuation remains required."
+}

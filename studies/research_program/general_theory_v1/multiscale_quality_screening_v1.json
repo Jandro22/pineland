@@ -1,0 +1,32 @@
+{
+  "schema_version": "pineland.multiscale_quality_screening.v1",
+  "historical_outcomes_used": false,
+  "micro_causal_evidence": {
+    "veterancy": "Controlled common-RNG assays show E=.1->.9 raises tactical-win probability about 23.5 pp, reduces immediate own loss ~16.7%, increases opponent loss ~20%, and raises sustained-contact combat-effective survival ~3.4 pp government / ~4.2 pp insurgent.",
+    "police_professionalism": "Force-discrimination assay shows distinct professionalism memory, intelligence effects, and cumulative underground-disruption effects."
+  },
+  "macro_omitted_state_stress": {
+    "government_veterancy": {
+      "status": "NOT_DETECTED_IN_TESTED_SUPPORT",
+      "states": 9,
+      "raw_practically_large_state_rate": 0.0,
+      "significant_and_large_state_rate": 0.0
+    },
+    "insurgent_veterancy": {
+      "status": "NOT_DETECTED_IN_TESTED_SUPPORT",
+      "states": 9,
+      "raw_practically_large_state_rate": 0.0,
+      "significant_and_large_state_rate": 0.0
+    },
+    "police_professionalism": {
+      "status": "NOT_DETECTED_IN_TESTED_SUPPORT",
+      "states": 24,
+      "raw_practically_large_state_rate": 0.0,
+      "significant_and_large_state_rate": 0.0
+    }
+  },
+  "principle": "A state variable may be mechanistically causal at the engagement/organizational level yet be screened off by a coarser strategic state over a finite forecast horizon. Causal reality does not imply macrostate necessity.",
+  "interpretation": "On tested 30-day strategic continuations, quality-memory variables did not create practically large macro outcome changes once the matched strategic state was held fixed, despite strong local causal effects. This supports scale separation on the tested support, not universal irrelevance.",
+  "prediction": "Quality-memory variables should re-enter the required state when the forecast target is tactical loss/survival, when replacement turnover is itself a target/driver, or on horizons/conditions where cumulative quality differences feed back into force stock faster than coarse variables absorb them.",
+  "guard": "The omitted-state tests are finite-support synthetic stress tests; zero detected macro necessity is not proof of exact conditional independence."
+}

@@ -1,0 +1,245 @@
+{
+  "schema_version": "pineland.reproduction_hazard_kernel_confirmation_results.v1",
+  "status": "DYNAMIC_RECRUITMENT_HAZARD_KERNEL_SUPPORTED_ON_SYNTHETIC_SUPPORT",
+  "historical_outcomes_used": false,
+  "outcomes_input": "studies\\research_program\\general_theory_v1\\nonlocal_hazard_outcomes_12seed_180d_v1.csv",
+  "outcomes_sha256": "7ab684ec1954c49752b1de1533d1adbdd3c13b73b13dd9b9ede05435d0f2df52",
+  "hazard_input": "studies\\research_program\\general_theory_v1\\nonlocal_hazard_cases_12seed_180d_v1.csv",
+  "hazard_sha256": "71ecb46f30d01902ca8e4a62dc3f88c20816c05a8bf64f6aa3c8680a7b01cda1",
+  "rows": 13056,
+  "cases": 816,
+  "incubation": {
+    "finite_fraction": 0.9852941176470589,
+    "median_days_when_finite": 7.0
+  },
+  "horizons": {
+    "30": {
+      "positive_children": 1614,
+      "prevalence": 0.12362132352941177,
+      "models": {
+        "adjacency_only": {
+          "features": [
+            "adjacent_origin"
+          ],
+          "logloss": 0.3740988365800268,
+          "auc": 0.4584863869216371
+        },
+        "first_hazard": {
+          "features": [
+            "log1p_first_hazard_mass"
+          ],
+          "logloss": 0.36819412089935755,
+          "auc": 0.5911823588695921
+        },
+        "first_hazard_share": {
+          "features": [
+            "first_nonzero_hazard_share"
+          ],
+          "logloss": 0.3718503729962675,
+          "auc": 0.562834657505436
+        },
+        "hazard_plus_incubation": {
+          "features": [
+            "log1p_first_hazard_mass",
+            "first_nonzero_hazard_time_finite"
+          ],
+          "logloss": 0.36702634284573865,
+          "auc": 0.5922707640084239
+        },
+        "static_hybrid": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.3764750198025618,
+          "auc": 0.573267968377553
+        },
+        "static_hybrid_plus_hazard": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence",
+            "log1p_first_hazard_mass"
+          ],
+          "logloss": 0.37124716585952916,
+          "auc": 0.6175924824885902
+        }
+      },
+      "hybrid_plus_hazard_vs_static": {
+        "auc_gain": 0.044324514111037217,
+        "logloss_gain": 0.0052278539430326565
+      },
+      "first_hazard_vs_adjacency": {
+        "auc_gain": 0.13269597194795502,
+        "logloss_gain": 0.005904715680669248
+      },
+      "raw_hazard_auc": 0.617129612482285
+    },
+    "90": {
+      "positive_children": 5111,
+      "prevalence": 0.39146752450980393,
+      "models": {
+        "adjacency_only": {
+          "features": [
+            "adjacent_origin"
+          ],
+          "logloss": 0.6551194276833371,
+          "auc": 0.5257222326405405
+        },
+        "first_hazard": {
+          "features": [
+            "log1p_first_hazard_mass"
+          ],
+          "logloss": 0.6560074133068547,
+          "auc": 0.5961551480358199
+        },
+        "first_hazard_share": {
+          "features": [
+            "first_nonzero_hazard_share"
+          ],
+          "logloss": 0.6600202817031282,
+          "auc": 0.5852601263898656
+        },
+        "hazard_plus_incubation": {
+          "features": [
+            "log1p_first_hazard_mass",
+            "first_nonzero_hazard_time_finite"
+          ],
+          "logloss": 0.6506760710592314,
+          "auc": 0.5985366155181281
+        },
+        "static_hybrid": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.6451736289687918,
+          "auc": 0.6325866456915752
+        },
+        "static_hybrid_plus_hazard": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence",
+            "log1p_first_hazard_mass"
+          ],
+          "logloss": 0.6339335662418041,
+          "auc": 0.6571098701341238
+        }
+      },
+      "hybrid_plus_hazard_vs_static": {
+        "auc_gain": 0.02452322444254862,
+        "logloss_gain": 0.011240062726987743
+      },
+      "first_hazard_vs_adjacency": {
+        "auc_gain": 0.0704329153952794,
+        "logloss_gain": -0.000887985623517662
+      },
+      "raw_hazard_auc": 0.6112364291827779
+    },
+    "180": {
+      "positive_children": 6087,
+      "prevalence": 0.46622242647058826,
+      "models": {
+        "adjacency_only": {
+          "features": [
+            "adjacent_origin"
+          ],
+          "logloss": 0.6773006311988702,
+          "auc": 0.5224763128165303
+        },
+        "first_hazard": {
+          "features": [
+            "log1p_first_hazard_mass"
+          ],
+          "logloss": 0.6761433786979673,
+          "auc": 0.601314174960042
+        },
+        "first_hazard_share": {
+          "features": [
+            "first_nonzero_hazard_share"
+          ],
+          "logloss": 0.6779568824341581,
+          "auc": 0.5987847965159514
+        },
+        "hazard_plus_incubation": {
+          "features": [
+            "log1p_first_hazard_mass",
+            "first_nonzero_hazard_time_finite"
+          ],
+          "logloss": 0.669182755643343,
+          "auc": 0.6045304178991838
+        },
+        "static_hybrid": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.66726332573329,
+          "auc": 0.6301530543051519
+        },
+        "static_hybrid_plus_hazard": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence",
+            "log1p_first_hazard_mass"
+          ],
+          "logloss": 0.6547975495384881,
+          "auc": 0.6570601228378778
+        }
+      },
+      "hybrid_plus_hazard_vs_static": {
+        "auc_gain": 0.026907068532725953,
+        "logloss_gain": 0.012465776194801825
+      },
+      "first_hazard_vs_adjacency": {
+        "auc_gain": 0.07883786214351174,
+        "logloss_gain": 0.0011572525009029277
+      },
+      "raw_hazard_auc": 0.6171747877425581
+    }
+  },
+  "primary_gates": {
+    "90": {
+      "logloss_gain_ge_0_005": true,
+      "auc_gain_ge_0_02": true
+    },
+    "180": {
+      "logloss_gain_ge_0_005": true,
+      "auc_gain_ge_0_02": true
+    }
+  },
+  "secondary_30d_gates": {
+    "first_hazard_auc_gain_ge_0_05": true,
+    "first_hazard_logloss_gain_ge_0_005": true
+  },
+  "interpretation_guard": "Fresh synthetic confirmation of predictive state relevance only. Recruitment hazard is endogenous and may summarize multiple mechanisms; this does not establish a universal real-world propagation law."
+}

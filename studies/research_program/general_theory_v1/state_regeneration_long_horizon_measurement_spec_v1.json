@@ -1,0 +1,32 @@
+{
+  "schema_version": "pineland.state_regeneration_long_horizon_measurement_spec.v1",
+  "status": "PREREGISTERED_OPERATIONALIZATION_BEFORE_LONG_HORIZON_OUTCOMES",
+  "created_utc": "2026-09-11T12:20:00Z",
+  "parent_contract": "state_regeneration_long_horizon_contract_v1.json",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "recovery_fraction": "For each shocked trajectory, Q_capacity(t)=1-[C_control(t)-C_shocked(t)]/[C_control(0)-C_shocked(0)], with the no-shock shock_fraction=1.0 trajectory matched on seed, focal locality, capital multiplier, and time.",
+  "eligible_trajectory": "A shocked trajectory with finite Q_capacity at every scheduled observation and at least 8 observations. No trajectory is excluded because recovery is weak or negative.",
+  "functional_forms": {
+    "linear": "Q(t)=a*t; one fitted parameter a, zero intercept fixed by the matched-gap construction.",
+    "exponential": "Q(t)=A*(1-exp(-t/tau)); two fitted parameters A and tau; A constrained to [-5,5], tau constrained to [1,100000] days."
+  },
+  "fit_protocol": {
+    "aic": "Fit each candidate to all scheduled observations including t=0. AIC=n*log(max(SSE/n,1e-15))+2*k, with k=1 for linear and k=2 for exponential.",
+    "temporal_validation": "Sort by time; the first ceil(0.70*n) observations form the fit set and the remaining observations form the held-out late-time set. Fit both candidates only on the early set and compare RMSE on the held-out set.",
+    "optimizer": "Bounded nonlinear least squares for the exponential. Initial A is clipped final observed Q to [-2,2] with a nonzero fallback; initial tau=360 days. Optimization failure counts as an exponential loss for both AIC and held-out RMSE.",
+    "tau_summary": "A fitted tau is scientifically eligible for the within-shock CV calculation only when the full-data exponential fit converges with finite tau and A>0. If a shock stratum lacks at least four eligible tau estimates, the tau-stability gate fails for that stratum."
+  },
+  "first_passage": {
+    "Q50": "First scheduled observation with Q_capacity>=0.50; no interpolation.",
+    "Q80": "First scheduled observation with Q_capacity>=0.80; no interpolation."
+  },
+  "milestones_days": [180, 360, 720, 1080, 1440],
+  "promotion_gate_restated": {
+    "exponential_aic_win_fraction": ">=0.70",
+    "exponential_late_rmse_win_fraction": ">=0.70",
+    "fraction_reaching_Q50": ">=0.50",
+    "tau_cv_within_each_shock_stratum": "<=0.50 with at least four eligible tau fits per stratum"
+  },
+  "guard": "This operationalization resolves fitting details only; it does not alter the parent contract's scientific thresholds or synthetic-only interpretation."
+}

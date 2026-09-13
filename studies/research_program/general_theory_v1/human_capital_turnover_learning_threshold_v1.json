@@ -1,0 +1,41 @@
+﻿{
+  "schema_version": "pineland.human_capital_turnover_learning_threshold.v1",
+  "historical_outcomes_used": false,
+  "continuous_mixing_equation": "dE/dt = ell*(1-E) + (I/F)*(E_r-E)",
+  "definitions": {
+    "E": "formation mean experience",
+    "ell": "effective service/combat learning coefficient over the chosen time unit",
+    "I": "inexperienced replacement inflow",
+    "F": "incumbent formation personnel stock",
+    "E_r": 0.1
+  },
+  "decline_condition": "I/F > ell*(1-E)/(E-E_r), for E>E_r",
+  "interpretation": "Replacement/expansion is a quality-dilution flow while operational exposure is a learning flow. A force can recover or expand personnel while average experience falls if turnover outruns learning.",
+  "patrol_only_example": {
+    "ell_per_fully_operational_patrol_day": 0.0012,
+    "thresholds": [
+      {
+        "experience": 0.2,
+        "replacement_flow_over_force_per_day_threshold_patrol_only": 0.0096,
+        "approx_annualized_fraction_if_constant": 3.5039999999999996
+      },
+      {
+        "experience": 0.5,
+        "replacement_flow_over_force_per_day_threshold_patrol_only": 0.0014999999999999998,
+        "approx_annualized_fraction_if_constant": 0.5475
+      },
+      {
+        "experience": 0.7,
+        "replacement_flow_over_force_per_day_threshold_patrol_only": 0.0006000000000000001,
+        "approx_annualized_fraction_if_constant": 0.21900000000000003
+      },
+      {
+        "experience": 0.9,
+        "replacement_flow_over_force_per_day_threshold_patrol_only": 0.00014999999999999993,
+        "approx_annualized_fraction_if_constant": 0.05474999999999997
+      }
+    ]
+  },
+  "combat_extension": "Combat adds event-dependent learning with coefficient combat.momentum_learning_rate*0.025*exposure, raising the replacement-flow threshold a formation can tolerate before average experience declines. Do not combine patrol and combat learning into a calendar-time threshold without an explicit contact process.",
+  "guard": "Analytic consequence of implemented Pineland mixing/learning equations. Annualized patrol-only examples are illustrative model quantities, not empirical turnover thresholds for real armed forces."
+}

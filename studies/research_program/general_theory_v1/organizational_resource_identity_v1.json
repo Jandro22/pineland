@@ -1,0 +1,20 @@
+﻿{
+    "schema_version":  "pineland.organizational_resource_identity.v1",
+    "historical_outcomes_used":  false,
+    "source_defaults":  {
+                            "formation_supply_days":  30,
+                            "initial_supply_fraction":  0.8,
+                            "supply_per_fighter":  24,
+                            "fighter_conversion_fraction":  0.08,
+                            "baseline_capital_burn_per_represented_recruit":  1.92
+                        },
+    "identity":  {
+                     "fighter_flow":  "dF_recruit = phi * dR",
+                     "funded_equipment_flow":  "dB = s * dF_recruit = s * phi * dR while capital is sufficient and the manpower reserve remains funded",
+                     "liquid_capital":  "K(t) = K0 + Y_extraction(t) - B_equipment(t) in the closed focal-insurgent mobilization assay",
+                     "exhaustion_number":  "Lambda_K(t)=B(t)/(K0+Y(t)); liquid-capital exhaustion occurs at Lambda_K=1"
+                 },
+    "implication":  "The exploratory r*f^alpha boundary is a parameter-space proxy for an underlying stock-flow balance. Recruitment multiplier acts through realized recruited mass R; fielding multiplier acts through phi (subject to clamping); fiscal territorial control acts through endogenous extraction Y.",
+    "falsifiable_prediction":  "On fresh trajectories, measured early capital runway from realized Y and B should classify 180-day collapse nearly as well as, or better than, a fitted model using recruitment, fielding, and capital multipliers.",
+    "guard":  "The exact stock-flow identity is scoped to the closed assay. The proportional burn formula is exact only while equipment reserve demand is fully funded; capital limitation creates truncation at the exhaustion boundary."
+}

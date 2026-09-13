@@ -1,0 +1,46 @@
+{
+  "schema_version": "pineland.theory_status.v4",
+  "status": "CORE_ARCHITECTURE_DISCRIMINATED_THEORY_UNVALIDATED",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "supersedes": "theory_status_v3.json",
+  "engineering_foundation": {
+    "engine_commit": "c9afc89 Complete Rust v2 core theory architecture",
+    "checkpoint_schema": 14,
+    "workspace_regression": "54 passed, 0 failed",
+    "state_regeneration_active": true
+  },
+  "synthetic_discrimination_verdicts": {
+    "police_professionalism": {
+      "verdict": "CONFIRMED_DISTINCT_DYNAMICAL_STATE",
+      "falsification_id": "FALS-007",
+      "findings": "Screening-off hypothesis refuted. Initial professionalism drives significant intelligence penetration and underground disruption at equal headcount, decaying monotonically as local standard converges."
+    },
+    "formation_veterancy": {
+      "verdict": "CONFIRMED_DISTINCT_DYNAMICAL_STATE",
+      "falsification_id": "FALS-008",
+      "findings": "Static quality sufficiency refuted. Common-RNG equivalent pairs diverge significantly under green replacement dilution (t=35.44, p < 1e-100), proving experience is an irreducible memory stock."
+    },
+    "state_regeneration": {
+      "verdict": "OPERATIVE_HIERARCHICAL_SLOW_MANIFOLD",
+      "falsification_id": "FALS-009",
+      "findings": "100% pipeline engagement verified. Fast-elastic recovery refuted; state capacity recovery operates on multi-year timescale (tau ~ 3000 days), establishing extreme timescale separation with fast insurgent reproduction."
+    }
+  },
+  "scientific_status": {
+    "general_theory_licensed": false,
+    "structural_discrimination_complete": true,
+    "macrostate_distributional_closure": "REQUIRES_V2_UPDATE_WITH_NEW_STOCKS",
+    "timescale_separation_ratio": "tau_state / tau_insurgent ~ 30 to 100",
+    "cross_topology_scale_universality": "NOT_ESTABLISHED",
+    "historical_transport": "UNAUTHORIZED"
+  },
+  "evidence_artifacts": {
+    "force_discrimination_contract": "professionalism_veterancy_discrimination_contract_v1.json",
+    "force_discrimination_results": "force_discrimination_results_v1.json",
+    "state_regeneration_contract": "state_regeneration_v2_contract.json",
+    "state_regeneration_results": "state_regeneration_results_v2.json",
+    "falsification_ledger": "falsification_ledger_v1.json"
+  },
+  "next_stage": "Couple the slow state manifold into the reduced 5D/7D continuous dynamical system and investigate critical phase boundary shifts under competitive asymmetric reproduction."
+}

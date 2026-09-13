@@ -1,0 +1,44 @@
+{
+  "schema_version": "pineland.mobilization_two_timescale_identity.v1",
+  "historical_outcomes_used": false,
+  "status": "IMPLEMENTED_MECHANISM_IDENTITY_INTERIOR_WINDOW_HYPOTHESIS",
+  "sources": [
+    "rust/pineland-model/src/recruitment.rs",
+    "rust/pineland-model/src/organizations.rs",
+    "rust/pineland-core/src/scheduler.rs",
+    "rust/pineland-core/src/config.rs"
+  ],
+  "clock_order": {
+    "organization_ecology_interval_days": 7.0,
+    "recruitment_interval_days": 7.0,
+    "organization_ecology_priority": 58,
+    "recruitment_priority": 60,
+    "scheduler_order": "smallest (time, priority, sequence) first",
+    "consequence": "At coincident weekly boundaries, organization collapse is evaluated before that week's recruitment transition."
+  },
+  "conditional_recruitment_ignition": {
+    "per_subcohort_probability": "p_i = 1 - exp(-r * I_i * dt)",
+    "available_subcohorts": "a_i = ceil(eligible_fraction_i * n), capped at n",
+    "no_success_probability_for_frozen_interval": "P(no recruited cohort | state) = exp(-r * dt * sum_i(a_i I_i))",
+    "at_least_one_success": "P(ignite | state) = 1 - exp(-H_R), H_R = r * dt * sum_i(a_i I_i)",
+    "note": "Identity is conditional on the candidate intensities and cohort availability frozen at that interval boundary."
+  },
+  "conditional_collapse": {
+    "probability": "P(collapse draw | state) = 1 - exp(-H_C)",
+    "H_C": "collapse_base_hazard * exp(2(1-cohesion) + 2*loss_pressure - 3*social_base - 1.5*external_sanctuary) * dt/7",
+    "loss_pressure": "L_cumulative / (F_current + L_cumulative)",
+    "replacement_effect": "Recruitment can lower loss_pressure by adding current personnel without adding past cumulative losses; d loss_pressure / dF = -L/(F+L)^2. It also reduces future cohesion erosion through the same loss-pressure term."
+  },
+  "resource_boundary": {
+    "equipment_cost_per_represented_recruit_when_fully_funded": 1.92,
+    "derivation": "formation_supply_days 30 * initial_supply_fraction 0.8 * fighter_conversion_fraction 0.08",
+    "runway_coordinate": "Lambda_K = cumulative recruitment-linked capital burn / (initial capital + cumulative inflow)",
+    "capital_failure": "Organization collapse rule is triggered at central liquid capital <= 0."
+  },
+  "dimensionless_view": {
+    "ignition_load": "H_R relative to H_C determines whether replenishment is likely to occur before repeated weekly collapse opportunities.",
+    "runway_load": "Lambda_K measures whether mobilization has consumed the available liquid-resource runway.",
+    "window_hypothesis": "Increasing r raises ignition probability but also accelerates Lambda_K. A persistent mobilization band can therefore exist between a low-rate stochastic-ignition boundary and a high-rate capital-exhaustion boundary."
+  },
+  "guard": "Source-level synthetic mechanism identity. Existence/width/location of an interior viable band on the initialized support requires prospective confirmation; exact thresholds are not claimed from the identities alone."
+}

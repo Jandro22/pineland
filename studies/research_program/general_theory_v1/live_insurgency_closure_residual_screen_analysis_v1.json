@@ -1,0 +1,34 @@
+{
+  "schema_version": "pineland.live_insurgency_closure_residual_screen_analysis.v1",
+  "registered_before_screen_outcomes_inspected": true,
+  "historical_outcomes_used": false,
+  "simulation_contract": "live_insurgency_closure_residual_screen_contract_v1.json",
+  "analysis_method": "direct paired-branch bootstrap equivalence audit",
+  "analyzer": "analysis/analyze_distributional_closure_equivalence.py",
+  "bootstrap_draws": 10000,
+  "bootstrap_seed": 2026138091,
+  "same_bootstrap_seed_for_all_candidates": true,
+  "maximum_match_distance": 1.25,
+  "candidate_order": [
+    "rootedstock_net12v3",
+    "rootedstock_social_net13v3",
+    "rootedstock_hazard_net13v3",
+    "rootedstock_transport_net13v3"
+  ],
+  "ranking": [
+    "lowest demonstrably-non-equivalent pair fraction",
+    "highest fully-equivalent pair fraction",
+    "lower state dimension",
+    "lower maximum selected match distance"
+  ],
+  "nomination_gate": "A candidate must have zero demonstrably non-equivalent pairs in this screen. This screen cannot itself certify closure.",
+  "confirmation_if_nominated": {
+    "dynamic_seed_base": 2026139000,
+    "initialization_seed": 2026138900,
+    "pool_seeds": 144,
+    "pairs": 24,
+    "branches": 32,
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 2026139091
+  }
+}

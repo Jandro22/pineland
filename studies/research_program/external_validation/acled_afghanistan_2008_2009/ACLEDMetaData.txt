@@ -1,0 +1,63 @@
+13 August 2010
+
+This file contains metadata for the files contained in ACLEDPaperReplication.zip
+
+Modified ACLED data file containing only the fields we used for analysis.
+	afpak24may10_3actors.csv
+		ege_ID			- event ID
+		EVENT_DATE		- date of event
+		ACTOR1			- actor involved in the event
+		ALLY_ACTOR1		- ally to ACTOR1 if reported
+		ACTOR2			- actor involved in the event
+		ALLY_ACTOR_2	- ally to ACTOR2 if reported
+		COUNTRY			- either Afghanistan or Pakistan
+		LATITUDE		- latitude geographic coordinate
+		LONGITUDE		- longitude geographic coordinate
+		Drone			- 1 if the event is a drone attack, 0 otherwise
+		FREQ			- values all = 1, used for counting events
+		monthID			- field for month ID, 1 = Jan 2008, 2 = Feb 2008...
+		monthLbl		- text version of monthID field
+		qtrID			- field for quarter ID, 1 = 2008 Q1, 2 = 2008 Q2...
+		qtrLbl			- text version of qtrID field
+		forgn			- 1 if foreign forces were involved in the event, 0 otherwise
+		insgt			- 1 if event involves insurgents but no foreign or local forces, 0 otherwise
+		localGov		- 1 if event involves local forces, but no foreign forces, 0 otherwise
+
+Mean center & standard ellipses
+	centersEllipsesW.py	- Python script to generate mean centers & standard ellipses
+	afpak3actors.*		- projected event data shapefiles (x=coords_x1, y=coords_x2)
+
+Ripley's K clustering
+	ClusterTrendsW.R	- R script to generate Ripley's K clustering distance
+
+Civilian & non-civilian monthly plots
+	CivilianTrendsW.R	- R script to generate civilian & non-civilian monthly plots
+
+Actor trends by country
+	ActorTrendsW.R		- R script to generate actor trends by country barplot
+
+Urban/rural distributions
+	UrbanRuralW.R		- R script to generate urban/rural distributions
+	EventsUrbanJoin.dbf	- list of events with Join_Count=1 for urban areas (generated in ArcGIS)
+
+Rough terrain distributions
+	SlopeTrendsW.R		- R script to generate slope/terrain distributions
+	eventsSlp.csv		- contains mean slope for each event based on 2.5km buffer
+
+Near/far border distributions
+	NearBorderW.R		- R script to generate near/far border distributions
+	EventsBorderJoin.dbf	- list of events with Join_Count=1 for near border (generated in ArcGIS)
+
+Tribal/non-tribal areas
+	FATAw.R				- R script to generate tribal/non-tribal distributions
+	EventsFATAJoin.dbf	- list of events with Join_Count=1 for tribal areas (generated in ArcGIS)
+
+Pashtun/non-Pashtun distributions
+	PashtunW.R			- R script to generate Pashtun/non-Pashtun distributions
+	EventsPashtunJoin.dbf	- list of events with Join_Count=1 for Pashtun areas (generated in ArcGIS)
+
+Space-time cluster analysis
+	afpak2008h1.prm		- SaTScan parameter file for the 1st half of 2008
+	afpak2008h2.prm		- SaTScan parameter file for the 2nd half of 2008
+	afpak2009h1.prm		- SaTScan parameter file for the 1st half of 2009
+	afpak2009h2.prm		- SaTScan parameter file for the 2nd half of 2009

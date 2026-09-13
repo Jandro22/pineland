@@ -1,0 +1,1237 @@
+{
+  "schema_version": "pineland.development_dose_response_results.v1",
+  "status": "SYNTHETIC_DEVELOPMENT_DOSE_RESPONSE_MEASURED",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/development_dose_response_8seed_v1.csv",
+  "input_sha256": "6f2e7aff4fae9f590e771fb80e03f0a8f0a0a5322ef9baee6d6217d4e3418c2f",
+  "seed_count": 8,
+  "curves": {
+    "equal_locality": {
+      "vs_1x": [
+        {
+          "budget_multiplier": 1.0,
+          "mean_public_development_outflow": 648000.0,
+          "mean_incremental_public_outflow_vs_1x": 0.0,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            }
+          }
+        },
+        {
+          "budget_multiplier": 5.0,
+          "mean_public_development_outflow": 2027130.9091572892,
+          "mean_incremental_public_outflow_vs_1x": 1379130.9091572892,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.016113815395037853,
+              "ci95": [
+                0.014152197365565581,
+                0.018075433424510123
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.001168430286804171
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.003990981274867592,
+              "ci95": [
+                0.0035568212312665133,
+                0.0044251413184686695
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00028939080340887826
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.016923737405111827,
+              "ci95": [
+                0.015054210611405407,
+                0.018793264198818247
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0012271469798331431
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.007987148132186678,
+              "ci95": [
+                0.007338697553686185,
+                0.00863559871068717
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0005791510871017429
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.002888851335050596,
+              "ci95": [
+                -0.0030120465550694084,
+                -0.002765656115031784
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.00020946553572725877
+            }
+          }
+        },
+        {
+          "budget_multiplier": 10.0,
+          "mean_public_development_outflow": 2030217.9142049889,
+          "mean_incremental_public_outflow_vs_1x": 1382217.9142049889,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.012210152016418348,
+              "ci95": [
+                0.010986296720549798,
+                0.013434007312286897
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.000883401027683924
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.003040667012573897,
+              "ci95": [
+                0.002779201261539744,
+                0.00330213276360805
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00021999174264974704
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.012856562527478986,
+              "ci95": [
+                0.01163398251269968,
+                0.014079142542258291
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0009301639847607929
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.006954103277922834,
+              "ci95": [
+                0.006413096271078631,
+                0.0074951102847670365
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0005031206443404787
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.005425860605764485,
+              "ci95": [
+                -0.005647964583907268,
+                -0.0052037566276217015
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.00039254079305161313
+            }
+          }
+        },
+        {
+          "budget_multiplier": 20.0,
+          "mean_public_development_outflow": 2031759.2909749397,
+          "mean_incremental_public_outflow_vs_1x": 1383759.2909749397,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.007232007262250692,
+              "ci95": [
+                0.006685358000734024,
+                0.00777865652376736
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0005226544971555732
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0018143893867920563,
+              "ci95": [
+                0.0016896190523772812,
+                0.0019391597212068314
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00013112572832325002
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.007769491692248033,
+              "ci95": [
+                0.007186570828910746,
+                0.008352412555585319
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0005614961988121949
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.005566340309880499,
+              "ci95": [
+                0.004647587462559678,
+                0.0064850931572013205
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00040230176869165686
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.006797955223835944,
+              "ci95": [
+                -0.0070270279113711104,
+                -0.006568882536300778
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.0004912609346230084
+            }
+          }
+        },
+        {
+          "budget_multiplier": 40.0,
+          "mean_public_development_outflow": 2031759.2909749397,
+          "mean_incremental_public_outflow_vs_1x": 1383759.2909749397,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.007232007262250692,
+              "ci95": [
+                0.006685358000734024,
+                0.00777865652376736
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0005226544971555732
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0018143893867920563,
+              "ci95": [
+                0.0016896190523772812,
+                0.0019391597212068314
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00013112572832325002
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.007769491692248033,
+              "ci95": [
+                0.007186570828910746,
+                0.008352412555585319
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0005614961988121949
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.005566340309880499,
+              "ci95": [
+                0.004647587462559678,
+                0.0064850931572013205
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00040230176869165686
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.006797955223835944,
+              "ci95": [
+                -0.0070270279113711104,
+                -0.006568882536300778
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.0004912609346230084
+            }
+          }
+        },
+        {
+          "budget_multiplier": 80.0,
+          "mean_public_development_outflow": 2031759.2909749397,
+          "mean_incremental_public_outflow_vs_1x": 1383759.2909749397,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.007232007262250692,
+              "ci95": [
+                0.006685358000734024,
+                0.00777865652376736
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0005226544971555732
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0018143893867920563,
+              "ci95": [
+                0.0016896190523772812,
+                0.0019391597212068314
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00013112572832325002
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.007769491692248033,
+              "ci95": [
+                0.007186570828910746,
+                0.008352412555585319
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0005614961988121949
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.005566340309880499,
+              "ci95": [
+                0.004647587462559678,
+                0.0064850931572013205
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00040230176869165686
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.006797955223835944,
+              "ci95": [
+                -0.0070270279113711104,
+                -0.006568882536300778
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.0004912609346230084
+            }
+          }
+        }
+      ],
+      "adjacent_marginal_returns": [
+        {
+          "from": 1.0,
+          "to": 5.0,
+          "mean_incremental_public_outflow": 1379130.9091572892,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": 0.016113815395037853,
+              "mean_gain_per_100k_incremental_public_outflow": 0.001168430286804171
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": 0.003990981274867592,
+              "mean_gain_per_100k_incremental_public_outflow": 0.00028939080340887826
+            },
+            "mean_political_access": {
+              "mean_delta": 0.016923737405111827,
+              "mean_gain_per_100k_incremental_public_outflow": 0.0012271469798331431
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": 0.007987148132186678,
+              "mean_gain_per_100k_incremental_public_outflow": 0.0005791510871017429
+            },
+            "population_weighted_government_control": {
+              "mean_delta": -0.002888851335050596,
+              "mean_gain_per_100k_incremental_public_outflow": -0.00020946553572725877
+            }
+          }
+        },
+        {
+          "from": 5.0,
+          "to": 10.0,
+          "mean_incremental_public_outflow": 3087.0050476996694,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": -0.0039036633786195055,
+              "mean_gain_per_100k_incremental_public_outflow": -0.1261344913937819
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": -0.0009503142622936944,
+              "mean_gain_per_100k_incremental_public_outflow": -0.030688785789171568
+            },
+            "mean_political_access": {
+              "mean_delta": -0.004067174877632841,
+              "mean_gain_per_100k_incremental_public_outflow": -0.13160376057756623
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": -0.001033044854263844,
+              "mean_gain_per_100k_incremental_public_outflow": -0.033480948860955116
+            },
+            "population_weighted_government_control": {
+              "mean_delta": -0.0025370092707138886,
+              "mean_gain_per_100k_incremental_public_outflow": -0.08229534944158495
+            }
+          }
+        },
+        {
+          "from": 10.0,
+          "to": 20.0,
+          "mean_incremental_public_outflow": 1541.3767699505552,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": -0.004978144754167656,
+              "mean_gain_per_100k_incremental_public_outflow": -0.3226411891355057
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": -0.0012262776257818409,
+              "mean_gain_per_100k_incremental_public_outflow": -0.07948828016245668
+            },
+            "mean_political_access": {
+              "mean_delta": -0.005087070835230953,
+              "mean_gain_per_100k_incremental_public_outflow": -0.3300285572056155
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": -0.0013877629680423345,
+              "mean_gain_per_100k_incremental_public_outflow": -0.09026268028966382
+            },
+            "population_weighted_government_control": {
+              "mean_delta": -0.0013720946180714594,
+              "mean_gain_per_100k_incremental_public_outflow": -0.08916885787677722
+            }
+          }
+        },
+        {
+          "from": 20.0,
+          "to": 40.0,
+          "mean_incremental_public_outflow": 0.0,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_political_access": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "population_weighted_government_control": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            }
+          }
+        },
+        {
+          "from": 40.0,
+          "to": 80.0,
+          "mean_incremental_public_outflow": 0.0,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_political_access": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "population_weighted_government_control": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            }
+          }
+        }
+      ]
+    },
+    "marginal_return": {
+      "vs_1x": [
+        {
+          "budget_multiplier": 1.0,
+          "mean_public_development_outflow": 648000.0,
+          "mean_incremental_public_outflow_vs_1x": 0.0,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": 0.0,
+              "ci95": [
+                0.0,
+                0.0
+              ],
+              "gain_per_100k_incremental_public_outflow": null
+            }
+          }
+        },
+        {
+          "budget_multiplier": 5.0,
+          "mean_public_development_outflow": 2027118.963875596,
+          "mean_incremental_public_outflow_vs_1x": 1379118.963875596,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.01748375639304798,
+              "ci95": [
+                0.014629407486827638,
+                0.02033810529926832
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.001267735861682816
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.004200522404448584,
+              "ci95": [
+                0.003610365107304273,
+                0.004790679701592895
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0003045790517180719
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.01792314879594241,
+              "ci95": [
+                0.015169794534965138,
+                0.02067650305691968
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.001299593467330557
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.009511708335585893,
+              "ci95": [
+                0.008533451141918577,
+                0.01048996552925321
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0006896884088103345
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.0027745113732434573,
+              "ci95": [
+                -0.002976596934513804,
+                -0.0025724258119731104
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.00020117567082542022
+            }
+          }
+        },
+        {
+          "budget_multiplier": 10.0,
+          "mean_public_development_outflow": 2030222.009620259,
+          "mean_incremental_public_outflow_vs_1x": 1382222.009620259,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.009895714722195817,
+              "ci95": [
+                0.008700535630015365,
+                0.011090893814376269
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0007159256780138667
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0024053723600404586,
+              "ci95": [
+                0.0021183695824566933,
+                0.002692375137624224
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0001740234402166715
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.010382228852309272,
+              "ci95": [
+                0.009317095514005268,
+                0.011447362190613276
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0007511278962692987
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.0067400435645853796,
+              "ci95": [
+                0.0064915947763494655,
+                0.006988492352821294
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00048762470541070303
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.005399436988498985,
+              "ci95": [
+                -0.005557818403214889,
+                -0.00524105557378308
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.00039063102580331495
+            }
+          }
+        },
+        {
+          "budget_multiplier": 20.0,
+          "mean_public_development_outflow": 2031766.7075949349,
+          "mean_incremental_public_outflow_vs_1x": 1383766.7075949349,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.002934973990446045,
+              "ci95": [
+                0.001766322462650389,
+                0.004103625518241701
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00021209847391383998
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0007510990661637462,
+              "ci95": [
+                0.0004603705953001538,
+                0.0010418275370273388
+              ],
+              "gain_per_100k_incremental_public_outflow": 5.4279329801448236e-05
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.0035084091612470475,
+              "ci95": [
+                0.002365518205738697,
+                0.004651300116755398
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0002535474560706545
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.003858885306556377,
+              "ci95": [
+                0.0028251210152480427,
+                0.0048926495978647115
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0002789082320108142
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.006957914519451255,
+              "ci95": [
+                -0.007168758715816138,
+                -0.006747070323086373
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.0005028178636396155
+            }
+          }
+        },
+        {
+          "budget_multiplier": 40.0,
+          "mean_public_development_outflow": 2031766.7075949349,
+          "mean_incremental_public_outflow_vs_1x": 1383766.7075949349,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.002934973990446045,
+              "ci95": [
+                0.001766322462650389,
+                0.004103625518241701
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00021209847391383998
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0007510990661637462,
+              "ci95": [
+                0.0004603705953001538,
+                0.0010418275370273388
+              ],
+              "gain_per_100k_incremental_public_outflow": 5.4279329801448236e-05
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.0035084091612470475,
+              "ci95": [
+                0.002365518205738697,
+                0.004651300116755398
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0002535474560706545
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.003858885306556377,
+              "ci95": [
+                0.0028251210152480427,
+                0.0048926495978647115
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0002789082320108142
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.006957914519451255,
+              "ci95": [
+                -0.007168758715816138,
+                -0.006747070323086373
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.0005028178636396155
+            }
+          }
+        },
+        {
+          "budget_multiplier": 80.0,
+          "mean_public_development_outflow": 2031766.7075949349,
+          "mean_incremental_public_outflow_vs_1x": 1383766.7075949349,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "n": 8,
+              "mean": 0.002934973990446045,
+              "ci95": [
+                0.001766322462650389,
+                0.004103625518241701
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.00021209847391383998
+            },
+            "mean_state_legitimacy": {
+              "n": 8,
+              "mean": 0.0007510990661637462,
+              "ci95": [
+                0.0004603705953001538,
+                0.0010418275370273388
+              ],
+              "gain_per_100k_incremental_public_outflow": 5.4279329801448236e-05
+            },
+            "mean_political_access": {
+              "n": 8,
+              "mean": 0.0035084091612470475,
+              "ci95": [
+                0.002365518205738697,
+                0.004651300116755398
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0002535474560706545
+            },
+            "mean_local_institution_capacity": {
+              "n": 8,
+              "mean": 0.003858885306556377,
+              "ci95": [
+                0.0028251210152480427,
+                0.0048926495978647115
+              ],
+              "gain_per_100k_incremental_public_outflow": 0.0002789082320108142
+            },
+            "population_weighted_government_control": {
+              "n": 8,
+              "mean": -0.006957914519451255,
+              "ci95": [
+                -0.007168758715816138,
+                -0.006747070323086373
+              ],
+              "gain_per_100k_incremental_public_outflow": -0.0005028178636396155
+            }
+          }
+        }
+      ],
+      "adjacent_marginal_returns": [
+        {
+          "from": 1.0,
+          "to": 5.0,
+          "mean_incremental_public_outflow": 1379118.963875596,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": 0.01748375639304798,
+              "mean_gain_per_100k_incremental_public_outflow": 0.001267735861682816
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": 0.004200522404448584,
+              "mean_gain_per_100k_incremental_public_outflow": 0.0003045790517180719
+            },
+            "mean_political_access": {
+              "mean_delta": 0.01792314879594241,
+              "mean_gain_per_100k_incremental_public_outflow": 0.001299593467330557
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": 0.009511708335585893,
+              "mean_gain_per_100k_incremental_public_outflow": 0.0006896884088103345
+            },
+            "population_weighted_government_control": {
+              "mean_delta": -0.0027745113732434573,
+              "mean_gain_per_100k_incremental_public_outflow": -0.00020117567082542022
+            }
+          }
+        },
+        {
+          "from": 5.0,
+          "to": 10.0,
+          "mean_incremental_public_outflow": 3103.0457446631044,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": -0.007588041670852162,
+              "mean_gain_per_100k_incremental_public_outflow": -0.24384054630959529
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": -0.0017951500444081253,
+              "mean_gain_per_100k_incremental_public_outflow": -0.05768802581528961
+            },
+            "mean_political_access": {
+              "mean_delta": -0.007540919943633137,
+              "mean_gain_per_100k_incremental_public_outflow": -0.2423994234704828
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": -0.0027716647710005135,
+              "mean_gain_per_100k_incremental_public_outflow": -0.08901459530104477
+            },
+            "population_weighted_government_control": {
+              "mean_delta": -0.0026249256152555273,
+              "mean_gain_per_100k_incremental_public_outflow": -0.0847577335305528
+            }
+          }
+        },
+        {
+          "from": 10.0,
+          "to": 20.0,
+          "mean_incremental_public_outflow": 1544.6979746757133,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": -0.006960740731749772,
+              "mean_gain_per_100k_incremental_public_outflow": -0.45013160840157035
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": -0.0016542732938767124,
+              "mean_gain_per_100k_incremental_public_outflow": -0.10702822229618174
+            },
+            "mean_political_access": {
+              "mean_delta": -0.006873819691062225,
+              "mean_gain_per_100k_incremental_public_outflow": -0.44469037382198595
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": -0.0028811582580290027,
+              "mean_gain_per_100k_incremental_public_outflow": -0.18658135886745203
+            },
+            "population_weighted_government_control": {
+              "mean_delta": -0.0015584775309522708,
+              "mean_gain_per_100k_incremental_public_outflow": -0.10095467993489018
+            }
+          }
+        },
+        {
+          "from": 20.0,
+          "to": 40.0,
+          "mean_incremental_public_outflow": 0.0,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_political_access": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "population_weighted_government_control": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            }
+          }
+        },
+        {
+          "from": 40.0,
+          "to": 80.0,
+          "mean_incremental_public_outflow": 0.0,
+          "outcomes": {
+            "mean_government_legitimacy": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_state_legitimacy": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_political_access": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "mean_local_institution_capacity": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            },
+            "population_weighted_government_control": {
+              "mean_delta": 0.0,
+              "mean_gain_per_100k_incremental_public_outflow": null
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allocation_comparison": [
+    {
+      "budget_multiplier": 1.0,
+      "marginal_return_minus_equal": {
+        "mean_government_legitimacy": {
+          "n": 8,
+          "mean": 0.003779722670447107,
+          "ci95": [
+            0.0027453300832677024,
+            0.004814115257626511
+          ]
+        },
+        "mean_state_legitimacy": {
+          "n": 8,
+          "mean": 0.0008591063334625476,
+          "ci95": [
+            0.0006153237722734531,
+            0.0011028888946516423
+          ]
+        },
+        "mean_political_access": {
+          "n": 8,
+          "mean": 0.003326439546294621,
+          "ci95": [
+            0.002416727545507469,
+            0.004236151547081773
+          ]
+        },
+        "mean_local_institution_capacity": {
+          "n": 8,
+          "mean": 0.00045529254631201943,
+          "ci95": [
+            1.6715968015875294e-05,
+            0.0008938691246081636
+          ]
+        },
+        "population_weighted_government_control": {
+          "n": 8,
+          "mean": 0.00015990010447676506,
+          "ci95": [
+            0.00012607549721937406,
+            0.00019372471173415606
+          ]
+        }
+      },
+      "public_outflow_difference": {
+        "n": 8,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "budget_multiplier": 5.0,
+      "marginal_return_minus_equal": {
+        "mean_government_legitimacy": {
+          "n": 8,
+          "mean": 0.005149663668457233,
+          "ci95": [
+            0.003413225587939878,
+            0.006886101748974588
+          ]
+        },
+        "mean_state_legitimacy": {
+          "n": 8,
+          "mean": 0.00106864746304354,
+          "ci95": [
+            0.0007293864207236745,
+            0.0014079085053634055
+          ]
+        },
+        "mean_political_access": {
+          "n": 8,
+          "mean": 0.004325850937125203,
+          "ci95": [
+            0.0025870298959221848,
+            0.006064671978328221
+          ]
+        },
+        "mean_local_institution_capacity": {
+          "n": 8,
+          "mean": 0.0019798527497112348,
+          "ci95": [
+            0.0013299225521891942,
+            0.002629782947233275
+          ]
+        },
+        "population_weighted_government_control": {
+          "n": 8,
+          "mean": 0.00027424006628390396,
+          "ci95": [
+            0.00015900950191851353,
+            0.0003894706306492944
+          ]
+        }
+      },
+      "public_outflow_difference": {
+        "n": 8,
+        "mean": -11.94528169327532,
+        "ci95": [
+          -25.781210545095625,
+          1.8906471585449864
+        ]
+      }
+    },
+    {
+      "budget_multiplier": 10.0,
+      "marginal_return_minus_equal": {
+        "mean_government_legitimacy": {
+          "n": 8,
+          "mean": 0.001465285376224576,
+          "ci95": [
+            0.000480674610405006,
+            0.002449896142044146
+          ]
+        },
+        "mean_state_legitimacy": {
+          "n": 8,
+          "mean": 0.00022381168092910908,
+          "ci95": [
+            -2.063763063685594e-05,
+            0.0004682609924950741
+          ]
+        },
+        "mean_political_access": {
+          "n": 8,
+          "mean": 0.0008521058711249072,
+          "ci95": [
+            -4.856550112451513e-05,
+            0.0017527772433743294
+          ]
+        },
+        "mean_local_institution_capacity": {
+          "n": 8,
+          "mean": 0.00024123283297456527,
+          "ci95": [
+            -0.0005072847117318324,
+            0.000989750377680963
+          ]
+        },
+        "population_weighted_government_control": {
+          "n": 8,
+          "mean": 0.0001863237217422653,
+          "ci95": [
+            8.685309710297409e-05,
+            0.0002857943463815565
+          ]
+        }
+      },
+      "public_outflow_difference": {
+        "n": 8,
+        "mean": 4.0954152701597195,
+        "ci95": [
+          -10.831746523517939,
+          19.022577063837378
+        ]
+      }
+    },
+    {
+      "budget_multiplier": 20.0,
+      "marginal_return_minus_equal": {
+        "mean_government_legitimacy": {
+          "n": 8,
+          "mean": -0.0005173106013575401,
+          "ci95": [
+            -0.0008189103332869856,
+            -0.00021571086942809466
+          ]
+        },
+        "mean_state_legitimacy": {
+          "n": 8,
+          "mean": -0.00020418398716576247,
+          "ci95": [
+            -0.0002841864253534326,
+            -0.00012418154897809232
+          ]
+        },
+        "mean_political_access": {
+          "n": 8,
+          "mean": -0.0009346429847063645,
+          "ci95": [
+            -0.001211743736083597,
+            -0.000657542233329132
+          ]
+        },
+        "mean_local_institution_capacity": {
+          "n": 8,
+          "mean": -0.0012521624570121029,
+          "ci95": [
+            -0.0018274886688935486,
+            -0.0006768362451306573
+          ]
+        },
+        "population_weighted_government_control": {
+          "n": 8,
+          "mean": -5.9191138546133004e-08,
+          "ci95": [
+            -2.823315010069793e-05,
+            2.8114767823605663e-05
+          ]
+        }
+      },
+      "public_outflow_difference": {
+        "n": 8,
+        "mean": 7.4166199953178875,
+        "ci95": [
+          -6.914170004463932,
+          21.74740999509971
+        ]
+      }
+    },
+    {
+      "budget_multiplier": 40.0,
+      "marginal_return_minus_equal": {
+        "mean_government_legitimacy": {
+          "n": 8,
+          "mean": -0.0005173106013575401,
+          "ci95": [
+            -0.0008189103332869856,
+            -0.00021571086942809466
+          ]
+        },
+        "mean_state_legitimacy": {
+          "n": 8,
+          "mean": -0.00020418398716576247,
+          "ci95": [
+            -0.0002841864253534326,
+            -0.00012418154897809232
+          ]
+        },
+        "mean_political_access": {
+          "n": 8,
+          "mean": -0.0009346429847063645,
+          "ci95": [
+            -0.001211743736083597,
+            -0.000657542233329132
+          ]
+        },
+        "mean_local_institution_capacity": {
+          "n": 8,
+          "mean": -0.0012521624570121029,
+          "ci95": [
+            -0.0018274886688935486,
+            -0.0006768362451306573
+          ]
+        },
+        "population_weighted_government_control": {
+          "n": 8,
+          "mean": -5.9191138546133004e-08,
+          "ci95": [
+            -2.823315010069793e-05,
+            2.8114767823605663e-05
+          ]
+        }
+      },
+      "public_outflow_difference": {
+        "n": 8,
+        "mean": 7.4166199953178875,
+        "ci95": [
+          -6.914170004463932,
+          21.74740999509971
+        ]
+      }
+    },
+    {
+      "budget_multiplier": 80.0,
+      "marginal_return_minus_equal": {
+        "mean_government_legitimacy": {
+          "n": 8,
+          "mean": -0.0005173106013575401,
+          "ci95": [
+            -0.0008189103332869856,
+            -0.00021571086942809466
+          ]
+        },
+        "mean_state_legitimacy": {
+          "n": 8,
+          "mean": -0.00020418398716576247,
+          "ci95": [
+            -0.0002841864253534326,
+            -0.00012418154897809232
+          ]
+        },
+        "mean_political_access": {
+          "n": 8,
+          "mean": -0.0009346429847063645,
+          "ci95": [
+            -0.001211743736083597,
+            -0.000657542233329132
+          ]
+        },
+        "mean_local_institution_capacity": {
+          "n": 8,
+          "mean": -0.0012521624570121029,
+          "ci95": [
+            -0.0018274886688935486,
+            -0.0006768362451306573
+          ]
+        },
+        "population_weighted_government_control": {
+          "n": 8,
+          "mean": -5.9191138546133004e-08,
+          "ci95": [
+            -2.823315010069793e-05,
+            2.8114767823605663e-05
+          ]
+        }
+      },
+      "public_outflow_difference": {
+        "n": 8,
+        "mean": 7.4166199953178875,
+        "ci95": [
+          -6.914170004463932,
+          21.74740999509971
+        ]
+      }
+    }
+  ],
+  "guard": "Internal Pineland capital units are not real dollars. Dose response is synthetic and state-side; insurgent suppression is not inferred from this assay."
+}

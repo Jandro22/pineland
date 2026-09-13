@@ -1,0 +1,165 @@
+{
+  "schema_version": "pineland.human_capital_absorption_confirmation_results.v1",
+  "status": "QUANTITY_QUALITY_REGENERATION_TRADEOFF_CONFIRMED_ON_SYNTHETIC_SUPPORT",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/human_capital_absorption_confirmation_16seed_360d_v1.csv",
+  "input_sha256": "b656a6ddbb4faad57b8d3efdf6eea72c3bb4c4e564e2bdebfdd762d193e6c247",
+  "primary_contrast_360d": {
+    "slow": {
+      "mean_headcount_recovery": 0.6176160657109943,
+      "mean_experience": 0.7503670374092835,
+      "mean_veterancy_capability_deficit": 0.062347067746131864
+    },
+    "fast": {
+      "mean_headcount_recovery": 0.9978542422012084,
+      "mean_experience": 0.5075702483015316,
+      "mean_veterancy_capability_deficit": 0.16351239654102842
+    },
+    "fast_minus_slow_headcount": {
+      "n": 16,
+      "mean": 0.3802381764902142,
+      "ci95": [
+        0.3748252630460969,
+        0.38565108993433145
+      ]
+    },
+    "fast_minus_slow_veterancy_deficit": {
+      "n": 16,
+      "mean": 0.10116532879489656,
+      "ci95": [
+        0.09894355019572415,
+        0.10338710739406898
+      ]
+    },
+    "fast_minus_slow_experience": {
+      "n": 16,
+      "mean": -0.24279678910775176,
+      "ci95": [
+        -0.2481290577457656,
+        -0.23746452046973793
+      ]
+    }
+  },
+  "gates": {
+    "fast_minus_slow_headcount_recovery_ge_0_20": true,
+    "fast_minus_slow_veterancy_deficit_ge_0_05": true,
+    "fast_mean_experience_lower": true
+  },
+  "secondary_diagonal": [
+    {
+      "multiplier": 0.5,
+      "n": 16,
+      "mean_headcount_recovery": 0.6176160657109943,
+      "mean_experience": 0.7503670374092835,
+      "mean_veterancy_capability_deficit": 0.062347067746131864
+    },
+    {
+      "multiplier": 1.0,
+      "n": 16,
+      "mean_headcount_recovery": 0.7572798963100827,
+      "mean_experience": 0.631767371523817,
+      "mean_veterancy_capability_deficit": 0.11176359519840959
+    },
+    {
+      "multiplier": 2.0,
+      "n": 16,
+      "mean_headcount_recovery": 0.961997632409499,
+      "mean_experience": 0.5206140896985043,
+      "mean_veterancy_capability_deficit": 0.1580774626256231
+    },
+    {
+      "multiplier": 4.0,
+      "n": 16,
+      "mean_headcount_recovery": 0.9978542422012084,
+      "mean_experience": 0.5075702483015316,
+      "mean_veterancy_capability_deficit": 0.16351239654102842
+    }
+  ],
+  "secondary_monotonicity": {
+    "diagonal_headcount_non_decreasing": true,
+    "diagonal_veterancy_deficit_non_decreasing": true
+  },
+  "time_path": [
+    {
+      "time": 0.0,
+      "cell": "slow_0_5x",
+      "n": 16,
+      "mean_headcount_recovery": 0.5,
+      "mean_experience": 0.9,
+      "mean_veterancy_capability_deficit": 0.0
+    },
+    {
+      "time": 0.0,
+      "cell": "fast_4x",
+      "n": 16,
+      "mean_headcount_recovery": 0.5,
+      "mean_experience": 0.9,
+      "mean_veterancy_capability_deficit": 0.0
+    },
+    {
+      "time": 30.0,
+      "cell": "slow_0_5x",
+      "n": 16,
+      "mean_headcount_recovery": 0.5015538632657504,
+      "mean_experience": 0.8976426999761828,
+      "mean_veterancy_capability_deficit": 0.000982208343257067
+    },
+    {
+      "time": 30.0,
+      "cell": "fast_4x",
+      "n": 16,
+      "mean_headcount_recovery": 0.5673236374165218,
+      "mean_experience": 0.805420739500755,
+      "mean_veterancy_capability_deficit": 0.0394080252080187
+    },
+    {
+      "time": 90.0,
+      "cell": "slow_0_5x",
+      "n": 16,
+      "mean_headcount_recovery": 0.5103497560235251,
+      "mean_experience": 0.8841952400898183,
+      "mean_veterancy_capability_deficit": 0.006585316629242291
+    },
+    {
+      "time": 90.0,
+      "cell": "fast_4x",
+      "n": 16,
+      "mean_headcount_recovery": 0.7545766442043225,
+      "mean_experience": 0.6316622149885345,
+      "mean_veterancy_capability_deficit": 0.11180741042144396
+    },
+    {
+      "time": 180.0,
+      "cell": "slow_0_5x",
+      "n": 16,
+      "mean_headcount_recovery": 0.5368915130301202,
+      "mean_experience": 0.8460385915158898,
+      "mean_veterancy_capability_deficit": 0.022483920201712547
+    },
+    {
+      "time": 180.0,
+      "cell": "fast_4x",
+      "n": 16,
+      "mean_headcount_recovery": 0.9394066585079206,
+      "mean_experience": 0.5287763466618061,
+      "mean_veterancy_capability_deficit": 0.15467652222424744
+    },
+    {
+      "time": 360.0,
+      "cell": "slow_0_5x",
+      "n": 16,
+      "mean_headcount_recovery": 0.6176160657109943,
+      "mean_experience": 0.7503670374092835,
+      "mean_veterancy_capability_deficit": 0.062347067746131864
+    },
+    {
+      "time": 360.0,
+      "cell": "fast_4x",
+      "n": 16,
+      "mean_headcount_recovery": 0.9978542422012084,
+      "mean_experience": 0.5075702483015316,
+      "mean_veterancy_capability_deficit": 0.16351239654102842
+    }
+  ],
+  "interpretation_guard": "Synthetic formation-memory mechanism only; real militaries need not share Pineland's experience or replacement coefficients."
+}

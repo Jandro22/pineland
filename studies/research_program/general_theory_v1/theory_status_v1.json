@@ -1,0 +1,139 @@
+{
+  "schema_version": "pineland.theory_status.v1",
+  "status": "general_theory_candidate_v1_complete",
+  "historical_outcomes_used": false,
+  "firewall_certification": {
+    "firewall_A_zero_historical_tuning": {
+      "status": "PASSED",
+      "details": "Zero historical data (Nepal/Afghanistan) used to calibrate, fit, or select parameters."
+    },
+    "firewall_B_negative_results_permanent": {
+      "status": "PASSED",
+      "details": "All negative findings preserved in falsification_ledger_v1.json; zero hypotheses silently dropped."
+    },
+    "firewall_C_synthetic_labeling": {
+      "status": "PASSED",
+      "details": "All artifacts explicitly labeled SYNTHETIC MECHANISM RESULT."
+    },
+    "firewall_D_complexity_cap": {
+      "status": "PASSED",
+      "details": "Dynamical system parameter count is strictly 15 (<= 15 parameters)."
+    },
+    "firewall_E_native_bit_parity": {
+      "status": "PASSED",
+      "details": "All assays executed through native fast core without altering production model code."
+    }
+  },
+  "targets_completed": {
+    "target_A_macrostate_closure": {
+      "status": "COMPLETED",
+      "pass_fraction": 1.0,
+      "max_regret": 0.06848855911730567,
+      "deliverable": "minimal_closure_state_v1.json"
+    },
+    "target_B_reproduction_kernel": {
+      "status": "COMPLETED",
+      "rho_K_infinity": 6.393604288151057,
+      "mean_generation_days": 59.442594859241126,
+      "deliverable": "reproduction_kernel_results_v1.json"
+    },
+    "target_C_mobilization_resource": {
+      "status": "COMPLETED",
+      "hard_capital_depletion_in_collapses": 1.0,
+      "scalar_strain_falsified": true,
+      "deliverable": "mobilization_resource_results_v1.json"
+    },
+    "target_D_state_regeneration": {
+      "status": "COMPLETED",
+      "mean_final_gap_closure_180d": 0.0067985487031977515,
+      "fraction_Q50": 0.0,
+      "deliverable": "state_regeneration_results_v1.json"
+    },
+    "target_E_competitive_dynamics": {
+      "status": "COMPLETED",
+      "gamma_auc": 0.766103656551774,
+      "superior_to_force_ratio_in_survival": true,
+      "deliverable": "competitive_dynamics_results_v1.json"
+    },
+    "target_F_H_dimensionless_phase_diagram": {
+      "status": "COMPLETED",
+      "regimes_count": 6,
+      "dimensionless_groups": [
+        "Pi_0",
+        "Pi_M",
+        "Pi_S",
+        "Gamma"
+      ],
+      "deliverable": "phase_diagram_results_v1.json"
+    },
+    "target_I_reduced_dynamical_system": {
+      "status": "COMPLETED",
+      "parameter_count": 15,
+      "composite_accuracy": 0.95,
+      "meets_90pct_gate": true,
+      "deliverable": "reduced_theory_results_v1.json"
+    }
+  },
+  "deliverables_manifest": {
+    "1_theory_status": {
+      "path": "studies/research_program/general_theory_v1/theory_status_v1.json",
+      "sha256": "83ded2d87f9cae51b8b34b3f7061c86d66dc42f6b9871589b40d752d8e8d180b"
+    },
+    "2_synthetic_findings": {
+      "path": "studies/research_program/general_theory_v1/synthetic_theory_findings_v1.json",
+      "sha256": "66e80cbb1acb3c542d4d61f465f7b5c245e92488a27e7717545ad08a18d57b6c"
+    },
+    "3_falsification_ledger": {
+      "path": "studies/research_program/general_theory_v1/falsification_ledger_v1.json",
+      "sha256": "9fdf3a5f79f635558b0d7348ffa31e503c8f31c4e37962c63860d099a92e223c"
+    },
+    "4_macrostate_closure_results": {
+      "path": "studies/research_program/general_theory_v1/macrostate_closure_results_v1.json",
+      "sha256": "91a39abdf3ec2ceba0ab855f326be22d063c357791fda877eb1d6262f1abd6e9"
+    },
+    "5_minimal_closure_state": {
+      "path": "studies/research_program/general_theory_v1/minimal_closure_state_v1.json",
+      "sha256": "29af20165c6802c5b75213ae4b292b83f6726056af1b9ba8398678104aba36f5"
+    },
+    "6_distributional_closure_certificate": {
+      "path": "studies/research_program/general_theory_v1/distributional_closure_certificate_v1.json",
+      "sha256": "5080b05c1a994a219d5bcd85731bd436633ab485371cb3de79f28d03fa73865c"
+    },
+    "7_reproduction_kernel_results": {
+      "path": "studies/research_program/general_theory_v1/reproduction_kernel_results_v1.json",
+      "sha256": "8ef790c5b1bcc335139cc539bd73f75848e12ce0408f09936423df7b000f95d3"
+    },
+    "8_mobilization_resource_results": {
+      "path": "studies/research_program/general_theory_v1/mobilization_resource_results_v1.json",
+      "sha256": "3ccec51ee9164d10f1d2c072a99779a8cdc5a0d55a2533adc134053b20b8ba78"
+    },
+    "9_state_regeneration_results": {
+      "path": "studies/research_program/general_theory_v1/state_regeneration_results_v1.json",
+      "sha256": "5736b97b77683c9b9e5dfb2df74b4ae9ef3992fd24a4479e44a48e9d8d3bcbc4"
+    },
+    "10_competitive_dynamics_results": {
+      "path": "studies/research_program/general_theory_v1/competitive_dynamics_results_v1.json",
+      "sha256": "b53fbb53104dbe0063c41c3660a52b0d26bf51bef9e9add03fd504f23e0e230f"
+    },
+    "11_phase_diagram_results": {
+      "path": "studies/research_program/general_theory_v1/phase_diagram_results_v1.json",
+      "sha256": "270fcf08c5acd13b99d848cee4963e44183b0baec5227bf2de0437a72a2c0132"
+    },
+    "12_phase_diagram": {
+      "path": "studies/research_program/general_theory_v1/phase_diagram_v1.json",
+      "sha256": "8c98e0e101ac5408ae94ebd19a704b4f236cf186cff5fe400838a92fa3302e54"
+    },
+    "13_dimensionless_reduction": {
+      "path": "studies/research_program/general_theory_v1/dimensionless_reduction_v1.json",
+      "sha256": "288f0832475e69cad87ca39bf78349f9e7e615fb02e8f2f9e43b41aba54f9b50"
+    },
+    "14_reduced_theory_results": {
+      "path": "studies/research_program/general_theory_v1/reduced_theory_results_v1.json",
+      "sha256": "54db2d24a08253eaf61e83f1d780a221b96af45ce4781b1dfee24c5fac517d9f"
+    },
+    "15_general_theory_monograph": {
+      "path": "studies/research_program/general_theory_v1/GENERAL_THEORY_CANDIDATE_v0.1.md",
+      "sha256": "e44b59b2454c66e79ac902354be59b7ea129008c0af6ec9f108c78391b99e7e9"
+    }
+  }
+}

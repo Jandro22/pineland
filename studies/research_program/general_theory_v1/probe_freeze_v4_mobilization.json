@@ -1,0 +1,29 @@
+{
+  "schema_version": "pineland.general_theory_probe_freeze.v4",
+  "status": "frozen_synthetic_mobilization_probe",
+  "created_utc": "2026-09-10T19:06:43.165356+00:00",
+  "git_head_at_freeze": "655f38f154662096e45dfeb3955dcbf732cc9910",
+  "binary": "studies/research_program/general_theory_v1/bin/pineland-general-theory-probe-v4-mobilization.exe",
+  "binary_sha256": "5f414201a2d222fe541f3cfddf130eca25df5335414b2d5ea3fe60fce6322a93",
+  "probe_source_sha256": "a6c67266b9b95d459da9f62160963ed6e38a9d5cb85225302659e903cb811a97",
+  "cargo_lock_sha256": "393335506c20ec94fc8bdff39fcb31985c8e4fd1b1207cf7b42d444983fa9952",
+  "dependency_source_sha256": {
+    "rust/pineland-core/src/rng.rs": "df32d3317ec02caf51c4bac712be6642a2af1be31d95763fc0222b8aa1aae9ba",
+    "rust/pineland-core/src/state.rs": "2b55741ff49b9a225d0469630e73eed377921a01e893b17a104b57e7149f3179",
+    "rust/pineland-core/src/topology.rs": "9a8139ab9fe76d9d498188479fa868432b47bb97218928f51a5db11c25a2fb4f",
+    "rust/pineland-core/src/config.rs": "e2e70aa7283f4bfc7e7b2d135cdd7de006551e3a7ba7c14868a02b39f2b5aa5e",
+    "rust/pineland-model/src/lib.rs": "897cd5e150a7ce6f687e0d6bbd05109917685e1d966397bc747bb989b4619e0c",
+    "rust/pineland-model/src/recruitment.rs": "f18d52ae4bd35b2a027737643ef7cdab0369fe989886dec2243296e52919874c",
+    "rust/pineland-model/src/organizations.rs": "0498b1f181c9e74b22256fdf333ef3fd4b4ab0895da600992b2a4a73ae923163",
+    "rust/pineland-model/src/economy.rs": "8c07997cf5948841e3dba062abb79dc61dcbc179577a47ade8489be9e3e57415",
+    "rust/pineland-model/src/logistics.rs": "b3787ee11304d90843e07a263011a9d5c5e71e8edc818ad89f8b02e9a8314230",
+    "rust/pineland-model/src/information.rs": "d3465c2d43ab3ce2922e5f775e106e9c21cb81c69963e39595297ba9872540cd",
+    "rust/pineland-model/src/movement.rs": "1bd9c51e79d90aaf80204caa35de1d7e25280bd661567ad4cfe06b8a6ffa73e6"
+  },
+  "experiment_contract": "studies/research_program/general_theory_v1/mobilization_trap_contract_v1.json",
+  "experiment_contract_sha256": "0526ce6ea034aa7ca0528f31865163d3bd0849c4baf1ad62d363f4761676abcb",
+  "schema_check": "studies/research_program/general_theory_v1/mobilization_schema_check_v1.csv",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "core_certificate_status": "synthetic use only until fast native core clears remaining full Python-Rust parity certificate blocker"
+}

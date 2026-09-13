@@ -1,0 +1,699 @@
+{
+  "schema_version": "pineland.structured_block_ablation.v1",
+  "input_sha256": "4fde1254c95bbab648ffc0c729c8e64b466536ed601baf1a076f0e1ba520444b",
+  "historical_outcomes_used": false,
+  "blocks": {
+    "M": [
+      "m_member_depth",
+      "m_rooted_local_share",
+      "m_rooted_district_share",
+      "m_social_exposure",
+      "m_armed_mass"
+    ],
+    "F": [
+      "f_personnel",
+      "f_effective_strength",
+      "f_mean_readiness",
+      "f_mean_embeddedness",
+      "formation_quality",
+      "formation_command",
+      "formation_fatigue",
+      "formation_availability"
+    ],
+    "L": [
+      "l_supply_stock",
+      "l_supply_fraction"
+    ],
+    "K": [
+      "k_belief_conf",
+      "k_presence_conf",
+      "k_formation_info",
+      "k_tradecraft"
+    ],
+    "E": [
+      "e_foothold_strength",
+      "e_renewal_count"
+    ],
+    "C": [
+      "c_ins_effective",
+      "c_gov_effective",
+      "c_ins_formal",
+      "c_ins_physical",
+      "c_ins_admin",
+      "c_ins_legal",
+      "c_ins_fiscal",
+      "c_ins_social",
+      "c_ins_expected",
+      "c_gov_formal",
+      "c_gov_physical",
+      "c_gov_admin",
+      "c_gov_legal",
+      "c_gov_fiscal",
+      "c_gov_social",
+      "c_gov_expected"
+    ],
+    "X": [
+      "x_expected_gov",
+      "x_expected_ins",
+      "x_grievance",
+      "x_fear",
+      "x_political_access",
+      "x_state_legitimacy",
+      "x_government_legitimacy",
+      "x_trust_insurgent",
+      "x_insurgent_behavior_share"
+    ],
+    "S": [
+      "s_admin_capacity",
+      "s_security_per_1000",
+      "s_institution_capacity",
+      "s_institution_reach",
+      "s_government_governance"
+    ],
+    "U": [
+      "u_external_support",
+      "u_external_sanctuary",
+      "u_foreign_capacity"
+    ],
+    "Z": [
+      "z_log_population",
+      "z_log_econ_pc",
+      "infrastructure",
+      "terrain_friction",
+      "observability",
+      "network_mean_degree",
+      "displaced_share"
+    ],
+    "THETA": [
+      "org_cohesion",
+      "org_discipline",
+      "org_persistence",
+      "org_mobility",
+      "org_institutional_quality",
+      "org_capital_social",
+      "org_capital_political",
+      "org_capital_organizational",
+      "org_capital_material",
+      "org_risk_tolerance",
+      "org_governance_investment"
+    ]
+  },
+  "results": {
+    "30": {
+      "full": {
+        "viable_30": 0.2818471418551689,
+        "actions_30": 0.7815472104307918,
+        "recruits_30": 0.8360276947827437,
+        "control_30": 0.9455234984968895,
+        "fielded_30": 0.7489961526590405,
+        "state_30": 0.13568988867071693
+      },
+      "drop": {
+        "M": {
+          "viable_30": {
+            "score": 0.2798623144683379,
+            "degradation": -0.0019848273868309785
+          },
+          "actions_30": {
+            "score": 0.7747267329236428,
+            "degradation": -0.006820477507148981
+          },
+          "recruits_30": {
+            "score": 0.8429162207779087,
+            "degradation": 0.006888525995164985
+          },
+          "control_30": {
+            "score": 0.9491944773106188,
+            "degradation": 0.003670978813729242
+          },
+          "fielded_30": {
+            "score": 0.7471980561084268,
+            "degradation": -0.0017980965506136926
+          },
+          "state_30": {
+            "score": 0.13519713270990955,
+            "degradation": -0.0004927559608073895
+          }
+        },
+        "F": {
+          "viable_30": {
+            "score": 0.28184643141182825,
+            "degradation": -7.104433406568411e-07
+          },
+          "actions_30": {
+            "score": 0.8009054890183923,
+            "degradation": 0.01935827858760053
+          },
+          "recruits_30": {
+            "score": 0.8437503725055814,
+            "degradation": 0.007722677722837634
+          },
+          "control_30": {
+            "score": 0.9535789678919862,
+            "degradation": 0.008055469395096604
+          },
+          "fielded_30": {
+            "score": 0.7825138324311272,
+            "degradation": 0.03351767977208664
+          },
+          "state_30": {
+            "score": 0.13516953362110817,
+            "degradation": -0.0005203550496087617
+          }
+        },
+        "L": {
+          "viable_30": {
+            "score": 0.2818464049309582,
+            "degradation": -7.369242107091445e-07
+          },
+          "actions_30": {
+            "score": 0.7817155596906759,
+            "degradation": 0.0001683492598840708
+          },
+          "recruits_30": {
+            "score": 0.8396753617466239,
+            "degradation": 0.0036476669638801917
+          },
+          "control_30": {
+            "score": 0.9519144019813626,
+            "degradation": 0.006390903484473021
+          },
+          "fielded_30": {
+            "score": 0.749943172656952,
+            "degradation": 0.0009470199979114691
+          },
+          "state_30": {
+            "score": 0.13567608209402932,
+            "degradation": -1.380657668761942e-05
+          }
+        },
+        "K": {
+          "viable_30": {
+            "score": 0.27806567588342973,
+            "degradation": -0.003781465971739173
+          },
+          "actions_30": {
+            "score": 0.7843105659355749,
+            "degradation": 0.002763355504783127
+          },
+          "recruits_30": {
+            "score": 0.8377787953793688,
+            "degradation": 0.001751100596625088
+          },
+          "control_30": {
+            "score": 0.9507690595962873,
+            "degradation": 0.0052455610993977775
+          },
+          "fielded_30": {
+            "score": 0.7504177274352305,
+            "degradation": 0.0014215747761899822
+          },
+          "state_30": {
+            "score": 0.13521665161084276,
+            "degradation": -0.0004732370598741764
+          }
+        },
+        "E": {
+          "viable_30": {
+            "score": 0.3192506514390728,
+            "degradation": 0.03740350958390387
+          },
+          "actions_30": {
+            "score": 0.7856981264546848,
+            "degradation": 0.004150916023893059
+          },
+          "recruits_30": {
+            "score": 0.8404893682786054,
+            "degradation": 0.004461673495861684
+          },
+          "control_30": {
+            "score": 0.9520859896651465,
+            "degradation": 0.006562491168256912
+          },
+          "fielded_30": {
+            "score": 0.7498646316547182,
+            "degradation": 0.0008684789956776573
+          },
+          "state_30": {
+            "score": 0.13531913167653248,
+            "degradation": -0.00037075699418445685
+          }
+        },
+        "C": {
+          "viable_30": {
+            "score": 0.27772710813387697,
+            "degradation": -0.004120033721291938
+          },
+          "actions_30": {
+            "score": 0.7802371130243319,
+            "degradation": -0.0013100974064599313
+          },
+          "recruits_30": {
+            "score": 0.8518644907466324,
+            "degradation": 0.01583679596388865
+          },
+          "control_30": {
+            "score": 0.985218209859765,
+            "degradation": 0.0396947113628755
+          },
+          "fielded_30": {
+            "score": 0.7457373102158471,
+            "degradation": -0.0032588424431934104
+          },
+          "state_30": {
+            "score": 0.16013722317047693,
+            "degradation": 0.02444733449976
+          }
+        },
+        "X": {
+          "viable_30": {
+            "score": 0.29043662309134566,
+            "degradation": 0.008589481236176755
+          },
+          "actions_30": {
+            "score": 0.7818828227717276,
+            "degradation": 0.00033561234093582026
+          },
+          "recruits_30": {
+            "score": 0.8493706469614419,
+            "degradation": 0.013342952178698186
+          },
+          "control_30": {
+            "score": 0.9544907765375654,
+            "degradation": 0.008967278040675875
+          },
+          "fielded_30": {
+            "score": 0.7423425745251354,
+            "degradation": -0.0066535781339051026
+          },
+          "state_30": {
+            "score": 0.1343666370149534,
+            "degradation": -0.0013232516557635243
+          }
+        },
+        "S": {
+          "viable_30": {
+            "score": 0.28053989168769056,
+            "degradation": -0.0013072501674783465
+          },
+          "actions_30": {
+            "score": 0.7822521509852101,
+            "degradation": 0.0007049405544182763
+          },
+          "recruits_30": {
+            "score": 0.8371107739847091,
+            "degradation": 0.0010830792019653757
+          },
+          "control_30": {
+            "score": 0.949869756941465,
+            "degradation": 0.004346258444575479
+          },
+          "fielded_30": {
+            "score": 0.7495920452276645,
+            "degradation": 0.0005958925686240235
+          },
+          "state_30": {
+            "score": 0.13289433691916946,
+            "degradation": -0.0027955517515474704
+          }
+        },
+        "U": {
+          "viable_30": {
+            "score": 0.2817521241946814,
+            "degradation": -9.501766048752858e-05
+          },
+          "actions_30": {
+            "score": 0.7815472104307918,
+            "degradation": 0.0
+          },
+          "recruits_30": {
+            "score": 0.8367715276917841,
+            "degradation": 0.0007438329090403428
+          },
+          "control_30": {
+            "score": 0.9455234984968895,
+            "degradation": 0.0
+          },
+          "fielded_30": {
+            "score": 0.7479298561855385,
+            "degradation": -0.001066296473501982
+          },
+          "state_30": {
+            "score": 0.13567368440882704,
+            "degradation": -1.6204261889890548e-05
+          }
+        },
+        "Z": {
+          "viable_30": {
+            "score": 0.27606967564958645,
+            "degradation": -0.005777466205582449
+          },
+          "actions_30": {
+            "score": 0.7901070432951419,
+            "degradation": 0.008559832864350136
+          },
+          "recruits_30": {
+            "score": 0.8308044863232252,
+            "degradation": -0.0052232084595185135
+          },
+          "control_30": {
+            "score": 0.9475716007975125,
+            "degradation": 0.0020481023006229115
+          },
+          "fielded_30": {
+            "score": 0.747834292261289,
+            "degradation": -0.0011618603977515685
+          },
+          "state_30": {
+            "score": 0.13360324735397514,
+            "degradation": -0.0020866413167417996
+          }
+        },
+        "THETA": {
+          "viable_30": {
+            "score": 0.2791623608547342,
+            "degradation": -0.0026847810004346773
+          },
+          "actions_30": {
+            "score": 0.7784548403850353,
+            "degradation": -0.003092370045756465
+          },
+          "recruits_30": {
+            "score": 0.8432988860389297,
+            "degradation": 0.007271191256185916
+          },
+          "control_30": {
+            "score": 0.955040666217407,
+            "degradation": 0.009517167720517472
+          },
+          "fielded_30": {
+            "score": 0.7512067807396805,
+            "degradation": 0.002210628080639987
+          },
+          "state_30": {
+            "score": 0.13502600860624936,
+            "degradation": -0.0006638800644675757
+          }
+        }
+      }
+    },
+    "90": {
+      "full": {
+        "viable_90": 0.562516463669513,
+        "actions_90": 0.8296917658513328,
+        "recruits_90": 0.8830931755631919,
+        "control_90": 0.9003814837131616,
+        "fielded_90": 0.9282638916018584,
+        "state_90": 0.11433129032063072
+      },
+      "drop": {
+        "M": {
+          "viable_90": {
+            "score": 0.5627489084960715,
+            "degradation": 0.00023244482655848664
+          },
+          "actions_90": {
+            "score": 0.8288456126435616,
+            "degradation": -0.0008461532077711498
+          },
+          "recruits_90": {
+            "score": 0.8924827424476143,
+            "degradation": 0.009389566884422385
+          },
+          "control_90": {
+            "score": 0.8941717974074872,
+            "degradation": -0.006209686305674422
+          },
+          "fielded_90": {
+            "score": 0.9328003127291871,
+            "degradation": 0.00453642112732866
+          },
+          "state_90": {
+            "score": 0.11417053939123023,
+            "degradation": -0.0001607509294004883
+          }
+        },
+        "F": {
+          "viable_90": {
+            "score": 0.5628073806220015,
+            "degradation": 0.0002909169524885069
+          },
+          "actions_90": {
+            "score": 0.8342863679785313,
+            "degradation": 0.004594602127198533
+          },
+          "recruits_90": {
+            "score": 0.8788397053690766,
+            "degradation": -0.004253470194115261
+          },
+          "control_90": {
+            "score": 0.8986602315441858,
+            "degradation": -0.0017212521689757843
+          },
+          "fielded_90": {
+            "score": 0.9307582157368787,
+            "degradation": 0.002494324135020265
+          },
+          "state_90": {
+            "score": 0.11434661720352007,
+            "degradation": 1.532688288935491e-05
+          }
+        },
+        "L": {
+          "viable_90": {
+            "score": 0.5614557798676197,
+            "degradation": -0.0010606838018932807
+          },
+          "actions_90": {
+            "score": 0.8247661500798578,
+            "degradation": -0.004925615771474989
+          },
+          "recruits_90": {
+            "score": 0.8815808218436884,
+            "degradation": -0.0015123537195035341
+          },
+          "control_90": {
+            "score": 0.8972752695889293,
+            "degradation": -0.003106214124232287
+          },
+          "fielded_90": {
+            "score": 0.9411498676210692,
+            "degradation": 0.01288597601921082
+          },
+          "state_90": {
+            "score": 0.11383822937966395,
+            "degradation": -0.0004930609409667663
+          }
+        },
+        "K": {
+          "viable_90": {
+            "score": 0.5537560144287269,
+            "degradation": -0.008760449240786117
+          },
+          "actions_90": {
+            "score": 0.8259504986432692,
+            "degradation": -0.003741267208063559
+          },
+          "recruits_90": {
+            "score": 0.8896198171978389,
+            "degradation": 0.006526641634647001
+          },
+          "control_90": {
+            "score": 0.8938842391985524,
+            "degradation": -0.006497244514609202
+          },
+          "fielded_90": {
+            "score": 0.9364804031209907,
+            "degradation": 0.008216511519132275
+          },
+          "state_90": {
+            "score": 0.1142687366545251,
+            "degradation": -6.255366610562196e-05
+          }
+        },
+        "E": {
+          "viable_90": {
+            "score": 0.5529002487257584,
+            "degradation": -0.009616214943754642
+          },
+          "actions_90": {
+            "score": 0.832569432806756,
+            "degradation": 0.0028776669554232415
+          },
+          "recruits_90": {
+            "score": 0.8870933074305793,
+            "degradation": 0.0040001318673874575
+          },
+          "control_90": {
+            "score": 0.9010786321445554,
+            "degradation": 0.0006971484313937903
+          },
+          "fielded_90": {
+            "score": 0.9308266776603749,
+            "degradation": 0.002562786058516453
+          },
+          "state_90": {
+            "score": 0.1139422476804296,
+            "degradation": -0.00038904264020112045
+          }
+        },
+        "C": {
+          "viable_90": {
+            "score": 0.5548605840760333,
+            "degradation": -0.007655879593479686
+          },
+          "actions_90": {
+            "score": 0.8239861610342376,
+            "degradation": -0.0057056048170951446
+          },
+          "recruits_90": {
+            "score": 0.8831083450800297,
+            "degradation": 1.5169516837776342e-05
+          },
+          "control_90": {
+            "score": 0.9653390307389953,
+            "degradation": 0.06495754702583367
+          },
+          "fielded_90": {
+            "score": 0.9582150329307569,
+            "degradation": 0.029951141328898534
+          },
+          "state_90": {
+            "score": 0.12910894503953196,
+            "degradation": 0.014777654718901245
+          }
+        },
+        "X": {
+          "viable_90": {
+            "score": 0.5454350573062863,
+            "degradation": -0.017081406363226748
+          },
+          "actions_90": {
+            "score": 0.8139185893856535,
+            "degradation": -0.015773176465679217
+          },
+          "recruits_90": {
+            "score": 0.9034836805060482,
+            "degradation": 0.020390504942856325
+          },
+          "control_90": {
+            "score": 0.8868102943682002,
+            "degradation": -0.013571189344961376
+          },
+          "fielded_90": {
+            "score": 0.9388164257966685,
+            "degradation": 0.01055253419481006
+          },
+          "state_90": {
+            "score": 0.11188340688755731,
+            "degradation": -0.0024478834330734084
+          }
+        },
+        "S": {
+          "viable_90": {
+            "score": 0.5662098756061598,
+            "degradation": 0.00369341193664674
+          },
+          "actions_90": {
+            "score": 0.8245871300620752,
+            "degradation": -0.005104635789257572
+          },
+          "recruits_90": {
+            "score": 0.8778875227485404,
+            "degradation": -0.0052056528146514625
+          },
+          "control_90": {
+            "score": 0.8984322477368973,
+            "degradation": -0.0019492359762642852
+          },
+          "fielded_90": {
+            "score": 0.920489996606289,
+            "degradation": -0.007773894995569353
+          },
+          "state_90": {
+            "score": 0.11424465328013579,
+            "degradation": -8.663704049492738e-05
+          }
+        },
+        "U": {
+          "viable_90": {
+            "score": 0.562516463669513,
+            "degradation": 0.0
+          },
+          "actions_90": {
+            "score": 0.8296917658513328,
+            "degradation": 0.0
+          },
+          "recruits_90": {
+            "score": 0.883099845363062,
+            "degradation": 6.669799870073767e-06
+          },
+          "control_90": {
+            "score": 0.8990946730394234,
+            "degradation": -0.001286810673738259
+          },
+          "fielded_90": {
+            "score": 0.9282638916018584,
+            "degradation": 0.0
+          },
+          "state_90": {
+            "score": 0.11399368723561759,
+            "degradation": -0.0003376030850131273
+          }
+        },
+        "Z": {
+          "viable_90": {
+            "score": 0.5580990238864053,
+            "degradation": -0.004417439783107713
+          },
+          "actions_90": {
+            "score": 0.8295935927634761,
+            "degradation": -9.817308785664558e-05
+          },
+          "recruits_90": {
+            "score": 0.8526252762133334,
+            "degradation": -0.030467899349858496
+          },
+          "control_90": {
+            "score": 0.9024462470406259,
+            "degradation": 0.002064763327464303
+          },
+          "fielded_90": {
+            "score": 0.9294009766489824,
+            "degradation": 0.0011370850471239535
+          },
+          "state_90": {
+            "score": 0.11185268102723163,
+            "degradation": -0.0024786092933990894
+          }
+        },
+        "THETA": {
+          "viable_90": {
+            "score": 0.5632702815532298,
+            "degradation": 0.0007538178837167564
+          },
+          "actions_90": {
+            "score": 0.8275138843649398,
+            "degradation": -0.002177881486392974
+          },
+          "recruits_90": {
+            "score": 0.8903877929475629,
+            "degradation": 0.007294617384370983
+          },
+          "control_90": {
+            "score": 0.898348080221543,
+            "degradation": -0.002033403491618624
+          },
+          "fielded_90": {
+            "score": 0.9331094421477385,
+            "degradation": 0.004845550545880095
+          },
+          "state_90": {
+            "score": 0.11445342570836384,
+            "degradation": 0.00012213538773311883
+          }
+        }
+      }
+    }
+  }
+}

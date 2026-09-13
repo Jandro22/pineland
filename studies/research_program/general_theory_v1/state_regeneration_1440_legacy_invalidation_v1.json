@@ -1,0 +1,9 @@
+﻿{
+    "schema_version":  "pineland.state_regeneration_1440_legacy_invalidation.v1",
+    "status":  "INVALIDATED_WRONG_RUNNER",
+    "process_pid":  17108,
+    "output":  "state_regeneration_4seed_1440d_v3.csv",
+    "reason":  "Process used native_probe legacy state-regeneration subcommand. state_regeneration_runner_audit_v1 establishes that this path leaves state_regeneration.enabled=false and is unauthorized for theory-v2 recovery inference.",
+    "action":  "Terminated process and exclude any partial/complete output from theory evidence. Future long-horizon work must use examples/theory_v2_assays.rs state-v2 or a tested equivalent.",
+    "historical_outcomes_used":  false
+}

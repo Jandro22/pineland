@@ -1,0 +1,357 @@
+{
+  "schema_version": "pineland.professionalism_veterancy_discrimination_analysis.v1",
+  "status": "SYNTHETIC_STRUCTURAL_DISCRIMINATION",
+  "historical_outcomes_used": false,
+  "input": "studies\\research_program\\general_theory_v1\\force_discrimination_8seed_v1.csv",
+  "input_sha256": "18f89147e1a9b5c4ea532b84f1bbb7920fa8fb25908b6c75859aa582129bdc9f",
+  "integrity": {
+    "police_rows": 288,
+    "police_seed_count": 8,
+    "police_professionalism_levels": [
+      0.1,
+      0.5,
+      0.9
+    ],
+    "police_staffing_levels": [
+      0.5,
+      1.0,
+      1.5
+    ],
+    "veterancy_rows": 3072,
+    "veterancy_replicates": 256,
+    "veterancy_pairs": 3,
+    "turnover_levels": [
+      0.0,
+      0.2,
+      0.4,
+      0.5999999999999999
+    ]
+  },
+  "police_professionalism": {
+    "distinct_dynamic_state_signature_pass": true,
+    "early_high_minus_low_professionalism_gap": 0.6847516187298122,
+    "late_high_minus_low_professionalism_gap": 0.23048073579640738,
+    "late_to_early_gap_ratio": 0.3365902752065636,
+    "max_abs_mean_intelligence_gap": 0.05371104727312406,
+    "max_abs_mean_cumulative_disruption_gap": 253.26830427957606,
+    "professionalism_contrasts": [
+      {
+        "staffing_multiplier": 0.5,
+        "time": 14.0,
+        "mean_professionalism_gap": 0.6847516187298122,
+        "mean_intelligence_gap": 0.008789546493336551,
+        "mean_disruption_gap": 5.161576160906559
+      },
+      {
+        "staffing_multiplier": 0.5,
+        "time": 28.0,
+        "mean_professionalism_gap": 0.5861059741913726,
+        "mean_intelligence_gap": 0.01572560891004121,
+        "mean_disruption_gap": 14.17233630969026
+      },
+      {
+        "staffing_multiplier": 0.5,
+        "time": 56.0,
+        "mean_professionalism_gap": 0.4294002662285224,
+        "mean_intelligence_gap": 0.024456116163127976,
+        "mean_disruption_gap": 41.145498147744476
+      },
+      {
+        "staffing_multiplier": 0.5,
+        "time": 112.0,
+        "mean_professionalism_gap": 0.23048073579640738,
+        "mean_intelligence_gap": 0.03003011789130467,
+        "mean_disruption_gap": 102.18626679088402
+      },
+      {
+        "staffing_multiplier": 1.0,
+        "time": 14.0,
+        "mean_professionalism_gap": 0.6847516187298122,
+        "mean_intelligence_gap": 0.01733671308634274,
+        "mean_disruption_gap": 13.75105816253993
+      },
+      {
+        "staffing_multiplier": 1.0,
+        "time": 28.0,
+        "mean_professionalism_gap": 0.5861059741913726,
+        "mean_intelligence_gap": 0.030589556718907687,
+        "mean_disruption_gap": 37.437433822216946
+      },
+      {
+        "staffing_multiplier": 1.0,
+        "time": 56.0,
+        "mean_professionalism_gap": 0.4294002662285224,
+        "mean_intelligence_gap": 0.04626337059656899,
+        "mean_disruption_gap": 106.44844436039533
+      },
+      {
+        "staffing_multiplier": 1.0,
+        "time": 112.0,
+        "mean_professionalism_gap": 0.23048073579640738,
+        "mean_intelligence_gap": 0.05371104727312406,
+        "mean_disruption_gap": 253.26830427957606
+      },
+      {
+        "staffing_multiplier": 1.5,
+        "time": 14.0,
+        "mean_professionalism_gap": 0.6847516187298122,
+        "mean_intelligence_gap": 0.01733671308634274,
+        "mean_disruption_gap": 13.75105816253993
+      },
+      {
+        "staffing_multiplier": 1.5,
+        "time": 28.0,
+        "mean_professionalism_gap": 0.5861059741913726,
+        "mean_intelligence_gap": 0.030589556718907687,
+        "mean_disruption_gap": 37.437433822216946
+      },
+      {
+        "staffing_multiplier": 1.5,
+        "time": 56.0,
+        "mean_professionalism_gap": 0.42940026622852234,
+        "mean_intelligence_gap": 0.04626337059656899,
+        "mean_disruption_gap": 106.44844436039533
+      },
+      {
+        "staffing_multiplier": 1.5,
+        "time": 112.0,
+        "mean_professionalism_gap": 0.23048073579640738,
+        "mean_intelligence_gap": 0.05371104727312406,
+        "mean_disruption_gap": 253.26830427957606
+      }
+    ],
+    "half_to_full_staffing_contrasts": [
+      {
+        "initial_professionalism": 0.1,
+        "time": 14.0,
+        "mean_intelligence_gap": 0.009041229309636075,
+        "mean_disruption_gap": 5.326154078196231
+      },
+      {
+        "initial_professionalism": 0.1,
+        "time": 28.0,
+        "mean_intelligence_gap": 0.01812666232698411,
+        "mean_disruption_gap": 16.410030616570285
+      },
+      {
+        "initial_professionalism": 0.1,
+        "time": 56.0,
+        "mean_intelligence_gap": 0.0363008017739285,
+        "mean_disruption_gap": 63.24647141949017
+      },
+      {
+        "initial_professionalism": 0.1,
+        "time": 112.0,
+        "mean_intelligence_gap": 0.0687891679111973,
+        "mean_disruption_gap": 252.1634983592087
+      },
+      {
+        "initial_professionalism": 0.5,
+        "time": 14.0,
+        "mean_intelligence_gap": 0.013344217645738827,
+        "mean_disruption_gap": 9.207599852118495
+      },
+      {
+        "initial_professionalism": 0.5,
+        "time": 28.0,
+        "mean_intelligence_gap": 0.02565419695781806,
+        "mean_disruption_gap": 27.038744500973333
+      },
+      {
+        "initial_professionalism": 0.5,
+        "time": 56.0,
+        "mean_intelligence_gap": 0.04744278208743074,
+        "mean_disruption_gap": 93.76741488527716
+      },
+      {
+        "initial_professionalism": 0.5,
+        "time": 112.0,
+        "mean_intelligence_gap": 0.08101297191154505,
+        "mean_disruption_gap": 324.8562928018972
+      },
+      {
+        "initial_professionalism": 0.9,
+        "time": 14.0,
+        "mean_intelligence_gap": 0.017588395902642263,
+        "mean_disruption_gap": 13.915636079829603
+      },
+      {
+        "initial_professionalism": 0.9,
+        "time": 28.0,
+        "mean_intelligence_gap": 0.032990610135850584,
+        "mean_disruption_gap": 39.67512812909697
+      },
+      {
+        "initial_professionalism": 0.9,
+        "time": 56.0,
+        "mean_intelligence_gap": 0.05810805620736951,
+        "mean_disruption_gap": 128.54941763214103
+      },
+      {
+        "initial_professionalism": 0.9,
+        "time": 112.0,
+        "mean_intelligence_gap": 0.0924700972930167,
+        "mean_disruption_gap": 403.2455358479007
+      }
+    ]
+  },
+  "formation_veterancy": {
+    "distinct_dynamic_state_signature_pass": true,
+    "baseline_common_factor_spread": 0.0,
+    "baseline_common_rng_max_loss_difference": 0.0,
+    "turnover_spreads": [
+      {
+        "turnover": 0.0,
+        "experience_spread": 0.8,
+        "capability_factor_spread": 0.0,
+        "actor_loss_spread": 0.0,
+        "defender_loss_spread": 0.0
+      },
+      {
+        "turnover": 0.2,
+        "experience_spread": 0.6399999999999999,
+        "capability_factor_spread": 0.050000000000000044,
+        "actor_loss_spread": 0.0003972756101112418,
+        "defender_loss_spread": 0.0003891747498674797
+      },
+      {
+        "turnover": 0.4,
+        "experience_spread": 0.47999999999999987,
+        "capability_factor_spread": 0.09999999999999998,
+        "actor_loss_spread": 0.0008379710670470518,
+        "defender_loss_spread": 0.0007939600821228205
+      },
+      {
+        "turnover": 0.5999999999999999,
+        "experience_spread": 0.31999999999999984,
+        "capability_factor_spread": 0.15000000000000013,
+        "actor_loss_spread": 0.0013307609636867678,
+        "defender_loss_spread": 0.0012162609106419614
+      }
+    ],
+    "cell_summary": [
+      {
+        "turnover": 0.0,
+        "pair": 0,
+        "quality": 0.9375,
+        "initial_experience": 0.1,
+        "mean_post_experience": 0.1,
+        "mean_capability_factor": 0.75,
+        "mean_loss_actor": 0.012598417642960193,
+        "mean_loss_defender": 0.012730697637598211
+      },
+      {
+        "turnover": 0.0,
+        "pair": 1,
+        "quality": 0.75,
+        "initial_experience": 0.5,
+        "mean_post_experience": 0.5,
+        "mean_capability_factor": 0.75,
+        "mean_loss_actor": 0.012598417642960193,
+        "mean_loss_defender": 0.012730697637598211
+      },
+      {
+        "turnover": 0.0,
+        "pair": 2,
+        "quality": 0.625,
+        "initial_experience": 0.9,
+        "mean_post_experience": 0.9,
+        "mean_capability_factor": 0.75,
+        "mean_loss_actor": 0.012598417642960193,
+        "mean_loss_defender": 0.012730697637598211
+      },
+      {
+        "turnover": 0.2,
+        "pair": 0,
+        "quality": 0.9375,
+        "initial_experience": 0.1,
+        "mean_post_experience": 0.1,
+        "mean_capability_factor": 0.75,
+        "mean_loss_actor": 0.012598417642960193,
+        "mean_loss_defender": 0.012730697637598211
+      },
+      {
+        "turnover": 0.2,
+        "pair": 1,
+        "quality": 0.75,
+        "initial_experience": 0.5,
+        "mean_post_experience": 0.4199999999999999,
+        "mean_capability_factor": 0.7199999999999999,
+        "mean_loss_actor": 0.012831988048139911,
+        "mean_loss_defender": 0.012498970940668704
+      },
+      {
+        "turnover": 0.2,
+        "pair": 2,
+        "quality": 0.625,
+        "initial_experience": 0.9,
+        "mean_post_experience": 0.7399999999999999,
+        "mean_capability_factor": 0.7,
+        "mean_loss_actor": 0.012995693253071434,
+        "mean_loss_defender": 0.012341522887730732
+      },
+      {
+        "turnover": 0.4,
+        "pair": 0,
+        "quality": 0.9375,
+        "initial_experience": 0.1,
+        "mean_post_experience": 0.1,
+        "mean_capability_factor": 0.75,
+        "mean_loss_actor": 0.012598417642960193,
+        "mean_loss_defender": 0.012730697637598211
+      },
+      {
+        "turnover": 0.4,
+        "pair": 1,
+        "quality": 0.75,
+        "initial_experience": 0.5,
+        "mean_post_experience": 0.34,
+        "mean_capability_factor": 0.69,
+        "mean_loss_actor": 0.01308011249074117,
+        "mean_loss_defender": 0.012261870518180912
+      },
+      {
+        "turnover": 0.4,
+        "pair": 2,
+        "quality": 0.625,
+        "initial_experience": 0.9,
+        "mean_post_experience": 0.5799999999999998,
+        "mean_capability_factor": 0.65,
+        "mean_loss_actor": 0.013436388710007244,
+        "mean_loss_defender": 0.01193673755547539
+      },
+      {
+        "turnover": 0.5999999999999999,
+        "pair": 0,
+        "quality": 0.9375,
+        "initial_experience": 0.1,
+        "mean_post_experience": 0.1,
+        "mean_capability_factor": 0.75,
+        "mean_loss_actor": 0.012598417642960193,
+        "mean_loss_defender": 0.012730697637598211
+      },
+      {
+        "turnover": 0.5999999999999999,
+        "pair": 1,
+        "quality": 0.75,
+        "initial_experience": 0.5,
+        "mean_post_experience": 0.26,
+        "mean_capability_factor": 0.66,
+        "mean_loss_actor": 0.013344392235859521,
+        "mean_loss_defender": 0.012019029633564904
+      },
+      {
+        "turnover": 0.5999999999999999,
+        "pair": 2,
+        "quality": 0.625,
+        "initial_experience": 0.9,
+        "mean_post_experience": 0.4199999999999999,
+        "mean_capability_factor": 0.5999999999999999,
+        "mean_loss_actor": 0.01392917860664696,
+        "mean_loss_defender": 0.01151443672695625
+      }
+    ]
+  },
+  "joint_conclusion": "BOTH_NEW_STATES_STRUCTURALLY_DISTINCT",
+  "interpretation_guard": "Synthetic structural identification only; no historical or empirical magnitude claim is licensed."
+}

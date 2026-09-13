@@ -1,0 +1,35 @@
+{
+  "schema_version": "pineland.graph_flux_closure_identity.v1",
+  "status": "SOURCE_DERIVED_THEORY_IDENTITY",
+  "registered_date": "2026-09-12",
+  "historical_outcomes_used": false,
+  "implemented_model_facts": {
+    "default_relocation_scope": "adjacent",
+    "command_interval_days": 1.0,
+    "force_movement_interval_days": 0.25,
+    "nominal_local_net_flux_form": "Phi_i = sum_{j in N(i)} S_j q_{j->i} - S_i sum_{k in N(i)} q_{i->k}, with committed orders entering at full transported strength and prospective q containing command-decision and destination-choice probabilities.",
+    "executable_flux_correction": "For prospective orders q_exec = q_nominal * command_reliability. Already committed orders have passed the reliability draw and retain full weight."
+  },
+  "closure_identity": {
+    "claim": "Net flux is a first-moment projection of a higher-dimensional graph source state and is generally non-injective. Equal Phi_i does not imply equal future Phi_i.",
+    "derivation": [
+      "Let z_N(i) contain neighboring formation strength, command state, recruitment/rooted reservoirs, beliefs, footholds, and destination propensities.",
+      "The diagnostic flux is a projection Phi_i = h(z_N(i)). Many distinct z_N(i) can map to the same scalar Phi_i.",
+      "The next flux satisfies Phi_i(t+dt) = h(T(z_N(i), noise)). If T varies along a level set of h, then equal current Phi_i cannot define a Markov state for future Phi_i.",
+      "Therefore scalar-flux closure requires either that h be sufficient on the tested support or that source-state evolution be conditionally identical on each h-level set. The strict closure failures falsify that sufficiency on the tested 30d support."
+    ]
+  },
+  "spatial_markov_blanket": {
+    "one_step": "With adjacent-only relocation, the direct causal source set for next-command incoming movement is the one-hop neighborhood N(i).",
+    "multi_step": "Over repeated relocation/recruitment cycles, information can enter N(i) from N^2(i), then N^3(i), so the spatial support required for finite-horizon closure can expand with horizon.",
+    "consequence": "Reduced closure should be treated as a graph-field/horizon problem, not assumed to be a fixed-dimensional per-locality ODE problem."
+  },
+  "falsifiable_predictions": [
+    "Replacing nominal net flux with command-reliability-weighted executable net flux should reduce transport-driven closure failures if command realizability is the dominant omitted source state.",
+    "If executable flux is insufficient, adding one-hop transportable force, rooted stock, and recruitment hazard should reduce transport/reproduction failures if the missing state is the graph Markov blanket.",
+    "If one-hop state is sufficient at short horizons but not long horizons, demonstrable non-equivalence should reappear as horizon increases, consistent with an expanding spatial causal cone.",
+    "If one-hop state fails immediately even at short horizons, either the source projection remains too coarse or non-movement channels create longer-range coupling."
+  ],
+  "general_theory_interpretation": "A locality can be observationally identical in current stock and net flux while embedded in a different insurgent source network. The distinction is analogous to matching water level and current flow while ignoring the upstream reservoir and valve state: the derivative of the flow remains unidentified.",
+  "scientific_guard": "The mathematical non-injectivity statement is about the implemented synthetic graph process. Any claim that a real conflict has the same Markov blanket or propagation radius requires historical/empirical validation."
+}

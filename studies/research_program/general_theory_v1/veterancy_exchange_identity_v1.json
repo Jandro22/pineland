@@ -1,0 +1,24 @@
+{
+  "schema_version": "pineland.veterancy_exchange_identity.v1",
+  "historical_outcomes_used": false,
+  "source": "rust/pineland-model/src/combat.rs and rust/pineland-model/src/state_regeneration.rs",
+  "scope": "Analytic identity of implemented synthetic combat equations; not an empirical estimate.",
+  "combat_identity": {
+    "experience_multiplier": "V(E)=0.75+0.50E when state regeneration is enabled",
+    "capability_scaling": "C proportional to N^0.72 * V(E), holding other factors fixed",
+    "advantage": "A=ln(C_own)-ln(C_opponent)",
+    "own_fractional_loss": "L_own proportional to exp(-0.45 A)",
+    "opponent_fractional_loss": "L_enemy proportional to exp(+0.45 A)",
+    "exchange_ratio_scaling": "ER proportional to q^0.90 for an own-side experience multiplier ratio q"
+  },
+  "worked_example_E_0.1_to_0.9": {
+    "q": 1.5,
+    "personnel_equivalence_ratio": 1.7561887595477745,
+    "own_fractional_loss_multiplier": 0.8332185563593787,
+    "opponent_fractional_loss_multiplier": 1.200165301609877,
+    "exchange_ratio_multiplier": 1.440396751188327
+  },
+  "replacement_identity": "Adding trained but inexperienced replacements at E=0.10 dilutes formation experience by personnel-weighted averaging; survivors retain accumulated experience.",
+  "hypothesis": "Veterancy creates positive survival hysteresis: experienced formations lose a smaller fraction per comparable contact, preserve more veteran stock, and require fewer inexperienced replacements, while high-turnover formations can enter a dilution spiral.",
+  "guard": "Synthetic mechanism identity only. Effects assume no max-loss cap binds and all non-experience combat factors are held fixed."
+}

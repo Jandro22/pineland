@@ -1,0 +1,56 @@
+{
+  "schema_version": "pineland.general_theory_experiment_registry.v2",
+  "status": "V2_REDUCTION_AND_FALSIFICATION_ACTIVE",
+  "historical_rerun_authorized": false,
+  "supersedes": "experiment_registry_v1.json",
+  "preserved_completed_program": [
+    "GT01_source_mapping",
+    "GT02_macrostate_panel",
+    "GT03_macrostate_closure",
+    "GT04_channel_factorial",
+    "GT05_reproduction_operator",
+    "GT06_criticality_sweep",
+    "GT07_dimensionless_phase_diagram",
+    "GT08_state_side_reproduction",
+    "GT03B_distributional_closure"
+  ],
+  "v2_required_sequence": [
+    {
+      "order": 1,
+      "id": "GT12_v2_omitted_state_stress",
+      "purpose": "Hold the existing competitive11 macrostate fixed, perturb police professionalism and government/insurgent formation experience as hidden states, and test whether future outcome distributions materially change under common random numbers.",
+      "historical": false
+    },
+    {
+      "order": 2,
+      "id": "GT13_v2_distributional_closure",
+      "purpose": "Compare competitive11v2 against an augmented macrostate containing police professionalism and both government and insurgent veterancy using adversarial matched full-state continuations.",
+      "historical": false
+    },
+    {
+      "order": 3,
+      "id": "GT14_v2_competitive_regeneration",
+      "purpose": "Activate both insurgent reproduction and hierarchical state regeneration to test whether state flows alter survival, rebound, and control without assuming a scalar state reproduction number.",
+      "historical": false
+    },
+    {
+      "order": 4,
+      "id": "GT15_v2_reduced_system_holdout",
+      "purpose": "Derive and freeze the smallest surviving reduced system, then test untouched seeds, parameter cells, interventions, scales, and topology families.",
+      "historical": false
+    },
+    {
+      "order": 5,
+      "id": "GT16_v2_resolution_topology_invariance",
+      "purpose": "Test agent resolution, topology family, scheduling resolution, and structural-context invariance of the surviving v2 laws.",
+      "historical": false
+    },
+    {
+      "order": 6,
+      "id": "GT17_historical_transport",
+      "purpose": "Eligible historical transport and reduced competitors only after a corrected v2 synthetic freeze.",
+      "historical": true,
+      "authorized": false
+    }
+  ]
+}

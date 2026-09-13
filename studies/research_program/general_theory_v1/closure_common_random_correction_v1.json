@@ -1,0 +1,25 @@
+{
+  "schema_version": "pineland.closure_common_random_correction.v1",
+  "status": "METHOD_CORRECTION_REGISTERED_BEFORE_TRANSPORT_SCREENING_OUTCOMES",
+  "created_utc": "2026-09-11T12:12:00Z",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "problem": "The v2 closure probe used a future RNG namespace containing the candidate model label and a candidate-local pair ordinal. Left/right sides within one candidate correctly shared common random numbers, so each individual closure test remained internally valid. However, the same physical matched pair evaluated under two candidate macrostates received different future random streams, adding Monte Carlo noise to cross-candidate structural comparisons.",
+  "discovery_context": "On the fresh 2026103000 screening support, competitive14v2 and renewal15v2 selected effectively identical matched pairs but produced different significance outcomes. Source inspection revealed candidate-specific continuation namespaces. No transport15v2 or reaction_transport17v2 screening outcome had been observed when this correction was registered; the running screening batch was terminated.",
+  "correction": {
+    "old_namespace": "gt-closure-v2:{candidate}:{pair_id}:{branch}",
+    "new_namespace": "gt-closure-v3:{left_seed}:{right_seed}:{locality}:{branch}",
+    "branch_seed": "seed_from_namespace(202609300000, new_namespace, 'branch')",
+    "property": "Any identical matched state pair receives identical future process streams regardless of which candidate feature set selected it."
+  },
+  "evidence_policy": {
+    "old_individual_closure_tests": "May be retained as descriptive within-candidate closure results because side-level CRN was valid.",
+    "old_cross_candidate_differences": "Do not use for structural model selection.",
+    "fresh_screening_files_to_supersede": [
+      "screen_competitive14v2_18x12x16_30d_v1.csv",
+      "screen_renewal15v2_18x12x16_30d_v1.csv"
+    ],
+    "rerun_suffix": "v2_crn"
+  },
+  "guard": "This is a variance-control/methodology repair only. It changes no production Pineland causal mechanism and no preregistered closure threshold."
+}

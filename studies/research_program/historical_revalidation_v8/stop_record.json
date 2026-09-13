@@ -1,0 +1,44 @@
+{
+  "schema_version": "pineland.historical_revalidation_stop_record.v1",
+  "status": "partial_results_only",
+  "user_requested_boundary": "Stop after the Afghanistan 7500 initial-strength condition.",
+  "source_identity": {
+    "model_sha256": "4905b3fcd1caa0ad49508e4bf771f41f6e92c8af758e378a477df989be024715",
+    "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "valid_results": {
+    "nepal_full": {
+      "complete": true,
+      "members": 8,
+      "seeds": [20011126, 20021133, 20031140, 20041147, 20051154, 20061161, 20071168, 20081175],
+      "all_members_hash_validated": true
+    },
+    "nepal_competition": {
+      "complete": true,
+      "rows": 19575,
+      "verdict": "simple_models_not_beaten_on_all_holdouts",
+      "coin_science_authorized": false
+    },
+    "afghanistan_init_smoke_year": {
+      "complete": true,
+      "seed": 20040101,
+      "strength": 7500,
+      "gates_passed": true
+    },
+    "afghanistan_full": {
+      "complete_strength_conditions": [5000, 7500],
+      "seed": 20040101,
+      "all_completed_conditions_gates_passed": true,
+      "conditions_are_initialization_uncertainty_not_replications": true
+    }
+  },
+  "not_completed": {
+    "afghanistan_full_strength": 10000,
+    "afghanistan_competition": true,
+    "final_historical_confrontation_gate": true,
+    "general_theory_promotion": true,
+    "calibration": true,
+    "coin_inference": true
+  },
+  "interpretation_rule": "The partial Afghanistan envelope is descriptive only. It does not authorize a cross-case historical verdict, because the 10000 condition and identical-row Afghanistan competition were not completed."
+}

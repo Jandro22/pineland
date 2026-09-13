@@ -1,0 +1,137 @@
+{
+  "schema_version": "pineland.development_sequence_frontier_results.v1",
+  "status": "CAPACITY_FIRST_SEQUENCING_SUPPORTED",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/development_sequence_frontier_6seed_v1.csv",
+  "input_sha256": "e04e35d880e0b8b11f181b3c9e8034eb59f68c07fb3c74dbe4a2d9e692543e6b",
+  "seed_count": 6,
+  "summaries": {
+    "delayed20": {
+      "mean_total_outflow": 2263786.697998045,
+      "mean_political_outflow": 2254046.278668624,
+      "mean_governance_outflow": 3593.8198551203823,
+      "mean_regeneration_outflow": 6146.599474300674,
+      "median_first_below_10pct_day": 150.0,
+      "mean_final_legitimacy": 0.4204326384794164,
+      "mean_final_capacity": 0.5117095863862317,
+      "mean_final_control": 0.5958841357250205,
+      "mean_final_capital": 1822.9367568428759
+    },
+    "immediate20": {
+      "mean_total_outflow": 2263724.686916878,
+      "mean_political_outflow": 2257582.676209397,
+      "mean_governance_outflow": 0.0,
+      "mean_regeneration_outflow": 6142.0107074814,
+      "median_first_below_10pct_day": 90.0,
+      "mean_final_legitimacy": 0.4189235418151352,
+      "mean_final_capacity": 0.5127893757778647,
+      "mean_final_control": 0.5934647294396596,
+      "mean_final_capital": 1809.0929837833125
+    },
+    "ramp20": {
+      "mean_total_outflow": 2263807.357077802,
+      "mean_political_outflow": 2252235.722593817,
+      "mean_governance_outflow": 5394.566802716232,
+      "mean_regeneration_outflow": 6177.067681268646,
+      "median_first_below_10pct_day": 180.0,
+      "mean_final_legitimacy": 0.4254102446550008,
+      "mean_final_capacity": 0.5136643072333896,
+      "mean_final_control": 0.5972589760879315,
+      "mean_final_capital": 1829.8445070508662
+    },
+    "steady5": {
+      "mean_total_outflow": 2263807.372605623,
+      "mean_political_outflow": 2252249.558524881,
+      "mean_governance_outflow": 5386.433232183907,
+      "mean_regeneration_outflow": 6171.38084855854,
+      "median_first_below_10pct_day": 180.0,
+      "mean_final_legitimacy": 0.4266239165498602,
+      "mean_final_capacity": 0.5142272641528481,
+      "mean_final_control": 0.5972983846088175,
+      "mean_final_capital": 1829.8585129136836
+    }
+  },
+  "same_spend_pairwise": [
+    {
+      "left": "delayed20",
+      "right": "immediate20",
+      "within_1pct_total_outflow": true,
+      "relative_total_outflow_difference": 2.7393384683845203e-05,
+      "right_minus_left_governance_outflow": -3593.8198551203823,
+      "right_minus_left_legitimacy": -0.0015090966642812287,
+      "right_minus_left_capacity": 0.0010797893916330015,
+      "right_minus_left_control": -0.00241940628536097
+    },
+    {
+      "left": "delayed20",
+      "right": "ramp20",
+      "within_1pct_total_outflow": true,
+      "relative_total_outflow_difference": 9.125895021524349e-06,
+      "right_minus_left_governance_outflow": 1800.7469475958496,
+      "right_minus_left_legitimacy": 0.004977606175584404,
+      "right_minus_left_capacity": 0.0019547208471579758,
+      "right_minus_left_control": 0.0013748403629110229
+    },
+    {
+      "left": "delayed20",
+      "right": "steady5",
+      "within_1pct_total_outflow": true,
+      "relative_total_outflow_difference": 9.132754246008565e-06,
+      "right_minus_left_governance_outflow": 1792.6133770635251,
+      "right_minus_left_legitimacy": 0.006191278070443784,
+      "right_minus_left_capacity": 0.0025176777666164885,
+      "right_minus_left_control": 0.0014142488837969314
+    },
+    {
+      "left": "immediate20",
+      "right": "ramp20",
+      "within_1pct_total_outflow": true,
+      "relative_total_outflow_difference": 3.651952969452246e-05,
+      "right_minus_left_governance_outflow": 5394.566802716232,
+      "right_minus_left_legitimacy": 0.006486702839865632,
+      "right_minus_left_capacity": 0.0008749314555249743,
+      "right_minus_left_control": 0.0037942466482719928
+    },
+    {
+      "left": "immediate20",
+      "right": "steady5",
+      "within_1pct_total_outflow": true,
+      "relative_total_outflow_difference": 3.652638910690405e-05,
+      "right_minus_left_governance_outflow": 5386.433232183907,
+      "right_minus_left_legitimacy": 0.007700374734725013,
+      "right_minus_left_capacity": 0.001437888374983487,
+      "right_minus_left_control": 0.0038336551691579013
+    },
+    {
+      "left": "ramp20",
+      "right": "steady5",
+      "within_1pct_total_outflow": true,
+      "relative_total_outflow_difference": 6.8591618882251434e-09,
+      "right_minus_left_governance_outflow": -8.133570532324484,
+      "right_minus_left_legitimacy": 0.0012136718948593805,
+      "right_minus_left_capacity": 0.0005629569194585127,
+      "right_minus_left_control": 3.9408520885908516e-05
+    }
+  ],
+  "immediate20_sequence_tests": [
+    {
+      "schedule": "delayed20",
+      "within_1pct_total_outflow": true,
+      "more_governance": true,
+      "better_legitimacy": true,
+      "better_capacity": false,
+      "better_control": true,
+      "relative_total_outflow_difference": 2.7393384683845203e-05
+    },
+    {
+      "schedule": "ramp20",
+      "within_1pct_total_outflow": true,
+      "more_governance": true,
+      "better_legitimacy": true,
+      "better_capacity": true,
+      "better_control": true,
+      "relative_total_outflow_difference": 3.651952969452246e-05
+    }
+  ],
+  "guard": "Synthetic temporal-allocation mechanism only; internal capital is not real dollars."
+}

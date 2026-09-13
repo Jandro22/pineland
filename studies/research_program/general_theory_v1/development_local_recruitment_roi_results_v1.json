@@ -1,0 +1,362 @@
+{
+  "schema_version": "pineland.development_local_recruitment_roi_results.v1",
+  "status": "SYNTHETIC_LOCAL_DEVELOPMENT_RECRUITMENT_ROI_MAPPED",
+  "historical_outcomes_used": false,
+  "input": "studies\\research_program\\general_theory_v1\\development_local_recruitment_roi_12seed_v1.csv",
+  "input_sha256": "4fddf0492dd6a6f9d4b08e4723e9924b12790b915b93e9c70960f1c3b265fc04",
+  "seed_count": 12,
+  "locality_count": 34,
+  "fixed_increment": 1200.0,
+  "all_localities": {
+    "baseline_hazard": {
+      "n": 408,
+      "mean": 1.420940189553944,
+      "median": 0.48395203741707193,
+      "p10": 0.019785650702475115,
+      "p90": 4.57495699090207
+    },
+    "hazard_reduction_for_fixed_increment": {
+      "n": 408,
+      "mean": 0.00020375239470896424,
+      "median": 8.525698867314999e-05,
+      "p10": 4.88333300552e-06,
+      "p90": 0.0005001534103320001
+    },
+    "fractional_hazard_reduction_positive_hazard_only": {
+      "n": 382,
+      "mean": 0.0002828554909442152,
+      "median": 0.0001542956304203,
+      "p10": 4.6883208250359995e-05,
+      "p90": 0.0006761528664614301
+    },
+    "incremental_political_access": {
+      "n": 408,
+      "mean": 0.0007713678634127,
+      "median": 0.00042690441367164997,
+      "p10": 0.00012482599889556,
+      "p90": 0.00170128754317537
+    },
+    "saturation_headroom": {
+      "n": 408,
+      "mean": 93327.74008717408,
+      "median": 66254.03702836289,
+      "p10": 13950.246976717315,
+      "p90": 216754.086162744
+    }
+  },
+  "threat_absorption_quadrants": {
+    "high_threat__high_absorption": {
+      "rows": 71,
+      "baseline_hazard": {
+        "n": 71,
+        "mean": 1.7507273379227704,
+        "median": 0.9266016646049868,
+        "p10": 0.5116550308168569,
+        "p90": 4.541625637533877
+      },
+      "incremental_political_access": {
+        "n": 71,
+        "mean": 0.0011009096408628352,
+        "median": 0.0008188378016913,
+        "p10": 0.0004369443845555,
+        "p90": 0.0020152577947588
+      },
+      "hazard_reduction_for_fixed_increment": {
+        "n": 71,
+        "mean": 0.0006214638166905619,
+        "median": 0.0003447910284655,
+        "p10": 0.0001180954029153,
+        "p90": 0.0014744585562198
+      },
+      "fractional_hazard_reduction": {
+        "n": 71,
+        "mean": 0.00042330155653870564,
+        "median": 0.0002935584360627,
+        "p10": 0.0001626633712913,
+        "p90": 0.0008115571717645
+      },
+      "headroom_to_saturation": {
+        "n": 71,
+        "mean": 35511.404668286086,
+        "median": 32241.80371822548,
+        "p10": 12874.939468277147,
+        "p90": 66709.30031879547
+      }
+    },
+    "high_threat__low_absorption": {
+      "rows": 133,
+      "baseline_hazard": {
+        "n": 133,
+        "mean": 3.1552058196000816,
+        "median": 2.063906098918352,
+        "p10": 0.6081842637745511,
+        "p90": 7.10321917307278
+      },
+      "incremental_political_access": {
+        "n": 133,
+        "mean": 0.00020712687569680827,
+        "median": 0.0001985885884886,
+        "p10": 9.110621159616e-05,
+        "p90": 0.00033891946052297996
+      },
+      "hazard_reduction_for_fixed_increment": {
+        "n": 133,
+        "mean": 0.00020708892178743232,
+        "median": 0.0001458003190288,
+        "p10": 4.081063840058e-05,
+        "p90": 0.00045901689712294
+      },
+      "fractional_hazard_reduction": {
+        "n": 133,
+        "mean": 7.675919038083909e-05,
+        "median": 6.99059791902e-05,
+        "p10": 3.30077235521e-05,
+        "p90": 0.00012703621804584
+      },
+      "headroom_to_saturation": {
+        "n": 133,
+        "mean": 169365.74681825674,
+        "median": 147744.93522579627,
+        "p10": 81294.35476897305,
+        "p90": 289559.44349567714
+      }
+    },
+    "low_threat__high_absorption": {
+      "rows": 133,
+      "baseline_hazard": {
+        "n": 133,
+        "mean": 0.1494393959681284,
+        "median": 0.0878577564967888,
+        "p10": 0.0,
+        "p90": 0.37688681124214407
+      },
+      "incremental_political_access": {
+        "n": 133,
+        "mean": 0.0014364061504650656,
+        "median": 0.001096472255784,
+        "p10": 0.0005144132764611201,
+        "p90": 0.0023026730723968397
+      },
+      "hazard_reduction_for_fixed_increment": {
+        "n": 133,
+        "mean": 7.430750138281579e-05,
+        "median": 2.74468472348e-05,
+        "p10": 0.0,
+        "p90": 0.00017802570681377998
+      },
+      "fractional_hazard_reduction": {
+        "n": 133,
+        "mean": 0.00045813201994673826,
+        "median": 0.000360079475215,
+        "p10": 0.0,
+        "p90": 0.0008496848864883599
+      },
+      "headroom_to_saturation": {
+        "n": 133,
+        "mean": 27881.149970762963,
+        "median": 23941.16242696028,
+        "p10": 9644.880327706127,
+        "p90": 53058.84653667993
+      }
+    },
+    "low_threat__low_absorption": {
+      "rows": 71,
+      "baseline_hazard": {
+        "n": 71,
+        "mean": 0.22428369964676811,
+        "median": 0.2306921153751836,
+        "p10": 0.0355083313247724,
+        "p90": 0.4770351169027953
+      },
+      "incremental_political_access": {
+        "n": 71,
+        "mean": 0.00025300860974071976,
+        "median": 0.0002400809049996,
+        "p10": 0.0001189236807269,
+        "p90": 0.0004014660755962
+      },
+      "hazard_reduction_for_fixed_increment": {
+        "n": 71,
+        "mean": 2.227213767020423e-05,
+        "median": 1.8543088146e-05,
+        "p10": 3.3878831436e-06,
+        "p90": 4.92451187574e-05
+      },
+      "fractional_hazard_reduction": {
+        "n": 71,
+        "mean": 9.65613528573845e-05,
+        "median": 9.10604893737e-05,
+        "p10": 3.41829753003e-05,
+        "p90": 0.0001730963657485
+      },
+      "headroom_to_saturation": {
+        "n": 71,
+        "mean": 131303.8162137901,
+        "median": 112799.1564038204,
+        "p10": 61854.77998983971,
+        "p90": 215214.57504593505
+      }
+    }
+  },
+  "seed_best_targets": [
+    {
+      "seed": 2026150000,
+      "roi_best_locality": 27,
+      "roi_best_hazard_reduction": 0.0014786967585494,
+      "roi_best_baseline_hazard": 1.1920994296665792,
+      "roi_best_access_gain": 0.0031124884416322,
+      "max_threat_locality": 24,
+      "max_threat_hazard_reduction": 0.0007374663520349,
+      "max_threat_baseline_hazard": 10.549403077926412,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 2.0051040355525562
+    },
+    {
+      "seed": 2026150001,
+      "roi_best_locality": 27,
+      "roi_best_hazard_reduction": 0.001720156951095,
+      "roi_best_baseline_hazard": 6.67505299639203,
+      "roi_best_access_gain": 0.0006793180953822,
+      "max_threat_locality": 13,
+      "max_threat_hazard_reduction": 0.0002211042445976,
+      "max_threat_baseline_hazard": 7.136800626407972,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 7.779845901310534
+    },
+    {
+      "seed": 2026150002,
+      "roi_best_locality": 29,
+      "roi_best_hazard_reduction": 0.0039818363721229,
+      "roi_best_baseline_hazard": 1.3934041158465515,
+      "roi_best_access_gain": 0.0066549852917824,
+      "max_threat_locality": 20,
+      "max_threat_hazard_reduction": 0.0014744585562198,
+      "max_threat_baseline_hazard": 7.706563774869687,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 2.700541398960366
+    },
+    {
+      "seed": 2026150003,
+      "roi_best_locality": 17,
+      "roi_best_hazard_reduction": 0.0009694304048427,
+      "roi_best_baseline_hazard": 5.82967671034862,
+      "roi_best_access_gain": 0.000490424739441,
+      "max_threat_locality": 7,
+      "max_threat_hazard_reduction": 0.0006977509315504,
+      "max_threat_baseline_hazard": 11.174786837180028,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 1.3893645440051643
+    },
+    {
+      "seed": 2026150004,
+      "roi_best_locality": 26,
+      "roi_best_hazard_reduction": 0.0020983206825161,
+      "roi_best_baseline_hazard": 4.77013927259251,
+      "roi_best_access_gain": 0.0013174140886316,
+      "max_threat_locality": 5,
+      "max_threat_hazard_reduction": 0.0002669512189756,
+      "max_threat_baseline_hazard": 6.16065210453039,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 7.8603150439552465
+    },
+    {
+      "seed": 2026150005,
+      "roi_best_locality": 15,
+      "roi_best_hazard_reduction": 0.0004752825602924,
+      "roi_best_baseline_hazard": 0.697460443004491,
+      "roi_best_access_gain": 0.0018269912645664,
+      "max_threat_locality": 26,
+      "max_threat_hazard_reduction": 0.0003786087907254,
+      "max_threat_baseline_hazard": 7.931551512990467,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 1.2553394742414108
+    },
+    {
+      "seed": 2026150006,
+      "roi_best_locality": 15,
+      "roi_best_hazard_reduction": 0.0007543449022917,
+      "roi_best_baseline_hazard": 12.52993164740495,
+      "roi_best_access_gain": 0.0001836553442477,
+      "max_threat_locality": 15,
+      "max_threat_hazard_reduction": 0.0007543449022917,
+      "max_threat_baseline_hazard": 12.52993164740495,
+      "same_locality": true,
+      "roi_gain_over_max_threat_target": 1.0
+    },
+    {
+      "seed": 2026150007,
+      "roi_best_locality": 5,
+      "roi_best_hazard_reduction": 0.0006734285115298,
+      "roi_best_baseline_hazard": 5.454991081707964,
+      "roi_best_access_gain": 0.0003428578534746,
+      "max_threat_locality": 27,
+      "max_threat_hazard_reduction": 0.0001658481532665,
+      "max_threat_baseline_hazard": 5.474409910965903,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 4.060512572893551
+    },
+    {
+      "seed": 2026150008,
+      "roi_best_locality": 10,
+      "roi_best_hazard_reduction": 0.0004884990319938,
+      "roi_best_baseline_hazard": 5.255819856942361,
+      "roi_best_access_gain": 0.0002676768476775,
+      "max_threat_locality": 7,
+      "max_threat_hazard_reduction": 0.0001768997312817,
+      "max_threat_baseline_hazard": 7.676089433049574,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 2.7614458679753486
+    },
+    {
+      "seed": 2026150009,
+      "roi_best_locality": 7,
+      "roi_best_hazard_reduction": 0.0026763621879956,
+      "roi_best_baseline_hazard": 4.541625637533877,
+      "roi_best_access_gain": 0.0016650632560207,
+      "max_threat_locality": 27,
+      "max_threat_hazard_reduction": 0.0005877790961522,
+      "max_threat_baseline_hazard": 8.713594048491457,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 4.55334700658116
+    },
+    {
+      "seed": 2026150010,
+      "roi_best_locality": 11,
+      "roi_best_hazard_reduction": 0.0012920353181023,
+      "roi_best_baseline_hazard": 16.719789347022274,
+      "roi_best_access_gain": 0.0002266322786468,
+      "max_threat_locality": 11,
+      "max_threat_hazard_reduction": 0.0012920353181023,
+      "max_threat_baseline_hazard": 16.719789347022274,
+      "same_locality": true,
+      "roi_gain_over_max_threat_target": 1.0
+    },
+    {
+      "seed": 2026150011,
+      "roi_best_locality": 30,
+      "roi_best_hazard_reduction": 0.0009782237581627,
+      "roi_best_baseline_hazard": 4.8580308588831285,
+      "roi_best_access_gain": 0.0004946926861033,
+      "max_threat_locality": 29,
+      "max_threat_hazard_reduction": 0.0008195746024548,
+      "max_threat_baseline_hazard": 11.70674303857174,
+      "same_locality": false,
+      "roi_gain_over_max_threat_target": 1.1935750024863045
+    }
+  ],
+  "roi_best_equals_max_threat_fraction": 0.16666666666666666,
+  "roi_best_over_max_threat_target_ratio": {
+    "n": 12,
+    "mean": 3.129949237330137,
+    "median": 2.352822717256461,
+    "p10": 1.0193575002486304,
+    "p90": 7.457196011837597
+  },
+  "correlations": {
+    "hazard_reduction_vs_baseline_hazard_spearman": 0.8286299241385429,
+    "hazard_reduction_vs_access_gain_spearman": 0.041692916208784486,
+    "hazard_reduction_vs_institution_capacity_spearman": -0.2030596655997069
+  },
+  "dollar_conversion": "The fixed +1200 capital increment equals 1% of the default monthly policy-budget ceiling. If that monthly ceiling is externally calibrated to B dollars, each row's effect is the modeled first-order effect per 0.01*B dollars.",
+  "guard": "First-order synthetic recruitment mechanism only; does not include long-run feedback or establish real-world aid effectiveness."
+}

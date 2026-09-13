@@ -1,0 +1,2884 @@
+{
+  "schema_version": "pineland.mobilization_trap_analysis.v1",
+  "status": "synthetic_mechanism_test_not_historical_result",
+  "historical_outcomes_used": false,
+  "input": "studies\\research_program\\general_theory_v1\\mobilization_trap_8seed_180d_v1.csv",
+  "input_sha256": "08d6d16acb67ef1bbb29207a14186827e019954d85af2b7d4ba22ff39f177638",
+  "integrity": {
+    "rows": 12480,
+    "trajectory_count": 960,
+    "seed_count": 8,
+    "cell_count": 120
+  },
+  "overall": {
+    "p_survival_180": 0.36770833333333336,
+    "collapsed_trajectories": 607,
+    "hard_capital_depletion_fraction_among_collapses": 1.0
+  },
+  "predictive": {
+    "strain_log_oof_auc": 0.9789192191197129,
+    "strain_oof_brier": 0.04449797251586953,
+    "full_log_r_f_c_oof_auc": 0.9928968455833967,
+    "full_oof_brier": 0.033336008672116405
+  },
+  "matched_monotonicity": {
+    "capital_mult": {
+      "expected_direction": "up",
+      "matched_strata": 192,
+      "monotone_fraction": 1.0
+    },
+    "recruitment_mult": {
+      "expected_direction": "down",
+      "matched_strata": 160,
+      "monotone_fraction": 1.0
+    },
+    "fielding_mult": {
+      "expected_direction": "down",
+      "matched_strata": 240,
+      "monotone_fraction": 1.0
+    }
+  },
+  "transition_cell_count": 17,
+  "transition_cells": [
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.25,
+      "p_survival": 0.875,
+      "mean_collapse": 180.0,
+      "hard_depletion_fraction": 0.125,
+      "mean_final_capital": 8030.763684526799,
+      "mean_final_armed": 195433.3285994256,
+      "mean_final_fielded": 8694.102268404706,
+      "mean_final_footholds": 18.5,
+      "mean_recruitment": 18883.321039098508,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.875,
+      "mean_collapse": 180.0,
+      "hard_depletion_fraction": 0.125,
+      "mean_final_capital": 9193.369414072717,
+      "mean_final_armed": 103949.97752912498,
+      "mean_final_fielded": 9441.815146167495,
+      "mean_final_footholds": 20.125,
+      "mean_recruitment": 18699.973770004523,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.5,
+      "p_survival": 0.875,
+      "mean_collapse": 180.0,
+      "hard_depletion_fraction": 0.125,
+      "mean_final_capital": 11042.669958181665,
+      "mean_final_armed": 208633.3216671389,
+      "mean_final_fielded": 9295.621543407906,
+      "mean_final_footholds": 21.875,
+      "mean_recruitment": 36666.64539968355,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 2.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.5,
+      "mean_collapse": 161.25,
+      "hard_depletion_fraction": 0.5,
+      "mean_final_capital": 14392.280567866228,
+      "mean_final_armed": 31533.320904745713,
+      "mean_final_fielded": 10843.423409595041,
+      "mean_final_footholds": 20.375,
+      "mean_recruitment": 18333.319160089028,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 1.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.75,
+      "mean_collapse": 172.5,
+      "hard_depletion_fraction": 0.25,
+      "mean_final_capital": 16309.077052027227,
+      "mean_final_armed": 101383.32476228208,
+      "mean_final_fielded": 10861.624319303277,
+      "mean_final_footholds": 22.375,
+      "mean_recruitment": 36299.982649989244,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 1.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.625,
+      "mean_collapse": 175.0,
+      "hard_depletion_fraction": 0.375,
+      "mean_final_capital": 7574.162523114483,
+      "mean_final_armed": 113299.87880093248,
+      "mean_final_fielded": 14412.323460599786,
+      "mean_final_footholds": 26.125,
+      "mean_recruitment": 84149.85822924344,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.5,
+      "p_survival": 0.875,
+      "mean_collapse": 180.0,
+      "hard_depletion_fraction": 0.125,
+      "mean_final_capital": 11702.483976894373,
+      "mean_final_armed": 415433.29756129754,
+      "mean_final_fielded": 9102.225550407238,
+      "mean_final_footholds": 24.875,
+      "mean_recruitment": 74983.29341230006,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 2.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.625,
+      "mean_collapse": 170.0,
+      "hard_depletion_fraction": 0.375,
+      "mean_final_capital": 26455.502825999665,
+      "mean_final_armed": 49774.98313636027,
+      "mean_final_fielded": 13458.670250623567,
+      "mean_final_footholds": 22.75,
+      "mean_recruitment": 36666.625450355896,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 2.0,
+      "capital_mult": 4.0,
+      "p_survival": 0.75,
+      "mean_collapse": 165.0,
+      "hard_depletion_fraction": 0.25,
+      "mean_final_capital": 9299.180620000798,
+      "mean_final_armed": 98999.91950962481,
+      "mean_final_fielded": 20783.46893399856,
+      "mean_final_footholds": 25.0,
+      "mean_recruitment": 84149.90069819194,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 1.0,
+      "p_survival": 0.5,
+      "mean_collapse": 168.75,
+      "hard_depletion_fraction": 0.5,
+      "mean_final_capital": 1746.5095129632361,
+      "mean_final_armed": 291133.22897210706,
+      "mean_final_fielded": 11263.757827905469,
+      "mean_final_footholds": 28.75,
+      "mean_recruitment": 183149.81528839344,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.5,
+      "capital_mult": 1.0,
+      "p_survival": 0.625,
+      "mean_collapse": 170.0,
+      "hard_depletion_fraction": 0.375,
+      "mean_final_capital": 6067.31278140679,
+      "mean_final_armed": 176916.60640152846,
+      "mean_final_fielded": 11010.68932816046,
+      "mean_final_footholds": 25.125,
+      "mean_recruitment": 84333.25870895623,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 2.0,
+      "p_survival": 0.25,
+      "mean_collapse": 165.0,
+      "hard_depletion_fraction": 0.75,
+      "mean_final_capital": 215.16739278236392,
+      "mean_final_armed": 96249.92482557605,
+      "mean_final_fielded": 14549.057047076582,
+      "mean_final_footholds": 30.125,
+      "mean_recruitment": 182782.94809242288,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.25,
+      "p_survival": 0.125,
+      "mean_collapse": 141.42857142857142,
+      "hard_depletion_fraction": 0.875,
+      "mean_final_capital": 1022.0372524073832,
+      "mean_final_armed": 27683.33331971253,
+      "mean_final_fielded": 9056.736443391766,
+      "mean_final_footholds": 20.75,
+      "mean_recruitment": 26583.32282577701,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.125,
+      "mean_collapse": 122.14285714285714,
+      "hard_depletion_fraction": 0.875,
+      "mean_final_capital": 106.77329078051096,
+      "mean_final_armed": 8158.329559689262,
+      "mean_final_fielded": 9998.783741744339,
+      "mean_final_footholds": 18.25,
+      "mean_recruitment": 12283.32269345613,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.25,
+      "p_survival": 0.375,
+      "mean_collapse": 135.0,
+      "hard_depletion_fraction": 0.625,
+      "mean_final_capital": 684.8547010875593,
+      "mean_final_armed": 171233.32043096953,
+      "mean_final_fielded": 8792.931907118396,
+      "mean_final_footholds": 22.875,
+      "mean_recruitment": 54449.97205674879,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.25,
+      "mean_collapse": 132.5,
+      "hard_depletion_fraction": 0.75,
+      "mean_final_capital": 213.24472708479908,
+      "mean_final_armed": 29699.99234869831,
+      "mean_final_fielded": 9080.806295784445,
+      "mean_final_footholds": 19.5,
+      "mean_recruitment": 14116.644905145702,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 2.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.125,
+      "mean_collapse": 117.85714285714286,
+      "hard_depletion_fraction": 0.875,
+      "mean_final_capital": 780.9006253095312,
+      "mean_final_armed": 8158.333333333332,
+      "mean_final_fielded": 11575.951818486548,
+      "mean_final_footholds": 20.5,
+      "mean_recruitment": 23099.977347021406,
+      "strain_proxy": 0.5
+    }
+  ],
+  "strain_curve": [
+    {
+      "strain_proxy": 0.0078125,
+      "n": 8,
+      "p_survival": 1.0,
+      "mean_collapse_time": null,
+      "decomposition_count": 1,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 0.015625,
+      "n": 24,
+      "p_survival": 1.0,
+      "mean_collapse_time": null,
+      "decomposition_count": 3,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 0.03125,
+      "n": 48,
+      "p_survival": 1.0,
+      "mean_collapse_time": null,
+      "decomposition_count": 6,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 0.0625,
+      "n": 80,
+      "p_survival": 1.0,
+      "mean_collapse_time": null,
+      "decomposition_count": 10,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 0.125,
+      "n": 112,
+      "p_survival": 1.0,
+      "mean_collapse_time": null,
+      "decomposition_count": 14,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 0.25,
+      "n": 136,
+      "p_survival": 0.5367647058823529,
+      "mean_collapse_time": 158.8095238095238,
+      "decomposition_count": 17,
+      "within_strain_survival_range": 1.0
+    },
+    {
+      "strain_proxy": 0.5,
+      "n": 144,
+      "p_survival": 0.05555555555555555,
+      "mean_collapse_time": 113.49264705882354,
+      "decomposition_count": 18,
+      "within_strain_survival_range": 0.375
+    },
+    {
+      "strain_proxy": 1.0,
+      "n": 136,
+      "p_survival": 0.0,
+      "mean_collapse_time": 77.42647058823529,
+      "decomposition_count": 17,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 2.0,
+      "n": 112,
+      "p_survival": 0.0,
+      "mean_collapse_time": 49.6875,
+      "decomposition_count": 14,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 4.0,
+      "n": 80,
+      "p_survival": 0.0,
+      "mean_collapse_time": 35.0625,
+      "decomposition_count": 10,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 8.0,
+      "n": 48,
+      "p_survival": 0.0,
+      "mean_collapse_time": 27.5,
+      "decomposition_count": 6,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 16.0,
+      "n": 24,
+      "p_survival": 0.0,
+      "mean_collapse_time": 16.875,
+      "decomposition_count": 3,
+      "within_strain_survival_range": 0.0
+    },
+    {
+      "strain_proxy": 32.0,
+      "n": 8,
+      "p_survival": 0.0,
+      "mean_collapse_time": 15.0,
+      "decomposition_count": 1,
+      "within_strain_survival_range": 0.0
+    }
+  ],
+  "same_strain_decomposition": [
+    {
+      "strain_proxy": 0.0078125,
+      "decomposition_count": 1,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.25,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 0.015625,
+      "decomposition_count": 3,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.25,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.5,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.25,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 0.03125,
+      "decomposition_count": 6,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.25,
+          "capital_mult": 1.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.5,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 1.0,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.25,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.5,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.25,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 0.0625,
+      "decomposition_count": 10,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.5,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.5,
+          "capital_mult": 1.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 1.0,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 2.0,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.25,
+          "capital_mult": 1.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.5,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 1.0,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.25,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.5,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 0.125,
+      "decomposition_count": 14,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.25,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.5,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 1.0,
+          "capital_mult": 1.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 2.0,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.5,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.5,
+          "capital_mult": 1.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 1.0,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 2.0,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.25,
+          "capital_mult": 1.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.5,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 1.0,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 2.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 4.0,
+          "p_survival": 1.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 0.25,
+      "decomposition_count": 17,
+      "survival_range": 1.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.25,
+          "p_survival": 0.875
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.875
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 2.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.5
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.25,
+          "p_survival": 1.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.5,
+          "p_survival": 0.875
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 1.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.75
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 2.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.625
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.5,
+          "p_survival": 0.875
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.5,
+          "capital_mult": 1.0,
+          "p_survival": 0.625
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 1.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.625
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 2.0,
+          "capital_mult": 4.0,
+          "p_survival": 0.75
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 1.0,
+          "p_survival": 0.5
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 2.0,
+          "p_survival": 0.25
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 0.5,
+      "decomposition_count": 18,
+      "survival_range": 0.375,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.25
+        },
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.125
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.25,
+          "p_survival": 0.125
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 2.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.125
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.25,
+          "p_survival": 0.375
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 1.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 2.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 1.0,
+      "decomposition_count": 17,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.125,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 2.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 2.0,
+      "decomposition_count": 14,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.25,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 4.0,
+          "p_survival": 0.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 4.0,
+      "decomposition_count": 10,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 0.5,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.25,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 2.0,
+          "p_survival": 0.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 8.0,
+      "decomposition_count": 6,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 1.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 0.5,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 1.0,
+          "p_survival": 0.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 16.0,
+      "decomposition_count": 3,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 2.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 1.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        },
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.5,
+          "p_survival": 0.0
+        }
+      ]
+    },
+    {
+      "strain_proxy": 32.0,
+      "decomposition_count": 1,
+      "survival_range": 0.0,
+      "decompositions": [
+        {
+          "recruitment_mult": 4.0,
+          "fielding_mult": 2.0,
+          "capital_mult": 0.25,
+          "p_survival": 0.0
+        }
+      ]
+    }
+  ],
+  "cell_summaries": [
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.25,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 318188.6266486626,
+      "mean_final_armed": 423133.32859327644,
+      "mean_final_fielded": 8274.583761689519,
+      "mean_final_footholds": 18.875,
+      "mean_recruitment": 15583.325629436473,
+      "strain_proxy": 0.0078125
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.25,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 158188.62664866273,
+      "mean_final_armed": 423133.32859327644,
+      "mean_final_fielded": 8274.583761689519,
+      "mean_final_footholds": 18.875,
+      "mean_recruitment": 15583.325629436473,
+      "strain_proxy": 0.015625
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.5,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 307650.03251491487,
+      "mean_final_armed": 225316.65763471977,
+      "mean_final_fielded": 8691.956128610764,
+      "mean_final_footholds": 18.625,
+      "mean_recruitment": 19249.987705765172,
+      "strain_proxy": 0.015625
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.25,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 307830.55502663174,
+      "mean_final_armed": 444399.98734592105,
+      "mean_final_fielded": 8589.781784927745,
+      "mean_final_footholds": 21.125,
+      "mean_recruitment": 37583.31584222019,
+      "strain_proxy": 0.015625
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.25,
+      "capital_mult": 1.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 78188.62664866268,
+      "mean_final_armed": 423133.32859327644,
+      "mean_final_fielded": 8274.583761689519,
+      "mean_final_footholds": 18.875,
+      "mean_recruitment": 15583.325629436473,
+      "strain_proxy": 0.03125
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.5,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 147650.03251491516,
+      "mean_final_armed": 225316.65763471977,
+      "mean_final_fielded": 8691.956128610764,
+      "mean_final_footholds": 18.625,
+      "mean_recruitment": 19249.987705765172,
+      "strain_proxy": 0.03125
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 1.0,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 289198.199957027,
+      "mean_final_armed": 120083.31053413331,
+      "mean_final_fielded": 9446.049754273512,
+      "mean_final_footholds": 20.0,
+      "mean_recruitment": 18699.973770004523,
+      "strain_proxy": 0.03125
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.25,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 147830.55502663198,
+      "mean_final_armed": 444399.98734592105,
+      "mean_final_fielded": 8589.781784927745,
+      "mean_final_footholds": 21.125,
+      "mean_recruitment": 37583.31584222019,
+      "strain_proxy": 0.03125
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.5,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 291024.5189423333,
+      "mean_final_armed": 240533.31415181665,
+      "mean_final_fielded": 9300.83296929469,
+      "mean_final_footholds": 21.875,
+      "mean_recruitment": 36666.64539968355,
+      "strain_proxy": 0.03125
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.25,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 291354.3271618863,
+      "mean_final_armed": 479233.29704617243,
+      "mean_final_fielded": 9102.864973331452,
+      "mean_final_footholds": 24.875,
+      "mean_recruitment": 75899.96007896673,
+      "strain_proxy": 0.03125
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.5,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 38188.626648662714,
+      "mean_final_armed": 423133.32859327644,
+      "mean_final_fielded": 8274.583761689519,
+      "mean_final_footholds": 18.875,
+      "mean_recruitment": 15583.325629436473,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.5,
+      "capital_mult": 1.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 67650.03251491499,
+      "mean_final_armed": 225316.65763471977,
+      "mean_final_fielded": 8691.956128610764,
+      "mean_final_footholds": 18.625,
+      "mean_recruitment": 19249.987705765172,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 1.0,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 129198.19995702713,
+      "mean_final_armed": 120083.31053413331,
+      "mean_final_fielded": 9446.049754273512,
+      "mean_final_footholds": 20.0,
+      "mean_recruitment": 18699.973770004523,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 2.0,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 249069.11037556123,
+      "mean_final_armed": 69666.65232712962,
+      "mean_final_fielded": 11030.705032639304,
+      "mean_final_footholds": 20.0,
+      "mean_recruitment": 19799.98358524986,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.25,
+      "capital_mult": 1.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 67830.5550266319,
+      "mean_final_armed": 444399.98734592105,
+      "mean_final_fielded": 8589.781784927745,
+      "mean_final_footholds": 21.125,
+      "mean_recruitment": 37583.31584222019,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.5,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 131024.51894233338,
+      "mean_final_armed": 240533.31415181665,
+      "mean_final_fielded": 9300.83296929469,
+      "mean_final_footholds": 21.875,
+      "mean_recruitment": 36666.64539968355,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 1.0,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 252593.49456787473,
+      "mean_final_armed": 139149.98657096925,
+      "mean_final_fielded": 10985.127651100809,
+      "mean_final_footholds": 22.875,
+      "mean_recruitment": 37766.64931665591,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.25,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 131354.32716188655,
+      "mean_final_armed": 479233.29704617243,
+      "mean_final_fielded": 9102.864973331452,
+      "mean_final_footholds": 24.875,
+      "mean_recruitment": 75899.96007896673,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.5,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 241427.42862407683,
+      "mean_final_armed": 291316.59591560747,
+      "mean_final_fielded": 11153.33885316994,
+      "mean_final_footholds": 25.125,
+      "mean_recruitment": 88366.58822817252,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 233325.1796563865,
+      "mean_final_armed": 600783.1588042597,
+      "mean_final_fielded": 11605.65559241475,
+      "mean_final_footholds": 29.125,
+      "mean_recruitment": 200199.80173055883,
+      "strain_proxy": 0.0625
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.25,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 18188.626648662696,
+      "mean_final_armed": 423133.32859327644,
+      "mean_final_fielded": 8274.583761689519,
+      "mean_final_footholds": 18.875,
+      "mean_recruitment": 15583.325629436473,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.5,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 27650.03251491504,
+      "mean_final_armed": 225316.65763471977,
+      "mean_final_fielded": 8691.956128610764,
+      "mean_final_footholds": 18.625,
+      "mean_recruitment": 19249.987705765172,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 1.0,
+      "capital_mult": 1.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 49198.199957027064,
+      "mean_final_armed": 120083.31053413331,
+      "mean_final_fielded": 9446.049754273512,
+      "mean_final_footholds": 20.0,
+      "mean_recruitment": 18699.973770004523,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 2.0,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 89069.11037556127,
+      "mean_final_armed": 69666.65232712962,
+      "mean_final_fielded": 11030.705032639304,
+      "mean_final_footholds": 20.0,
+      "mean_recruitment": 19799.98358524986,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.5,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 27830.5550266319,
+      "mean_final_armed": 444399.98734592105,
+      "mean_final_fielded": 8589.781784927745,
+      "mean_final_footholds": 21.125,
+      "mean_recruitment": 37583.31584222019,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.5,
+      "capital_mult": 1.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 51024.518942333336,
+      "mean_final_armed": 240533.31415181665,
+      "mean_final_fielded": 9300.83296929469,
+      "mean_final_footholds": 21.875,
+      "mean_recruitment": 36666.64539968355,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 1.0,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 92593.49456787492,
+      "mean_final_armed": 139149.98657096925,
+      "mean_final_fielded": 10985.127651100809,
+      "mean_final_footholds": 22.875,
+      "mean_recruitment": 37766.64931665591,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 2.0,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 176561.3092541574,
+      "mean_final_armed": 87633.30459680509,
+      "mean_final_fielded": 13864.365010888441,
+      "mean_final_footholds": 23.125,
+      "mean_recruitment": 38683.2849658672,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.25,
+      "capital_mult": 1.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 51354.32716188644,
+      "mean_final_armed": 479233.29704617243,
+      "mean_final_fielded": 9102.864973331452,
+      "mean_final_footholds": 24.875,
+      "mean_recruitment": 75899.96007896673,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.5,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 81427.42862407687,
+      "mean_final_armed": 291316.59591560747,
+      "mean_final_fielded": 11153.33885316994,
+      "mean_final_footholds": 25.125,
+      "mean_recruitment": 88366.58822817252,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 1.0,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 156153.61390595295,
+      "mean_final_armed": 187366.52693391938,
+      "mean_final_fielded": 14831.590373453915,
+      "mean_final_footholds": 26.25,
+      "mean_recruitment": 87999.8538505403,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 2.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 73325.17965638639,
+      "mean_final_armed": 600783.1588042597,
+      "mean_final_fielded": 11605.65559241475,
+      "mean_final_footholds": 29.125,
+      "mean_recruitment": 200199.80173055883,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 127313.89221319143,
+      "mean_final_armed": 408832.9261299947,
+      "mean_final_fielded": 15855.514856651247,
+      "mean_final_footholds": 31.125,
+      "mean_recruitment": 208632.89463276012,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 4.0,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 105259.66781900206,
+      "mean_final_armed": 859099.3762344759,
+      "mean_final_fielded": 16751.673273102846,
+      "mean_final_footholds": 32.25,
+      "mean_recruitment": 467866.0099136046,
+      "strain_proxy": 0.125
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.25,
+      "p_survival": 0.875,
+      "mean_collapse": 180.0,
+      "hard_depletion_fraction": 0.125,
+      "mean_final_capital": 8030.763684526799,
+      "mean_final_armed": 195433.3285994256,
+      "mean_final_fielded": 8694.102268404706,
+      "mean_final_footholds": 18.5,
+      "mean_recruitment": 18883.321039098508,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.875,
+      "mean_collapse": 180.0,
+      "hard_depletion_fraction": 0.125,
+      "mean_final_capital": 9193.369414072717,
+      "mean_final_armed": 103949.97752912498,
+      "mean_final_fielded": 9441.815146167495,
+      "mean_final_footholds": 20.125,
+      "mean_recruitment": 18699.973770004523,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 2.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.5,
+      "mean_collapse": 161.25,
+      "hard_depletion_fraction": 0.5,
+      "mean_final_capital": 14392.280567866228,
+      "mean_final_armed": 31533.320904745713,
+      "mean_final_fielded": 10843.423409595041,
+      "mean_final_footholds": 20.375,
+      "mean_recruitment": 18333.319160089028,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.25,
+      "p_survival": 1.0,
+      "mean_collapse": NaN,
+      "hard_depletion_fraction": 0.0,
+      "mean_final_capital": 7830.555026631905,
+      "mean_final_armed": 444399.98734592105,
+      "mean_final_fielded": 8589.781784927745,
+      "mean_final_footholds": 21.125,
+      "mean_recruitment": 37583.31584222019,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.5,
+      "p_survival": 0.875,
+      "mean_collapse": 180.0,
+      "hard_depletion_fraction": 0.125,
+      "mean_final_capital": 11042.669958181665,
+      "mean_final_armed": 208633.3216671389,
+      "mean_final_fielded": 9295.621543407906,
+      "mean_final_footholds": 21.875,
+      "mean_recruitment": 36666.64539968355,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 1.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.75,
+      "mean_collapse": 172.5,
+      "hard_depletion_fraction": 0.25,
+      "mean_final_capital": 16309.077052027227,
+      "mean_final_armed": 101383.32476228208,
+      "mean_final_fielded": 10861.624319303277,
+      "mean_final_footholds": 22.375,
+      "mean_recruitment": 36299.982649989244,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 2.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.625,
+      "mean_collapse": 170.0,
+      "hard_depletion_fraction": 0.375,
+      "mean_final_capital": 26455.502825999665,
+      "mean_final_armed": 49774.98313636027,
+      "mean_final_fielded": 13458.670250623567,
+      "mean_final_footholds": 22.75,
+      "mean_recruitment": 36666.625450355896,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.5,
+      "p_survival": 0.875,
+      "mean_collapse": 180.0,
+      "hard_depletion_fraction": 0.125,
+      "mean_final_capital": 11702.483976894373,
+      "mean_final_armed": 415433.29756129754,
+      "mean_final_fielded": 9102.225550407238,
+      "mean_final_footholds": 24.875,
+      "mean_recruitment": 74983.29341230006,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.5,
+      "capital_mult": 1.0,
+      "p_survival": 0.625,
+      "mean_collapse": 170.0,
+      "hard_depletion_fraction": 0.375,
+      "mean_final_capital": 6067.31278140679,
+      "mean_final_armed": 176916.60640152846,
+      "mean_final_fielded": 11010.68932816046,
+      "mean_final_footholds": 25.125,
+      "mean_recruitment": 84333.25870895623,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 1.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.625,
+      "mean_collapse": 175.0,
+      "hard_depletion_fraction": 0.375,
+      "mean_final_capital": 7574.162523114483,
+      "mean_final_armed": 113299.87880093248,
+      "mean_final_fielded": 14412.323460599786,
+      "mean_final_footholds": 26.125,
+      "mean_recruitment": 84149.85822924344,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 2.0,
+      "capital_mult": 4.0,
+      "p_survival": 0.75,
+      "mean_collapse": 165.0,
+      "hard_depletion_fraction": 0.25,
+      "mean_final_capital": 9299.180620000798,
+      "mean_final_armed": 98999.91950962481,
+      "mean_final_fielded": 20783.46893399856,
+      "mean_final_footholds": 25.0,
+      "mean_recruitment": 84149.90069819194,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 1.0,
+      "p_survival": 0.5,
+      "mean_collapse": 168.75,
+      "hard_depletion_fraction": 0.5,
+      "mean_final_capital": 1746.5095129632361,
+      "mean_final_armed": 291133.22897210706,
+      "mean_final_fielded": 11263.757827905469,
+      "mean_final_footholds": 28.75,
+      "mean_recruitment": 183149.81528839344,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 2.0,
+      "p_survival": 0.25,
+      "mean_collapse": 165.0,
+      "hard_depletion_fraction": 0.75,
+      "mean_final_capital": 215.16739278236392,
+      "mean_final_armed": 96249.92482557605,
+      "mean_final_fielded": 14549.057047076582,
+      "mean_final_footholds": 30.125,
+      "mean_recruitment": 182782.94809242288,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 166.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21221.53320480988,
+      "mean_final_footholds": 29.5,
+      "mean_recruitment": 178382.92150432873,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 155.625,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 14675.784088514622,
+      "mean_final_footholds": 30.875,
+      "mean_recruitment": 368866.1817884113,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 144.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21013.118970634387,
+      "mean_final_footholds": 32.0,
+      "mean_recruitment": 359332.28911744803,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 127.5,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21031.258802120574,
+      "mean_final_footholds": 32.75,
+      "mean_recruitment": 713531.1183853854,
+      "strain_proxy": 0.25
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.25,
+      "mean_collapse": 132.5,
+      "hard_depletion_fraction": 0.75,
+      "mean_final_capital": 213.24472708479908,
+      "mean_final_armed": 29699.99234869831,
+      "mean_final_fielded": 9080.806295784445,
+      "mean_final_footholds": 19.5,
+      "mean_recruitment": 14116.644905145702,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.125,
+      "mean_collapse": 122.14285714285714,
+      "hard_depletion_fraction": 0.875,
+      "mean_final_capital": 106.77329078051096,
+      "mean_final_armed": 8158.329559689262,
+      "mean_final_fielded": 9998.783741744339,
+      "mean_final_footholds": 18.25,
+      "mean_recruitment": 12283.32269345613,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.25,
+      "p_survival": 0.125,
+      "mean_collapse": 141.42857142857142,
+      "hard_depletion_fraction": 0.875,
+      "mean_final_capital": 1022.0372524073832,
+      "mean_final_armed": 27683.33331971253,
+      "mean_final_fielded": 9056.736443391766,
+      "mean_final_footholds": 20.75,
+      "mean_recruitment": 26583.32282577701,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 142.5,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9853.910654579502,
+      "mean_final_footholds": 21.0,
+      "mean_recruitment": 24933.32236206802,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 2.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.125,
+      "mean_collapse": 117.85714285714286,
+      "hard_depletion_fraction": 0.875,
+      "mean_final_capital": 780.9006253095312,
+      "mean_final_armed": 8158.333333333332,
+      "mean_final_fielded": 11575.951818486548,
+      "mean_final_footholds": 20.5,
+      "mean_recruitment": 23099.977347021406,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.25,
+      "p_survival": 0.375,
+      "mean_collapse": 135.0,
+      "hard_depletion_fraction": 0.625,
+      "mean_final_capital": 684.8547010875593,
+      "mean_final_armed": 171233.32043096953,
+      "mean_final_fielded": 8792.931907118396,
+      "mean_final_footholds": 22.875,
+      "mean_recruitment": 54449.97205674879,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 118.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9882.202544395137,
+      "mean_final_footholds": 20.625,
+      "mean_recruitment": 47666.62498291666,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 1.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 120.0,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11570.006920082762,
+      "mean_final_footholds": 23.625,
+      "mean_recruitment": 46199.92209750314,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 2.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 114.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 14847.141220165122,
+      "mean_final_footholds": 22.875,
+      "mean_recruitment": 46199.958963744335,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 121.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9812.507089031818,
+      "mean_final_footholds": 25.75,
+      "mean_recruitment": 102116.57800456558,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 108.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11605.518509759038,
+      "mean_final_footholds": 24.5,
+      "mean_recruitment": 92583.22905794752,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 108.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 14903.690654390013,
+      "mean_final_footholds": 26.5,
+      "mean_recruitment": 90749.86905451781,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 110.625,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21576.429753862314,
+      "mean_final_footholds": 25.75,
+      "mean_recruitment": 90933.1974541572,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 103.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11546.382365240646,
+      "mean_final_footholds": 26.875,
+      "mean_recruitment": 192866.50169475737,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 97.5,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 14820.086365339472,
+      "mean_final_footholds": 28.125,
+      "mean_recruitment": 194882.92680710406,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 95.625,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21632.568942409613,
+      "mean_final_footholds": 28.125,
+      "mean_recruitment": 179299.83943115643,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 86.25,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 14804.231904180782,
+      "mean_final_footholds": 26.875,
+      "mean_recruitment": 373815.95903939026,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 84.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21283.53800417016,
+      "mean_final_footholds": 28.25,
+      "mean_recruitment": 365382.4163011171,
+      "strain_proxy": 0.5
+    },
+    {
+      "recruitment_mult": 0.125,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 105.0,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9256.992979328326,
+      "mean_final_footholds": 15.25,
+      "mean_recruitment": 7516.662254645797,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 101.25,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9331.458992947819,
+      "mean_final_footholds": 17.5,
+      "mean_recruitment": 13749.996276872973,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 97.5,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10094.515908232472,
+      "mean_final_footholds": 18.0,
+      "mean_recruitment": 14299.987635537786,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 82.5,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9261.536283415047,
+      "mean_final_footholds": 17.125,
+      "mean_recruitment": 25666.647291497877,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 86.25,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10082.157273800547,
+      "mean_final_footholds": 18.625,
+      "mean_recruitment": 25483.3075805728,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 2.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 84.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11787.182962828501,
+      "mean_final_footholds": 19.375,
+      "mean_recruitment": 24016.65364035639,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 84.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9212.612952337075,
+      "mean_final_footholds": 16.75,
+      "mean_recruitment": 53533.30612949682,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 76.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10105.51149254618,
+      "mean_final_footholds": 18.5,
+      "mean_recruitment": 48216.645856759234,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 78.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11849.350369371918,
+      "mean_final_footholds": 20.125,
+      "mean_recruitment": 48766.63684367184,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 80.625,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 15128.84385348612,
+      "mean_final_footholds": 22.0,
+      "mean_recruitment": 47116.62538076804,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 69.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10049.663635144057,
+      "mean_final_footholds": 19.125,
+      "mean_recruitment": 106333.28504952167,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 65.625,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11763.746127021368,
+      "mean_final_footholds": 22.125,
+      "mean_recruitment": 98449.89739132239,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 63.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 15234.415985119947,
+      "mean_final_footholds": 24.0,
+      "mean_recruitment": 95883.28980202031,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 63.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21718.043314087387,
+      "mean_final_footholds": 25.125,
+      "mean_recruitment": 94599.90015664854,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 58.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11741.665413750638,
+      "mean_final_footholds": 24.125,
+      "mean_recruitment": 195983.18143211716,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 58.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 15051.664550916748,
+      "mean_final_footholds": 23.75,
+      "mean_recruitment": 199833.04332605618,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 60.0,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21591.233968719105,
+      "mean_final_footholds": 27.25,
+      "mean_recruitment": 201849.69181252384,
+      "strain_proxy": 1.0
+    },
+    {
+      "recruitment_mult": 0.25,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 58.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9408.540460339493,
+      "mean_final_footholds": 15.875,
+      "mean_recruitment": 6233.331956954915,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 54.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9421.237651530095,
+      "mean_final_footholds": 15.5,
+      "mean_recruitment": 13933.324739212248,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 52.5,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10348.626148014771,
+      "mean_final_footholds": 17.875,
+      "mean_recruitment": 12833.32487202266,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 52.5,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9359.08714990272,
+      "mean_final_footholds": 14.625,
+      "mean_recruitment": 25116.661060596805,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 52.5,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10338.030344520508,
+      "mean_final_footholds": 17.5,
+      "mean_recruitment": 26399.9871940566,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 54.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11997.81493196147,
+      "mean_final_footholds": 18.25,
+      "mean_recruitment": 26766.650760478373,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 48.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9337.57514557703,
+      "mean_final_footholds": 16.125,
+      "mean_recruitment": 58116.647379994516,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 48.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10180.783285310023,
+      "mean_final_footholds": 18.5,
+      "mean_recruitment": 62149.95385615511,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 46.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11978.136482637938,
+      "mean_final_footholds": 19.75,
+      "mean_recruitment": 60133.31262390183,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 46.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 15340.915037212235,
+      "mean_final_footholds": 20.0,
+      "mean_recruitment": 58849.94759513217,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 45.0,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10194.510890899213,
+      "mean_final_footholds": 19.625,
+      "mean_recruitment": 146299.92179317665,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 43.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11884.53691044754,
+      "mean_final_footholds": 22.75,
+      "mean_recruitment": 128883.19871118772,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 45.0,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 15239.197783121916,
+      "mean_final_footholds": 22.875,
+      "mean_recruitment": 137866.49018045227,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 4.0,
+      "p_survival": 0.0,
+      "mean_collapse": 46.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 21948.820381068814,
+      "mean_final_footholds": 23.75,
+      "mean_recruitment": 144283.07744051615,
+      "strain_proxy": 2.0
+    },
+    {
+      "recruitment_mult": 0.5,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 43.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9544.749473829925,
+      "mean_final_footholds": 15.0,
+      "mean_recruitment": 9349.99830373577,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 39.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9523.19827861207,
+      "mean_final_footholds": 15.25,
+      "mean_recruitment": 15216.661078961548,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 39.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10359.701895313476,
+      "mean_final_footholds": 16.625,
+      "mean_recruitment": 15216.660872803457,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 33.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9427.092719118034,
+      "mean_final_footholds": 15.75,
+      "mean_recruitment": 30433.32257457388,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 33.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10370.954891869613,
+      "mean_final_footholds": 18.125,
+      "mean_recruitment": 31166.654580155402,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 33.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 12034.056841641104,
+      "mean_final_footholds": 16.875,
+      "mean_recruitment": 29883.310881633013,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.25,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 31.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9349.78499229459,
+      "mean_final_footholds": 16.75,
+      "mean_recruitment": 65449.976575745546,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 31.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10233.672472866563,
+      "mean_final_footholds": 19.0,
+      "mean_recruitment": 52433.30391465995,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 31.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 11988.239973817746,
+      "mean_final_footholds": 21.25,
+      "mean_recruitment": 62699.95196732022,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 2.0,
+      "p_survival": 0.0,
+      "mean_collapse": 31.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 15336.306168967894,
+      "mean_final_footholds": 19.375,
+      "mean_recruitment": 60683.258443599894,
+      "strain_proxy": 4.0
+    },
+    {
+      "recruitment_mult": 1.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 31.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9578.367860708968,
+      "mean_final_footholds": 15.25,
+      "mean_recruitment": 8616.665691050754,
+      "strain_proxy": 8.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 28.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9588.582043143993,
+      "mean_final_footholds": 15.125,
+      "mean_recruitment": 17599.99599801503,
+      "strain_proxy": 8.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 28.125,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10421.23265098789,
+      "mean_final_footholds": 14.625,
+      "mean_recruitment": 16683.325355100915,
+      "strain_proxy": 8.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 0.5,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 26.25,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9421.042956551019,
+      "mean_final_footholds": 14.625,
+      "mean_recruitment": 35016.66117720768,
+      "strain_proxy": 8.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 26.25,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10383.614690413404,
+      "mean_final_footholds": 16.5,
+      "mean_recruitment": 35933.31339977064,
+      "strain_proxy": 8.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 1.0,
+      "p_survival": 0.0,
+      "mean_collapse": 24.375,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 12055.115264105856,
+      "mean_final_footholds": 18.375,
+      "mean_recruitment": 32633.312979434682,
+      "strain_proxy": 8.0
+    },
+    {
+      "recruitment_mult": 2.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 18.75,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9605.375932842217,
+      "mean_final_footholds": 14.375,
+      "mean_recruitment": 9899.997637841345,
+      "strain_proxy": 16.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 1.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 15.0,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9591.873264243954,
+      "mean_final_footholds": 16.125,
+      "mean_recruitment": 18883.328574507228,
+      "strain_proxy": 16.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.5,
+      "p_survival": 0.0,
+      "mean_collapse": 16.875,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 10406.75570030399,
+      "mean_final_footholds": 16.25,
+      "mean_recruitment": 19249.99444021405,
+      "strain_proxy": 16.0
+    },
+    {
+      "recruitment_mult": 4.0,
+      "fielding_mult": 2.0,
+      "capital_mult": 0.25,
+      "p_survival": 0.0,
+      "mean_collapse": 15.0,
+      "hard_depletion_fraction": 1.0,
+      "mean_final_capital": 0.0,
+      "mean_final_armed": 0.0,
+      "mean_final_fielded": 9618.060390775616,
+      "mean_final_footholds": 15.5,
+      "mean_recruitment": 18699.99526141423,
+      "strain_proxy": 32.0
+    }
+  ],
+  "interpretation_guard": "Association with r*f/c is evidence about the implemented synthetic mechanism only. A useful general-theory strain variable requires robustness to resource-flow definitions, actor phenotype, geography, and independent empirical confrontation."
+}

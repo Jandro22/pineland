@@ -1,0 +1,19 @@
+﻿{
+    "schema_version":  "pineland.state_regeneration_timescale_bounds.v1",
+    "historical_outcomes_used":  false,
+    "source_parameters":  {
+                              "administrative_rebuild_rate_per_day":  0.0015,
+                              "security_training_rate_per_day":  0.011111111111111112,
+                              "interval_days":  14
+                          },
+    "analytic_bounds":  {
+                            "administrative_recovery_fraction_upper_bound":  "Q_admin(t) \u003c= 1 - exp(-0.0015 t), before affordability/decay restrictions",
+                            "best_case_q50_days":  462.09812037329687,
+                            "best_case_q80_days":  1072.9586082894002,
+                            "best_case_q180":  0.23662050566314685,
+                            "security_pipeline_efold_days":  90,
+                            "security_pipeline_half_days":  62.383246250395075
+                        },
+    "implication":  "The regeneration architecture contains at least a fast security-training mode and a much slower administrative-rebuild mode. A single context-invariant regeneration time constant is structurally disfavored before any 1440-day outcome is inspected.",
+    "guard":  "This is an analytic bound of the implemented synthetic mechanism, not an empirical claim about real states."
+}

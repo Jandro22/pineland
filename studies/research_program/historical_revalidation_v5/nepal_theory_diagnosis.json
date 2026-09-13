@@ -1,0 +1,412 @@
+{
+  "action_funnels_by_seed": [
+    {
+      "counts": {
+        "channel:armed_confrontation": 877,
+        "channel:asset_violence": 1933,
+        "channel:coercion": 3383,
+        "channel:nonfielded_human_target": 2146,
+        "channel:wait": 382767,
+        "latent_events": 3567,
+        "outcome:actor_selected_wait": 17028,
+        "outcome:believed_asset_target_absent": 157,
+        "outcome:believed_battle_target_absent": 857,
+        "outcome:believed_human_target_absent": 1628,
+        "outcome:execution_failed": 2130,
+        "outcome:no_action_opportunity": 365457,
+        "outcome:no_local_fighter_capacity": 282,
+        "outcome:realized": 3567,
+        "scheduled": 391106,
+        "state_based_violence_events": 54
+      },
+      "seed": 20011126
+    },
+    {
+      "counts": {
+        "channel:armed_confrontation": 345,
+        "channel:asset_violence": 637,
+        "channel:coercion": 4010,
+        "channel:nonfielded_human_target": 726,
+        "channel:wait": 395112,
+        "latent_events": 4122,
+        "outcome:actor_selected_wait": 19681,
+        "outcome:believed_asset_target_absent": 41,
+        "outcome:believed_battle_target_absent": 328,
+        "outcome:believed_human_target_absent": 527,
+        "outcome:execution_failed": 700,
+        "outcome:no_action_opportunity": 374995,
+        "outcome:no_local_fighter_capacity": 436,
+        "outcome:realized": 4122,
+        "scheduled": 400830,
+        "state_based_violence_events": 45
+      },
+      "seed": 20021133
+    },
+    {
+      "counts": {
+        "channel:armed_confrontation": 173,
+        "channel:asset_violence": 145,
+        "channel:coercion": 3711,
+        "channel:nonfielded_human_target": 218,
+        "channel:wait": 341279,
+        "latent_events": 3753,
+        "outcome:actor_selected_wait": 16651,
+        "outcome:believed_asset_target_absent": 37,
+        "outcome:believed_battle_target_absent": 162,
+        "outcome:believed_human_target_absent": 189,
+        "outcome:execution_failed": 106,
+        "outcome:no_action_opportunity": 324127,
+        "outcome:no_local_fighter_capacity": 501,
+        "outcome:realized": 3753,
+        "scheduled": 345526,
+        "state_based_violence_events": 14
+      },
+      "seed": 20031140
+    },
+    {
+      "counts": {
+        "channel:armed_confrontation": 1772,
+        "channel:asset_violence": 3613,
+        "channel:coercion": 3602,
+        "channel:nonfielded_human_target": 3900,
+        "channel:wait": 397895,
+        "latent_events": 3873,
+        "outcome:actor_selected_wait": 14286,
+        "outcome:believed_battle_target_absent": 1750,
+        "outcome:believed_human_target_absent": 2973,
+        "outcome:execution_failed": 4291,
+        "outcome:no_action_opportunity": 383267,
+        "outcome:no_local_fighter_capacity": 342,
+        "outcome:realized": 3873,
+        "scheduled": 410782,
+        "state_based_violence_events": 91
+      },
+      "seed": 20041147
+    },
+    {
+      "counts": {
+        "channel:armed_confrontation": 1236,
+        "channel:asset_violence": 2749,
+        "channel:coercion": 3434,
+        "channel:nonfielded_human_target": 3163,
+        "channel:wait": 404566,
+        "latent_events": 3737,
+        "outcome:actor_selected_wait": 16611,
+        "outcome:believed_battle_target_absent": 1209,
+        "outcome:believed_human_target_absent": 2433,
+        "outcome:execution_failed": 3203,
+        "outcome:no_action_opportunity": 387580,
+        "outcome:no_local_fighter_capacity": 375,
+        "outcome:realized": 3737,
+        "scheduled": 415148,
+        "state_based_violence_events": 89
+      },
+      "seed": 20051154
+    },
+    {
+      "counts": {
+        "channel:armed_confrontation": 637,
+        "channel:asset_violence": 1333,
+        "channel:coercion": 4266,
+        "channel:nonfielded_human_target": 1517,
+        "channel:wait": 395977,
+        "latent_events": 4398,
+        "outcome:actor_selected_wait": 18915,
+        "outcome:believed_asset_target_absent": 18,
+        "outcome:believed_battle_target_absent": 618,
+        "outcome:believed_human_target_absent": 1197,
+        "outcome:execution_failed": 1522,
+        "outcome:no_action_opportunity": 376759,
+        "outcome:no_local_fighter_capacity": 303,
+        "outcome:realized": 4398,
+        "scheduled": 403730,
+        "state_based_violence_events": 39
+      },
+      "seed": 20061161
+    },
+    {
+      "counts": {
+        "channel:armed_confrontation": 975,
+        "channel:asset_violence": 2165,
+        "channel:coercion": 4384,
+        "channel:nonfielded_human_target": 2432,
+        "channel:wait": 395761,
+        "latent_events": 4601,
+        "outcome:actor_selected_wait": 17023,
+        "outcome:believed_asset_target_absent": 112,
+        "outcome:believed_battle_target_absent": 954,
+        "outcome:believed_human_target_absent": 1797,
+        "outcome:execution_failed": 2492,
+        "outcome:no_action_opportunity": 378425,
+        "outcome:no_local_fighter_capacity": 313,
+        "outcome:realized": 4601,
+        "scheduled": 405717,
+        "state_based_violence_events": 84
+      },
+      "seed": 20071168
+    },
+    {
+      "counts": {
+        "channel:armed_confrontation": 786,
+        "channel:asset_violence": 1614,
+        "channel:coercion": 4314,
+        "channel:nonfielded_human_target": 1761,
+        "channel:wait": 399339,
+        "latent_events": 4505,
+        "outcome:actor_selected_wait": 18180,
+        "outcome:believed_asset_target_absent": 263,
+        "outcome:believed_battle_target_absent": 766,
+        "outcome:believed_human_target_absent": 1332,
+        "outcome:execution_failed": 1609,
+        "outcome:no_action_opportunity": 380836,
+        "outcome:no_local_fighter_capacity": 323,
+        "outcome:realized": 4505,
+        "scheduled": 407814,
+        "state_based_violence_events": 68
+      },
+      "seed": 20081175
+    }
+  ],
+  "belief_support_localization": "Unavailable from aggregate action funnels; no inferred local causal diagnosis.",
+  "calibration_licensed": false,
+  "capacity_measurement_note": "The control composite is model-implied territorial state, not independently validated capacity.",
+  "coin_inference_licensed": false,
+  "diagnostic_decomposition": [
+    "rate_error",
+    "discrimination",
+    "latent_to_recorded_information_loss",
+    "model_implied_control_signal"
+  ],
+  "diagnostic_not_confirmatory": true,
+  "identical_rows_targets_splits_competitors": true,
+  "input_sha256": {
+    "studies\\nepal_2001_2006\\runs\\post_structural_repair\\final_empirical_rescore_v5\\seed_20011126_agents_750.json": "2444e82a87735aa02131df9de9ff0ea2746b4e9f0b9a088724428befd39d1501",
+    "studies\\nepal_2001_2006\\runs\\post_structural_repair\\final_empirical_rescore_v5\\seed_20021133_agents_750.json": "4fb4dc6ef17c857006a2fb2766875cf5424ae5558046e1bb1143ec02f4af21f4",
+    "studies\\nepal_2001_2006\\runs\\post_structural_repair\\final_empirical_rescore_v5\\seed_20031140_agents_750.json": "dc13e22d9f87719e861aac205bf453914c363811074cf871f097ff9aafcf7cfc",
+    "studies\\nepal_2001_2006\\runs\\post_structural_repair\\final_empirical_rescore_v5\\seed_20041147_agents_750.json": "7c1e6f94bb5d6f9436734b3226483c18057ad1ead712befd8275c8326b38f2ff",
+    "studies\\nepal_2001_2006\\runs\\post_structural_repair\\final_empirical_rescore_v5\\seed_20051154_agents_750.json": "67c452ec7a93836a6288ea47557eacc48880f63a4d79a73d1455105bdebf6c36",
+    "studies\\nepal_2001_2006\\runs\\post_structural_repair\\final_empirical_rescore_v5\\seed_20061161_agents_750.json": "9710a719cfb6c7543f1efe1cd3444549132350dda524b920be66393026591bb9",
+    "studies\\nepal_2001_2006\\runs\\post_structural_repair\\final_empirical_rescore_v5\\seed_20071168_agents_750.json": "62d95461d4c7639a07077bb192eb4f82b161bc3fe5e161fcf6e4e306205a4221",
+    "studies\\nepal_2001_2006\\runs\\post_structural_repair\\final_empirical_rescore_v5\\seed_20081175_agents_750.json": "dc9880131e2ff69001bd42c8e639e41734bcb43107993ce24dccd53c43894ecd",
+    "studies\\research_program\\historical_revalidation_v5\\execution_contract.json": "15290512119d7e90aa17c542373a658b7e497d5a0c359ecac1c2a0d0cb6bd397",
+    "studies\\research_program\\predictive_competition\\nepal_v4\\aligned_predictions.csv": "8f07c9c5cddaa03be52cb6316165d2172b62d08bc9409f4f08a7a9f4bed45271",
+    "studies\\research_program\\predictive_competition\\nepal_v4\\manifest.json": "cfa7c5d0c090869613ae07b188dfa0bd4df5e1dd53dc4895bc5185a4eb776cde",
+    "studies\\research_program\\predictive_competition\\nepal_v5\\aligned_predictions.csv": "9e496d16025995a9243b3d04eb66a8284151d7a8cbbce6a603851a9e9e6b6729",
+    "studies\\research_program\\predictive_competition\\nepal_v5\\manifest.json": "27e25a9df836c20d699e9b8aa506cb7cc24eb300db3424f501adb80275697e65",
+    "studies\\research_program\\scripts\\diagnose_v5_historical_confrontation.py": "e96c37f2712b3709ab4efeaef29f7c821cf96f381f0fdca85dfc39eb3f3bfa42",
+    "studies\\research_program\\v5_theory_discrimination_contract.json": "b5b2655c61600f47b215c67533c3cf00e499b4d010522d9c349fbe47573f2436"
+  },
+  "model_sha256": "e9a2c1c3fc99fee836157044be5e17c0e469d042e1f683e23a135c7e776455e6",
+  "primary_verdict": "simple_models_not_beaten_on_all_holdouts",
+  "schema_version": "pineland.v5_historical_diagnosis.v1",
+  "split_diagnostics": [
+    {
+      "discrimination": {
+        "latent_auc": 0.49908214957321917,
+        "recorded_auc": 0.4982449400625191
+      },
+      "latent_to_recorded_information_loss": {
+        "auc_change_recorded_minus_latent": -0.0008372095107000432,
+        "brier_change_recorded_minus_latent": 0.0004521122685185175,
+        "interpretation": "Descriptive observation-channel attenuation only; it does not identify the recording process as the causal source of predictive error.",
+        "mean_probability_change_recorded_minus_latent": -0.00236304012345679
+      },
+      "model_implied_control_signal": {
+        "independently_validated": false,
+        "prior_control_composite_auc": 0.46810315765187094
+      },
+      "observed_activity": 0.15779320987654322,
+      "proper_scores": {
+        "latent_brier": 0.1573290412808642,
+        "recorded_brier": 0.1577811535493827
+      },
+      "rate_error": {
+        "latent_mean_probability": 0.0030381944444444445,
+        "latent_rate_bias": -0.15475501543209877,
+        "observed_activity_rate": 0.15779320987654322,
+        "recorded_mean_probability": 0.0006751543209876543,
+        "recorded_rate_bias": -0.15711805555555555
+      },
+      "recorded_brier_improvement_v5_over_v4": -9.64506172839441e-05,
+      "rows": 2592,
+      "split": "geographic_validation",
+      "v4_latent": {
+        "auc": 0.5003119235434514,
+        "brier": 0.15737726658950618,
+        "mean_probability": 0.0020736882716049384
+      },
+      "v4_recorded": {
+        "auc": 0.49969647655197363,
+        "brier": 0.15768470293209877,
+        "mean_probability": 0.0006751543209876543
+      },
+      "v5_latent": {
+        "auc": 0.49908214957321917,
+        "brier": 0.1573290412808642,
+        "mean_probability": 0.0030381944444444445
+      },
+      "v5_prior_control_composite_auc": 0.46810315765187094,
+      "v5_recorded": {
+        "auc": 0.4982449400625191,
+        "brier": 0.1577811535493827,
+        "mean_probability": 0.0006751543209876543
+      }
+    },
+    {
+      "discrimination": {
+        "latent_auc": 0.5075553405661899,
+        "recorded_auc": 0.5030751157487389
+      },
+      "latent_to_recorded_information_loss": {
+        "auc_change_recorded_minus_latent": -0.004480224817451028,
+        "brier_change_recorded_minus_latent": 8.877840909090468e-05,
+        "interpretation": "Descriptive observation-channel attenuation only; it does not identify the recording process as the causal source of predictive error.",
+        "mean_probability_change_recorded_minus_latent": -0.0018150252525252527
+      },
+      "model_implied_control_signal": {
+        "independently_validated": false,
+        "prior_control_composite_auc": 0.6147352175615599
+      },
+      "observed_activity": 0.054924242424242424,
+      "proper_scores": {
+        "latent_brier": 0.054766414141414144,
+        "recorded_brier": 0.05485519255050505
+      },
+      "rate_error": {
+        "latent_mean_probability": 0.0025252525252525255,
+        "latent_rate_bias": -0.052398989898989896,
+        "observed_activity_rate": 0.054924242424242424,
+        "recorded_mean_probability": 0.0007102272727272727,
+        "recorded_rate_bias": -0.05421401515151515
+      },
+      "recorded_brier_improvement_v5_over_v4": 0.00011837121212121549,
+      "rows": 1584,
+      "split": "strict_joint_holdout",
+      "v4_latent": {
+        "auc": 0.4969939879759519,
+        "brier": 0.055013020833333336,
+        "mean_probability": 0.0007102272727272727
+      },
+      "v4_recorded": {
+        "auc": 0.4983299933199733,
+        "brier": 0.054973563762626264,
+        "mean_probability": 0.00039457070707070706
+      },
+      "v5_latent": {
+        "auc": 0.5075553405661899,
+        "brier": 0.054766414141414144,
+        "mean_probability": 0.0025252525252525255
+      },
+      "v5_prior_control_composite_auc": 0.6147352175615599,
+      "v5_recorded": {
+        "auc": 0.5030751157487389,
+        "brier": 0.05485519255050505,
+        "mean_probability": 0.0007102272727272727
+      }
+    },
+    {
+      "discrimination": {
+        "latent_auc": 0.49406249698420207,
+        "recorded_auc": 0.49681933842239184
+      },
+      "latent_to_recorded_information_loss": {
+        "auc_change_recorded_minus_latent": 0.002756841438189772,
+        "brier_change_recorded_minus_latent": -0.00012037750385208296,
+        "interpretation": "Descriptive observation-channel attenuation only; it does not identify the recording process as the causal source of predictive error.",
+        "mean_probability_change_recorded_minus_latent": -0.0018190378359869887
+      },
+      "model_implied_control_signal": {
+        "independently_validated": false,
+        "prior_control_composite_auc": 0.6361272221739694
+      },
+      "observed_activity": 0.058038007190549565,
+      "proper_scores": {
+        "latent_brier": 0.058260036808765625,
+        "recorded_brier": 0.05813965930491354
+      },
+      "rate_error": {
+        "latent_mean_probability": 0.0025894538606403015,
+        "latent_rate_bias": -0.055448553329909264,
+        "observed_activity_rate": 0.058038007190549565,
+        "recorded_mean_probability": 0.0007704160246533128,
+        "recorded_rate_bias": -0.057267591165896255
+      },
+      "recorded_brier_improvement_v5_over_v4": -0.00015515322718712837,
+      "rows": 5841,
+      "split": "temporal_validation",
+      "v4_latent": {
+        "auc": 0.5012433129706655,
+        "brier": 0.05801928180106146,
+        "mean_probability": 0.0008346173600410888
+      },
+      "v4_recorded": {
+        "auc": 0.5020410920566295,
+        "brier": 0.057984506077726414,
+        "mean_probability": 0.00025680534155110427
+      },
+      "v5_latent": {
+        "auc": 0.49406249698420207,
+        "brier": 0.058260036808765625,
+        "mean_probability": 0.0025894538606403015
+      },
+      "v5_prior_control_composite_auc": 0.6361272221739694,
+      "v5_recorded": {
+        "auc": 0.49681933842239184,
+        "brier": 0.05813965930491354,
+        "mean_probability": 0.0007704160246533128
+      }
+    },
+    {
+      "discrimination": {
+        "latent_auc": 0.5042821562929485,
+        "recorded_auc": 0.5012796044519874
+      },
+      "latent_to_recorded_information_loss": {
+        "auc_change_recorded_minus_latent": -0.0030025518409610985,
+        "brier_change_recorded_minus_latent": 0.0007895872567482698,
+        "interpretation": "Descriptive observation-channel attenuation only; it does not identify the recording process as the causal source of predictive error.",
+        "mean_probability_change_recorded_minus_latent": -0.0026548441096463696
+      },
+      "model_implied_control_signal": {
+        "independently_validated": false,
+        "prior_control_composite_auc": 0.5925673804131067
+      },
+      "observed_activity": 0.17231638418079095,
+      "proper_scores": {
+        "latent_brier": 0.17126033165934296,
+        "recorded_brier": 0.17204991891609123
+      },
+      "rate_error": {
+        "latent_mean_probability": 0.003452605147520402,
+        "latent_rate_bias": -0.16886377903327054,
+        "observed_activity_rate": 0.17231638418079095,
+        "recorded_mean_probability": 0.0007977610378740323,
+        "recorded_rate_bias": -0.1715186231429169
+      },
+      "recorded_brier_improvement_v5_over_v4": 0.00017982318476669756,
+      "rows": 9558,
+      "split": "training",
+      "v4_latent": {
+        "auc": 0.49912098906651003,
+        "brier": 0.17207280550324336,
+        "mean_probability": 0.0013470391295250053
+      },
+      "v4_recorded": {
+        "auc": 0.4996723567907912,
+        "brier": 0.17222974210085792,
+        "mean_probability": 0.0005362000418497594
+      },
+      "v5_latent": {
+        "auc": 0.5042821562929485,
+        "brier": 0.17126033165934296,
+        "mean_probability": 0.003452605147520402
+      },
+      "v5_prior_control_composite_auc": 0.5925673804131067,
+      "v5_recorded": {
+        "auc": 0.5012796044519874,
+        "brier": 0.17204991891609123,
+        "mean_probability": 0.0007977610378740323
+      }
+    }
+  ]
+}

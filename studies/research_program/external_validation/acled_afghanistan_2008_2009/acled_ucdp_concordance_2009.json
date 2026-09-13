@@ -1,0 +1,24 @@
+{
+  "acled_panel_sha256": "f91ed1ceefe834c9feaef82d4afd513a668f6ee257c7bea46dea86b8fbabe8cf",
+  "cells": {
+    "acled_only_reported_active": 28,
+    "both_reported_active": 240,
+    "both_source_silent": 1098,
+    "ucdp_only_reported_active": 436
+  },
+  "contract_sha256": "1768adf2bc212d2db41fe3f7be71163967d3e782328fa2dd8e7d63f289dd2631",
+  "ground_truth_assumed": false,
+  "interpretation": "This is a source-family concordance diagnostic. ACLED-only and UCDP-only cells demonstrate measurement-pipeline disagreement; source silence is not interpreted as latent peace. The result may not tune Pineland or its recording operator.",
+  "parameters_fitted": false,
+  "rates": {
+    "acled_overlap_fraction": 0.8955223880597015,
+    "acled_reported_active": 0.14872364039955605,
+    "positive_jaccard": 0.3409090909090909,
+    "ucdp_overlap_fraction": 0.35502958579881655,
+    "ucdp_reported_active": 0.3751387347391787
+  },
+  "rows": 1802,
+  "schema_version": "pineland.afghanistan.acled_ucdp_concordance.v1",
+  "ucdp_panel_sha256": "615b8ccd5db30eb45e74b9400029084edd1a931ed0a27bfaa8d7b708d767256c",
+  "year": 2009
+}

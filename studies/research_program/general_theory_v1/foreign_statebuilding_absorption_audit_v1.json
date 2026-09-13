@@ -1,0 +1,38 @@
+﻿{
+    "schema_version":  "pineland.foreign_statebuilding_absorption_audit.v1",
+    "status":  "STRUCTURAL_GAP_IDENTIFIED_BEFORE_MODEL_CHANGE",
+    "historical_outcomes_used":  false,
+    "source":  "rust/pineland-model/src/foreign.rs",
+    "findings":  [
+                     {
+                         "id":  "FSA-1",
+                         "channel":  "active foreign intervention -\u003e host institution capacity",
+                         "equation":  "delta_capacity_per_institution = 0.002*(transfer_efficiency-crowding_out)*foreign_contribution/N_institutions*cycle_scale",
+                         "defaults":  {
+                                          "transfer_efficiency":  0.35,
+                                          "crowding_out":  0.25,
+                                          "net_coefficient_before_contribution_and_N":  0.0002
+                                      },
+                         "finding":  "Transfer is linear in foreign force contribution until clamp. It has transfer efficiency and crowding-out but no domestic administrative/integrity/legitimacy throughput gate."
+                     },
+                     {
+                         "id":  "FSA-2",
+                         "channel":  "foreign support package -\u003e government training/organizational learning",
+                         "equation":  "learning=(0.14+0.10)*T=0.24T; denominator=T; delta_capacity=learning/denominator*0.02/N=0.0048/N for any T\u003e0",
+                         "finding":  "Institution-capacity gain is invariant to support-package magnitude because T cancels. This channel cannot encode either dose response or absorptive saturation."
+                     },
+                     {
+                         "id":  "FSA-3",
+                         "channel":  "foreign financial support",
+                         "equation":  "government organizational capital += 0.22*T",
+                         "finding":  "Financial aid does scale with package size, but its direct institutional-learning companion does not share the domestic state-regeneration absorptive-capacity function."
+                     }
+                 ],
+    "theory_implication":  "Foreign state-building currently has transfer/crowding-out concepts but is not coupled to the domestic absorptive-capacity architecture. This can make foreign institution-building structurally inconsistent with domestic rebuilding and cannot reproduce aid-volume saturation or implementation overload.",
+    "required_before_change":  [
+                                   "Freeze a synthetic mechanism contract comparing the current transfer law against an absorptive-throughput formulation.",
+                                   "Do not tune against Afghanistan outcomes; Afghanistan remains a conceptual comparator only.",
+                                   "Preserve a compatibility mode or explicit version gate because changing foreign transfer equations invalidates prior v2 foreign-affairs theory outputs."
+                               ],
+    "guard":  "This is a source-level mathematical audit, not an empirical claim that foreign aid is ineffective or that a particular real-world aid function is correct."
+}

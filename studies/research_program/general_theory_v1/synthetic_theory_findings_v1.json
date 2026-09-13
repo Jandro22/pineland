@@ -1,0 +1,153 @@
+{
+  "schema_version": "pineland.synthetic_theory_findings.v1",
+  "status": "synthetic_findings_not_historical_truth",
+  "historical_outcomes_used": false,
+  "firewall_certified": true,
+  "findings": [
+    {
+      "id": "minimal_sufficient_state_closure_v1",
+      "title": "Minimal Sufficient State and Distributional Closure",
+      "claim": "The 4-dimensional vector (M, F, E, C) constitutes the minimal sufficient macrostate for Pineland, achieving 100% pass rate (14/14 targets) with max regret 0.068 <= 0.10 against 70+ expanded microstate variables across 30d and 90d horizons.",
+      "evidence": {
+        "minimal_vector": [
+          "M",
+          "F",
+          "E",
+          "C"
+        ],
+        "pass_fraction": 1.0,
+        "test_count": 14,
+        "max_regret": 0.06848855911730567,
+        "threshold": 0.1,
+        "cross_validation": "Seed-grouped CV across 16 seeds and 34 localities"
+      },
+      "source": "studies/research_program/general_theory_v1/minimal_closure_state_v1.json",
+      "source_sha256": "29af20165c6802c5b75213ae4b292b83f6726056af1b9ba8398678104aba36f5",
+      "scope": "Pineland synthetic multi-agent dynamics"
+    },
+    {
+      "id": "rooted_membership_spatial_reproduction_v1",
+      "title": "Rooted Membership Spatial Reproduction and Generation Time Density",
+      "claim": "Spatial branching strictly requires rooted civilian membership M; parent types lacking M produce exactly zero spatial offspring. The empirical generation time density g(t) has mean 59.44d, median 56.0d, and plateaus at 158d, yielding an asymptotic reproduction number rho(K_infinity) = 6.394 (95% CI [6.036, 6.665]).",
+      "evidence": {
+        "mean_generation_days": 59.442594859241126,
+        "median_generation_days": 56.0,
+        "plateau_day": 158.0,
+        "zero_offspring_parent_types": [
+          "none",
+          "E",
+          "F",
+          "G",
+          "FG"
+        ],
+        "M_parent_children_30d": 1.5514705882352942,
+        "MF_parent_children_30d": 1.75,
+        "rho_K_curve": {
+          "7d": 0.40614,
+          "14d": 0.68522,
+          "21d": 1.2238,
+          "30d": 1.65843,
+          "60d": 3.82498,
+          "90d": 5.29576,
+          "180d": 6.3936
+        },
+        "effective_continuous_rate_lambda_I": 0.0355
+      },
+      "source": "studies/research_program/general_theory_v1/reproduction_kernel_results_v1.json",
+      "source_sha256": "8ef790c5b1bcc335139cc539bd73f75848e12ce0408f09936423df7b000f95d3",
+      "scope": "Pineland normalized first-generation impulse assay"
+    },
+    {
+      "id": "mobilization_resource_exhaustion_trap_v1",
+      "title": "Mobilization Burn and Organizational Resource Exhaustion",
+      "claim": "100% of trajectory collapses (607/607 across 960 runs) coincide with complete organizational capital exhaustion (K=0). The naive scalar strain law sigma = rf/c is falsified (dispersion 62.5% > 15%); operational burn is driven by a 3-term law Burn = kappa_r*r + kappa_rf*r*f + kappa_f*f reflecting upfront supply reservations and maintenance.",
+      "evidence": {
+        "total_trajectories": 960,
+        "collapsed_trajectories": 607,
+        "hard_capital_depletion_fraction": 1.0,
+        "matched_monotonicity_score": 1.0,
+        "recruitment_harm_monotonicity": 1.0,
+        "fielding_harm_monotonicity": 1.0,
+        "capital_rescue_monotonicity": 1.0,
+        "strain_dispersion": 0.625
+      },
+      "source": "studies/research_program/general_theory_v1/mobilization_resource_results_v1.json",
+      "source_sha256": "3ccec51ee9164d10f1d2c072a99779a8cdc5a0d55a2533adc134053b20b8ba78",
+      "scope": "Pineland 8-seed 120-cell 180-day mobilization sweep"
+    },
+    {
+      "id": "state_capacity_hysteresis_v1",
+      "title": "State Institutional Regeneration Inertia and Hysteresis",
+      "claim": "Local government institutional capacity exhibits deep hysteresis and does not passively regenerate from central fiscal subsidy over 180 days (mean final gap closure Q_capacity(180) = 0.0068, fraction reaching Q_50 = 0.0%, monotone rescue fraction = 0.0%).",
+      "evidence": {
+        "total_trajectories": 960,
+        "mean_final_gap_closure_Q180": 0.0067985487031977515,
+        "median_final_gap_closure": -0.004481180039466848,
+        "fraction_reaching_Q50": 0.0,
+        "fraction_reaching_Q80": 0.0,
+        "monotone_rescue_fraction": 0.0,
+        "capital_slope": -0.0004954
+      },
+      "source": "studies/research_program/general_theory_v1/state_regeneration_results_v1.json",
+      "source_sha256": "5736b97b77683c9b9e5dfb2df74b4ae9ef3992fd24a4479e44a48e9d8d3bcbc4",
+      "scope": "Pineland 8-seed 1,280-run focal capacity shock assay"
+    },
+    {
+      "id": "competitive_net_margin_dominance_v1",
+      "title": "Competitive Net Margin Gamma Governs Bifurcation and Survival",
+      "claim": "Log institutional capacity ratio Gamma(t) = log(G_I) - log(G_S) governs control bifurcation and predicts insurgent survival with AUC = 0.766, superior to raw kinetic force ratio (AUC = 0.746) and raw violence level (AUC = 0.583, R2 = -0.001).",
+      "evidence": {
+        "gamma_survival_auc": 0.766103656551774,
+        "force_ratio_survival_auc": 0.7455799980644026,
+        "violence_survival_auc": 0.5828448827725732,
+        "violence_delta_control_r2": -0.0010972280365020293
+      },
+      "source": "studies/research_program/general_theory_v1/competitive_dynamics_results_v1.json",
+      "source_sha256": "b53fbb53104dbe0063c41c3660a52b0d26bf51bef9e9add03fd504f23e0e230f",
+      "scope": "Pineland macrostate panel competitive analysis"
+    },
+    {
+      "id": "dimensionless_regime_taxonomy_v1",
+      "title": "Six Universal Regimes in Dimensionless Phase Space",
+      "claim": "The phase space of insurgent-state competition is partitioned into 6 qualitative regimes across dimensionless coordinates (Pi_0, Pi_M, Pi_S, Gamma): Endogenous Extinction, Mobilization Trap, Externally Maintained Persistence, Localized Endemic, Spatial Expansion, and State Consolidation.",
+      "evidence": {
+        "regimes_identified": 6,
+        "dimensionless_groups": [
+          "Pi_0",
+          "Pi_M",
+          "Pi_S",
+          "Gamma"
+        ],
+        "subcritical_boundary": "Pi_0 < 1.0",
+        "supercritical_boundary": "Pi_0 >= 1.0",
+        "burn_exhaustion_boundary": "Pi_M >= 0.25"
+      },
+      "source": "studies/research_program/general_theory_v1/phase_diagram_results_v1.json",
+      "source_sha256": "270fcf08c5acd13b99d848cee4963e44183b0baec5227bf2de0437a72a2c0132",
+      "scope": "Synthesized phase diagram specification"
+    },
+    {
+      "id": "reduced_dynamical_system_reconstruction_v1",
+      "title": "High-Fidelity Trajectory Reconstruction via 15-Parameter Dynamical System",
+      "claim": "A 15-parameter (<= 15) continuous spatial dynamical system compresses Pineland multi-agent behavior with 95.0% composite qualitative regime accuracy (90.0% mobilization sweep accuracy, 100.0% macrostate persistence accuracy), passing the 90% fidelity threshold.",
+      "evidence": {
+        "parameter_count": 15,
+        "state_variables": [
+          "M_i",
+          "F_i",
+          "E_i",
+          "C_i",
+          "K_o"
+        ],
+        "mobilization_accuracy": 0.9,
+        "macrostate_persistence_accuracy": 1.0,
+        "composite_accuracy": 0.95,
+        "threshold_passed": true
+      },
+      "source": "studies/research_program/general_theory_v1/reduced_theory_results_v1.json",
+      "source_sha256": "54db2d24a08253eaf61e83f1d780a221b96af45ce4781b1dfee24c5fac517d9f",
+      "scope": "Held-out Pineland simulation panels"
+    }
+  ],
+  "global_guard": "SYNTHETIC MECHANISM RESULT. All findings characterize native Pineland agent-based simulation dynamics and candidate theoretical compressions under zero historical tuning."
+}

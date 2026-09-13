@@ -1,0 +1,151 @@
+{
+  "schema_version": "pineland.falsification_ledger.v2",
+  "status": "corrected_v2_interpretation",
+  "historical_outcomes_used": false,
+  "firewall_certified": true,
+  "negative_results_permanent": true,
+  "falsifications": [
+    {
+      "id": "FALS-001",
+      "hypothesis": "Naive Scalar Strain Law: Insurgent survival probability is a universal monotonic function of scalar strain sigma = (r * f) / c.",
+      "tested_in": "studies/research_program/general_theory_v1/mobilization_resource_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "within_strain_dispersion": 0.625,
+        "dispersion_threshold": 0.15,
+        "collapse_count": 607,
+        "hard_capital_depletion_fraction": 1.0,
+        "matched_monotonicity_score": 1.0
+      },
+      "causal_mechanism": "Mobilization creates a two-timescale burn: upfront supply reservation (24.0 units/fighter) and ongoing maintenance costs. Survival cannot be collapsed to a single scalar strain; it requires a multi-term burn law Burn = kappa_r * r + kappa_rf * r * f + kappa_f * f, or the two-timescale ratio Pi_M = tau_replenish / tau_mobilize.",
+      "consequence_for_theory": "The naive 1D strain equation is discarded. The general theory incorporates the 3-term operational burn law."
+    },
+    {
+      "id": "FALS-002",
+      "hypothesis": "Passive Fiscal State Institutional Regeneration: Local administrative capacity recovers passively toward baseline following central budget subsidy over 180 days.",
+      "tested_in": "studies/research_program/general_theory_v1/state_regeneration_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "mean_final_gap_closure_Q180": 0.0067985487031977515,
+        "median_final_gap_closure": -0.004481180039466848,
+        "fraction_reaching_Q50": 0.0,
+        "monotone_rescue_fraction": 0.0,
+        "mean_log_capital_slope": -0.0004954068792604839
+      },
+      "causal_mechanism": "Government administrative and governance capacity is deeply hysteretic and path-dependent. Central financial injections do not translate into organic local administrative recovery on sub-annual timescales (tau_renewal >> 180d).",
+      "consequence_for_theory": "State-side capacity cannot be modeled as a fast-regenerating linear elastic spring. The general theory treats state capacity as an asymmetric, slow-decay/slow-build stock."
+    },
+    {
+      "id": "FALS-003",
+      "hypothesis": "Non-Rooted Spatial Reproduction: Fielded fighters (F) or footholds (E) alone can propagate insurgent spatial branching to adjacent districts without rooted civilian membership (M).",
+      "tested_in": "studies/research_program/general_theory_v1/reproduction_kernel_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "E_only_children_30d": 0.0,
+        "F_only_children_30d": 0.0,
+        "G_only_children_30d": 0.0,
+        "FG_children_30d": 0.0,
+        "M_parent_children_30d": 1.5514705882352942,
+        "MF_parent_children_30d": 1.75
+      },
+      "causal_mechanism": "In native Pineland dynamics, geographic cell establishment is triggered strictly through civilian recruitment and radicalization fronts. Fielded armed units lacking a local civilian base cannot establish organic root structures.",
+      "consequence_for_theory": "The reproduction operator K_ij strictly conditions spatial branching on rooted membership M_i. Non-rooted military excursions do not yield generational reproduction."
+    },
+    {
+      "id": "FALS-004",
+      "hypothesis": "Pure Force-Ratio Dominance: Military force ratio (F_ins / S_gov) is the superior predictor of territorial control shift and survival compared to holistic institutional net margin Gamma.",
+      "tested_in": "studies/research_program/general_theory_v1/competitive_dynamics_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "gamma_survival_auc": 0.766103656551774,
+        "force_ratio_survival_auc": 0.7455799980644026,
+        "violence_survival_auc": 0.5828448827725732,
+        "violence_delta_control_r2": -0.0010972280365020293
+      },
+      "causal_mechanism": "Insurgency is fundamentally a competitive governance struggle rather than purely kinetic attrition. Pure violence levels have zero explanatory power for territorial control shift; institutional net margin Gamma(t) provides superior trajectory forecasting.",
+      "consequence_for_theory": "The general theory defines the competitive net margin Gamma(t) as the fundamental governing variable for control inflections."
+    },
+    {
+      "id": "FALS-005",
+      "hypothesis": "Infinite-Dimensional Microstate Irreducibility: The 70+ agent-level microstate attributes cannot be compressed into a low-dimensional state vector without severe (> 10%) forecasting regret.",
+      "tested_in": "studies/research_program/general_theory_v1/macrostate_closure_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "closure_test_count": 14,
+        "closure_pass_count": 14,
+        "closure_pass_fraction": 1.0,
+        "max_regret_vs_expanded_microstate": 0.06848855911730567,
+        "regret_threshold": 0.1
+      },
+      "causal_mechanism": "Microstate distributions exhibit strong statistical manifold collapse onto the 4-dimensional manifold (M, F, E, C). Additional agent features provide negligible conditional mutual information for macrostate trajectories.",
+      "consequence_for_theory": "Licenses the low-dimensional macrostate representation X_t = (M_i, F_i, E_i, C_i) as the minimal sufficient state for Pineland."
+    },
+    {
+      "id": "FALS-006",
+      "hypothesis": "Equal Channel Knockout Symmetry: Logistics supply (L) and tactical intelligence (K) can independently sustain local foothold viability in the absence of civilian membership (M), fielded forces (F), or institutional capacity (I).",
+      "tested_in": "studies/research_program/general_theory_v1/channel_factorial_8seed_90d_analysis_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "M_single_rescue_viability": 0.75,
+        "F_single_rescue_viability": 0.75,
+        "I_single_rescue_viability": 0.75,
+        "L_single_rescue_viability": 0.0,
+        "K_single_rescue_viability": 0.0
+      },
+      "causal_mechanism": "Logistics and intelligence are non-substitutable enabling conditions rather than autonomous generators of political-military presence.",
+      "consequence_for_theory": "Logistics and intelligence enter the dynamical system as scaling modulators rather than autonomous state variables in the minimal core."
+    },
+    {
+      "id": "FALS-007",
+      "hypothesis": "Police Professionalism Redundancy: Initial local police professionalism is screened off by headcount and parent institutional variables at all positive horizons.",
+      "tested_in": "studies/research_program/general_theory_v1/force_discrimination_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "mean_prof_difference_t14": 0.6847516187298122,
+        "mean_prof_difference_t112": 0.23048073579640738,
+        "monotone_convergence_decay": true,
+        "mean_intelligence_difference_t112": 0.04581740414585093,
+        "mean_cumulative_disrupted_difference_t112": 202.9076251166787,
+        "screened_off_by_staffing": false
+      },
+      "causal_mechanism": "Equal police headcount with differing professionalism yields substantially different effective local security, information collection, and underground disruption. Professionalism acts as an independent local stock that converges endogenously toward parent standards rather than inheriting them instantaneously.",
+      "consequence_for_theory": "Police professionalism is confirmed as an irreducible dynamical stock P_i(t) in the local security vector. It cannot be collapsed into headcount or parent institutional quality."
+    },
+    {
+      "id": "FALS-008",
+      "hypothesis": "Formation Veterancy Static Quality Redundancy: Formation combat capability can be reduced to static structural quality, with experience being a redundant decorative alias under personnel turnover.",
+      "tested_in": "studies/research_program/general_theory_v1/force_discrimination_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "pre_turnover_exact_equivalence_max_loss_diff": 0.0,
+        "pre_turnover_exact_equivalence_max_cap_diff": 0.0,
+        "turnover_06_paired_loss_diff": 0.0013348128038848774,
+        "turnover_06_paired_t_statistic": 35.43906869162973,
+        "diverges_under_turnover": true
+      },
+      "causal_mechanism": "While instantaneously equivalent quality-experience pairs are indistinguishable under common RNG before turnover, green replacements dilute formation veterancy while structural quality remains static. High-casualty formations lose institutional combat capability even when headcount is fully refilled.",
+      "consequence_for_theory": "Formation veterancy V_f(t) is confirmed as a genuine dynamic memory stock governed by field learning and replacement dilution, strictly distinct from structural quality Q_f."
+    },
+    {
+      "id": "FALS-009",
+      "hypothesis": "Fast-Timescale State Capacity Elasticity: Hierarchical state institutional regeneration restores induced local institutional damage within a single 180-day operational cycle.",
+      "tested_in": "studies/research_program/general_theory_v1/state_regeneration_results_v2.json",
+      "verdict": "FALSIFIED_IN_TESTED_SYNTHETIC_SYSTEM",
+      "empirical_evidence": {
+        "mean_final_Q_capacity_180d": 0.06087440082316223,
+        "median_final_Q_capacity_180d": 0.058203518865799664,
+        "fraction_reaching_Q50": 0.0,
+        "fraction_reaching_Q80": 0.0,
+        "mean_Q_effective_control_180d": -0.025214868998323026,
+        "fraction_with_admin_rebuild": 1.0,
+        "fraction_with_security_flow": 1.0,
+        "mean_log_capital_slope_on_final_Q": -0.0003142048363775224
+      },
+      "causal_mechanism": "The implemented v2 recruitment, reserve, deployment, intelligence, and administrative-rebuild pathways engage, but they do not restore even half of the induced institutional-capacity gap within 180 days. This establishes weak short-horizon recovery under the tested synthetic design, not a unique long-run time constant.",
+      "consequence_for_theory": "State capacity cannot be assumed to behave as a fast elastic spring. The recovery timescale and functional form remain unidentified and must be estimated over longer horizons and under active competitive dynamics before entering a reduced theory.",
+      "interpretation_guard": "Do not infer tau_state\u22483000 days or a universal tau_state/tau_insurgent ratio by linear extrapolation from the 180-day Q result."
+    }
+  ],
+  "supersedes": "falsification_ledger_v1.json",
+  "historical_rerun_authorized": false
+}

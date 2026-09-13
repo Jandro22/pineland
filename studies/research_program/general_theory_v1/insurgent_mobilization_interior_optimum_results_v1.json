@@ -1,0 +1,113 @@
+{
+  "schema_version": "pineland.insurgent_mobilization_interior_optimum_results.v1",
+  "status": "INTERIOR_MOBILIZATION_OPTIMUM_SUPPORTED",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/insurgent_mobilization_interior_optimum_6seed_v1.csv",
+  "input_sha256": "2c22a3a41e4cf78febc6ebeb5a1062d4acb590937942999314f71f30f6024bd9",
+  "seed_count": 6,
+  "cell_summary": [
+    {
+      "recruitment_multiplier": 0.0,
+      "n": 6,
+      "joint_viability_fraction": 0.8333333333333334,
+      "collapse_fraction": 0.16666666666666666,
+      "median_collapse_time": 70.0,
+      "median_final_rooted": 88733.3614322108,
+      "median_final_operational_force": 7028.446732008439,
+      "median_final_capital": 89347.2557023731,
+      "median_final_cumulative_recruitment": 0.0,
+      "median_runway_ratio": 0.0,
+      "collapse_causes": {
+        "stochastic": 1
+      }
+    },
+    {
+      "recruitment_multiplier": 0.03125,
+      "n": 6,
+      "joint_viability_fraction": 0.8333333333333334,
+      "collapse_fraction": 0.16666666666666666,
+      "median_collapse_time": 70.0,
+      "median_final_rooted": 99733.33449007207,
+      "median_final_operational_force": 7758.505806877152,
+      "median_final_capital": 79513.08201978498,
+      "median_final_cumulative_recruitment": 5133.333333333333,
+      "median_runway_ratio": 0.11028675395638725,
+      "collapse_causes": {
+        "stochastic": 1
+      }
+    },
+    {
+      "recruitment_multiplier": 0.0625,
+      "n": 6,
+      "joint_viability_fraction": 1.0,
+      "collapse_fraction": 0.0,
+      "median_collapse_time": NaN,
+      "median_final_rooted": 108533.31295902508,
+      "median_final_operational_force": 8580.04672022683,
+      "median_final_capital": 51371.32842988518,
+      "median_final_cumulative_recruitment": 19799.969921732358,
+      "median_runway_ratio": 0.4252918891946802,
+      "collapse_causes": {}
+    },
+    {
+      "recruitment_multiplier": 0.125,
+      "n": 6,
+      "joint_viability_fraction": 0.8333333333333334,
+      "collapse_fraction": 0.16666666666666666,
+      "median_collapse_time": 329.0,
+      "median_final_rooted": 125399.96361801855,
+      "median_final_operational_force": 9828.779138520704,
+      "median_final_capital": 16157.497105030834,
+      "median_final_cumulative_recruitment": 38133.327463200716,
+      "median_runway_ratio": 0.8192137539501738,
+      "collapse_causes": {
+        "capital": 1
+      }
+    },
+    {
+      "recruitment_multiplier": 0.25,
+      "n": 6,
+      "joint_viability_fraction": 0.0,
+      "collapse_fraction": 1.0,
+      "median_collapse_time": 206.5,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_capital": 0.0,
+      "median_final_cumulative_recruitment": 46199.90782209236,
+      "median_runway_ratio": 1.0,
+      "collapse_causes": {
+        "capital": 6
+      }
+    },
+    {
+      "recruitment_multiplier": 0.5,
+      "n": 6,
+      "joint_viability_fraction": 0.0,
+      "collapse_fraction": 1.0,
+      "median_collapse_time": 108.5,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_capital": 0.0,
+      "median_final_cumulative_recruitment": 46933.30721415962,
+      "median_runway_ratio": 1.0,
+      "collapse_causes": {
+        "capital": 6
+      }
+    }
+  ],
+  "best_tested_cell": {
+    "recruitment_multiplier": 0.0625,
+    "n": 6,
+    "joint_viability_fraction": 1.0,
+    "collapse_fraction": 0.0,
+    "median_collapse_time": NaN,
+    "median_final_rooted": 108533.31295902508,
+    "median_final_operational_force": 8580.04672022683,
+    "median_final_capital": 51371.32842988518,
+    "median_final_cumulative_recruitment": 19799.969921732358,
+    "median_runway_ratio": 0.4252918891946802,
+    "collapse_causes": {}
+  },
+  "strict_interior_viability_maximum": true,
+  "guard": "Fresh synthetic mechanism screen only; no empirical mobilization recommendation."
+}

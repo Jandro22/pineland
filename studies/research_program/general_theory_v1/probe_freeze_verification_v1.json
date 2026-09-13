@@ -1,0 +1,38 @@
+{
+  "schema_version": "pineland.probe_freeze_verification.v1",
+  "status": "verified_no_mismatch",
+  "created_utc": "2026-09-10T16:59:29.506823+00:00",
+  "git_head": "34b0bad87c50150c9effe2bcb3d6d3c589705204",
+  "recorded_freeze": {
+    "schema_version": "pineland.general_theory_probe_freeze.v1",
+    "status": "frozen_synthetic_probe_not_historical_core_certificate",
+    "created_utc": "2026-09-10T16:54:28.407913+00:00",
+    "git_head": "34b0bad87c50150c9effe2bcb3d6d3c589705204",
+    "binary": "studies/research_program/general_theory_v1/bin/pineland-general-theory-probe-v1.exe",
+    "binary_sha256": "ec66f44a5f51181e700a413d507fcf6390b7a07b99007f4770913b464c3621f9",
+    "probe_source_sha256": "d86a8d64436bf2ca889a30d051e64e4394412f69ed0bd72eee3f266bb4f922af",
+    "cargo_lock_sha256": "ddc0a2b9f14cedcfb3d771539e33ad1f4ad8efc0390f7347265694367c1edb11",
+    "rust_source_sha256": {
+      "rust/pineland-core/src/state.rs": "2b55741ff49b9a225d0469630e73eed377921a01e893b17a104b57e7149f3179",
+      "rust/pineland-core/src/config.rs": "e2e70aa7283f4bfc7e7b2d135cdd7de006551e3a7ba7c14868a02b39f2b5aa5e",
+      "rust/pineland-model/src/lib.rs": "897cd5e150a7ce6f687e0d6bbd05109917685e1d966397bc747bb989b4619e0c",
+      "rust/pineland-model/src/organizations.rs": "0498b1f181c9e74b22256fdf333ef3fd4b4ab0895da600992b2a4a73ae923163",
+      "rust/pineland-model/src/recruitment.rs": "f18d52ae4bd35b2a027737643ef7cdab0369fe989886dec2243296e52919874c",
+      "rust/pineland-model/src/actions.rs": "8faf06dd465dbd82c728fc9d6dde8ca0e25dd0ffe948189f7cc6a95b235532be",
+      "rust/pineland-model/src/social.rs": "d183583934d02365a5041a1938d202540368b8e8468be0e9b361fd4159e992d0",
+      "rust/pineland-model/src/governance.rs": "455e1046b09429ae5a241bc364b3dceb05d62771f61970ab723225864a4dacf8",
+      "rust/pineland-model/src/information.rs": "d3465c2d43ab3ce2922e5f775e106e9c21cb81c69963e39595297ba9872540cd",
+      "rust/pineland-model/src/movement.rs": "1bd9c51e79d90aaf80204caa35de1d7e25280bd661567ad4cfe06b8a6ffa73e6",
+      "rust/pineland-model/src/logistics.rs": "b3787ee11304d90843e07a263011a9d5c5e71e8edc818ad89f8b02e9a8314230",
+      "rust/pineland-model/src/physical.rs": "41897cd99fbd5b85585b2e7187adedc52da297c49398c73717f5cb67f317d840",
+      "rust/pineland-model/src/combat.rs": "290e965751e9cb4dee44520e5c5821237afa015cd185bb85e88280339b26fd03",
+      "rust/pineland-model/src/foreign.rs": "abb5c72adeaf3d1abe07e20c498ff1c5e75dfd74f3fb57d6bbf215d982bf8077"
+    },
+    "historical_outcomes_used": false,
+    "historical_rerun_authorized": false
+  },
+  "current_probe_source_sha256": "d86a8d64436bf2ca889a30d051e64e4394412f69ed0bd72eee3f266bb4f922af",
+  "rebuilt_binary_sha256": "ec66f44a5f51181e700a413d507fcf6390b7a07b99007f4770913b464c3621f9",
+  "original_binary_sha256": "ec66f44a5f51181e700a413d507fcf6390b7a07b99007f4770913b464c3621f9",
+  "all_equal_to_recorded": true
+}

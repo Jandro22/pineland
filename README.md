@@ -154,6 +154,13 @@ interfering with active runs.  Scratch/cache directories such as `tmp/`,
 `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, and coverage output are ignored
 by Git.
 
+The full source/evidence layout and the rules for what is tracked, retained
+locally, compressed, or disposable are documented in
+[`docs/repository-layout.md`](docs/repository-layout.md). In particular, Cargo
+`target*` trees and copied native binaries are rebuildable products, while
+compact scientific audits, falsification ledgers, and result summaries should
+be retained even when their much larger raw panels stay outside Git.
+
 Run the publication-readiness smoke battery (add `--full` for the powered
 resolution/sensitivity/recovery runs):
 
