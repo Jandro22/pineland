@@ -1,0 +1,54 @@
+{
+  "schema_version": "pineland.development_recruitment_roi_allocation_contract.v1",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "question": "Does dynamically allocating a fixed public-development budget to the highest current anti-recruitment marginal return outperform equal, threat-weighted, need-weighted, and service-output-marginal-return allocation, and does the advantage survive withdrawal?",
+  "design": {
+    "seed_base": 2026160000,
+    "seeds": 12,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 180,
+    "final_day": 270,
+    "recruitment_multiplier": 0.0625,
+    "underground_disruption_rate": 0.0,
+    "collapse_requires_fielded_exhaustion": true,
+    "foreign_affairs": false,
+    "allocation_modes": [
+      "equal_locality",
+      "threat_weighted",
+      "need_weighted",
+      "marginal_return",
+      "recruitment_roi_waterfill"
+    ],
+    "budget_multipliers": [1.0, 2.0, 5.0]
+  },
+  "recruitment_roi_waterfill_definition": {
+    "marginal_value": "For each locality at each political-order decision boundary, use recruitment_hazard_access_sensitivity * d(political_access)/d(nominal_public) under the same stored-compliance approximation as development_recruitment_roi_identity_v1.json.",
+    "finite_budget_rule": "Sort localities by current positive marginal anti-recruitment return. Allocate nominal public capital greedily to the best locality only up to its remaining public-capital headroom before the local production clamp reaches 1, then continue to the next locality. This is the exact finite-budget optimizer of the frozen piecewise-linear first-order objective before feedback.",
+    "residual_budget_rule": "If all positive-return locality headrooms are saturated, distribute any residual nominal public budget using the existing equal-locality rule so total public spending remains budget-comparable.",
+    "recompute_frequency": "Recompute the ranking and saturation headroom at every political-order event from the current state; do not freeze the day-60 ranking."
+  },
+  "primary_outcomes": [
+    "cumulative_recruitment_since_anchor",
+    "recruitment_hazard_mass",
+    "rooted_armed_membership_mass",
+    "active_owner_fielded_force_personnel",
+    "foothold_strength_sum",
+    "cumulative_insurgent_actions_since_anchor",
+    "population_weighted_insurgent_control"
+  ],
+  "secondary_outcomes": [
+    "mean_political_access",
+    "mean_government_legitimacy",
+    "mean_local_institution_capacity",
+    "population_weighted_government_control",
+    "government_military_losses_since_anchor",
+    "population_loss_since_anchor",
+    "displacement"
+  ],
+  "cost_rule": "At each budget multiplier compare modes at matched nominal public-development outflow. Also report any realized outflow divergence caused by government-capital scarcity.",
+  "primary_falsifier": "If recruitment_roi_waterfill does not reduce cumulative recruitment more than threat_weighted at matched realized public outflow on fresh seeds, the first-order targeting advantage does not transport to the dynamic system.",
+  "interpretation_guard": "Synthetic allocation mechanism only. The water-filling rule is an analytical upper-bound targeting operator, not a claim that real governments observe or can optimize the required state variables perfectly."
+}
