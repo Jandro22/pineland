@@ -491,10 +491,16 @@ future transport contract.
   realized incremental political-access gain alone (rho=.042).  This supports
   a multiplicative targeting logic: money is most useful where both a live
   recruitment margin and enough institutional conversion capacity coexist.
-- A full dynamic 12-seed development suppression-efficiency assay is running
-  under the frozen `development_suppression_efficiency_contract_v1.json` with
-  only four below-normal-priority worker threads.  It tests whether the
-  first-order recruitment advantage compounds into recruits prevented, rooted
-  membership reduction, lower fielded force/actions/control, and durable
-  post-withdrawal suppression.  No dynamic result is claimed before completion.
+- A full dynamic 12-seed development suppression-efficiency assay remains
+  preregistered under `development_suppression_efficiency_contract_v1.json`,
+  but no completed outcome block is claimed here.  The first attempted run was
+  stopped before output because its forensic cost ledger advanced every event
+  individually and was unnecessarily expensive.  A sparse political-event
+  accounting path was implemented and parity-checked against the old binary on
+  a one-seed validation world: every scientific outcome and the gross
+  political/public-development outflow matched exactly (maximum difference 0
+  at printed precision).  The fast path intentionally does not claim the
+  secondary all-event gross inflow/outflow fields.  The full dynamic block was
+  not completed in this session, so only the first-order locality ROI map is an
+  outcome result at this stage.
 
