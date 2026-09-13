@@ -1,0 +1,59 @@
+{
+  "schema_version": "pineland.development_suppression_efficiency_contract.v1",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "question": "How much insurgent reproductive/organizational activity is suppressed per unit of incremental public-development spending, how does that return vary by allocation rule and dose, and how much suppression persists after the spending intervention ends?",
+  "design": {
+    "seed_base": 2026148000,
+    "seeds": 12,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 180,
+    "final_day": 270,
+    "threads": 8,
+    "recruitment_multiplier": 0.0625,
+    "underground_disruption_rate": 0.0,
+    "collapse_requires_fielded_exhaustion": true,
+    "foreign_affairs": false,
+    "allocation_modes": [
+      "equal_locality",
+      "threat_weighted",
+      "need_weighted",
+      "marginal_return"
+    ],
+    "budget_multipliers": [1.0, 2.0, 5.0, 10.0, 20.0]
+  },
+  "primary_outcomes": [
+    "recruitment_hazard_mass",
+    "cumulative_recruitment_since_anchor",
+    "rooted_armed_membership_mass",
+    "active_owner_fielded_force_personnel",
+    "foothold_strength_sum",
+    "cumulative_insurgent_actions_since_anchor",
+    "population_weighted_insurgent_control"
+  ],
+  "secondary_outcomes": [
+    "mean_political_access",
+    "mean_government_legitimacy",
+    "mean_local_institution_capacity",
+    "population_weighted_government_control",
+    "government_military_losses_since_anchor",
+    "population_loss_since_anchor",
+    "displaced_population_fraction"
+  ],
+  "cost_accounting": {
+    "primary_denominator": "incremental nominal public-development outflow versus the 1x dose under the same allocation mode",
+    "normalized_reporting_unit": "1,200 Pineland capital units = 1% of the default one-month 120,000 federal policy-budget ceiling",
+    "real_dollar_conversion": "If the real-dollar monthly budget anchor is B dollars, then one Pineland capital unit corresponds to B/120000 dollars. No B is assumed in this assay."
+  },
+  "analysis_rules": [
+    "Use within-seed 1x same-mode baselines for dose ROI so allocation-rule differences are not mixed into the spending denominator.",
+    "At each fixed budget multiplier, compare allocation modes against equal-locality using paired seeds; this is a budget-neutral allocation-efficiency comparison.",
+    "Report suppression per 1,200 incremental public capital separately for each insurgent outcome; do not collapse outcomes into one utility score.",
+    "Report intervention-end effect and final-day retained effect separately. A transient improvement that reverses after spending ends is not durable suppression.",
+    "Fail closed for an outcome when the denominator is nonpositive or the 1x baseline has already lost the relevant insurgent state in most seeds.",
+    "No real-world dollar or operational COIN effect size may be claimed from internal capital units without an external calibration contract."
+  ],
+  "interpretation_guard": "Synthetic mechanism experiment on persistent low-tempo live-insurgency support. It tests model economics and causal pathways, not real-world aid effectiveness or operational targeting."
+}

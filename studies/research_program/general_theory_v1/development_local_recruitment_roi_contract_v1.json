@@ -1,0 +1,43 @@
+{
+  "schema_version": "pineland.development_local_recruitment_roi_contract.v1",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "question": "At the locality level, what is the first-order reduction in insurgent recruitment hazard produced by an additional fixed public-development increment, and how does that ROI vary with threat and local absorptive capacity?",
+  "design": {
+    "seed_base": 2026150000,
+    "seeds": 12,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "recruitment_multiplier": 0.0625,
+    "underground_disruption_rate": 0.0,
+    "state_regeneration": true,
+    "foreign_affairs": false,
+    "incremental_nominal_public_capital": 1200.0,
+    "increment_interpretation": "1% of the default one-month 120,000 federal policy-budget ceiling"
+  },
+  "derivation": [
+    "Recruitment logit includes -peaceful_channel_strength*political_access. The diagnostic computes the exact interval-boundary derivative of recruitment hazard with respect to political access.",
+    "For local public spending, expected low-dose production uses the stored-compliance approximation already frozen for marginal-return allocation: production = clamp(capacity*reach*compliance^2*public/(population*0.05),0,1) for a 30-day reference cycle.",
+    "Political-access output is representation = production*(0.5+0.5*autonomy), and access changes by 0.03*(representation-0.2) per reference cycle. Incremental access from extra spending therefore depends only on the change in production.",
+    "The reported immediate hazard reduction is access_sensitivity * incremental_political_access. This is first-order in recruitment response but exact in the spending-to-production clamp under the stored-compliance approximation."
+  ],
+  "primary_outputs": [
+    "baseline_local_recruitment_hazard",
+    "recruitment_hazard_access_sensitivity",
+    "baseline_equal-locality nominal public allocation",
+    "incremental political-access gain from +1200 public capital",
+    "first-order recruitment-hazard reduction from +1200 public capital",
+    "fractional hazard reduction where baseline hazard > 0",
+    "nominal public capital required to saturate local production",
+    "local institution capacity/reach/compliance/integrity/autonomy",
+    "local rooted membership and insurgent control"
+  ],
+  "analysis_rules": [
+    "Rank localities by hazard reduction per +1200 capital, but separately report baseline hazard and saturation headroom so tiny-hazard localities cannot dominate on percentage change alone.",
+    "Partition localities by threat and absorptive capacity to test whether high-threat/high-absorption localities dominate high-threat/low-absorption ones.",
+    "This diagnostic may nominate a dynamic recruitment-ROI allocation rule, but it cannot by itself certify long-run suppression. Any dynamic rule must be tested on untouched seeds."
+  ],
+  "real_dollar_guard": "No USD conversion is assumed. If the default monthly budget is externally anchored to B dollars, +1200 capital corresponds to 0.01*B dollars.",
+  "interpretation_guard": "Synthetic first-order mechanism map only; not a real-world development targeting recommendation."
+}
