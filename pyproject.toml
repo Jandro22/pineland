@@ -12,6 +12,21 @@ license = {text = "MIT"}
 authors = [{name = "Pineland COIN-SIM contributors"}]
 dependencies = []
 
+[project.optional-dependencies]
+research = [
+    "jsonschema>=4.20",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "pyreadr>=0.5",
+    "reportlab>=4.0",
+    "scikit-learn>=1.4",
+    "scipy>=1.12",
+    "shapely>=2.0",
+]
+dev = [
+    "pytest>=8.0",
+]
+
 [project.scripts]
 pineland-sim = "pineland_sim.cli:main"
 
