@@ -11,6 +11,12 @@
       "skipped": 2,
       "failed": 0
     },
+    "portable_clean_clone_pytest": {
+      "passed": 650,
+      "skipped": 2,
+      "failed": 0,
+      "scope": "GitHub-portable suite excluding tests whose declared inputs are gitignored historical panels, sealed holdouts, or generated result bundles"
+    },
     "notes": [
       "Native scheduler-oracle horizon clipping was aligned with reference exact-continuation semantics.",
       "Research-readiness scoring no longer infers empirical readiness from synthetic data-status wording."
