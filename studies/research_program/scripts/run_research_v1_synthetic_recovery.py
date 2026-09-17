@@ -532,9 +532,14 @@ def _run_localized_reconstruction(
     reports: Sequence[SyntheticObservation],
     adjacency: dict[str, tuple[str, ...]],
     args: argparse.Namespace,
+    *,
+    radius: int | None = None,
 ) -> dict[str, Any]:
     """Run a localized fixed-lag reconstruction over coherent prior worlds."""
 
+    radius = args.localization_radius if radius is None else int(radius)
+    if radius < 0:
+        raise ValueError("localization radius cannot be negative")
     channels = _channels(args)
     design = observation_design_diagnostics(channels, DEFAULT_VARIABLES)
     linked = set(design["observation_linked_variables"])
@@ -556,7 +561,7 @@ def _run_localized_reconstruction(
             adjacency=adjacency,
             time=state_time,
             variables=DEFAULT_VARIABLES,
-            radius=args.localization_radius,
+            radius=radius,
             assumed_geolocation_error_probability=args.geolocation_error_probability,
             assumed_measurement_noise_multiplier=args.measurement_noise_multiplier,
         )
@@ -579,7 +584,7 @@ def _run_localized_reconstruction(
     linked_prior_metrics = evaluate_recovery(linked_prior_points)
     return {
         "status": "localized_marginal_approximation_not_joint_posterior",
-        "radius": args.localization_radius,
+        "radius": radius,
         "metrics": asdict(metrics),
         "metrics_observation_linked": asdict(linked_metrics),
         "prior_metrics_same_targets": asdict(prior_metrics),
@@ -601,6 +606,34 @@ def _run_localized_reconstruction(
         "support_rows": [asdict(row) for row in support],
         "metrics_by_variable": evaluate_recovery_by_variable(points),
         "posterior_points": [asdict(point) for point in points],
+    }
+
+
+def _run_localization_radius_sweep(
+    prior_history: dict[float, list[dict[str, dict[str, float]]]],
+    truth_states: dict[float, dict[str, dict[str, float]]],
+    reports: Sequence[SyntheticObservation],
+    adjacency: dict[str, tuple[str, ...]],
+    args: argparse.Namespace,
+) -> dict[str, dict[str, Any]]:
+    """Compare localization radii on exactly the same worlds and reports."""
+
+    requested = getattr(args, "localization_radius_sweep", None)
+    if not requested:
+        return {}
+    radii = sorted({int(radius) for radius in requested})
+    if any(radius < 0 for radius in radii):
+        raise ValueError("localization radius sweep values cannot be negative")
+    return {
+        str(radius): _run_localized_reconstruction(
+            prior_history,
+            truth_states,
+            reports,
+            adjacency,
+            args,
+            radius=radius,
+        )
+        for radius in radii
     }
 
 
@@ -630,6 +663,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         prior_history, truth_states, args
     )
     localized_reconstruction = _run_localized_reconstruction(
+        prior_history,
+        truth_states,
+        reports,
+        adjacency,
+        args,
+    )
+    localization_radius_sweep = _run_localization_radius_sweep(
         prior_history,
         truth_states,
         reports,
@@ -687,6 +727,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "truth_boundaries": sorted(truth_states),
         "no_assimilation_baseline": no_assimilation,
         "localized_reconstruction": localized_reconstruction,
+        "localization_radius_sweep": localization_radius_sweep,
         "scenario_results": results,
     }
     return payload
@@ -719,6 +760,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=0,
         help="graph radius of reports used for each localized marginal posterior",
+    )
+    parser.add_argument(
+        "--localization-radius-sweep",
+        type=int,
+        nargs="+",
+        default=None,
+        help=(
+            "optional matched comparison of several localization radii using "
+            "the same hidden world, prior ensemble, and reports"
+        ),
     )
     parser.add_argument(
         "--geographic-reporting-bias-strength",
@@ -777,6 +828,14 @@ def main() -> int:
             "linked_rmse_ratio_vs_prior": payload["localized_reconstruction"]["relative_to_prior"]["linked_rmse_ratio"],
             "coverage_90": payload["localized_reconstruction"]["metrics"]["coverage_90"],
             "minimum_ess": payload["localized_reconstruction"]["support"]["minimum_ess"],
+        },
+        "localization_radius_sweep": {
+            radius: {
+                "linked_rmse_ratio_vs_prior": result["relative_to_prior"]["linked_rmse_ratio"],
+                "coverage_90": result["metrics"]["coverage_90"],
+                "minimum_ess": result["support"]["minimum_ess"],
+            }
+            for radius, result in payload["localization_radius_sweep"].items()
         },
     }
     print(json.dumps(summary, indent=2, sort_keys=True))

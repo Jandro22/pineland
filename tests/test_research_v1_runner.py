@@ -2,6 +2,7 @@ from argparse import Namespace
 
 from studies.research_program.scripts.run_research_v1_synthetic_recovery import (
     DEFAULT_VARIABLES,
+    build_parser,
     _run_no_assimilation_baseline,
 )
 
@@ -28,3 +29,10 @@ def test_full_rank_profile_has_no_unobserved_subset_metric():
 
     assert result["metric_groups"]["observation_linked_targets"] is not None
     assert result["metric_groups"]["snapshot_unobserved_targets"] is None
+
+
+def test_parser_accepts_matched_localization_radius_sweep():
+    args = build_parser().parse_args([
+        "--localization-radius-sweep", "0", "1", "2",
+    ])
+    assert args.localization_radius_sweep == [0, 1, 2]

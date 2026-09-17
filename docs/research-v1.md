@@ -109,7 +109,11 @@ python pineland.py reproduce paper1 --profile smoke
 The smoke profile is deliberately too small for scientific claims. The
 development profile adds the current misspecification battery and a matched
 no-assimilation ensemble so posterior improvement can be measured against the
-same latent prior rather than only against a direct-report heuristic.
+same latent prior rather than only against a direct-report heuristic. The
+development profile also compares localization radii 0, 1, and 2 on the same
+hidden world, reports, and prior ensemble. Radius is therefore treated as an
+estimator-design choice to diagnose spatial dimensionality, not tuned against a
+historical case.
 
 ## Claim firewall
 
