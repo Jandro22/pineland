@@ -4,7 +4,7 @@
   <img src="docs/assets/pineland-logo.webp" alt="Unofficial Pineland project logo" width="128">
 </p>
 
-<p align="center"><sub>Unofficial project artwork — just for fun.</sub></p>
+<p align="center"><sub>Unofficial project artwork - just for fun.</sub></p>
 
 ## Research-v1: inferring the hidden war
 
