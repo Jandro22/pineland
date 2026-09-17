@@ -114,112 +114,115 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 ),
                 observation_prefix=f"weight:{profile}:{reporting_multiplier:g}",
             )
-            for requested_count in args.locality_count_sweep:
-                count = min(len(units), requested_count)
-                selected = set(units[:count])
-                selected_truth = {
-                    unit_id: truth[unit_id] for unit_id in units[:count]
-                }
-                selected_fields = [
-                    {unit_id: field[unit_id] for unit_id in units[:count]}
-                    for field in particle_fields
-                ]
-                selected_observations = [
-                    observation
-                    for observation in observations
-                    if observation.true_unit_id in selected
-                ]
-                log_weights = [
-                    observation_batch_log_likelihood(
-                        field,
-                        selected_observations,
-                        channels=channels,
-                        adjacency=adjacency,
-                    )
-                    for field in particle_fields
-                ]
-                weights = normalize_log_weights(log_weights, strict=True)
-                prior_weights = [1.0 / len(particle_fields)] * len(particle_fields)
-                posterior_points = summarize_posterior_field(
-                    selected_truth,
-                    selected_fields,
-                    weights,
-                    time=0.0,
-                    variables=linked_variables,
-                )
-                prior_points = summarize_posterior_field(
-                    selected_truth,
-                    selected_fields,
-                    prior_weights,
-                    time=0.0,
-                    variables=linked_variables,
-                )
-                localized_points = []
-                local_ess_values = []
-                local_max_weights = []
-                for unit_id in units[:count]:
-                    local_observations = [
-                        observation
-                        for observation in selected_observations
-                        if observation.reported_unit_id == unit_id
+            for requested_particles in args.particle_count_sweep:
+                particle_count = min(args.particles, int(requested_particles))
+                active_fields = particle_fields[:particle_count]
+                for requested_count in args.locality_count_sweep:
+                    count = min(len(units), requested_count)
+                    selected = set(units[:count])
+                    selected_truth = {
+                        unit_id: truth[unit_id] for unit_id in units[:count]
+                    }
+                    selected_fields = [
+                        {unit_id: field[unit_id] for unit_id in units[:count]}
+                        for field in active_fields
                     ]
-                    local_log_weights = [
+                    selected_observations = [
+                        observation
+                        for observation in observations
+                        if observation.true_unit_id in selected
+                    ]
+                    log_weights = [
                         observation_batch_log_likelihood(
                             field,
-                            local_observations,
+                            selected_observations,
                             channels=channels,
                             adjacency=adjacency,
                         )
-                        for field in particle_fields
+                        for field in active_fields
                     ]
-                    local_weights = normalize_log_weights(
-                        local_log_weights, strict=True
-                    )
-                    local_ess_values.append(effective_sample_size(local_weights))
-                    local_max_weights.append(max(local_weights))
-                    localized_points.extend(summarize_posterior_field(
-                        {unit_id: truth[unit_id]},
-                        [{unit_id: field[unit_id]} for field in particle_fields],
-                        local_weights,
+                    weights = normalize_log_weights(log_weights, strict=True)
+                    prior_weights = [1.0 / particle_count] * particle_count
+                    posterior_points = summarize_posterior_field(
+                        selected_truth,
+                        selected_fields,
+                        weights,
                         time=0.0,
                         variables=linked_variables,
-                    ))
-                posterior_metrics = evaluate_recovery(posterior_points)
-                prior_metrics = evaluate_recovery(prior_points)
-                localized_metrics = evaluate_recovery(localized_points)
-                rows.append({
-                    "profile": profile,
-                    "reporting_multiplier": reporting_multiplier,
-                    "localities": count,
-                    "reports": len(selected_observations),
-                    "particle_count": len(weights),
-                    "ess": effective_sample_size(weights),
-                    "ess_fraction": effective_sample_size(weights) / len(weights),
-                    "maximum_weight": max(weights),
-                    "top_five_weight": sum(sorted(weights, reverse=True)[:5]),
-                    "posterior_rmse": posterior_metrics.rmse,
-                    "prior_rmse": prior_metrics.rmse,
-                    "rmse_ratio_vs_prior": (
-                        posterior_metrics.rmse / prior_metrics.rmse
-                        if prior_metrics.rmse > 0 else None
-                    ),
-                    "posterior_coverage_90": posterior_metrics.coverage_90,
-                    "prior_coverage_90": prior_metrics.coverage_90,
-                    "posterior_width_90": posterior_metrics.mean_interval_width_90,
-                    "prior_width_90": prior_metrics.mean_interval_width_90,
-                    "localized_rmse": localized_metrics.rmse,
-                    "localized_rmse_ratio_vs_prior": (
-                        localized_metrics.rmse / prior_metrics.rmse
-                        if prior_metrics.rmse > 0 else None
-                    ),
-                    "localized_coverage_90": localized_metrics.coverage_90,
-                    "localized_width_90": localized_metrics.mean_interval_width_90,
-                    "mean_local_ess": sum(local_ess_values) / len(local_ess_values),
-                    "minimum_local_ess": min(local_ess_values),
-                    "maximum_local_weight": max(local_max_weights),
-                    "snapshot_design_rank": design["snapshot_design_rank"],
-                    "linked_variables": len(linked_variables),
-                })
+                    )
+                    prior_points = summarize_posterior_field(
+                        selected_truth,
+                        selected_fields,
+                        prior_weights,
+                        time=0.0,
+                        variables=linked_variables,
+                    )
+                    localized_points = []
+                    local_ess_values = []
+                    local_max_weights = []
+                    for unit_id in units[:count]:
+                        local_observations = [
+                            observation
+                            for observation in selected_observations
+                            if observation.reported_unit_id == unit_id
+                        ]
+                        local_log_weights = [
+                            observation_batch_log_likelihood(
+                                field,
+                                local_observations,
+                                channels=channels,
+                                adjacency=adjacency,
+                            )
+                            for field in active_fields
+                        ]
+                        local_weights = normalize_log_weights(
+                            local_log_weights, strict=True
+                        )
+                        local_ess_values.append(effective_sample_size(local_weights))
+                        local_max_weights.append(max(local_weights))
+                        localized_points.extend(summarize_posterior_field(
+                            {unit_id: truth[unit_id]},
+                            [{unit_id: field[unit_id]} for field in active_fields],
+                            local_weights,
+                            time=0.0,
+                            variables=linked_variables,
+                        ))
+                    posterior_metrics = evaluate_recovery(posterior_points)
+                    prior_metrics = evaluate_recovery(prior_points)
+                    localized_metrics = evaluate_recovery(localized_points)
+                    rows.append({
+                        "profile": profile,
+                        "reporting_multiplier": reporting_multiplier,
+                        "localities": count,
+                        "reports": len(selected_observations),
+                        "particle_count": particle_count,
+                        "ess": effective_sample_size(weights),
+                        "ess_fraction": effective_sample_size(weights) / particle_count,
+                        "maximum_weight": max(weights),
+                        "top_five_weight": sum(sorted(weights, reverse=True)[:5]),
+                        "posterior_rmse": posterior_metrics.rmse,
+                        "prior_rmse": prior_metrics.rmse,
+                        "rmse_ratio_vs_prior": (
+                            posterior_metrics.rmse / prior_metrics.rmse
+                            if prior_metrics.rmse > 0 else None
+                        ),
+                        "posterior_coverage_90": posterior_metrics.coverage_90,
+                        "prior_coverage_90": prior_metrics.coverage_90,
+                        "posterior_width_90": posterior_metrics.mean_interval_width_90,
+                        "prior_width_90": prior_metrics.mean_interval_width_90,
+                        "localized_rmse": localized_metrics.rmse,
+                        "localized_rmse_ratio_vs_prior": (
+                            localized_metrics.rmse / prior_metrics.rmse
+                            if prior_metrics.rmse > 0 else None
+                        ),
+                        "localized_coverage_90": localized_metrics.coverage_90,
+                        "localized_width_90": localized_metrics.mean_interval_width_90,
+                        "mean_local_ess": sum(local_ess_values) / len(local_ess_values),
+                        "minimum_local_ess": min(local_ess_values),
+                        "maximum_local_weight": max(local_max_weights),
+                        "snapshot_design_rank": design["snapshot_design_rank"],
+                        "linked_variables": len(linked_variables),
+                    })
 
     return {
         "schema_version": "pineland.research_v1.weight_collapse.v1",
@@ -236,6 +239,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "design": {
             "agents": args.agents,
             "particles": args.particles,
+            "particle_count_sweep": args.particle_count_sweep,
             "prior_sd": args.prior_sd,
             "profiles": args.profile,
             "reporting_multipliers": args.reporting_multiplier,
@@ -256,6 +260,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--localities", type=int, default=17)
     parser.add_argument("--days", type=float, default=1.0)
     parser.add_argument("--particles", type=int, default=64)
+    parser.add_argument(
+        "--particle-count-sweep",
+        type=int,
+        nargs="+",
+        default=None,
+        help="nested particle prefixes evaluated from one maximum-size prior ensemble",
+    )
     parser.add_argument("--prior-sd", type=float, default=0.10)
     parser.add_argument("--initial-insurgent-share", type=float, default=0.001)
     parser.add_argument(
@@ -290,6 +301,16 @@ def main() -> int:
         args.profile = ["mixed-proxy", "direct-oracle"]
     if args.reporting_multiplier is None:
         args.reporting_multiplier = [1.0, 0.5, 0.25]
+    if args.particle_count_sweep is None:
+        args.particle_count_sweep = [
+            count for count in (8, 16, 32, 64) if count <= args.particles
+        ]
+        if args.particles not in args.particle_count_sweep:
+            args.particle_count_sweep.append(args.particles)
+    if any(count < 2 for count in args.particle_count_sweep):
+        raise ValueError("particle-count-sweep values must be at least two")
+    if max(args.particle_count_sweep) > args.particles:
+        raise ValueError("particle-count-sweep cannot exceed --particles")
     payload = run(args)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
