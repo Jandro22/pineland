@@ -276,6 +276,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     "mean_ess": estimand_result["support"]["mean_ess"],
                     "minimum_ess": estimand_result["support"]["minimum_ess"],
                 },
+                "measurement_estimand_direct_baseline": {
+                    "rmse": estimand_result["direct_report_baseline"]["rmse"],
+                    "direct_report_coverage": (
+                        estimand_result["direct_report_baseline"][
+                            "direct_report_coverage"
+                        ]
+                    ),
+                },
             })
 
     execution_end = _execution_fingerprint()
@@ -343,6 +351,26 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 "measurement_estimand_aggregate": _aggregate([
                     row["measurement_estimand_summary"] for row in rows
                 ]),
+                "measurement_estimand_direct_report_baseline": {
+                    "mean_rmse": _mean([
+                        row["measurement_estimand_direct_baseline"]["rmse"]
+                        for row in rows
+                    ]),
+                    "mean_direct_report_coverage": _mean([
+                        row["measurement_estimand_direct_baseline"][
+                            "direct_report_coverage"
+                        ]
+                        for row in rows
+                    ]),
+                    "mean_posterior_mse": _mean([
+                        row["measurement_estimand_summary"]["posterior_mse"]
+                        for row in rows
+                    ]),
+                    "mean_direct_report_mse": _mean([
+                        row["measurement_estimand_direct_baseline"]["rmse"] ** 2
+                        for row in rows
+                    ]),
+                },
                 "worlds": rows,
             }
             for profile, rows in profile_rows.items()

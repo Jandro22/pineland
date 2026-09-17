@@ -42,6 +42,7 @@ from pineland_sim.recovery import (  # noqa: E402
     generate_observations,
     component_localized_importance_reconstruction,
     channel_aligned_importance_reconstruction,
+    channel_estimand_direct_report_baseline,
     localized_importance_reconstruction,
     observation_batch_log_likelihood,
     observation_design_diagnostics,
@@ -656,6 +657,13 @@ def _run_localized_reconstruction(
     linked_prior_metrics = evaluate_recovery(linked_prior_points)
     estimand_metrics = evaluate_recovery(estimand_points)
     estimand_prior_metrics = evaluate_recovery(estimand_prior_points)
+    estimand_direct_baseline = channel_estimand_direct_report_baseline(
+        reports,
+        truth_points=estimand_points,
+        prior_points=estimand_prior_points,
+    )
+    estimand_posterior_mse = estimand_metrics.rmse ** 2
+    estimand_direct_mse = float(estimand_direct_baseline["rmse"]) ** 2
     return {
         "status": "localized_marginal_approximation_not_joint_posterior",
         "radius": radius,
@@ -696,6 +704,17 @@ def _run_localized_reconstruction(
                 ),
                 "coverage_90_delta": (
                     estimand_metrics.coverage_90 - estimand_prior_metrics.coverage_90
+                ),
+            },
+            "direct_report_baseline": estimand_direct_baseline,
+            "relative_to_direct_report_baseline": {
+                "mse_ratio": (
+                    estimand_posterior_mse / estimand_direct_mse
+                    if estimand_direct_mse > 0 else None
+                ),
+                "mse_improvement_fraction": (
+                    1.0 - estimand_posterior_mse / estimand_direct_mse
+                    if estimand_direct_mse > 0 else None
                 ),
             },
             "metrics_by_estimand": evaluate_recovery_by_variable(estimand_points),
