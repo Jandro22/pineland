@@ -2012,13 +2012,21 @@ fn run_distributional_closure(args: &[String]) -> Result<(), Box<dyn Error>> {
     if pairs.is_empty() {
         return Err("no closure pairs selected".into());
     }
+    let min_distance = pairs
+        .iter()
+        .map(|pair| pair.distance)
+        .fold(f64::INFINITY, f64::min);
+    let max_distance = pairs
+        .iter()
+        .map(|pair| pair.distance)
+        .fold(0.0_f64, f64::max);
     eprintln!(
         "closure {}: selected {} pairs from {} dynamic seeds; best distance {:.6}, worst {:.6}; recruitment_multiplier={:.6}; live_anchor_filter={}",
         candidate,
         pairs.len(),
         pool_seeds,
-        pairs.first().unwrap().distance,
-        pairs.last().unwrap().distance,
+        min_distance,
+        max_distance,
         recruitment_multiplier,
         require_live_anchor,
     );
