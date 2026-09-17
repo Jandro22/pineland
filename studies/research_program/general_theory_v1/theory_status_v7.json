@@ -1,0 +1,116 @@
+{
+  "schema_version": "pineland.theory_status.v7",
+  "status": "SYNTHETIC_MECHANISMS_RETAINED_STRATEGIC_CLOSURE_RECERTIFICATION_REQUIRED",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "supersedes": "theory_status_v6.json",
+  "reason_for_reissue": "fielded_force_definition_audit_results_v1.json materially changes F classification on the original default closure support; high-stratum anchors are not live canonical insurgencies.",
+  "firewall_certification": {
+    "firewall_A_zero_historical_tuning": {
+      "status": "PASSED",
+      "details": "Zero historical data (Nepal, Afghanistan, etc.) used to tune parameters, select states, or calibrate equations."
+    },
+    "firewall_B_negative_results_permanent": {
+      "status": "PASSED",
+      "details": "All 17 negative findings permanently preserved in falsification_ledger_v4.json; zero hypotheses dropped."
+    },
+    "firewall_C_synthetic_labeling": {
+      "status": "PASSED",
+      "details": "All deliverables explicitly watermarked SYNTHETIC MECHANISM RESULT."
+    },
+    "firewall_D_claim_language_governance": {
+      "status": "PASSED",
+      "details": "Strict compliance with claim_language_contract.json Level 1 (Synthetically Identified); no empirical or universal claims."
+    },
+    "firewall_E_native_bit_parity": {
+      "status": "PASSED",
+      "details": "Native execution parity certified; all assays run through certified native probe."
+    }
+  },
+  "confirmed_synthetic_mechanisms": {
+    "rooted_membership_exclusivity_and_nonlocal_reproduction": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "nonlocal_reproduction_confirmation_results_v1.json",
+        "reproduction_hazard_kernel_confirmation_results_v1.json"
+      ],
+      "law": "Spatial reproduction requires rooted membership underground; propagation is nonlocal and predicted by early recruitment hazard (+0.027 AUC gain at 180d)."
+    },
+    "operational_capital_stock_flow_depletion": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "mobilization_resource_results_v1.json",
+        "organizational_resource_identity_v1.json"
+      ],
+      "law": "Insurgent collapse is governed by strict capital exhaustion K = K_0 + Y - B under a 3-term operational burn law, falsifying naive 1D scalar strain."
+    },
+    "military_human_capital_turnover_learning_tradeoff": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "force_discrimination_results_v1.json",
+        "human_capital_absorption_confirmation_results_v1.json"
+      ],
+      "law": "Faster replacement throughput recovers headcount (+38.0 pp) while incurring an experience dilution capability deficit (+10.1 pp) governed by dE/dt = ell*(1-E) + (I/F)*(E_r-E)."
+    },
+    "police_professionalism_institutional_persistence": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "force_discrimination_results_v1.json",
+        "v2_omitted_state_stress_police_results_v1.json"
+      ],
+      "law": "Police professionalism is an independent dynamical stock acting on intelligence and underground disruption, converging endogenously toward parent standards."
+    },
+    "state_capacity_dual_channel_divergence": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "state_regeneration_results_v2.json",
+        "state_regeneration_capital_transition_results_v1.json",
+        "state_recovery_mechanism_factorial_results_v1.json"
+      ],
+      "law": "Explicit state regeneration builds physical administrative capacity (+0.10 Q), while political institution capacity suffers endogenous erosion (-0.15 Q) from service-quality decay and patronage."
+    }
+  },
+  "new_confirmed_synthetic_mechanisms": {
+    "development_temporal_absorptive_capacity": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "development_pacing_crowdout_results_v1.json",
+        "development_sequence_frontier_results_v1.json"
+      ],
+      "law": "At nearly equal total realized government spend, faster front-loading exhausts fungible capital earlier and crowds out slower governance production; ramped/moderate sequencing preserves more durable state output."
+    },
+    "mobilization_metabolic_ceiling": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "insurgent_mobilization_metabolic_ceiling_results_v1.json"
+      ],
+      "law": "Recruitment consumes organizational capital; above resource throughput, faster mobilization shortens survival through capital exhaustion. A stronger interior-optimum claim remains under fresh confirmation."
+    },
+    "veterancy_survival_exchange": {
+      "verdict": "CONFIRMED_SYNTHETIC_MECHANISM",
+      "evidence": [
+        "veterancy_exchange_identity_v1.json",
+        "veterancy_matched_engagement_results_v1.json"
+      ],
+      "law": "Holding structural unit traits and headcount fixed, E=.9 versus E=.1 multiplies expected exchange ratio by ~1.4404 and reduces own fractional losses by ~16.7% in matched contacts for either side."
+    }
+  },
+  "reduced_state_status": {
+    "status": "PROVISIONAL_CANDIDATE_PENDING_LIVE_SUPPORT_RECERTIFICATION",
+    "prior_specification": "reduced_theory_specification_v2.json",
+    "candidate_dimension_count": 10,
+    "mandatory_semantic_change": "F must use active-owner effective force; ecosystem aggregation must be reported in policy assays.",
+    "state_variable_churn": "NOT_REOPENED_BY_DEFAULT; only semantic correction and live-support falsification are authorized before adding coordinates."
+  },
+  "strategic_closure": {
+    "status": "PRIOR_CERTIFICATE_SUPERSEDED",
+    "correction": "strategic_closure_support_correction_v1.json",
+    "decision_support_authorized": false,
+    "next_gate": "Fresh prospective closure on baseline-policy persistent live-insurgency support with corrected F semantics."
+  },
+  "policy_layer": {
+    "status": "MECHANISM_EXPERIMENTS_ALLOWED_FULL_STRATEGY_RANKING_BLOCKED",
+    "allowed": "State-side development sequencing, matched tactical mechanisms, cost/operator calibration.",
+    "blocked": "General claims about most efficient government strategy to defeat insurgency until live-support closure and challenge calibration pass."
+  }
+}

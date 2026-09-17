@@ -1,0 +1,76 @@
+{
+  "schema_version": "pineland.development_efficiency_synthesis.v1",
+  "status": "SYNTHETIC_DEVELOPMENT_EFFICIENCY_SYNTHESIS",
+  "historical_outcomes_used": false,
+  "evidence": [
+    {
+      "file": "development_local_recruitment_roi_results_v1.json",
+      "seed_count": 12,
+      "input_sha256": "4fddf0492dd6a6f9d4b08e4723e9924b12790b915b93e9c70960f1c3b265fc04"
+    },
+    {
+      "file": "development_dose_response_results_v1.json",
+      "seed_count": 8,
+      "input_sha256": "6f2e7aff4fae9f590e771fb80e03f0a8f0a0a5322ef9baee6d6217d4e3418c2f"
+    },
+    {
+      "file": "development_pacing_crowdout_results_v1.json",
+      "seed_count": 6,
+      "input_sha256": "c2c904020e6affece11523168f35c07dcc1dbfe8b3aca7e275d33ccce108dcaa"
+    },
+    {
+      "file": "development_sequence_frontier_results_v1.json",
+      "seed_count": 6,
+      "input_sha256": "e04e35d880e0b8b11f181b3c9e8034eb59f68c07fb3c74dbe4a2d9e692543e6b"
+    }
+  ],
+  "core_findings": {
+    "spatial_complementarity": {
+      "finding": "Immediate anti-recruitment return depends jointly on live recruitment pressure and institutional conversion capacity; threat alone is not the efficient statistic.",
+      "roi_best_equals_max_threat_fraction": 0.16666666666666666,
+      "roi_best_over_max_threat_target_ratio_median": 2.352822717256461,
+      "roi_best_over_max_threat_target_ratio_mean": 3.129949237330137,
+      "high_threat_high_absorption_vs_high_threat_low_absorption_roi_ratio": 3.0009515300314673,
+      "high_threat_high_absorption_vs_low_threat_high_absorption_roi_ratio": 8.363406185452503,
+      "interpretation": "High threat is valuable only when the state can convert nominal public capital into political access; strong institutions with little live recruitment pressure also have low absolute immediate suppression return."
+    },
+    "dose_saturation": {
+      "finding": "State-building return per incremental public-capital unit falls sharply as the budget ceiling rises beyond the moderate-dose regime.",
+      "equal_locality_legitimacy_efficiency_decline_5x_to_20x_fraction": 0.5526866231916067,
+      "marginal_return_legitimacy_efficiency_decline_5x_to_20x_fraction": 0.8326950587070271,
+      "equal_locality_capacity_efficiency_decline_5x_to_20x_fraction": 0.3053595553020483,
+      "marginal_return_capacity_efficiency_decline_5x_to_20x_fraction": 0.5956025526195055,
+      "interpretation": "The marginal-return allocation rule is strongest at low/moderate dose and loses much of its advantage at high dose as conversion channels saturate and government capital becomes binding."
+    },
+    "temporal_absorptive_capacity": {
+      "finding": "Nearly identical total government outflow can produce materially different durable state outcomes solely because of spending sequence.",
+      "steady5_minus_immediate20": {
+        "relative_total_outflow_difference": 0.00003652638910690405,
+        "government_legitimacy": 0.007700374734725013,
+        "local_institution_capacity": 0.001437888374983487,
+        "population_weighted_government_control": 0.0038336551691579013
+      },
+      "ramp20_minus_immediate20": {
+        "relative_total_outflow_difference": 0.00003651952969452246,
+        "government_legitimacy": 0.006486702839865632,
+        "local_institution_capacity": 0.0008749314555249743,
+        "population_weighted_government_control": 0.0037942466482719928
+      },
+      "interpretation": "Front-loading spends down fungible government capital before slower governance processes can use it. In this synthetic mechanism, pacing is therefore part of absorptive capacity rather than a cosmetic implementation detail."
+    }
+  },
+  "synthesized_model_principle": "Development efficiency in Pineland is a state-dependent, saturating, path-dependent return surface. The next unit of nominal public capital is most productive where a live recruitment margin and sufficient institutional conversion capacity coincide; the best destination changes as local production saturates; and spending too quickly can lower durable state output even when eventual total outflow is essentially unchanged.",
+  "cost_reporting": {
+    "default_monthly_policy_budget_capital": 120000.0,
+    "one_percent_monthly_budget_capital": 1200.0,
+    "usd_formula": "If an external calibration assigns B USD to one default monthly policy budget, then 1 Pineland capital unit = B/120000 USD and 1200 capital = 0.01*B USD.",
+    "cost_per_prevented_recruit_formula": "Once a completed dynamic assay estimates R represented recruits prevented per 1200 incremental public capital, the corresponding calibrated cost is 0.01*B/R USD per represented recruit prevented. No B or R is supplied by this synthesis."
+  },
+  "not_yet_identified": [
+    "A completed fresh dynamic estimate of represented recruits prevented per incremental public-capital unit.",
+    "A validated long-run reduction in rooted membership, fielded force, actions, or insurgent control per public-capital unit.",
+    "An empirical mapping from Pineland capital to real USD.",
+    "A real-world geographic targeting rule; locality identifiers in synthetic worlds have no empirical counterpart."
+  ],
+  "guard": "Synthetic mechanism synthesis only. Do not convert these effect sizes into real-world aid or military recommendations without external calibration and validation."
+}

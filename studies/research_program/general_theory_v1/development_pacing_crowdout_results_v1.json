@@ -1,0 +1,62 @@
+{
+  "schema_version": "pineland.development_pacing_crowdout_results.v1",
+  "status": "PACING_AND_CROWDOUT_SUPPORTED",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/development_pacing_crowdout_6seed_v1.csv",
+  "input_sha256": "c2c904020e6affece11523168f35c07dcc1dbfe8b3aca7e275d33ccce108dcaa",
+  "seed_count": 6,
+  "summaries": {
+    "1.0": {
+      "mean_total_outflow": 736836.8416485591,
+      "mean_political_outflow": 720000.0,
+      "mean_regeneration_outflow": 6234.085002095399,
+      "mean_governance_outflow": 10602.756646463726,
+      "median_first_below_10pct_day": null,
+      "mean_final_legitimacy": 0.41619325695912757,
+      "mean_final_capacity": 0.5105836940418198,
+      "mean_final_control": 0.6011049951556834,
+      "mean_final_capital": 1528588.9848264393
+    },
+    "5.0": {
+      "mean_total_outflow": 2263588.464376736,
+      "mean_political_outflow": 2252040.2806997937,
+      "mean_regeneration_outflow": 6259.1689068290325,
+      "mean_governance_outflow": 5289.01477011268,
+      "median_first_below_10pct_day": 180.0,
+      "mean_final_legitimacy": 0.43164818601390437,
+      "mean_final_capacity": 0.5188922108134006,
+      "mean_final_control": 0.5982437291589089,
+      "mean_final_capital": 1796.7056396969722
+    },
+    "10.0": {
+      "mean_total_outflow": 2263541.1717733075,
+      "mean_political_outflow": 2255513.9103904995,
+      "mean_regeneration_outflow": 6266.514882940293,
+      "mean_governance_outflow": 1760.7464998673338,
+      "median_first_below_10pct_day": 120.0,
+      "mean_final_legitimacy": 0.42609612684615733,
+      "mean_final_capacity": 0.5175947818622223,
+      "mean_final_control": 0.5957170499757819,
+      "mean_final_capital": 1783.1609282933769
+    },
+    "20.0": {
+      "mean_total_outflow": 2263507.4194353796,
+      "mean_political_outflow": 2257249.5797904134,
+      "mean_regeneration_outflow": 6257.839644965691,
+      "mean_governance_outflow": 0.0,
+      "median_first_below_10pct_day": 90.0,
+      "mean_final_legitimacy": 0.4203724758853773,
+      "mean_final_capacity": 0.5174671544477912,
+      "mean_final_control": 0.5943670567814031,
+      "mean_final_capital": 1776.372051100897
+    }
+  },
+  "primary_gates": {
+    "5x_20x_total_outflow_within_1pct": true,
+    "20x_exhausts_earlier": true,
+    "20x_worse_legitimacy_and_capacity": true,
+    "20x_lower_regeneration_outflow": true
+  },
+  "relative_total_outflow_difference_5x_vs_20x": 3.5803743759897985e-05,
+  "guard": "Synthetic capital-pacing mechanism only; internal capital is not real dollars."
+}

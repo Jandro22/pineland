@@ -1,0 +1,353 @@
+{
+  "schema_version": "pineland.live_closure_residual_diagnostics.v1",
+  "status": "POST_HOC_DIAGNOSTIC_ONLY",
+  "historical_outcomes_used": false,
+  "diagnostics_input": "studies\\research_program\\general_theory_v1\\live_insurgency_closure_hidden_diagnostics_48x24_v1.csv",
+  "diagnostics_sha256": "f7c2ac333460d158615c2387d944ed2be6bdf417ba322503f1c33ad7aa885918",
+  "closure_input": "studies\\research_program\\general_theory_v1\\live_insurgency_closure_recertification_results_v1.json",
+  "closure_sha256": "ac5379fed8c1a12d2bf8cfe65a4746ac18c960749ee7b5bf3e2d8586ac6e02fb",
+  "failing_pair_ids": [
+    5,
+    6,
+    7
+  ],
+  "low_stratum_pair_count": 8,
+  "low_stratum_failing_pair_count": 3,
+  "hidden_difference_ranking": [
+    {
+      "feature": "mean_readiness",
+      "scale_across_selected_anchor_sides": 0.0015713513396931132,
+      "failed_low_mean_abs_z_difference": 2.3094010767585025,
+      "passed_low_mean_abs_z_difference": 0.0,
+      "failed_minus_passed_low": 2.3094010767585025,
+      "max_failed_low_abs_z_difference": 6.928203230275508
+    },
+    {
+      "feature": "foothold_strength_hidden",
+      "scale_across_selected_anchor_sides": 0.03453344684077501,
+      "failed_low_mean_abs_z_difference": 2.1932642777933014,
+      "passed_low_mean_abs_z_difference": 0.08738101618173628,
+      "failed_minus_passed_low": 2.1058832616115652,
+      "max_failed_low_abs_z_difference": 3.5099430981056865
+    },
+    {
+      "feature": "foothold_embeddedness_hidden",
+      "scale_across_selected_anchor_sides": 0.03453344684077501,
+      "failed_low_mean_abs_z_difference": 2.1932642777933014,
+      "passed_low_mean_abs_z_difference": 0.08738101618173628,
+      "failed_minus_passed_low": 2.1058832616115652,
+      "max_failed_low_abs_z_difference": 3.5099430981056865
+    },
+    {
+      "feature": "log_supply_reserve",
+      "scale_across_selected_anchor_sides": 1.417147857130837,
+      "failed_low_mean_abs_z_difference": 1.5559107070647764,
+      "passed_low_mean_abs_z_difference": 0.0,
+      "failed_minus_passed_low": 1.5559107070647764,
+      "max_failed_low_abs_z_difference": 4.667732121194329
+    },
+    {
+      "feature": "mean_cohesion",
+      "scale_across_selected_anchor_sides": 0.009054417181961944,
+      "failed_low_mean_abs_z_difference": 1.5189842493916519,
+      "passed_low_mean_abs_z_difference": 0.3106712100849688,
+      "failed_minus_passed_low": 1.2083130393066832,
+      "max_failed_low_abs_z_difference": 4.556952748174956
+    },
+    {
+      "feature": "mean_experience",
+      "scale_across_selected_anchor_sides": 0.007652014485902598,
+      "failed_low_mean_abs_z_difference": 1.3736515582919202,
+      "passed_low_mean_abs_z_difference": 0.21749833725057005,
+      "failed_minus_passed_low": 1.15615322104135,
+      "max_failed_low_abs_z_difference": 3.8490594829957963
+    },
+    {
+      "feature": "mean_quality",
+      "scale_across_selected_anchor_sides": 0.002665031635275894,
+      "failed_low_mean_abs_z_difference": 0.8755368238215367,
+      "passed_low_mean_abs_z_difference": 3.332712482447427e-14,
+      "failed_minus_passed_low": 0.8755368238215034,
+      "max_failed_low_abs_z_difference": 1.313305235732326
+    },
+    {
+      "feature": "formation_count",
+      "scale_across_selected_anchor_sides": 0.5830799855110327,
+      "failed_low_mean_abs_z_difference": 0.5716768567200737,
+      "passed_low_mean_abs_z_difference": 0.0,
+      "failed_minus_passed_low": 0.5716768567200737,
+      "max_failed_low_abs_z_difference": 1.7150305701602213
+    },
+    {
+      "feature": "log_recruitment_hazard_mass",
+      "scale_across_selected_anchor_sides": 0.5320864633018219,
+      "failed_low_mean_abs_z_difference": 0.8310228465577912,
+      "passed_low_mean_abs_z_difference": 0.32845417294254836,
+      "failed_minus_passed_low": 0.5025686736152428,
+      "max_failed_low_abs_z_difference": 1.262543569310176
+    },
+    {
+      "feature": "mean_availability",
+      "scale_across_selected_anchor_sides": 0.0558392573056584,
+      "failed_low_mean_abs_z_difference": 1.1939031764290862,
+      "passed_low_mean_abs_z_difference": 0.8236729990149527,
+      "failed_minus_passed_low": 0.37023017741413344,
+      "max_failed_low_abs_z_difference": 3.5817095292872585
+    },
+    {
+      "feature": "mean_sustainment",
+      "scale_across_selected_anchor_sides": 0.11263843194557047,
+      "failed_low_mean_abs_z_difference": 0.8277216348745141,
+      "passed_low_mean_abs_z_difference": 0.5857105372608574,
+      "failed_minus_passed_low": 0.2420110976136567,
+      "max_failed_low_abs_z_difference": 1.5783253806609494
+    },
+    {
+      "feature": "log_raw_fielded_personnel",
+      "scale_across_selected_anchor_sides": 0.8875903340262191,
+      "failed_low_mean_abs_z_difference": 0.31443448772611554,
+      "passed_low_mean_abs_z_difference": 0.11123421251550518,
+      "failed_minus_passed_low": 0.20320027521061035,
+      "max_failed_low_abs_z_difference": 0.829416329788526
+    },
+    {
+      "feature": "log_rooted_member_mass",
+      "scale_across_selected_anchor_sides": 1.9695179517560035,
+      "failed_low_mean_abs_z_difference": 0.12907060317587504,
+      "passed_low_mean_abs_z_difference": 0.026847745276960117,
+      "failed_minus_passed_low": 0.10222285789891493,
+      "max_failed_low_abs_z_difference": 0.3199502495683504
+    },
+    {
+      "feature": "log_foothold_renewals",
+      "scale_across_selected_anchor_sides": 0.030611112140855632,
+      "failed_low_mean_abs_z_difference": 0.9680908993034582,
+      "passed_low_mean_abs_z_difference": 0.9500476520797587,
+      "failed_minus_passed_low": 0.018043247223699432,
+      "max_failed_low_abs_z_difference": 1.2473831984430197
+    },
+    {
+      "feature": "log_manpower_pool",
+      "scale_across_selected_anchor_sides": 0.6110603377355821,
+      "failed_low_mean_abs_z_difference": 0.0,
+      "passed_low_mean_abs_z_difference": 0.0,
+      "failed_minus_passed_low": 0.0,
+      "max_failed_low_abs_z_difference": 0.0
+    },
+    {
+      "feature": "log_fieldable_reserve",
+      "scale_across_selected_anchor_sides": 0.6110603377355821,
+      "failed_low_mean_abs_z_difference": 0.0,
+      "passed_low_mean_abs_z_difference": 0.0,
+      "failed_minus_passed_low": 0.0,
+      "max_failed_low_abs_z_difference": 0.0
+    },
+    {
+      "feature": "log_foothold_age_days",
+      "scale_across_selected_anchor_sides": 1e-09,
+      "failed_low_mean_abs_z_difference": 0.0,
+      "passed_low_mean_abs_z_difference": 0.0,
+      "failed_minus_passed_low": 0.0,
+      "max_failed_low_abs_z_difference": 0.0
+    },
+    {
+      "feature": "log_cumulative_local_arrivals",
+      "scale_across_selected_anchor_sides": 0.37944385263686636,
+      "failed_low_mean_abs_z_difference": 0.3561924513912214,
+      "passed_low_mean_abs_z_difference": 0.792779952197934,
+      "failed_minus_passed_low": -0.43658750080671255,
+      "max_failed_low_abs_z_difference": 1.0685773541736643
+    },
+    {
+      "feature": "log_cumulative_local_recruits",
+      "scale_across_selected_anchor_sides": 3.217411700151623,
+      "failed_low_mean_abs_z_difference": 4.339006787677955e-07,
+      "passed_low_mean_abs_z_difference": 0.4532481611554823,
+      "failed_minus_passed_low": -0.4532477272548035,
+      "max_failed_low_abs_z_difference": 1.3017020363033866e-06
+    },
+    {
+      "feature": "mean_social_exposure",
+      "scale_across_selected_anchor_sides": 0.07527540659660785,
+      "failed_low_mean_abs_z_difference": 0.37348721448441385,
+      "passed_low_mean_abs_z_difference": 1.0774546476291675,
+      "failed_minus_passed_low": -0.7039674331447536,
+      "max_failed_low_abs_z_difference": 0.4934961108701566
+    }
+  ],
+  "failing_pair_detail": [
+    {
+      "pair_id": 5,
+      "match_distance": 1.5428689867388694,
+      "significant_large_outcomes": [
+        "final_E",
+        "final_Mstar"
+      ],
+      "largest_hidden_differences": [
+        {
+          "feature": "mean_readiness",
+          "abs_z_difference": 6.928203230275508,
+          "left": 1.0,
+          "right": 0.9891133585724404
+        },
+        {
+          "feature": "mean_cohesion",
+          "abs_z_difference": 4.556952748174956,
+          "left": 1.0,
+          "right": 0.958739448739536
+        },
+        {
+          "feature": "mean_availability",
+          "abs_z_difference": 3.5817095292872585,
+          "left": 1.0,
+          "right": 0.8000000000000002
+        },
+        {
+          "feature": "foothold_strength_hidden",
+          "abs_z_difference": 3.5099430981056865,
+          "left": 0.8787895666074221,
+          "right": 1.0
+        },
+        {
+          "feature": "foothold_embeddedness_hidden",
+          "abs_z_difference": 3.5099430981056865,
+          "left": 0.8787895666074221,
+          "right": 1.0
+        },
+        {
+          "feature": "mean_sustainment",
+          "abs_z_difference": 1.5783253806609494,
+          "left": 0.561122127384667,
+          "right": 0.738902223362212
+        },
+        {
+          "feature": "mean_quality",
+          "abs_z_difference": 1.313305235732326,
+          "left": 0.4534999999999999,
+          "right": 0.457
+        },
+        {
+          "feature": "log_recruitment_hazard_mass",
+          "abs_z_difference": 1.1713895304185327,
+          "left": 2.144438688893598,
+          "right": 2.7677192012827767
+        }
+      ]
+    },
+    {
+      "pair_id": 6,
+      "match_distance": 1.5998067597361356,
+      "significant_large_outcomes": [
+        "final_E"
+      ],
+      "largest_hidden_differences": [
+        {
+          "feature": "log_supply_reserve",
+          "abs_z_difference": 4.667732121194329,
+          "left": 0.0,
+          "right": 6.614866573211319
+        },
+        {
+          "feature": "mean_experience",
+          "abs_z_difference": 3.8490594829957963,
+          "left": 0.4080747183940923,
+          "right": 0.4375277773150769
+        },
+        {
+          "feature": "foothold_strength_hidden",
+          "abs_z_difference": 1.990023901859591,
+          "left": 1.0,
+          "right": 0.9312776153732601
+        },
+        {
+          "feature": "foothold_embeddedness_hidden",
+          "abs_z_difference": 1.990023901859591,
+          "left": 1.0,
+          "right": 0.9312776153732601
+        },
+        {
+          "feature": "formation_count",
+          "abs_z_difference": 1.7150305701602213,
+          "left": 1.0,
+          "right": 2.0
+        },
+        {
+          "feature": "mean_quality",
+          "abs_z_difference": 1.3133052357322843,
+          "left": 0.4535,
+          "right": 0.45
+        },
+        {
+          "feature": "log_recruitment_hazard_mass",
+          "abs_z_difference": 1.262543569310176,
+          "left": 2.35295533517588,
+          "right": 1.68117299261717
+        },
+        {
+          "feature": "log_foothold_renewals",
+          "abs_z_difference": 0.9716069465846141,
+          "left": 7.882314918980269,
+          "right": 7.912056888179005
+        }
+      ]
+    },
+    {
+      "pair_id": 7,
+      "match_distance": 1.6646925481167365,
+      "significant_large_outcomes": [
+        "final_E"
+      ],
+      "largest_hidden_differences": [
+        {
+          "feature": "log_foothold_renewals",
+          "abs_z_difference": 1.2473831984430197,
+          "left": 7.890582534656536,
+          "right": 7.928766321626695
+        },
+        {
+          "feature": "foothold_strength_hidden",
+          "abs_z_difference": 1.0798258334146265,
+          "left": 0.9308478749228016,
+          "right": 0.9681379829383212
+        },
+        {
+          "feature": "foothold_embeddedness_hidden",
+          "abs_z_difference": 1.0798258334146265,
+          "left": 0.9308478749228016,
+          "right": 0.9681379829383212
+        },
+        {
+          "feature": "log_cumulative_local_arrivals",
+          "abs_z_difference": 1.0685773541736643,
+          "left": 1.0986122886681096,
+          "right": 0.6931471805599452
+        },
+        {
+          "feature": "mean_sustainment",
+          "abs_z_difference": 0.441306820712672,
+          "left": 0.6379833178835159,
+          "right": 0.5882752095915555
+        },
+        {
+          "feature": "mean_social_exposure",
+          "abs_z_difference": 0.3467519751626613,
+          "left": 0.175742574440514,
+          "right": 0.2018444703590602
+        },
+        {
+          "feature": "log_raw_fielded_personnel",
+          "abs_z_difference": 0.07816480749786668,
+          "left": 7.497636872466179,
+          "right": 7.567015200062306
+        },
+        {
+          "feature": "log_rooted_member_mass",
+          "abs_z_difference": 0.06552285692284034,
+          "left": 9.276337468902199,
+          "right": 9.405385911862073
+        }
+      ]
+    }
+  ],
+  "interpretation_guard": "Exploratory post-hoc diagnosis of the failed closure block. Hidden-coordinate rankings may nominate future preregistered candidates but cannot rescue or certify the failed closure result."
+}

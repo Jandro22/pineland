@@ -1,0 +1,893 @@
+{
+  "schema_version": "pineland.human_capital_absorption_results.v1",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/human_capital_absorption_16seed_360d_v1.csv",
+  "input_sha256": "84cbf2df2efd839f18e9a966db3ce9a59c9748657f04288db35c91bbe77c4940",
+  "preregistered_primary": {
+    "status": "PRIMARY_METRIC_SIGN_REVERSED_BY_SUBLINEAR_PERSONNEL_SCALING",
+    "interpretation": "The preregistered headcount-minus-total-capability recovery gap is negative on the assay support. This does not refute veterancy dilution: aggregate capability scales as P^0.72, so capability fraction can exceed headcount fraction after a personnel shock. The primary metric is retained as a measurement-design falsification.",
+    "cells_at_360d": [
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 0.5,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6212761238665852,
+        "mean_capability_recovery_fraction": 0.7213875229768042,
+        "mean_headcount_minus_capability_recovery_gap": -0.10011139911021902,
+        "mean_experience": 0.7465827743619537
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 1.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6690571801438856,
+        "mean_capability_recovery_fraction": 0.7432619288394465,
+        "mean_headcount_minus_capability_recovery_gap": -0.07420474869556079,
+        "mean_experience": 0.7011138294572656
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 2.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7113294502605089,
+        "mean_capability_recovery_fraction": 0.7595924624723185,
+        "mean_headcount_minus_capability_recovery_gap": -0.04826301221180954,
+        "mean_experience": 0.6658484444684071
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 4.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7334197984329556,
+        "mean_capability_recovery_fraction": 0.7699798173628065,
+        "mean_headcount_minus_capability_recovery_gap": -0.03656001892985095,
+        "mean_experience": 0.6491974341336655
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 0.5,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6862370186668189,
+        "mean_capability_recovery_fraction": 0.7532926257335628,
+        "mean_headcount_minus_capability_recovery_gap": -0.06705560706674392,
+        "mean_experience": 0.6861749550900849
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 1.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7626449109747073,
+        "mean_capability_recovery_fraction": 0.7811208187344694,
+        "mean_headcount_minus_capability_recovery_gap": -0.018475907759762093,
+        "mean_experience": 0.6283281280417481
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 2.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.8261831352438223,
+        "mean_capability_recovery_fraction": 0.8053354230392832,
+        "mean_headcount_minus_capability_recovery_gap": 0.020847712204538904,
+        "mean_experience": 0.5886624778210294
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 4.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.8734621484232981,
+        "mean_capability_recovery_fraction": 0.8262794102236128,
+        "mean_headcount_minus_capability_recovery_gap": 0.04718273819968523,
+        "mean_experience": 0.5627858002176441
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 0.5,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7984309992189995,
+        "mean_capability_recovery_fraction": 0.799340800976794,
+        "mean_headcount_minus_capability_recovery_gap": -0.0009098017577945864,
+        "mean_experience": 0.6051625131297489
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 1.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.901170837724951,
+        "mean_capability_recovery_fraction": 0.829932468411025,
+        "mean_headcount_minus_capability_recovery_gap": 0.07123836931392606,
+        "mean_experience": 0.548677254414693
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 2.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9595643514270515,
+        "mean_capability_recovery_fraction": 0.8315329920703612,
+        "mean_headcount_minus_capability_recovery_gap": 0.12803135935669024,
+        "mean_experience": 0.5223386209648677
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 4.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9761097385647579,
+        "mean_capability_recovery_fraction": 0.8308658006363212,
+        "mean_headcount_minus_capability_recovery_gap": 0.1452439379284366,
+        "mean_experience": 0.5156007306511258
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 0.5,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9350785794748195,
+        "mean_capability_recovery_fraction": 0.8414308100723622,
+        "mean_headcount_minus_capability_recovery_gap": 0.09364776940245723,
+        "mean_experience": 0.5328026861925541
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 1.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.98110529029033,
+        "mean_capability_recovery_fraction": 0.8410001590663927,
+        "mean_headcount_minus_capability_recovery_gap": 0.14010513122393714,
+        "mean_experience": 0.5132249909090483
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 2.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9876525571077718,
+        "mean_capability_recovery_fraction": 0.8079542587743678,
+        "mean_headcount_minus_capability_recovery_gap": 0.17969829833340384,
+        "mean_experience": 0.5110780108072702
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 4.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9938853089080717,
+        "mean_capability_recovery_fraction": 0.8076726174649234,
+        "mean_headcount_minus_capability_recovery_gap": 0.18621269144314823,
+        "mean_experience": 0.509196502405608
+      }
+    ]
+  },
+  "secondary_post_primary_decomposition": {
+    "status": "EXPERIENCE_DILUTION_QUANTIFIED_AT_FIXED_REALIZED_HEADCOUNT",
+    "definition": "1 - (0.75+0.50*E_actual)/(0.75+0.50*E_baseline)",
+    "cells_by_time": [
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 0.5,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 0.5,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5016676070945225,
+        "mean_experience": 0.8974724467333366,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0010531471944430285
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 0.5,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5112985559491412,
+        "mean_experience": 0.8827285215026414,
+        "mean_experience_capability_deficit_at_same_headcount": 0.007196449373899384
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 0.5,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5355995070911586,
+        "mean_experience": 0.8478135617571785,
+        "mean_experience_capability_deficit_at_same_headcount": 0.021744349267842314
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 0.5,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6212761238665852,
+        "mean_experience": 0.7465827743619537,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0639238440158526
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 1.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 1.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5031394953823065,
+        "mean_experience": 0.8951407847235038,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0020246730318733835
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 1.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5196825725513418,
+        "mean_experience": 0.870130462240232,
+        "mean_experience_capability_deficit_at_same_headcount": 0.012445640733236597
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 1.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.556742567873997,
+        "mean_experience": 0.8195834821281882,
+        "mean_experience_capability_deficit_at_same_headcount": 0.03350688244658822
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 1.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6690571801438856,
+        "mean_experience": 0.7011138294572656,
+        "mean_experience_capability_deficit_at_same_headcount": 0.08286923772613927
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 2.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 2.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5055922392899006,
+        "mean_experience": 0.8912860728141373,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0036308029941093944
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 2.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5308038037782294,
+        "mean_experience": 0.8540419772890047,
+        "mean_experience_capability_deficit_at_same_headcount": 0.019149176129581343
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 2.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5790512720043713,
+        "mean_experience": 0.7920476361349114,
+        "mean_experience_capability_deficit_at_same_headcount": 0.044980151610453566
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 2.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7113294502605089,
+        "mean_experience": 0.6658484444684071,
+        "mean_experience_capability_deficit_at_same_headcount": 0.09756314813816372
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 4.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 4.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5090436361740571,
+        "mean_experience": 0.8859259154818895,
+        "mean_experience_capability_deficit_at_same_headcount": 0.005864201882545959
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 4.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5416553531328805,
+        "mean_experience": 0.8389890050220588,
+        "mean_experience_capability_deficit_at_same_headcount": 0.025421247907475464
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 4.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5946072729248906,
+        "mean_experience": 0.7740722687167811,
+        "mean_experience_capability_deficit_at_same_headcount": 0.05246988803467446
+      },
+      {
+        "recruitment_mult": 0.5,
+        "training_mult": 4.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7334197984329556,
+        "mean_experience": 0.6491974341336655,
+        "mean_experience_capability_deficit_at_same_headcount": 0.10450106911097265
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 0.5,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 0.5,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.503335214189045,
+        "mean_experience": 0.8948317678363698,
+        "mean_experience_capability_deficit_at_same_headcount": 0.002153430068179238
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 0.5,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5218736525584885,
+        "mean_experience": 0.8669022146860226,
+        "mean_experience_capability_deficit_at_same_headcount": 0.013790743880823908
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 0.5,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5625315718122988,
+        "mean_experience": 0.8122195322236638,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0365751949068067
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 0.5,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6862370186668189,
+        "mean_experience": 0.6861749550900849,
+        "mean_experience_capability_deficit_at_same_headcount": 0.08909376871246463
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 1.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 1.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.506278990764613,
+        "mean_experience": 0.8902135511810648,
+        "mean_experience_capability_deficit_at_same_headcount": 0.004077687007889609
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 1.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5382815921588008,
+        "mean_experience": 0.8435933102959321,
+        "mean_experience_capability_deficit_at_same_headcount": 0.02350278737669493
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 1.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6002070111272984,
+        "mean_experience": 0.7678189460861236,
+        "mean_experience_capability_deficit_at_same_headcount": 0.055075439130781785
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 1.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7626449109747073,
+        "mean_experience": 0.6283281280417481,
+        "mean_experience_capability_deficit_at_same_headcount": 0.11319661331593822
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 2.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 2.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5111841443820764,
+        "mean_experience": 0.8826385891658031,
+        "mean_experience_capability_deficit_at_same_headcount": 0.007233921180915322
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 2.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5601729319536185,
+        "mean_experience": 0.8146416188869607,
+        "mean_experience_capability_deficit_at_same_headcount": 0.035565992130432975
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 2.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6411766577397409,
+        "mean_experience": 0.7255000195144525,
+        "mean_experience_capability_deficit_at_same_headcount": 0.07270832520231138
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 2.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.8261831352438223,
+        "mean_experience": 0.5886624778210294,
+        "mean_experience_capability_deficit_at_same_headcount": 0.129723967574571
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 4.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 4.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5180872723481145,
+        "mean_experience": 0.8722249094417778,
+        "mean_experience_capability_deficit_at_same_headcount": 0.011572954399259233
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 4.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5816635632238552,
+        "mean_experience": 0.7883567287736044,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0465180296776648
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 4.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6742447784409159,
+        "mean_experience": 0.6950599231605612,
+        "mean_experience_capability_deficit_at_same_headcount": 0.08539169868309945
+      },
+      {
+        "recruitment_mult": 1.0,
+        "training_mult": 4.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.8734621484232981,
+        "mean_experience": 0.5627858002176441,
+        "mean_experience_capability_deficit_at_same_headcount": 0.14050591657598155
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 0.5,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 0.5,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5066704283780904,
+        "mean_experience": 0.8896035610334198,
+        "mean_experience_capability_deficit_at_same_headcount": 0.004331849569408394
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 0.5,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5401558605961148,
+        "mean_experience": 0.8410149559974323,
+        "mean_experience_capability_deficit_at_same_headcount": 0.02457710166773653
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 0.5,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6069448318821087,
+        "mean_experience": 0.7604356252450668,
+        "mean_experience_capability_deficit_at_same_headcount": 0.058151822814555505
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 0.5,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7984309992189995,
+        "mean_experience": 0.6051625131297489,
+        "mean_experience_capability_deficit_at_same_headcount": 0.12284895286260455
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 1.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 1.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5125576213906325,
+        "mean_experience": 0.8805440354740304,
+        "mean_experience_capability_deficit_at_same_headcount": 0.008106651885820645
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 1.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5699293751697718,
+        "mean_experience": 0.8024360734016152,
+        "mean_experience_capability_deficit_at_same_headcount": 0.04065163608266034
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 1.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6694856882932307,
+        "mean_experience": 0.6991752936698724,
+        "mean_experience_capability_deficit_at_same_headcount": 0.08367696097088648
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 1.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.901170837724951,
+        "mean_experience": 0.548677254414693,
+        "mean_experience_capability_deficit_at_same_headcount": 0.14638447732721124
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 2.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 2.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5223682887641528,
+        "mean_experience": 0.8659079648116073,
+        "mean_experience_capability_deficit_at_same_headcount": 0.014205014661830252
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 2.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6099192172678198,
+        "mean_experience": 0.7565657403895085,
+        "mean_experience_capability_deficit_at_same_headcount": 0.059764274837704696
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 2.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7354143706925851,
+        "mean_experience": 0.6459180923999558,
+        "mean_experience_capability_deficit_at_same_headcount": 0.10586746150001838
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 2.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9595643514270515,
+        "mean_experience": 0.5223386209648677,
+        "mean_experience_capability_deficit_at_same_headcount": 0.15735890793130505
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 4.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 4.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5361745446962287,
+        "mean_experience": 0.8462302151506189,
+        "mean_experience_capability_deficit_at_same_headcount": 0.022404077020575397
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 4.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6511683512944071,
+        "mean_experience": 0.7151976634427902,
+        "mean_experience_capability_deficit_at_same_headcount": 0.07700097356550405
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 4.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7927754303937405,
+        "mean_experience": 0.6069240218102182,
+        "mean_experience_capability_deficit_at_same_headcount": 0.12211499091240904
+      },
+      {
+        "recruitment_mult": 2.0,
+        "training_mult": 4.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9761097385647579,
+        "mean_experience": 0.5156007306511258,
+        "mean_experience_capability_deficit_at_same_headcount": 0.16016636222869757
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 0.5,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 0.5,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5133277702191544,
+        "mean_experience": 0.8793748029808288,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0085938320913213
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 0.5,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5724563006840755,
+        "mean_experience": 0.799366824813522,
+        "mean_experience_capability_deficit_at_same_headcount": 0.041930489661032445
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 0.5,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6861923681120969,
+        "mean_experience": 0.6848075473985932,
+        "mean_experience_capability_deficit_at_same_headcount": 0.08966352191725281
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 0.5,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9350785794748195,
+        "mean_experience": 0.5328026861925541,
+        "mean_experience_capability_deficit_at_same_headcount": 0.15299888075310236
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 1.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 1.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5250916525359345,
+        "mean_experience": 0.8619449652835021,
+        "mean_experience_capability_deficit_at_same_headcount": 0.01585626446520743
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 1.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6258894691524675,
+        "mean_experience": 0.7399400302562833,
+        "mean_experience_capability_deficit_at_same_headcount": 0.06669165405988191
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 1.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7933847708160086,
+        "mean_experience": 0.6065218313885385,
+        "mean_experience_capability_deficit_at_same_headcount": 0.1222825702547756
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 1.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.98110529029033,
+        "mean_experience": 0.5132249909090483,
+        "mean_experience_capability_deficit_at_same_headcount": 0.1611562537878965
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 2.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 2.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5446957152774723,
+        "mean_experience": 0.8345955735653128,
+        "mean_experience_capability_deficit_at_same_headcount": 0.02725184434778625
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 2.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.6965340271232733,
+        "mean_experience": 0.6753695565632571,
+        "mean_experience_capability_deficit_at_same_headcount": 0.09359601809864285
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 2.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.889671139628786,
+        "mean_experience": 0.5521209498209831,
+        "mean_experience_capability_deficit_at_same_headcount": 0.14494960424125705
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 2.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9876525571077718,
+        "mean_experience": 0.5110780108072702,
+        "mean_experience_capability_deficit_at_same_headcount": 0.16205082883030403
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 4.0,
+        "time": 0.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.5,
+        "mean_experience": 0.9,
+        "mean_experience_capability_deficit_at_same_headcount": 0.0
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 4.0,
+        "time": 30.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.572286152842372,
+        "mean_experience": 0.7993110017400478,
+        "mean_experience_capability_deficit_at_same_headcount": 0.04195374927498002
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 4.0,
+        "time": 90.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.7639904486555348,
+        "mean_experience": 0.6247542369548912,
+        "mean_experience_capability_deficit_at_same_headcount": 0.11468573460212864
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 4.0,
+        "time": 180.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9452558642195767,
+        "mean_experience": 0.5259689813604718,
+        "mean_experience_capability_deficit_at_same_headcount": 0.15584625776647004
+      },
+      {
+        "recruitment_mult": 4.0,
+        "training_mult": 4.0,
+        "time": 360.0,
+        "n": 16,
+        "mean_personnel_recovery_fraction": 0.9938853089080717,
+        "mean_experience": 0.509196502405608,
+        "mean_experience_capability_deficit_at_same_headcount": 0.16283479066432996
+      }
+    ],
+    "slow_0_5x_0_5x_at_360d": {
+      "mean_personnel_recovery_fraction": 0.6212761238665852,
+      "mean_experience": 0.7465827743619537,
+      "mean_experience_capability_deficit_at_same_headcount": 0.0639238440158526
+    },
+    "fast_4x_4x_at_360d": {
+      "mean_personnel_recovery_fraction": 0.9938853089080717,
+      "mean_experience": 0.509196502405608,
+      "mean_experience_capability_deficit_at_same_headcount": 0.16283479066432996
+    }
+  },
+  "guard": "The secondary decomposition is mechanistic and post-primary. It is not a replacement preregistered endpoint. A future fresh contract should preregister fixed-headcount veteran-counterfactual capability if that quantity is promoted."
+}

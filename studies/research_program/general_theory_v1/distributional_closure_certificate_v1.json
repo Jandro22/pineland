@@ -1,0 +1,36 @@
+{
+  "schema_version": "pineland.distributional_closure_certificate.v1",
+  "status": "certified_pass",
+  "historical_outcomes_used": false,
+  "minimal_sufficient_state": {
+    "name": "minimal_4",
+    "dimension": 4,
+    "state_vector": [
+      "M",
+      "F",
+      "E",
+      "C"
+    ],
+    "global_resource_stock": "K_o"
+  },
+  "evaluation_protocol": {
+    "method": "distributional_macrostate_closure",
+    "horizons_days": [
+      30,
+      90
+    ],
+    "seeds": 16,
+    "localities": 34,
+    "total_panel_rows": 2720,
+    "cross_validation": "seed_grouped_kfold"
+  },
+  "closure_criteria": {
+    "max_allowable_regret": 0.1,
+    "observed_max_regret": 0.06848855911730567,
+    "targets_tested": 14,
+    "targets_passed": 14,
+    "pass_fraction": 1.0
+  },
+  "verdict": "PASS",
+  "scientific_conclusion": "The 4-variable state (M, F, E, C) plus global capital K_o constitutes an approximately Markov-sufficient macrostate for Pineland. Microstate details beyond this vector do not reduce trajectory forecasting regret by more than 6.8% (well below the 10% threshold)."
+}

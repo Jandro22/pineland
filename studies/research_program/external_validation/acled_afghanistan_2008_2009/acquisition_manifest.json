@@ -1,0 +1,18 @@
+{
+  "artifacts": {
+    "bundle": {
+      "bytes": 675878,
+      "path": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\external_validation\\acled_afghanistan_2008_2009\\ACLEDPaperReplication.zip",
+      "sha256": "3a70eb1bf411775aaa6f8d24d64c773d5222626ce5c3e8a3b25261fd771aa8db"
+    },
+    "metadata": {
+      "bytes": 2872,
+      "path": "C:\\Users\\Jandro\\Documents\\ChatGPT\\Modelling Insurgencies through Agent-Based Simulations\\studies\\research_program\\external_validation\\acled_afghanistan_2008_2009\\ACLEDMetaData.txt",
+      "sha256": "6039dcd741de5ff02b4997b89934f80d6758af8fca2df88347bd338eaba11339"
+    }
+  },
+  "contract_path": "studies/research_program/afghanistan_acled_independent_measurement_contract_v1.json",
+  "contract_sha256": "1768adf2bc212d2db41fe3f7be71163967d3e782328fa2dd8e7d63f289dd2631",
+  "event_rows_inspected_by_acquisition": false,
+  "schema_version": "pineland.afghanistan.acled_acquisition_manifest.v1"
+}

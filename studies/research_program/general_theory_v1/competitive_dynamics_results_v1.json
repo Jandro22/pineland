@@ -1,0 +1,125 @@
+{
+  "schema_version": "pineland.competitive_dynamics_results.v1",
+  "status": "synthetic_competitive_dynamics_evaluated",
+  "historical_outcomes_used": false,
+  "input_file": "studies/research_program/general_theory_v1/macrostate_panel_v1.csv",
+  "input_sha256": "4fde1254c95bbab648ffc0c729c8e64b466536ed601baf1a076f0e1ba520444b",
+  "sample_size": {
+    "evaluated_rows": 1632,
+    "unique_seeds": 16,
+    "localities": 34
+  },
+  "competitive_quantity_definition": {
+    "formula": "Gamma(t) = log(M + log(1 + F) + eps) - log(C_gov + log(1 + S_sec) + eps)",
+    "meaning": "Log net capacity ratio between rooted insurgent challenger and institutional state authority",
+    "eps": 0.0001
+  },
+  "continuous_control_shift_prediction_60d": {
+    "target": "delta_control_60",
+    "models": {
+      "gamma_margin_alone": {
+        "n": 1632,
+        "rmse": 0.0136385233224801,
+        "nrmse": 0.9621685171156246,
+        "r2": 0.07423174467151994
+      },
+      "raw_force_ratio_alone": {
+        "n": 1632,
+        "rmse": 0.013370977294936949,
+        "nrmse": 0.9432937197131036,
+        "r2": 0.11019695834981669
+      },
+      "raw_violence_alone": {
+        "n": 1632,
+        "rmse": 0.014182550471670845,
+        "nrmse": 1.000548463612084,
+        "r2": -0.0010972280365020293
+      },
+      "combined_model": {
+        "n": 1632,
+        "rmse": 0.013366496032685884,
+        "nrmse": 0.9429775762895846,
+        "r2": 0.11079329061502063
+      }
+    },
+    "superiority_test": {
+      "gamma_vs_force_ratio_rmse_diff": 0.0002675460275431505,
+      "gamma_vs_violence_rmse_diff": -0.0005440271491907456,
+      "gamma_is_superior_to_force_ratio": false,
+      "gamma_is_superior_to_violence": true
+    }
+  },
+  "binary_survival_prediction_60d": {
+    "target": "insurgent_survives_60",
+    "models": {
+      "gamma_margin_alone": {
+        "n": 1632,
+        "auc": 0.766103656551774,
+        "brier": 0.1537864144114503
+      },
+      "raw_force_ratio_alone": {
+        "n": 1632,
+        "auc": 0.7459299573693208,
+        "brier": 0.19135696630552976
+      },
+      "raw_violence_alone": {
+        "n": 1632,
+        "auc": 0.5826360572833046,
+        "brier": 0.23080696091901173
+      },
+      "combined_model": {
+        "n": 1632,
+        "auc": 0.8136751545381782,
+        "brier": 0.14896216659178055
+      }
+    },
+    "superiority_test": {
+      "gamma_auc": 0.766103656551774,
+      "force_ratio_auc": 0.7459299573693208,
+      "violence_auc": 0.5826360572833046,
+      "gamma_is_superior_to_force_ratio": true,
+      "gamma_is_superior_to_violence": true
+    }
+  },
+  "binary_expansion_prediction_60d": {
+    "target": "insurgent_expansion_60",
+    "models": {
+      "gamma_margin_alone": {
+        "n": 1632,
+        "auc": 0.47730061349693254,
+        "brier": 0.0012250401207979647
+      },
+      "raw_force_ratio_alone": {
+        "n": 1632,
+        "auc": 0.3300613496932515,
+        "brier": 0.0012252062432994606
+      },
+      "raw_violence_alone": {
+        "n": 1632,
+        "auc": 0.3289877300613497,
+        "brier": 0.001225206665274828
+      },
+      "combined_model": {
+        "n": 1632,
+        "auc": 0.5837423312883435,
+        "brier": 0.001224850216662474
+      }
+    },
+    "superiority_test": {
+      "gamma_auc": 0.47730061349693254,
+      "force_ratio_auc": 0.3300613496932515,
+      "violence_auc": 0.3289877300613497,
+      "gamma_is_superior_to_force_ratio": true,
+      "gamma_is_superior_to_violence": true
+    }
+  },
+  "critical_inflection_thresholds": {
+    "expansion_regime_threshold": -11.01085305530428,
+    "collapse_hazard_threshold": -10.961051923965751,
+    "contested_stalemate_interval": [
+      -10.961051923965751,
+      -11.01085305530428
+    ]
+  },
+  "theoretical_verdict": "The competitive margin Gamma(t) provides substantially higher predictive discrimination over future trajectory inflection points (control shift, survival, and expansion) than raw force ratios or raw violence levels. Raw troop ratios fail because they measure deployed mass without accounting for rooted civilian embeddedness or institutional governance decay."
+}

@@ -1,0 +1,30 @@
+﻿{
+    "schema_version":  "pineland.foreign_absorptive_transfer_candidate.v1",
+    "status":  "THEORY_CANDIDATE_NOT_YET_PRODUCTION",
+    "historical_outcomes_used":  false,
+    "source_audit":  "foreign_statebuilding_absorption_audit_v1.json",
+    "literature_structure":  "Use diminishing returns and recipient-capacity-dependent saturation only; no empirical coefficient is calibrated from historical Afghanistan.",
+    "definitions":  {
+                        "T":  "offered foreign training+organizational support resources in one cycle",
+                        "T_ref":  "political_order.federal_policy_budget * cycle_scale",
+                        "N":  "number of recipient institutions",
+                        "K_i":  "current institution capacity",
+                        "A_i":  "domestic absorptive score = 0.35*security + 0.35*integrity + 0.30*legitimacy, reusing state_regeneration weights",
+                        "r":  "state_regeneration.administrative_rebuild_rate",
+                        "dt":  "foreign-affairs elapsed days",
+                        "p_i":  "offered capacity potential = (0.0048/N)*(T/T_ref), preserving the legacy .0048/N scale when T=T_ref",
+                        "H_i":  "host throughput ceiling = (1-K_i)*(1-exp(-r*A_i*dt))*integrity_i",
+                        "G_i":  "absorbed foreign capacity gain = H_i*(1-exp(-p_i/H_i)) for H_i\u003e0, else 0"
+                    },
+    "properties":  [
+                       "G_i=0 when T=0.",
+                       "For p_i \u003c\u003c H_i, G_i approximately equals p_i: low-dose response is locally linear.",
+                       "G_i is bounded above by H_i: aid volume cannot create unlimited institution capacity in one cycle.",
+                       "Lower domestic absorptive capacity lowers H_i and therefore lowers the aid saturation point.",
+                       "No new fitted rate parameter is introduced: r and absorptive weights reuse the domestic state-regeneration architecture.",
+                       "Existing intervention crowding-out remains a separate subtractive channel; once absorbed gains saturate, crowding-out can produce zero or negative marginal returns."
+                   ],
+    "compatibility":  "Implement only behind an explicit theory-version/config gate. Legacy foreign-affairs equations remain available for archived parity/revalidation runs.",
+    "next_synthetic_test":  "Before production promotion, compare legacy vs candidate across aid-intensity x host-capacity x crowding-out factorial. Require low-dose continuity, monotone saturation without crowding-out, earlier saturation at lower A_i, and possible inverted-U only when crowding-out is enabled.",
+    "guard":  "Candidate mathematical architecture only. It is not yet a validated Pineland mechanism and makes no empirical claim about a real country."
+}

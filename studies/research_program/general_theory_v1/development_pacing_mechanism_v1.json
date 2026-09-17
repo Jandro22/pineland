@@ -1,0 +1,33 @@
+{
+  "schema_version": "pineland.development_pacing_mechanism.v1",
+  "status": "SAME_TOTAL_SPEND_DIFFERENT_SEQUENCE_EFFECT_CONFIRMED",
+  "historical_outcomes_used": false,
+  "source_results": "development_pacing_crowdout_results_v1.json",
+  "comparison": "5x steady ceiling versus 20x steady ceiling, fresh six-seed block",
+  "same_money_check": {
+    "mean_total_outflow_5x": 2263588.464376736,
+    "mean_total_outflow_20x": 2263507.4194353796,
+    "relative_difference": 3.5803743759897985e-05
+  },
+  "timing": {
+    "median_day_below_10pct_capital_5x": 180.0,
+    "median_day_below_10pct_capital_20x": 90.0
+  },
+  "final_outcomes": {
+    "government_legitimacy_5x": 0.43164818601390437,
+    "government_legitimacy_20x": 0.4203724758853773,
+    "institution_capacity_5x": 0.5188922108134006,
+    "institution_capacity_20x": 0.5174671544477912,
+    "government_control_5x": 0.5982437291589089,
+    "government_control_20x": 0.5943670567814031
+  },
+  "flow_substitution": {
+    "political_order_outflow_difference_20x_minus_5x": 5209.299090619665,
+    "governance_outflow_difference_20x_minus_5x": -5289.01477011268,
+    "state_regeneration_outflow_difference_20x_minus_5x": -1.329261863341344,
+    "interpretation": "Nearly one-for-one substitution from durable governance production into short-cycle political allocation; state-regeneration spending is nearly unchanged."
+  },
+  "governance_process": "Government-funded locality production that raises administrative, legal, fiscal, social, and expected control.",
+  "hypothesis": "Absorptive capacity has a temporal/sequence component: exhausting a fungible government capital stock through high-ceiling political spending can crowd out slower governance production even when total expenditure is unchanged.",
+  "guard": "Synthetic mechanism finding in Pineland internal capital units; not an empirical aid-spending effect size."
+}

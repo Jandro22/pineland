@@ -1,3 +1,4 @@
+# Python / test caches
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -11,12 +12,59 @@ htmlcov/
 .docx-render/
 build/
 dist/
-outputs/
-tmp/
+
+# Rebuildable native/Rust products.  Source, Cargo manifests, and probe code
+# stay tracked; target trees and locally copied extension binaries do not.
+/rust/target/
+/rust/target-*/
+/target-*/
+/src/pineland_sim/_native/
+/studies/research_program/general_theory_v1/native_probe/target/
+/studies/research_program/general_theory_v1/native_probe/target-*/
+/studies/research_program/general_theory_v1/bin/
+
+# Local scratch / generated CLI output
+/outputs/
+/tmp/
+/json/
+/artifacts/debug_*.json
+/artifacts/*.bak
+/artifacts/pdf_renders/
+
+# Empirical data products are regenerated from manifests/source data and can be
+# very large.  Keep manifests and hand-authored case definitions tracked.
 studies/*/data/raw/
 studies/*/data/processed/
+studies/*/data/derived/
+studies/*/data/standard_v2/
 studies/*/runs/
 studies/*/results/
+
+# General-theory panels are generated evidence.  Compact JSON summaries and
+# scientific ledgers remain eligible for version control; bulky panels/logs do
+# not.  Existing tracked files are unaffected by these rules.
+/studies/research_program/general_theory_v1/*.csv
+/studies/research_program/general_theory_v1/*.npz
+/studies/research_program/general_theory_v1/*.log
+/studies/research_program/general_theory_v1/_tmp_*
+/studies/research_program/general_theory_v1/_smoke_*
+/studies/research_program/general_theory_v1/*smoke*.json
+/studies/research_program/general_theory_v1/dev_*_results*.json
+/studies/research_program/general_theory_v1/screen_*_results*.json
+/studies/research_program/general_theory_v1/live_*_screen_v1/
+/studies/research_program/general_theory_v1/live_*_screen_v2/
+
+# Research-program caches / transient orchestration logs
+/studies/research_program/source_cache/
+/studies/research_program/afghanistan_performance/
+/studies/research_program/external_validation/**/*.zip
+/studies/research_program/civilian_harm_ucdp_event_crosscheck_v1.csv
+/studies/research_program/construct_representation_audit_v1.json
+/studies/research_program/prospective_measurement_retention_recovery*.json
+/studies/research_program/**/*.pstats
+/studies/research_program/**/*.stdout.log
+/studies/research_program/**/*.stderr.log
+/studies/research_program/**/*.log
+studies/research_program/*.latest.txt
 studies/research_program/benchmarks/
 studies/research_program/predictive_competition/
-studies/research_program/*.latest.txt

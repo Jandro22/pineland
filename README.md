@@ -1,5 +1,39 @@
 # Pineland COIN-SIM
 
+## Research-v1: inferring the hidden war
+
+The active `research-v1` program treats Pineland primarily as a state-estimation
+research platform: attacks and reports are observable, while political control,
+organizational penetration, fighter/supply capacity, expectations, and related
+latent conditions are only partially observed. The first-paper priority is now
+known-truth synthetic recovery rather than historical reconstruction. A live
+Pineland trajectory is hidden behind an explicit observation process and the
+existing particle filter must recover that latent state with calibrated
+uncertainty.
+
+The evidence order is synthetic recovery -> synthetic misspecification ->
+Afghanistan held-out evaluation -> frozen Nepal transfer. Afghanistan is a
+development/calibration case, not a source of known latent truth. Nepal is a
+transfer test: outcome-driven mechanism retuning is prohibited after the
+transfer freeze. See [`docs/research-v1.md`](docs/research-v1.md) and
+`studies/research_program/research_v1_protocol.json`.
+
+Run the small software/reproduction smoke with:
+
+```powershell
+python pineland.py reproduce paper1 --profile smoke
+```
+
+The larger development profile runs the current misspecification battery:
+
+```powershell
+python pineland.py reproduce paper1 --profile development
+```
+
+Neither profile is a confirmatory paper run. Confirmatory world counts,
+particle counts, severity levels, and promotion gates must be frozen before the
+confirmatory batch is executed.
+
 Version 0.13 adds a belief-based, budget-constrained organized-action layer
 that separates persistent organizational capacity from action choice, execution,
 latent events, and historical recording. Armed formation contact remains one
@@ -153,6 +187,13 @@ or publication.  Trees modified inside the safety window are skipped to avoid
 interfering with active runs.  Scratch/cache directories such as `tmp/`,
 `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, and coverage output are ignored
 by Git.
+
+The full source/evidence layout and the rules for what is tracked, retained
+locally, compressed, or disposable are documented in
+[`docs/repository-layout.md`](docs/repository-layout.md). In particular, Cargo
+`target*` trees and copied native binaries are rebuildable products, while
+compact scientific audits, falsification ledgers, and result summaries should
+be retained even when their much larger raw panels stay outside Git.
 
 Run the publication-readiness smoke battery (add `--full` for the powered
 resolution/sensitivity/recovery runs):

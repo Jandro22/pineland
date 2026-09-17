@@ -1,0 +1,37 @@
+{
+  "schema_version": "pineland.theory_status.v8",
+  "status": "SYNTHETIC_MECHANISMS_RETAINED_REDUCED_CLOSURE_REOPENED",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "supersedes": "theory_status_v7.json",
+  "reason_for_reissue": "Strict paired-bootstrap equivalence and fresh live-support residual screens falsified sufficiency of the corrected per-locality scalar reduced state. A fresh committed-delay extension also failed and had zero movement pipeline state on all selected anchors.",
+  "retained_mechanism_status": "All previously confirmed synthetic mechanism assays remain in force because they do not depend on the reduced-state closure certificate.",
+  "closure_evidence": {
+    "strict_live_overlap": "0/24 fully equivalent; 12/24 demonstrably non-equivalent; 12/24 inconclusive",
+    "fresh_rootedstock_net12v3": "11/24 demonstrably non-equivalent",
+    "fresh_rootedstock_social_net13v3": "12/24 demonstrably non-equivalent",
+    "fresh_rootedstock_hazard_net13v3": "12/24 demonstrably non-equivalent",
+    "fresh_rootedstock_transport_net13v3": "10/24 demonstrably non-equivalent",
+    "fresh_rootedstock_delay16v4": "9/24 demonstrably non-equivalent; 0/48 selected anchor states had nonzero committed inbound/outbound movement state"
+  },
+  "closure_conclusion": {
+    "scalar_coordinate_accretion": "TERMINATED_BY_PREREGISTERED_STOP_RULE",
+    "temporal_committed_movement_delay": "FALSIFIED_AS_GENERAL_EXPLANATION_ON_TESTED_SUPPORT",
+    "working_hypotheses": [
+      "The nominal transport coordinate omits command-reliability acceptance and may be a mismeasured expected flux.",
+      "The local reduced state omits the adjacent source reservoir that generates future transport, so closure may require a graph Markov blanket rather than more local history scalars."
+    ],
+    "source_theory": "graph_flux_closure_identity_v1.json"
+  },
+  "decision_support": {
+    "authorized": false,
+    "status": "GENERAL_POLICY_RANKING_BLOCKED",
+    "allowed": "Mechanism-specific synthetic assays with explicit support and scope guards.",
+    "next_gate": "A fresh-screen nomination followed by fresh 32-branch confirmation of either corrected executable-flux closure or graph-local closure."
+  },
+  "active_preregistered_tests": [
+    "live_insurgency_closure_executable_transport_contract_v1.json",
+    "live_insurgency_closure_graph_markov_blanket_contract_v1.json",
+    "insurgent_mobilization_risk_frontier_contract_v1.json"
+  ]
+}

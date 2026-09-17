@@ -1,0 +1,12 @@
+[package]
+name = "pineland-general-theory-probe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+pineland-core = { path = "../../../../rust/pineland-core" }
+pineland-model = { path = "../../../../rust/pineland-model" }
+rayon = "1.12.0"
+
+[workspace]

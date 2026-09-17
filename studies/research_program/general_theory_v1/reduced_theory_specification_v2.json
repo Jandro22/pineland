@@ -1,0 +1,124 @@
+{
+  "schema_version": "pineland.reduced_theory_specification.v2",
+  "status": "SYNTHETIC_MECHANISM_LAYER_COMPLETE_STABILIZED_REDUCED_THEORY",
+  "historical_outcomes_used": false,
+  "firewall_certified": true,
+  "closure_philosophy": "STOCHASTIC_BOUNDED_UNCERTAINTY_CLOSURE",
+  "summary": "Stabilized 10-dimensional state representation with characterized residual uncertainty covariance, eliminating continual state churn while providing certified bounds for operational and policy decisions.",
+  "state_vector": {
+    "local_coordinates": [
+      {
+        "symbol": "M_star",
+        "name": "Rooted civilian membership mass",
+        "domain": "[0, inf)",
+        "role": "Generative underground carrier; required for non-local spatial reproduction and radicalization."
+      },
+      {
+        "symbol": "F",
+        "name": "Fielded combatant force (log1p)",
+        "domain": "[0, inf)",
+        "role": "Active kinetic coercive capacity; consumes supplies and sustains combat attrition."
+      },
+      {
+        "symbol": "E",
+        "name": "Embedded foothold sanctuary",
+        "domain": "[0, 1]",
+        "role": "Physical infrastructure and sanctuary; reduces attrition and anchors presence."
+      },
+      {
+        "symbol": "C",
+        "name": "Net territorial governance control margin",
+        "domain": "[-1, 1]",
+        "role": "Primary order parameter governing civilian compliance, extraction, and intelligence."
+      },
+      {
+        "symbol": "Phi_net",
+        "name": "Signed net transport flux",
+        "domain": "(-inf, inf)",
+        "role": "Internal spatial redeployment and repositioning pressure between localities."
+      },
+      {
+        "symbol": "A",
+        "name": "Structural administrative capacity",
+        "domain": "[0, 1]",
+        "role": "Slow physical/administrative state machinery; rebuilt via hierarchical pipeline."
+      }
+    ],
+    "global_coordinates": [
+      {
+        "symbol": "K_o",
+        "name": "Central liquid organizational capital",
+        "domain": "[0, inf)",
+        "role": "Global solvency stock. Governs operational runway; K_o = 0 causes unconditional collapse."
+      }
+    ],
+    "slow_memory_stocks": [
+      {
+        "symbol": "P_G",
+        "name": "Police professionalism",
+        "domain": "[0, 1]",
+        "role": "Local procedural discipline and investigative capability; distinct from headcount."
+      },
+      {
+        "symbol": "V_G",
+        "name": "Government formation veterancy",
+        "domain": "[0, 1]",
+        "role": "Combat experience memory; diluted by green replacements under the turnover-learning law."
+      },
+      {
+        "symbol": "V_I",
+        "name": "Insurgent formation veterancy",
+        "domain": "[0, 1]",
+        "role": "Insurgent combat experience memory; improves tactical exchange ratio g(E)=0.75+0.50E."
+      }
+    ]
+  },
+  "governing_laws_and_identities": {
+    "capital_stock_flow_identity": {
+      "formula": "dK_o/dt = sum_i [tau_tax * max(0, C_i) * Y_i] - [kappa_r * r + kappa_rf * r * f + kappa_f * f]",
+      "verified_in": "organizational_resource_identity_v1.json, mobilization_resource_results_v1.json",
+      "properties": "Strict stock-flow conservation; replaces naive 1D scalar strain."
+    },
+    "human_capital_turnover_learning_law": {
+      "formula": "dE/dt = ell * (1 - E) + (I / F) * (E_r - E)",
+      "verified_in": "veterancy_quality_dynamic_equivalence_v1.json, human_capital_absorption_confirmation_results_v1.json",
+      "properties": "Deficit threshold I/F > ell*(1-E)/(E-E_r); fast replacement trades headcount recovery (+38.0 pp) for experience deficit (+10.1 pp)."
+    },
+    "state_capacity_dual_timescale_law": {
+      "formula": "dA_i/dt = admin_gain * integrity - 0.5 * admin_decay; dQ_inst/dt = service_learning - service_decay - patronage_damage",
+      "verified_in": "state_recovery_mechanism_factorial_results_v1.json",
+      "properties": "Explains rising structural admin capacity alongside declining institutional capacity on shock support."
+    },
+    "nonlocal_reproduction_kernel": {
+      "formula": "Pr(j establishment | i parent) = sigma(alpha_0 + alpha_dist * dist_ij + alpha_social * Soc_ij + alpha_haz * log1p(H_ij))",
+      "verified_in": "nonlocal_reproduction_confirmation_results_v1.json, reproduction_hazard_kernel_confirmation_results_v1.json",
+      "properties": "Nonlocal branching mediated by recruitment hazard (+0.027 AUC gain at 180d)."
+    }
+  },
+  "residual_uncertainty_characterization": {
+    "low_activity_regime": {
+      "closure_status": "EXACT_MARKOV_CLOSURE",
+      "sig_large_failure_rate": 0.0,
+      "control_delta_mean_smd": 0.0028,
+      "decision_relevance": "Deterministic simulation is fully valid; no stochastic expansion needed."
+    },
+    "mid_activity_regime": {
+      "closure_status": "HIGH_FIDELITY_CLOSURE_UNDER_NET_TRANSPORT",
+      "sig_large_failure_rate": 0.0,
+      "control_delta_mean_smd": 0.0245,
+      "decision_relevance": "Net transport flux absorbs spatial flows; macro-trajectories are bounded within tight +/- 5% error bars."
+    },
+    "high_activity_regime": {
+      "closure_status": "STOCHASTIC_DIFFUSION_CLOSURE",
+      "sig_large_failure_rate": 0.375,
+      "failure_locus": "Concentrated in combat force attrition (final_logF SMD=0.512) and foothold degradation (final_E SMD=0.385).",
+      "control_stability": "Territorial governance control remains stable (mean SMD < 0.18, 0% control divergence).",
+      "decision_relevance": "High-intensity contact produces discrete path-dependent branching. Bounded stochastic innovation Sigma_res(high) enables minimax and probabilistic risk planning without destabilizing the state vector."
+    }
+  },
+  "decision_support_certification": {
+    "supports_counterfactual_policy_choice": true,
+    "state_variable_churn_status": "PERMANENTLY_FROZEN",
+    "rationale": "No additional micro-state variables will be appended to pursue zero-variance Markov closure; residual uncertainty is fully parameterized."
+  }
+}

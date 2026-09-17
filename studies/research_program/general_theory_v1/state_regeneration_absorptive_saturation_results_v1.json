@@ -1,0 +1,36 @@
+﻿{
+    "schema_version":  "pineland.state_regeneration_absorptive_saturation_results.v1",
+    "historical_outcomes_used":  false,
+    "inputs":  {
+                   "trajectory_csv":  "state_regeneration_8seed_180d_v2.csv",
+                   "metadata_csv":  "state_regeneration_v2_metadata_v1.csv",
+                   "seed_base":  2026093100,
+                   "trajectories":  1280
+               },
+    "analytic_context":  {
+                             "administrative_rebuild_rate_per_day":  0.0015,
+                             "interval_days":  14,
+                             "maximum_unconstrained_interval_gap_fraction":  0.02078103543054044,
+                             "best_case_q50_days":  462.09812037329687,
+                             "best_case_q80_days":  1072.9586082894002
+                         },
+    "initial_affordability":  {
+                                  "capital_0_25_min_admin_throughput_multiple":  130.409797,
+                                  "capital_0_25_median_admin_throughput_multiple":  578.552082,
+                                  "capital_0_25_min_security_training_multiple":  2419.688038
+                              },
+    "trajectory_binding":  {
+                               "ever_admin_binding_count":  60,
+                               "ever_admin_binding_fraction":  0.046875,
+                               "ever_security_training_binding_count":  2,
+                               "ever_security_training_binding_fraction":  0.0015625,
+                               "capital_ge_0_5_admin_binding_count":  0,
+                               "capital_ge_0_5_trajectory_count":  1024,
+                               "capital_0_25_admin_binding_count":  60,
+                               "capital_0_25_trajectory_count":  256,
+                               "final_zero_capital_count":  0
+                           },
+    "status":  "ABSORPTIVE_CAPACITY_SATURATION_SUPPORTED_ON_TESTED_SUPPORT",
+    "interpretation":  "For capital multipliers 0.5 through 4.0, financial affordability never binds the maximum administrative-rebuild increment in any tested trajectory. The tested sweep therefore lies overwhelmingly on the throughput/absorptive-capacity plateau, explaining the weak marginal response to additional capital. The 0.25 edge begins to enter a resource-limited regime but remains mostly saturated.",
+    "guard":  "Synthetic mechanism result only. It does not imply real-world state building is generally money-insensitive. The next experiment must deliberately sample below the observed saturation plateau."
+}

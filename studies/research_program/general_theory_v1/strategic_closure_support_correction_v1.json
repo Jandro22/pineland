@@ -1,0 +1,58 @@
+{
+  "schema_version": "pineland.strategic_closure_support_correction.v1",
+  "status": "PRIOR_STRATEGIC_CLOSURE_CERTIFICATION_SUPERSEDED_LIVE_SUPPORT_REISSUE_REQUIRED",
+  "historical_outcomes_used": false,
+  "trigger": "Fresh fielded-force semantic audit found that the default day-60 closure support frequently/entirely contained an inactive canonical insurgent organization while retained formation records still carried nonzero operational-status-derived strength.",
+  "evidence": {
+    "audit_file": "fielded_force_definition_audit_results_v1.json",
+    "audit_input": "fielded_force_definition_audit_24x24x16_v1.csv",
+    "overall_final_F_definition_disagreement_fraction": 0.3658854166666667,
+    "pair_large_classification_changes": 4,
+    "by_stratum": {
+      "high": {
+        "rows": 256,
+        "pre_definition_disagreement_fraction": 1.0,
+        "final_definition_disagreement_fraction": 0.87109375,
+        "inactive_owner_final_fraction": 1.0,
+        "mean_pair_smd_legacy": 0.5026277891116041,
+        "mean_pair_smd_corrected": 0.0,
+        "pair_large_classification_changes": 3
+      },
+      "low": {
+        "rows": 256,
+        "pre_definition_disagreement_fraction": 0.0,
+        "final_definition_disagreement_fraction": 0.03515625,
+        "inactive_owner_final_fraction": 1.0,
+        "mean_pair_smd_legacy": 0.14898204600017084,
+        "mean_pair_smd_corrected": 0.0,
+        "pair_large_classification_changes": 1
+      },
+      "mid": {
+        "rows": 256,
+        "pre_definition_disagreement_fraction": 0.125,
+        "final_definition_disagreement_fraction": 0.19140625,
+        "inactive_owner_final_fraction": 1.0,
+        "mean_pair_smd_legacy": 0.24352851953082738,
+        "mean_pair_smd_corrected": 0.0,
+        "pair_large_classification_changes": 0
+      }
+    }
+  },
+  "scientific_interpretation": [
+    "The old F coordinate was not consistently equivalent to effective fielded coercive force because logistics can restore formation operational_status after organization collapse, while active-organization gating removes those formations from normal physical/recruitment channels.",
+    "The fresh high-activity audit support had canonical insurgent organization inactive at all high-stratum anchors; therefore the old high-activity F residual cannot be used as evidence of irreducible live-insurgency combat diffusion.",
+    "Default recruitment-resource metabolism causes rapid capital exhaustion and is a support-validity problem for day-60 closure, independently confirmed by the mobilization metabolic-ceiling assays."
+  ],
+  "retained_claims": [
+    "Directly preregistered mechanism findings on capital stock-flow depletion, human-capital/veterancy, police professionalism, state-regeneration dual channels, and recruitment-hazard/nonlocal reproduction remain separately supported by their own assays.",
+    "The 10-dimensional state vector remains a candidate compression, not a certified policy-decision state, until live-support closure is rerun."
+  ],
+  "superseded_claims": [
+    "theory_status_v6 strategic_closure_and_state_stabilization decision-readiness certification",
+    "reduced_theory_specification_v2 decision_support_certification supports_counterfactual_policy_choice=true",
+    "GENERAL_THEORY_v1.0 high-activity statement that final_logF divergence on the old support demonstrates live micro-combat stochastic diffusion"
+  ],
+  "corrected_F_definition": "Local effective fielded force must require an active insurgent owner in addition to active formation slot, operational_status=1, inside Pineland, and positive effective combat strength. Future policy work should additionally report ecosystem aggregate across all active insurgent organizations.",
+  "required_reissue": "Select a baseline-policy persistent-insurgency challenge regime without using strategy outcomes; then repeat prospective closure on untouched seeds using corrected active-owner F and re-evaluate the candidate reduced state and residual covariance.",
+  "guard": "This correction does not convert synthetic results into empirical claims and does not authorize retrospective tuning to historical outcomes."
+}

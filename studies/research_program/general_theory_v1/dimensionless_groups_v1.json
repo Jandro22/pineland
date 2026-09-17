@@ -1,0 +1,16 @@
+﻿{
+  "schema_version": "pineland.dimensionless_theory_groups.v1",
+  "status": "candidate_dimensionless_groups_to_test_not_laws",
+  "historical_outcomes_used": false,
+  "groups": [
+    {"id":"Pi_reproduction_memory","formula":"tau_foothold_memory/tau_local_renewal","meaning":"organizational memory relative to renewal opportunity","prediction":"larger values increase persistence until saturation"},
+    {"id":"Pi_supply_endurance","formula":"local_supply_endurance_days/tau_resupply_or_interdiction","meaning":"ability to sustain fielded capacity between replenishment opportunities","prediction":"low values reduce readiness/action before membership stock"},
+    {"id":"Pi_information","formula":"tau_information_memory/tau_decision","meaning":"whether local knowledge persists across operational decisions","prediction":"low values create failed/dispersed action despite surviving membership"},
+    {"id":"Pi_response","formula":"state_response_time/insurgent_move_action_time","meaning":"relative tempo advantage","prediction":"higher values favor challenger action/escape; lower values favor interruption"},
+    {"id":"Pi_fielding","formula":"local recruitment-to-fighter conversion rate/(attrition+exit+formation-loss rate)","meaning":"ability to deepen social base into deployable force","prediction":"controls member-to-fielded transition"},
+    {"id":"Pi_state_build","formula":"state local-capacity gain rate/insurgent endogenous regeneration rate","meaning":"competitive reproduction balance","prediction":"persistent values above one should favor durable state order, conditional on exogenous inputs"},
+    {"id":"Pi_external_dependence","formula":"exogenous replenishment rate/endogenous regeneration rate","meaning":"degree to which persistence is immigration-supported","prediction":"high values allow observed persistence with subcritical endogenous reproduction"}
+  ],
+  "phase_regimes": ["endogenous extinction","externally maintained persistence","localized endemic persistence","spatial expansion","state-dominant durable quiet","oscillatory/recurrence"],
+  "invariance_tests": ["process-timestep ladder","agent-resolution ladder","spatial/topology-family ladder","independent seed panel","parameter perturbations preserving candidate Pi groups"]
+}

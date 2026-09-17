@@ -1,0 +1,37 @@
+{
+  "schema_version": "3.0.0",
+  "manifest_id": "professor_packet_current_science_v3",
+  "status": "phase_a_e1_passed_historical_authorization_closed",
+  "historical_outreach_performed": false,
+  "model_sha256": "bc8a5f0e98a913501a2770b7683dfe1d9dbcd5ae25a33963a05e552ee62e9da3",
+  "source_commit_at_benchmark": "e8ffb4a1f4c5118c42c27af299cbffaf49b1bd9c",
+  "current_source_commit": "394d9b8c8fe94d6f15eecdc8b6d580b1141425b3",
+  "files": [
+    {"path": "studies/research_program/phase_a_packed_state_authority_v1.json", "bytes": 11914, "sha256": "11e431c9e88659992c819f9a2c9c1170b26bc3aeef147970af786040e5b42281"},
+    {"path": "studies/research_program/phase_a_kernel_oracles_v1.json", "bytes": 1678, "sha256": "a72560ec7cf092d7ef55c8d2e516510a85557ad87c5765ba4063bb88d451272c"},
+    {"path": "studies/research_program/phase_a_exactness_battery_v9.json", "bytes": 63290, "sha256": "3d510ed4d9adcf60fcc366619857527d105012b842585290e26b499261f60988"},
+    {"path": "studies/research_program/phase_a_execution_profile_v7.json", "bytes": 36837, "sha256": "e7af39b0fd86ceaaa5537018dd8585528cf953095c6d462aad54a10aeb62f2a2"},
+    {"path": "studies/research_program/phase_a_migration_validation_v4.json", "bytes": 22509, "sha256": "302c7bba54a39a8c13e9638a07de1274a22f2bfe4d3d458f57157829a4d48d57"},
+    {"path": "studies/research_program/phase_a_migration_decision_v3.json", "bytes": 2030, "sha256": "63718237963b99f9b1e7bbd689f822b300bb283ba1d7ae446d680cfaaaf19d95"},
+    {"path": "studies/research_program/phase_a_reproducibility_checkpoint_v5.json", "bytes": 2280, "sha256": "699e5aa688a19783870c9c0d18e39c57f160484458ecba7700498aff0976c88c"},
+    {"path": "studies/research_program/phase_a_fixed_work_benchmark_v5.json", "bytes": 189413, "sha256": "1792b00ea329eaef918aefae8fa7bdfd85ee53dbf5a40b8c35feafee96b65af5"},
+    {"path": "studies/research_program/phase_a_fixed_work_benchmark_failure_v4.json", "bytes": 22571, "sha256": "9d522ed09e8cb87a83ca425c4f0536f69e5625f3050f64ef46fa82a04b965bf2"},
+    {"path": "studies/research_program/phase_a_fixed_work_global_probe_v1.json", "bytes": 74643, "sha256": "e4035c7095c45862fc49f649293a008fe4e4925972b7c1b09fa7ae0528fc4036"},
+    {"path": "studies/research_program/phase_a_certificate_v11.json", "bytes": 23361, "sha256": "c60be816a20e813b5d84b1e13b10da5d06f8cd4d78ef706aa5adf469e0434d2c"},
+    {"path": "studies/research_program/phase_b_inference_validation_v6.json", "bytes": 7348, "sha256": "1c74a265da63e6f082ff45b064ff99b9d9acf552031ba08f871079173a19d87b"},
+    {"path": "studies/research_program/phase_c_method_contract_v11.json", "bytes": 22987, "sha256": "2419f8bdee4f57bc6e25f4c20a71270b244612769fe4fdde49950c118b705fa8"},
+    {"path": "studies/research_program/phase_d_historical_confrontation_status_v11.json", "bytes": 2157, "sha256": "ee83b792d9a15dd8e2d19c2b1fec9a0e950a838993adba9f9aa09514fcbf7bab"},
+    {"path": "studies/research_program/phase_e_theory_contract_v11.json", "bytes": 5168, "sha256": "d00109e73304a335f34a984251119805f9f3ed6dec69ef8038424308ffae9d20"},
+    {"path": "studies/research_program/phase_f_robustness_status_v11.json", "bytes": 2376, "sha256": "6dff84e6105e9fd197226a7e9d274031970030d8cc959865e23d69b6eef8accd"},
+    {"path": "artifacts/professor_packet/08_professor_readme.md", "bytes": 1888, "sha256": "d2035afadf627715c10b2b3e38099f7b457f47a06a2a19a980bd7766a5d3b751"},
+    {"path": "artifacts/professor_packet/09_independent_review.json", "bytes": 2140, "sha256": "5addca9538556218af1fc69540a446e7553a2e66d5ffe29f813c457a2ed0813b"},
+    {"path": "artifacts/professor_packet/10_current_science_status.md", "bytes": 2827, "sha256": "92e337d59e5416750d870bc38481e54ce551ea2f3ee2ce50165e5372bdf2b3ed"},
+    {"path": "artifacts/professor_packet/11_current_claims_and_evidence.md", "bytes": 1633, "sha256": "643dcce3065de297e236a1b0c19a24ea5b8941ef72e51e0714b1de7ee69e9b0d"}
+  ],
+  "negative_evidence_policy": "complete fixed-work E2-negative evidence and stale-core historical outputs are preserved; no historical claim is promoted",
+  "verification_commands": [
+    "python -m pytest -q",
+    "python studies/research_program/scripts/run_phase_a_exactness_battery.py --output studies/research_program/phase_a_exactness_battery_v9.json",
+    "python studies/research_program/scripts/run_phase_b_inference_validation.py --phase-a studies/research_program/phase_a_exactness_battery_v9.json --output studies/research_program/phase_b_inference_validation_v6.json"
+  ]
+}

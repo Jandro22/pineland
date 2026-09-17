@@ -1,0 +1,46 @@
+{
+  "schema_version": "pineland.theory_status.v5",
+  "status": "CORE_ARCHITECTURE_DISCRIMINATED_V2_REDUCTION_REQUIRED",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "supersedes": "theory_status_v4.json",
+  "engineering_foundation": {
+    "engine_commit": "c9afc89 Complete Rust v2 core theory architecture",
+    "checkpoint_schema": 14,
+    "workspace_regression": "54 passed, 0 failed",
+    "state_regeneration_active_when_explicitly_enabled": true
+  },
+  "synthetic_discrimination_verdicts": {
+    "police_professionalism": {
+      "verdict": "CONFIRMED_DISTINCT_DYNAMICAL_STATE_IN_IMPLEMENTED_SYNTHETIC_SYSTEM",
+      "evidence": "force_discrimination_results_v1.json",
+      "interpretation": "At fixed staffing and parent standard, different initial professionalism states persist into different intelligence and disruption trajectories while converging over time."
+    },
+    "formation_veterancy": {
+      "verdict": "CONFIRMED_DISTINCT_DYNAMICAL_MEMORY_STATE_IN_IMPLEMENTED_SYNTHETIC_SYSTEM",
+      "evidence": "force_discrimination_results_v1.json",
+      "interpretation": "Quality-experience pairs with identical initial capability are exactly common-RNG equivalent before turnover but diverge after green replacement dilution."
+    },
+    "state_regeneration": {
+      "verdict": "MECHANISM_ENGAGED_RECOVERY_WEAK_AT_180D",
+      "evidence": "state_regeneration_results_v2.json",
+      "interpretation_audit": "state_regeneration_interpretation_audit_v1.json",
+      "mean_Q_capacity_180d": 0.06087440082316223,
+      "fraction_Q50_180d": 0.0,
+      "mean_Q_effective_control_180d": -0.025214868998323026
+    }
+  },
+  "scientific_status": {
+    "general_theory_licensed": false,
+    "core_architecture_complete": true,
+    "new_state_structural_discrimination_complete": true,
+    "v1_macrostate_closure_status": "STALE_FOR_V2_ENGINE_BECAUSE_PROFESSIONALISM_AND_VETERANCY_WERE_NOT_INCLUDED",
+    "v2_macrostate_distributional_closure": "NOT_YET_ESTABLISHED",
+    "state_recovery_timescale": "NOT_IDENTIFIED; ONLY NO_Q50_BY_180D_ESTABLISHED",
+    "competitive_state_vs_insurgent_order_parameter": "NOT_ESTABLISHED",
+    "cross_topology_scale_universality": "NOT_ESTABLISHED",
+    "historical_transport": "UNAUTHORIZED"
+  },
+  "next_stage": "Run preregistered v2 omitted-state stress tests and v2 distributional closure under active insurgent dynamics. Determine whether police professionalism and government/insurgent veterancy survive coarse-graining or can be represented by a smaller effective macrostate before deriving any new reduced competitive system.",
+  "promotion_guard": "Do not couple a claimed slow-state manifold into a reduced general theory until v2 closure and competitive interaction tests establish which state variables are actually required."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "pineland.development_absorptive_thresholds_results.v1",
+  "status": "ANALYTIC_ABSORPTIVE_THRESHOLDS_MAPPED",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/development_absorptive_thresholds_12seed_day60_v1.csv",
+  "input_sha256": "b909a15f0b5d902a0adbd79ea1db8838629a68cce781a319a16607bbb400fda8",
+  "rows": 408,
+  "seeds": 12,
+  "thresholds": {
+    "government_legitimacy": {
+      "structurally_possible_fraction": 0.9926470588235294,
+      "baseline_equal_allocation_clears_threshold_fraction": 0.00980392156862745,
+      "required_nominal_public_when_possible": {
+        "n": 405,
+        "median": 44008.50584233916,
+        "p10": 10705.010926725003,
+        "p90": 138324.30824823
+      }
+    },
+    "state_legitimacy": {
+      "structurally_possible_fraction": 1.0,
+      "baseline_equal_allocation_clears_threshold_fraction": 0.022058823529411766,
+      "required_nominal_public_when_possible": {
+        "n": 408,
+        "median": 31830.157232189886,
+        "p10": 8061.282709059938,
+        "p90": 89838.96737684777
+      }
+    },
+    "political_access": {
+      "structurally_possible_fraction": 1.0,
+      "baseline_equal_allocation_clears_threshold_fraction": 0.04656862745098039,
+      "required_nominal_public_when_possible": {
+        "n": 408,
+        "median": 16975.66328450814,
+        "p10": 4304.016115466243,
+        "p90": 51385.022456290455
+      }
+    }
+  },
+  "baseline_equal_allocation_saturates_production_fraction": 0.0,
+  "marginal_production_per_nominal_public": {
+    "n": 408,
+    "median": 1.49284757737e-05,
+    "p10": 4.99511697199e-06,
+    "p90": 6.286839563613001e-05
+  },
+  "interpretation": "Under the implemented political-order equations, public spending can fail to improve legitimacy/access when local institutions cannot convert spending into sufficiently high-quality services. Production thresholds above 1 are impossible to clear by spending alone in that cycle.",
+  "guard": "Exact/approximate synthetic equation audit. Nominal-public thresholds use stored compliance as the mean sampled-compliance approximation and are not empirical monetary estimates."
+}

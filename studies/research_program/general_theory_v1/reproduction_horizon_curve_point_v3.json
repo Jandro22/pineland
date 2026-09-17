@@ -1,0 +1,229 @@
+{
+  "schema_version": "pineland.reproduction_horizon_curve.v3",
+  "status": "synthetic_normalized_first_generation_point_estimates",
+  "historical_outcomes_used": false,
+  "source": "reproduction_impulse_8seed_180d_v3.csv",
+  "horizons": [
+    {
+      "horizon_days": 30,
+      "rho_K_h": 1.6584328235244976,
+      "parent_summary": {
+        "E": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "F": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "FG": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "G": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "M": {
+          "mean": 1.5514705882352942,
+          "p_any": 0.8014705882352942,
+          "sum": 211
+        },
+        "MF": {
+          "mean": 1.75,
+          "p_any": 0.8676470588235294,
+          "sum": 238
+        },
+        "MFG": {
+          "mean": 1.75,
+          "p_any": 0.8676470588235294,
+          "sum": 238
+        },
+        "MG": {
+          "mean": 1.5514705882352942,
+          "p_any": 0.8014705882352942,
+          "sum": 211
+        },
+        "none": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        }
+      },
+      "child_count": 898,
+      "recruitment_trigger_fraction": 0.9910913140311804,
+      "adjacent_fraction": 0.267260579064588,
+      "median_first_time": 21.0
+    },
+    {
+      "horizon_days": 60,
+      "rho_K_h": 3.8249807897847723,
+      "parent_summary": {
+        "E": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "F": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "FG": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "G": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "M": {
+          "mean": 3.8823529411764706,
+          "p_any": 0.9632352941176471,
+          "sum": 528
+        },
+        "MF": {
+          "mean": 4.1911764705882355,
+          "p_any": 0.9779411764705882,
+          "sum": 570
+        },
+        "MFG": {
+          "mean": 4.1911764705882355,
+          "p_any": 0.9779411764705882,
+          "sum": 570
+        },
+        "MG": {
+          "mean": 3.8823529411764706,
+          "p_any": 0.9632352941176471,
+          "sum": 528
+        },
+        "none": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        }
+      },
+      "child_count": 2196,
+      "recruitment_trigger_fraction": 0.9799635701275046,
+      "adjacent_fraction": 0.27595628415300544,
+      "median_first_time": 35.0
+    },
+    {
+      "horizon_days": 90,
+      "rho_K_h": 5.29576050612007,
+      "parent_summary": {
+        "E": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "F": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "FG": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "G": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "M": {
+          "mean": 5.8161764705882355,
+          "p_any": 0.9779411764705882,
+          "sum": 791
+        },
+        "MF": {
+          "mean": 6.051470588235294,
+          "p_any": 0.9779411764705882,
+          "sum": 823
+        },
+        "MFG": {
+          "mean": 6.051470588235294,
+          "p_any": 0.9779411764705882,
+          "sum": 823
+        },
+        "MG": {
+          "mean": 5.8088235294117645,
+          "p_any": 0.9779411764705882,
+          "sum": 790
+        },
+        "none": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        }
+      },
+      "child_count": 3227,
+      "recruitment_trigger_fraction": 0.9752091726061357,
+      "adjacent_fraction": 0.2618531143476914,
+      "median_first_time": 49.0
+    },
+    {
+      "horizon_days": 180,
+      "rho_K_h": 6.393604288151057,
+      "parent_summary": {
+        "E": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "F": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "FG": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "G": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        },
+        "M": {
+          "mean": 7.492647058823529,
+          "p_any": 0.9779411764705882,
+          "sum": 1019
+        },
+        "MF": {
+          "mean": 7.529411764705882,
+          "p_any": 0.9779411764705882,
+          "sum": 1024
+        },
+        "MFG": {
+          "mean": 7.529411764705882,
+          "p_any": 0.9779411764705882,
+          "sum": 1024
+        },
+        "MG": {
+          "mean": 7.485294117647059,
+          "p_any": 0.9779411764705882,
+          "sum": 1018
+        },
+        "none": {
+          "mean": 0.0,
+          "p_any": 0.0,
+          "sum": 0
+        }
+      },
+      "child_count": 4085,
+      "recruitment_trigger_fraction": 0.9671970624235006,
+      "adjacent_fraction": 0.25238678090575273,
+      "median_first_time": 56.0
+    }
+  ],
+  "guard": "Finite-horizon K_h point estimates from one nested 180-day trajectory set. Bootstrap uncertainty and horizon convergence diagnostics are separate."
+}

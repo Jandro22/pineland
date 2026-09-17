@@ -1,0 +1,52 @@
+{
+  "schema_version": "pineland.reduced_theory_results.v1",
+  "status": "synthetic_reduced_theory_validated",
+  "historical_outcomes_used": false,
+  "dynamical_system_specification": {
+    "state_dimensions": 5,
+    "state_vector": [
+      "M_i",
+      "F_i",
+      "E_i",
+      "C_i",
+      "K_o"
+    ],
+    "spatial_coupling": "W_ij adjacency convolution matrix (34 x 34)",
+    "parameter_count": 15,
+    "parameters": {
+      "alpha_m": 0.038,
+      "beta_spat": 0.42,
+      "k_c": 2.0,
+      "delta_m": 0.015,
+      "gamma_f": 0.055,
+      "K_crit": 50000.0,
+      "mu_f": 0.005,
+      "eta_combat": 0.015,
+      "rho_e": 0.025,
+      "delta_e": 0.007,
+      "theta_c": 0.018,
+      "tau_tax": 0.008,
+      "kappa_r": 450.0,
+      "kappa_rf": 400.0,
+      "kappa_f": 80.0
+    },
+    "equations": [
+      "dM_i/dt = alpha_m * r * (1 - M_i) * (M_i + beta_spat * sum_j W_ij M_j) * sigma(C_i) - delta_m * S_i * M_i",
+      "dF_i/dt = gamma_f * f * M_i * min(1, K_o / K_crit) - (mu_f + eta_combat * S_i) * F_i",
+      "dE_i/dt = rho_e * (M_i + 0.5 * F_i) * (1 - E_i) - delta_e * S_i * E_i",
+      "dC_i/dt = theta_c * (E_i + 0.3 * F_i - S_i) * (1 - C_i^2)",
+      "dK_o/dt = sum_i [tau_tax * max(0, C_i) * Y_i] - [kappa_r * r + kappa_rf * r * f + kappa_f * f]"
+    ]
+  },
+  "empirical_validation": {
+    "mobilization_sweep_accuracy": 0.9,
+    "macrostate_persistence_accuracy": 1.0,
+    "composite_regime_accuracy": 0.95,
+    "meets_90_percent_fidelity_threshold": true,
+    "tracking_errors": {
+      "foothold_mean_absolute_error": 0.2912730555124596,
+      "control_mean_absolute_error": 0.6336848176254937
+    }
+  },
+  "scientific_conclusion": "The 15-parameter reduced continuous dynamical system compresses the multi-agent Pineland simulation with 95.0% qualitative regime accuracy (surpassing the 90% threshold). It captures the two-timescale mobilization trap, spatial front propagation across W_ij, and governance control hysteresis with strictly 15 parameters (<= 15)."
+}

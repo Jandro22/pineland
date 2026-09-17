@@ -1,0 +1,32 @@
+{
+  "schema_version": "pineland.minimal_closure_state.v1",
+  "status": "synthetic_minimal_sufficient_state_frozen",
+  "historical_outcomes_used": false,
+  "minimal_state_name": "minimal_4",
+  "dimension": 4,
+  "vector_symbols": [
+    "M",
+    "F",
+    "E",
+    "C"
+  ],
+  "definitions": {
+    "M": "m_member_depth (rooted civilian membership depth)",
+    "F": "log(1 + f_effective_strength) (log fielded armed personnel)",
+    "L": "l_supply_fraction (logistics supply saturation)",
+    "K_local": "mean target intelligence confidence (belief, presence, formation)",
+    "E": "e_foothold_strength (local organizational foothold / sanctuary base)",
+    "C": "c_margin (net governance control margin = c_ins - c_gov)",
+    "X": "x_expected_ins - x_expected_gov (popular political expectation balance)",
+    "S_state": "mean government institutional administrative & governance capacity",
+    "U_ext": "external sanctuary and foreign assistance stock",
+    "N_spatial_M": "sum_j W_ij M_j (spatial neighborhood rooted membership pressure)"
+  },
+  "closure_certification": {
+    "test_count": 14,
+    "passed_count": 14,
+    "pass_fraction": 1.0,
+    "max_regret_vs_70d_microstate": 0.06848855911730567
+  },
+  "mathematical_role_in_general_theory": "Forms the core low-dimensional state vector X_t in the reduced dynamical system. Guarantees that microstate details can be compressed into this state vector without significant loss of trajectory forecasting power."
+}

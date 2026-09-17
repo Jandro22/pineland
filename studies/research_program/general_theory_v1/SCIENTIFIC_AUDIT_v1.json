@@ -1,0 +1,54 @@
+{
+  "schema_version": "pineland.general_theory_scientific_audit.v1",
+  "status": "corrective_audit_supersedes_v1_promotion_language",
+  "historical_outcomes_used": false,
+  "audited_head": "3e976a38f599815c2f761602908e76f2701e5f86",
+  "engineering_certification": {
+    "native_reference_parity": "PASS",
+    "requested_cases": 140,
+    "completed_cases": 140,
+    "mismatch_count": 0,
+    "source": "artifacts/final_native_full20_parity.json"
+  },
+  "strong_current_synthetic_results": [
+    "Rooted-membership parent configurations generated spatial offspring in the isolated reproduction assay while tested non-M parent configurations and placebo generated zero.",
+    "The 180-day mobilization factorial produced 607 collapses and every observed collapse coincided with zero central organizational capital.",
+    "The scalar strain proxy r*f/c failed its proposed collapse because equal-proxy cells had large survival dispersion.",
+    "The state-regeneration shock assay showed negligible local institutional gap closure from central capital variation over the tested 180-day horizon.",
+    "A four-variable macrostate is a strong predictive compression over the tested seed-grouped 30/90-day panel tasks."
+  ],
+  "required_downgrades": [
+    {
+      "claim": "(M,F,E,C) is a certified minimal Markov-sufficient state",
+      "verdict": "NOT YET ESTABLISHED",
+      "reason": "macrostate_closure_results_v1 uses grouped predictive models; the preregistered common-random-number distributional adversarial continuation had not been run."
+    },
+    {
+      "claim": "Gamma universally governs territorial-control bifurcation",
+      "verdict": "NOT SUPPORTED",
+      "reason": "Gamma improves survival AUC, but raw force ratio has higher R2 for 60-day continuous control change and Gamma expansion AUC is below 0.5 in the current panel."
+    },
+    {
+      "claim": "The six-regime universal phase diagram and named bifurcations are experimentally established",
+      "verdict": "NOT YET ESTABLISHED",
+      "reason": "build_phase_diagram.py synthesizes hand-coded regime conditions from prior result files rather than sampling and classifying a multidimensional phase surface."
+    },
+    {
+      "claim": "The 15-parameter ODE has 95 percent trajectory fidelity",
+      "verdict": "NOT SUPPORTED BY THAT METRIC",
+      "reason": "0.95 is the mean of two coarse classification accuracies. Continuous errors are substantial and the validation does not provide a strict derive/freeze/untouched-test split."
+    },
+    {
+      "claim": "Cross-topology and scale universality",
+      "verdict": "NOT YET TESTED",
+      "reason": "the existing theory package does not contain the required topology-family and resolution-invariance battery."
+    }
+  ],
+  "documentation_corrections": {
+    "mobilization_design": "Actual design is 6 recruitment multipliers x 4 fighter-conversion multipliers x 5 capital multipliers x 8 seeds = 960 trajectories.",
+    "state_regeneration_design": "CSV contains 1,280 unique trajectories; analyzer reports 960 non-control shocked trajectories because shock_fraction=1.0 matched controls are excluded from primary shock-path count.",
+    "agent_scale": "General-theory synthetic contracts use 300 representative agents and 34 localities; do not describe these assays as direct ~100,000-agent experiments.",
+    "hash_language": "SHA-256 fingerprints are integrity hashes, not cryptographic signatures."
+  },
+  "next_authoritative_contract": "studies/research_program/general_theory_v1/general_theory_hardening_contract_v2.json"
+}

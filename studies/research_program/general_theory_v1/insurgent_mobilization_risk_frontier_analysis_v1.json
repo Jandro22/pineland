@@ -1,0 +1,21 @@
+{
+  "schema_version": "pineland.insurgent_mobilization_risk_frontier_analysis.v1",
+  "status": "FROZEN_BEFORE_FRESH_OUTCOMES",
+  "registered_date": "2026-09-12",
+  "input_contract": "insurgent_mobilization_risk_frontier_contract_v1.json",
+  "analysis_rules": [
+    "Use exact observed collapse counts and Wilson 95% intervals at every recruitment rate.",
+    "Define the observed transition band as the interval from the highest tested rate with zero observed collapse to the lowest tested rate with one or more observed collapses. Do not interpret either endpoint as an exact true threshold.",
+    "Report median final rooted membership and operational force both unconditionally and conditional on survival.",
+    "Because seeds are shared across rates, report adjacent-rate paired changes: new collapses induced at the higher rate and median growth change among seeds surviving both rates.",
+    "Construct a Pareto set rather than an arbitrary scalar utility: a rate is dominated if another tested rate has no higher observed collapse fraction and no lower median rooted membership and operational force, with at least one strict improvement.",
+    "Report recruitment-linked runway ratio and final liquid capital to connect collapse risk to the preregistered metabolic mechanism.",
+    "Report collapse causes exactly; do not pool non-capital collapse causes into the metabolic mechanism claim.",
+    "Zero observed collapse is not zero true risk. Always display its confidence interval."
+  ],
+  "guards": [
+    "Synthetic mechanism result only.",
+    "Recruitment multipliers and capital units are not historically calibrated.",
+    "No interior optimum claim is permitted unless an interior rate has prospectively lower collapse risk than zero recruitment."
+  ]
+}

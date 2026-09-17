@@ -1,0 +1,1410 @@
+{
+  "schema_version": "pineland.macrostate_closure_analysis.v1",
+  "status": "synthetic_reduction_test_not_historical_result",
+  "historical_outcomes_used": false,
+  "input": "studies\\research_program\\general_theory_v1\\macrostate_panel_v1.csv",
+  "input_sha256": "4fde1254c95bbab648ffc0c729c8e64b466536ed601baf1a076f0e1ba520444b",
+  "seed_count": 16,
+  "row_count": 2720,
+  "feature_sets": {
+    "minimal_4": [
+      "M",
+      "F",
+      "E",
+      "C"
+    ],
+    "operational_7": [
+      "M",
+      "F",
+      "L",
+      "K_local",
+      "E",
+      "C",
+      "X"
+    ],
+    "competitive_9": [
+      "M",
+      "F",
+      "L",
+      "K_local",
+      "E",
+      "C",
+      "X",
+      "S_state",
+      "U_ext"
+    ],
+    "expanded_state": [
+      "M",
+      "F",
+      "L",
+      "K_local",
+      "E",
+      "C",
+      "X",
+      "S_state",
+      "U_ext",
+      "m_armed_mass",
+      "m_member_depth",
+      "m_rooted_local_share",
+      "m_rooted_district_share",
+      "m_social_exposure",
+      "f_personnel",
+      "f_effective_strength",
+      "f_mean_readiness",
+      "f_mean_embeddedness",
+      "l_supply_stock",
+      "l_supply_fraction",
+      "k_belief_conf",
+      "k_presence_conf",
+      "k_formation_info",
+      "k_tradecraft",
+      "e_foothold_strength",
+      "e_renewal_count",
+      "c_ins_effective",
+      "c_gov_effective",
+      "c_margin",
+      "c_ins_formal",
+      "c_ins_physical",
+      "c_ins_admin",
+      "c_ins_legal",
+      "c_ins_fiscal",
+      "c_ins_social",
+      "c_ins_expected",
+      "c_gov_formal",
+      "c_gov_physical",
+      "c_gov_admin",
+      "c_gov_legal",
+      "c_gov_fiscal",
+      "c_gov_social",
+      "c_gov_expected",
+      "x_expected_gov",
+      "x_expected_ins",
+      "x_grievance",
+      "x_fear",
+      "x_political_access",
+      "x_state_legitimacy",
+      "x_government_legitimacy",
+      "x_trust_insurgent",
+      "x_insurgent_behavior_share",
+      "s_admin_capacity",
+      "s_security_personnel",
+      "s_institution_capacity",
+      "s_institution_reach",
+      "s_government_governance",
+      "u_external_support",
+      "u_external_sanctuary",
+      "u_foreign_capacity",
+      "population",
+      "economic_output",
+      "infrastructure",
+      "terrain_friction",
+      "observability",
+      "violence",
+      "disruption",
+      "displaced_share",
+      "org_cohesion",
+      "org_discipline",
+      "org_persistence",
+      "org_mobility",
+      "org_institutional_quality",
+      "org_capital_social",
+      "org_capital_political",
+      "org_capital_organizational",
+      "org_capital_material",
+      "org_risk_tolerance",
+      "org_governance_investment",
+      "formation_quality",
+      "formation_command",
+      "formation_fatigue",
+      "formation_availability",
+      "network_mean_degree",
+      "access_pressure"
+    ]
+  },
+  "results": {
+    "30": {
+      "viable_30": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.28007133021368713,
+            "brier": 0.08732580815364553,
+            "auc": 0.9129301943888803,
+            "baseline_logloss": 0.68725425670709,
+            "baseline_brier": 0.24705933039576125
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.28246578101434944,
+            "brier": 0.08829669741822604,
+            "auc": 0.9158669709869894,
+            "baseline_logloss": 0.68725425670709,
+            "baseline_brier": 0.24705933039576125
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.2834453704596954,
+            "brier": 0.08927459670085028,
+            "auc": 0.915504949479407,
+            "baseline_logloss": 0.68725425670709,
+            "baseline_brier": 0.24705933039576125
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "prevalence": 0.5542279411764706,
+            "logloss": 0.2830720944378079,
+            "brier": 0.08692384814692096,
+            "auc": 0.9228471046827718,
+            "baseline_logloss": 0.68725425670709,
+            "baseline_brier": 0.24705933039576125
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "logloss",
+          "competitive_minus_expanded": 0.0003732760218875253,
+          "passed_provisional_gate": true
+        }
+      },
+      "actions_delta_30": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.31985294117647056,
+            "sd": 0.892519554320403,
+            "rmse": 0.7255676117547741,
+            "nrmse": 0.8129430982688641,
+            "r2": 0.33912351897702,
+            "baseline_rmse": 0.892519554320403
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.31985294117647056,
+            "sd": 0.892519554320403,
+            "rmse": 0.7060704847263812,
+            "nrmse": 0.79109805640506,
+            "r2": 0.3741638651521364,
+            "baseline_rmse": 0.892519554320403
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.31985294117647056,
+            "sd": 0.892519554320403,
+            "rmse": 0.7150774074822505,
+            "nrmse": 0.8011896255054451,
+            "r2": 0.35809518398244444,
+            "baseline_rmse": 0.892519554320403
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.31985294117647056,
+            "sd": 0.892519554320403,
+            "rmse": 0.6969050202712719,
+            "nrmse": 0.7808288534383102,
+            "r2": 0.3903063016382139,
+            "baseline_rmse": 0.892519554320403
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.020360772067134936,
+          "passed_provisional_gate": true
+        }
+      },
+      "recruits_delta_30": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 370.0363109035014,
+            "sd": 1138.1984762101677,
+            "rmse": 1020.6085159645353,
+            "nrmse": 0.8966876492075716,
+            "r2": 0.19595125975859928,
+            "baseline_rmse": 1138.1984762101677
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 370.0363109035014,
+            "sd": 1138.1984762101677,
+            "rmse": 1013.2663728325253,
+            "nrmse": 0.8902369788847146,
+            "r2": 0.20747812142621636,
+            "baseline_rmse": 1138.1984762101677
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 370.0363109035014,
+            "sd": 1138.1984762101677,
+            "rmse": 1025.0693024960046,
+            "nrmse": 0.9006068132415301,
+            "r2": 0.18890736794293572,
+            "baseline_rmse": 1138.1984762101677
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 370.0363109035014,
+            "sd": 1138.1984762101677,
+            "rmse": 961.3663194745493,
+            "nrmse": 0.8446385578335932,
+            "r2": 0.2865857066207881,
+            "baseline_rmse": 1138.1984762101677
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.05596825540793693,
+          "passed_provisional_gate": true
+        }
+      },
+      "control_delta_30": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": -0.00010255676058612973,
+            "sd": 0.011880090080765154,
+            "rmse": 0.011790961162427971,
+            "nrmse": 0.9924976226837294,
+            "r2": 0.014948468967145523,
+            "baseline_rmse": 0.011880090080765154
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": -0.00010255676058612973,
+            "sd": 0.011880090080765154,
+            "rmse": 0.011714817105160381,
+            "nrmse": 0.9860882388533094,
+            "r2": 0.027629985195178897,
+            "baseline_rmse": 0.011880090080765154
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": -0.00010255676058612973,
+            "sd": 0.011880090080765154,
+            "rmse": 0.011330592474449584,
+            "nrmse": 0.9537463434553201,
+            "r2": 0.09036791234560682,
+            "baseline_rmse": 0.011880090080765154
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": -0.00010255676058612973,
+            "sd": 0.011880090080765154,
+            "rmse": 0.011282338914065717,
+            "nrmse": 0.9496846267464549,
+            "r2": 0.09809910972144686,
+            "baseline_rmse": 0.011880090080765154
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.004061716708865126,
+          "passed_provisional_gate": true
+        }
+      },
+      "fielded_30": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 334.65008196309174,
+            "sd": 578.1095980813722,
+            "rmse": 431.4354688434546,
+            "nrmse": 0.7462866388575815,
+            "r2": 0.4430562526626537,
+            "baseline_rmse": 578.1095980813722
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 334.65008196309174,
+            "sd": 578.1095980813722,
+            "rmse": 425.2932852566844,
+            "nrmse": 0.7356620382504391,
+            "r2": 0.4588013654772095,
+            "baseline_rmse": 578.1095980813722
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 334.65008196309174,
+            "sd": 578.1095980813722,
+            "rmse": 426.4114202403793,
+            "nrmse": 0.7375961611008567,
+            "r2": 0.455951903129279,
+            "baseline_rmse": 578.1095980813722
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 334.65008196309174,
+            "sd": 578.1095980813722,
+            "rmse": 433.0460300787697,
+            "nrmse": 0.7490725487277173,
+            "r2": 0.43889031674256174,
+            "baseline_rmse": 578.1095980813722
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": -0.011476387626860651,
+          "passed_provisional_gate": true
+        }
+      },
+      "state_control_30": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.58691403175926,
+            "sd": 0.048551856487999166,
+            "rmse": 0.00928627894471279,
+            "nrmse": 0.19126516711071864,
+            "r2": 0.9634176358501089,
+            "baseline_rmse": 0.048551856487999166
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.58691403175926,
+            "sd": 0.048551856487999166,
+            "rmse": 0.009231190889584778,
+            "nrmse": 0.19013054406820679,
+            "r2": 0.9638503762123277,
+            "baseline_rmse": 0.048551856487999166
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.58691403175926,
+            "sd": 0.048551856487999166,
+            "rmse": 0.007486300334804775,
+            "nrmse": 0.1541918450977298,
+            "r2": 0.9762248749053577,
+            "baseline_rmse": 0.048551856487999166
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.58691403175926,
+            "sd": 0.048551856487999166,
+            "rmse": 0.006455831886451986,
+            "nrmse": 0.1329677658782772,
+            "r2": 0.9823195732373396,
+            "baseline_rmse": 0.048551856487999166
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.021224079219452602,
+          "passed_provisional_gate": true
+        }
+      },
+      "viable_activation_delta_30": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.04090073529411765,
+            "sd": 0.19806025635275282,
+            "rmse": 0.19714667569573086,
+            "nrmse": 0.9953873600193931,
+            "r2": 0.009204003513622938,
+            "baseline_rmse": 0.19806025635275282
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.04090073529411765,
+            "sd": 0.19806025635275282,
+            "rmse": 0.19861847327845733,
+            "nrmse": 1.0028184196869376,
+            "r2": -0.005644782863407194,
+            "baseline_rmse": 0.19806025635275282
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.04090073529411765,
+            "sd": 0.19806025635275282,
+            "rmse": 0.19937729779490698,
+            "nrmse": 1.0066497007850401,
+            "r2": -0.013343620090611186,
+            "baseline_rmse": 0.19806025635275282
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 2176,
+            "mean": 0.04090073529411765,
+            "sd": 0.19806025635275282,
+            "rmse": 0.19801137966517154,
+            "nrmse": 0.9997532231428893,
+            "r2": 0.0004934928154042284,
+            "baseline_rmse": 0.19806025635275282
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.0068964776421508445,
+          "passed_provisional_gate": true
+        }
+      }
+    },
+    "90": {
+      "viable_90": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.5238950180859714,
+            "brier": 0.1892661540132357,
+            "auc": 0.7364995830834272,
+            "baseline_logloss": 0.654635215232884,
+            "baseline_brier": 0.23099251189446365
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.5311352860727809,
+            "brier": 0.19078679357123884,
+            "auc": 0.7481147325151041,
+            "baseline_logloss": 0.654635215232884,
+            "baseline_brier": 0.23099251189446365
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.546566773998541,
+            "brier": 0.19674645990493755,
+            "auc": 0.7387158238125191,
+            "baseline_logloss": 0.654635215232884,
+            "baseline_brier": 0.23099251189446365
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "prevalence": 0.6378676470588235,
+            "logloss": 0.5793469646312882,
+            "brier": 0.2044009333814538,
+            "auc": 0.7562354627773957,
+            "baseline_logloss": 0.654635215232884,
+            "baseline_brier": 0.23099251189446365
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "logloss",
+          "competitive_minus_expanded": -0.032780190632747175,
+          "passed_provisional_gate": true
+        }
+      },
+      "actions_delta_90": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.9944852941176471,
+            "sd": 1.8893973984303836,
+            "rmse": 1.5198771402299347,
+            "nrmse": 0.8044242791339569,
+            "r2": 0.352901579139814,
+            "baseline_rmse": 1.8893973984303836
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.9944852941176471,
+            "sd": 1.8893973984303836,
+            "rmse": 1.5068397026321283,
+            "nrmse": 0.7975239639283589,
+            "r2": 0.3639555269599979,
+            "baseline_rmse": 1.8893973984303836
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.9944852941176471,
+            "sd": 1.8893973984303836,
+            "rmse": 1.522400931192973,
+            "nrmse": 0.805760044158898,
+            "r2": 0.3507507512370508,
+            "baseline_rmse": 1.8893973984303836
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.9944852941176471,
+            "sd": 1.8893973984303836,
+            "rmse": 1.5678354381826125,
+            "nrmse": 0.8298071329435996,
+            "r2": 0.3114201221159234,
+            "baseline_rmse": 1.8893973984303836
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": -0.02404708878470163,
+          "passed_provisional_gate": true
+        }
+      },
+      "recruits_delta_90": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 1147.179910888535,
+            "sd": 2398.3689755703585,
+            "rmse": 2237.1012430211713,
+            "nrmse": 0.9327594151726233,
+            "r2": 0.1299598734068257,
+            "baseline_rmse": 2398.3689755703585
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 1147.179910888535,
+            "sd": 2398.3689755703585,
+            "rmse": 2206.471454802256,
+            "nrmse": 0.919988324264215,
+            "r2": 0.15362148321752178,
+            "baseline_rmse": 2398.3689755703585
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 1147.179910888535,
+            "sd": 2398.3689755703585,
+            "rmse": 2218.234945381974,
+            "nrmse": 0.9248931119343108,
+            "r2": 0.14457273149646666,
+            "baseline_rmse": 2398.3689755703585
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 1147.179910888535,
+            "sd": 2398.3689755703585,
+            "rmse": 2105.368712848048,
+            "nrmse": 0.8778335336610865,
+            "r2": 0.2294082871800901,
+            "baseline_rmse": 2398.3689755703585
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.04705957827322427,
+          "passed_provisional_gate": true
+        }
+      },
+      "control_delta_90": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.00029820435956050105,
+            "sd": 0.014692204061843935,
+            "rmse": 0.014076743935648063,
+            "nrmse": 0.9581097482988111,
+            "r2": 0.08202571021478855,
+            "baseline_rmse": 0.014692204061843935
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.00029820435956050105,
+            "sd": 0.014692204061843935,
+            "rmse": 0.014188072219519957,
+            "nrmse": 0.9656871194953505,
+            "r2": 0.06744838724077262,
+            "baseline_rmse": 0.014692204061843935
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.00029820435956050105,
+            "sd": 0.014692204061843935,
+            "rmse": 0.013504647773171393,
+            "nrmse": 0.9191709913860604,
+            "r2": 0.1551246885943668,
+            "baseline_rmse": 0.014692204061843935
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.00029820435956050105,
+            "sd": 0.014692204061843935,
+            "rmse": 0.013146301504756775,
+            "nrmse": 0.8947807591985527,
+            "r2": 0.1993673929680616,
+            "baseline_rmse": 0.014692204061843935
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.024390232187507688,
+          "passed_provisional_gate": true
+        }
+      },
+      "fielded_90": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 345.4906183858367,
+            "sd": 583.074877807489,
+            "rmse": 545.4897795193045,
+            "nrmse": 0.9355398427908367,
+            "r2": 0.12476520255089651,
+            "baseline_rmse": 583.074877807489
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 345.4906183858367,
+            "sd": 583.074877807489,
+            "rmse": 542.5986324979912,
+            "nrmse": 0.9305813938310996,
+            "r2": 0.13401826945536788,
+            "baseline_rmse": 583.074877807489
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 345.4906183858367,
+            "sd": 583.074877807489,
+            "rmse": 536.229423870841,
+            "nrmse": 0.9196579106395409,
+            "r2": 0.154229327398114,
+            "baseline_rmse": 583.074877807489
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 345.4906183858367,
+            "sd": 583.074877807489,
+            "rmse": 544.8684303279597,
+            "nrmse": 0.9344742005980513,
+            "r2": 0.126757968416633,
+            "baseline_rmse": 583.074877807489
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": -0.014816289958510365,
+          "passed_provisional_gate": true
+        }
+      },
+      "state_control_90": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.5876028855111175,
+            "sd": 0.04806441087657719,
+            "rmse": 0.008391551332393662,
+            "nrmse": 0.17458970534231688,
+            "r2": 0.969518434788483,
+            "baseline_rmse": 0.04806441087657719
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.5876028855111175,
+            "sd": 0.04806441087657719,
+            "rmse": 0.00837597302317457,
+            "nrmse": 0.1742655921588828,
+            "r2": 0.969631503389514,
+            "baseline_rmse": 0.04806441087657719
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.5876028855111175,
+            "sd": 0.04806441087657719,
+            "rmse": 0.006428594091529737,
+            "nrmse": 0.13374956593221302,
+            "r2": 0.9821110536129446,
+            "baseline_rmse": 0.04806441087657719
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.5876028855111175,
+            "sd": 0.04806441087657719,
+            "rmse": 0.005524469314732117,
+            "nrmse": 0.11493887502164951,
+            "r2": 0.9867890550087577,
+            "baseline_rmse": 0.04806441087657719
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.018810690910563505,
+          "passed_provisional_gate": true
+        }
+      },
+      "viable_activation_delta_90": {
+        "scores": {
+          "minimal_4": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.12683823529411764,
+            "sd": 0.33279167261455284,
+            "rmse": 0.3340927199205755,
+            "nrmse": 1.0039094947773215,
+            "r2": -0.007834273704056871,
+            "baseline_rmse": 0.33279167261455284
+          },
+          "operational_7": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.12683823529411764,
+            "sd": 0.33279167261455284,
+            "rmse": 0.3314435270237139,
+            "nrmse": 0.9959489803929066,
+            "r2": 0.008085628454329585,
+            "baseline_rmse": 0.33279167261455284
+          },
+          "competitive_9": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.12683823529411764,
+            "sd": 0.33279167261455284,
+            "rmse": 0.340782803206401,
+            "nrmse": 1.0240124115157883,
+            "r2": -0.048601418938380325,
+            "baseline_rmse": 0.33279167261455284
+          },
+          "expanded_state": {
+            "cv_mode": "grouped_seed_cv",
+            "n": 1088,
+            "mean": 0.12683823529411764,
+            "sd": 0.33279167261455284,
+            "rmse": 0.3322584938998758,
+            "nrmse": 0.9983978604077194,
+            "r2": 0.0032017123332879205,
+            "baseline_rmse": 0.33279167261455284
+          }
+        },
+        "competitive_vs_expanded": {
+          "metric": "nrmse",
+          "competitive_minus_expanded": 0.025614551108068873,
+          "passed_provisional_gate": true
+        }
+      }
+    }
+  },
+  "adversarial_pairs": {
+    "status": "ok",
+    "candidate_pairs": 1078,
+    "selected_adversarial_pairs": 6,
+    "macro_distance_p20": 0.024212414945736945,
+    "expanded_distance_p75": 6.215401759610412,
+    "large_outcome_difference_rate": 0.6666666666666666,
+    "pairs": [
+      {
+        "macro_distance": 0.02102409893614915,
+        "expanded_distance": 6.302101170805806,
+        "viability_diff": 0,
+        "control_delta_absdiff": 0.011767770703227431,
+        "row_a": 7,
+        "row_b": 477,
+        "large_outcome_difference": true,
+        "a": {
+          "seed": 2026091000,
+          "time": 0.0,
+          "locality": 7,
+          "viable_90": 1,
+          "control_delta_90": 0.03414295175404636
+        },
+        "b": {
+          "seed": 2026091007,
+          "time": 0.0,
+          "locality": 1,
+          "viable_90": 1,
+          "control_delta_90": 0.022375181050818926
+        },
+        "top_omitted_differences": [
+          {
+            "feature": "economic_output",
+            "standardized_absdiff": 4.648544262815501,
+            "a": 420318.4273654135,
+            "b": 1281990.692244622
+          },
+          {
+            "feature": "population",
+            "standardized_absdiff": 3.116178879990231,
+            "a": 460000.0,
+            "b": 1013696.0
+          },
+          {
+            "feature": "infrastructure",
+            "standardized_absdiff": 1.5864537180042964,
+            "a": 0.5900032850332027,
+            "b": 0.98
+          },
+          {
+            "feature": "s_institution_reach",
+            "standardized_absdiff": 1.5766683756260877,
+            "a": 0.6745018067682614,
+            "b": 0.889
+          },
+          {
+            "feature": "observability",
+            "standardized_absdiff": 1.4743170741363334,
+            "a": 0.6334236459792046,
+            "b": 0.7771452278460963
+          },
+          {
+            "feature": "terrain_friction",
+            "standardized_absdiff": 0.7279985937655787,
+            "a": 1.3994606934741989,
+            "b": 1.210709688100826
+          },
+          {
+            "feature": "x_fear",
+            "standardized_absdiff": 0.6252394697016377,
+            "a": 0.1708207431041595,
+            "b": 0.2252957868955142
+          },
+          {
+            "feature": "network_mean_degree",
+            "standardized_absdiff": 0.4325683329646872,
+            "a": 2.8749999999999996,
+            "b": 3.4722222222222205
+          },
+          {
+            "feature": "x_trust_insurgent",
+            "standardized_absdiff": 0.27976868247907516,
+            "a": 0.2123098727421489,
+            "b": 0.1901140073784201
+          },
+          {
+            "feature": "x_political_access",
+            "standardized_absdiff": 0.12889293361411994,
+            "a": 0.439665664347136,
+            "b": 0.4198085588646642
+          },
+          {
+            "feature": "x_grievance",
+            "standardized_absdiff": 0.10184023962111212,
+            "a": 0.1676563801759572,
+            "b": 0.1759313085460653
+          },
+          {
+            "feature": "c_gov_physical",
+            "standardized_absdiff": 0.08108392943195547,
+            "a": 0.344334007586504,
+            "b": 0.349240383899474
+          }
+        ]
+      },
+      {
+        "macro_distance": 0.014839847513348181,
+        "expanded_distance": 6.638835854289316,
+        "viability_diff": 0,
+        "control_delta_absdiff": 0.0075358158146906495,
+        "row_a": 205,
+        "row_b": 340,
+        "large_outcome_difference": true,
+        "a": {
+          "seed": 2026091003,
+          "time": 0.0,
+          "locality": 1,
+          "viable_90": 1,
+          "control_delta_90": 0.01973381406964614
+        },
+        "b": {
+          "seed": 2026091005,
+          "time": 0.0,
+          "locality": 0,
+          "viable_90": 1,
+          "control_delta_90": 0.027269629884336788
+        },
+        "top_omitted_differences": [
+          {
+            "feature": "economic_output",
+            "standardized_absdiff": 4.693663769028262,
+            "a": 87939.4366385831,
+            "b": 957975.2288739952
+          },
+          {
+            "feature": "population",
+            "standardized_absdiff": 3.66130307506452,
+            "a": 106366.0,
+            "b": 756922.0
+          },
+          {
+            "feature": "s_security_personnel",
+            "standardized_absdiff": 2.5142901426511894,
+            "a": 159.549,
+            "b": 3442.857142857142
+          },
+          {
+            "feature": "x_grievance",
+            "standardized_absdiff": 0.9503712425204717,
+            "a": 0.1150752077260249,
+            "b": 0.1922966870364217
+          },
+          {
+            "feature": "network_mean_degree",
+            "standardized_absdiff": 0.774096121433318,
+            "a": 2.4000000000000004,
+            "b": 3.468749999999998
+          },
+          {
+            "feature": "observability",
+            "standardized_absdiff": 0.6089185183146886,
+            "a": 0.7266813181907272,
+            "b": 0.7860408238326854
+          },
+          {
+            "feature": "x_fear",
+            "standardized_absdiff": 0.4870325210744704,
+            "a": 0.1267598610917719,
+            "b": 0.1691933912814226
+          },
+          {
+            "feature": "x_trust_insurgent",
+            "standardized_absdiff": 0.42242177296788136,
+            "a": 0.1558596084207322,
+            "b": 0.189373069314283
+          },
+          {
+            "feature": "terrain_friction",
+            "standardized_absdiff": 0.3216302260854101,
+            "a": 0.9373255558577708,
+            "b": 1.0207158660204232
+          },
+          {
+            "feature": "infrastructure",
+            "standardized_absdiff": 0.12165044104842727,
+            "a": 0.98,
+            "b": 0.9500947642879676
+          },
+          {
+            "feature": "s_institution_reach",
+            "standardized_absdiff": 0.1209000937785328,
+            "a": 0.889,
+            "b": 0.8725521203583821
+          },
+          {
+            "feature": "x_government_legitimacy",
+            "standardized_absdiff": 0.10020645912330314,
+            "a": 0.4942126830737163,
+            "b": 0.5126416756600892
+          }
+        ]
+      },
+      {
+        "macro_distance": 0.014839847513348181,
+        "expanded_distance": 6.638835854289316,
+        "viability_diff": 0,
+        "control_delta_absdiff": 0.0075358158146906495,
+        "row_a": 340,
+        "row_b": 205,
+        "large_outcome_difference": true,
+        "a": {
+          "seed": 2026091005,
+          "time": 0.0,
+          "locality": 0,
+          "viable_90": 1,
+          "control_delta_90": 0.027269629884336788
+        },
+        "b": {
+          "seed": 2026091003,
+          "time": 0.0,
+          "locality": 1,
+          "viable_90": 1,
+          "control_delta_90": 0.01973381406964614
+        },
+        "top_omitted_differences": [
+          {
+            "feature": "economic_output",
+            "standardized_absdiff": 4.693663769028262,
+            "a": 957975.2288739952,
+            "b": 87939.4366385831
+          },
+          {
+            "feature": "population",
+            "standardized_absdiff": 3.66130307506452,
+            "a": 756922.0,
+            "b": 106366.0
+          },
+          {
+            "feature": "s_security_personnel",
+            "standardized_absdiff": 2.5142901426511894,
+            "a": 3442.857142857142,
+            "b": 159.549
+          },
+          {
+            "feature": "x_grievance",
+            "standardized_absdiff": 0.9503712425204717,
+            "a": 0.1922966870364217,
+            "b": 0.1150752077260249
+          },
+          {
+            "feature": "network_mean_degree",
+            "standardized_absdiff": 0.774096121433318,
+            "a": 3.468749999999998,
+            "b": 2.4000000000000004
+          },
+          {
+            "feature": "observability",
+            "standardized_absdiff": 0.6089185183146886,
+            "a": 0.7860408238326854,
+            "b": 0.7266813181907272
+          },
+          {
+            "feature": "x_fear",
+            "standardized_absdiff": 0.4870325210744704,
+            "a": 0.1691933912814226,
+            "b": 0.1267598610917719
+          },
+          {
+            "feature": "x_trust_insurgent",
+            "standardized_absdiff": 0.42242177296788136,
+            "a": 0.189373069314283,
+            "b": 0.1558596084207322
+          },
+          {
+            "feature": "terrain_friction",
+            "standardized_absdiff": 0.3216302260854101,
+            "a": 1.0207158660204232,
+            "b": 0.9373255558577708
+          },
+          {
+            "feature": "infrastructure",
+            "standardized_absdiff": 0.12165044104842727,
+            "a": 0.9500947642879676,
+            "b": 0.98
+          },
+          {
+            "feature": "s_institution_reach",
+            "standardized_absdiff": 0.1209000937785328,
+            "a": 0.8725521203583821,
+            "b": 0.889
+          },
+          {
+            "feature": "x_government_legitimacy",
+            "standardized_absdiff": 0.10020645912330314,
+            "a": 0.5126416756600892,
+            "b": 0.4942126830737163
+          }
+        ]
+      },
+      {
+        "macro_distance": 0.01914565601541245,
+        "expanded_distance": 7.077702717075748,
+        "viability_diff": 0,
+        "control_delta_absdiff": 0.002639688385190686,
+        "row_a": 433,
+        "row_b": 498,
+        "large_outcome_difference": false,
+        "a": {
+          "seed": 2026091006,
+          "time": 0.0,
+          "locality": 25,
+          "viable_90": 1,
+          "control_delta_90": -0.0011204781706865008
+        },
+        "b": {
+          "seed": 2026091007,
+          "time": 0.0,
+          "locality": 22,
+          "viable_90": 1,
+          "control_delta_90": 0.0015192102145041853
+        },
+        "top_omitted_differences": [
+          {
+            "feature": "x_insurgent_behavior_share",
+            "standardized_absdiff": 5.683599810555763,
+            "a": 1.0,
+            "b": 0.3333333333333333
+          },
+          {
+            "feature": "x_fear",
+            "standardized_absdiff": 1.194960350003959,
+            "a": 0.4422383115383899,
+            "b": 0.3381253747360131
+          },
+          {
+            "feature": "c_gov_physical",
+            "standardized_absdiff": 0.8340943952415508,
+            "a": 0.2654526697818957,
+            "b": 0.2149817440107362
+          },
+          {
+            "feature": "infrastructure",
+            "standardized_absdiff": 0.6689407813663939,
+            "a": 0.3820672173156868,
+            "b": 0.2176220120887735
+          },
+          {
+            "feature": "s_institution_reach",
+            "standardized_absdiff": 0.6648147142128865,
+            "a": 0.5601369695236277,
+            "b": 0.4696921066488254
+          },
+          {
+            "feature": "c_ins_physical",
+            "standardized_absdiff": 0.5504623584790115,
+            "a": 0.163462210302611,
+            "b": 0.1241167069647182
+          },
+          {
+            "feature": "c_ins_effective",
+            "standardized_absdiff": 0.5340886097256682,
+            "a": 0.0492561000496083,
+            "b": 0.0428060175351997
+          },
+          {
+            "feature": "economic_output",
+            "standardized_absdiff": 0.5112966101912038,
+            "a": 63098.46006780028,
+            "b": 157874.39060001264
+          },
+          {
+            "feature": "x_grievance",
+            "standardized_absdiff": 0.4746265305854562,
+            "a": 0.0714590529805906,
+            "b": 0.1100243642736464
+          },
+          {
+            "feature": "observability",
+            "standardized_absdiff": 0.3273443478218547,
+            "a": 0.5078086600195003,
+            "b": 0.539719331278397
+          },
+          {
+            "feature": "population",
+            "standardized_absdiff": 0.32478393736880207,
+            "a": 78291.0,
+            "b": 136000.0
+          },
+          {
+            "feature": "network_mean_degree",
+            "standardized_absdiff": 0.24143348816633703,
+            "a": 2.0,
+            "b": 2.3333333333333326
+          }
+        ]
+      },
+      {
+        "macro_distance": 0.02102409893614915,
+        "expanded_distance": 6.302101170805806,
+        "viability_diff": 0,
+        "control_delta_absdiff": 0.011767770703227431,
+        "row_a": 477,
+        "row_b": 7,
+        "large_outcome_difference": true,
+        "a": {
+          "seed": 2026091007,
+          "time": 0.0,
+          "locality": 1,
+          "viable_90": 1,
+          "control_delta_90": 0.022375181050818926
+        },
+        "b": {
+          "seed": 2026091000,
+          "time": 0.0,
+          "locality": 7,
+          "viable_90": 1,
+          "control_delta_90": 0.03414295175404636
+        },
+        "top_omitted_differences": [
+          {
+            "feature": "economic_output",
+            "standardized_absdiff": 4.648544262815501,
+            "a": 1281990.692244622,
+            "b": 420318.4273654135
+          },
+          {
+            "feature": "population",
+            "standardized_absdiff": 3.116178879990231,
+            "a": 1013696.0,
+            "b": 460000.0
+          },
+          {
+            "feature": "infrastructure",
+            "standardized_absdiff": 1.5864537180042964,
+            "a": 0.98,
+            "b": 0.5900032850332027
+          },
+          {
+            "feature": "s_institution_reach",
+            "standardized_absdiff": 1.5766683756260877,
+            "a": 0.889,
+            "b": 0.6745018067682614
+          },
+          {
+            "feature": "observability",
+            "standardized_absdiff": 1.4743170741363334,
+            "a": 0.7771452278460963,
+            "b": 0.6334236459792046
+          },
+          {
+            "feature": "terrain_friction",
+            "standardized_absdiff": 0.7279985937655787,
+            "a": 1.210709688100826,
+            "b": 1.3994606934741989
+          },
+          {
+            "feature": "x_fear",
+            "standardized_absdiff": 0.6252394697016377,
+            "a": 0.2252957868955142,
+            "b": 0.1708207431041595
+          },
+          {
+            "feature": "network_mean_degree",
+            "standardized_absdiff": 0.4325683329646872,
+            "a": 3.4722222222222205,
+            "b": 2.8749999999999996
+          },
+          {
+            "feature": "x_trust_insurgent",
+            "standardized_absdiff": 0.27976868247907516,
+            "a": 0.1901140073784201,
+            "b": 0.2123098727421489
+          },
+          {
+            "feature": "x_political_access",
+            "standardized_absdiff": 0.12889293361411994,
+            "a": 0.4198085588646642,
+            "b": 0.439665664347136
+          },
+          {
+            "feature": "x_grievance",
+            "standardized_absdiff": 0.10184023962111212,
+            "a": 0.1759313085460653,
+            "b": 0.1676563801759572
+          },
+          {
+            "feature": "c_gov_physical",
+            "standardized_absdiff": 0.08108392943195547,
+            "a": 0.349240383899474,
+            "b": 0.344334007586504
+          }
+        ]
+      },
+      {
+        "macro_distance": 0.01914565601541245,
+        "expanded_distance": 7.077702717075748,
+        "viability_diff": 0,
+        "control_delta_absdiff": 0.002639688385190686,
+        "row_a": 498,
+        "row_b": 433,
+        "large_outcome_difference": false,
+        "a": {
+          "seed": 2026091007,
+          "time": 0.0,
+          "locality": 22,
+          "viable_90": 1,
+          "control_delta_90": 0.0015192102145041853
+        },
+        "b": {
+          "seed": 2026091006,
+          "time": 0.0,
+          "locality": 25,
+          "viable_90": 1,
+          "control_delta_90": -0.0011204781706865008
+        },
+        "top_omitted_differences": [
+          {
+            "feature": "x_insurgent_behavior_share",
+            "standardized_absdiff": 5.683599810555763,
+            "a": 0.3333333333333333,
+            "b": 1.0
+          },
+          {
+            "feature": "x_fear",
+            "standardized_absdiff": 1.194960350003959,
+            "a": 0.3381253747360131,
+            "b": 0.4422383115383899
+          },
+          {
+            "feature": "c_gov_physical",
+            "standardized_absdiff": 0.8340943952415508,
+            "a": 0.2149817440107362,
+            "b": 0.2654526697818957
+          },
+          {
+            "feature": "infrastructure",
+            "standardized_absdiff": 0.6689407813663939,
+            "a": 0.2176220120887735,
+            "b": 0.3820672173156868
+          },
+          {
+            "feature": "s_institution_reach",
+            "standardized_absdiff": 0.6648147142128865,
+            "a": 0.4696921066488254,
+            "b": 0.5601369695236277
+          },
+          {
+            "feature": "c_ins_physical",
+            "standardized_absdiff": 0.5504623584790115,
+            "a": 0.1241167069647182,
+            "b": 0.163462210302611
+          },
+          {
+            "feature": "c_ins_effective",
+            "standardized_absdiff": 0.5340886097256682,
+            "a": 0.0428060175351997,
+            "b": 0.0492561000496083
+          },
+          {
+            "feature": "economic_output",
+            "standardized_absdiff": 0.5112966101912038,
+            "a": 157874.39060001264,
+            "b": 63098.46006780028
+          },
+          {
+            "feature": "x_grievance",
+            "standardized_absdiff": 0.4746265305854562,
+            "a": 0.1100243642736464,
+            "b": 0.0714590529805906
+          },
+          {
+            "feature": "observability",
+            "standardized_absdiff": 0.3273443478218547,
+            "a": 0.539719331278397,
+            "b": 0.5078086600195003
+          },
+          {
+            "feature": "population",
+            "standardized_absdiff": 0.32478393736880207,
+            "a": 136000.0,
+            "b": 78291.0
+          },
+          {
+            "feature": "network_mean_degree",
+            "standardized_absdiff": 0.24143348816633703,
+            "a": 2.3333333333333326,
+            "b": 2.0
+          }
+        ]
+      }
+    ]
+  },
+  "provisional_gate_passed": false,
+  "warning": "Expanded-state predictor is a practical high-dimensional snapshot reference, not the literal full ParticleState. Passing is evidence for approximate closure only."
+}

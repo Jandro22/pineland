@@ -1,0 +1,281 @@
+{
+  "schema_version": "pineland.reproduction_kernel_results.v1",
+  "status": "synthetic_normalized_first_generation_complete",
+  "historical_outcomes_used": false,
+  "input": "studies\\research_program\\general_theory_v1\\reproduction_impulse_8seed_180d_v3.csv",
+  "input_sha256": "99cf675fdb693039625d3b173ac3228aecc1b1fbacb8e307c335a336cdba58cb",
+  "generation_time_density": {
+    "mean_days": 59.442594859241126,
+    "median_days": 56.0,
+    "std_days": 32.294319358127424,
+    "iqr_days": [
+      35.0,
+      84.0
+    ],
+    "p90_days": 105.0,
+    "min_days": 7.0,
+    "max_days": 158.0,
+    "weekly_binned_counts": {
+      "day_0_7": 0,
+      "day_7_14": 162,
+      "day_14_21": 176,
+      "day_21_28": 300,
+      "day_28_35": 260,
+      "day_35_42": 376,
+      "day_42_49": 279,
+      "day_49_56": 379,
+      "day_56_63": 266,
+      "day_63_70": 277,
+      "day_70_77": 212,
+      "day_77_84": 322,
+      "day_84_91": 218,
+      "day_91_98": 251,
+      "day_98_105": 155,
+      "day_105_112": 132,
+      "day_112_119": 94,
+      "day_119_126": 80,
+      "day_126_133": 56,
+      "day_133_140": 42,
+      "day_140_147": 26,
+      "day_147_154": 10,
+      "day_154_161": 12,
+      "day_161_168": 0,
+      "day_168_175": 0,
+      "day_175_182": 0
+    },
+    "plateau_verified": true
+  },
+  "horizon_curve": [
+    {
+      "horizon_days": 7,
+      "rho_K": 0.4061425672661939,
+      "ci95": [
+        0.0,
+        0.657290675941774
+      ],
+      "children_count": 162,
+      "mean_first_time": 7.0,
+      "lambda_eff_per_30d": -3.861647271932133
+    },
+    {
+      "horizon_days": 14,
+      "rho_K": 0.6852168295833239,
+      "ci95": [
+        0.2849406253608262,
+        1.1025092464896646
+      ],
+      "children_count": 338,
+      "mean_first_time": 10.644970414201184,
+      "lambda_eff_per_30d": -1.0653480561091342
+    },
+    {
+      "horizon_days": 21,
+      "rho_K": 1.2237996214143547,
+      "ci95": [
+        0.6082986859995376,
+        1.665843944382117
+      ],
+      "children_count": 634,
+      "mean_first_time": 15.479495268138802,
+      "lambda_eff_per_30d": 0.39140900758450764
+    },
+    {
+      "horizon_days": 30,
+      "rho_K": 1.6584328235244976,
+      "ci95": [
+        1.072282065372516,
+        1.998305959539877
+      ],
+      "children_count": 898,
+      "mean_first_time": 19.142538975501115,
+      "lambda_eff_per_30d": 0.7927993379698808
+    },
+    {
+      "horizon_days": 45,
+      "rho_K": 2.7453653918083836,
+      "ci95": [
+        2.4778205991760696,
+        2.9327711033721338
+      ],
+      "children_count": 1553,
+      "mean_first_time": 27.11912427559562,
+      "lambda_eff_per_30d": 1.1171977763105299
+    },
+    {
+      "horizon_days": 60,
+      "rho_K": 3.8249807897847723,
+      "ci95": [
+        3.4618543304836398,
+        4.161002267497012
+      ],
+      "children_count": 2196,
+      "mean_first_time": 34.40300546448088,
+      "lambda_eff_per_30d": 1.1698571914356202
+    },
+    {
+      "horizon_days": 90,
+      "rho_K": 5.29576050612007,
+      "ci95": [
+        4.767935838723668,
+        5.739252906120655
+      ],
+      "children_count": 3227,
+      "mean_first_time": 46.837929965912615,
+      "lambda_eff_per_30d": 1.0676645597945351
+    },
+    {
+      "horizon_days": 120,
+      "rho_K": 6.217619225068842,
+      "ci95": [
+        5.878077048654383,
+        6.566960348527476
+      ],
+      "children_count": 3935,
+      "mean_first_time": 56.594917407878015,
+      "lambda_eff_per_30d": 0.9686667050327643
+    },
+    {
+      "horizon_days": 150,
+      "rho_K": 6.3798158895886905,
+      "ci95": [
+        6.052545356652663,
+        6.6979747101888645
+      ],
+      "children_count": 4073,
+      "mean_first_time": 59.16204272035355,
+      "lambda_eff_per_30d": 0.9396933342557856
+    },
+    {
+      "horizon_days": 180,
+      "rho_K": 6.393604288151057,
+      "ci95": [
+        6.035904766077329,
+        6.664998658828836
+      ],
+      "children_count": 4085,
+      "mean_first_time": 59.442594859241126,
+      "lambda_eff_per_30d": 0.9363478319474898
+    }
+  ],
+  "type_reduction": {
+    "child_types_produced": {
+      "MF": 2764,
+      "M": 727,
+      "F": 594
+    },
+    "mf_or_m_fraction": 0.8545899632802938,
+    "g_produced_at_first_gen": false,
+    "dominant_trigger": {
+      "recruitment": 3951,
+      "force_movement": 100,
+      "mobility": 34
+    },
+    "recruitment_trigger_fraction": 0.9671970624235006,
+    "falsification_parent_types": {
+      "E_offspring": 0,
+      "F_offspring": 0,
+      "G_offspring": 0,
+      "FG_offspring": 0,
+      "none_placebo_offspring": 0
+    },
+    "parent_type_stats": {
+      "E": {
+        "mean_offspring": 0.0,
+        "std_offspring": 0.0,
+        "p_any": 0.0,
+        "total_offspring": 0
+      },
+      "F": {
+        "mean_offspring": 0.0,
+        "std_offspring": 0.0,
+        "p_any": 0.0,
+        "total_offspring": 0
+      },
+      "FG": {
+        "mean_offspring": 0.0,
+        "std_offspring": 0.0,
+        "p_any": 0.0,
+        "total_offspring": 0
+      },
+      "G": {
+        "mean_offspring": 0.0,
+        "std_offspring": 0.0,
+        "p_any": 0.0,
+        "total_offspring": 0
+      },
+      "M": {
+        "mean_offspring": 7.492647058823529,
+        "std_offspring": 2.197629441784646,
+        "p_any": 0.9779411764705882,
+        "total_offspring": 1019
+      },
+      "MF": {
+        "mean_offspring": 7.529411764705882,
+        "std_offspring": 2.093875288905764,
+        "p_any": 0.9779411764705882,
+        "total_offspring": 1024
+      },
+      "MFG": {
+        "mean_offspring": 7.529411764705882,
+        "std_offspring": 2.093875288905764,
+        "p_any": 0.9779411764705882,
+        "total_offspring": 1024
+      },
+      "MG": {
+        "mean_offspring": 7.485294117647059,
+        "std_offspring": 2.204323341602931,
+        "p_any": 0.9779411764705882,
+        "total_offspring": 1018
+      },
+      "none": {
+        "mean_offspring": 0.0,
+        "std_offspring": 0.0,
+        "p_any": 0.0,
+        "total_offspring": 0
+      }
+    }
+  },
+  "spatial_kernel": {
+    "distance_binned": [
+      {
+        "dist_bin": "(0, 25]",
+        "n": 60,
+        "mean_time": 47.46666666666667,
+        "adjacent_frac": 1.0
+      },
+      {
+        "dist_bin": "(25, 50]",
+        "n": 1109,
+        "mean_time": 55.48963029756538,
+        "adjacent_frac": 0.781785392245266
+      },
+      {
+        "dist_bin": "(50, 75]",
+        "n": 832,
+        "mean_time": 61.07091346153846,
+        "adjacent_frac": 0.125
+      },
+      {
+        "dist_bin": "(75, 100]",
+        "n": 1024,
+        "mean_time": 59.900390625,
+        "adjacent_frac": 0.0
+      },
+      {
+        "dist_bin": "(100, 150]",
+        "n": 814,
+        "mean_time": 62.3955773955774,
+        "adjacent_frac": 0.0
+      },
+      {
+        "dist_bin": "(150, 200]",
+        "n": 246,
+        "mean_time": 63.0,
+        "adjacent_frac": 0.0
+      }
+    ],
+    "adjacent_fraction": 0.25238678090575273,
+    "median_distance_km": 76.15773105863907
+  },
+  "interpretation_guard": "Reproduction kernel estimates are derived strictly from experimentally isolated single-parent synthetic trials without external support. Results characterize the native generative structure of Pineland, not real-world insurgent reproduction."
+}

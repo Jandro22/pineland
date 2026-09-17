@@ -1,0 +1,105 @@
+{
+  "schema_version": "pineland.state_regeneration_capital_transition_results.v1",
+  "status": "CAPITAL_TRANSITION_ARCHITECTURE_NOT_CONFIRMED",
+  "historical_outcomes_used": false,
+  "input": "studies\\research_program\\general_theory_v1\\state_regeneration_capital_transition_4seed_180d_v1.csv",
+  "input_sha256": "8ee3b08c51fe70f182542623aba13f226d082d9b54f286f6aac40baf208c4118",
+  "metadata_input": "studies\\research_program\\general_theory_v1\\state_regeneration_capital_transition_metadata_v1.csv",
+  "metadata_sha256": "51cdab2c0bac226d31ea73aebd97dbec3aee736a8a3da8ce3bfb8774f4d3c13f",
+  "trajectory_count": 256,
+  "capital_curve": [
+    {
+      "capital_mult": 0.05,
+      "n": 32,
+      "mean_Q_capacity_180": -0.16178741520241136,
+      "mean_Q_admin_180": 0.09750298445164203,
+      "mean_admin_binding_fraction": 0.17708333333333334,
+      "mean_training_binding_fraction": 0.010416666666666666,
+      "min_admin_affordability_ratio": 0.0,
+      "min_training_affordability_ratio": 0.0
+    },
+    {
+      "capital_mult": 0.1,
+      "n": 32,
+      "mean_Q_capacity_180": -0.17928331607351175,
+      "mean_Q_admin_180": 0.1026701206353342,
+      "mean_admin_binding_fraction": 0.1171875,
+      "mean_training_binding_fraction": 0.0,
+      "min_admin_affordability_ratio": 0.08232542488527035,
+      "min_training_affordability_ratio": 1.5275067601563381
+    },
+    {
+      "capital_mult": 0.1499999999999999,
+      "n": 32,
+      "mean_Q_capacity_180": -0.18158927238547937,
+      "mean_Q_admin_180": 0.10357636841444842,
+      "mean_admin_binding_fraction": 0.07291666666666667,
+      "mean_training_binding_fraction": 0.0,
+      "min_admin_affordability_ratio": 0.18211069089033388,
+      "min_training_affordability_ratio": 3.378972071135917
+    },
+    {
+      "capital_mult": 0.2,
+      "n": 32,
+      "mean_Q_capacity_180": -0.18182270707932865,
+      "mean_Q_admin_180": 0.1039063694624988,
+      "mean_admin_binding_fraction": 0.03645833333333333,
+      "mean_training_binding_fraction": 0.0,
+      "min_admin_affordability_ratio": 0.33259866468999916,
+      "min_training_affordability_ratio": 6.171200567029743
+    },
+    {
+      "capital_mult": 0.25,
+      "n": 32,
+      "mean_Q_capacity_180": -0.1814330585075168,
+      "mean_Q_admin_180": 0.1039732669164462,
+      "mean_admin_binding_fraction": 0.005208333333333333,
+      "mean_training_binding_fraction": 0.0,
+      "min_admin_affordability_ratio": 0.8078339412670594,
+      "min_training_affordability_ratio": 14.988951567378471
+    },
+    {
+      "capital_mult": 0.3499999999999999,
+      "n": 32,
+      "mean_Q_capacity_180": -0.18093096073756504,
+      "mean_Q_admin_180": 0.1039732669164462,
+      "mean_admin_binding_fraction": 0.0,
+      "mean_training_binding_fraction": 0.0,
+      "min_admin_affordability_ratio": 60.198623407453404,
+      "min_training_affordability_ratio": 1116.955112410759
+    },
+    {
+      "capital_mult": 0.5,
+      "n": 32,
+      "mean_Q_capacity_180": -0.18093096073756504,
+      "mean_Q_admin_180": 0.1039732669164462,
+      "mean_admin_binding_fraction": 0.0,
+      "mean_training_binding_fraction": 0.0,
+      "min_admin_affordability_ratio": 226.6592898072646,
+      "min_training_affordability_ratio": 4205.54886798741
+    },
+    {
+      "capital_mult": 1.0,
+      "n": 32,
+      "mean_Q_capacity_180": -0.18093096073756504,
+      "mean_Q_admin_180": 0.1039732669164462,
+      "mean_admin_binding_fraction": 0.0,
+      "mean_training_binding_fraction": 0.0,
+      "min_admin_affordability_ratio": 781.8200023184442,
+      "min_training_affordability_ratio": 14506.276043289998
+    }
+  ],
+  "contrasts": {
+    "Q_capacity_0_25_minus_0_05": -0.01964564330510543,
+    "Q_admin_0_25_minus_0_05": 0.006470282464804175,
+    "Q_capacity_1_minus_0_5": 0.0,
+    "Q_admin_1_minus_0_5": 0.0
+  },
+  "gates": {
+    "binding_fraction_nonincreasing": true,
+    "low_capital_recovery_gain_ge_0_02": false,
+    "recovery_plateau_0_5_to_1_abs_diff_le_0_01": true,
+    "plateau_admin_binding_fraction_le_0_01": true
+  },
+  "interpretation_guard": "Synthetic state-regeneration architecture only. Afghanistan and other real cases may motivate the mechanism but do not validate these numerical thresholds or rates."
+}

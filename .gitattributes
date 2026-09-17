@@ -1,3 +1,14 @@
 # Frozen validation manifests are byte-hashed by the research test suite.
 # Force stable checkout bytes regardless of the user's global core.autocrlf.
 studies/nepal_2001_2006/config/split_manifest.json text eol=lf
+
+# Generated/binary research artifacts must never be newline-normalized or
+# presented as text diffs. This also prevents core.autocrlf from corrupting
+# byte-stable PDFs and columnar data on Windows checkouts.
+*.pdf binary
+*.parquet binary
+*.zip binary
+*.pstats binary
+*.dll binary
+*.lib binary
+*.pdb binary

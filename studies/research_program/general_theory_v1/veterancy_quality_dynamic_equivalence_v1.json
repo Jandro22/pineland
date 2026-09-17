@@ -1,0 +1,122 @@
+{
+  "schema_version": "pineland.veterancy_quality_dynamic_equivalence.v1",
+  "historical_outcomes_used": false,
+  "identity": "instantaneous quality-experience contribution Phi=Q*(0.75+0.50E)",
+  "iso_capability_pairs": [
+    [
+      0.9375,
+      0.1
+    ],
+    [
+      0.75,
+      0.5
+    ],
+    [
+      0.625,
+      0.9
+    ]
+  ],
+  "initial_common_Phi": 0.75,
+  "replacement_rule": "E_after=(1-tau)*E_before+tau*0.10",
+  "analytic_result": [
+    {
+      "turnover": 0.0,
+      "cells": [
+        {
+          "quality": 0.9375,
+          "pre_experience": 0.1,
+          "post_experience": 0.1,
+          "instant_capability_factor": 0.75
+        },
+        {
+          "quality": 0.75,
+          "pre_experience": 0.5,
+          "post_experience": 0.5,
+          "instant_capability_factor": 0.75
+        },
+        {
+          "quality": 0.625,
+          "pre_experience": 0.9,
+          "post_experience": 0.9,
+          "instant_capability_factor": 0.75
+        }
+      ],
+      "spread": 0.0
+    },
+    {
+      "turnover": 0.2,
+      "cells": [
+        {
+          "quality": 0.9375,
+          "pre_experience": 0.1,
+          "post_experience": 0.10000000000000002,
+          "instant_capability_factor": 0.75
+        },
+        {
+          "quality": 0.75,
+          "pre_experience": 0.5,
+          "post_experience": 0.42000000000000004,
+          "instant_capability_factor": 0.72
+        },
+        {
+          "quality": 0.625,
+          "pre_experience": 0.9,
+          "post_experience": 0.7400000000000001,
+          "instant_capability_factor": 0.7000000000000001
+        }
+      ],
+      "spread": 0.04999999999999993
+    },
+    {
+      "turnover": 0.4,
+      "cells": [
+        {
+          "quality": 0.9375,
+          "pre_experience": 0.1,
+          "post_experience": 0.1,
+          "instant_capability_factor": 0.75
+        },
+        {
+          "quality": 0.75,
+          "pre_experience": 0.5,
+          "post_experience": 0.33999999999999997,
+          "instant_capability_factor": 0.69
+        },
+        {
+          "quality": 0.625,
+          "pre_experience": 0.9,
+          "post_experience": 0.5800000000000001,
+          "instant_capability_factor": 0.65
+        }
+      ],
+      "spread": 0.09999999999999998
+    },
+    {
+      "turnover": 0.6,
+      "cells": [
+        {
+          "quality": 0.9375,
+          "pre_experience": 0.1,
+          "post_experience": 0.1,
+          "instant_capability_factor": 0.75
+        },
+        {
+          "quality": 0.75,
+          "pre_experience": 0.5,
+          "post_experience": 0.26,
+          "instant_capability_factor": 0.66
+        },
+        {
+          "quality": 0.625,
+          "pre_experience": 0.9,
+          "post_experience": 0.42000000000000004,
+          "instant_capability_factor": 0.6
+        }
+      ],
+      "spread": 0.15000000000000002
+    }
+  ],
+  "interpretation": "Structural quality and veterancy can be observationally equivalent in one engagement when Q*(0.75+0.50E) matches, but they are not dynamically interchangeable. Replacement turnover preserves Q while pulling E toward the replacement experience 0.10, so veteran-heavy capability is more fragile to rapid force regeneration.",
+  "theory_implication": "Separate durable structural capability from memory-dependent human-capital capability. Headcount replacement can restore force stock while eroding the memory-dependent component.",
+  "guard": "Implemented synthetic combat identity only; not an empirical military-effect coefficient."
+}

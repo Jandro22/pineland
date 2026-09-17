@@ -1,0 +1,1050 @@
+{
+  "schema_version": "pineland.strategic_closure_residual_uncertainty.v1",
+  "status": "CHARACTERIZED_BOUNDED_RESIDUAL_UNCERTAINTY",
+  "historical_outcomes_used": false,
+  "candidates": {
+    "rootedstock_social12v3": {
+      "results_sha256": "4364da5380823ca983107a0744b219a61d770943279aad7b71a844e715ee8ab3",
+      "csv_sha256": "5c0eac647e0ae49e34e7e0223f2573830e79220c20c88fec2a5409a703181e13",
+      "summary": {
+        "raw_practically_large_pair_rate": 0.7083333333333334,
+        "multiplicity_significant_and_large_pair_rate": 0.25,
+        "median_match_distance": 0.1541738659468438,
+        "max_match_distance": 0.4831192013125456,
+        "strata": {
+          "high": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 0.875,
+            "multiplicity_significant_and_large_pair_rate": 0.375
+          },
+          "low": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 0.5,
+            "multiplicity_significant_and_large_pair_rate": 0.0
+          },
+          "mid": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 0.75,
+            "multiplicity_significant_and_large_pair_rate": 0.375
+          }
+        },
+        "official_stratified_design": true
+      },
+      "strata_residuals": {
+        "low": {
+          "pair_count": 8,
+          "raw_large_rate": 0.5,
+          "sig_large_rate": 0.0,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.20231796746718972,
+              "max_raw_abs_diff": 0.6341379669985601,
+              "mean_smd": 0.2162097180471228,
+              "max_smd": 0.5123378151966864,
+              "mean_normalized_wasserstein": 0.2162097180471228,
+              "max_normalized_wasserstein": 0.5123378151966864,
+              "practically_large_fraction": 0.5,
+              "sig_large_fraction": 0.0
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.03454597188900636,
+              "max_raw_abs_diff": 0.10297443597816935,
+              "mean_smd": 0.17272985944503183,
+              "max_smd": 0.5148721798908468,
+              "mean_normalized_wasserstein": 0.1727298594450318,
+              "max_normalized_wasserstein": 0.5148721798908467,
+              "practically_large_fraction": 0.25,
+              "sig_large_fraction": 0.0
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0005685052424322649,
+              "max_raw_abs_diff": 0.003063155148574322,
+              "mean_smd": 0.0028425262121613243,
+              "max_smd": 0.015315775742871608,
+              "mean_normalized_wasserstein": 0.0029235521873180238,
+              "max_normalized_wasserstein": 0.015685459145337706,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0005673723176510596,
+              "max_raw_abs_diff": 0.003086405658419507,
+              "mean_smd": 0.0028368615882552978,
+              "max_smd": 0.015432028292097534,
+              "mean_normalized_wasserstein": 0.002944440433398797,
+              "max_normalized_wasserstein": 0.015783466368718378,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0005589402470183953,
+              "max_raw_abs_diff": 0.003100183565241759,
+              "mean_smd": 0.0027947012350919764,
+              "max_smd": 0.015500917826208795,
+              "mean_normalized_wasserstein": 0.002898984826542601,
+              "max_normalized_wasserstein": 0.015714576834607395,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.05078125,
+              "max_abs_risk_diff": 0.15625,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.0
+            }
+          }
+        },
+        "mid": {
+          "pair_count": 8,
+          "raw_large_rate": 0.75,
+          "sig_large_rate": 0.375,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.05507230344731122,
+              "max_raw_abs_diff": 0.44057842757848975,
+              "mean_smd": 0.07342973792974829,
+              "max_smd": 0.5874379034379863,
+              "mean_normalized_wasserstein": 0.07342973792974829,
+              "max_normalized_wasserstein": 0.5874379034379863,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.125
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.054258014798711465,
+              "max_raw_abs_diff": 0.2278571599089889,
+              "mean_smd": 0.027548543685747204,
+              "max_smd": 0.14668467350961706,
+              "mean_normalized_wasserstein": 0.029483128535174895,
+              "max_normalized_wasserstein": 0.14668467350961706,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.849244776133138,
+              "max_raw_abs_diff": 2.4449990847383933,
+              "mean_smd": 0.5399509621961283,
+              "max_smd": 1.0142762172557362,
+              "mean_normalized_wasserstein": 0.5399509621961281,
+              "max_normalized_wasserstein": 1.0142762172557358,
+              "practically_large_fraction": 0.75,
+              "sig_large_fraction": 0.375
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.07938597087276883,
+              "max_raw_abs_diff": 0.23717859127809285,
+              "mean_smd": 0.3851893711364001,
+              "max_smd": 1.185892956390464,
+              "mean_normalized_wasserstein": 0.3880822285830653,
+              "max_normalized_wasserstein": 1.2088099361061118,
+              "practically_large_fraction": 0.375,
+              "sig_large_fraction": 0.25
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.003867451766372215,
+              "max_raw_abs_diff": 0.02178507585225998,
+              "mean_smd": 0.019337258831861076,
+              "max_smd": 0.10892537926129989,
+              "mean_normalized_wasserstein": 0.019337258831861073,
+              "max_normalized_wasserstein": 0.10892537926129987,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.003754459912109369,
+              "max_raw_abs_diff": 0.021451968754883838,
+              "mean_smd": 0.018772299560546844,
+              "max_smd": 0.10725984377441919,
+              "mean_normalized_wasserstein": 0.018940428431054885,
+              "max_normalized_wasserstein": 0.10725984377441919,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.00020534176187743175,
+              "max_raw_abs_diff": 0.00039426760526174373,
+              "mean_smd": 0.0010267088093871587,
+              "max_smd": 0.0019713380263087187,
+              "mean_normalized_wasserstein": 0.0012383219757851273,
+              "max_normalized_wasserstein": 0.002191281320562989,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.03515625,
+              "max_abs_risk_diff": 0.09375,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            }
+          }
+        },
+        "high": {
+          "pair_count": 8,
+          "raw_large_rate": 0.875,
+          "sig_large_rate": 0.375,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.03535834117890446,
+              "max_raw_abs_diff": 0.1299650963549897,
+              "mean_smd": 0.04714445490520594,
+              "max_smd": 0.17328679513998627,
+              "mean_normalized_wasserstein": 0.05204032604318236,
+              "max_normalized_wasserstein": 0.17328679513998632,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.44934292794323516,
+              "max_raw_abs_diff": 1.8878078835567693,
+              "mean_smd": 0.134400375605655,
+              "max_smd": 0.6084112528055353,
+              "mean_normalized_wasserstein": 0.134400375605655,
+              "max_normalized_wasserstein": 0.6084112528055353,
+              "practically_large_fraction": 0.25,
+              "sig_large_fraction": 0.125
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.03515625,
+              "max_raw_abs_diff": 0.28125,
+              "mean_smd": 0.0789749602868871,
+              "max_smd": 0.6317996822950968,
+              "mean_normalized_wasserstein": 0.0789749602868871,
+              "max_normalized_wasserstein": 0.6317996822950968,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.32915349969223884,
+              "max_raw_abs_diff": 0.7899896203549039,
+              "mean_smd": 0.17783623777813903,
+              "max_smd": 0.4140322973557627,
+              "mean_normalized_wasserstein": 0.3159573403886716,
+              "max_normalized_wasserstein": 0.46677935692265715,
+              "practically_large_fraction": 0.75,
+              "sig_large_fraction": 0.0
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.02842543097485606,
+              "max_raw_abs_diff": 0.06993548925314455,
+              "mean_smd": 0.1421271548742803,
+              "max_smd": 0.3496774462657227,
+              "mean_normalized_wasserstein": 0.16172118820657988,
+              "max_normalized_wasserstein": 0.3820848108639684,
+              "practically_large_fraction": 0.25,
+              "sig_large_fraction": 0.25
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0006100811849436855,
+              "max_raw_abs_diff": 0.0023038343173629027,
+              "mean_smd": 0.0030504059247184272,
+              "max_smd": 0.011519171586814514,
+              "mean_normalized_wasserstein": 0.006782349266237272,
+              "max_normalized_wasserstein": 0.019371592277752012,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0009575919724365187,
+              "max_raw_abs_diff": 0.002168076649495908,
+              "mean_smd": 0.004787959862182593,
+              "max_smd": 0.01084038324747954,
+              "mean_normalized_wasserstein": 0.007913480445599443,
+              "max_normalized_wasserstein": 0.019753410718627875,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0005270385500619917,
+              "max_raw_abs_diff": 0.0013963660564924908,
+              "mean_smd": 0.0026351927503099584,
+              "max_smd": 0.006981830282462454,
+              "mean_normalized_wasserstein": 0.002734621454135364,
+              "max_normalized_wasserstein": 0.007201865725107916,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.0,
+              "max_abs_risk_diff": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            }
+          }
+        }
+      }
+    },
+    "rootedstock_net12v3": {
+      "results_sha256": "811a1c758f8d968576f662b2a20b2c5bcf6370213f5fcceccb29d981ee229c8b",
+      "csv_sha256": "265bc6f174e5908ac7edb7a288f74da51966d411616ee01a770b3f8e397ce733",
+      "summary": {
+        "raw_practically_large_pair_rate": 0.5416666666666666,
+        "multiplicity_significant_and_large_pair_rate": 0.125,
+        "median_match_distance": 0.19492834005559415,
+        "max_match_distance": 0.4043294295972123,
+        "strata": {
+          "high": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 1.0,
+            "multiplicity_significant_and_large_pair_rate": 0.375
+          },
+          "low": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 0.125,
+            "multiplicity_significant_and_large_pair_rate": 0.0
+          },
+          "mid": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 0.5,
+            "multiplicity_significant_and_large_pair_rate": 0.0
+          }
+        },
+        "official_stratified_design": true
+      },
+      "strata_residuals": {
+        "low": {
+          "pair_count": 8,
+          "raw_large_rate": 0.125,
+          "sig_large_rate": 0.0,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.039232867845846196,
+              "max_raw_abs_diff": 0.31386294276676957,
+              "mean_smd": 0.04454913257677715,
+              "max_smd": 0.3563930606142172,
+              "mean_normalized_wasserstein": 0.04454913257677715,
+              "max_normalized_wasserstein": 0.3563930606142172,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.0
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.005315863396252646,
+              "max_raw_abs_diff": 0.04246465144289853,
+              "mean_smd": 0.02657931698126323,
+              "max_smd": 0.21232325721449263,
+              "mean_normalized_wasserstein": 0.02657931698126323,
+              "max_normalized_wasserstein": 0.21232325721449263,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0006197349792540535,
+              "max_raw_abs_diff": 0.003063155148574322,
+              "mean_smd": 0.0030986748962702673,
+              "max_smd": 0.015315775742871608,
+              "mean_normalized_wasserstein": 0.0032266462426341035,
+              "max_normalized_wasserstein": 0.015685459145337706,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0006109916216157146,
+              "max_raw_abs_diff": 0.003086405658419507,
+              "mean_smd": 0.003054958108078573,
+              "max_smd": 0.015432028292097534,
+              "mean_normalized_wasserstein": 0.00329004727061594,
+              "max_normalized_wasserstein": 0.015783466368718378,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0006025595509830343,
+              "max_raw_abs_diff": 0.003100183565241759,
+              "mean_smd": 0.0030127977549151714,
+              "max_smd": 0.015500917826208795,
+              "mean_normalized_wasserstein": 0.003244591663759725,
+              "max_normalized_wasserstein": 0.015714576834607395,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.0078125,
+              "max_abs_risk_diff": 0.0625,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            }
+          }
+        },
+        "mid": {
+          "pair_count": 8,
+          "raw_large_rate": 0.5,
+          "sig_large_rate": 0.0,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.11122230477595868,
+              "max_raw_abs_diff": 0.2278571599089889,
+              "mean_smd": 0.07713412787444934,
+              "max_smd": 0.25000000000000006,
+              "mean_normalized_wasserstein": 0.07906871272387703,
+              "max_normalized_wasserstein": 0.25000000000000006,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.0
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.20185268193171996,
+              "max_raw_abs_diff": 0.520703615357567,
+              "mean_smd": 0.24864538553433185,
+              "max_smd": 0.5100905201091589,
+              "mean_normalized_wasserstein": 0.24864538553433185,
+              "max_normalized_wasserstein": 0.5100905201091589,
+              "practically_large_fraction": 0.375,
+              "sig_large_fraction": 0.0
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.02799987303906265,
+              "max_raw_abs_diff": 0.06508554358005728,
+              "mean_smd": 0.13300775412517046,
+              "max_smd": 0.32542771790028635,
+              "mean_normalized_wasserstein": 0.13347911744307156,
+              "max_normalized_wasserstein": 0.32542771790028635,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.0
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.001189397007303446,
+              "max_raw_abs_diff": 0.004232511832251615,
+              "mean_smd": 0.00594698503651723,
+              "max_smd": 0.021162559161258074,
+              "mean_normalized_wasserstein": 0.007319374082045292,
+              "max_normalized_wasserstein": 0.021162559161258074,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0009579843430761056,
+              "max_raw_abs_diff": 0.00202927202408407,
+              "mean_smd": 0.004789921715380528,
+              "max_smd": 0.010146360120420351,
+              "mean_normalized_wasserstein": 0.005232649607144212,
+              "max_normalized_wasserstein": 0.010179855858386457,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0004752289204183039,
+              "max_raw_abs_diff": 0.0015863543031685266,
+              "mean_smd": 0.0023761446020915196,
+              "max_smd": 0.007931771515842633,
+              "mean_normalized_wasserstein": 0.0026241538287041463,
+              "max_normalized_wasserstein": 0.007931771515842633,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.0390625,
+              "max_abs_risk_diff": 0.09375,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            }
+          }
+        },
+        "high": {
+          "pair_count": 8,
+          "raw_large_rate": 1.0,
+          "sig_large_rate": 0.375,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.03464614759767808,
+              "max_raw_abs_diff": 0.09690914966286926,
+              "mean_smd": 0.04619486346357077,
+              "max_smd": 0.12921219955049235,
+              "mean_normalized_wasserstein": 0.0602102006156503,
+              "max_normalized_wasserstein": 0.14440566261665524,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.7556503275740735,
+              "max_raw_abs_diff": 2.549727237260422,
+              "mean_smd": 0.2480513260763672,
+              "max_smd": 0.7763713649072935,
+              "mean_normalized_wasserstein": 0.2480513260763672,
+              "max_normalized_wasserstein": 0.7763713649072935,
+              "practically_large_fraction": 0.375,
+              "sig_large_fraction": 0.25
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.03515625,
+              "max_raw_abs_diff": 0.28125,
+              "mean_smd": 0.0789749602868871,
+              "max_smd": 0.6317996822950968,
+              "mean_normalized_wasserstein": 0.0789749602868871,
+              "max_normalized_wasserstein": 0.6317996822950968,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.46139917929972685,
+              "max_raw_abs_diff": 1.1836815374554948,
+              "mean_smd": 0.24760706835598037,
+              "max_smd": 0.6061287847755404,
+              "mean_normalized_wasserstein": 0.32383179089338143,
+              "max_normalized_wasserstein": 0.6304633949682223,
+              "practically_large_fraction": 0.625,
+              "sig_large_fraction": 0.125
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.022201035468281005,
+              "max_raw_abs_diff": 0.06993548925314455,
+              "mean_smd": 0.11100517734140503,
+              "max_smd": 0.3496774462657227,
+              "mean_normalized_wasserstein": 0.14722922228591798,
+              "max_normalized_wasserstein": 0.3820848108639684,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.125
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.001714422956848953,
+              "max_raw_abs_diff": 0.00849740078764133,
+              "mean_smd": 0.008572114784244765,
+              "max_smd": 0.04248700393820665,
+              "mean_normalized_wasserstein": 0.011832027226788371,
+              "max_normalized_wasserstein": 0.04254945355680849,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0017836000107025458,
+              "max_raw_abs_diff": 0.006943585844407097,
+              "mean_smd": 0.00891800005351273,
+              "max_smd": 0.03471792922203548,
+              "mean_normalized_wasserstein": 0.011812361286320995,
+              "max_normalized_wasserstein": 0.03881497264576801,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.00039632487036682655,
+              "max_raw_abs_diff": 0.0013579139847435667,
+              "mean_smd": 0.0019816243518341325,
+              "max_smd": 0.006789569923717834,
+              "mean_normalized_wasserstein": 0.0021976864853452778,
+              "max_normalized_wasserstein": 0.007942672803849214,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.0,
+              "max_abs_risk_diff": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            }
+          }
+        }
+      }
+    },
+    "rootedstock_social_net13v3": {
+      "results_sha256": "0afe720d852be76ae91eb95b7c37772f9ffc91e8530c1d95f06319c8ec811c08",
+      "csv_sha256": "ae1d70edc611131f1abec80091c79210565bb905ca1aca3078d7b2a36b295ca8",
+      "summary": {
+        "raw_practically_large_pair_rate": 0.5833333333333334,
+        "multiplicity_significant_and_large_pair_rate": 0.16666666666666666,
+        "median_match_distance": 0.2392441888171775,
+        "max_match_distance": 0.5571518157754966,
+        "strata": {
+          "high": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 1.0,
+            "multiplicity_significant_and_large_pair_rate": 0.375
+          },
+          "low": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 0.125,
+            "multiplicity_significant_and_large_pair_rate": 0.0
+          },
+          "mid": {
+            "pair_count": 8,
+            "raw_practically_large_pair_rate": 0.625,
+            "multiplicity_significant_and_large_pair_rate": 0.125
+          }
+        },
+        "official_stratified_design": true
+      },
+      "strata_residuals": {
+        "low": {
+          "pair_count": 8,
+          "raw_large_rate": 0.125,
+          "sig_large_rate": 0.0,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.039232867845846196,
+              "max_raw_abs_diff": 0.31386294276676957,
+              "mean_smd": 0.04454913257677715,
+              "max_smd": 0.3563930606142172,
+              "mean_normalized_wasserstein": 0.04454913257677715,
+              "max_normalized_wasserstein": 0.3563930606142172,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.0
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.005315863396252646,
+              "max_raw_abs_diff": 0.04246465144289853,
+              "mean_smd": 0.02657931698126323,
+              "max_smd": 0.21232325721449263,
+              "mean_normalized_wasserstein": 0.02657931698126323,
+              "max_normalized_wasserstein": 0.21232325721449263,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0006197349792540535,
+              "max_raw_abs_diff": 0.003063155148574322,
+              "mean_smd": 0.0030986748962702673,
+              "max_smd": 0.015315775742871608,
+              "mean_normalized_wasserstein": 0.0032266462426341035,
+              "max_normalized_wasserstein": 0.015685459145337706,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0006109916216157146,
+              "max_raw_abs_diff": 0.003086405658419507,
+              "mean_smd": 0.003054958108078573,
+              "max_smd": 0.015432028292097534,
+              "mean_normalized_wasserstein": 0.00329004727061594,
+              "max_normalized_wasserstein": 0.015783466368718378,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0006025595509830343,
+              "max_raw_abs_diff": 0.003100183565241759,
+              "mean_smd": 0.0030127977549151714,
+              "max_smd": 0.015500917826208795,
+              "mean_normalized_wasserstein": 0.003244591663759725,
+              "max_normalized_wasserstein": 0.015714576834607395,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.0078125,
+              "max_abs_risk_diff": 0.0625,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            }
+          }
+        },
+        "mid": {
+          "pair_count": 8,
+          "raw_large_rate": 0.625,
+          "sig_large_rate": 0.125,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.054258014798711465,
+              "max_raw_abs_diff": 0.2278571599089889,
+              "mean_smd": 0.027548543685747204,
+              "max_smd": 0.1466846735096171,
+              "mean_normalized_wasserstein": 0.0294831285351749,
+              "max_normalized_wasserstein": 0.1466846735096171,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0,
+              "max_raw_abs_diff": 0.0,
+              "mean_smd": 0.0,
+              "max_smd": 0.0,
+              "mean_normalized_wasserstein": 0.0,
+              "max_normalized_wasserstein": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.4485421940103662,
+              "max_raw_abs_diff": 1.5511322562313237,
+              "mean_smd": 0.4162129044139702,
+              "max_smd": 0.8816836599641202,
+              "mean_normalized_wasserstein": 0.4162129044139702,
+              "max_normalized_wasserstein": 0.8816836599641202,
+              "practically_large_fraction": 0.625,
+              "sig_large_fraction": 0.125
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.04440638036194072,
+              "max_raw_abs_diff": 0.1837241846420607,
+              "mean_smd": 0.21504029073956088,
+              "max_smd": 0.9186209232103034,
+              "mean_normalized_wasserstein": 0.2720058286479407,
+              "max_normalized_wasserstein": 0.9186209232103035,
+              "practically_large_fraction": 0.375,
+              "sig_large_fraction": 0.125
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0013168532361327381,
+              "max_raw_abs_diff": 0.004232511832251615,
+              "mean_smd": 0.006584266180663691,
+              "max_smd": 0.021162559161258074,
+              "mean_normalized_wasserstein": 0.00776188946920344,
+              "max_normalized_wasserstein": 0.021162559161258074,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0007946823116654084,
+              "max_raw_abs_diff": 0.00202927202408407,
+              "mean_smd": 0.003973411558327042,
+              "max_smd": 0.010146360120420351,
+              "mean_normalized_wasserstein": 0.00411367995075255,
+              "max_normalized_wasserstein": 0.010179855858386457,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0005137360118281664,
+              "max_raw_abs_diff": 0.0015863543031685266,
+              "mean_smd": 0.002568680059140832,
+              "max_smd": 0.007931771515842633,
+              "mean_normalized_wasserstein": 0.002742068893872359,
+              "max_normalized_wasserstein": 0.007931771515842633,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.02734375,
+              "max_abs_risk_diff": 0.09375,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            }
+          }
+        },
+        "high": {
+          "pair_count": 8,
+          "raw_large_rate": 1.0,
+          "sig_large_rate": 0.375,
+          "outcomes": {
+            "log1p_actions_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.03535834117890446,
+              "max_raw_abs_diff": 0.1299650963549897,
+              "mean_smd": 0.04714445490520594,
+              "max_smd": 0.17328679513998627,
+              "mean_normalized_wasserstein": 0.052040326043182365,
+              "max_normalized_wasserstein": 0.17328679513998632,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "log1p_recruits_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.44934292794323516,
+              "max_raw_abs_diff": 1.8878078835567693,
+              "mean_smd": 0.134400375605655,
+              "max_smd": 0.6084112528055353,
+              "mean_normalized_wasserstein": 0.134400375605655,
+              "max_normalized_wasserstein": 0.6084112528055353,
+              "practically_large_fraction": 0.25,
+              "sig_large_fraction": 0.125
+            },
+            "final_M": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.03515625,
+              "max_raw_abs_diff": 0.28125,
+              "mean_smd": 0.0789749602868871,
+              "max_smd": 0.6317996822950968,
+              "mean_normalized_wasserstein": 0.0789749602868871,
+              "max_normalized_wasserstein": 0.6317996822950968,
+              "practically_large_fraction": 0.125,
+              "sig_large_fraction": 0.0
+            },
+            "final_logF": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.32915349969223884,
+              "max_raw_abs_diff": 0.7899896203549039,
+              "mean_smd": 0.177836237778139,
+              "max_smd": 0.4140322973557627,
+              "mean_normalized_wasserstein": 0.3159573403886716,
+              "max_normalized_wasserstein": 0.46677935692265715,
+              "practically_large_fraction": 0.75,
+              "sig_large_fraction": 0.0
+            },
+            "final_E": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.02842543097485606,
+              "max_raw_abs_diff": 0.06993548925314455,
+              "mean_smd": 0.1421271548742803,
+              "max_smd": 0.3496774462657227,
+              "mean_normalized_wasserstein": 0.16172118820657988,
+              "max_normalized_wasserstein": 0.3820848108639684,
+              "practically_large_fraction": 0.25,
+              "sig_large_fraction": 0.25
+            },
+            "control_delta": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0006100811849436854,
+              "max_raw_abs_diff": 0.0023038343173629027,
+              "mean_smd": 0.0030504059247184272,
+              "max_smd": 0.011519171586814514,
+              "mean_normalized_wasserstein": 0.006782349266237271,
+              "max_normalized_wasserstein": 0.019371592277752012,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_C": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0009575919724365187,
+              "max_raw_abs_diff": 0.002168076649495908,
+              "mean_smd": 0.004787959862182594,
+              "max_smd": 0.01084038324747954,
+              "mean_normalized_wasserstein": 0.007913480445599443,
+              "max_normalized_wasserstein": 0.019753410718627875,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "final_state_control": {
+              "type": "continuous",
+              "mean_raw_abs_diff": 0.0005270385500619917,
+              "max_raw_abs_diff": 0.0013963660564924908,
+              "mean_smd": 0.0026351927503099584,
+              "max_smd": 0.006981830282462454,
+              "mean_normalized_wasserstein": 0.002734621454135364,
+              "max_normalized_wasserstein": 0.007201865725107916,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            },
+            "viable": {
+              "type": "binary",
+              "mean_abs_risk_diff": 0.0,
+              "max_abs_risk_diff": 0.0,
+              "practically_large_fraction": 0.0,
+              "sig_large_fraction": 0.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "decision_support_bounds": {
+    "low_activity": {
+      "max_sig_large_fraction": 0.0,
+      "residual_description": "Distributional closure strictly holds across all candidates (0/8 pairs fail). The macrostate is completely Markov-sufficient for low/dormant activity.",
+      "decision_guidance": "Deterministic reduced dynamics are fully certified; uncertainty envelope is negligible."
+    },
+    "mid_activity": {
+      "rootedstock_net12v3_sig_large_fraction": 0.0,
+      "residual_description": "Distributional closure strictly holds under net transport flux (0/8 pairs fail in rootedstock_net12v3).",
+      "decision_guidance": "Net transport flux captures spatial repositioning. Stochastic innovations in mid-activity have mean SMD < 0.20."
+    },
+    "high_activity": {
+      "failure_concentration": "All candidates exhibit 3/8 (37.5%) significant divergence, driven specifically by final_logF (kinetic attrition) and final_E (foothold degradation).",
+      "governance_stability": "Net territorial control (final_C, control_delta) and administrative capacity remain tightly bounded (mean SMD < 0.18, 0% control divergence).",
+      "decision_guidance": "High activity involves discrete combat encounters causing path-dependent personnel branching. The state vector is stable; residual divergence must be treated as an additive stochastic innovation Sigma_res(high) rather than seeking further deterministic coordinates."
+    }
+  },
+  "stabilized_state_space": {
+    "local_vector": [
+      "M_star (rooted membership mass)",
+      "log1p_F (fielded combatant force)",
+      "E (embedded foothold sanctuary)",
+      "C (net territorial control margin)",
+      "Phi_net (signed net transport flux)",
+      "A (structural administrative capacity)"
+    ],
+    "global_scalar": "K_o (central liquid organizational capital)",
+    "slow_memory_stocks": [
+      "P_G (police professionalism)",
+      "V_G (government formation veterancy)",
+      "V_I (insurgent formation veterancy)"
+    ],
+    "state_dimensionality": "6 local coordinates + 1 global scalar + 3 slow memory parameters = 10 total core dimensions",
+    "residual_uncertainty_characterized": true
+  }
+}

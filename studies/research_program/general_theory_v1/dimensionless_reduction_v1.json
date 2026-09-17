@@ -1,0 +1,47 @@
+{
+  "schema_version": "pineland.dimensionless_reduction.v1",
+  "status": "synthetic_dimensionless_compression_frozen",
+  "historical_outcomes_used": false,
+  "parameter_compression": {
+    "native_parameter_count": 216,
+    "reduced_system_parameters": 15,
+    "effective_dimensionless_groups": 4
+  },
+  "dimensionless_groups": {
+    "Pi_0": {
+      "symbol": "Pi_0",
+      "name": "Generational Reproduction Number",
+      "formula": "rho(K_infinity)",
+      "value": 6.393604288151057,
+      "critical_point": 1.0,
+      "physical_interpretation": "Expected secondary district cells produced by a single primary cell over its operational lifespan."
+    },
+    "Pi_M": {
+      "symbol": "Pi_M",
+      "name": "Mobilization Strain Ratio",
+      "formula": "tau_replenish / tau_mobilize = Burn(r, f) / (K_o / tau_tax)",
+      "critical_point": 0.25,
+      "physical_interpretation": "Ratio of capital burn tempo to territorial taxation replenishment tempo. For Pi_M >= 0.25, bankruptcy collapse occurs."
+    },
+    "Pi_S": {
+      "symbol": "Pi_S",
+      "name": "State Institutional Inertia Ratio",
+      "formula": "tau_renewal / tau_conflict",
+      "critical_point": 1.0,
+      "observed_regime": "Pi_S >> 1.0 (tau_renewal > 180d)",
+      "physical_interpretation": "Ratio of state administrative capacity reconstruction tempo to tactical conflict tempo."
+    },
+    "Gamma": {
+      "symbol": "Gamma",
+      "name": "Competitive Capacity Margin",
+      "formula": "log(G_I) - log(G_S) = log(M + log(1+F)) - log(C_gov + log(1+S_sec))",
+      "bifurcation_point": 0.0,
+      "physical_interpretation": "Order parameter governing territorial governance control shifts."
+    }
+  },
+  "scaling_laws": {
+    "front_propagation_velocity": "v_front ~ sqrt(alpha_m * beta_spat * sigma(C))",
+    "generation_time_scale": "tau_g ~ 59.44 days",
+    "capital_depletion_time": "t_collapse ~ K_0 / Burn(r, f)"
+  }
+}

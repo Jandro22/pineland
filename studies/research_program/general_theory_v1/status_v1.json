@@ -1,0 +1,21 @@
+{
+  "schema_version": "pineland.general_theory_status.v1",
+  "status": "general_theory_candidate_v1_complete",
+  "general_theory_licensed": true,
+  "historical_rerun_authorized": false,
+  "completed": [
+    "GT01 conceptual/source audit contracts",
+    "native synthetic probe v1-v5",
+    "macrostate panel v1",
+    "closure analysis (Target A)",
+    "channel factorial (Target B)",
+    "reproduction criticality (Target B)",
+    "mobilization resource trap (Target C)",
+    "state regeneration assay (Target D)",
+    "competitive dynamics & net margin (Target E & G)",
+    "dimensionless phase diagram (Target F & H)",
+    "reduced dynamical system validation (Target I)",
+    "master theory monograph authoring"
+  ],
+  "pending": []
+}

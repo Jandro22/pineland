@@ -1,0 +1,41 @@
+{
+  "blocked_reasons": [],
+  "bundle_size_bytes": 39573,
+  "bundle_size_mib": 0.03773975372314453,
+  "case_id": "nigeria_2014",
+  "checks": {
+    "event_ids_unique": true,
+    "fatality_bound_anomalies_preserved_and_flagged": true,
+    "fatality_values_nonnegative": true,
+    "geography_nonempty": true,
+    "holdout_firewall_declared": true,
+    "source_hashes_available": true,
+    "unit_time_units_in_geography": true,
+    "unmapped_events_retained": true,
+    "zero_missing_semantics_explicit": true
+  },
+  "coverage": {
+    "auxiliary_observations": 0,
+    "events": 0,
+    "geography_units": 37,
+    "unit_time_rows": 37
+  },
+  "fatality_uncertainty_source_anomalies": {
+    "count": 0,
+    "policy": "preserve source values; do not silently reorder; downstream code must branch on anomaly flag",
+    "rate": 0.0
+  },
+  "holdout_integrity": {
+    "firewall": "2014 GED target archive intentionally not opened or read by this builder; target_rows_read remains false."
+  },
+  "license": "SEALED_HOLDOUT",
+  "mapping": {
+    "event_mapping_rate": null,
+    "mapped_events": 0,
+    "unmapped_events": 0
+  },
+  "measurement_independence": {
+    "independent_auxiliary_stream_present": false
+  },
+  "schema_version": "pineland.historical_database_quality.v2"
+}

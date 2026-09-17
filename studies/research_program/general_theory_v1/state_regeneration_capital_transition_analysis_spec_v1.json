@@ -1,0 +1,24 @@
+﻿{
+    "schema_version":  "pineland.state_regeneration_capital_transition_analysis_spec.v1",
+    "registered_before_fresh_outcomes":  true,
+    "source_contract":  "state_regeneration_capital_transition_contract_v1.json",
+    "primary_metrics":  {
+                            "Q_capacity_180":  "(capacity_180-capacity_0)/(baseline_capacity-capacity_0)",
+                            "Q_admin_180":  "(admin_180-admin_0)/(baseline_admin-admin_0)",
+                            "admin_binding":  "government_capital \u003c population*administrative_rebuild_cost*(1-exp(-administrative_rebuild_rate*interval_days))",
+                            "training_binding":  "government_capital \u003c population*security_recruitment_rate*interval_days*training_cost_per_person"
+                        },
+    "thresholds":  {
+                       "low_capital_material_recovery_gain":  0.02,
+                       "plateau_abs_recovery_difference_max":  0.01,
+                       "plateau_binding_fraction_max":  0.01
+                   },
+    "gates":  [
+                  "Mean admin-affordability binding fraction is nonincreasing over the ordered capital grid.",
+                  "At least one of Q_capacity_180 or Q_admin_180 improves by \u003e=0.02 between capital 0.05 and 0.25.",
+                  "For both recovery metrics, absolute mean difference between capital 0.50 and 1.00 is \u003c=0.01.",
+                  "At both 0.50 and 1.00 capital, mean administration-affordability binding fraction is \u003c=0.01."
+              ],
+    "status_rule":  "All four gates =\u003e RESOURCE_TO_ABSORPTIVE_SATURATION_TRANSITION_SUPPORTED. Otherwise retain the measured curve without promoting the architecture.",
+    "guard":  "Exact transition location is exploratory within the fresh grid even if the architecture-level gate passes."
+}

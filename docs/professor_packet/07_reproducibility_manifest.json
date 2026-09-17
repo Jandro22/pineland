@@ -1,0 +1,91 @@
+{
+  "files": [
+    {
+      "bytes": 5713,
+      "path": "01_two_page_research_memo.pdf",
+      "sha256": "3b637d08d166f518a1e8e8e1240b3ff5b346622bf0bbf49434cb0d33bec78a9a"
+    },
+    {
+      "bytes": 5827,
+      "path": "02_technical_note.pdf",
+      "sha256": "009458b13b527b5b3e483f0d8ca14d29554d63adcfe724af163a1249f79c6c2c"
+    },
+    {
+      "bytes": 4181,
+      "path": "03_architecture_figure.pdf",
+      "sha256": "2216201808ba309ab9e5282dba9feb00c7baef8948e480bfd57c074d40109cdb"
+    },
+    {
+      "bytes": 3493,
+      "path": "04_results_packet.pdf",
+      "sha256": "ff8ffd6ed3d1457bcbc85df022bfd68432ee5da8409247185e33ae757d555522"
+    },
+    {
+      "bytes": 3376,
+      "path": "05_claims_and_evidence.pdf",
+      "sha256": "fa8e92923da88185fc5381e6e210521981a4e63005b8d76847fbd62e21d165f3"
+    },
+    {
+      "bytes": 3554,
+      "path": "06_limitations_and_failures.pdf",
+      "sha256": "b13f247287608180b66b5de99acbd19d3d9fbefe20f01893adbd5d18ab995fb2"
+    },
+    {
+      "bytes": 1226,
+      "path": "09_independent_review.json",
+      "sha256": "91f3e5eeea1f9a4f372e5b0d27eccb64bbd37e606147b56720e9839aae80e305"
+    }
+  ],
+  "historical_outreach_performed": false,
+  "packet_id": "professor_packet_v1",
+  "review_requirements": [
+    "verify hashes",
+    "rerun exactness and synthetic gates",
+    "inspect fixed workload",
+    "do not promote historical claims without authorization"
+  ],
+  "schema_version": "1.0.0",
+  "source_artifacts": {
+    "phase_a_certificate_v1.json": {
+      "path": "studies/research_program/phase_a_certificate_v1.json",
+      "sha256": "82d8238171830effa020e50edcbbfcbf42f9daa45ed9d4426e4dfe1a6b043053"
+    },
+    "phase_a_execution_profile_v1.json": {
+      "path": "studies/research_program/phase_a_execution_profile_v1.json",
+      "sha256": "0d278914fc3664edf338df7b70a3f9e33162bb588fe2f1d00ef7343f409fc3ed"
+    },
+    "phase_a_fixed_work_benchmark_failure_v1.json": {
+      "path": "studies/research_program/phase_a_fixed_work_benchmark_failure_v1.json",
+      "sha256": "c7bef1921ef5dbde6a084dd72f2eb519825dc369e52c5d42f7a35e4471777612"
+    },
+    "phase_a_migration_decision_v1.json": {
+      "path": "studies/research_program/phase_a_migration_decision_v1.json",
+      "sha256": "2c3c0e667b2f542ad8df988f9dd20009d6bcce4931ed0cf6ab879756764d164a"
+    },
+    "phase_b_inference_validation_v1.json": {
+      "path": "studies/research_program/phase_b_inference_validation_v1.json",
+      "sha256": "a17dd0db2e80094c4800b9fda8513588ec31d8705be640aabb1ef3a0ace287a4"
+    },
+    "phase_b_inference_validation_v2.json": {
+      "path": "studies/research_program/phase_b_inference_validation_v2.json",
+      "sha256": "cbba49e53491cb6e4792475f5cf67dca2723f417c587bd189948f3be293f1361"
+    },
+    "phase_c_method_contract_v1.json": {
+      "path": "studies/research_program/phase_c_method_contract_v1.json",
+      "sha256": "45cb8e5cf3e6a5bf51b521eb09583d514ea43214f10707834b5050ca98e297a9"
+    },
+    "phase_d_historical_confrontation_status_v1.json": {
+      "path": "studies/research_program/phase_d_historical_confrontation_status_v1.json",
+      "sha256": "684838068a98b47e33a19d44df56de789fbd0941859e0755dc829a46f7e17ab4"
+    },
+    "phase_e_theory_contract_v1.json": {
+      "path": "studies/research_program/phase_e_theory_contract_v1.json",
+      "sha256": "0878e58d4c6a16cdb4946c7ac89de2d170ab5f5d013d925282a32ffb7ecbc7c0"
+    },
+    "phase_f_robustness_status_v1.json": {
+      "path": "studies/research_program/phase_f_robustness_status_v1.json",
+      "sha256": "9838a26c31c3d4764f10f3947d11861b92349e8b732e1e09297ab56ec6c1dea6"
+    }
+  },
+  "status": "gated_research_handoff"
+}

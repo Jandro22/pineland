@@ -1,0 +1,43 @@
+{
+  "schema_version": "pineland.policy_fielded_force_measurement_correction.v1",
+  "status": "MEASUREMENT_BUG_ISOLATED_POLICY_LAYER_ONLY",
+  "historical_outcomes_used": false,
+  "bug": "Several newer example/policy snapshot functions counted insurgent formation personnel when formation.active!=0 and outside_pineland==0 but did not require operational_status==1. collapse_organization intentionally retains historical formation slots while setting operational_status=0 and availability=0, so collapsed formations were miscounted as live fielded force.",
+  "correct_definition": "Sum insurgent formation personnel only when formation.active!=0, operational_status==1, and outside_pineland==0, matching native_probe/src/main.rs frozen theory implementation.",
+  "unaffected_core": [
+    "studies/research_program/general_theory_v1/native_probe/src/main.rs general-theory panel/closure F measurement",
+    "stabilized reduced theory and closure outputs generated through that core measurement path"
+  ],
+  "affected_outputs": [
+    {
+      "path": "government_strategy_frontier_12seed_360d_v1.csv",
+      "scope": "fielded_force_personnel column and any derived policy conclusions using it; rooted/hazard/control/legitimacy/cost/loss metrics unaffected"
+    },
+    {
+      "path": "government_strategy_frontier_results_v1.json",
+      "scope": "fielded-force contrasts only; support audit based on rooted/hazard extinction remains valid"
+    },
+    {
+      "path": "development_allocation_frontier_smoke_v2.csv",
+      "scope": "fielded-force column only"
+    },
+    {
+      "path": "force_equipment_smoke_v1.csv",
+      "scope": "fielded-force column and any break-even/Pareto result using it; must be regenerated before promotion"
+    },
+    {
+      "path": "air_support_smoke_v1.csv",
+      "scope": "fielded-force column and any Pareto result using it; must be regenerated before promotion"
+    },
+    {
+      "path": "insurgency_challenge_support_calibration_6seed_v1.csv",
+      "scope": "fielded-force medians wrong after organizational collapse; rooted/hazard all-zero result unaffected"
+    },
+    {
+      "path": "reproduction_disruption_phase_map_4seed_v1.csv if produced by pre-correction binary",
+      "scope": "fielded-force values in collapsed cells; phase classification based on rooted/hazard to be rechecked on selected cells before policy use"
+    }
+  ],
+  "source_fix": "2026-09-12: operational_status==1 added to government_strategy_frontier.rs, development_allocation_frontier.rs, capability_frontiers.rs, challenge_support_calibration.rs, reproduction_disruption_phase_map.rs.",
+  "guard": "No old policy-layer fielded-force ranking is licensed. Regenerate corrected capability/policy outputs before interpretation."
+}

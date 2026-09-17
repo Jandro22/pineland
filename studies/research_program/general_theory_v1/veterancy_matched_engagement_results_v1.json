@@ -1,0 +1,129 @@
+{
+  "schema_version": "pineland.veterancy_matched_engagement_results.v1",
+  "status": "VETERANCY_SURVIVAL_EXCHANGE_CONFIRMED",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/veterancy_matched_engagement_6x128_v1.csv",
+  "input_sha256": "b7c6aece19d994ea01e224bf03cc132a78f22b010ecac9e9f40463db075be684",
+  "world_count": 6,
+  "replicates_per_world": 128,
+  "cell_summary": [
+    {
+      "government_experience": 0.1,
+      "insurgent_experience": 0.1,
+      "mean_government_loss_fraction": 0.00861176780984307,
+      "mean_insurgent_loss_fraction": 0.008622691297643549,
+      "mean_exchange_ratio": 1.1902149191020375,
+      "government_win_probability": 0.5065104166666666,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    },
+    {
+      "government_experience": 0.1,
+      "insurgent_experience": 0.5,
+      "mean_government_loss_fraction": 0.009521422081868031,
+      "mean_insurgent_loss_fraction": 0.007798899650995418,
+      "mean_exchange_ratio": 0.9736578688331705,
+      "government_win_probability": 0.37890625,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    },
+    {
+      "government_experience": 0.1,
+      "insurgent_experience": 0.9,
+      "mean_government_loss_fraction": 0.01033554491089455,
+      "mean_insurgent_loss_fraction": 0.00718458639495513,
+      "mean_exchange_ratio": 0.8263104718336184,
+      "government_win_probability": 0.265625,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    },
+    {
+      "government_experience": 0.5,
+      "insurgent_experience": 0.1,
+      "mean_government_loss_fraction": 0.007789019767528168,
+      "mean_insurgent_loss_fraction": 0.009533499409108047,
+      "mean_exchange_ratio": 1.4549377137481916,
+      "government_win_probability": 0.6341145833333334,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    },
+    {
+      "government_experience": 0.5,
+      "insurgent_experience": 0.5,
+      "mean_government_loss_fraction": 0.00861176780984307,
+      "mean_insurgent_loss_fraction": 0.008622691297643549,
+      "mean_exchange_ratio": 1.1902149191020375,
+      "government_win_probability": 0.5065104166666666,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    },
+    {
+      "government_experience": 0.5,
+      "insurgent_experience": 0.9,
+      "mean_government_loss_fraction": 0.009348111258540745,
+      "mean_insurgent_loss_fraction": 0.00794348861470999,
+      "mean_exchange_ratio": 1.01009510924533,
+      "government_win_probability": 0.3997395833333333,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    },
+    {
+      "government_experience": 0.9,
+      "insurgent_experience": 0.1,
+      "mean_government_loss_fraction": 0.007175484742219607,
+      "mean_insurgent_loss_fraction": 0.010348654901925242,
+      "mean_exchange_ratio": 1.7143817026904522,
+      "government_win_probability": 0.7330729166666666,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    },
+    {
+      "government_experience": 0.9,
+      "insurgent_experience": 0.5,
+      "mean_government_loss_fraction": 0.007933425561542386,
+      "mean_insurgent_loss_fraction": 0.009359968751862091,
+      "mean_exchange_ratio": 1.4024536310362492,
+      "government_win_probability": 0.609375,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    },
+    {
+      "government_experience": 0.9,
+      "insurgent_experience": 0.9,
+      "mean_government_loss_fraction": 0.00861176780984307,
+      "mean_insurgent_loss_fraction": 0.008622691297643549,
+      "mean_exchange_ratio": 1.1902149191020375,
+      "government_win_probability": 0.5065104166666666,
+      "government_survival_probability": 1.0,
+      "insurgent_survival_probability": 1.0
+    }
+  ],
+  "government_0.1_to_0.9_at_insurgent_0.5": {
+    "n": 768,
+    "own_loss_multiplier_high_over_low": 0.8332185563593784,
+    "opponent_loss_multiplier_high_over_low": 1.2001653016098786,
+    "exchange_ratio_multiplier_high_over_low": 1.4403967511883269,
+    "government_win_probability_low": 0.37890625,
+    "government_win_probability_high": 0.609375
+  },
+  "insurgent_0.1_to_0.9_at_government_0.5": {
+    "n": 768,
+    "own_loss_multiplier_high_over_low": 0.8332185563593778,
+    "opponent_loss_multiplier_high_over_low": 1.2001653016098779,
+    "exchange_ratio_multiplier_high_over_low": 1.4403967511883298,
+    "insurgent_win_probability_low": 0.3658854166666667,
+    "insurgent_win_probability_high": 0.6002604166666666
+  },
+  "analytic_prediction": {
+    "own_loss_multiplier": 0.8332185563593787,
+    "opponent_loss_multiplier": 1.200165301609877,
+    "exchange_ratio_multiplier": 1.440396751188327
+  },
+  "gates": {
+    "government_direction": true,
+    "insurgent_direction": true,
+    "government_matches_analytic_within_2pct": true,
+    "insurgent_matches_analytic_within_2pct": true
+  },
+  "guard": "Synthetic matched-contact result only; no empirical casualty or force-ratio estimate."
+}

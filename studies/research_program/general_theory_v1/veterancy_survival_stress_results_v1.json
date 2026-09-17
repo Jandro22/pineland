@@ -1,0 +1,159 @@
+{
+  "schema_version": "pineland.veterancy_outcomes_results.v1",
+  "historical_outcomes_used": false,
+  "controlled_input": "studies\\research_program\\general_theory_v1\\veterancy_survival_stress_1024rep_v1.csv",
+  "controlled_sha256": "5cb4335032ec21561f90f35f3ea09c2521a508bf07178218873e329cecc512e9",
+  "controlled": {
+    "government": {
+      "levels": {
+        "0.1": {
+          "single_loss_fraction": 0.007154981639422063,
+          "single_opponent_loss_fraction": 0.005939870532832839,
+          "single_tactical_win": 0.3720703125,
+          "campaign_combat_effective": 0.5576171875,
+          "campaign_loss_exchange_ratio": 1.6975840858086948,
+          "final_personnel_fraction": 0.6298607330001471,
+          "n": 1024
+        },
+        "0.3": {
+          "single_loss_fraction": 0.006785625521388848,
+          "single_opponent_loss_fraction": 0.006263190396964976,
+          "single_tactical_win": 0.4482421875,
+          "campaign_combat_effective": 0.56640625,
+          "campaign_loss_exchange_ratio": 1.8314952671311029,
+          "final_personnel_fraction": 0.6385786930479017,
+          "n": 1024
+        },
+        "0.5": {
+          "single_loss_fraction": 0.006471411521576438,
+          "single_opponent_loss_fraction": 0.006567294393389181,
+          "single_tactical_win": 0.50390625,
+          "campaign_combat_effective": 0.578125,
+          "campaign_loss_exchange_ratio": 1.9686426016044731,
+          "final_personnel_fraction": 0.6474379860903223,
+          "n": 1024
+        },
+        "0.7": {
+          "single_loss_fraction": 0.00619972333633278,
+          "single_opponent_loss_fraction": 0.006855090509264918,
+          "single_tactical_win": 0.5537109375,
+          "campaign_combat_effective": 0.5849609375,
+          "campaign_loss_exchange_ratio": 2.0906365800126525,
+          "final_personnel_fraction": 0.6548553549483609,
+          "n": 1024
+        },
+        "0.9": {
+          "single_loss_fraction": 0.005961663472377107,
+          "single_opponent_loss_fraction": 0.00712882650956095,
+          "single_tactical_win": 0.6083984375,
+          "campaign_combat_effective": 0.591796875,
+          "campaign_loss_exchange_ratio": 2.218405271898313,
+          "final_personnel_fraction": 0.6617961490974995,
+          "n": 1024
+        }
+      },
+      "experience_0_9_minus_0_1": {
+        "single_loss_fraction": {
+          "mean_high_minus_low": -0.001193318167044957,
+          "median_high_minus_low": -0.0010703414940274499
+        },
+        "single_opponent_loss_fraction": {
+          "mean_high_minus_low": 0.00118895597672811,
+          "median_high_minus_low": 0.0010794964034959503
+        },
+        "single_tactical_win": {
+          "mean_high_minus_low": 0.236328125,
+          "median_high_minus_low": 0.0
+        },
+        "campaign_combat_effective": {
+          "mean_high_minus_low": 0.0341796875,
+          "median_high_minus_low": 0.0
+        },
+        "campaign_loss_exchange_ratio": {
+          "mean_high_minus_low": 0.5208211860896179,
+          "median_high_minus_low": 0.2569492770602445
+        },
+        "final_personnel_fraction": {
+          "mean_high_minus_low": 0.031935416097352336,
+          "median_high_minus_low": 0.026573203493597042
+        }
+      }
+    },
+    "insurgent": {
+      "levels": {
+        "0.1": {
+          "single_loss_fraction": 0.007154981639422063,
+          "single_opponent_loss_fraction": 0.005939870532832839,
+          "single_tactical_win": 0.3720703125,
+          "campaign_combat_effective": 0.55859375,
+          "campaign_loss_exchange_ratio": 1.7419307024128527,
+          "final_personnel_fraction": 0.6353749862210064,
+          "n": 1024
+        },
+        "0.3": {
+          "single_loss_fraction": 0.006785625521388848,
+          "single_opponent_loss_fraction": 0.006263190396964976,
+          "single_tactical_win": 0.4482421875,
+          "campaign_combat_effective": 0.5712890625,
+          "campaign_loss_exchange_ratio": 1.8714149373075752,
+          "final_personnel_fraction": 0.643943247524177,
+          "n": 1024
+        },
+        "0.5": {
+          "single_loss_fraction": 0.006471411521576438,
+          "single_opponent_loss_fraction": 0.006567294393389181,
+          "single_tactical_win": 0.50390625,
+          "campaign_combat_effective": 0.58203125,
+          "campaign_loss_exchange_ratio": 2.0030095627718962,
+          "final_personnel_fraction": 0.6524614226822324,
+          "n": 1024
+        },
+        "0.7": {
+          "single_loss_fraction": 0.00619972333633278,
+          "single_opponent_loss_fraction": 0.006855090509264918,
+          "single_tactical_win": 0.5537109375,
+          "campaign_combat_effective": 0.5947265625,
+          "campaign_loss_exchange_ratio": 2.133790591995482,
+          "final_personnel_fraction": 0.6602048872198818,
+          "n": 1024
+        },
+        "0.9": {
+          "single_loss_fraction": 0.005961663472377107,
+          "single_opponent_loss_fraction": 0.00712882650956095,
+          "single_tactical_win": 0.6083984375,
+          "campaign_combat_effective": 0.6005859375,
+          "campaign_loss_exchange_ratio": 2.2465128458843653,
+          "final_personnel_fraction": 0.6664197008455037,
+          "n": 1024
+        }
+      },
+      "experience_0_9_minus_0_1": {
+        "single_loss_fraction": {
+          "mean_high_minus_low": -0.001193318167044957,
+          "median_high_minus_low": -0.0010703414940274499
+        },
+        "single_opponent_loss_fraction": {
+          "mean_high_minus_low": 0.00118895597672811,
+          "median_high_minus_low": 0.0010794964034959503
+        },
+        "single_tactical_win": {
+          "mean_high_minus_low": 0.236328125,
+          "median_high_minus_low": 0.0
+        },
+        "campaign_combat_effective": {
+          "mean_high_minus_low": 0.0419921875,
+          "median_high_minus_low": 0.0
+        },
+        "campaign_loss_exchange_ratio": {
+          "mean_high_minus_low": 0.5045821434715123,
+          "median_high_minus_low": 0.34091111360163695
+        },
+        "final_personnel_fraction": {
+          "mean_high_minus_low": 0.031044714624497326,
+          "median_high_minus_low": 0.02736533544083819
+        }
+      }
+    }
+  },
+  "interpretation_guard": "Controlled CRN contrasts isolate the synthetic model's causal experience mechanism. Naturalistic associations, when present, do not by themselves identify causality because combat exposure creates experience and survival selects who remains observable."
+}

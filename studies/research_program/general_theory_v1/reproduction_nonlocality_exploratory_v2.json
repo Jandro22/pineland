@@ -1,0 +1,218 @@
+{
+  "schema_version": "pineland.reproduction_nonlocality_exploratory.v2",
+  "status": "exploratory_synthetic_spatial_structure_analysis",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/reproduction_impulse_8seed_180d_v3.csv",
+  "input_sha256": "99cf675fdb693039625d3b173ac3228aecc1b1fbacb8e307c335a336cdba58cb",
+  "scope": "Rooted parent types only (M, MF, MG, MFG); this is exploratory analysis of an already-observed assay and requires an independently preregistered confirmation before promotion.",
+  "horizons": {
+    "30": {
+      "rows": 8704,
+      "positive_children": 898,
+      "prevalence": 0.10317095588235294,
+      "positive_adjacent_fraction": 0.267260579064588,
+      "positive_nonadjacent_fraction": 0.732739420935412,
+      "positive_median_distance_km": 76.83749084919418,
+      "distance_bins": [
+        {
+          "bin_km": "0-25",
+          "rows": 64,
+          "child_probability": 0.21875
+        },
+        {
+          "bin_km": "25-50",
+          "rows": 1664,
+          "child_probability": 0.15745192307692307
+        },
+        {
+          "bin_km": "50-75",
+          "rows": 1664,
+          "child_probability": 0.08533653846153846
+        },
+        {
+          "bin_km": "75-100",
+          "rows": 2432,
+          "child_probability": 0.09868421052631579
+        },
+        {
+          "bin_km": "100-150",
+          "rows": 2112,
+          "child_probability": 0.08522727272727272
+        },
+        {
+          "bin_km": "150-200",
+          "rows": 768,
+          "child_probability": 0.078125
+        },
+        {
+          "bin_km": "200+",
+          "rows": 0,
+          "child_probability": null
+        }
+      ],
+      "cv_models": {
+        "intercept": {
+          "logloss": 0.3319949312512629,
+          "auc": 0.5
+        },
+        "adjacency_only": {
+          "logloss": 0.3323207883226516,
+          "auc": 0.5011937593547765
+        },
+        "distance_only": {
+          "logloss": 0.33311273075472514,
+          "auc": 0.529090751389343
+        },
+        "distance_plus_adjacency": {
+          "logloss": 0.33228914638212453,
+          "auc": 0.5151148651000572
+        },
+        "spatial_context_full": {
+          "logloss": 0.34992317997280625,
+          "auc": 0.5558459114598044
+        }
+      }
+    },
+    "90": {
+      "rows": 8704,
+      "positive_children": 3227,
+      "prevalence": 0.3707490808823529,
+      "positive_adjacent_fraction": 0.2618531143476914,
+      "positive_nonadjacent_fraction": 0.7381468856523086,
+      "positive_median_distance_km": 70.3420215802759,
+      "distance_bins": [
+        {
+          "bin_km": "0-25",
+          "rows": 64,
+          "child_probability": 0.90625
+        },
+        {
+          "bin_km": "25-50",
+          "rows": 1664,
+          "child_probability": 0.5522836538461539
+        },
+        {
+          "bin_km": "50-75",
+          "rows": 1664,
+          "child_probability": 0.39783653846153844
+        },
+        {
+          "bin_km": "75-100",
+          "rows": 2432,
+          "child_probability": 0.328125
+        },
+        {
+          "bin_km": "100-150",
+          "rows": 2112,
+          "child_probability": 0.2878787878787879
+        },
+        {
+          "bin_km": "150-200",
+          "rows": 768,
+          "child_probability": 0.23697916666666666
+        },
+        {
+          "bin_km": "200+",
+          "rows": 0,
+          "child_probability": null
+        }
+      ],
+      "cv_models": {
+        "intercept": {
+          "logloss": 0.6593531508498458,
+          "auc": 0.5
+        },
+        "adjacency_only": {
+          "logloss": 0.6457591105211287,
+          "auc": 0.5330609242956956
+        },
+        "distance_only": {
+          "logloss": 0.641216633935368,
+          "auc": 0.6156532608770066
+        },
+        "distance_plus_adjacency": {
+          "logloss": 0.6383618650634459,
+          "auc": 0.612866838867939
+        },
+        "spatial_context_full": {
+          "logloss": 0.6396785223499488,
+          "auc": 0.6301514477620276
+        }
+      }
+    },
+    "180": {
+      "rows": 8704,
+      "positive_children": 4085,
+      "prevalence": 0.46932444852941174,
+      "positive_adjacent_fraction": 0.25238678090575273,
+      "positive_nonadjacent_fraction": 0.7476132190942473,
+      "positive_median_distance_km": 76.15773105863907,
+      "distance_bins": [
+        {
+          "bin_km": "0-25",
+          "rows": 64,
+          "child_probability": 0.9375
+        },
+        {
+          "bin_km": "25-50",
+          "rows": 1664,
+          "child_probability": 0.6664663461538461
+        },
+        {
+          "bin_km": "50-75",
+          "rows": 1664,
+          "child_probability": 0.5
+        },
+        {
+          "bin_km": "75-100",
+          "rows": 2432,
+          "child_probability": 0.42105263157894735
+        },
+        {
+          "bin_km": "100-150",
+          "rows": 2112,
+          "child_probability": 0.3854166666666667
+        },
+        {
+          "bin_km": "150-200",
+          "rows": 768,
+          "child_probability": 0.3203125
+        },
+        {
+          "bin_km": "200+",
+          "rows": 0,
+          "child_probability": null
+        }
+      ],
+      "cv_models": {
+        "intercept": {
+          "logloss": 0.6912640192479093,
+          "auc": 0.5
+        },
+        "adjacency_only": {
+          "logloss": 0.671286895735367,
+          "auc": 0.551422110207877
+        },
+        "distance_only": {
+          "logloss": 0.6701377612394754,
+          "auc": 0.6218849396206345
+        },
+        "distance_plus_adjacency": {
+          "logloss": 0.6650891429129059,
+          "auc": 0.618355692773423
+        },
+        "spatial_context_full": {
+          "logloss": 0.6583952200952297,
+          "auc": 0.652569332725269
+        }
+      }
+    }
+  },
+  "summary_180d": {
+    "nonadjacent_child_fraction": 0.7476132190942473,
+    "median_child_distance_km": 76.15773105863907,
+    "adjacency_only_logloss_regret_vs_full_spatial_context": 0.012891675640137379,
+    "nearest_neighbor_wave_description_supported": false
+  },
+  "next_test": "Preregister a kernel-shape confirmation assay comparing graph-hop, metric-distance, and social/mobility connectivity kernels on fresh synthetic seeds and topology families."
+}

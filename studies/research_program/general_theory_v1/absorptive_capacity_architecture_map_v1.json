@@ -1,0 +1,134 @@
+{
+  "schema_version": "pineland.absorptive_capacity_architecture_map.v1",
+  "historical_outcomes_used": false,
+  "purpose": "Decompose absorptive capacity into distinct causal bottlenecks and map each to existing Pineland state rather than introduce one omnibus scalar.",
+  "dimensions": [
+    {
+      "dimension": "fiscal_financial",
+      "status": "represented",
+      "state": [
+        "government organizational capital",
+        "political federal budget",
+        "training/deployment/admin rebuild costs"
+      ],
+      "mechanism": "Resources cap recruits, deployments, administrative rebuilding, and ordinary political spending.",
+      "gap": "Foreign institutional-learning transfers are not consistently routed through the same financial/implementation constraints."
+    },
+    {
+      "dimension": "administrative_implementation",
+      "status": "represented",
+      "state": [
+        "locality.administrative_capacity",
+        "institution_capacity",
+        "institution_reach",
+        "institution_compliance",
+        "institution_integrity"
+      ],
+      "mechanism": "Administrative rebuilding has an endogenous rate, ceiling, absorptive score, cost, and decay; political-order service production has a separate learning/decay loop.",
+      "gap": "No explicit project/procurement queue or sector-specific implementation workforce."
+    },
+    {
+      "dimension": "security_personnel_throughput",
+      "status": "represented",
+      "state": [
+        "security recruit pipeline",
+        "trained reserve",
+        "police personnel",
+        "military personnel"
+      ],
+      "mechanism": "Recruitment flows through training and reserve before deployment; replacements are not instantaneous.",
+      "gap": "Training throughput is dynamic, but the canonical POLICE incoming recruit standard is based on static organization-level institutional_quality/discipline/accountability (0.583 in the current canonical setup). Post-entry professionalism does subsequently adjust toward a local target using legitimacy and administrative capacity."
+    },
+    {
+      "dimension": "human_capital_memory",
+      "status": "represented",
+      "state": [
+        "military formation experience",
+        "police professionalism"
+      ],
+      "mechanism": "Combat/service learning accumulates; green replacements dilute veteran experience; police professionalism converges toward an institutional standard.",
+      "gap": "Military replacement experience is fixed at 0.10. Police recruit-entry professionalism is fixed by the canonical parent-organization standard, while post-entry professionalism is locally adaptive. Civil-service expertise is not an explicit memory stock."
+    },
+    {
+      "dimension": "institutional_political",
+      "status": "represented",
+      "state": [
+        "institution integrity",
+        "compliance",
+        "autonomy",
+        "patronage",
+        "elite networks",
+        "government/state legitimacy",
+        "political access"
+      ],
+      "mechanism": "Service quality, patronage damage, legitimacy, integrity, and access condition state capacity and recovery.",
+      "gap": "No explicit reform-management capacity or bureaucratic organizational-learning network."
+    },
+    {
+      "dimension": "social_legitimacy_cooperation",
+      "status": "represented",
+      "state": [
+        "state legitimacy",
+        "government legitimacy",
+        "community cooperation",
+        "political access"
+      ],
+      "mechanism": "Legitimacy and cooperation gate recruitment, administrative absorption, intelligence penetration, and foreign-presence effects.",
+      "gap": "No explicit survey/expectation distinction for donor-program legitimacy."
+    },
+    {
+      "dimension": "donor_delivery_oversight",
+      "status": "partial",
+      "state": [
+        "foreign transfer efficiency",
+        "foreign crowding out",
+        "interpreter effect",
+        "foreign willingness"
+      ],
+      "mechanism": "Foreign support can be inefficient or crowd out host capacity.",
+      "gap": "No explicit donor administrative/oversight workforce, project-monitoring queue, contracting capacity, or fragmentation/coordination cost. One government support channel is currently aid-volume invariant."
+    },
+    {
+      "dimension": "macroeconomic_absorption",
+      "status": "partial",
+      "state": [
+        "local economic output",
+        "infrastructure",
+        "fiscal control"
+      ],
+      "mechanism": "Economy and infrastructure feed resources and governance.",
+      "gap": "No wage/price pressure, tradable/nontradable split, exchange-rate/Dutch-disease channel, or skilled-labor bidding from large aid inflows."
+    },
+    {
+      "dimension": "physical_infrastructure_and_logistics",
+      "status": "represented_partial",
+      "state": [
+        "infrastructure",
+        "road/physical graph",
+        "logistics sources and stocks"
+      ],
+      "mechanism": "Physical capacity and logistics constrain movement and force sustainment.",
+      "gap": "Civilian reconstruction-project logistics are not explicitly queued against construction capacity."
+    },
+    {
+      "dimension": "time_and_sequence",
+      "status": "represented",
+      "state": [
+        "14d state-regeneration cadence",
+        "30d political cycle",
+        "90d security training e-fold",
+        "slow admin rebuild rate"
+      ],
+      "mechanism": "Different stocks regenerate on distinct timescales.",
+      "gap": "No endogenous acceleration of training/admin throughput from long-run institution-building investment."
+    }
+  ],
+  "theory_conclusion": "Absorptive capacity should remain a vector/operator over resources, throughput, institutional quality, human capital, legitimacy, donor delivery, and macroeconomic context. Collapsing it to one scalar would erase mechanisms already shown to have different timescales and response laws.",
+  "highest_priority_gaps": [
+    "foreign aid dose-response and host-throughput coupling",
+    "civil-service human-capital stock",
+    "donor oversight/project execution capacity",
+    "macroeconomic skilled-labor/price-pressure channel"
+  ],
+  "guard": "Architecture audit only. Missing dimensions should be added only when they answer a preregistered mechanism question and survive synthetic discrimination."
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": "pineland.state_regeneration_interpretation_audit.v1",
+  "status": "CORRECTIVE_SYNTHETIC_INTERPRETATION_AUDIT",
+  "historical_outcomes_used": false,
+  "historical_rerun_authorized": false,
+  "source_contract": "state_regeneration_v2_contract.json",
+  "source_results": "state_regeneration_results_v2.json",
+  "preserved_prior_result": "state_regeneration_results_v1.json",
+  "verified_results": {
+    "rows": 16640,
+    "dynamic_seeds": 8,
+    "seed_locality_focals": 64,
+    "shocked_trajectories": 960,
+    "mean_Q_capacity_180d": 0.06087440082316223,
+    "median_Q_capacity_180d": 0.058203518865799664,
+    "fraction_Q50_180d": 0.0,
+    "fraction_Q80_180d": 0.0,
+    "mean_Q_effective_control_180d": -0.025214868998323026,
+    "fraction_with_admin_rebuild": 1.0,
+    "fraction_with_security_flow": 1.0,
+    "mean_cumulative_admin_rebuild": 0.043801403513120764,
+    "mean_cumulative_security_recruits": 60.07261959168531,
+    "mean_cumulative_security_deployments": 34.93314427347472,
+    "monotone_capital_rescue_fraction": 0.005208333333333333,
+    "mean_log_capital_slope_on_Q_capacity": -0.0003142048363775224
+  },
+  "licensed_claims": [
+    "The v2 hierarchical state-regeneration pathways are mechanically engaged in the tested synthetic shock family.",
+    "Engagement does not imply rapid recovery: no shocked trajectory reached 50 percent matched institutional-capacity gap closure by 180 days.",
+    "Simple central-capital scaling is not a demonstrated short-run rescue law in this assay.",
+    "Fast-elastic state recovery over one 180-day operational cycle is not supported by the tested implementation."
+  ],
+  "claims_not_licensed": [
+    "A universal state recovery time constant of approximately 3000 days.",
+    "A universal tau_state/tau_insurgent ratio of 30 to 100.",
+    "That the observed 180-day trajectory is exponential, linear, or governed by a single timescale.",
+    "That active state regeneration improves effective territorial control over the tested 180-day horizon.",
+    "Historical or empirical magnitudes for state reconstruction speed."
+  ],
+  "reason_for_correction": "Dividing the 180-day horizon by approximately 0.061 mean gap closure is only a linear extrapolation and does not identify a dynamical time constant. The assay also reports negative matched effective-control closure, so state-regeneration engagement must not be conflated with demonstrated competitive effectiveness.",
+  "next_required_test": "Run v2 competitive and distributional-closure assays with active insurgent dynamics, explicitly retaining police professionalism and government/insurgent formation experience as candidate hidden-state blocks."
+}

@@ -1,0 +1,78 @@
+{
+  "case_id": "nigeria_2014",
+  "coordinates": {
+    "A": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "C": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "E": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "F": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "K_o": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "M_star": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "P_G": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "Phi_net": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "V_G": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    },
+    "V_I": {
+      "allowed_use": "none",
+      "note": "Latent Pineland coordinate; historical proxy requires an explicit measurement operator.",
+      "status": "not_directly_observed"
+    }
+  },
+  "do_not_infer": [
+    "violence != territorial control",
+    "event absence outside explicit source coverage != zero violence",
+    "armed-group presence != rooted membership mass",
+    "headcount != veterancy/professionalism",
+    "aid/spending != administrative capacity"
+  ],
+  "mechanisms": {
+    "human_capital_turnover_learning": {
+      "status": "sealed_holdout_no_target_access"
+    },
+    "nonlocal_reproduction_recruitment_hazard": {
+      "status": "sealed_holdout_no_target_access"
+    },
+    "organizational_capital_stock_flow": {
+      "status": "sealed_holdout_no_target_access"
+    },
+    "state_capacity_dual_channel": {
+      "status": "sealed_holdout_no_target_access"
+    }
+  },
+  "reduced_theory_version": "reduced_theory_specification_v2.json",
+  "schema_version": "pineland.historical_observability_map.v2"
+}

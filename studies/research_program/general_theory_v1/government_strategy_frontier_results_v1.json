@@ -1,0 +1,3459 @@
+{
+  "schema_version": "pineland.government_strategy_frontier_results.v1",
+  "status": "SYNTHETIC_POLICY_FRONTIER_MEASURED",
+  "historical_outcomes_used": false,
+  "scope_guard": "Synthetic Pineland policy comparison only; not a real-world operational recommendation.",
+  "input": "studies/research_program/general_theory_v1/government_strategy_frontier_12seed_360d_v1.csv",
+  "input_sha256": "a46927c08128174ff150f619e926fb02026723f00af4481759e20d9c405a14a2",
+  "seed_count": 12,
+  "strategy_count": 10,
+  "strategy_means_intervention_end": {
+    "baseline": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 13.93864162513332,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6015282764236689,
+      "mean_government_legitimacy": 0.40948433787643385,
+      "mean_state_legitimacy": 0.6184250558482398,
+      "mean_local_institution_capacity": 0.49828749161575975,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.1588885664876917,
+      "government_capital_outflow_intervention": 736822.0058104931,
+      "government_capital_inflow_intervention": 10905.764855053936,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074298169891,
+      "state_regeneration_outflow_intervention": 6140.931512323422,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1528699.687821713
+    },
+    "clean_governance": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 13.93864162513332,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6016083559077768,
+      "mean_government_legitimacy": 0.41131627152056294,
+      "mean_state_legitimacy": 0.6188838065490118,
+      "mean_local_institution_capacity": 0.5101457992952093,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.1588885664876917,
+      "government_capital_outflow_intervention": 736823.17966478,
+      "government_capital_inflow_intervention": 10905.765013128597,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074330476133,
+      "state_regeneration_outflow_intervention": 6142.105334303885,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1528698.514125501
+    },
+    "spending_surge": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 13.90779530254232,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.601784407582591,
+      "mean_government_legitimacy": 0.4152619059433771,
+      "mean_state_legitimacy": 0.6198577380172036,
+      "mean_local_institution_capacity": 0.501036217056838,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.1574996844356855,
+      "government_capital_outflow_intervention": 1456829.9438744204,
+      "government_capital_inflow_intervention": 10905.763958972442,
+      "political_order_outflow_intervention": 1440000.0,
+      "governance_outflow_intervention": 10681.074331808099,
+      "state_regeneration_outflow_intervention": 6148.869542612413,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 808691.7488617041
+    },
+    "clean_spending_surge": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 13.870233577191158,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.601918740615361,
+      "mean_government_legitimacy": 0.41866119121140805,
+      "mean_state_legitimacy": 0.6206985878418952,
+      "mean_local_institution_capacity": 0.5137153320539086,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.15861079625366556,
+      "government_capital_outflow_intervention": 1456829.4722748369,
+      "government_capital_inflow_intervention": 10905.752870174192,
+      "political_order_outflow_intervention": 1440000.0,
+      "governance_outflow_intervention": 10681.074168335172,
+      "state_regeneration_outflow_intervention": 6148.39810650169,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 808692.2093724897
+    },
+    "security_expansion": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.529040029052,
+      "foothold_strength_sum": 13.93864162513332,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324463926241515,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6015282764689555,
+      "mean_government_legitimacy": 0.4094843379552888,
+      "mean_state_legitimacy": 0.6184250558661115,
+      "mean_local_institution_capacity": 0.49828749085308593,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.15888856648769187,
+      "government_capital_outflow_intervention": 738099.5577468364,
+      "government_capital_inflow_intervention": 10905.765025313633,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074485823823,
+      "state_regeneration_outflow_intervention": 7418.483261012647,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1527422.1360556297
+    },
+    "police_first": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.529040029052,
+      "foothold_strength_sum": 13.93864162513332,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324461238850541,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6016001490839963,
+      "mean_government_legitimacy": 0.40948433223918407,
+      "mean_state_legitimacy": 0.618425054571084,
+      "mean_local_institution_capacity": 0.4982872981350783,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.15888856648768804,
+      "government_capital_outflow_intervention": 746973.4143592409,
+      "government_capital_inflow_intervention": 10905.78121019442,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.084203491395,
+      "state_regeneration_outflow_intervention": 16292.330155749534,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1518548.295628106
+    },
+    "military_first": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.529040029052,
+      "foothold_strength_sum": 13.93864162513332,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324463926241515,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6015282764689555,
+      "mean_government_legitimacy": 0.4094843379552888,
+      "mean_state_legitimacy": 0.6184250558661115,
+      "mean_local_institution_capacity": 0.49828749085308593,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.15888856648769187,
+      "government_capital_outflow_intervention": 738555.1897954065,
+      "government_capital_inflow_intervention": 10905.765025313633,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074485823823,
+      "state_regeneration_outflow_intervention": 7874.115309582713,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1526966.5040070594
+    },
+    "admin_first": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900264253,
+      "foothold_strength_sum": 13.93864162513332,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819745,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6015763606249945,
+      "mean_government_legitimacy": 0.4105804570115235,
+      "mean_state_legitimacy": 0.6186994184394379,
+      "mean_local_institution_capacity": 0.5055820855949342,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.1588885664876917,
+      "government_capital_outflow_intervention": 736909.4181329362,
+      "government_capital_inflow_intervention": 10905.768540148603,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074307216933,
+      "state_regeneration_outflow_intervention": 6228.343825719436,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1528612.2791843647
+    },
+    "integrated": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528964618401,
+      "foothold_strength_sum": 13.90779530254232,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.033244617707786785,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6017965836324957,
+      "mean_government_legitimacy": 0.4142883753546691,
+      "mean_state_legitimacy": 0.6196206197291974,
+      "mean_local_institution_capacity": 0.5089353038169088,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.1574996844356817,
+      "government_capital_outflow_intervention": 1104558.7790274008,
+      "government_capital_inflow_intervention": 10905.778239049308,
+      "political_order_outflow_intervention": 1080000.0,
+      "governance_outflow_intervention": 10681.081761537702,
+      "state_regeneration_outflow_intervention": 13877.697265863186,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1160962.9279888007
+    },
+    "patronage_heavy": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 13.935841902254149,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6014207806165367,
+      "mean_government_legitimacy": 0.4069844481807326,
+      "mean_state_legitimacy": 0.6178003062530503,
+      "mean_local_institution_capacity": 0.47584947981746817,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.1588885664876917,
+      "government_capital_outflow_intervention": 736820.1850167344,
+      "government_capital_inflow_intervention": 10905.764887933366,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074327288099,
+      "state_regeneration_outflow_intervention": 6139.110689446407,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1528701.508648351
+    }
+  },
+  "strategy_means_final": {
+    "baseline": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 14.783574176899094,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6062838915408624,
+      "mean_government_legitimacy": 0.3569276082768016,
+      "mean_state_legitimacy": 0.6092662872811506,
+      "mean_local_institution_capacity": 0.44216569242825415,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.13194404572298216,
+      "government_capital_outflow_intervention": 736822.0058104931,
+      "government_capital_inflow_intervention": 10905.764855053936,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074298169891,
+      "state_regeneration_outflow_intervention": 6140.931512323422,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1048060.1443711194
+    },
+    "clean_governance": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 14.783574176899094,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6063687869783267,
+      "mean_government_legitimacy": 0.35891662030972715,
+      "mean_state_legitimacy": 0.6097700337807085,
+      "mean_local_institution_capacity": 0.45407993640980604,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.13194404572298216,
+      "government_capital_outflow_intervention": 736823.17966478,
+      "government_capital_inflow_intervention": 10905.765013128597,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074330476133,
+      "state_regeneration_outflow_intervention": 6142.105334303885,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1048057.4825762706
+    },
+    "spending_surge": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 14.544955459406347,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6065437270149108,
+      "mean_government_legitimacy": 0.3628032628690388,
+      "mean_state_legitimacy": 0.610718385731055,
+      "mean_local_institution_capacity": 0.44493773670856146,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.1272218525379577,
+      "government_capital_outflow_intervention": 1456829.9438744204,
+      "government_capital_inflow_intervention": 10905.763958972442,
+      "political_order_outflow_intervention": 1440000.0,
+      "governance_outflow_intervention": 10681.074331808099,
+      "state_regeneration_outflow_intervention": 6148.869542612413,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 328043.5675771832
+    },
+    "clean_spending_surge": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 14.507803888623402,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.606776613770905,
+      "mean_government_legitimacy": 0.36637717182017093,
+      "mean_state_legitimacy": 0.6116073117832433,
+      "mean_local_institution_capacity": 0.45767769343413894,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.12805518759362802,
+      "government_capital_outflow_intervention": 1456829.4722748369,
+      "government_capital_inflow_intervention": 10905.752870174192,
+      "political_order_outflow_intervention": 1440000.0,
+      "governance_outflow_intervention": 10681.074168335172,
+      "state_regeneration_outflow_intervention": 6148.39810650169,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 328044.60986455117
+    },
+    "security_expansion": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.529040029052,
+      "foothold_strength_sum": 14.783574176899094,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324463926241515,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6062838915329358,
+      "mean_government_legitimacy": 0.3569276083889526,
+      "mean_state_legitimacy": 0.6092662873039764,
+      "mean_local_institution_capacity": 0.44216568741734713,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.131944045722982,
+      "government_capital_outflow_intervention": 738099.5577468364,
+      "government_capital_inflow_intervention": 10905.765025313633,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074485823823,
+      "state_regeneration_outflow_intervention": 7418.483261012647,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1047054.6186368695
+    },
+    "police_first": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.529040029052,
+      "foothold_strength_sum": 14.783574176899094,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324461238850541,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6063543103417759,
+      "mean_government_legitimacy": 0.3569275954318638,
+      "mean_state_legitimacy": 0.6092662843878066,
+      "mean_local_institution_capacity": 0.442165507936376,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.13194404572298032,
+      "government_capital_outflow_intervention": 746973.4143592409,
+      "government_capital_inflow_intervention": 10905.78121019442,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.084203491395,
+      "state_regeneration_outflow_intervention": 16292.330155749534,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1037574.5260032095
+    },
+    "military_first": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.529040029052,
+      "foothold_strength_sum": 14.783574176899094,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324463926241515,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6062838915329358,
+      "mean_government_legitimacy": 0.3569276083889526,
+      "mean_state_legitimacy": 0.6092662873039764,
+      "mean_local_institution_capacity": 0.44216568741734713,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.131944045722982,
+      "government_capital_outflow_intervention": 738555.1897954065,
+      "government_capital_inflow_intervention": 10905.765025313633,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074485823823,
+      "state_regeneration_outflow_intervention": 7874.115309582713,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1046610.9054751893
+    },
+    "admin_first": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900264253,
+      "foothold_strength_sum": 14.816631133532312,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819745,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6063431147171224,
+      "mean_government_legitimacy": 0.3581195411164193,
+      "mean_state_legitimacy": 0.6095680600190948,
+      "mean_local_institution_capacity": 0.4494922443583802,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.13194404572298216,
+      "government_capital_outflow_intervention": 736909.4181329362,
+      "government_capital_inflow_intervention": 10905.768540148603,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074307216933,
+      "state_regeneration_outflow_intervention": 6228.343825719436,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1047981.5819604155
+    },
+    "integrated": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528964618401,
+      "foothold_strength_sum": 14.54374062841191,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.033244617707786785,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6065618119720971,
+      "mean_government_legitimacy": 0.3619142709508049,
+      "mean_state_legitimacy": 0.6105079879198492,
+      "mean_local_institution_capacity": 0.45286842491945367,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.1272218525379539,
+      "government_capital_outflow_intervention": 1104558.7790274008,
+      "government_capital_inflow_intervention": 10905.778239049308,
+      "political_order_outflow_intervention": 1080000.0,
+      "governance_outflow_intervention": 10681.081761537702,
+      "state_regeneration_outflow_intervention": 13877.697265863186,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 680040.0972170231
+    },
+    "patronage_heavy": {
+      "rooted_armed_membership_mass": 0.0,
+      "fielded_force_personnel": 11724.528900240415,
+      "foothold_strength_sum": 14.659970131406306,
+      "recruitment_hazard_mass": 0.0,
+      "population_weighted_insurgent_control": 0.03324464501819475,
+      "cumulative_insurgent_actions_since_anchor": 4.75,
+      "population_weighted_government_control": 0.6061770152131206,
+      "mean_government_legitimacy": 0.35415086925339434,
+      "mean_state_legitimacy": 0.6085615825364169,
+      "mean_local_institution_capacity": 0.4196263119480888,
+      "government_military_losses_since_anchor": 12.266525523389708,
+      "population_loss_since_anchor": 1.7141884101244311,
+      "displaced_population_fraction": 0.13194404572298216,
+      "government_capital_outflow_intervention": 736820.1850167344,
+      "government_capital_inflow_intervention": 10905.764887933366,
+      "political_order_outflow_intervention": 720000.0,
+      "governance_outflow_intervention": 10681.074327288099,
+      "state_regeneration_outflow_intervention": 6139.110689446407,
+      "other_outflow_intervention": 0.0,
+      "government_capital": 1048066.7739603397
+    }
+  },
+  "paired_improvement_vs_baseline_intervention_end": {
+    "baseline": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "clean_governance": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -1.1738542866854307,
+        "ci95": [
+          -1.3480515636536077,
+          -0.9996570097172537
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 8.007948410779231e-05,
+        "ci95": [
+          7.485343866690988e-05,
+          8.530552954867474e-05
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.001831933644129068,
+        "ci95": [
+          0.0015926220841096744,
+          0.002071245204148462
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.000458750700771976,
+        "ci95": [
+          0.0003927908087631,
+          0.000524710592780852
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.011858307679449676,
+        "ci95": [
+          0.011734420341771672,
+          0.011982195017127679
+        ]
+      }
+    },
+    "spending_surge": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.030846322590996806,
+        "ci95": [
+          -0.023899580752488648,
+          0.08559222593448226
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0013888820520062337,
+        "ci95": [
+          -0.0013333267699259842,
+          0.0041110908739384515
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -720007.9380639271,
+        "ci95": [
+          -720017.9312898179,
+          -719997.9448380363
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 0.00025613115892209975,
+        "ci95": [
+          0.0002416679386701792,
+          0.00027059437917402034
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.005777568066943263,
+        "ci95": [
+          0.005039462459389256,
+          0.006515673674497269
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.001432682168963667,
+        "ci95": [
+          0.0012332186420405506,
+          0.0016321456958867835
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.00274872544107832,
+        "ci95": [
+          0.002627807972533891,
+          0.0028696429096227495
+        ]
+      }
+    },
+    "clean_spending_surge": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.06840804794216071,
+        "ci95": [
+          -0.01881513516020912,
+          0.15563123104453053
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.000277770234026177,
+        "ci95": [
+          -0.0033596778199029387,
+          0.003915218287955293
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -720007.4664643435,
+        "ci95": [
+          -720018.848226095,
+          -719996.084702592
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 0.0003904641916920489,
+        "ci95": [
+          0.0003515129119081893,
+          0.00042941547147590844
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.0091768533349742,
+        "ci95": [
+          0.008184499164930775,
+          0.010169207505017624
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.0022735319936554588,
+        "ci95": [
+          0.0020124124812720464,
+          0.002534651506038871
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.015427840438148946,
+        "ci95": [
+          0.015180383361614615,
+          0.015675297514683276
+        ]
+      }
+    },
+    "security_expansion": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -0.00013978863823164525,
+        "ci95": [
+          -0.00041377436916566993,
+          0.00013419709270237945
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 5.755779591947359e-09,
+        "ci95": [
+          -4.782156907345695e-09,
+          1.6293716091240413e-08
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": -1.410908427127803e-16,
+        "ci95": [
+          -4.176288944298297e-16,
+          1.3544720900426914e-16
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -1277.551936343157,
+        "ci95": [
+          -1436.4812861429386,
+          -1118.6225865433753
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 4.528645051552852e-11,
+        "ci95": [
+          1.8887350097835725e-11,
+          7.168555093322132e-11
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 7.885498735464107e-11,
+        "ci95": [
+          6.86236654314129e-12,
+          1.5084760816614084e-10
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 1.7871750375893687e-11,
+        "ci95": [
+          -1.1426910606464119e-12,
+          3.6886191812433785e-11
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": -7.626737991150989e-10,
+        "ci95": [
+          -2.5515984553549883e-09,
+          1.0262508571247907e-09
+        ]
+      }
+    },
+    "police_first": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -0.00013978863823164525,
+        "ci95": [
+          -0.00041377436916566993,
+          0.00013419709270237945
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 3.262968933300895e-08,
+        "ci95": [
+          -1.6865831472029957e-08,
+          8.212521013804786e-08
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 3.659110051993745e-15,
+        "ci95": [
+          -3.5127456499139977e-15,
+          1.083096575390149e-14
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -10151.408548747617,
+        "ci95": [
+          -11558.923872134596,
+          -8743.893225360638
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 7.187266032725644e-05,
+        "ci95": [
+          5.952291294936086e-05,
+          8.422240770515201e-05
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": -5.637249805845457e-09,
+        "ci95": [
+          -7.480424351610195e-09,
+          -3.794075260080719e-09
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": -1.277155816289029e-09,
+        "ci95": [
+          -1.739323859367248e-09,
+          -8.149877732108102e-10
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": -1.9348068139302121e-07,
+        "ci95": [
+          -2.2454472403967815e-07,
+          -1.6241663874636427e-07
+        ]
+      }
+    },
+    "military_first": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -0.00013978863823164525,
+        "ci95": [
+          -0.00041377436916566993,
+          0.00013419709270237945
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 5.755779591947359e-09,
+        "ci95": [
+          -4.782156907345695e-09,
+          1.6293716091240413e-08
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": -1.410908427127803e-16,
+        "ci95": [
+          -4.176288944298297e-16,
+          1.3544720900426914e-16
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -1733.1839849132327,
+        "ci95": [
+          -1888.6236087075001,
+          -1577.7443611189653
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 4.528645051552852e-11,
+        "ci95": [
+          1.8887350097835725e-11,
+          7.168555093322132e-11
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 7.885498735464107e-11,
+        "ci95": [
+          6.86236654314129e-12,
+          1.5084760816614084e-10
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 1.7871750375893687e-11,
+        "ci95": [
+          -1.1426910606464119e-12,
+          3.6886191812433785e-11
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": -7.626737991150989e-10,
+        "ci95": [
+          -2.5515984553549883e-09,
+          1.0262508571247907e-09
+        ]
+      }
+    },
+    "admin_first": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -2.384012987022288e-08,
+        "ci95": [
+          -7.056678441585973e-08,
+          2.2886524675413966e-08
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": -2.6998079697785706e-15,
+        "ci95": [
+          -7.991431590544568e-15,
+          2.5918156509874274e-15
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -87.41232244304653,
+        "ci95": [
+          -90.95459033626308,
+          -83.87005454982999
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 4.808420132548785e-05,
+        "ci95": [
+          4.4037614586445604e-05,
+          5.21307880645301e-05
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.0010961191350896127,
+        "ci95": [
+          0.0009537387421130145,
+          0.0012384995280662109
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.0002743625911980259,
+        "ci95": [
+          0.0002351448880849832,
+          0.0003135802943110686
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.007294593979174553,
+        "ci95": [
+          0.007222291439021963,
+          0.007366896519327143
+        ]
+      }
+    },
+    "integrated": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -6.437798750387931e-05,
+        "ci95": [
+          -0.00019055884301148274,
+          6.180286800372413e-05
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.030846322590996806,
+        "ci95": [
+          -0.023899580752488648,
+          0.08559222593448226
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 2.7310407958551497e-08,
+        "ci95": [
+          -1.7209798078859497e-08,
+          7.183061399596249e-08
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0013888820520100177,
+        "ci95": [
+          -0.0013333267699215262,
+          0.004111090873941562
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -367736.77321690763,
+        "ci95": [
+          -368839.37319527817,
+          -366634.1732385371
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 0.00026830720882673836,
+        "ci95": [
+          0.00025123514389004684,
+          0.0002853792737634299
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.0048040374782352775,
+        "ci95": [
+          0.004183180499599928,
+          0.005424894456870627
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.0011955638809577247,
+        "ci95": [
+          0.0010264973934941428,
+          0.0013646303684213066
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.010647812201148998,
+        "ci95": [
+          0.010505581381145162,
+          0.010790043021152834
+        ]
+      }
+    },
+    "patronage_heavy": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0027997228791700004,
+        "ci95": [
+          -0.002687733964003201,
+          0.008287179722343201
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": 1.820793758815853,
+        "ci95": [
+          1.5833436455084289,
+          2.0582438721232768
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": -0.00010749580713228142,
+        "ci95": [
+          -0.00011250757275903704,
+          -0.0001024840415055258
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": -0.0024998896957012288,
+        "ci95": [
+          -0.0028209244505746404,
+          -0.002178854940827817
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": -0.0006247495951895629,
+        "ci95": [
+          -0.0007130086393042794,
+          -0.0005364905510748463
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": -0.022438011798291527,
+        "ci95": [
+          -0.022619917424913403,
+          -0.022256106171669652
+        ]
+      }
+    }
+  },
+  "paired_improvement_vs_baseline_final": {
+    "baseline": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "clean_governance": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -1.1738542866854307,
+        "ci95": [
+          -1.3480515636536077,
+          -0.9996570097172537
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 8.489543746438104e-05,
+        "ci95": [
+          8.146842862763768e-05,
+          8.832244630112439e-05
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.0019890120329255447,
+        "ci95": [
+          0.0017270894141106193,
+          0.00225093465174047
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.0005037464995578481,
+        "ci95": [
+          0.0004311560767468138,
+          0.0005763369223688824
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.011914243981551853,
+        "ci95": [
+          0.011789165348565936,
+          0.012039322614537771
+        ]
+      }
+    },
+    "spending_surge": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.23861871749274735,
+        "ci95": [
+          -0.21619270426339174,
+          0.6934301392488864
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.004722193185024447,
+        "ci95": [
+          -0.002123296302059578,
+          0.011567682672108472
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -720007.9380639271,
+        "ci95": [
+          -720017.9312898179,
+          -719997.9448380363
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 0.00025983547404855495,
+        "ci95": [
+          0.0002271425833111103,
+          0.0002925283647859996
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.005875654592237212,
+        "ci95": [
+          0.005121454183416854,
+          0.006629855001057569
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.00145209844990421,
+        "ci95": [
+          0.0012469093813555342,
+          0.0016572875184528858
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.002772044280307353,
+        "ci95": [
+          0.002649828891962532,
+          0.0028942596686521737
+        ]
+      }
+    },
+    "clean_spending_surge": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.275770288275692,
+        "ci95": [
+          -0.1892447685636165,
+          0.7407853451150005
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.003888858129354106,
+        "ci95": [
+          -0.0032514251894248444,
+          0.011029141448133056
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -720007.4664643435,
+        "ci95": [
+          -720018.848226095,
+          -719996.084702592
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 0.0004927222300426156,
+        "ci95": [
+          0.0003749997436481675,
+          0.0006104447164370637
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.009449563543369321,
+        "ci95": [
+          0.008425279484201,
+          0.010473847602537643
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.002341024502092707,
+        "ci95": [
+          0.00206886367514395,
+          0.002613185329041464
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.015512001005884882,
+        "ci95": [
+          0.015261382092345585,
+          0.01576261991942418
+        ]
+      }
+    },
+    "security_expansion": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -0.00013978863823164525,
+        "ci95": [
+          -0.00041377436916566993,
+          0.00013419709270237945
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 5.755779591947359e-09,
+        "ci95": [
+          -4.782156907345695e-09,
+          1.6293716091240413e-08
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 1.6653345369377348e-16,
+        "ci95": [
+          -1.5987211554602259e-16,
+          4.929390229335695e-16
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -1277.551936343157,
+        "ci95": [
+          -1436.4812861429386,
+          -1118.6225865433753
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": -7.926520551038152e-12,
+        "ci95": [
+          -6.331909647594485e-11,
+          4.7466055373868547e-11
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 1.1215100144864228e-10,
+        "ci95": [
+          -1.2330728127795596e-11,
+          2.3663273102508016e-10
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 2.2825750548941908e-11,
+        "ci95": [
+          -9.44364352513498e-12,
+          5.50951446230188e-11
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": -5.0109071105438234e-09,
+        "ci95": [
+          -7.0735551768049414e-09,
+          -2.9482590442827055e-09
+        ]
+      }
+    },
+    "police_first": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -0.00013978863823164525,
+        "ci95": [
+          -0.00041377436916566993,
+          0.00013419709270237945
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 3.262968933300895e-08,
+        "ci95": [
+          -1.6865831472029957e-08,
+          8.212521013804786e-08
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 1.808738344285151e-15,
+        "ci95": [
+          -1.7363888105137457e-15,
+          5.353865499084048e-15
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -10151.408548747617,
+        "ci95": [
+          -11558.923872134596,
+          -8743.893225360638
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 7.041880091357422e-05,
+        "ci95": [
+          5.8025471594741415e-05,
+          8.281213023240703e-05
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": -1.2844937780087662e-08,
+        "ci95": [
+          -1.671154227715532e-08,
+          -8.978333283020005e-09
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": -2.8933440088252382e-09,
+        "ci95": [
+          -3.844505247752143e-09,
+          -1.942182769898334e-09
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": -1.8449187808948034e-07,
+        "ci95": [
+          -2.134278518902632e-07,
+          -1.5555590428869748e-07
+        ]
+      }
+    },
+    "military_first": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -0.00013978863823164525,
+        "ci95": [
+          -0.00041377436916566993,
+          0.00013419709270237945
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 5.755779591947359e-09,
+        "ci95": [
+          -4.782156907345695e-09,
+          1.6293716091240413e-08
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 1.6653345369377348e-16,
+        "ci95": [
+          -1.5987211554602259e-16,
+          4.929390229335695e-16
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -1733.1839849132327,
+        "ci95": [
+          -1888.6236087075001,
+          -1577.7443611189653
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": -7.926520551038152e-12,
+        "ci95": [
+          -6.331909647594485e-11,
+          4.7466055373868547e-11
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 1.1215100144864228e-10,
+        "ci95": [
+          -1.2330728127795596e-11,
+          2.3663273102508016e-10
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 2.2825750548941908e-11,
+        "ci95": [
+          -9.44364352513498e-12,
+          5.50951446230188e-11
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": -5.0109071105438234e-09,
+        "ci95": [
+          -7.0735551768049414e-09,
+          -2.9482590442827055e-09
+        ]
+      }
+    },
+    "admin_first": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -2.384012987022288e-08,
+        "ci95": [
+          -7.056678441585973e-08,
+          2.2886524675413966e-08
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": -0.033056956633218615,
+        "ci95": [
+          -0.12853903672333455,
+          0.062425123456897325
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": -2.6998079697785706e-15,
+        "ci95": [
+          -7.991431590544568e-15,
+          2.5918156509874274e-15
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -87.41232244304653,
+        "ci95": [
+          -90.95459033626308,
+          -83.87005454982999
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 5.9223176260086996e-05,
+        "ci95": [
+          4.4672076906060915e-05,
+          7.377427561411308e-05
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.0011919328396176783,
+        "ci95": [
+          0.0010355325950595973,
+          0.0013483330841757592
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.00030177273794421144,
+        "ci95": [
+          0.0002584627759268869,
+          0.00034508269996153597
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.007326551930126074,
+        "ci95": [
+          0.007253551764930718,
+          0.00739955209532143
+        ]
+      }
+    },
+    "integrated": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": -6.437798750387931e-05,
+        "ci95": [
+          -0.00019055884301148274,
+          6.180286800372413e-05
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.23983354848718438,
+        "ci95": [
+          -0.21476146312920144,
+          0.6944285601035702
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 2.7310407958551497e-08,
+        "ci95": [
+          -1.7209798078859497e-08,
+          7.183061399596249e-08
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.004722193185028256,
+        "ci95": [
+          -0.0021232963020580897,
+          0.011567682672114603
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": -367736.77321690763,
+        "ci95": [
+          -368839.37319527817,
+          -366634.1732385371
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": 0.00027792043123470167,
+        "ci95": [
+          0.00024341802068850068,
+          0.00031242284178090266
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": 0.004986662674003259,
+        "ci95": [
+          0.004343286341485712,
+          0.0056300390065208055
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": 0.001241700638698634,
+        "ci95": [
+          0.0010646163280329424,
+          0.0014187849493643256
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": 0.010702732491199532,
+        "ci95": [
+          0.010558533297655265,
+          0.010846931684743799
+        ]
+      }
+    },
+    "patronage_heavy": {
+      "rooted_armed_membership_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "fielded_force_personnel": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "foothold_strength_sum": {
+        "n": 12,
+        "mean": 0.12360404549278876,
+        "ci95": [
+          -0.19111166171724325,
+          0.43831975270282075
+        ]
+      },
+      "recruitment_hazard_mass": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_weighted_insurgent_control": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_military_losses_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "population_loss_since_anchor": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "displaced_population_fraction": {
+        "n": 12,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "government_capital_outflow_intervention": {
+        "n": 12,
+        "mean": 1.820793758815853,
+        "ci95": [
+          1.5833436455084289,
+          2.0582438721232768
+        ]
+      },
+      "population_weighted_government_control": {
+        "n": 12,
+        "mean": -0.00010687632774171914,
+        "ci95": [
+          -0.00012138420133830227,
+          -9.2368454145136e-05
+        ]
+      },
+      "mean_government_legitimacy": {
+        "n": 12,
+        "mean": -0.002776739023407221,
+        "ci95": [
+          -0.0031362346300806095,
+          -0.0024172434167338322
+        ]
+      },
+      "mean_state_legitimacy": {
+        "n": 12,
+        "mean": -0.0007047047447337196,
+        "ci95": [
+          -0.0008042371820634368,
+          -0.0006051723074040024
+        ]
+      },
+      "mean_local_institution_capacity": {
+        "n": 12,
+        "mean": -0.02253938048016539,
+        "ci95": [
+          -0.022722993461430342,
+          -0.02235576749890044
+        ]
+      }
+    }
+  },
+  "durability": {
+    "clean_governance": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    },
+    "spending_surge": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.030846322590996806,
+        "final_improvement": 0.23861871749274735,
+        "retained_fraction": 7.735726577741024,
+        "durable_by_preregistered_rule": true
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    },
+    "clean_spending_surge": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.06840804794216071,
+        "final_improvement": 0.275770288275692,
+        "retained_fraction": 4.031255043395726,
+        "durable_by_preregistered_rule": true
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    },
+    "security_expansion": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": -0.00013978863823164525,
+        "final_improvement": -0.00013978863823164525,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": 5.755779591947359e-09,
+        "final_improvement": 5.755779591947359e-09,
+        "retained_fraction": 1.0,
+        "durable_by_preregistered_rule": true
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    },
+    "police_first": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": -0.00013978863823164525,
+        "final_improvement": -0.00013978863823164525,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": 3.262968933300895e-08,
+        "final_improvement": 3.262968933300895e-08,
+        "retained_fraction": 1.0,
+        "durable_by_preregistered_rule": true
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    },
+    "military_first": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": -0.00013978863823164525,
+        "final_improvement": -0.00013978863823164525,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": 5.755779591947359e-09,
+        "final_improvement": 5.755779591947359e-09,
+        "retained_fraction": 1.0,
+        "durable_by_preregistered_rule": true
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    },
+    "admin_first": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": -2.384012987022288e-08,
+        "final_improvement": -2.384012987022288e-08,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": -0.033056956633218615,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": -2.6998079697785706e-15,
+        "final_improvement": -2.6998079697785706e-15,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    },
+    "integrated": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": -6.437798750387931e-05,
+        "final_improvement": -6.437798750387931e-05,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.030846322590996806,
+        "final_improvement": 0.23983354848718438,
+        "retained_fraction": 7.77510991074136,
+        "durable_by_preregistered_rule": true
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": 2.7310407958551497e-08,
+        "final_improvement": 2.7310407958551497e-08,
+        "retained_fraction": 1.0,
+        "durable_by_preregistered_rule": true
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    },
+    "patronage_heavy": {
+      "rooted_armed_membership_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "fielded_force_personnel": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "foothold_strength_sum": {
+        "intervention_end_improvement": 0.0027997228791700004,
+        "final_improvement": 0.12360404549278876,
+        "retained_fraction": 44.148671431878334,
+        "durable_by_preregistered_rule": true
+      },
+      "recruitment_hazard_mass": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "population_weighted_insurgent_control": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      },
+      "cumulative_insurgent_actions_since_anchor": {
+        "intervention_end_improvement": 0.0,
+        "final_improvement": 0.0,
+        "retained_fraction": null,
+        "durable_by_preregistered_rule": false
+      }
+    }
+  },
+  "cost_effectiveness_final": {
+    "clean_governance": {
+      "incremental_gross_outflow": 1.1738542868988588,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        }
+      }
+    },
+    "spending_surge": {
+      "incremental_gross_outflow": 720007.9380639272,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": 0.23861871749274677,
+          "improvement_per_1m_incremental_outflow": 0.3314112315683394,
+          "status": "ratio_defined"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        }
+      }
+    },
+    "clean_spending_surge": {
+      "incremental_gross_outflow": 720007.4664643437,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": 0.2757702882756927,
+          "improvement_per_1m_incremental_outflow": 0.3830103174205756,
+          "status": "ratio_defined"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        }
+      }
+    },
+    "security_expansion": {
+      "incremental_gross_outflow": 1277.5519363433123,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": -0.0001397886371705681,
+          "improvement_per_1m_incremental_outflow": -0.1094191423408427,
+          "status": "ratio_defined"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": 5.7557795959950475e-09,
+          "improvement_per_1m_incremental_outflow": 4.505319456890022e-06,
+          "status": "ratio_defined"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        }
+      }
+    },
+    "police_first": {
+      "incremental_gross_outflow": 10151.408548747771,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": -0.0001397886371705681,
+          "improvement_per_1m_incremental_outflow": -0.013770368565041328,
+          "status": "ratio_defined"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": 3.2629689339369605e-08,
+          "improvement_per_1m_incremental_outflow": 3.214301658994371e-06,
+          "status": "ratio_defined"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        }
+      }
+    },
+    "military_first": {
+      "incremental_gross_outflow": 1733.1839849133976,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": -0.0001397886371705681,
+          "improvement_per_1m_incremental_outflow": -0.08065424005031581,
+          "status": "ratio_defined"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": 5.7557795959950475e-09,
+          "improvement_per_1m_incremental_outflow": 3.3209282142557115e-06,
+          "status": "ratio_defined"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        }
+      }
+    },
+    "admin_first": {
+      "incremental_gross_outflow": 87.41232244309504,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": -2.383785613346845e-08,
+          "improvement_per_1m_incremental_outflow": -0.0002727059008069116,
+          "status": "ratio_defined"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": -0.03305695663321728,
+          "improvement_per_1m_incremental_outflow": -378.17273022046965,
+          "status": "ratio_defined"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": -2.699229728619912e-15,
+          "improvement_per_1m_incremental_outflow": -3.0879281698265095e-11,
+          "status": "ratio_defined"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        }
+      }
+    },
+    "integrated": {
+      "incremental_gross_outflow": 367736.77321690763,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": -6.437798583647236e-05,
+          "improvement_per_1m_incremental_outflow": -0.0001750654014644854,
+          "status": "ratio_defined"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": 0.23983354848718363,
+          "improvement_per_1m_incremental_outflow": 0.6521881028898872,
+          "status": "ratio_defined"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": 2.7310407962888306e-08,
+          "improvement_per_1m_incremental_outflow": 7.426618699016919e-08,
+          "status": "ratio_defined"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": 0.0,
+          "status": "ratio_defined"
+        }
+      }
+    },
+    "patronage_heavy": {
+      "incremental_gross_outflow": -1.8207937587285414,
+      "outcomes": {
+        "rooted_armed_membership_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": null,
+          "status": "no_positive_incremental_effect"
+        },
+        "fielded_force_personnel": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": null,
+          "status": "no_positive_incremental_effect"
+        },
+        "foothold_strength_sum": {
+          "improvement_vs_baseline": 0.12360404549278847,
+          "improvement_per_1m_incremental_outflow": null,
+          "status": "better_with_no_extra_gross_outflow"
+        },
+        "recruitment_hazard_mass": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": null,
+          "status": "no_positive_incremental_effect"
+        },
+        "population_weighted_insurgent_control": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": null,
+          "status": "no_positive_incremental_effect"
+        },
+        "cumulative_insurgent_actions_since_anchor": {
+          "improvement_vs_baseline": 0.0,
+          "improvement_per_1m_incremental_outflow": null,
+          "status": "no_positive_incremental_effect"
+        }
+      }
+    }
+  },
+  "pareto_final": {
+    "nondominated_strategies": [
+      "baseline",
+      "clean_governance",
+      "spending_surge",
+      "clean_spending_surge",
+      "security_expansion",
+      "police_first",
+      "integrated",
+      "patronage_heavy"
+    ],
+    "domination_counts": {
+      "baseline": {
+        "strategies_dominated": [],
+        "count": 0
+      },
+      "clean_governance": {
+        "strategies_dominated": [
+          "admin_first"
+        ],
+        "count": 1
+      },
+      "spending_surge": {
+        "strategies_dominated": [],
+        "count": 0
+      },
+      "clean_spending_surge": {
+        "strategies_dominated": [],
+        "count": 0
+      },
+      "security_expansion": {
+        "strategies_dominated": [
+          "military_first"
+        ],
+        "count": 1
+      },
+      "police_first": {
+        "strategies_dominated": [],
+        "count": 0
+      },
+      "military_first": {
+        "strategies_dominated": [],
+        "count": 0
+      },
+      "admin_first": {
+        "strategies_dominated": [],
+        "count": 0
+      },
+      "integrated": {
+        "strategies_dominated": [],
+        "count": 0
+      },
+      "patronage_heavy": {
+        "strategies_dominated": [],
+        "count": 0
+      }
+    },
+    "rule": "No single utility score. Lower insurgent/resource/loss/harm metrics and higher government control/legitimacy/institution capacity are jointly preferred."
+  },
+  "interpretation_guard": "Policy-package differences arise inside the current synthetic mechanisms. They require independent robustness and historical transport before any operational interpretation."
+}

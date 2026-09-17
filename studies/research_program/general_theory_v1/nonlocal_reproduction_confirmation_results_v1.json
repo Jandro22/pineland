@@ -1,0 +1,345 @@
+{
+  "schema_version": "pineland.nonlocal_reproduction_confirmation_results.v1",
+  "status": "NONLOCAL_RECRUITMENT_CONFIRMED_KERNEL_UNRESOLVED",
+  "historical_outcomes_used": false,
+  "input": "studies\\research_program\\general_theory_v1\\nonlocal_reproduction_confirmation_8seed_180d_v1.csv",
+  "input_sha256": "7ef20f5a16a6a4e51421d5ef85187c512160d5429ccf34a5c7725aad405f737d",
+  "scope": "Fresh-seed confirmation under nonlocal_reproduction_confirmation_contract_v1.json and its preregistered measurement specification.",
+  "integrity": {
+    "rows_raw": 19584,
+    "rows_rooted": 8704,
+    "seeds": [
+      2026102000,
+      2026102001,
+      2026102002,
+      2026102003,
+      2026102004,
+      2026102005,
+      2026102006,
+      2026102007
+    ],
+    "rooted_parent_types": [
+      "M",
+      "MF",
+      "MG",
+      "MFG"
+    ],
+    "feature_integrity": {
+      "cross_locality_social_influence": {
+        "finite_fraction": 1.0,
+        "std": 0.007759054523322012
+      },
+      "distance_km": {
+        "finite_fraction": 1.0,
+        "std": 37.7813422681145
+      },
+      "locality_graph_hops": {
+        "finite_fraction": 1.0,
+        "std": 1.2997662486147508
+      },
+      "locality_graph_path_cost": {
+        "finite_fraction": 1.0,
+        "std": 2.345776572818788
+      },
+      "parent_social_exposure_potential": {
+        "finite_fraction": 1.0,
+        "std": 2.1428794321802207e-05
+      },
+      "parent_social_min_hops": {
+        "finite_fraction": 1.0,
+        "std": 144.60237886370152
+      }
+    }
+  },
+  "horizons": {
+    "30": {
+      "rows": 8704,
+      "positive_children": 1132,
+      "prevalence": 0.13005514705882354,
+      "positive_nonadjacent_fraction": 0.7314487632508834,
+      "recruitment_trigger_share_nonadjacent": 1.0,
+      "models": {
+        "intercept": {
+          "features": [],
+          "logloss": 0.38785141001463347,
+          "auc": 0.42231748360614424
+        },
+        "adjacency_only": {
+          "features": [
+            "adjacent_origin"
+          ],
+          "logloss": 0.38382773134457193,
+          "auc": 0.492161935641633
+        },
+        "euclidean_only": {
+          "features": [
+            "distance_km"
+          ],
+          "logloss": 0.3862184567212428,
+          "auc": 0.556029373608179
+        },
+        "locality_graph": {
+          "features": [
+            "locality_graph_hops",
+            "locality_graph_path_cost"
+          ],
+          "logloss": 0.38667223675586254,
+          "auc": 0.5480055775509176
+        },
+        "social": {
+          "features": [
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.38679460884475897,
+          "auc": 0.5019408495871903
+        },
+        "geographic_combined": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost"
+          ],
+          "logloss": 0.38603161536476316,
+          "auc": 0.5330075095339161
+        },
+        "hybrid": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.38722547098970655,
+          "auc": 0.5339898342227922
+        }
+      }
+    },
+    "90": {
+      "rows": 8704,
+      "positive_children": 3322,
+      "prevalence": 0.38166360294117646,
+      "positive_nonadjacent_fraction": 0.7504515352197472,
+      "recruitment_trigger_share_nonadjacent": 0.9823505816285599,
+      "models": {
+        "intercept": {
+          "features": [],
+          "logloss": 0.6658885425611387,
+          "auc": 0.4605060774078914
+        },
+        "adjacency_only": {
+          "features": [
+            "adjacent_origin"
+          ],
+          "logloss": 0.65241187065144,
+          "auc": 0.5348435516877785
+        },
+        "euclidean_only": {
+          "features": [
+            "distance_km"
+          ],
+          "logloss": 0.6510641257436139,
+          "auc": 0.600346529370428
+        },
+        "locality_graph": {
+          "features": [
+            "locality_graph_hops",
+            "locality_graph_path_cost"
+          ],
+          "logloss": 0.651811493161816,
+          "auc": 0.5981103869096959
+        },
+        "social": {
+          "features": [
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.6635716903138578,
+          "auc": 0.5349951261267126
+        },
+        "geographic_combined": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost"
+          ],
+          "logloss": 0.6477923148706414,
+          "auc": 0.6020166447750669
+        },
+        "hybrid": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.6535136253181539,
+          "auc": 0.5990997037642589
+        }
+      }
+    },
+    "180": {
+      "rows": 8704,
+      "positive_children": 3991,
+      "prevalence": 0.45852481617647056,
+      "positive_nonadjacent_fraction": 0.7594587822600852,
+      "recruitment_trigger_share_nonadjacent": 0.9709666776641372,
+      "models": {
+        "intercept": {
+          "features": [],
+          "logloss": 0.6903325821446537,
+          "auc": 0.4645712507289502
+        },
+        "adjacency_only": {
+          "features": [
+            "adjacent_origin"
+          ],
+          "logloss": 0.6753206173269438,
+          "auc": 0.5389879988301708
+        },
+        "euclidean_only": {
+          "features": [
+            "distance_km"
+          ],
+          "logloss": 0.6738300800377055,
+          "auc": 0.6055702298131755
+        },
+        "locality_graph": {
+          "features": [
+            "locality_graph_hops",
+            "locality_graph_path_cost"
+          ],
+          "logloss": 0.6749563003266099,
+          "auc": 0.6008807053298311
+        },
+        "social": {
+          "features": [
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.6866428557386175,
+          "auc": 0.5337802278763968
+        },
+        "geographic_combined": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost"
+          ],
+          "logloss": 0.6708746979285369,
+          "auc": 0.603880878167262
+        },
+        "hybrid": {
+          "features": [
+            "adjacent_origin",
+            "distance_km",
+            "locality_graph_hops",
+            "locality_graph_path_cost",
+            "parent_social_exposure_potential",
+            "parent_social_min_hops",
+            "cross_locality_social_influence"
+          ],
+          "logloss": 0.6749236988322869,
+          "auc": 0.60092812796541
+        }
+      }
+    }
+  },
+  "seed_robustness_180d": {
+    "passing_seeds": 8,
+    "required": 6,
+    "details": [
+      {
+        "seed": 2026102000,
+        "positive_children": 492,
+        "nonadjacent_fraction": 0.766260162601626,
+        "passes": true
+      },
+      {
+        "seed": 2026102001,
+        "positive_children": 476,
+        "nonadjacent_fraction": 0.7815126050420168,
+        "passes": true
+      },
+      {
+        "seed": 2026102002,
+        "positive_children": 489,
+        "nonadjacent_fraction": 0.7361963190184049,
+        "passes": true
+      },
+      {
+        "seed": 2026102003,
+        "positive_children": 526,
+        "nonadjacent_fraction": 0.7262357414448669,
+        "passes": true
+      },
+      {
+        "seed": 2026102004,
+        "positive_children": 548,
+        "nonadjacent_fraction": 0.7737226277372263,
+        "passes": true
+      },
+      {
+        "seed": 2026102005,
+        "positive_children": 488,
+        "nonadjacent_fraction": 0.75,
+        "passes": true
+      },
+      {
+        "seed": 2026102006,
+        "positive_children": 434,
+        "nonadjacent_fraction": 0.7557603686635944,
+        "passes": true
+      },
+      {
+        "seed": 2026102007,
+        "positive_children": 538,
+        "nonadjacent_fraction": 0.7843866171003717,
+        "passes": true
+      }
+    ]
+  },
+  "material_gain_details": {
+    "90": {
+      "social": {
+        "logloss_gain": -0.011159819662417747,
+        "auc_gain": 0.00015157443893409894
+      },
+      "hybrid": {
+        "logloss_gain": -0.0011017546667139166,
+        "auc_gain": 0.06425615207648039
+      }
+    },
+    "180": {
+      "social": {
+        "logloss_gain": -0.01132223841167368,
+        "auc_gain": -0.005207770953774005
+      },
+      "hybrid": {
+        "logloss_gain": 0.0003969184946569504,
+        "auc_gain": 0.061940129135239164
+      }
+    }
+  },
+  "gates": {
+    "nonadjacent_fraction_180d_gt_0_50": true,
+    "recruitment_trigger_share_nonadjacent_180d_ge_0_80": true,
+    "social_kernel_direction_90_180": false,
+    "social_or_hybrid_material_gain": true,
+    "seed_robustness_ge_6_of_8": true,
+    "all_pass": false
+  },
+  "interpretation_guard": "This is a synthetic isolated-parent mechanism result. It does not establish historical social-network structure or a universal spatial law."
+}

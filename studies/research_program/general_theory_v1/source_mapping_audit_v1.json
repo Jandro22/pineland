@@ -1,0 +1,1148 @@
+{
+  "schema_version": "pineland.source_mapping_audit.v1",
+  "status": "source_audit_not_mechanism_validation",
+  "historical_outcomes_used": false,
+  "git_head": "34b0bad87c50150c9effe2bcb3d6d3c589705204",
+  "rust_source_sha256": {
+    "rust/pineland-model/src/access.rs": "ca4b0e04603e2730a7892630f8c20033cfcb373d81ad0d304f3547441452c045",
+    "rust/pineland-model/src/actions.rs": "8faf06dd465dbd82c728fc9d6dde8ca0e25dd0ffe948189f7cc6a95b235532be",
+    "rust/pineland-model/src/beliefs.rs": "3f16bfbc147ec23b9e4633612c5c4a54bbb65872a05fbce83165ed82c884b2a6",
+    "rust/pineland-model/src/combat.rs": "290e965751e9cb4dee44520e5c5821237afa015cd185bb85e88280339b26fd03",
+    "rust/pineland-model/src/economy.rs": "8c07997cf5948841e3dba062abb79dc61dcbc179577a47ade8489be9e3e57415",
+    "rust/pineland-model/src/foreign.rs": "abb5c72adeaf3d1abe07e20c498ff1c5e75dfd74f3fb57d6bbf215d982bf8077",
+    "rust/pineland-model/src/governance.rs": "455e1046b09429ae5a241bc364b3dceb05d62771f61970ab723225864a4dacf8",
+    "rust/pineland-model/src/information.rs": "d3465c2d43ab3ce2922e5f775e106e9c21cb81c69963e39595297ba9872540cd",
+    "rust/pineland-model/src/lib.rs": "897cd5e150a7ce6f687e0d6bbd05109917685e1d966397bc747bb989b4619e0c",
+    "rust/pineland-model/src/logistics.rs": "b3787ee11304d90843e07a263011a9d5c5e71e8edc818ad89f8b02e9a8314230",
+    "rust/pineland-model/src/movement.rs": "1bd9c51e79d90aaf80204caa35de1d7e25280bd661567ad4cfe06b8a6ffa73e6",
+    "rust/pineland-model/src/organizations.rs": "0498b1f181c9e74b22256fdf333ef3fd4b4ab0895da600992b2a4a73ae923163",
+    "rust/pineland-model/src/patrol.rs": "827ff00c87aeb14b87b429135b328b8539ea723665d37746a226a2c1fe2293de",
+    "rust/pineland-model/src/peace.rs": "9869391b36d6729555baf19e8325e17a58da7508dcd4a74083bca4dd826dae85",
+    "rust/pineland-model/src/physical.rs": "41897cd99fbd5b85585b2e7187adedc52da297c49398c73717f5cb67f317d840",
+    "rust/pineland-model/src/political.rs": "0dd17bda6d949240672e408540f74991e9a876629a1057b65aae82f4d16a3b95",
+    "rust/pineland-model/src/recording.rs": "cb4c59b8bc89a6f824ae2ada7149e7e92458f6e51c2bffcbd3dde0e9f915d49c",
+    "rust/pineland-model/src/recruitment.rs": "f18d52ae4bd35b2a027737643ef7cdab0369fe989886dec2243296e52919874c",
+    "rust/pineland-model/src/social.rs": "d183583934d02365a5041a1938d202540368b8e8468be0e9b361fd4159e992d0",
+    "rust/pineland-core/src/state.rs": "2b55741ff49b9a225d0469630e73eed377921a01e893b17a104b57e7149f3179",
+    "rust/pineland-core/src/config.rs": "e2e70aa7283f4bfc7e7b2d135cdd7de006551e3a7ba7c14868a02b39f2b5aa5e"
+  },
+  "construct_pattern_usage": {
+    "M_membership": {
+      "people.organization": {
+        "count": 35,
+        "files": [
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/recruitment.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "people.armed_fraction": {
+        "count": 53,
+        "files": [
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/recruitment.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "people.represented_population": {
+        "count": 63,
+        "files": [
+          "rust/pineland-model/src/beliefs.rs",
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/political.rs",
+          "rust/pineland-model/src/recruitment.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "people.home": {
+        "count": 19,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "people.residence": {
+        "count": 35,
+        "files": [
+          "rust/pineland-model/src/beliefs.rs",
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/political.rs",
+          "rust/pineland-model/src/recruitment.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "people.social_exposure": {
+        "count": 2,
+        "files": [
+          "rust/pineland-model/src/recruitment.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "manpower.pool": {
+        "count": 38,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      }
+    },
+    "F_fielded": {
+      "formations.personnel": {
+        "count": 153,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/logistics.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "formations.readiness": {
+        "count": 25,
+        "files": [
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/logistics.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "formations.sustainment": {
+        "count": 16,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/logistics.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "formations.embeddedness": {
+        "count": 13,
+        "files": [
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "formations.availability": {
+        "count": 33,
+        "files": [
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/logistics.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "formations.command": {
+        "count": 13,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/logistics.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      }
+    },
+    "L_logistics": {
+      "formations.supply_stock": {
+        "count": 50,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/logistics.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "manpower.supply_reserve": {
+        "count": 23,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "logistics.source_stock": {
+        "count": 15,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/logistics.rs"
+        ]
+      },
+      "logistics.source_production": {
+        "count": 4,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/logistics.rs"
+        ]
+      },
+      "shipment_": {
+        "count": 32,
+        "files": [
+          "rust/pineland-model/src/logistics.rs"
+        ]
+      }
+    },
+    "K_information": {
+      "beliefs.": {
+        "count": 99,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/beliefs.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "presence_beliefs.": {
+        "count": 0,
+        "files": []
+      },
+      "information_observations": {
+        "count": 10,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "formations.information": {
+        "count": 12,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "organizations.local_knowledge": {
+        "count": 7,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs"
+        ]
+      }
+    },
+    "E_foothold": {
+      "footholds.strength": {
+        "count": 14,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "footholds.renewal_count": {
+        "count": 10,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "footholds.cumulative_arrivals": {
+        "count": 2,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/organizations.rs"
+        ]
+      },
+      "footholds.cumulative_recruits": {
+        "count": 3,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/recruitment.rs"
+        ]
+      },
+      "footholds.cumulative_actions": {
+        "count": 3,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/organizations.rs"
+        ]
+      }
+    },
+    "C_control": {
+      "government_control": {
+        "count": 49,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/economy.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/political.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "insurgent_control": {
+        "count": 35,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/economy.rs",
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/patrol.rs",
+          "rust/pineland-model/src/physical.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "organization_control": {
+        "count": 21,
+        "files": [
+          "rust/pineland-model/src/economy.rs",
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs"
+        ]
+      }
+    },
+    "X_expectations": {
+      "expected_control": {
+        "count": 28,
+        "files": [
+          "rust/pineland-model/src/beliefs.rs",
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "political_access": {
+        "count": 16,
+        "files": [
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/political.rs",
+          "rust/pineland-model/src/recruitment.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "state_legitimacy": {
+        "count": 7,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/political.rs"
+        ]
+      },
+      "government_legitimacy": {
+        "count": 10,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/political.rs"
+        ]
+      },
+      "grievance": {
+        "count": 21,
+        "files": [
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/recruitment.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "fear": {
+        "count": 22,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/recruitment.rs",
+          "rust/pineland-model/src/social.rs"
+        ]
+      },
+      "trust_insurgent": {
+        "count": 3,
+        "files": [
+          "rust/pineland-model/src/beliefs.rs",
+          "rust/pineland-model/src/lib.rs"
+        ]
+      }
+    },
+    "S_state": {
+      "political.institution_": {
+        "count": 61,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/political.rs"
+        ]
+      },
+      "security_posts.": {
+        "count": 78,
+        "files": [
+          "rust/pineland-model/src/actions.rs",
+          "rust/pineland-model/src/combat.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs",
+          "rust/pineland-model/src/physical.rs"
+        ]
+      },
+      "government_governance": {
+        "count": 1,
+        "files": [
+          "rust/pineland-model/src/lib.rs"
+        ]
+      },
+      "administrative_capacity": {
+        "count": 11,
+        "files": [
+          "rust/pineland-model/src/governance.rs",
+          "rust/pineland-model/src/information.rs",
+          "rust/pineland-model/src/lib.rs"
+        ]
+      }
+    },
+    "U_external": {
+      "foreign_interventions.": {
+        "count": 17,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs"
+        ]
+      },
+      "external_support": {
+        "count": 5,
+        "files": [
+          "rust/pineland-model/src/economy.rs",
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/lib.rs",
+          "rust/pineland-model/src/organizations.rs"
+        ]
+      },
+      "external_sanctuary": {
+        "count": 9,
+        "files": [
+          "rust/pineland-model/src/foreign.rs",
+          "rust/pineland-model/src/movement.rs",
+          "rust/pineland-model/src/organizations.rs"
+        ]
+      }
+    }
+  },
+  "foothold_field_usage": {
+    "strength": {
+      "total_occurrences": 14,
+      "non_initializer_occurrences": 12,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs",
+        "rust/pineland-model/src/movement.rs",
+        "rust/pineland-model/src/organizations.rs",
+        "rust/pineland-model/src/recruitment.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 57,
+          "text": "particle.footholds.strength.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3554,
+          "text": "particle.footholds.strength[index] = raw;"
+        },
+        {
+          "file": "rust/pineland-model/src/movement.rs",
+          "line": 734,
+          "text": "if organization == INSURGENT && index < particle.footholds.strength.len() {"
+        },
+        {
+          "file": "rust/pineland-model/src/movement.rs",
+          "line": 735,
+          "text": "represented[locality] = represented[locality].max(particle.footholds.strength[index]);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 916,
+          "text": "if index >= particle.footholds.strength.len() {"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 933,
+          "text": "let previous = particle.footholds.strength[index].clamp(0.0, 1.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 953,
+          "text": "particle.footholds.strength[index] = updated;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 982,
+          "text": "if index >= particle.footholds.strength.len() {"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 996,
+          "text": "particle.footholds.strength[index] = particle.footholds.strength[index]"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 999,
+          "text": "particle.footholds.embeddedness[index] = particle.footholds.strength[index];"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 1024,
+          "text": "particle.footholds.embeddedness[index] = particle.footholds.strength[index];"
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 232,
+          "text": "particle.footholds.embeddedness[index] = particle.footholds.strength[index];"
+        }
+      ]
+    },
+    "raw_signal": {
+      "total_occurrences": 4,
+      "non_initializer_occurrences": 2,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 58,
+          "text": "particle.footholds.raw_signal.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3555,
+          "text": "particle.footholds.raw_signal[index] = raw;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 954,
+          "text": "particle.footholds.raw_signal[index] = raw;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 1000,
+          "text": "particle.footholds.raw_signal[index] = particle.footholds.raw_signal[index].max(arrival_signal);"
+        }
+      ]
+    },
+    "membership": {
+      "total_occurrences": 7,
+      "non_initializer_occurrences": 5,
+      "files": [
+        "rust/pineland-model/src/combat.rs",
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs",
+        "rust/pineland-model/src/recruitment.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/combat.rs",
+          "line": 347,
+          "text": "if index >= particle.footholds.membership.len() {"
+        },
+        {
+          "file": "rust/pineland-model/src/combat.rs",
+          "line": 351,
+          "text": "particle.footholds.membership[index] = 0.0;"
+        },
+        {
+          "file": "rust/pineland-model/src/combat.rs",
+          "line": 365,
+          "text": "particle.footholds.membership[index] ="
+        },
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 59,
+          "text": "particle.footholds.membership.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3556,
+          "text": "particle.footholds.membership[index] ="
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 732,
+          "text": "if index >= particle.footholds.membership.len()"
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 750,
+          "text": "particle.footholds.membership[index] ="
+        }
+      ]
+    },
+    "embeddedness": {
+      "total_occurrences": 6,
+      "non_initializer_occurrences": 4,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs",
+        "rust/pineland-model/src/organizations.rs",
+        "rust/pineland-model/src/recruitment.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 60,
+          "text": "particle.footholds.embeddedness.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3558,
+          "text": "particle.footholds.embeddedness[index] = raw;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 957,
+          "text": "particle.footholds.embeddedness[index] = updated;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 999,
+          "text": "particle.footholds.embeddedness[index] = particle.footholds.strength[index];"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 1024,
+          "text": "particle.footholds.embeddedness[index] = particle.footholds.strength[index];"
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 232,
+          "text": "particle.footholds.embeddedness[index] = particle.footholds.strength[index];"
+        }
+      ]
+    },
+    "access": {
+      "total_occurrences": 2,
+      "non_initializer_occurrences": 0,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 61,
+          "text": "particle.footholds.access.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3468,
+          "text": "particle.footholds.access[index] = if organization == INSURGENT { 0.4 } else { 0.8 };"
+        }
+      ]
+    },
+    "target_knowledge": {
+      "total_occurrences": 2,
+      "non_initializer_occurrences": 0,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 62,
+          "text": "particle.footholds.target_knowledge.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3470,
+          "text": "particle.footholds.target_knowledge[index] ="
+        }
+      ]
+    },
+    "infrastructure": {
+      "total_occurrences": 2,
+      "non_initializer_occurrences": 0,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 63,
+          "text": "particle.footholds.infrastructure.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3469,
+          "text": "particle.footholds.infrastructure[index] = particle.locality.infrastructure[locality];"
+        }
+      ]
+    },
+    "sustainment": {
+      "total_occurrences": 2,
+      "non_initializer_occurrences": 0,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 64,
+          "text": "particle.footholds.sustainment.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3472,
+          "text": "particle.footholds.sustainment[index] ="
+        }
+      ]
+    },
+    "updated_at": {
+      "total_occurrences": 4,
+      "non_initializer_occurrences": 3,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 65,
+          "text": "particle.footholds.updated_at.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 677,
+          "text": "particle.footholds.updated_at[index] = time;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 922,
+          "text": "let elapsed = (time - particle.footholds.updated_at[index]).max(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 958,
+          "text": "particle.footholds.updated_at[index] = time;"
+        }
+      ]
+    },
+    "first_activated_at": {
+      "total_occurrences": 5,
+      "non_initializer_occurrences": 2,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 66,
+          "text": "particle.footholds.first_activated_at.push(-1.0e9);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3563,
+          "text": "particle.footholds.first_activated_at[index] = if viable { 0.0 } else { -1.0e9 };"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3565,
+          "text": "particle.footholds.first_activated_at[index];"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 946,
+          "text": "if particle.footholds.first_activated_at[index] < -1.0e8 {"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 947,
+          "text": "particle.footholds.first_activated_at[index] = time;"
+        }
+      ]
+    },
+    "last_activated_at": {
+      "total_occurrences": 4,
+      "non_initializer_occurrences": 2,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 67,
+          "text": "particle.footholds.last_activated_at.push(-1.0e9);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3564,
+          "text": "particle.footholds.last_activated_at[index] ="
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 949,
+          "text": "particle.footholds.last_activated_at[index] = time;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 951,
+          "text": "particle.footholds.last_activated_at[index] = time;"
+        }
+      ]
+    },
+    "cumulative_active_days": {
+      "total_occurrences": 2,
+      "non_initializer_occurrences": 1,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 68,
+          "text": "particle.footholds.cumulative_active_days.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 940,
+          "text": "particle.footholds.cumulative_active_days[index] += elapsed;"
+        }
+      ]
+    },
+    "cumulative_arrivals": {
+      "total_occurrences": 2,
+      "non_initializer_occurrences": 1,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 69,
+          "text": "particle.footholds.cumulative_arrivals.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 986,
+          "text": "particle.footholds.cumulative_arrivals[index] += 1.0;"
+        }
+      ]
+    },
+    "cumulative_recruits": {
+      "total_occurrences": 3,
+      "non_initializer_occurrences": 2,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/recruitment.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 70,
+          "text": "particle.footholds.cumulative_recruits.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 226,
+          "text": "if index >= particle.footholds.cumulative_recruits.len() {"
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 229,
+          "text": "particle.footholds.cumulative_recruits[index] += represented_mass.max(0.0);"
+        }
+      ]
+    },
+    "cumulative_actions": {
+      "total_occurrences": 3,
+      "non_initializer_occurrences": 2,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 71,
+          "text": "particle.footholds.cumulative_actions.push(0.0);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 1017,
+          "text": "if index >= particle.footholds.cumulative_actions.len() {"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 1021,
+          "text": "particle.footholds.cumulative_actions[index] += 1.0;"
+        }
+      ]
+    },
+    "viable_activation_count": {
+      "total_occurrences": 4,
+      "non_initializer_occurrences": 2,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 72,
+          "text": "particle.footholds.viable_activation_count.push(0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3566,
+          "text": "particle.footholds.viable_activation_count[index] = u32::from(viable);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 944,
+          "text": "particle.footholds.viable_activation_count[index] ="
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 945,
+          "text": "particle.footholds.viable_activation_count[index].saturating_add(1);"
+        }
+      ]
+    },
+    "renewal_count": {
+      "total_occurrences": 10,
+      "non_initializer_occurrences": 9,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/organizations.rs",
+        "rust/pineland-model/src/recruitment.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 73,
+          "text": "particle.footholds.renewal_count.push(0);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 936,
+          "text": "particle.footholds.renewal_count[index] ="
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 937,
+          "text": "particle.footholds.renewal_count[index].saturating_add(1);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 987,
+          "text": "particle.footholds.renewal_count[index] ="
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 988,
+          "text": "particle.footholds.renewal_count[index].saturating_add(1);"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 1022,
+          "text": "particle.footholds.renewal_count[index] ="
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 1023,
+          "text": "particle.footholds.renewal_count[index].saturating_add(1);"
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 230,
+          "text": "particle.footholds.renewal_count[index] ="
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 231,
+          "text": "particle.footholds.renewal_count[index].saturating_add(1);"
+        },
+        {
+          "file": "rust/pineland-model/src/recruitment.rs",
+          "line": 879,
+          "text": "&& particle.footholds.renewal_count[foothold_index] > 0"
+        }
+      ]
+    },
+    "active": {
+      "total_occurrences": 7,
+      "non_initializer_occurrences": 4,
+      "files": [
+        "rust/pineland-model/src/foreign.rs",
+        "rust/pineland-model/src/lib.rs",
+        "rust/pineland-model/src/organizations.rs"
+      ],
+      "sample": [
+        {
+          "file": "rust/pineland-model/src/foreign.rs",
+          "line": 74,
+          "text": "particle.footholds.active.push(0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3462,
+          "text": "particle.footholds.active.fill(0);"
+        },
+        {
+          "file": "rust/pineland-model/src/lib.rs",
+          "line": 3477,
+          "text": "particle.footholds.active[index] = 1;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 676,
+          "text": "particle.footholds.active[index] = 1;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 919,
+          "text": "if particle.footholds.active[index] == 0 {"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 985,
+          "text": "particle.footholds.active[index] = 1;"
+        },
+        {
+          "file": "rust/pineland-model/src/organizations.rs",
+          "line": 1020,
+          "text": "particle.footholds.active[index] = 1;"
+        }
+      ]
+    }
+  },
+  "adjudicated_findings": [
+    {
+      "id": "A1",
+      "finding": "local embeddedness uses a probabilistic-OR composition of member, pool, formation, and institutional channels",
+      "evidence": "rust/pineland-model/src/organizations.rs::local_embeddedness"
+    },
+    {
+      "id": "A2",
+      "finding": "recruitment access uses a max operator across social, formation, member, and foothold access",
+      "evidence": "rust/pineland-model/src/recruitment.rs::update"
+    },
+    {
+      "id": "A3",
+      "finding": "FootholdState access/target_knowledge/infrastructure/sustainment have substantially weaker live transition usage than foothold strength and renewal counters",
+      "evidence": "field-level occurrence audit; absence of a read is evidence about implementation, not substantive irrelevance"
+    },
+    {
+      "id": "A4",
+      "finding": "global organization local_knowledge and locality-specific information coexist; they must not be collapsed without a closure test",
+      "evidence": "OrganizationState.local_knowledge plus BeliefState/PresenceState/FormationState.information"
+    },
+    {
+      "id": "A5",
+      "finding": "adapt_organization implements stochastic phenotype mutation around current traits, not explicit reward-directed strategic learning",
+      "evidence": "rust/pineland-model/src/organizations.rs::adapt_organization"
+    }
+  ]
+}

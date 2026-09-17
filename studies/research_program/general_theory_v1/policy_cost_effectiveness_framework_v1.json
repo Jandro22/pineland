@@ -1,0 +1,57 @@
+{
+  "schema_version": "pineland.policy_cost_effectiveness_framework.v1",
+  "status": "FROZEN_CROSS_INTERVENTION_ACCOUNTING_STANDARD",
+  "historical_outcomes_used": false,
+  "purpose": "Make development, air-support, security, and later government-policy mechanism assays comparable without hiding distinct outcomes inside one utility score.",
+  "cost_denominators": {
+    "preferred": "within-seed gross incremental government organizational-capital outflow during the intervention relative to the matched baseline",
+    "development": "incremental nominal public-development outflow when isolating development allocation/dose; also report total incremental government outflow to expose crowd-out",
+    "air_support": "incremental combat-event government-capital outflow attributable to the support operator; also report total incremental government outflow",
+    "force_equipment": "no dollar-equivalent denominator until a separate acquisition/operating-cost calibration exists; report supply/readiness/terrain burdens and government losses instead",
+    "net_capital_change": "never use as the primary cost denominator because unrelated inflows can offset intervention outflow"
+  },
+  "normalization": {
+    "default_monthly_federal_policy_budget_capital": 120000.0,
+    "one_percent_monthly_budget_capital": 1200.0,
+    "reporting_rule": "For interventions with an explicit capital cost, report outcome improvement per 1,200 incremental capital in addition to raw effect and raw spend.",
+    "usd_mapping": "If an external calibration later assigns B USD to one default monthly federal policy budget, then 1 capital unit = B/120000 USD and 1200 capital = 0.01*B USD. No B is assumed here."
+  },
+  "suppression_outcomes": [
+    "cumulative recruits prevented since anchor",
+    "recruitment-hazard mass reduced",
+    "rooted armed membership reduced",
+    "active-owner fielded insurgent force reduced",
+    "foothold strength reduced",
+    "insurgent actions prevented",
+    "population-weighted insurgent control reduced"
+  ],
+  "state_side_outcomes": [
+    "population-weighted government control gained",
+    "government legitimacy gained",
+    "political access gained",
+    "local institution capacity gained"
+  ],
+  "externalities_reported_separately": [
+    "government military losses",
+    "civilian population loss",
+    "displacement",
+    "military readiness",
+    "military supply fraction"
+  ],
+  "durability": {
+    "requirement": "Measure at intervention end and again after intervention-specific settings return to baseline.",
+    "retention_ratio": "final paired improvement / intervention-end paired improvement when the intervention-end effect is positive and nontrivial",
+    "rule": "Do not call an intervention durably suppressive when its apparent end-of-intervention gain substantially disappears or reverses after withdrawal."
+  },
+  "decision_rule": {
+    "single_utility_score": false,
+    "method": "Pareto comparison across suppression, cost, government losses, civilian harm/displacement, and durable state outcomes.",
+    "dominated_intervention": "An intervention is dominated when another tested intervention is no worse on every declared comparison dimension and materially better on at least one, subject to sampling uncertainty."
+  },
+  "guards": [
+    "Internal capital is not USD.",
+    "Synthetic effect sizes are not empirical COIN returns.",
+    "Do not infer a real-world operational recommendation from a synthetic mechanism ranking.",
+    "Do not compare a costed intervention to an uncosted force-composition profile as though both had dollar denominators."
+  ]
+}

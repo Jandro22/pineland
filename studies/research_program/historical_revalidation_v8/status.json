@@ -1,0 +1,16 @@
+{
+  "completed_stages": [
+    "nepal_full",
+    "nepal_competition",
+    "afghanistan_init",
+    "afghanistan_smoke",
+    "afghanistan_year"
+  ],
+  "current_stage": "afghanistan_full",
+  "status": "stopped_by_user_after_7500",
+  "completed_afghanistan_full_strengths": [5000, 7500],
+  "next_strength_not_completed": 10000,
+  "afghanistan_competition_completed": false,
+  "historical_confrontation_gate_completed": false,
+  "stop_reason": "User requested stopping after the 7500-strength Afghanistan condition. The coordinator was interrupted after that condition passed and before a valid 10000-strength member could be produced."
+}

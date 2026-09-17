@@ -1,0 +1,269 @@
+{
+  "schema_version": "pineland.reproduction_impulse_analysis.v2",
+  "status": "synthetic_finite_horizon_first_generation_kernel",
+  "historical_outcomes_used": false,
+  "input": "studies\\research_program\\general_theory_v1\\reproduction_impulse_8seed_30d_v3.csv",
+  "input_sha256": "854b3f1c591b231f55197b15dba448b6ab035092c5fe68be4c94124ec4a3926c",
+  "integrity": {
+    "rows": 19584,
+    "expected_rows": 19584,
+    "complete": true,
+    "seed_count": 8,
+    "origin_count": 17,
+    "parent_types": [
+      "E",
+      "F",
+      "FG",
+      "G",
+      "M",
+      "MF",
+      "MFG",
+      "MG",
+      "none"
+    ]
+  },
+  "parent_summary": {
+    "E": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 0.0,
+      "sd_offspring": 0.0,
+      "p_any_offspring": 0.0,
+      "max_offspring": 0,
+      "total_offspring": 0
+    },
+    "F": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 0.0,
+      "sd_offspring": 0.0,
+      "p_any_offspring": 0.0,
+      "max_offspring": 0,
+      "total_offspring": 0
+    },
+    "FG": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 0.0,
+      "sd_offspring": 0.0,
+      "p_any_offspring": 0.0,
+      "max_offspring": 0,
+      "total_offspring": 0
+    },
+    "G": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 0.0,
+      "sd_offspring": 0.0,
+      "p_any_offspring": 0.0,
+      "max_offspring": 0,
+      "total_offspring": 0
+    },
+    "M": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 1.5514705882352942,
+      "sd_offspring": 1.2520788813227648,
+      "p_any_offspring": 0.8014705882352942,
+      "max_offspring": 6,
+      "total_offspring": 211
+    },
+    "MF": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 1.75,
+      "sd_offspring": 1.2337837015547832,
+      "p_any_offspring": 0.8676470588235294,
+      "max_offspring": 5,
+      "total_offspring": 238
+    },
+    "MFG": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 1.75,
+      "sd_offspring": 1.2337837015547832,
+      "p_any_offspring": 0.8676470588235294,
+      "max_offspring": 5,
+      "total_offspring": 238
+    },
+    "MG": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 1.5514705882352942,
+      "sd_offspring": 1.2520788813227648,
+      "p_any_offspring": 0.8014705882352942,
+      "max_offspring": 6,
+      "total_offspring": 211
+    },
+    "none": {
+      "n_parent_experiments": 136,
+      "mean_offspring": 0.0,
+      "sd_offspring": 0.0,
+      "p_any_offspring": 0.0,
+      "max_offspring": 0,
+      "total_offspring": 0
+    }
+  },
+  "placebo_passed": true,
+  "child_signature_counts": {
+    "M": {
+      "MF": 191,
+      "M": 11,
+      "F": 9
+    },
+    "MF": {
+      "MF": 202,
+      "M": 24,
+      "F": 12
+    },
+    "MFG": {
+      "MF": 202,
+      "M": 24,
+      "F": 12
+    },
+    "MG": {
+      "MF": 191,
+      "M": 11,
+      "F": 9
+    }
+  },
+  "trigger_counts": {
+    "M": {
+      "recruitment": 209,
+      "force_movement": 2
+    },
+    "MF": {
+      "recruitment": 236,
+      "force_movement": 2
+    },
+    "MFG": {
+      "recruitment": 236,
+      "force_movement": 2
+    },
+    "MG": {
+      "recruitment": 209,
+      "force_movement": 2
+    }
+  },
+  "spatial": {
+    "M": {
+      "n": 211,
+      "adjacent_fraction": 0.22748815165876776,
+      "median_distance_km": 77.79460135510689,
+      "mean_distance_km": 80.39739216232263,
+      "median_first_time_days": 21.0,
+      "p90_first_time_days": 28.0
+    },
+    "MF": {
+      "n": 238,
+      "adjacent_fraction": 0.3025210084033613,
+      "median_distance_km": 76.15773105863907,
+      "mean_distance_km": 77.82547302467616,
+      "median_first_time_days": 21.0,
+      "p90_first_time_days": 28.0
+    },
+    "MFG": {
+      "n": 238,
+      "adjacent_fraction": 0.3025210084033613,
+      "median_distance_km": 76.15773105863907,
+      "mean_distance_km": 77.82547302467616,
+      "median_first_time_days": 21.0,
+      "p90_first_time_days": 28.0
+    },
+    "MG": {
+      "n": 211,
+      "adjacent_fraction": 0.22748815165876776,
+      "median_distance_km": 77.79460135510689,
+      "mean_distance_km": 80.39739216232263,
+      "median_first_time_days": 21.0,
+      "p90_first_time_days": 28.0
+    }
+  },
+  "kernel": {
+    "type_order": [
+      "E",
+      "M",
+      "F",
+      "G",
+      "MF",
+      "MG",
+      "FG",
+      "MFG"
+    ],
+    "locality_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "shape": [
+      136,
+      136
+    ],
+    "horizon_days": 30.0,
+    "rho_K_horizon": 1.6584328235244976,
+    "rho_seed_bootstrap_ci95": [
+      1.085362064830196,
+      2.0287223104130776
+    ],
+    "bootstrap_replicates": 1000,
+    "row_summary": {
+      "E": {
+        "mean_excess_offspring": 0.0,
+        "median_excess_offspring": 0.0,
+        "max_excess_offspring": 0.0
+      },
+      "M": {
+        "mean_excess_offspring": 1.5514705882352942,
+        "median_excess_offspring": 1.625,
+        "max_excess_offspring": 2.625
+      },
+      "F": {
+        "mean_excess_offspring": 0.0,
+        "median_excess_offspring": 0.0,
+        "max_excess_offspring": 0.0
+      },
+      "G": {
+        "mean_excess_offspring": 0.0,
+        "median_excess_offspring": 0.0,
+        "max_excess_offspring": 0.0
+      },
+      "MF": {
+        "mean_excess_offspring": 1.75,
+        "median_excess_offspring": 1.75,
+        "max_excess_offspring": 2.5
+      },
+      "MG": {
+        "mean_excess_offspring": 1.5514705882352942,
+        "median_excess_offspring": 1.625,
+        "max_excess_offspring": 2.625
+      },
+      "FG": {
+        "mean_excess_offspring": 0.0,
+        "median_excess_offspring": 0.0,
+        "max_excess_offspring": 0.0
+      },
+      "MFG": {
+        "mean_excess_offspring": 1.75,
+        "median_excess_offspring": 1.75,
+        "max_excess_offspring": 2.5
+      }
+    },
+    "child_mass": {
+      "E": 0.0,
+      "M": 8.75,
+      "F": 5.25,
+      "G": 0.0,
+      "MF": 98.25,
+      "MG": 0.0,
+      "FG": 0.0,
+      "MFG": 0.0
+    }
+  },
+  "interpretation_guard": "K_h is a finite-horizon, experimentally isolated first-generation kernel. Pure relocation/E-only viability is excluded and no-parent spontaneous ignition is subtracted. rho(K_90) is not yet promoted as a lifetime R_I; horizon convergence and replication under structural contexts are required."
+}

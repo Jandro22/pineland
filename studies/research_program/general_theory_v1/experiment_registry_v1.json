@@ -1,0 +1,24 @@
+{
+  "schema_version": "pineland.general_theory_experiment_registry.v1",
+  "status": "v1_experiments_partly_complete_v2_hardening_active",
+  "historical_rerun_authorized": false,
+  "experiments": [
+    {"order":1,"id":"GT01_source_mapping","purpose":"validate model-to-theory map and flag dead/proxy-only fields","historical":false},
+    {"order":2,"id":"GT02_macrostate_panel","purpose":"emit locality-time macrostate panel from native Rust engine across synthetic seeds","historical":false},
+    {"order":3,"id":"GT03_macrostate_closure","purpose":"compare reduced macrostate and expanded predictors with seed-grouped holdout","historical":false},
+    {"order":4,"id":"GT04_channel_factorial","purpose":"measure complementarity/substitution signatures by matched channel knockouts/rescues","historical":false},
+    {"order":5,"id":"GT05_reproduction_operator","purpose":"estimate pathway-resolved multitype K and criticality under synthetic truth","historical":false},
+    {"order":6,"id":"GT06_criticality_sweep","purpose":"force subcritical/near-critical/supercritical regimes and test growth/extinction predictions","historical":false},
+    {"order":7,"id":"GT07_dimensionless_phase_diagram","purpose":"search for phase collapse in dimensionless groups","historical":false},
+    {"order":8,"id":"GT08_state_side_reproduction","purpose":"construct indigenous state reproduction and withdrawal-durability test","historical":false},
+    {"order":9,"id":"GT09_resolution_invariance","purpose":"test timestep, agent, spatial/topology invariance of surviving relations","historical":false},
+    {"order":10,"id":"GT03B_distributional_closure","purpose":"common-random-number adversarial continuation of near-matched full microstates for minimal4/minimal5","historical":false},
+    {"order":11,"id":"GT07B_empirical_phase_map","purpose":"sample multidimensional synthetic phase space and infer regime boundaries rather than hand-code them","historical":false},
+    {"order":12,"id":"GT09_resolution_invariance_v2","purpose":"test agent resolution, topology family, timing, and structural-context invariance of surviving mechanisms","historical":false},
+    {"order":13,"id":"GT10B_reduced_system_holdout","purpose":"derive/freeze reduced equations and parameters, then test on untouched seeds, cells, topologies, and interventions","historical":false},
+    {"order":14,"id":"GT10C_freeze_robust_synthetic_core","purpose":"issue corrected theory certificate only for claims passing v2 hardening gates","historical":false},
+    {"order":15,"id":"GT11_historical_transport","purpose":"eligible historical transport and reduced competitors only after corrected synthetic freeze","historical":true,"authorized":false},
+    {"order":16,"id":"GT16_force_discrimination_v1","purpose":"preregistered synthetic discrimination of police professionalism and formation veterancy against redundancy","historical":false,"status":"COMPLETE_CONFIRMED_DISTINCT"},
+    {"order":17,"id":"GT08B_state_regeneration_v2","purpose":"preregistered hierarchical state regeneration assay with 100% mechanism flow and timescale evaluation","historical":false,"status":"COMPLETE_SLOW_MANIFOLD"}
+  ]
+}

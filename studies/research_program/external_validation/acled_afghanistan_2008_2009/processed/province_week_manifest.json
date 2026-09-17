@@ -1,0 +1,56 @@
+{
+  "acquisition_manifest_sha256": "157d901d697facafcb5a92e43a0126cb80b52e3da61a3ab3664705b7b82e6e40",
+  "bundle_sha256": "3a70eb1bf411775aaa6f8d24d64c773d5222626ce5c3e8a3b25261fd771aa8db",
+  "contract_sha256": "1768adf2bc212d2db41fe3f7be71163967d3e782328fa2dd8e7d63f289dd2631",
+  "event_file_sha256": "7893cbebea28c269672664b1fee1395da1f7264b742da397ce92330f467c091e",
+  "interpretation_guard": "A zero ACLED cell means source-silent under this archival collection, not known latent peace. This panel is licensed for independent source-family predictive scoring/concordance only.",
+  "mapping_changed_after_row_inspection": false,
+  "outputs": {
+    "2008": {
+      "path": "studies/research_program/external_validation/acled_afghanistan_2008_2009/processed/acled_afghanistan_2008_province_week.csv",
+      "reported_active_cells": 366,
+      "rows": 1802,
+      "sha256": "daf875ea3e83554f4cc2bfd4086852974a9439b4dde533452ce6d4bd09816218"
+    },
+    "2009": {
+      "path": "studies/research_program/external_validation/acled_afghanistan_2008_2009/processed/acled_afghanistan_2009_province_week.csv",
+      "reported_active_cells": 268,
+      "rows": 1802,
+      "sha256": "f91ed1ceefe834c9feaef82d4afd513a668f6ee257c7bea46dea86b8fbabe8cf"
+    }
+  },
+  "pineland_outputs_used_to_build_mapping": false,
+  "rejected_rows": {
+    "path": "studies/research_program/external_validation/acled_afghanistan_2008_2009/processed/acled_unmapped_actor_construct_rows.csv",
+    "rows": 0,
+    "sha256": "01a2f5ce2617a0b41b001cc19b03adac2d40970191c267fd2a841597107663f4"
+  },
+  "schema_version": "pineland.afghanistan.acled_province_week_manifest.v1",
+  "stats": {
+    "actor_construct_rows": {
+      "2008": 701,
+      "2009": 401
+    },
+    "afghanistan_rows": 2570,
+    "mapped_actor_construct_rows": {
+      "2008": 701,
+      "2009": 401
+    },
+    "rejected_invalid_coordinate": 0,
+    "rejected_invalid_date": 0,
+    "rejected_no_actor_match": {
+      "2008": 328,
+      "2009": 1140
+    },
+    "rejected_unmapped_point": {
+      "2008": 0,
+      "2009": 0
+    },
+    "rows_total": 5189,
+    "year_rows": {
+      "2008": 1029,
+      "2009": 1541
+    }
+  },
+  "ucdp_outcomes_used_to_build_mapping": false
+}

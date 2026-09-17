@@ -38,6 +38,10 @@ CACHE_DIR_NAMES = {
     "htmlcov",
 }
 
+LOCAL_BUILD_DIRS = {
+    ROOT / "src" / "pineland_sim" / "_native",
+}
+
 
 def tree_stats(path: Path) -> tuple[int, int, float]:
     """Return (bytes, files, newest_mtime) for a file tree."""
@@ -90,6 +94,19 @@ def disposable_paths(root: Path = ROOT) -> list[Path]:
 
     for cache_name in CACHE_DIR_NAMES:
         paths.extend(p for p in root.rglob(cache_name) if p.is_dir())
+
+    # Cargo writes CACHEDIR.TAG at the root of target directories.  Discovering
+    # by marker is safer than maintaining a growing list of ad-hoc target names
+    # (target-policy-v6, target-breakthrough-v15, native_probe/target-*, ...).
+    # The tracked-file guard below still refuses any false positive.
+    for marker in root.rglob("CACHEDIR.TAG"):
+        parent = marker.parent
+        if parent.name == "target" or parent.name.startswith("target-"):
+            paths.append(parent)
+
+    for path in LOCAL_BUILD_DIRS:
+        if path.exists():
+            paths.append(path)
     return sorted(set(paths))
 
 

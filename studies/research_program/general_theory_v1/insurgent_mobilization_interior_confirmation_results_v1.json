@@ -1,0 +1,87 @@
+{
+  "schema_version": "pineland.insurgent_mobilization_interior_optimum_confirmation_results.v1",
+  "status": "METABOLIC_CEILING_CONFIRMED_INTERIOR_OPTIMUM_NOT_CONFIRMED",
+  "historical_outcomes_used": false,
+  "input": "studies/research_program/general_theory_v1/insurgent_mobilization_interior_confirmation_16seed_v1.csv",
+  "input_sha256": "990151519c6e01f45d7fd34acbc234a39eb0cb85345b6769598c4a5fd529b2d2",
+  "seed_count": 16,
+  "cell_summary": [
+    {
+      "recruitment_multiplier": 0.0,
+      "n": 16,
+      "joint_viability_fraction": 1.0,
+      "collapse_fraction": 0.0,
+      "median_final_rooted": 92400.00065981419,
+      "median_final_operational_force": 7239.19280122129,
+      "median_final_capital": 89356.33898086962,
+      "median_final_cumulative_recruitment": 0.0,
+      "median_runway_ratio": 0.0,
+      "collapse_causes": {}
+    },
+    {
+      "recruitment_multiplier": 0.03125,
+      "n": 16,
+      "joint_viability_fraction": 1.0,
+      "collapse_fraction": 0.0,
+      "median_final_rooted": 98266.668167381,
+      "median_final_operational_force": 7704.82195269659,
+      "median_final_capital": 75295.10275924938,
+      "median_final_cumulative_recruitment": 7333.331824933103,
+      "median_runway_ratio": 0.1575382537884782,
+      "collapse_causes": {}
+    },
+    {
+      "recruitment_multiplier": 0.0625,
+      "n": 16,
+      "joint_viability_fraction": 1.0,
+      "collapse_fraction": 0.0,
+      "median_final_rooted": 108533.31270638923,
+      "median_final_operational_force": 8402.24330841318,
+      "median_final_capital": 54197.5868866793,
+      "median_final_cumulative_recruitment": 18333.308266035347,
+      "median_runway_ratio": 0.3937472135992176,
+      "collapse_causes": {}
+    },
+    {
+      "recruitment_multiplier": 0.125,
+      "n": 16,
+      "joint_viability_fraction": 0.75,
+      "collapse_fraction": 0.25,
+      "median_final_rooted": 129066.60490347276,
+      "median_final_operational_force": 9774.964388618066,
+      "median_final_capital": 4910.981551931045,
+      "median_final_cumulative_recruitment": 43999.96840350211,
+      "median_runway_ratio": 0.9450617495761883,
+      "collapse_causes": {
+        "capital": 4
+      }
+    },
+    {
+      "recruitment_multiplier": 0.25,
+      "n": 16,
+      "joint_viability_fraction": 0.0,
+      "collapse_fraction": 1.0,
+      "median_final_rooted": 0.0,
+      "median_final_operational_force": 0.0,
+      "median_final_capital": 0.0,
+      "median_final_cumulative_recruitment": 46933.312567891946,
+      "median_runway_ratio": 1.0,
+      "collapse_causes": {
+        "capital": 16
+      }
+    }
+  ],
+  "mean_interior_joint_viability": 0.9166666666666666,
+  "zero_joint_viability": 1.0,
+  "0.25_joint_viability": 0.0,
+  "0.25_capital_trigger_share_among_collapses": 1.0,
+  "zero_capital_trigger_fraction_all_cases": 0.0,
+  "gates": {
+    "interior_beats_zero_by_0.05": false,
+    "interior_beats_0.25_by_0.50": true,
+    "0.25_capital_collapse_share_at_least_0.75": true,
+    "zero_stochastic_plurality": true,
+    "zero_capital_trigger_fraction_at_most_0.25": true
+  },
+  "guard": "Fresh synthetic confirmation only; confirms a mechanism band, not an empirical recruitment-rate optimum."
+}

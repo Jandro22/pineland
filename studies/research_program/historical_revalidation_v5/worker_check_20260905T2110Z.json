@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-09-05T21:11:00.1572564Z",
+  "finding": "No simulation workers, coordinator, or watcher present; saved running status stale",
+  "cause": "undetermined; no error recorded in stage log",
+  "completed_seeds": [
+    20011126,
+    20021133,
+    20031140,
+    20041147
+  ],
+  "missing_seeds": [
+    20051154,
+    20061161,
+    20071168,
+    20081175
+  ],
+  "prior_output_validation": "model start/end and execution diff match contract",
+  "action": "resume only missing seeds on original frozen core; no force overwrite"
+}

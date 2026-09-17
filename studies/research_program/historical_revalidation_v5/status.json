@@ -1,0 +1,16 @@
+{
+  "completed_stages": [
+    "nepal_full",
+    "nepal_competition",
+    "afghanistan_init",
+    "afghanistan_smoke",
+    "afghanistan_year"
+  ],
+  "current_stage": "afghanistan_full_blocked",
+  "returncode": 0,
+  "status": "blocked",
+  "reason": "The repaired 366-day latent/scaling gate passes, but the generic downstream recording operator remains independently unlicensed. Do not automatically launch the 17.6-year Afghanistan stage or tune recording parameters on the observed Afghanistan target.",
+  "repair_gate": "studies/research_program/afghanistan_performance/year_equipped_pool_final_gate.json",
+  "repair_run": "studies/research_program/afghanistan_performance/year_equipped_pool_final.json",
+  "automatic_full_horizon_launch": false
+}

@@ -1,0 +1,70 @@
+{
+  "artifacts": {
+    "auxiliary_observations": {
+      "bytes": 7489,
+      "path": "studies/research_program/external_validation/nigeria_2014/standard_v2/auxiliary_observations.parquet",
+      "rows": 0,
+      "sha256": "f75481559457ce2bd05bdbc31f6a1e5544bdf57e85091b7f4b5b1efaceed23bd"
+    },
+    "events": {
+      "bytes": 10586,
+      "path": "studies/research_program/external_validation/nigeria_2014/standard_v2/events.parquet",
+      "rows": 0,
+      "sha256": "2e5626b7d585aca0c107d1906e3476e64de4faf4a12c39010ac4b1c712d4e162"
+    },
+    "geography": {
+      "bytes": 9525,
+      "path": "studies/research_program/external_validation/nigeria_2014/standard_v2/geography.parquet",
+      "rows": 37,
+      "sha256": "1a7f1c28d1f26381aec57beb33adf3941e3c67ef1823d6a0b1b2a139a30317f6"
+    },
+    "observability_map": {
+      "bytes": 2906,
+      "path": "studies/research_program/external_validation/nigeria_2014/standard_v2/observability_map.json",
+      "sha256": "1f23e28cf9a3bb0318b2476696f6332623914fed4fa2fb6d82548393de5e5bf2"
+    },
+    "quality_report": {
+      "bytes": 1303,
+      "path": "studies/research_program/external_validation/nigeria_2014/standard_v2/quality_report.json",
+      "sha256": "48ca4b681fc90750f897d6add4d12dc0ab69295a5517c25e2d1c73cb8c6aec2b"
+    },
+    "unit_time": {
+      "bytes": 9067,
+      "path": "studies/research_program/external_validation/nigeria_2014/standard_v2/unit_time.parquet",
+      "rows": 37,
+      "sha256": "fa8f9dca7981791f4b884e7a24ecdf9e4c5045de1915983117d1dd10dd21911e"
+    }
+  },
+  "build_timestamp_utc": "2026-09-12T00:17:09.028971+00:00",
+  "builder_sha256": "5d27ac5013b8ded51353965c5d73bfee49d69662c53f6a6e38ebe7eb0c982857",
+  "case_id": "nigeria_2014",
+  "case_metadata": {
+    "sealed": true
+  },
+  "historical_target_firewall": "2014 GED target archive intentionally not opened or read by this builder; target_rows_read remains false.",
+  "repository_revision": "a2b792e1e3b91345192f6bd7c619c688ebd7287e",
+  "schema_version": "pineland.historical_database_manifest.v2",
+  "source_artifacts": [
+    {
+      "bytes": 111798,
+      "path": "studies/research_program/external_validation/nigeria_2014/raw/gadm41_NGA_1.json.zip",
+      "sha256": "9fc2a23c654b1e834c4c44ce47005199b3b7916501355bd426e4c54b7d337e23"
+    },
+    {
+      "bytes": 15530698,
+      "path": "studies/research_program/external_validation/nigeria_2014/raw/nga_ppp_2014_1km_ASCII_XYZ.zip",
+      "sha256": "d3bcb2f1ad3fdd494fa67191263697da60defc5aa9d4e81367b97f5980140092"
+    },
+    {
+      "bytes": 1370,
+      "path": "studies/research_program/external_validation/nigeria_2014/raw/acquisition_manifest.json",
+      "sha256": "7fcb243a6078b610761841450d20012bc771457085b6e592c9f85e5c56bb9431"
+    },
+    {
+      "bytes": 1412,
+      "path": "studies/research_program/nigeria_2014_external_holdout_certificate.json",
+      "sha256": "524a154390fa2839ca23d604c94b5eb95b2e9a53113111596c6431182e0dc182"
+    }
+  ],
+  "standard_sha256": "c94113a221547d2878295cdb2c29350ac64517cea31370cd03fd62800faee0ea"
+}

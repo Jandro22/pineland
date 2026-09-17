@@ -1,0 +1,23 @@
+﻿{
+  "schema_version": "pineland.model_theory_map.v1",
+  "status": "source_audited_mapping_not_empirical_validation",
+  "mapping": [
+    {"symbol":"M","construct":"embedded local membership/rooted social base","rust_state":["PersonState.organization","PersonState.armed_fraction","PersonState.represented_population","PersonState.home","PersonState.residence","PersonState.social_exposure","ManpowerState.pool"],"transitions":["recruitment.rs::update","social.rs::update","organizations.rs ecology","combat.rs","movement.rs"]},
+    {"symbol":"F","construct":"fielded deployable armed capacity","rust_state":["FormationState.personnel","availability","readiness","sustainment","command","fatigue","quality","cohesion","locality","moving","operational_status"],"transitions":["recruitment.rs fighter conversion","combat.rs","movement.rs","logistics.rs"]},
+    {"symbol":"L","construct":"local sustainment/logistics","rust_state":["FormationState.supply_stock","supply_capacity","sustainment","ManpowerState.supply_reserve","LogisticsState.source_stock","source_capacity","source_production","shipment_*"],"transitions":["logistics.rs","actions.rs","combat.rs","movement.rs"]},
+    {"symbol":"K","construct":"local operational knowledge/actor belief quality","rust_state":["BeliefState.*","PresenceState.*","ZoneBeliefState.*","InformationObservation","FormationState.information","OrganizationState.local_knowledge"],"transitions":["information.rs","beliefs.rs","patrol.rs","combat.rs"],"warning":"OrganizationState.local_knowledge is organization-wide; treat it as tradecraft, not the theoretical locality-specific K."},
+    {"symbol":"E","construct":"persistent local organizational embeddedness","rust_state":["FootholdState.strength","renewal_count","cumulative_*","FormationState.embeddedness","organization-specific local control","rooted membership","local manpower/supply pool"],"transitions":["organizations.rs::local_embeddedness","advance_footholds","record_foothold_arrival","record_foothold_action","recruitment.rs::record_foothold_recruitment"]},
+    {"symbol":"C","construct":"multidimensional political-security control","rust_state":["LocalityState.government_control[7]","insurgent_control[7]","organization_control[7]","ZoneState control"],"transitions":["physical.rs","governance.rs","social.rs","political.rs","actions.rs","combat.rs"]},
+    {"symbol":"X","construct":"civilian expectations/political response","rust_state":["PersonState.expected_control","state_legitimacy","government_legitimacy","political_access","grievance","fear","efficacy","trust","trust_insurgent","public_behavior"],"transitions":["beliefs.rs","social.rs","political.rs","combat.rs","foreign.rs","movement.rs"]},
+    {"symbol":"S","construct":"state-side locally reproduced security/institutional order","rust_state":["PoliticalState.institution_*","SecurityPostState.*","government_control[7]","LocalityState.administrative_capacity","government_governance"],"transitions":["governance.rs","political.rs","physical.rs","patrol.rs","foreign.rs"]},
+    {"symbol":"U","construct":"exogenous replenishment/dependence","rust_state":["ForeignSystemState.*","ForeignInterventionState.*","OrganizationState.external_support","external_sanctuary"],"transitions":["foreign.rs","logistics.rs","movement.rs"]}
+  ],
+  "source_findings": [
+    {"id":"A1","finding":"local_embeddedness combines member, pool, formation, and institutional channels as 1-product(1-channel): a substitution/OR architecture."},
+    {"id":"A2","finding":"recruitment access uses max of social, formation, member, and foothold access: another strong substitution architecture."},
+    {"id":"A3","finding":"action opportunity hazard is proportional to committed fighter equivalents; access/knowledge mostly shape action channel and execution downstream."},
+    {"id":"A4","finding":"FootholdState access, target_knowledge, infrastructure, and sustainment are initialized but are not broadly live inputs to foothold dynamics in the audited Rust core; field existence is not mechanism validation."},
+    {"id":"A5","finding":"organization adaptation is stochastic phenotype mutation, not clearly reward-directed strategic learning."},
+    {"id":"A6","finding":"Phase-E reduced equations are schematic theory, not literal Rust transition equations; reduction must be validated on synthetic trajectories."}
+  ]
+}

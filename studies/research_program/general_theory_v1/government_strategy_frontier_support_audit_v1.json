@@ -1,0 +1,73 @@
+{
+  "schema_version": "pineland.government_strategy_frontier_support_audit.v1",
+  "status": "DEFAULT_SUPPORT_NONDISCRIMINATING_FOR_REPRODUCTIVE_SUPPRESSION",
+  "historical_outcomes_used": false,
+  "input_sha256": "a46927c08128174ff150f619e926fb02026723f00af4481759e20d9c405a14a2",
+  "baseline_support": {
+    "anchor": {
+      "n": 12,
+      "live_reproductive_n": 6,
+      "live_reproductive_fraction": 0.5,
+      "median_rooted": 69274.30538675161,
+      "median_hazard": 451.07236794354816,
+      "median_force": 11617.242803010016,
+      "median_insurgent_control": 0.03310711451820775
+    },
+    "intervention_end": {
+      "n": 12,
+      "live_reproductive_n": 0,
+      "live_reproductive_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 11683.842546166044,
+      "median_insurgent_control": 0.032773912444739844
+    },
+    "final": {
+      "n": 12,
+      "live_reproductive_n": 0,
+      "live_reproductive_fraction": 0.0,
+      "median_rooted": 0.0,
+      "median_hazard": 0.0,
+      "median_force": 11683.842546166044,
+      "median_insurgent_control": 0.032773912444739844
+    }
+  },
+  "conclusion": "The default-policy support cannot identify a comparative effect on insurgent reproductive state because only half the seeds are live at anchor and zero are live by intervention end/final under baseline. Reproductive suppression rankings from this run are not licensed.",
+  "government_side_secondary_finding": {
+    "clean_governance_final_institution_capacity_gain": {
+      "n": 12,
+      "mean": 0.011914243981551853,
+      "ci95": [
+        0.011789165348565936,
+        0.012039322614537771
+      ]
+    },
+    "spending_surge_final_institution_capacity_gain": {
+      "n": 12,
+      "mean": 0.002772044280307353,
+      "ci95": [
+        0.002649828891962532,
+        0.0028942596686521737
+      ]
+    },
+    "clean_spending_surge_final_institution_capacity_gain": {
+      "n": 12,
+      "mean": 0.015512001005884882,
+      "ci95": [
+        0.015261382092345585,
+        0.01576261991942418
+      ]
+    },
+    "patronage_heavy_final_institution_capacity_gain": {
+      "n": 12,
+      "mean": -0.02253938048016539,
+      "ci95": [
+        -0.022722993461430342,
+        -0.02235576749890044
+      ]
+    },
+    "clean_governance_incremental_gross_outflow": 1.1738542868988588,
+    "spending_surge_incremental_gross_outflow": 720007.9380639272
+  },
+  "next_step": "Use baseline-only challenge-support calibration to select persistent insurgency regimes, then rerun policy frontier on untouched seeds."
+}
