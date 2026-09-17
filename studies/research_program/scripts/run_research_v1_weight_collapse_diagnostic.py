@@ -69,7 +69,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         base,
         namespace="research-v1:weight-diagnostic:truth",
         perturbation_seed=args.truth_seed,
-        perturbation_sd=args.prior_sd,
+        perturbation_sd=args.truth_sd,
     )
     truth = extract_pineland_latent_state(truth_particle.world)
     units = sorted(truth)
@@ -241,6 +241,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "particles": args.particles,
             "particle_count_sweep": args.particle_count_sweep,
             "prior_sd": args.prior_sd,
+            "truth_sd": args.truth_sd,
             "profiles": args.profile,
             "reporting_multipliers": args.reporting_multiplier,
             "locality_count_sweep": args.locality_count_sweep,
@@ -268,6 +269,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="nested particle prefixes evaluated from one maximum-size prior ensemble",
     )
     parser.add_argument("--prior-sd", type=float, default=0.10)
+    parser.add_argument("--truth-sd", type=float, default=0.10)
     parser.add_argument("--initial-insurgent-share", type=float, default=0.001)
     parser.add_argument(
         "--profile",

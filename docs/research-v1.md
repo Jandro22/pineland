@@ -115,11 +115,25 @@ hidden world, reports, and prior ensemble. Radius is therefore treated as an
 estimator-design choice to diagnose spatial dimensionality, not tuned against a
 historical case.
 
+Three additional synthetic diagnostics isolate failure modes before expensive
+dynamic batches are attempted:
+
+```text
+python studies/research_program/scripts/run_research_v1_weight_collapse_diagnostic.py
+python studies/research_program/scripts/run_research_v1_channel_ablation.py
+python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py
+```
+
+The repeated-snapshot benchmark treats the synthetic world as the scientific
+unit and measures paired prior-versus-posterior error across multiple known
+truths. A single world's RMSE change is therefore a pilot diagnostic, not a
+general recoverability claim.
+
 ## Claim firewall
 
-The synthetic benchmark may support statements such as “under this declared
+The synthetic benchmark may support statements such as "under this declared
 observation and transition process, physical control is recoverable with this
-error and coverage.” It cannot support “Pineland reconstructed the true Taliban
-strength in a historical district,” because that historical latent truth is
+error and coverage." It cannot support "Pineland reconstructed the true Taliban
+strength in a historical district," because that historical latent truth is
 not observed. Historical cases answer predictive/transfer questions against
 observable held-out evidence under a separately frozen contract.

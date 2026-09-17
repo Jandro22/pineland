@@ -1150,7 +1150,12 @@ def publication_readiness_report(config: SimulationConfig, *, horizon_days: floa
         "run_expensive": run_expensive,
         "checks": checks,
         "methods_paper_readiness_score": methods_score,
-        "substantive_paper_readiness_score": 35.0 if spec["data_status"].startswith("not supplied") else 70.0,
+        # Research-v1 can execute its synthetic benchmark without historical
+        # data, but that does not license a substantive empirical claim.  Do
+        # not infer empirical readiness from the wording of ``data_status``:
+        # the new contract deliberately says the synthetic benchmark is
+        # executable while historical claims remain unlicensed.
+        "substantive_paper_readiness_score": 35.0,
         "closed_questions": [name for name, passed in checks.items()
                              if passed and name not in {item for item in deferred}],
         "open_or_conditional_questions": [name for name, passed in checks.items() if not passed] + deferred,

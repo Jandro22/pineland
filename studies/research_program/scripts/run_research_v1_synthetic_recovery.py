@@ -223,7 +223,7 @@ def _truth_and_reports(
         base,
         namespace="research-v1:truth",
         perturbation_seed=args.truth_seed,
-        perturbation_sd=args.prior_sd,
+        perturbation_sd=args.truth_sd,
     )
     boundaries = _boundaries(args.days, args.interval_days)
     states: dict[float, dict[str, dict[str, float]]] = {
@@ -715,6 +715,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "particles": args.particles,
             "ess_fraction": args.ess_fraction,
             "prior_control_sd": args.prior_sd,
+            "truth_control_sd": args.truth_sd,
             "variables": list(DEFAULT_VARIABLES),
             "observation_process": asdict(process),
             "observation_profile": args.observation_profile,
@@ -749,6 +750,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--particles", type=int, default=16)
     parser.add_argument("--ess-fraction", type=float, default=0.50)
     parser.add_argument("--prior-sd", type=float, default=0.10)
+    parser.add_argument(
+        "--truth-sd",
+        type=float,
+        default=0.10,
+        help="fixed hidden-world initial-state perturbation; vary prior-sd separately",
+    )
     parser.add_argument("--initial-insurgent-share", type=float, default=0.001)
     parser.add_argument("--reporting-multiplier", type=float, default=1.0)
     parser.add_argument("--geolocation-error-probability", type=float, default=0.08)

@@ -2426,10 +2426,14 @@ class NativeEnsembleRunner:
 
                     if event.event_type == "contact_scan":
                         interval = float(event.payload["interval"])
-                        exposure_days = min(
-                            interval,
-                            max(0.0, end_time - float(event.time)),
-                        )
+                        # Match Simulation.run exactly: a requested horizon is
+                        # an observation boundary, not part of the latent
+                        # transition law.  The scan owns its complete cadence
+                        # window even when the resulting contact/action is
+                        # realized after ``end_time``.  Clipping here makes a
+                        # sequence of short particle advances schedule a
+                        # different future than one uninterrupted advance.
+                        exposure_days = max(0.0, interval)
                         if exposure_days > 0.0:
                             if (
                                 simulation.world.config.combat

@@ -1,0 +1,51 @@
+name: Research v1 core
+
+on:
+  push:
+    branches: [research-v1]
+  pull_request:
+    branches: [research-v1]
+  workflow_dispatch:
+
+concurrency:
+  group: research-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e . pytest
+      - name: Research-v1 focused tests
+        run: >-
+          python -m pytest
+          tests/test_recovery.py
+          tests/test_research_v1_runner.py
+          tests/test_state_estimation.py
+          tests/test_empirical.py
+          -q
+      - name: Emit paper contract
+        run: python pineland.py paper-spec --output outputs/ci-paper-spec.json
+
+  full-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e . pytest
+      - name: Full regression suite
+        run: python -m pytest -q
