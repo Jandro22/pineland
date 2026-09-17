@@ -103,6 +103,40 @@ def test_spatial_likelihood_can_account_for_geolocation_error():
     assert all(observation.geolocation_error for observation in observations)
 
 
+def test_contamination_likelihood_softens_an_extreme_report():
+    state = {"A": {"x": 0.0}}
+    channel = ObservationChannel(
+        "x-report",
+        (("x", 1.0),),
+        measurement_sd=0.05,
+        reporting_probability=1.0,
+    )
+    observation = SyntheticObservation(
+        observation_id="outlier",
+        channel="x-report",
+        state_time=0.0,
+        arrival_time=0.0,
+        true_unit_id="A",
+        reported_unit_id="A",
+        value=1.0,
+        measurement_sd=0.05,
+    )
+    strict = observation_batch_log_likelihood(
+        state,
+        (observation,),
+        channels=(channel,),
+        adjacency={"A": ()},
+    )
+    robust = observation_batch_log_likelihood(
+        state,
+        (observation,),
+        channels=(channel,),
+        adjacency={"A": ()},
+        assumed_false_report_probability=0.1,
+    )
+    assert robust > strict
+
+
 def test_posterior_summary_reports_calibrated_intervals_and_failures():
     truth = {"A": {"x": 0.5}}
     fields = [
@@ -183,6 +217,22 @@ def test_observation_design_reports_rank_deficiency_and_unobserved_variables():
     assert report["snapshot_nullity"] == 1
     assert report["full_snapshot_identification_possible"] is False
     assert report["snapshot_unobserved_variables"] == ["z"]
+    assert report["free_variables"] == ["z"]
+    assert report["nullspace_basis"] == [{"z": 1.0}]
+
+
+def test_observation_design_nullspace_exposes_proxy_tradeoff():
+    channels = (
+        ObservationChannel(
+            "mixed", (("x", 1.0), ("y", 2.0)), measurement_sd=0.1
+        ),
+    )
+    report = observation_design_diagnostics(channels, ("x", "y"))
+    assert report["snapshot_design_rank"] == 1
+    assert report["snapshot_nullity"] == 1
+    basis = report["nullspace_basis"][0]
+    assert basis["x"] == pytest.approx(-2.0)
+    assert basis["y"] == pytest.approx(1.0)
 
 
 def test_direct_oracle_measurement_design_is_full_rank():
@@ -213,6 +263,84 @@ def test_geographic_reporting_bias_changes_collection_probability():
         unit_reporting_multipliers={"A": 0.0, "B": 2.0},
     )
     assert all(observation.true_unit_id == "B" for observation in observations)
+
+
+def test_observation_degradation_dimensions_use_paired_random_substreams():
+    state = {"A": {"x": 0.8}, "B": {"x": 0.2}}
+    channel = ObservationChannel(
+        "x", (("x", 1.0),), measurement_sd=0.1, reporting_probability=1.0
+    )
+    common = dict(
+        state=state,
+        state_time=7.0,
+        channels=(channel,),
+        adjacency={"A": ("B",), "B": ("A",)},
+        observation_prefix="paired",
+    )
+    exact = generate_observations(
+        **common,
+        process=ObservationProcessConfig(
+            geolocation_error_probability=0.0,
+            maximum_delay_days=3.0,
+        ),
+        rng=random.Random(123),
+    )
+    displaced = generate_observations(
+        **common,
+        process=ObservationProcessConfig(
+            geolocation_error_probability=1.0,
+            maximum_delay_days=3.0,
+        ),
+        rng=random.Random(123),
+    )
+    assert len(exact) == len(displaced) == 2
+    for left, right in zip(exact, displaced):
+        assert left.true_unit_id == right.true_unit_id
+        assert left.channel == right.channel
+        assert left.value == pytest.approx(right.value)
+        assert left.arrival_time == pytest.approx(right.arrival_time)
+        assert left.reported_unit_id != right.reported_unit_id
+
+
+def test_reporting_rate_sweep_preserves_common_report_realizations():
+    state = {
+        "A": {"x": 0.8},
+        "B": {"x": 0.2},
+        "C": {"x": 0.5},
+        "D": {"x": 0.6},
+    }
+    channel = ObservationChannel(
+        "x", (("x", 1.0),), measurement_sd=0.1, reporting_probability=1.0
+    )
+    common = dict(
+        state=state,
+        state_time=7.0,
+        channels=(channel,),
+        adjacency={unit: () for unit in state},
+    )
+    dense = generate_observations(
+        **common,
+        process=ObservationProcessConfig(
+            reporting_multiplier=1.0,
+            maximum_delay_days=3.0,
+        ),
+        rng=random.Random(456),
+    )
+    sparse = generate_observations(
+        **common,
+        process=ObservationProcessConfig(
+            reporting_multiplier=0.5,
+            maximum_delay_days=3.0,
+        ),
+        rng=random.Random(456),
+    )
+    dense_by_key = {(row.true_unit_id, row.channel): row for row in dense}
+    assert 0 < len(sparse) < len(dense)
+    for row in sparse:
+        dense_row = dense_by_key[(row.true_unit_id, row.channel)]
+        assert row.observation_id == dense_row.observation_id
+        assert row.value == pytest.approx(dense_row.value)
+        assert row.arrival_time == pytest.approx(dense_row.arrival_time)
 
 
 def test_component_localization_does_not_reweight_unrelated_variable():

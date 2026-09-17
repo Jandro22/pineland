@@ -63,10 +63,27 @@ contracts, not assertions about the properties of any historical dataset. The
 process can vary report probability, Gaussian measurement error, reporting
 delay, geolocation error, false-report probability, and channel availability.
 
+Synthetic report generation uses deterministic per-unit, per-channel,
+per-purpose random substreams. Reporting selection, measurement noise, false-
+report status/value, geolocation, geolocation target, and delay therefore do
+not share one sequential RNG stream. This is essential for matched degradation
+sweeps: changing the geolocation-error rate cannot silently change a retained
+report's measurement noise or delay, and lowering reporting probability yields
+a true subset of the denser condition with common report realizations held
+fixed. Earlier September 17 degradation contrasts generated with the sequential
+observation RNG are retained as development history but are superseded for
+failure-envelope claims.
+
 Spatially fallible reports are scored with a finite mixture over the reported
 locality and its neighbors when the estimator admits geolocation error. A
 misspecification experiment can instead force the estimator to pretend that
 reported coordinates are exact.
+
+The likelihood can also include an explicit state-independent contamination
+component for false reports. The robust observation model mixes the usual
+state-dependent Gaussian likelihood with a broad Uniform-plus-Gaussian report
+component. This lets an observation be treated as possible junk rather than
+forcing some particle state to explain every extreme report.
 
 ## Recovery measures
 
@@ -80,6 +97,20 @@ warning. Small or resampled particle ensembles can create duplicate support and
 spuriously extreme correlations. A substantive non-identifiability claim
 therefore requires repeated worlds, adequate particle support, deliberate
 observation-channel ablations, and stability across seeds.
+
+The observation-design diagnostic also reports an explicit null-space basis.
+For the current eight-channel mixed-proxy design, the 18-dimensional snapshot
+matrix has rank 8 and nullity 10. Six directions are completely unobserved:
+government formal, legal, fiscal, and expected control plus insurgent formal
+and legal control. Public-alignment reporting identifies only one linear
+combination of government social, insurgent social, and insurgent expected
+control, leaving two tradeoff directions. The taxation, organizational-
+presence, and logistics channels identify only three combinations of five
+fiscal/foothold/embeddedness/fighter/supply variables, leaving two additional
+tradeoffs. Conversely, the direct anchors plus mixed proxies make government
+and insurgent physical and administrative control structurally identifiable in
+the declared one-snapshot measurement system. This is structural measurement
+identifiability, not proof of practical finite-sample recoverability.
 
 ## Development profiles
 
@@ -166,15 +197,79 @@ The repository development reproduction profile uses it explicitly; locality-
 only weighting remains available as an ablation and failure-mode comparison.
 
 The first repeated live-dynamics pilot used four independently generated worlds,
-16 particles per world, 14 days, and a seven-day observation interval. Component
-localization reduced trajectory MSE by about 21.3% for the mixed-proxy profile
-and 8.4% for the direct-oracle diagnostic, with all four worlds improving in
-each profile and roughly 90% empirical 90% interval coverage. The matched
-locality-only ablation produced slightly larger point-MSE gains at this narrow
-prior but lower coverage and much lower effective support. Together with its
-broad-prior failures, that makes locality-only weighting a useful aggressive
-ablation rather than the default estimator. Four worlds remain deliberately
-underpowered; these values are development evidence, not confirmatory claims.
+16 particles per world, 14 days, and a seven-day observation interval. That
+pilot initially reported a 21.3% mixed-proxy MSE gain. Subsequent audit found
+that the observation generator used one sequential RNG stream, so changing a
+degradation parameter could also change unrelated later noise/delay draws. The
+21.3% value is therefore retained in provenance but superseded for comparative
+claims.
+
+After introducing purpose-separated paired observation substreams, the matched
+nominal rerun gives an 11.3% mixed-proxy trajectory-MSE information gain, with
+all four development worlds improving and empirical 90% coverage of about
+90.7%. The paired locality-only ablation gives a similar/slightly larger point
+gain (12.1%) but only about 87.4% coverage, a 6.3% confidently-wrong rate, and
+mean effective support of about 71.8% versus 96.6% for component localization.
+Component localization therefore remains the development default because it is
+substantially better calibrated and less particle-degenerate, not because it
+maximizes this four-world point estimate.
+
+### Variable-level recoverability
+
+The paired nominal development run also makes clear that aggregate error hides
+strong heterogeneity. Relative to the matched dynamically propagated prior,
+government administrative control improves by about 26.7%, insurgent fighter
+capacity by 22.3%, and insurgent embeddedness by 15.0%. Insurgent fiscal,
+physical, administrative, expected, and supply-capacity targets show only small
+positive gains. The six completely unobserved formal/legal/fiscal/expected
+directions identified by the measurement null space show exactly zero
+incremental information, while insurgent foothold and social control are
+slightly worse than the prior in this small pilot. Paper-level claims must
+therefore be target-specific rather than treating "hidden conflict state" as a
+single recoverable object.
+
+A paired full-rank direct-oracle diagnostic supports the interpretation that
+these zeros belong primarily to the mixed measurement design rather than an
+intrinsic inability of the localized estimator to update those coordinates.
+Across the same four-world development structure, the direct-oracle profile
+reduces aggregate MSE by about 9.7% and improves all four worlds. Variables that
+receive no mixed-proxy loading become positively recoverable when directly
+measured: government legal about +19.2%, government fiscal +6.0%, government
+formal +5.6%, insurgent formal +4.4%, government expected +2.2%, and insurgent
+legal +1.3%. The mixed-proxy and direct-oracle profiles have different channel
+contracts and are not a performance ranking; the oracle exists to separate
+measurement identification from estimator failure.
+
+The paired reporting-density sweep is correspondingly smoother than the old
+single-stream assay: mixed-proxy MSE information gain is about 8.0% at 25% of
+nominal reporting, 8.0% at 35%, 10.1% at 50%, and 11.3% at nominal reporting in
+the current four-world development batch. These values do not license a sharp
+reporting threshold; larger frozen batches are required before estimating a
+failure boundary.
+
+### False-report robustness
+
+False-report contamination is the clearest adversarial failure found so far.
+With the paired generator and a strict Gaussian observation likelihood, the
+four-world development gain falls from +11.3% with clean reports to +6.9% at
+5% false reports, -2.0% at 10%, and -4.3% at 20%. A fixed 10% contamination-
+mixture likelihood costs little on clean data (+10.4%) while producing +8.9%,
++5.7%, and +4.6% gains at 5%, 10%, and 20% false-report rates respectively. At
+20% contamination, a correctly specified 20% robust mixture yields +5.8%.
+These are development results, but they motivate a robust-likelihood estimator
+as a predeclared Paper-1 ablation rather than an after-the-fact rescue.
+
+At 10% false reports the strict estimator particularly damages insurgent
+physical state, embeddedness, and fighter capacity. The fixed 10% robust
+mixture changes their information gains from about -18.0%, -11.8%, and -5.0%
+to +2.4%, +5.2%, and +9.6% respectively. Government administrative recovery is
+much less sensitive to contamination, suggesting that vulnerability depends on
+the report/latent measurement block rather than being a uniform property of the
+estimator.
+
+All of these repeated-dynamic values remain four-world development diagnostics.
+The confirmatory world count, particle count, severity grid, and promotion
+criteria must be frozen before any paper-level failure-envelope claim is made.
 
 ## Repository and data boundary
 

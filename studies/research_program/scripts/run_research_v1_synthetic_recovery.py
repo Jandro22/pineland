@@ -556,6 +556,9 @@ def _run_localized_reconstruction(
     )
     if assumed_noise is None:
         assumed_noise = args.measurement_noise_multiplier
+    assumed_false = getattr(args, "assumed_false_report_probability", 0.0)
+    if assumed_false is None:
+        assumed_false = 0.0
     design = observation_design_diagnostics(channels, DEFAULT_VARIABLES)
     linked = set(design["observation_linked_variables"])
     points: list[PosteriorPoint] = []
@@ -584,6 +587,7 @@ def _run_localized_reconstruction(
             radius=radius,
             assumed_geolocation_error_probability=assumed_geo,
             assumed_measurement_noise_multiplier=assumed_noise,
+            assumed_false_report_probability=assumed_false,
         )
         points.extend(local_points)
         support.extend(local_support)
@@ -608,6 +612,7 @@ def _run_localized_reconstruction(
         "state_localization": args.state_localization,
         "assumed_geolocation_error_probability": assumed_geo,
         "assumed_measurement_noise_multiplier": assumed_noise,
+        "assumed_false_report_probability": assumed_false,
         "metrics": asdict(metrics),
         "metrics_observation_linked": asdict(linked_metrics),
         "prior_metrics_same_targets": asdict(prior_metrics),
@@ -628,6 +633,7 @@ def _run_localized_reconstruction(
         },
         "support_rows": [asdict(row) for row in support],
         "metrics_by_variable": evaluate_recovery_by_variable(points),
+        "prior_metrics_by_variable": evaluate_recovery_by_variable(prior_points),
         "posterior_points": [asdict(point) for point in points],
     }
 
@@ -787,6 +793,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--measurement-noise-multiplier", type=float, default=1.0)
     parser.add_argument("--false-report-probability", type=float, default=0.0)
     parser.add_argument(
+        "--assumed-false-report-probability",
+        type=float,
+        default=0.0,
+        help="state-independent contamination mass allowed by localized inference",
+    )
+    parser.add_argument(
         "--localization-radius",
         type=int,
         default=0,
@@ -795,7 +807,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--state-localization",
         choices=["locality", "component"],
-        default="locality",
+        default="component",
         help=(
             "locality uses every same-neighborhood report for each latent "
             "coordinate; component only uses channels with a declared loading "

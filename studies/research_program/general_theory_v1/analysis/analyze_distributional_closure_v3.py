@@ -50,6 +50,16 @@ EXTRA_BY_CANDIDATE = {
         "final_neighbor_rooted_mass",
         "final_neighbor_recruitment_hazard",
     ],
+    "rootedstock_execnet_ring2_18v6": [
+        "final_Mstar",
+        "final_executable_net_transport_pressure",
+        "final_neighbor_transportable_strength",
+        "final_neighbor_rooted_mass",
+        "final_neighbor_recruitment_hazard",
+        "final_ring2_transportable_strength",
+        "final_ring2_rooted_mass",
+        "final_ring2_recruitment_hazard",
+    ],
 }
 
 DOMAIN_SCALE_FLOOR = {
@@ -75,6 +85,9 @@ DOMAIN_SCALE_FLOOR = {
     "final_neighbor_transportable_strength": 0.75,
     "final_neighbor_rooted_mass": 0.75,
     "final_neighbor_recruitment_hazard": 0.75,
+    "final_ring2_transportable_strength": 0.75,
+    "final_ring2_rooted_mass": 0.75,
+    "final_ring2_recruitment_hazard": 0.75,
 }
 
 

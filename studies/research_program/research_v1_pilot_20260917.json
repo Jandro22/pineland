@@ -20,7 +20,12 @@
     "notes": [
       "Native scheduler-oracle horizon clipping was aligned with reference exact-continuation semantics.",
       "Research-readiness scoring no longer infers empirical readiness from synthetic data-status wording."
-    ]
+    ],
+    "current_focused_pytest": {
+      "passed": 44,
+      "failed": 0,
+      "scope": "recovery + repeated-dynamic runner + state-estimation + empirical focused suite after paired-substream/nullspace/robust-likelihood changes"
+    }
   },
   "diagnostic_findings": {
     "global_particle_weighting": {
@@ -58,6 +63,51 @@
         "global_filter_coverage_90": 0.3047385620915033
       },
       "interpretation": "Component localization is now the development estimator; locality-only and global weighting are retained as explicit ablations."
+    },
+    "paired_observation_substreams": {
+      "finding": "Synthetic observation generation now uses deterministic unit/channel/purpose substreams so degradation sweeps alter only the declared stochastic mechanism and common retained reports keep the same noise/delay realization.",
+      "consequence": "Earlier repeated-dynamic/failure-envelope contrasts generated with the sequential observation RNG are retained as provenance but superseded for comparative claims."
+    },
+    "mixed_proxy_nullspace": {
+      "variables": 18,
+      "channels": 8,
+      "snapshot_design_rank": 8,
+      "snapshot_nullity": 10,
+      "completely_unobserved": [
+        "government.formal",
+        "government.legal",
+        "government.fiscal",
+        "government.expected",
+        "insurgent.formal",
+        "insurgent.legal"
+      ],
+      "tradeoff_blocks": [
+        {
+          "variables": [
+            "government.social",
+            "insurgent.social",
+            "insurgent.expected"
+          ],
+          "identified_combinations": 1,
+          "null_directions": 2
+        },
+        {
+          "variables": [
+            "insurgent.fiscal",
+            "insurgent.foothold",
+            "insurgent.embeddedness",
+            "insurgent.fighter_capacity",
+            "insurgent.supply_capacity"
+          ],
+          "identified_combinations": 3,
+          "null_directions": 2
+        }
+      ],
+      "fully_structurally_resolved_blocks": [
+        "government/insurgent physical via security proxy + insurgent physical anchor",
+        "government/insurgent administrative via administrative proxy + government administrative anchor"
+      ],
+      "interpretation": "This is a property of the declared one-snapshot linear measurement design. Dynamics/priors can add restrictions but cannot be credited as observation information without separate recovery evidence."
     }
   },
   "repeated_snapshot_pilot": {
@@ -130,7 +180,15 @@
     },
     "interpretation": "The broad-prior failure of locality-only weighting is largely a state-component dimensionality problem. Mixed proxies remain weak at broad priors, which is a measurement-identifiability result rather than a reason to add simulator mechanics."
   },
-  "repeated_dynamic_pilot": {
+  "reproduction_commands": [
+    "python pineland.py reproduce paper1 --profile smoke",
+    "python studies/research_program/scripts/run_research_v1_weight_collapse_diagnostic.py",
+    "python studies/research_program/scripts/run_research_v1_channel_ablation.py --agents 60 --particles 64",
+    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 16 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.10",
+    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 8 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.30 --state-localization component",
+    "python studies/research_program/scripts/run_research_v1_repeated_dynamic_recovery.py --worlds 4 --particles 16 --agents 60 --days 14 --interval-days 7"
+  ],
+  "repeated_dynamic_pilot_prepaired_superseded": {
     "design": {
       "worlds": 4,
       "particles_per_world": 16,
@@ -179,14 +237,122 @@
       "Component localization now has positive information gain across repeated live synthetic trajectories, not only one-snapshot assays.",
       "Locality-only weighting is sharper at this narrow prior but sacrifices posterior support and interval calibration, and it fails under broader priors.",
       "Four worlds are intentionally underpowered; paired normal intervals cross zero and no confirmatory threshold is licensed."
-    ]
+    ],
+    "status": "superseded_for_failure_envelope_comparison",
+    "superseded_reason": "Observation generation used one sequential RNG stream, so changing degradation parameters could shift unrelated later stochastic draws. Purpose-separated paired substreams now define the comparison contract."
   },
-  "reproduction_commands": [
-    "python pineland.py reproduce paper1 --profile smoke",
-    "python studies/research_program/scripts/run_research_v1_weight_collapse_diagnostic.py",
-    "python studies/research_program/scripts/run_research_v1_channel_ablation.py --agents 60 --particles 64",
-    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 16 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.10",
-    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 8 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.30 --state-localization component",
-    "python studies/research_program/scripts/run_research_v1_repeated_dynamic_recovery.py --worlds 4 --particles 16 --agents 60 --days 14 --interval-days 7"
-  ]
+  "model_sha256_paired_observation_robustness": "56dce1d53cd2b91116dd711a965d5bd3aeba9bf4dd911fbfe37f7650e0761a81",
+  "paired_repeated_dynamic_pilot": {
+    "status": "development_pilot_not_confirmatory",
+    "design": {
+      "worlds": 4,
+      "particles_per_world": 16,
+      "agents": 60,
+      "localities": 17,
+      "days": 14,
+      "interval_days": 7,
+      "truth_sd": 0.1,
+      "prior_sd": 0.1,
+      "localization_radius": 0,
+      "observation_rng": "purpose-separated paired substreams",
+      "historical_case_data_loaded": false
+    },
+    "component_localization_mixed_proxy": {
+      "mse_information_gain_fraction": 0.11321606497272063,
+      "world_win_rate": 1.0,
+      "posterior_coverage_90": 0.9074754901960784,
+      "posterior_confidently_wrong_rate": 0.037377450980392156,
+      "mean_support_fraction": 0.9661684980479163,
+      "minimum_support_fraction": 0.13550834940940978
+    },
+    "locality_only_ablation_mixed_proxy": {
+      "mse_information_gain_fraction": 0.12116664073083983,
+      "world_win_rate": 1.0,
+      "posterior_coverage_90": 0.8743872549019608,
+      "posterior_confidently_wrong_rate": 0.06311274509803921,
+      "mean_support_fraction": 0.7178921987542946,
+      "minimum_support_fraction": 0.12663817936750935
+    },
+    "reporting_density_information_gain_fraction": {
+      "0.25": 0.07994897208582741,
+      "0.35": 0.08041414148668369,
+      "0.50": 0.10100000285579191,
+      "1.00": 0.11321606497272063
+    },
+    "variable_information_gain_fraction_nominal": {
+      "government.administrative": 0.267,
+      "insurgent.fighter_capacity": 0.223,
+      "insurgent.embeddedness": 0.15,
+      "insurgent.fiscal": 0.048,
+      "insurgent.physical": 0.044,
+      "insurgent.supply_capacity": 0.031,
+      "insurgent.administrative": 0.03,
+      "insurgent.expected": 0.018,
+      "government.physical": 0.006,
+      "government.social": 0.002,
+      "insurgent.social": -0.033,
+      "insurgent.foothold": -0.044
+    },
+    "zero_incremental_information_variables": [
+      "government.formal",
+      "government.legal",
+      "government.fiscal",
+      "government.expected",
+      "insurgent.formal",
+      "insurgent.legal"
+    ],
+    "interpretation": [
+      "Aggregate recovery is positive but strongly target-dependent.",
+      "The locality-only ablation is slightly sharper in this narrow-prior pilot but materially less calibrated and less supported.",
+      "Four worlds are intentionally underpowered; no confirmatory threshold is licensed."
+    ],
+    "direct_oracle_diagnostic": {
+      "mse_information_gain_fraction": 0.09740423025802336,
+      "world_win_rate": 1.0,
+      "posterior_coverage_90": 0.9044117647058824,
+      "posterior_confidently_wrong_rate": 0.026552287581699346,
+      "mean_support_fraction": 0.9656892959229821,
+      "formerly_unobserved_variable_information_gain_fraction": {
+        "government.legal": 0.192,
+        "government.fiscal": 0.06,
+        "government.formal": 0.056,
+        "insurgent.formal": 0.044,
+        "government.expected": 0.022,
+        "insurgent.legal": 0.013
+      },
+      "interpretation": "Previously zero-gain mixed-proxy coordinates become positively recoverable when directly measured, supporting a measurement-design rather than estimator-incapacity interpretation. The oracle and mixed profiles are different measurement contracts, not a ranking."
+    }
+  },
+  "false_report_robustness_pilot": {
+    "status": "development_pilot_not_confirmatory",
+    "strict_gaussian_information_gain_fraction": {
+      "false_0.00": 0.11321606497272063,
+      "false_0.05": 0.0685044913732823,
+      "false_0.10": -0.019825173841093058,
+      "false_0.20": -0.04301028263080586
+    },
+    "fixed_0.10_contamination_mixture_information_gain_fraction": {
+      "false_0.00": 0.1035391994561683,
+      "false_0.05": 0.0893479980700107,
+      "false_0.10": 0.0567842264805134,
+      "false_0.20": 0.045781406926411417
+    },
+    "matched_0.20_contamination_at_false_0.20_information_gain_fraction": 0.0584464703832559,
+    "false_0.10_variable_rescue_gain_fraction": {
+      "insurgent.physical": {
+        "strict": -0.18,
+        "robust_0.10": 0.024
+      },
+      "insurgent.embeddedness": {
+        "strict": -0.118,
+        "robust_0.10": 0.052
+      },
+      "insurgent.fighter_capacity": {
+        "strict": -0.05,
+        "robust_0.10": 0.096
+      }
+    },
+    "interpretation": "A modest contamination floor behaves as robustness insurance in this development batch: little clean-data cost, higher support, and positive average information gain under 10-20% fabricated reports where the strict Gaussian likelihood becomes worse than the prior."
+  },
+  "legacy_observation_rng_note": "Repeated-snapshot and prior-width pilot numbers above predate the purpose-separated observation-substream change. They remain useful hypothesis-generating development evidence but must be rerun under the paired generator before confirmatory use."
 }
