@@ -122,12 +122,20 @@ dynamic batches are attempted:
 python studies/research_program/scripts/run_research_v1_weight_collapse_diagnostic.py
 python studies/research_program/scripts/run_research_v1_channel_ablation.py
 python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py
+python studies/research_program/scripts/run_research_v1_repeated_dynamic_recovery.py
 ```
 
 The repeated-snapshot benchmark treats the synthetic world as the scientific
 unit and measures paired prior-versus-posterior error across multiple known
 truths. A single world's RMSE change is therefore a pilot diagnostic, not a
 general recoverability claim.
+
+The repeated-dynamic benchmark carries that same paired design through live
+Pineland transitions. It regenerates the synthetic country for every world,
+propagates a matched no-assimilation ensemble through the same observation
+boundaries, and scores trajectory reconstruction against known latent truth.
+Its default estimator is radius-zero component localization. A locality-only
+run with the same seeds is the principal estimator ablation.
 
 ### State-component localization
 
@@ -156,6 +164,17 @@ not confirmatory thresholds.
 The dynamic benchmark exposes this mode with `--state-localization component`.
 The repository development reproduction profile uses it explicitly; locality-
 only weighting remains available as an ablation and failure-mode comparison.
+
+The first repeated live-dynamics pilot used four independently generated worlds,
+16 particles per world, 14 days, and a seven-day observation interval. Component
+localization reduced trajectory MSE by about 21.3% for the mixed-proxy profile
+and 8.4% for the direct-oracle diagnostic, with all four worlds improving in
+each profile and roughly 90% empirical 90% interval coverage. The matched
+locality-only ablation produced slightly larger point-MSE gains at this narrow
+prior but lower coverage and much lower effective support. Together with its
+broad-prior failures, that makes locality-only weighting a useful aggressive
+ablation rather than the default estimator. Four worlds remain deliberately
+underpowered; these values are development evidence, not confirmatory claims.
 
 ## Repository and data boundary
 
