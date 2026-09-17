@@ -74,6 +74,7 @@ class ObservationProcessConfig:
     maximum_delay_days: float = 3.0
     measurement_noise_multiplier: float = 1.0
     false_report_probability: float = 0.0
+    geographic_reporting_bias_strength: float = 0.0
 
     def __post_init__(self) -> None:
         if self.reporting_multiplier < 0:
@@ -86,6 +87,8 @@ class ObservationProcessConfig:
             raise ValueError("measurement_noise_multiplier must be positive")
         if not 0 <= self.false_report_probability <= 1:
             raise ValueError("false_report_probability must be in [0, 1]")
+        if not 0 <= self.geographic_reporting_bias_strength <= 1:
+            raise ValueError("geographic_reporting_bias_strength must be in [0, 1]")
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,6 +144,16 @@ class RecoveryMetrics:
     detected_change_events: int
     change_detection_rate: float | None
     mean_detection_lag_days: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class LocalizedSupportDiagnostic:
+    time: float
+    unit_id: str
+    radius: int
+    reports: int
+    ess: float
+    maximum_weight: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -221,6 +234,114 @@ def default_hidden_war_channels() -> tuple[ObservationChannel, ...]:
             reporting_probability=0.20,
         ),
     )
+
+
+def direct_hidden_war_channels(
+    variables: Sequence[str],
+    *,
+    measurement_sd: float = 0.10,
+    reporting_probability: float = 0.20,
+) -> tuple[ObservationChannel, ...]:
+    """Return an intentionally favorable full-rank synthetic measurement set.
+
+    This profile is an estimator diagnostic, not a realistic intelligence
+    collection claim.  If the state estimator cannot recover under these
+    direct channels, the failure belongs to inference/support rather than to
+    ambiguity in the mixed proxy design.
+    """
+
+    return tuple(
+        ObservationChannel(
+            f"direct::{variable}",
+            ((variable, 1.0),),
+            measurement_sd=measurement_sd,
+            reporting_probability=reporting_probability,
+        )
+        for variable in variables
+    )
+
+
+def observation_design_diagnostics(
+    channels: Sequence[ObservationChannel],
+    variables: Sequence[str],
+    *,
+    tolerance: float = 1e-10,
+) -> dict[str, object]:
+    """Diagnose snapshot identifiability of the declared linear proxy design.
+
+    This is deliberately a property of the measurement design, not of a
+    realized particle ensemble.  A rank deficiency proves that the channel
+    matrix cannot uniquely identify every listed coordinate from one
+    locality-time snapshot without additional dynamic/prior restrictions.
+    Conversely, full rank would not by itself prove practical recoverability.
+    """
+
+    variables = tuple(variables)
+    index = {variable: position for position, variable in enumerate(variables)}
+    matrix: list[list[float]] = []
+    loaded_by: dict[str, list[str]] = {variable: [] for variable in variables}
+    loading_energy: dict[str, float] = {variable: 0.0 for variable in variables}
+    for channel in channels:
+        row = [0.0] * len(variables)
+        for variable, weight in channel.loadings:
+            if variable not in index:
+                continue
+            row[index[variable]] = float(weight)
+            loaded_by[variable].append(channel.name)
+            loading_energy[variable] += float(weight) ** 2
+        matrix.append(row)
+
+    # Stable-enough Gaussian elimination for this small declared design.
+    working = [row[:] for row in matrix]
+    rank = 0
+    column = 0
+    while rank < len(working) and column < len(variables):
+        pivot = max(
+            range(rank, len(working)),
+            key=lambda row_index: abs(working[row_index][column]),
+        )
+        if abs(working[pivot][column]) <= tolerance:
+            column += 1
+            continue
+        working[rank], working[pivot] = working[pivot], working[rank]
+        pivot_value = working[rank][column]
+        working[rank] = [value / pivot_value for value in working[rank]]
+        for row_index in range(len(working)):
+            if row_index == rank:
+                continue
+            factor = working[row_index][column]
+            if abs(factor) <= tolerance:
+                continue
+            working[row_index] = [
+                current - factor * pivot_component
+                for current, pivot_component in zip(
+                    working[row_index], working[rank]
+                )
+            ]
+        rank += 1
+        column += 1
+
+    linked = [variable for variable in variables if loaded_by[variable]]
+    unlinked = [variable for variable in variables if not loaded_by[variable]]
+    return {
+        "channels": len(channels),
+        "variables": len(variables),
+        "snapshot_design_rank": rank,
+        "snapshot_nullity": len(variables) - rank,
+        "full_snapshot_identification_possible": rank == len(variables),
+        "observation_linked_variables": linked,
+        "snapshot_unobserved_variables": unlinked,
+        "variable_loading_strength": {
+            variable: sqrt(loading_energy[variable])
+            for variable in variables
+        },
+        "loaded_by_channels": loaded_by,
+        "interpretation": (
+            "Rank deficiency is a structural warning for one-time-slice measurement. "
+            "Dynamics and informative priors can add identifying restrictions, but "
+            "they must be tested rather than assumed."
+        ),
+    }
 
 
 def extract_pineland_latent_state(world) -> StateField:
@@ -323,6 +444,7 @@ def generate_observations(
     adjacency: Mapping[str, Iterable[str]],
     rng: random.Random,
     observation_prefix: str = "synthetic",
+    unit_reporting_multipliers: Mapping[str, float] | None = None,
 ) -> list[SyntheticObservation]:
     """Generate delayed, noisy, spatially fallible reports from known truth."""
 
@@ -331,10 +453,23 @@ def generate_observations(
     for unit_id in sorted(state):
         unit_state = state[unit_id]
         neighbors = tuple(sorted(adjacency.get(unit_id, ())))
+        raw_unit_multiplier = (
+            float(unit_reporting_multipliers.get(unit_id, 1.0))
+            if unit_reporting_multipliers is not None
+            else 1.0
+        )
+        if raw_unit_multiplier < 0 or not isfinite(raw_unit_multiplier):
+            raise ValueError("unit reporting multipliers must be finite and nonnegative")
+        unit_multiplier = (
+            1.0 - process.geographic_reporting_bias_strength
+            + process.geographic_reporting_bias_strength * raw_unit_multiplier
+        )
         for channel in channels:
             probability = min(
                 1.0,
-                channel.reporting_probability * process.reporting_multiplier,
+                channel.reporting_probability
+                * process.reporting_multiplier
+                * unit_multiplier,
             )
             if rng.random() >= probability:
                 continue
@@ -431,6 +566,107 @@ def observation_batch_log_likelihood(
         )
         total += _logsumexp(components)
     return total
+
+
+def graph_neighborhood(
+    adjacency: Mapping[str, Iterable[str]],
+    unit_id: str,
+    radius: int,
+) -> tuple[str, ...]:
+    """Return units within an unweighted graph radius, including the focal unit."""
+
+    if radius < 0:
+        raise ValueError("localization radius cannot be negative")
+    visited = {unit_id}
+    frontier = {unit_id}
+    for _ in range(radius):
+        next_frontier = {
+            neighbor
+            for current in frontier
+            for neighbor in adjacency.get(current, ())
+            if neighbor not in visited
+        }
+        if not next_frontier:
+            break
+        visited.update(next_frontier)
+        frontier = next_frontier
+    return tuple(sorted(visited))
+
+
+def localized_importance_reconstruction(
+    truth: StateField,
+    particle_fields: Sequence[StateField],
+    observations: Sequence[SyntheticObservation],
+    *,
+    channels: Sequence[ObservationChannel],
+    adjacency: Mapping[str, Iterable[str]],
+    time: float,
+    variables: Sequence[str] | None = None,
+    radius: int = 0,
+    assumed_geolocation_error_probability: float = 0.0,
+    assumed_measurement_noise_multiplier: float = 1.0,
+) -> tuple[list[PosteriorPoint], list[LocalizedSupportDiagnostic]]:
+    """Estimate locality marginals without multiplying all-country likelihoods.
+
+    Each particle remains a complete, causally coherent Pineland trajectory.
+    For the marginal posterior of one locality, only observations reported in
+    that locality (or within ``radius`` graph steps) contribute to its
+    importance weight. No world-state splicing occurs.
+
+    This is a localized marginal approximation, not an exact joint posterior:
+    distant evidence that is informative through cross-locality dynamics is
+    deliberately omitted. The radius therefore exposes a bias/support tradeoff
+    that must be evaluated empirically.
+    """
+
+    if not particle_fields:
+        raise ValueError("localized reconstruction requires particles")
+    points: list[PosteriorPoint] = []
+    diagnostics: list[LocalizedSupportDiagnostic] = []
+    for unit_id in sorted(truth):
+        neighborhood = set(graph_neighborhood(adjacency, unit_id, radius))
+        local_observations = [
+            observation
+            for observation in observations
+            if observation.reported_unit_id in neighborhood
+        ]
+        log_weights = [
+            observation_batch_log_likelihood(
+                field,
+                local_observations,
+                channels=channels,
+                adjacency=adjacency,
+                assumed_geolocation_error_probability=(
+                    assumed_geolocation_error_probability
+                ),
+                assumed_measurement_noise_multiplier=(
+                    assumed_measurement_noise_multiplier
+                ),
+            )
+            for field in particle_fields
+        ]
+        # Import locally to keep the recovery module's public dependency
+        # direction simple: state_estimation does not depend on recovery.
+        from .state_estimation import effective_sample_size, normalize_log_weights
+
+        weights = normalize_log_weights(log_weights, strict=True)
+        unit_fields = [{unit_id: field[unit_id]} for field in particle_fields]
+        points.extend(summarize_posterior_field(
+            {unit_id: truth[unit_id]},
+            unit_fields,
+            weights,
+            time=time,
+            variables=variables,
+        ))
+        diagnostics.append(LocalizedSupportDiagnostic(
+            time=float(time),
+            unit_id=unit_id,
+            radius=radius,
+            reports=len(local_observations),
+            ess=effective_sample_size(weights),
+            maximum_weight=max(weights),
+        ))
+    return points, diagnostics
 
 
 def _weighted_quantile(
