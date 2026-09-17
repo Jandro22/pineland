@@ -93,6 +93,52 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _aggregate_variables(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Aggregate paired prior/posterior recovery by latent variable across worlds."""
+
+    variables = sorted({
+        variable
+        for row in rows
+        for variable in row.get("variables", {})
+    })
+    output: dict[str, dict[str, Any]] = {}
+    for variable in variables:
+        variable_rows = [row["variables"][variable] for row in rows]
+        prior_mse = _mean([row["prior_mse"] for row in variable_rows])
+        posterior_mse = _mean([row["posterior_mse"] for row in variable_rows])
+        deltas = [
+            row["posterior_mse"] - row["prior_mse"]
+            for row in variable_rows
+        ]
+        output[variable] = {
+            "worlds": len(variable_rows),
+            "prior_mse": prior_mse,
+            "posterior_mse": posterior_mse,
+            "mse_ratio_vs_prior": (
+                posterior_mse / prior_mse if prior_mse > 0 else None
+            ),
+            "mse_information_gain_fraction": (
+                1.0 - posterior_mse / prior_mse if prior_mse > 0 else None
+            ),
+            "world_win_rate": _mean([
+                row["posterior_mse"] < row["prior_mse"]
+                for row in variable_rows
+            ]),
+            "mean_paired_mse_delta": _mean(deltas),
+            "posterior_coverage_90": _mean([
+                row["posterior_coverage_90"] for row in variable_rows
+            ]),
+            "prior_coverage_90": _mean([
+                row["prior_coverage_90"] for row in variable_rows
+            ]),
+            "posterior_confidently_wrong_rate": _mean([
+                row["posterior_confidently_wrong_rate"]
+                for row in variable_rows
+            ]),
+        }
+    return output
+
+
 def run(args: argparse.Namespace) -> dict[str, Any]:
     if args.worlds < 2:
         raise ValueError("repeated dynamic recovery requires at least two worlds")
@@ -140,6 +186,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             )
             linked_metrics = result["metrics_observation_linked"]
             prior_metrics = result["prior_metrics_observation_linked"]
+            by_variable = result["metrics_by_variable"]
+            prior_by_variable = result["prior_metrics_by_variable"]
             profile_rows[profile].append({
                 "world_index": world_index,
                 "particles": args.particles,
@@ -154,6 +202,20 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 "mean_ess": result["support"]["mean_ess"],
                 "minimum_ess": result["support"]["minimum_ess"],
                 "maximum_weight": result["support"]["maximum_weight"],
+                "variables": {
+                    variable: {
+                        "posterior_mse": metrics["rmse"] ** 2,
+                        "prior_mse": prior_by_variable[variable]["rmse"] ** 2,
+                        "posterior_coverage_90": metrics["coverage_90"],
+                        "prior_coverage_90": (
+                            prior_by_variable[variable]["coverage_90"]
+                        ),
+                        "posterior_confidently_wrong_rate": (
+                            metrics["confidently_wrong_rate"]
+                        ),
+                    }
+                    for variable, metrics in by_variable.items()
+                },
             })
 
     return {
@@ -202,11 +264,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     if args.assumed_measurement_noise_multiplier is not None
                     else args.measurement_noise_multiplier
                 ),
+                "false_report_probability": args.assumed_false_report_probability,
             },
         },
         "profiles": {
             profile: {
                 "aggregate": _aggregate(rows),
+                "variables": _aggregate_variables(rows),
                 "worlds": rows,
             }
             for profile, rows in profile_rows.items()
@@ -247,6 +311,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="estimator assumption; defaults to the data-generating value",
     )
     parser.add_argument("--false-report-probability", type=float, default=0.0)
+    parser.add_argument(
+        "--assumed-false-report-probability",
+        type=float,
+        default=0.0,
+        help="state-independent contamination mass allowed by the estimator",
+    )
     parser.add_argument("--geographic-reporting-bias-strength", type=float, default=0.0)
     parser.add_argument("--localization-radius", type=int, default=0)
     parser.add_argument(

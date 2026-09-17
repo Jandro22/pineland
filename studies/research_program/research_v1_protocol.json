@@ -115,7 +115,23 @@
     "single_world_success_is_insufficient": true,
     "posterior_collinearity_alone_is_not_an_identifiability_claim": true,
     "historical_fit_cannot_substitute_for_known_truth_recovery": true,
-    "nepal_failure_must_be_retained_if_frozen_transfer_fails": true
+    "nepal_failure_must_be_retained_if_frozen_transfer_fails": true,
+    "failure_envelope_sweeps_must_use_paired_observation_substreams": true,
+    "aggregate_recovery_cannot_license_every_latent_target": true,
+    "target_specific_claims_require_variable_level_recovery": true,
+    "robustness_hyperparameters_must_be_frozen_before_confirmatory_batch": true
   },
-  "current_executable": "studies/research_program/scripts/run_research_v1_synthetic_recovery.py"
+  "inference_contract": {
+    "development_default_state_localization": "component",
+    "localization_radius": 0,
+    "observation_rng_pairing": "deterministic per-unit/per-channel/per-purpose substreams; matched sweeps must preserve common report realizations",
+    "strict_observation_likelihood": "Gaussian measurement model plus declared spatial-geolocation mixture",
+    "robust_false_report_ablation": "state-dependent likelihood mixed with a broad state-independent contamination component; contamination mass must be declared before each run",
+    "joint_posterior_claim": false,
+    "note": "Component-localized outputs are marginal approximations over coherent full-world trajectories, not an exact joint posterior."
+  },
+  "current_executables": [
+    "studies/research_program/scripts/run_research_v1_synthetic_recovery.py",
+    "studies/research_program/scripts/run_research_v1_repeated_dynamic_recovery.py"
+  ]
 }

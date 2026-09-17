@@ -14,7 +14,8 @@ model.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from math import exp, isfinite, log, pi, sqrt
+import hashlib
+from math import erf, exp, isfinite, log, pi, sqrt
 import random
 import statistics
 from typing import Iterable, Mapping, Sequence
@@ -309,6 +310,7 @@ def observation_design_diagnostics(
     working = [row[:] for row in matrix]
     rank = 0
     column = 0
+    pivot_columns: list[int] = []
     while rank < len(working) and column < len(variables):
         pivot = max(
             range(rank, len(working)),
@@ -332,8 +334,26 @@ def observation_design_diagnostics(
                     working[row_index], working[rank]
                 )
             ]
+        pivot_columns.append(column)
         rank += 1
         column += 1
+
+    free_columns = [
+        index for index in range(len(variables)) if index not in pivot_columns
+    ]
+    nullspace_basis: list[dict[str, float]] = []
+    for free_column in free_columns:
+        vector = [0.0] * len(variables)
+        vector[free_column] = 1.0
+        for pivot_row, pivot_column in enumerate(pivot_columns):
+            value = -working[pivot_row][free_column]
+            if abs(value) > tolerance:
+                vector[pivot_column] = float(value)
+        nullspace_basis.append({
+            variable: float(value)
+            for variable, value in zip(variables, vector)
+            if abs(value) > tolerance
+        })
 
     linked = [variable for variable in variables if loaded_by[variable]]
     unlinked = [variable for variable in variables if not loaded_by[variable]]
@@ -342,6 +362,9 @@ def observation_design_diagnostics(
         "variables": len(variables),
         "snapshot_design_rank": rank,
         "snapshot_nullity": len(variables) - rank,
+        "pivot_variables": [variables[index] for index in pivot_columns],
+        "free_variables": [variables[index] for index in free_columns],
+        "nullspace_basis": nullspace_basis,
         "full_snapshot_identification_possible": rank == len(variables),
         "observation_linked_variables": linked,
         "snapshot_unobserved_variables": unlinked,
@@ -442,6 +465,24 @@ def _normal_logpdf(value: float, mean: float, sd: float) -> float:
     return -0.5 * (log(2.0 * pi * variance) + (value - mean) ** 2 / variance)
 
 
+def _uniform_gaussian_logpdf(
+    value: float,
+    minimum: float,
+    maximum: float,
+    sd: float,
+) -> float:
+    """Density for Uniform(min,max) convolved with zero-mean Gaussian noise."""
+
+    width = maximum - minimum
+    if width <= 0 or sd <= 0:
+        raise ValueError("contamination likelihood requires positive width and sd")
+    scale = sd * sqrt(2.0)
+    upper_cdf = 0.5 * (1.0 + erf((maximum - value) / scale))
+    lower_cdf = 0.5 * (1.0 + erf((minimum - value) / scale))
+    density = max(1e-300, (upper_cdf - lower_cdf) / width)
+    return log(density)
+
+
 def _logsumexp(values: Sequence[float]) -> float:
     maximum = max(values)
     if maximum == float("-inf"):
@@ -460,10 +501,25 @@ def generate_observations(
     observation_prefix: str = "synthetic",
     unit_reporting_multipliers: Mapping[str, float] | None = None,
 ) -> list[SyntheticObservation]:
-    """Generate delayed, noisy, spatially fallible reports from known truth."""
+    """Generate delayed, noisy, spatially fallible reports from known truth.
+
+    One root token is consumed from ``rng`` per state-time call.  Individual
+    stochastic choices then use deterministic substreams keyed by unit,
+    channel, and purpose.  This keeps misspecification/degradation sweeps
+    paired: changing geolocation error, for example, cannot silently change a
+    later report's measurement-noise or delay draw.
+    """
 
     reports: list[SyntheticObservation] = []
-    counter = 0
+    root_token = rng.getrandbits(128)
+
+    def subrng(unit_id: str, channel_name: str, purpose: str) -> random.Random:
+        token = (
+            f"{root_token}:{state_time:.17g}:{unit_id}:{channel_name}:{purpose}"
+        ).encode("utf-8")
+        seed = int.from_bytes(hashlib.sha256(token).digest()[:16], "big")
+        return random.Random(seed)
+
     for unit_id in sorted(state):
         unit_state = state[unit_id]
         neighbors = tuple(sorted(adjacency.get(unit_id, ())))
@@ -479,33 +535,52 @@ def generate_observations(
             + process.geographic_reporting_bias_strength * raw_unit_multiplier
         )
         for channel in channels:
+            report_rng = subrng(unit_id, channel.name, "reporting")
             probability = min(
                 1.0,
                 channel.reporting_probability
                 * process.reporting_multiplier
                 * unit_multiplier,
             )
-            if rng.random() >= probability:
+            if report_rng.random() >= probability:
                 continue
-            false_report = rng.random() < process.false_report_probability
+            false_report = (
+                subrng(unit_id, channel.name, "false-report").random()
+                < process.false_report_probability
+            )
             expected = (
-                rng.uniform(channel.minimum_value, channel.maximum_value)
+                subrng(unit_id, channel.name, "false-value").uniform(
+                    channel.minimum_value, channel.maximum_value
+                )
                 if false_report
                 else channel.expected_value(unit_state)
             )
             sd = channel.measurement_sd * process.measurement_noise_multiplier
             value = min(
                 channel.maximum_value,
-                max(channel.minimum_value, rng.gauss(expected, sd)),
+                max(
+                    channel.minimum_value,
+                    subrng(unit_id, channel.name, "measurement").gauss(expected, sd),
+                ),
             )
             geolocation_error = bool(
-                neighbors and rng.random() < process.geolocation_error_probability
+                neighbors
+                and subrng(unit_id, channel.name, "geolocation").random()
+                < process.geolocation_error_probability
             )
-            reported_unit_id = rng.choice(neighbors) if geolocation_error else unit_id
-            delay = rng.random() * process.maximum_delay_days
-            counter += 1
+            reported_unit_id = (
+                subrng(unit_id, channel.name, "geolocation-target").choice(neighbors)
+                if geolocation_error
+                else unit_id
+            )
+            delay = (
+                subrng(unit_id, channel.name, "delay").random()
+                * process.maximum_delay_days
+            )
             reports.append(SyntheticObservation(
-                observation_id=f"{observation_prefix}:{state_time:g}:{counter}",
+                observation_id=(
+                    f"{observation_prefix}:{state_time:g}:{unit_id}:{channel.name}"
+                ),
                 channel=channel.name,
                 state_time=float(state_time),
                 arrival_time=float(state_time + delay),
@@ -527,6 +602,7 @@ def observation_batch_log_likelihood(
     adjacency: Mapping[str, Iterable[str]],
     assumed_geolocation_error_probability: float = 0.0,
     assumed_measurement_noise_multiplier: float = 1.0,
+    assumed_false_report_probability: float = 0.0,
 ) -> float:
     """Score a candidate latent field against one report batch.
 
@@ -542,6 +618,8 @@ def observation_batch_log_likelihood(
         raise ValueError("assumed geolocation error probability must be in [0, 1]")
     if assumed_measurement_noise_multiplier <= 0:
         raise ValueError("assumed measurement noise multiplier must be positive")
+    if not 0 <= assumed_false_report_probability < 1:
+        raise ValueError("assumed false report probability must be in [0, 1)")
     total = 0.0
     for observation in observations:
         channel = channel_by_name[observation.channel]
@@ -553,32 +631,46 @@ def observation_batch_log_likelihood(
         )
         sd = channel.measurement_sd * assumed_measurement_noise_multiplier
         if not neighbors or assumed_geolocation_error_probability <= 0:
-            total += _normal_logpdf(
+            state_log_likelihood = _normal_logpdf(
                 observation.value,
                 channel.expected_value(state[reported]),
                 sd,
             )
-            continue
-        error_probability = assumed_geolocation_error_probability
-        components = [
-            log(max(1e-15, 1.0 - error_probability))
-            + _normal_logpdf(
+        else:
+            error_probability = assumed_geolocation_error_probability
+            components = [
+                log(max(1e-15, 1.0 - error_probability))
+                + _normal_logpdf(
+                    observation.value,
+                    channel.expected_value(state[reported]),
+                    sd,
+                )
+            ]
+            neighbor_mass = error_probability / len(neighbors)
+            components.extend(
+                log(max(1e-15, neighbor_mass))
+                + _normal_logpdf(
+                    observation.value,
+                    channel.expected_value(state[neighbor]),
+                    sd,
+                )
+                for neighbor in neighbors
+            )
+            state_log_likelihood = _logsumexp(components)
+
+        if assumed_false_report_probability > 0:
+            contamination_log_likelihood = _uniform_gaussian_logpdf(
                 observation.value,
-                channel.expected_value(state[reported]),
+                channel.minimum_value,
+                channel.maximum_value,
                 sd,
             )
-        ]
-        neighbor_mass = error_probability / len(neighbors)
-        components.extend(
-            log(max(1e-15, neighbor_mass))
-            + _normal_logpdf(
-                observation.value,
-                channel.expected_value(state[neighbor]),
-                sd,
-            )
-            for neighbor in neighbors
-        )
-        total += _logsumexp(components)
+            total += _logsumexp((
+                log(1.0 - assumed_false_report_probability) + state_log_likelihood,
+                log(assumed_false_report_probability) + contamination_log_likelihood,
+            ))
+        else:
+            total += state_log_likelihood
     return total
 
 
@@ -619,6 +711,7 @@ def localized_importance_reconstruction(
     radius: int = 0,
     assumed_geolocation_error_probability: float = 0.0,
     assumed_measurement_noise_multiplier: float = 1.0,
+    assumed_false_report_probability: float = 0.0,
 ) -> tuple[list[PosteriorPoint], list[LocalizedSupportDiagnostic]]:
     """Estimate locality marginals without multiplying all-country likelihoods.
 
@@ -656,6 +749,7 @@ def localized_importance_reconstruction(
                 assumed_measurement_noise_multiplier=(
                     assumed_measurement_noise_multiplier
                 ),
+                assumed_false_report_probability=assumed_false_report_probability,
             )
             for field in particle_fields
         ]
@@ -695,6 +789,7 @@ def component_localized_importance_reconstruction(
     radius: int = 0,
     assumed_geolocation_error_probability: float = 0.0,
     assumed_measurement_noise_multiplier: float = 1.0,
+    assumed_false_report_probability: float = 0.0,
 ) -> tuple[list[PosteriorPoint], list[ComponentLocalizedSupportDiagnostic]]:
     """Estimate locality-variable marginals using only structurally relevant reports.
 
@@ -762,6 +857,9 @@ def component_localized_importance_reconstruction(
                         ),
                         assumed_measurement_noise_multiplier=(
                             assumed_measurement_noise_multiplier
+                        ),
+                        assumed_false_report_probability=(
+                            assumed_false_report_probability
                         ),
                     )
                     for field in particle_fields

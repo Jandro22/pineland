@@ -7,6 +7,7 @@ from studies.research_program.scripts.run_research_v1_repeated_snapshot_recovery
 )
 from studies.research_program.scripts.run_research_v1_repeated_dynamic_recovery import (
     _aggregate as _dynamic_aggregate,
+    _aggregate_variables as _dynamic_aggregate_variables,
     build_parser as build_dynamic_parser,
 )
 
@@ -49,8 +50,9 @@ def test_parser_accepts_matched_localization_radius_sweep():
 
 
 def test_parser_accepts_component_state_localization():
-    args = build_parser().parse_args(["--state-localization", "component"])
+    args = build_parser().parse_args([])
     assert args.state_localization == "component"
+    assert args.assumed_false_report_probability == 0.0
 
 
 def test_repeated_snapshot_summary_uses_world_paired_mse():
@@ -92,6 +94,7 @@ def test_repeated_dynamic_defaults_to_component_localization():
     assert args.localization_radius == 0
     assert args.assumed_geolocation_error_probability is None
     assert args.assumed_measurement_noise_multiplier is None
+    assert args.assumed_false_report_probability == 0.0
 
 
 def test_repeated_dynamic_accepts_misspecified_measurement_assumptions():
@@ -100,11 +103,13 @@ def test_repeated_dynamic_accepts_misspecified_measurement_assumptions():
         "--assumed-geolocation-error-probability", "0.0",
         "--measurement-noise-multiplier", "2.0",
         "--assumed-measurement-noise-multiplier", "1.0",
+        "--assumed-false-report-probability", "0.10",
     ])
     assert args.geolocation_error_probability == pytest.approx(0.20)
     assert args.assumed_geolocation_error_probability == pytest.approx(0.0)
     assert args.measurement_noise_multiplier == pytest.approx(2.0)
     assert args.assumed_measurement_noise_multiplier == pytest.approx(1.0)
+    assert args.assumed_false_report_probability == pytest.approx(0.10)
 
 
 def test_repeated_dynamic_summary_is_world_paired():
@@ -134,3 +139,35 @@ def test_repeated_dynamic_summary_is_world_paired():
     assert result["mse_ratio_vs_prior"] == pytest.approx(0.5)
     assert result["mse_information_gain_fraction"] == pytest.approx(0.5)
     assert result["world_win_rate"] == 1.0
+
+
+def test_repeated_dynamic_variable_summary_is_paired_by_world():
+    rows = [
+        {
+            "variables": {
+                "physical_control": {
+                    "prior_mse": 4.0,
+                    "posterior_mse": 2.0,
+                    "posterior_coverage_90": 0.9,
+                    "prior_coverage_90": 0.8,
+                    "posterior_confidently_wrong_rate": 0.1,
+                },
+            },
+        },
+        {
+            "variables": {
+                "physical_control": {
+                    "prior_mse": 2.0,
+                    "posterior_mse": 1.0,
+                    "posterior_coverage_90": 0.8,
+                    "prior_coverage_90": 0.7,
+                    "posterior_confidently_wrong_rate": 0.2,
+                },
+            },
+        },
+    ]
+    result = _dynamic_aggregate_variables(rows)["physical_control"]
+    assert result["mse_ratio_vs_prior"] == pytest.approx(0.5)
+    assert result["mse_information_gain_fraction"] == pytest.approx(0.5)
+    assert result["world_win_rate"] == 1.0
+    assert result["posterior_coverage_90"] == pytest.approx(0.85)

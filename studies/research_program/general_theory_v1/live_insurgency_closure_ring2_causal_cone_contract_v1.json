@@ -1,0 +1,71 @@
+{
+  "schema_version": "pineland.closure_ring2_causal_cone_contract.v1",
+  "status": "PREREGISTERED_CONTINGENT_BEFORE_RING2_OUTCOMES",
+  "registered_date": "2026-09-17",
+  "historical_outcomes_used": false,
+  "activation_condition": "Activate only if the exact preregistered rootedstock_execnet_ring1_15v5 fresh screen has one or more demonstrably non-equivalent pairs and those failures remain transport/reproduction dominated.",
+  "source_basis": {
+    "topology": "Default insurgent relocation is adjacent-only. Ring 1 can directly source the focal locality at the next relocation opportunity; an exact graph-distance-2 shell can replenish or alter ring 1 over repeated movement/recruitment cycles within a 30-day horizon.",
+    "ring1_development_diagnostic": "A pre-activation 64-world/12-pair/8-branch diagnostic using the frozen ring1 seed block produced five demonstrably non-equivalent pairs; all five diverged on future executable net transport pressure, with two also diverging on neighboring transportable force and two on fielded force. This diagnostic motivates the exact contingency but does not replace the exact ring1 activation screen.",
+    "hypothesis": "Finite-horizon closure requires an expanding spatial causal cone. Conditional on the local executable-flux core and ring-1 source reservoir, adding the exact two-hop source-reservoir shell should remove residual 30-day transport/force divergence if two hops are sufficient on the tested support."
+  },
+  "candidate": {
+    "name": "rootedstock_execnet_ring2_18v6",
+    "base": "rootedstock_execnet_ring1_15v5",
+    "added_coordinates": [
+      "log_ring2_transportable_strength",
+      "log_ring2_rooted_mass",
+      "log_ring2_recruitment_hazard"
+    ],
+    "dimension": 18,
+    "shell_definition": "Exact shortest-path distance 2 from the focal locality. The focal locality and all distance-1 neighbors are excluded; ring-1 and ring-2 statistics remain separate.",
+    "coordinate_rationale": {
+      "log_ring2_transportable_strength": "two-hop fielded reservoir capable of entering ring 1 before subsequently reaching the focal locality",
+      "log_ring2_rooted_mass": "durable two-hop organizational stock capable of replenishing the ring-1 force reservoir",
+      "log_ring2_recruitment_hazard": "current two-hop regeneration flow into that reservoir"
+    }
+  },
+  "fresh_screen": {
+    "dynamic_seed_base": 2026162000,
+    "initialization_seed": 2026161900,
+    "pool_worlds": 320,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "pairs": 24,
+    "branches": 16,
+    "threads": 14,
+    "recruitment_multiplier": 0.0625,
+    "require_live_anchor": true,
+    "max_match_distance": 1.25,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 2026162091,
+    "nomination_rule": "Zero demonstrably non-equivalent pairs required; 16 branches cannot certify closure.",
+    "falsifier": "One or more demonstrably non-equivalent pairs rejects the exact two-hop shell as sufficient 30-day closure."
+  },
+  "fresh_confirmation": {
+    "activation": "Only if fresh_screen has zero demonstrably non-equivalent pairs.",
+    "dynamic_seed_base": 2026163000,
+    "initialization_seed": 2026162900,
+    "pool_worlds": 320,
+    "pairs": 24,
+    "branches": 32,
+    "threads": 14,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 2026163091,
+    "pass_gate": {
+      "overall_equivalent_pair_fraction_min": 0.9,
+      "each_stratum_equivalent_pair_fraction_min": 0.8,
+      "demonstrably_non_equivalent_pair_fraction_max": 0.1,
+      "all_selected_anchor_rows_live": true,
+      "maximum_match_distance_max": 1.25
+    }
+  },
+  "interpretation_rules": [
+    "A ring-2 failure supports an expanding/nonlocal causal-state interpretation but does not by itself identify the next sufficient radius.",
+    "A ring-2 pass at 30 days licenses only the tested synthetic topology, support, and horizon; it does not imply a universal two-hop Markov blanket.",
+    "No radius-3 or alternate hidden-state coordinates may be tested on the fresh ring-2 outcome block unless their exact aggregation and new seed block are frozen in a separate contract first."
+  ],
+  "scientific_guard": "Synthetic closure experiment only. Graph distance, source reservoirs, recruitment hazards, and 30-day propagation in Pineland are not empirical claims about any real conflict."
+}

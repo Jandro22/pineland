@@ -1,5 +1,9 @@
 # Pineland COIN-SIM
 
+<p align="center">
+  <img src="docs/assets/pineland-logo.webp" alt="Unofficial Pineland project logo" width="128">
+</p>
+
 ## Research-v1: inferring the hidden war
 
 The active `research-v1` program treats Pineland primarily as a state-estimation

@@ -689,7 +689,7 @@ fn local_formation_experience_for_closure(
     weighted_mean(weighted, weight)
 }
 
-const CLOSURE_FEATURE_COUNT: usize = 30;
+const CLOSURE_FEATURE_COUNT: usize = 33;
 type ClosureFeatureVector = [f64; CLOSURE_FEATURE_COUNT];
 
 fn rooted_membership_mass_from_snapshot(v: &[f64]) -> f64 {
@@ -700,48 +700,89 @@ fn rooted_membership_mass_from_snapshot(v: &[f64]) -> f64 {
     armed_mass * (0.5 + 0.5 * origin_depth)
 }
 
-/// One-hop source reservoir implied by the production movement Markov blanket.
-/// Default movement is adjacent-only, so these are the states capable of
-/// directly supplying the focal locality at the next relocation opportunity.
-fn closure_ring1_features(
+/// Aggregate the exact graph shell at `distance` hops from the focal locality.
+///
+/// Keeping shells separate matters for the causal-cone test: ring 1 is the
+/// direct next-command movement reservoir, while ring 2 can enter ring 1 after
+/// one or more adjacent relocation/recruitment cycles. A radius-2 ball would
+/// blur that distinction and make a positive result hard to interpret.
+fn closure_graph_shell_features(
     engine: &SimulationEngine,
     locality: usize,
     recruitment_hazard_by_locality: &[f64],
+    distance: usize,
 ) -> [f64; 3] {
     let p = &engine.particle;
     let locality_count = engine.topology.locality_count();
-    let mut neighbor_mask = vec![false; locality_count];
-    for (neighbor, _) in engine.topology.locality_edges.neighbors(locality) {
-        let neighbor = neighbor as usize;
-        if neighbor < locality_count {
-            neighbor_mask[neighbor] = true;
+    if locality >= locality_count || distance == 0 {
+        return [0.0; 3];
+    }
+    let mut graph_distance = vec![usize::MAX; locality_count];
+    graph_distance[locality] = 0;
+    let mut frontier = vec![locality];
+    for depth in 1..=distance {
+        let mut next = Vec::new();
+        for node in frontier {
+            for (neighbor, _) in engine.topology.locality_edges.neighbors(node) {
+                let neighbor = neighbor as usize;
+                if neighbor < locality_count && graph_distance[neighbor] == usize::MAX {
+                    graph_distance[neighbor] = depth;
+                    next.push(neighbor);
+                }
+            }
+        }
+        frontier = next;
+        if frontier.is_empty() {
+            break;
         }
     }
+    let shell_mask = graph_distance
+        .iter()
+        .map(|&d| d == distance)
+        .collect::<Vec<_>>();
     let mut transportable = 0.0;
     for formation in 0..p.formations.personnel.len() {
         if p.formations.organization[formation] as usize != INSURGENT {
             continue;
         }
         let origin = p.formations.locality[formation] as usize;
-        if origin < locality_count && neighbor_mask[origin] {
+        if origin < locality_count && shell_mask[origin] {
             transportable += closure_transport_strength_if_present(p, formation).max(0.0);
         }
     }
     let mut rooted = 0.0;
     let mut hazard = 0.0;
-    for neighbor in 0..locality_count {
-        if !neighbor_mask[neighbor] {
+    for node in 0..locality_count {
+        if !shell_mask[node] {
             continue;
         }
-        let v = snapshot_values(engine, neighbor);
+        let v = snapshot_values(engine, node);
         rooted += rooted_membership_mass_from_snapshot(&v);
         hazard += recruitment_hazard_by_locality
-            .get(neighbor)
+            .get(node)
             .copied()
             .unwrap_or(0.0)
             .max(0.0);
     }
     [transportable.ln_1p(), rooted.ln_1p(), hazard.ln_1p()]
+}
+
+/// One-hop source reservoir implied by the production movement Markov blanket.
+fn closure_ring1_features(
+    engine: &SimulationEngine,
+    locality: usize,
+    recruitment_hazard_by_locality: &[f64],
+) -> [f64; 3] {
+    closure_graph_shell_features(engine, locality, recruitment_hazard_by_locality, 1)
+}
+
+/// Exact two-hop shell used by the expanding-causal-cone test.
+fn closure_ring2_features(
+    engine: &SimulationEngine,
+    locality: usize,
+    recruitment_hazard_by_locality: &[f64],
+) -> [f64; 3] {
+    closure_graph_shell_features(engine, locality, recruitment_hazard_by_locality, 2)
 }
 
 /// Probe-local source-parity copy of movement::transport_strength_if_present.
@@ -899,6 +940,7 @@ fn closure_features_with_transport(
     let social_exposure = v[panel_index("m_social_exposure")].clamp(0.0, 1.0);
     let delay = closure_delay_features(engine, locality);
     let ring1 = closure_ring1_features(engine, locality, &recruitment_hazard_by_locality);
+    let ring2 = closure_ring2_features(engine, locality, &recruitment_hazard_by_locality);
     [
         v[panel_index("m_member_depth")],
         (1.0 + v[panel_index("f_effective_strength")].max(0.0)).ln(),
@@ -931,6 +973,9 @@ fn closure_features_with_transport(
         ring1[0],
         ring1[1],
         ring1[2],
+        ring2[0],
+        ring2[1],
+        ring2[2],
     ]
 }
 
@@ -1490,6 +1535,9 @@ fn select_closure_pairs(
         "rootedstock_execnet_ring1_15v5" => {
             &[18, 26, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 27, 28, 29]
         }
+        "rootedstock_execnet_ring2_18v6" => {
+            &[18, 26, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 27, 28, 29, 30, 31, 32]
+        }
         _ => &[0, 1, 2, 3],
     };
     let locality_count = engines
@@ -1804,6 +1852,9 @@ fn closure_branch_rows(
             format!("{:.17}", pre[27]),
             format!("{:.17}", pre[28]),
             format!("{:.17}", pre[29]),
+            format!("{:.17}", pre[30]),
+            format!("{:.17}", pre[31]),
+            format!("{:.17}", pre[32]),
             u8::from(e_final >= 0.20).to_string(),
             format!("{:.17}", action_delta.ln_1p()),
             format!("{:.17}", recruit_delta.ln_1p()),
@@ -1842,6 +1893,9 @@ fn closure_branch_rows(
             format!("{:.17}", final_features[27]),
             format!("{:.17}", final_features[28]),
             format!("{:.17}", final_features[29]),
+            format!("{:.17}", final_features[30]),
+            format!("{:.17}", final_features[31]),
+            format!("{:.17}", final_features[32]),
             pre_org_active.to_string(),
             final_org_active.to_string(),
             format!("{pre_active_owner_logf:.17}"),
@@ -1883,6 +1937,7 @@ fn closure_candidate_supported(candidate: &str) -> bool {
             | "rootedstock_delay16v4"
             | "rootedstock_execnet12v4"
             | "rootedstock_execnet_ring1_15v5"
+            | "rootedstock_execnet_ring2_18v6"
     )
 }
 
@@ -1891,9 +1946,10 @@ fn closure_candidate_uses_state_regeneration(candidate: &str) -> bool {
         || candidate.ends_with("v3")
         || candidate.ends_with("v4")
         || candidate.ends_with("v5")
+        || candidate.ends_with("v6")
 }
 
-const CLOSURE_CSV_HEADER: &str = "pair_id,candidate,anchor_days,horizon_days,branch,side,left_seed,right_seed,locality,match_distance,stratum,pre_M,pre_logF,pre_E,pre_C,pre_logKo,pre_NM,pre_L,pre_Kintel,pre_X,pre_S,pre_U,pre_police_professionalism,pre_government_veterancy,pre_insurgent_veterancy,pre_renewal_potential,pre_organization_persistence,pre_inbound_transport_pressure,pre_net_transport_pressure,pre_Mstar,pre_recruitment_hazard,pre_social_exposure,pre_pending_incoming_strength,pre_pending_incoming_mean_eta_days,pre_pending_outgoing_strength,pre_pending_outgoing_mean_eta_days,pre_executable_inbound_transport_pressure,pre_executable_net_transport_pressure,pre_neighbor_transportable_strength,pre_neighbor_rooted_mass,pre_neighbor_recruitment_hazard,viable,log1p_actions_delta,log1p_recruits_delta,final_M,final_logF,final_E,control_delta,final_C,final_state_control,final_Mstar,final_recruitment_hazard,final_social_exposure,final_inbound_transport_pressure,final_net_transport_pressure,final_pending_incoming_strength,final_pending_incoming_mean_eta_days,final_pending_outgoing_strength,final_pending_outgoing_mean_eta_days,final_executable_inbound_transport_pressure,final_executable_net_transport_pressure,final_neighbor_transportable_strength,final_neighbor_rooted_mass,final_neighbor_recruitment_hazard,pre_org_active,final_org_active,pre_active_owner_logF,final_active_owner_logF";
+const CLOSURE_CSV_HEADER: &str = "pair_id,candidate,anchor_days,horizon_days,branch,side,left_seed,right_seed,locality,match_distance,stratum,pre_M,pre_logF,pre_E,pre_C,pre_logKo,pre_NM,pre_L,pre_Kintel,pre_X,pre_S,pre_U,pre_police_professionalism,pre_government_veterancy,pre_insurgent_veterancy,pre_renewal_potential,pre_organization_persistence,pre_inbound_transport_pressure,pre_net_transport_pressure,pre_Mstar,pre_recruitment_hazard,pre_social_exposure,pre_pending_incoming_strength,pre_pending_incoming_mean_eta_days,pre_pending_outgoing_strength,pre_pending_outgoing_mean_eta_days,pre_executable_inbound_transport_pressure,pre_executable_net_transport_pressure,pre_neighbor_transportable_strength,pre_neighbor_rooted_mass,pre_neighbor_recruitment_hazard,pre_ring2_transportable_strength,pre_ring2_rooted_mass,pre_ring2_recruitment_hazard,viable,log1p_actions_delta,log1p_recruits_delta,final_M,final_logF,final_E,control_delta,final_C,final_state_control,final_Mstar,final_recruitment_hazard,final_social_exposure,final_inbound_transport_pressure,final_net_transport_pressure,final_pending_incoming_strength,final_pending_incoming_mean_eta_days,final_pending_outgoing_strength,final_pending_outgoing_mean_eta_days,final_executable_inbound_transport_pressure,final_executable_net_transport_pressure,final_neighbor_transportable_strength,final_neighbor_rooted_mass,final_neighbor_recruitment_hazard,final_ring2_transportable_strength,final_ring2_rooted_mass,final_ring2_recruitment_hazard,pre_org_active,final_org_active,pre_active_owner_logF,final_active_owner_logF";
 
 fn run_distributional_closure(args: &[String]) -> Result<(), Box<dyn Error>> {
     let out = args
@@ -1916,7 +1972,7 @@ fn run_distributional_closure(args: &[String]) -> Result<(), Box<dyn Error>> {
     let require_live_anchor = require_live_anchor != 0;
     if !closure_candidate_supported(candidate) {
         return Err(format!(
-            "candidate must be minimal4, core5, core6spatial, operational9, competitive11, competitive11v2, professionalism12v2, veterancy13v2, competitive14v2, renewal15v2, memory15v2, regenerative16v2, transport15v2, reaction_transport17v2, transport12v2, reaction_transport14v2, nettransport12v2, transportnet13v2, rootedstock11v3, rootedstock_hazard12v3, rootedstock_social12v3, rootedstock_net12v3, rootedstock_social_net13v3, rootedstock_hazard_net13v3, rootedstock_transport_net13v3, rootedstock_delay16v4, rootedstock_execnet12v4, or rootedstock_execnet_ring1_15v5; got {candidate}"
+            "candidate must be minimal4, core5, core6spatial, operational9, competitive11, competitive11v2, professionalism12v2, veterancy13v2, competitive14v2, renewal15v2, memory15v2, regenerative16v2, transport15v2, reaction_transport17v2, transport12v2, reaction_transport14v2, nettransport12v2, transportnet13v2, rootedstock11v3, rootedstock_hazard12v3, rootedstock_social12v3, rootedstock_net12v3, rootedstock_social_net13v3, rootedstock_hazard_net13v3, rootedstock_transport_net13v3, rootedstock_delay16v4, rootedstock_execnet12v4, rootedstock_execnet_ring1_15v5, or rootedstock_execnet_ring2_18v6; got {candidate}"
         )
         .into());
     }
@@ -5121,7 +5177,7 @@ fn usage() {
     eprintln!("pineland-general-theory-probe state-regeneration-metadata OUT.csv [seeds=8] [agents=300] [localities=34] [focals=8] [seed_base=2026093100]");
     eprintln!("pineland-general-theory-probe veterancy-controlled OUT.csv [replicates=1024] [engagements=12] [threads=16] [seed_base=2026110000]");
     eprintln!("pineland-general-theory-probe veterancy-naturalistic OUT.csv [seeds=32] [agents=300] [localities=34] [anchor=60] [horizon=180] [threads=16] [seed_base=2026111000]");
-    eprintln!("pineland-general-theory-probe closure OUT.csv [pool_seeds=24] [agents=300] [localities=34] [anchor=60] [horizon=30] [pairs=24] [branches=32] [threads=16] [candidate=minimal4|core5|core6spatial|operational9|competitive11|competitive11v2|professionalism12v2|veterancy13v2|competitive14v2|renewal15v2|memory15v2|regenerative16v2|transport15v2|reaction_transport17v2|transport12v2|reaction_transport14v2|nettransport12v2|transportnet13v2|rootedstock11v3|rootedstock_hazard12v3|rootedstock_social12v3|rootedstock_net12v3|rootedstock_social_net13v3|rootedstock_hazard_net13v3|rootedstock_transport_net13v3|rootedstock_delay16v4|rootedstock_execnet12v4|rootedstock_execnet_ring1_15v5] [dynamic_seed_base=2026092000] [initialization_seed=2026091900]");
+    eprintln!("pineland-general-theory-probe closure OUT.csv [pool_seeds=24] [agents=300] [localities=34] [anchor=60] [horizon=30] [pairs=24] [branches=32] [threads=16] [candidate=minimal4|core5|core6spatial|operational9|competitive11|competitive11v2|professionalism12v2|veterancy13v2|competitive14v2|renewal15v2|memory15v2|regenerative16v2|transport15v2|reaction_transport17v2|transport12v2|reaction_transport14v2|nettransport12v2|transportnet13v2|rootedstock11v3|rootedstock_hazard12v3|rootedstock_social12v3|rootedstock_net12v3|rootedstock_social_net13v3|rootedstock_hazard_net13v3|rootedstock_transport_net13v3|rootedstock_delay16v4|rootedstock_execnet12v4|rootedstock_execnet_ring1_15v5|rootedstock_execnet_ring2_18v6] [dynamic_seed_base=2026092000] [initialization_seed=2026091900]");
     eprintln!("pineland-general-theory-probe closure-battery OUT_DIR CANDIDATE1,CANDIDATE2 [pool_seeds=48] [agents=300] [localities=34] [anchor=60] [horizon=30] [pairs=24] [branches=32] [threads=16] [dynamic_seed_base=2026092000] [initialization_seed=2026091900] [recruitment_multiplier=1.0] [require_live_anchor=0]");
     eprintln!("pineland-general-theory-probe closure-hidden-diagnostics OUT.csv [pool_seeds=36] [agents=300] [localities=34] [anchor=60] [pairs=24] [threads=8] [candidate=nettransport12v2] [dynamic_seed_base=2026107000] [initialization_seed=2026106900] [recruitment_multiplier=1.0] [require_live_anchor=0]");
     eprintln!("pineland-general-theory-probe closure-stress OUT.csv [seeds=8] [agents=300] [localities=34] [anchor=60] [horizon=30] [focals=3] [branches=32] [threads=16] [block=police_professionalism|government_veterancy|insurgent_veterancy]");
