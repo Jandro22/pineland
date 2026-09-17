@@ -201,37 +201,59 @@ def build_construct_correspondence(metric: str, *, theoretical_construct: str,
 
 
 def first_paper_experiment_spec() -> dict[str, Any]:
-    """Return an executable, data-free specification for the first paper.
+    """Return the data-free Research-v1 specification for the first paper.
 
-    This is deliberately a contract rather than fabricated calibration data.
-    A case package must populate the empirical observables and correspondence
-    records before the specification can be used for substantive inference.
+    Synthetic ground-truth recovery is the primary identification exercise.
+    Historical cases enter only after that exercise and its misspecification
+    battery are frozen; they cannot substitute for recovery against known
+    truth.
     """
     return {
-        "title_concept": "Control Under Uncertainty: Information, Logistics, and Local Territorial Competition",
-        "question": "When do information-limited, logistics-constrained spatial forces generate persistent local control?",
+        "title_concept": "Inferring the Hidden War: State Estimation in Partially Observed Agent-Based Models of Insurgency",
+        "question": ("When the true underlying conflict state is known, which hidden political and "
+                     "organizational conditions can Pineland recover from incomplete and noisy "
+                     "observations, and how well calibrated is that uncertainty?"),
         "unit_of_analysis": "locality-week",
-        "target_metrics": ["government_control", "insurgent_control", "control_persistence",
-                           "event_frequency", "event_spatial_concentration", "event_temporal_burstiness"],
-        "required_empirical_observables": [
-            "geocoded administrative/security presence by locality-week",
-            "geocoded conflict contacts or engagements with timestamps",
-            "source type, coverage, and reporting-delay metadata",
-            "formation/logistics or force-presence proxies",
+        "primary_latent_targets": [
+            "government and insurgent seven-dimensional control vectors",
+            "insurgent local foothold and embeddedness",
+            "insurgent local fighter capacity",
+            "insurgent local supply capacity",
         ],
-        "mechanisms": ["microzone physical control", "formation movement and logistics",
-                       "actor-local information and beliefs", "civilian/social response"],
-        "parameter_subset": ["combat.base_attrition_rate", "contact_rate", "recruitment_rate",
-                             "social_network.behavior_update_rate"],
-        "training_holdout": {"split": "temporal_and_geographic", "no_retuning": True},
-        "competitors": ["random null", "negative-binomial or spatial hazard", "self-exciting event model",
-                        "reduced Pineland", "question-specific Pineland"],
-        "ablations": ["no logistics", "no information", "degree-preserving rewiring",
-                      "no social behavior update"],
-        "falsification": ["full model fails held-out targets", "resolution changes reverse the conclusion",
-                          "logistics ablation does not selectively change logistics-sensitive outcomes",
-                          "recording-calibrated model cannot reproduce observed source patterns"],
-        "data_status": "not supplied; no empirical claim is licensed until a case package fills this contract",
+        "primary_metrics": [
+            "bias", "MAE", "RMSE", "50/90/95 percent interval coverage",
+            "posterior interval width", "confidently-wrong rate",
+            "spatial correlation", "change-detection rate", "change-detection lag",
+        ],
+        "evidence_ladder": [
+            {"level": 1, "name": "synthetic_ground_truth_recovery", "role": "primary identification"},
+            {"level": 2, "name": "synthetic_misspecification", "role": "failure-envelope mapping"},
+            {"level": 3, "name": "afghanistan_held_out_evaluation", "role": "historical calibrated case confrontation"},
+            {"level": 4, "name": "nepal_frozen_transfer", "role": "out-of-case transfer test without mechanism retuning"},
+        ],
+        "synthetic_observation_failures": [
+            "missing reports", "measurement noise", "reporting delay", "geolocation error",
+            "geographically heterogeneous reporting", "channel removal", "false reports",
+        ],
+        "misspecification_axes": [
+            "reporting probability", "geolocation assumptions", "measurement variance",
+            "recruitment function", "mobility", "combat effectiveness", "insurgent strategy",
+            "government responsiveness", "foreign support", "terrain friction",
+        ],
+        "historical_holdout": {
+            "afghanistan": "temporal and/or geographic holdout after calibration; no holdout retuning",
+            "nepal": "case initialization only after model freeze; no mechanism changes in response to outcome",
+        },
+        "competitors": [
+            "prior/no-assimilation ensemble", "latest direct report", "previous-period activity",
+            "rolling historical average", "district base-rate model", "simple logistic model",
+            "simple spatial diffusion model",
+        ],
+        "claim_boundary": ("Synthetic recovery licenses statements about estimator behavior under the declared "
+                           "data-generating process only. Afghanistan and Nepal are separate historical "
+                           "confrontations and cannot retroactively validate latent synthetic truth."),
+        "data_status": ("synthetic benchmark is executable without historical data; empirical claims remain "
+                        "unlicensed until the historical levels are run under their frozen contracts"),
     }
 
 

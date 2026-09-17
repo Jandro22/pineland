@@ -1,0 +1,121 @@
+{
+  "schema_version": "pineland.research_v1.protocol.v1",
+  "program_name": "Hidden War State Estimation",
+  "paper_1_working_title": "Inferring the Hidden War: State Estimation in Partially Observed Agent-Based Models of Insurgency",
+  "north_star": "Estimate hidden political and organizational conditions in irregular warfare from incomplete observations, with explicit uncertainty and known failure conditions.",
+  "primary_question": "When synthetic truth is known, which latent conflict states can Pineland recover from incomplete and noisy reports, and how well calibrated is posterior uncertainty?",
+  "evidence_hierarchy": [
+    {
+      "level": 1,
+      "name": "synthetic_ground_truth_recovery",
+      "priority": "primary",
+      "historical_truth_claim": false
+    },
+    {
+      "level": 2,
+      "name": "adversarial_synthetic_misspecification",
+      "priority": "primary",
+      "historical_truth_claim": false
+    },
+    {
+      "level": 3,
+      "name": "afghanistan_calibrated_holdout",
+      "priority": "secondary",
+      "role": "observable historical confrontation; latent truth remains unknown"
+    },
+    {
+      "level": 4,
+      "name": "nepal_frozen_transfer",
+      "priority": "secondary",
+      "role": "case initialization allowed; outcome-driven mechanism changes forbidden"
+    }
+  ],
+  "architecture_freeze": {
+    "branch": "research-v1",
+    "allowed": [
+      "bugs_and_invariant_repairs",
+      "observation_and_measurement_models",
+      "inference_and_validation_infrastructure",
+      "experiment_tooling",
+      "simple_baselines",
+      "provenance_and_reproduction",
+      "scientifically_necessary_corrections_exposed_by_experiments"
+    ],
+    "deferred": [
+      "gui",
+      "fictional_world_enrichment",
+      "new_political_subsystems",
+      "unmotivated_feature_expansion",
+      "performance_work_without_an_experiment_bottleneck"
+    ],
+    "historical_tuning_forbidden": true,
+    "core_change_rule": "A core-model change must identify the experiment that requires it and invalidates affected evidence until rerun."
+  },
+  "latent_targets": [
+    "government.formal",
+    "government.physical",
+    "government.administrative",
+    "government.legal",
+    "government.fiscal",
+    "government.social",
+    "government.expected",
+    "insurgent.formal",
+    "insurgent.physical",
+    "insurgent.administrative",
+    "insurgent.legal",
+    "insurgent.fiscal",
+    "insurgent.social",
+    "insurgent.expected",
+    "insurgent.foothold",
+    "insurgent.embeddedness",
+    "insurgent.fighter_capacity",
+    "insurgent.supply_capacity"
+  ],
+  "primary_metrics": [
+    "bias",
+    "mae",
+    "rmse",
+    "coverage_50",
+    "coverage_90",
+    "coverage_95",
+    "mean_interval_width_90",
+    "confidently_wrong_rate",
+    "mean_spatial_correlation",
+    "change_detection_rate",
+    "mean_detection_lag_days"
+  ],
+  "synthetic_failure_axes": [
+    "reporting_probability",
+    "geographic_reporting_bias",
+    "geolocation_error",
+    "reporting_delay",
+    "measurement_noise",
+    "false_reports",
+    "channel_removal",
+    "recruitment_function",
+    "mobility_assumptions",
+    "combat_effectiveness",
+    "insurgent_strategy",
+    "government_responsiveness",
+    "foreign_support",
+    "terrain_friction"
+  ],
+  "baseline_ladder": [
+    "prior_or_no_assimilation_ensemble",
+    "latest_direct_report",
+    "previous_period_activity",
+    "rolling_historical_average",
+    "district_base_rate",
+    "simple_logistic_model",
+    "simple_spatial_diffusion_model"
+  ],
+  "promotion_rules": {
+    "pilot_results_cannot_set_confirmatory_thresholds_retroactively": true,
+    "confirmatory_thresholds": "to_be_frozen_before_confirmatory_batch",
+    "single_world_success_is_insufficient": true,
+    "posterior_collinearity_alone_is_not_an_identifiability_claim": true,
+    "historical_fit_cannot_substitute_for_known_truth_recovery": true,
+    "nepal_failure_must_be_retained_if_frozen_transfer_fails": true
+  },
+  "current_executable": "studies/research_program/scripts/run_research_v1_synthetic_recovery.py"
+}

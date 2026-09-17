@@ -69,11 +69,27 @@ rates; interval coverage is explicitly unavailable for point estimates.
 
 ## First-paper boundary
 
-`paper-spec` emits the locality-week experiment contract for physical control,
-logistics, information, and social response, including construct
-correspondence, measurement model, holdouts, competitors, ablations, and
-falsification criteria. No empirical data are bundled. The readiness report
-therefore does not claim empirical validation.
+Research-v1 makes **known-truth synthetic recovery** the first-paper primary
+identification exercise. `paper-spec` now emits the evidence ladder rather
+than treating a historical case as the first validation target. The executable
+benchmark is
+`studies/research_program/scripts/run_research_v1_synthetic_recovery.py`.
+It runs a live Pineland truth trajectory, degrades that truth into incomplete,
+noisy, delayed, and spatially fallible reports, passes only those reports to
+the existing particle filter, and then scores posterior state estimates against
+the truth that was withheld from the estimator.
+
+The benchmark reports bias, RMSE, credible-interval coverage and width,
+confidently-wrong rates, spatial recovery, change-detection rate/lag, and
+posterior-collinearity warnings. A collinearity warning is not by itself an
+identifiability result: confirmatory identification requires repeated worlds,
+adequate particle support, and the preregistered misspecification battery.
+
+The evidence order is fixed: (1) synthetic recovery, (2) adversarial synthetic
+misspecification, (3) calibrated Afghanistan held-out evaluation against simple
+baselines, and (4) frozen Nepal transfer with no mechanism retuning. Synthetic
+success does not establish historical validity, and historical fit cannot
+substitute for known-truth recovery.
 
 ## Final report
 

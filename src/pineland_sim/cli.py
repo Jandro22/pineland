@@ -4,6 +4,8 @@ import argparse
 from dataclasses import asdict
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 from .config import SimulationConfig
 from .experiments import governance_surge, run_paired_experiment
@@ -158,8 +160,12 @@ def build_parser() -> argparse.ArgumentParser:
     longrun.add_argument("--seed", type=int)
     longrun.add_argument("--seeds", type=int, nargs="+")
     longrun.add_argument("--output", type=Path, default=Path("outputs/long-horizon.json"))
-    paper = subparsers.add_parser("paper-spec", help="emit the first-paper empirical experiment contract")
+    paper = subparsers.add_parser("paper-spec", help="emit the Research-v1 first-paper evidence contract")
     paper.add_argument("--output", type=Path, default=Path("outputs/first-paper-spec.json"))
+    reproduce = subparsers.add_parser("reproduce", help="run a frozen research reproduction entry point")
+    reproduce.add_argument("target", choices=["paper1"])
+    reproduce.add_argument("--profile", choices=["smoke", "development"], default="smoke")
+    reproduce.add_argument("--output", type=Path)
     firewall = subparsers.add_parser("truth-firewall", help="run the decision-level hidden-state metamorphic battery")
     firewall.add_argument("--config", type=Path)
     firewall.add_argument("--agents", type=int, default=250)
@@ -335,6 +341,31 @@ def main(argv: list[str] | None = None) -> int:
         args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(json.dumps(result, indent=2))
         return 0
+    if args.command == "reproduce":
+        root = Path(__file__).resolve().parents[2]
+        runner = root / "studies/research_program/scripts/run_research_v1_synthetic_recovery.py"
+        if not runner.exists():
+            raise FileNotFoundError(
+                "paper1 reproduction requires the Pineland source repository with studies/"
+            )
+        output = args.output or (
+            Path("outputs/research-v1/reproduce-paper1-smoke.json")
+            if args.profile == "smoke"
+            else Path("outputs/research-v1/reproduce-paper1-development.json")
+        )
+        command = [sys.executable, str(runner), "--output", str(output)]
+        if args.profile == "smoke":
+            command += [
+                "--agents", "60", "--particles", "8", "--days", "14",
+                "--interval-days", "7", "--scenario", "nominal",
+            ]
+        else:
+            command += [
+                "--agents", "120", "--particles", "32", "--days", "28",
+                "--interval-days", "7", "--scenario", "all",
+            ]
+        completed = subprocess.run(command, cwd=root, check=False)
+        return int(completed.returncode)
     if args.command == "truth-firewall":
         result = truth_firewall_battery(config, args.days)
         args.output.parent.mkdir(parents=True, exist_ok=True)
