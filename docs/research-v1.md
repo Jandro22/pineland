@@ -115,11 +115,62 @@ hidden world, reports, and prior ensemble. Radius is therefore treated as an
 estimator-design choice to diagnose spatial dimensionality, not tuned against a
 historical case.
 
+Three additional synthetic diagnostics isolate failure modes before expensive
+dynamic batches are attempted:
+
+```text
+python studies/research_program/scripts/run_research_v1_weight_collapse_diagnostic.py
+python studies/research_program/scripts/run_research_v1_channel_ablation.py
+python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py
+```
+
+The repeated-snapshot benchmark treats the synthetic world as the scientific
+unit and measures paired prior-versus-posterior error across multiple known
+truths. A single world's RMSE change is therefore a pilot diagnostic, not a
+general recoverability claim.
+
+### State-component localization
+
+The first localized estimator weighted every latent coordinate in a locality
+with every report from that locality. Repeated prior-width experiments exposed
+a second dimensionality problem: finite ensembles create incidental
+cross-variable correlations, so evidence about one construct can move an
+unrelated construct even when the observation channel has no loading on it.
+
+`component_localized_importance_reconstruction` therefore adds a second,
+declared localization boundary. Each locality-variable marginal uses only
+channels whose measurement equation has a non-zero loading on that variable.
+Particles remain complete coherent Pineland worlds; only the weights used to
+summarize each marginal differ. Mixed-proxy channels can still inform multiple
+coordinates, so their intended ambiguity is preserved rather than artificially
+diagonalized.
+
+In the September 17 development pilot, this removed the broad-prior failure of
+locality-only weighting. Across eight independently generated truths with 64
+particles per world and truth SD 0.10, component localization produced direct-
+oracle MSE information gains of about 8.3%, 7.8%, and 10.2% at prior SD 0.10,
+0.20, and 0.30 respectively. The mixed-proxy design produced gains of about
+9.6%, 3.4%, and 1.1% over the same prior widths. These are development results,
+not confirmatory thresholds.
+
+The dynamic benchmark exposes this mode with `--state-localization component`.
+The repository development reproduction profile uses it explicitly; locality-
+only weighting remains available as an ablation and failure-mode comparison.
+
+## Repository and data boundary
+
+The private GitHub repository is the canonical code/protocol/provenance remote.
+Large generated runs, processed historical panels, sealed holdouts, and local
+research result bundles remain outside Git and are covered by `.gitignore`.
+GitHub CI therefore runs a portable regression suite plus the Research-v1 core
+tests. Data-bound historical certification remains a local-workspace test and
+must not be inferred from a green clean-clone CI run.
+
 ## Claim firewall
 
-The synthetic benchmark may support statements such as “under this declared
+The synthetic benchmark may support statements such as "under this declared
 observation and transition process, physical control is recoverable with this
-error and coverage.” It cannot support “Pineland reconstructed the true Taliban
-strength in a historical district,” because that historical latent truth is
+error and coverage." It cannot support "Pineland reconstructed the true Taliban
+strength in a historical district," because that historical latent truth is
 not observed. Historical cases answer predictive/transfer questions against
 observable held-out evidence under a separately frozen contract.

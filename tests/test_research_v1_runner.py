@@ -1,5 +1,11 @@
 from argparse import Namespace
 
+import pytest
+
+from studies.research_program.scripts.run_research_v1_repeated_snapshot_recovery import (
+    _paired_summary,
+)
+
 from studies.research_program.scripts.run_research_v1_synthetic_recovery import (
     DEFAULT_VARIABLES,
     build_parser,
@@ -36,3 +42,41 @@ def test_parser_accepts_matched_localization_radius_sweep():
         "--localization-radius-sweep", "0", "1", "2",
     ])
     assert args.localization_radius_sweep == [0, 1, 2]
+
+
+def test_parser_accepts_component_state_localization():
+    args = build_parser().parse_args(["--state-localization", "component"])
+    assert args.state_localization == "component"
+
+
+def test_repeated_snapshot_summary_uses_world_paired_mse():
+    rows = [
+        {
+            "prior_mse": 4.0,
+            "posterior_mse": 1.0,
+            "posterior_metrics": {
+                "coverage_90": 0.9,
+                "confidently_wrong_rate": 0.1,
+            },
+            "prior_metrics": {"coverage_90": 0.8},
+            "mean_local_ess_fraction": 0.5,
+            "minimum_local_ess_fraction": 0.25,
+        },
+        {
+            "prior_mse": 1.0,
+            "posterior_mse": 2.0,
+            "posterior_metrics": {
+                "coverage_90": 0.8,
+                "confidently_wrong_rate": 0.2,
+            },
+            "prior_metrics": {"coverage_90": 0.7},
+            "mean_local_ess_fraction": 0.75,
+            "minimum_local_ess_fraction": 0.5,
+        },
+    ]
+    result = _paired_summary(rows)
+    assert result["prior_mse"] == pytest.approx(2.5)
+    assert result["posterior_mse"] == pytest.approx(1.5)
+    assert result["mse_ratio_vs_prior"] == pytest.approx(0.6)
+    assert result["mse_information_gain_fraction"] == pytest.approx(0.4)
+    assert result["world_win_rate"] == pytest.approx(0.5)

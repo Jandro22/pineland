@@ -1,0 +1,134 @@
+{
+  "schema_version": "pineland.research_v1.pilot_ledger.v1",
+  "date": "2026-09-17",
+  "status": "development_pilot_not_confirmatory",
+  "north_star": "Estimate hidden political and organizational conditions in irregular warfare from incomplete observations, with calibrated uncertainty.",
+  "model_sha256_repeated_snapshot_pilot": "1c6ef1bfc1a7251a1e8e40cf81b353fa40597aa9b92c636f63b1647a32cb6525",
+  "model_sha256_component_localization_pilot": "1ccd1dcf2df64dfc10bbbb7dc706b198adc60cbdce8d56c0cd76208c160e196a",
+  "software_integrity": {
+    "full_pytest": {
+      "passed": 702,
+      "skipped": 2,
+      "failed": 0
+    },
+    "notes": [
+      "Native scheduler-oracle horizon clipping was aligned with reference exact-continuation semantics.",
+      "Research-readiness scoring no longer infers empirical readiness from synthetic data-status wording."
+    ]
+  },
+  "diagnostic_findings": {
+    "global_particle_weighting": {
+      "finding": "Whole-country likelihood multiplication causes severe particle collapse as observed spatial dimension grows.",
+      "example": "At 17 localities and 64 particles, effective support fell to roughly 1-3% in the direct-oracle/mixed-proxy diagnostics."
+    },
+    "localization": {
+      "finding": "Radius-zero localized marginal weighting removes most of the global dimensionality damage while preserving coherent full-world trajectories.",
+      "radius_pilot": "Radii 1 and 2 worsened recovery relative to radius 0 on the matched smoke worlds; neighboring evidence is not currently licensed by the observation model."
+    },
+    "snapshot_identifiability": {
+      "mixed_proxy_variables": 18,
+      "mixed_proxy_channels": 8,
+      "snapshot_design_rank": 8,
+      "snapshot_nullity": 10,
+      "interpretation": "Dynamics and priors may add identifying restrictions, but full snapshot identification is not available from the current mixed proxy design alone."
+    },
+    "channel_ablation_64_particles": {
+      "full_mixed_proxy_mse_ratio_vs_prior": 1.0035512289367068,
+      "full_mixed_proxy_coverage_90": 0.9166666666666666,
+      "interpretation": "No single channel explains the weak one-world information gain; single-channel effects are small and the full design remains rank-deficient."
+    },
+    "component_localization": {
+      "finding": "Locality-only weighting still allowed finite-ensemble correlations to make reports reweight latent variables that the observation channel did not measure. Component localization restricts each marginal to channels with a declared non-zero loading on that variable.",
+      "dynamic_smoke_16_particles": {
+        "linked_rmse_ratio_vs_prior": 0.94658964190137,
+        "posterior_coverage_90": 0.8709150326797386,
+        "minimum_ess": 3.773833805311731
+      },
+      "dynamic_development_32_particles_28_days": {
+        "linked_rmse_ratio_vs_prior": 0.8568623598774779,
+        "posterior_coverage_90": 0.886437908496732,
+        "minimum_ess": 2.43411617570753,
+        "global_filter_rmse_ratio_vs_prior": 1.125603550763013,
+        "global_filter_coverage_90": 0.3047385620915033
+      },
+      "interpretation": "Component localization is now the development estimator; locality-only and global weighting are retained as explicit ablations."
+    }
+  },
+  "repeated_snapshot_pilot": {
+    "design": {
+      "worlds": 16,
+      "particles_per_world": 64,
+      "agents": 60,
+      "localities": 17,
+      "truth_sd": 0.1,
+      "prior_sd": 0.1,
+      "localization_radius": 0,
+      "historical_case_data_loaded": false
+    },
+    "mixed_proxy": {
+      "mean_reports_per_world": 57.0,
+      "mse_information_gain_fraction": 0.09317958101861123,
+      "mse_ratio_vs_prior": 0.9068204189813888,
+      "world_win_rate": 0.9375,
+      "posterior_coverage_90": 0.9322916666666666,
+      "posterior_confidently_wrong_rate": 0.014093137254901961,
+      "mean_local_ess_fraction": 0.5878477704303718,
+      "minimum_local_ess_fraction": 0.03579870218817611
+    },
+    "direct_oracle": {
+      "mean_reports_per_world": 61.6,
+      "mse_information_gain_fraction": 0.05674594795073962,
+      "mse_ratio_vs_prior": 0.9432540520492604,
+      "world_win_rate": 1.0,
+      "posterior_coverage_90": 0.9089052287581699,
+      "posterior_confidently_wrong_rate": 0.023284313725490197,
+      "mean_local_ess_fraction": 0.5120691525710792,
+      "minimum_local_ess_fraction": 0.01882209948015492
+    },
+    "interpretation": [
+      "This is the first repeated-known-truth pilot showing positive average information gain for localized recovery.",
+      "The mixed-proxy and direct-oracle profiles are not a ranking: their channel counts, loadings, reporting probabilities, and noise structures differ.",
+      "The normal paired-difference intervals emitted by the runner are descriptive pilot diagnostics, not preregistered confirmatory inference.",
+      "Confirmatory world counts, particle counts, severity levels, and promotion gates remain to be frozen before a confirmatory run."
+    ]
+  },
+  "component_localization_prior_width_pilot": {
+    "design": {
+      "worlds_per_condition": 8,
+      "particles_per_world": 64,
+      "agents": 60,
+      "localities": 17,
+      "truth_sd": 0.1,
+      "state_localization": "component",
+      "historical_case_data_loaded": false
+    },
+    "conditions": {
+      "prior_sd_0.10": {
+        "mixed_proxy_mse_information_gain_fraction": 0.0964520256241238,
+        "direct_oracle_mse_information_gain_fraction": 0.08299271448357637,
+        "mixed_proxy_world_win_rate": 1.0,
+        "direct_oracle_world_win_rate": 1.0
+      },
+      "prior_sd_0.20": {
+        "mixed_proxy_mse_information_gain_fraction": 0.03371648030188856,
+        "direct_oracle_mse_information_gain_fraction": 0.07792569671191718,
+        "mixed_proxy_world_win_rate": 0.875,
+        "direct_oracle_world_win_rate": 1.0
+      },
+      "prior_sd_0.30": {
+        "mixed_proxy_mse_information_gain_fraction": 0.010909396270531113,
+        "direct_oracle_mse_information_gain_fraction": 0.10231445240621473,
+        "mixed_proxy_world_win_rate": 0.75,
+        "direct_oracle_world_win_rate": 1.0
+      }
+    },
+    "interpretation": "The broad-prior failure of locality-only weighting is largely a state-component dimensionality problem. Mixed proxies remain weak at broad priors, which is a measurement-identifiability result rather than a reason to add simulator mechanics."
+  },
+  "reproduction_commands": [
+    "python pineland.py reproduce paper1 --profile smoke",
+    "python studies/research_program/scripts/run_research_v1_weight_collapse_diagnostic.py",
+    "python studies/research_program/scripts/run_research_v1_channel_ablation.py --agents 60 --particles 64",
+    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 16 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.10",
+    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 8 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.30 --state-localization component"
+  ]
+}

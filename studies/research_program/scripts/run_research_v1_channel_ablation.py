@@ -144,7 +144,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         base,
         namespace="research-v1:channel-ablation:truth",
         perturbation_seed=args.truth_seed,
-        perturbation_sd=args.prior_sd,
+        perturbation_sd=args.truth_sd,
     )
     truth = extract_pineland_latent_state(truth_particle.world)
     adjacency = {
@@ -229,6 +229,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "agents": args.agents,
             "particles": args.particles,
             "prior_sd": args.prior_sd,
+            "truth_sd": args.truth_sd,
             "reporting_multiplier": args.reporting_multiplier,
             "target_variables": list(target_variables),
             "full_observation_design": full_design,
@@ -249,6 +250,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--days", type=float, default=1.0)
     parser.add_argument("--particles", type=int, default=64)
     parser.add_argument("--prior-sd", type=float, default=0.10)
+    parser.add_argument("--truth-sd", type=float, default=0.10)
     parser.add_argument("--initial-insurgent-share", type=float, default=0.001)
     parser.add_argument("--reporting-multiplier", type=float, default=1.0)
     parser.add_argument("--model-seed", type=int, default=2026091701)

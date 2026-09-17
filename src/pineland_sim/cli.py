@@ -364,6 +364,7 @@ def main(argv: list[str] | None = None) -> int:
                 "--agents", "120", "--particles", "32", "--days", "28",
                 "--interval-days", "7", "--scenario", "all",
                 "--localization-radius-sweep", "0", "1", "2",
+                "--state-localization", "component",
             ]
         completed = subprocess.run(command, cwd=root, check=False)
         return int(completed.returncode)

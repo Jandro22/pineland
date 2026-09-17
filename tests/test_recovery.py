@@ -8,6 +8,8 @@ from pineland_sim.recovery import (
     ObservationChannel,
     ObservationProcessConfig,
     PosteriorPoint,
+    SyntheticObservation,
+    component_localized_importance_reconstruction,
     evaluate_recovery,
     extract_pineland_latent_state,
     generate_observations,
@@ -211,3 +213,42 @@ def test_geographic_reporting_bias_changes_collection_probability():
         unit_reporting_multipliers={"A": 0.0, "B": 2.0},
     )
     assert all(observation.true_unit_id == "B" for observation in observations)
+
+
+def test_component_localization_does_not_reweight_unrelated_variable():
+    truth = {"A": {"x": 1.0, "y": 0.5}}
+    particles = [
+        {"A": {"x": 1.0, "y": 0.0}},
+        {"A": {"x": 0.0, "y": 1.0}},
+    ]
+    channel = ObservationChannel(
+        "x-only",
+        (("x", 1.0),),
+        measurement_sd=0.05,
+        reporting_probability=1.0,
+    )
+    observation = SyntheticObservation(
+        observation_id="obs",
+        channel="x-only",
+        state_time=0.0,
+        arrival_time=0.0,
+        true_unit_id="A",
+        reported_unit_id="A",
+        value=1.0,
+        measurement_sd=0.05,
+    )
+    points, support = component_localized_importance_reconstruction(
+        truth,
+        particles,
+        (observation,),
+        channels=(channel,),
+        adjacency={"A": ()},
+        time=0.0,
+        variables=("x", "y"),
+    )
+    by_variable = {point.variable: point for point in points}
+    assert by_variable["x"].mean > 0.99
+    assert by_variable["y"].mean == pytest.approx(0.5)
+    y_support = next(row for row in support if row.variable == "y")
+    assert y_support.reports == 0
+    assert y_support.ess == pytest.approx(2.0)

@@ -296,7 +296,7 @@ class ContactWindowProbe(Simulation):
         self.contact_windows.append((current_time, interval_days, realization_time))
 
 
-def test_scheduler_contact_windows_partition_calendar_time_at_multiple_cadences():
+def test_scheduler_contact_windows_preserve_full_cadence_across_observation_horizon():
     horizon = 2.3
     for cadence in (.25, .7, 1.0, 2.0):
         world, _, _ = micro_world(62100 + int(cadence * 100), horizon_days=horizon)
@@ -307,10 +307,20 @@ def test_scheduler_contact_windows_partition_calendar_time_at_multiple_cadences(
         world.config.intervals.contact = cadence
         simulation = ContactWindowProbe(world)
         simulation.run(until=horizon)
-        windows = [float(interval) for _, interval, _ in simulation.contact_windows]
-        assert sum(windows) == pytest.approx(horizon, abs=1e-12)
-        assert all(0 < interval <= cadence for interval in windows)
-        for start, interval, realization in simulation.contact_windows:
+        windows = simulation.contact_windows
+        assert windows
+        # Observation boundaries must not truncate the latent cadence.  The
+        # final scan processed before ``horizon`` is allowed to schedule a
+        # realization beyond it so that checkpointed and uninterrupted runs
+        # have identical future queues.
+        assert all(float(interval) == pytest.approx(cadence) for _, interval, _ in windows)
+        starts = [float(start) for start, _, _ in windows]
+        assert starts[0] == pytest.approx(0.0, abs=1e-12)
+        assert starts[-1] <= horizon + 1e-12
+        assert starts[-1] + cadence > horizon
+        for left, right in zip(starts, starts[1:]):
+            assert right - left == pytest.approx(cadence, abs=1e-12)
+        for start, interval, realization in windows:
             assert realization == pytest.approx(start + interval, abs=1e-12)
 
 

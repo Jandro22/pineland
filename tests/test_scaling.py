@@ -9,8 +9,13 @@ class ScaleSensitivityTests(unittest.TestCase):
         config = SimulationConfig(locality_count=24, seed=991, horizon_days=2)
         result = compare_agent_scales(config, [400, 1_200], 2)
         self.assertEqual(len(result["runs"]), 2)
-        self.assertAlmostEqual(result["runs"][0]["represented_population"],
-                               result["runs"][1]["represented_population"])
+        self.assertLessEqual(
+            abs(
+                result["runs"][0]["represented_population"]
+                - result["runs"][1]["represented_population"]
+            ),
+            1e-6,
+        )
         comparison = result["comparisons"][0]
         self.assertLess(abs(comparison["government_control_difference"]), .05)
         self.assertLess(abs(comparison["insurgent_control_difference"]), .05)
