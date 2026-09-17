@@ -60,6 +60,31 @@ EXTRA_BY_CANDIDATE = {
         "final_ring2_rooted_mass",
         "final_ring2_recruitment_hazard",
     ],
+    "rootedstock_execnet_ring1_localflow17v7": [
+        "final_Mstar",
+        "final_executable_net_transport_pressure",
+        "final_neighbor_transportable_strength",
+        "final_neighbor_rooted_mass",
+        "final_neighbor_recruitment_hazard",
+        "final_net_transport_pressure",
+        "final_recruitment_hazard",
+    ],
+    "rootedstock_execnet_ring1_rawnet16v7": [
+        "final_Mstar",
+        "final_executable_net_transport_pressure",
+        "final_neighbor_transportable_strength",
+        "final_neighbor_rooted_mass",
+        "final_neighbor_recruitment_hazard",
+        "final_net_transport_pressure",
+    ],
+    "rootedstock_execnet_ring1_hazard16v7": [
+        "final_Mstar",
+        "final_executable_net_transport_pressure",
+        "final_neighbor_transportable_strength",
+        "final_neighbor_rooted_mass",
+        "final_neighbor_recruitment_hazard",
+        "final_recruitment_hazard",
+    ],
 }
 
 DOMAIN_SCALE_FLOOR = {
@@ -137,14 +162,23 @@ def analyze(csv_path: str, out_path: str) -> None:
         raise SystemExit(f"expected one candidate, got {candidates}")
     candidate = candidates[0]
     continuous = BASE_CONTINUOUS + EXTRA_BY_CANDIDATE.get(candidate, [])
-    required = {"pair_id", "branch", "side", "candidate", "match_distance", "viable"} | set(continuous)
+    required = {
+        "pair_id",
+        "branch",
+        "side",
+        "candidate",
+        "match_distance",
+        "viable",
+        "left_seed",
+        "right_seed",
+        "locality",
+    } | set(continuous)
     missing = sorted(required - set(df.columns))
     if missing:
         raise SystemExit(f"missing columns: {missing}")
     if set(df.side.unique()) != {"L", "R"}:
         raise SystemExit("each assay must contain L and R sides")
 
-    rng = np.random.default_rng(20260910)
     tests: list[dict] = []
     pair_meta: dict[int, dict] = {}
     for pair_id, g in df.groupby("pair_id", sort=True):
@@ -162,6 +196,12 @@ def analyze(csv_path: str, out_path: str) -> None:
             "stratum": str(g.stratum.iloc[0]) if "stratum" in g.columns else "unstratified",
         }
         pair_meta[int(pair_id)] = meta
+        provenance = (
+            f"20260910:{meta['left_seed']}:{meta['right_seed']}:"
+            f"{meta['locality']}"
+        ).encode("utf-8")
+        pair_seed = int.from_bytes(hashlib.sha256(provenance).digest()[:8], "little")
+        pair_rng = np.random.default_rng(pair_seed)
 
         lv = left.viable.to_numpy(float)
         rv = right.viable.to_numpy(float)
@@ -175,7 +215,7 @@ def analyze(csv_path: str, out_path: str) -> None:
             "mean_right": float(rv.mean()),
             "absolute_risk_difference": rd,
             "practically_large": bool(rd > 0.15),
-            "p_value": paired_signflip_p(diff, rng),
+            "p_value": paired_signflip_p(diff, pair_rng),
         })
 
         for outcome in continuous:
@@ -197,7 +237,7 @@ def analyze(csv_path: str, out_path: str) -> None:
                 "standardized_mean_difference": smd,
                 "normalized_wasserstein": nw,
                 "practically_large": bool(smd > 0.25 or nw > 0.25),
-                "p_value": paired_signflip_p(d, rng),
+                "p_value": paired_signflip_p(d, pair_rng),
             })
 
     qvals = bh_qvalues([float(x["p_value"]) for x in tests])

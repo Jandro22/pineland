@@ -41,14 +41,21 @@ from pineland_sim.recovery import (  # noqa: E402
     extract_pineland_latent_state,
     generate_observations,
     component_localized_importance_reconstruction,
+    channel_aligned_importance_reconstruction,
+    channel_estimand_direct_report_baseline,
     localized_importance_reconstruction,
     observation_batch_log_likelihood,
     observation_design_diagnostics,
     observation_diagnostics,
     posterior_identifiability,
+    project_state_to_channel_estimands,
     summarize_posterior_field,
 )
-from pineland_sim.reproducibility import model_sha256  # noqa: E402
+from pineland_sim.reproducibility import (  # noqa: E402
+    canonical_sha256,
+    file_sha256,
+    model_sha256,
+)
 from pineland_sim.simulation import Simulation, SimulationParticle  # noqa: E402
 from pineland_sim.state_estimation import (  # noqa: E402
     AssimilationObservation,
@@ -93,6 +100,18 @@ SCENARIOS = {
         dropped_channels=("government_admin_anchor", "insurgent_physical_anchor"),
     ),
 }
+
+
+def _execution_fingerprint() -> dict[str, str]:
+    runner = Path(__file__).resolve()
+    components = {
+        "model_sha256": model_sha256(ROOT),
+        "runner_sha256": file_sha256(runner),
+    }
+    return {
+        **components,
+        "execution_sha256": canonical_sha256(components),
+    }
 
 
 def _channels(args: argparse.Namespace):
@@ -564,6 +583,9 @@ def _run_localized_reconstruction(
     points: list[PosteriorPoint] = []
     support = []
     prior_points: list[PosteriorPoint] = []
+    estimand_points: list[PosteriorPoint] = []
+    estimand_support = []
+    estimand_prior_points: list[PosteriorPoint] = []
     uniform = [1.0 / args.particles] * args.particles
     report_times = sorted({observation.state_time for observation in reports})
     for state_time in report_times:
@@ -598,6 +620,33 @@ def _run_localized_reconstruction(
             time=state_time,
             variables=DEFAULT_VARIABLES,
         ))
+        channel_points, channel_support = channel_aligned_importance_reconstruction(
+            truth_states[state_time],
+            prior_history[state_time],
+            time_reports,
+            channels=channels,
+            adjacency=adjacency,
+            time=state_time,
+            radius=radius,
+            assumed_geolocation_error_probability=assumed_geo,
+            assumed_measurement_noise_multiplier=assumed_noise,
+            assumed_false_report_probability=assumed_false,
+        )
+        estimand_points.extend(channel_points)
+        estimand_support.extend(channel_support)
+        projected_truth = project_state_to_channel_estimands(
+            truth_states[state_time], channels
+        )
+        projected_particles = [
+            project_state_to_channel_estimands(field, channels)
+            for field in prior_history[state_time]
+        ]
+        estimand_prior_points.extend(summarize_posterior_field(
+            projected_truth,
+            projected_particles,
+            uniform,
+            time=state_time,
+        ))
     metrics = evaluate_recovery(points)
     prior_metrics = evaluate_recovery(prior_points)
     linked_points = [point for point in points if point.variable in linked]
@@ -606,6 +655,15 @@ def _run_localized_reconstruction(
     ]
     linked_metrics = evaluate_recovery(linked_points)
     linked_prior_metrics = evaluate_recovery(linked_prior_points)
+    estimand_metrics = evaluate_recovery(estimand_points)
+    estimand_prior_metrics = evaluate_recovery(estimand_prior_points)
+    estimand_direct_baseline = channel_estimand_direct_report_baseline(
+        reports,
+        truth_points=estimand_points,
+        prior_points=estimand_prior_points,
+    )
+    estimand_posterior_mse = estimand_metrics.rmse ** 2
+    estimand_direct_mse = float(estimand_direct_baseline["rmse"]) ** 2
     return {
         "status": "localized_marginal_approximation_not_joint_posterior",
         "radius": radius,
@@ -634,6 +692,44 @@ def _run_localized_reconstruction(
         "support_rows": [asdict(row) for row in support],
         "metrics_by_variable": evaluate_recovery_by_variable(points),
         "prior_metrics_by_variable": evaluate_recovery_by_variable(prior_points),
+        "measurement_aligned_estimands": {
+            "metrics": asdict(estimand_metrics),
+            "prior_metrics": asdict(estimand_prior_metrics),
+            "relative_to_prior": {
+                "rmse_ratio": estimand_metrics.rmse / estimand_prior_metrics.rmse,
+                "mse_information_gain_fraction": (
+                    1.0
+                    - (estimand_metrics.rmse ** 2)
+                    / (estimand_prior_metrics.rmse ** 2)
+                ),
+                "coverage_90_delta": (
+                    estimand_metrics.coverage_90 - estimand_prior_metrics.coverage_90
+                ),
+            },
+            "direct_report_baseline": estimand_direct_baseline,
+            "relative_to_direct_report_baseline": {
+                "mse_ratio": (
+                    estimand_posterior_mse / estimand_direct_mse
+                    if estimand_direct_mse > 0 else None
+                ),
+                "mse_improvement_fraction": (
+                    1.0 - estimand_posterior_mse / estimand_direct_mse
+                    if estimand_direct_mse > 0 else None
+                ),
+            },
+            "metrics_by_estimand": evaluate_recovery_by_variable(estimand_points),
+            "prior_metrics_by_estimand": evaluate_recovery_by_variable(
+                estimand_prior_points
+            ),
+            "support": {
+                "unit_time_updates": len(estimand_support),
+                "mean_ess": (
+                    sum(row.ess for row in estimand_support) / len(estimand_support)
+                ),
+                "minimum_ess": min(row.ess for row in estimand_support),
+                "maximum_weight": max(row.maximum_weight for row in estimand_support),
+            },
+        },
         "posterior_points": [asdict(point) for point in points],
     }
 
@@ -667,6 +763,7 @@ def _run_localization_radius_sweep(
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    execution_start = _execution_fingerprint()
     if args.days <= 0 or args.interval_days <= 0:
         raise ValueError("days and interval-days must be positive")
     if args.particles < 2:
@@ -721,6 +818,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
         for name in scenario_names
     }
+    execution_end = _execution_fingerprint()
+    if execution_end != execution_start:
+        raise RuntimeError(
+            "Research-v1 executable source changed during the experiment; "
+            "discard this run and rerun from a stable source checkpoint."
+        )
     payload = {
         "schema_version": "pineland.research_v1.synthetic_recovery.v1",
         "study_id": "research_v1_hidden_war_synthetic_recovery",
@@ -732,7 +835,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "noisy observations, with calibrated uncertainty?"
         ),
         "provenance": {
-            "model_sha256": model_sha256(ROOT),
+            **execution_start,
             "runner": str(Path(__file__).resolve().relative_to(ROOT)).replace("\\", "/"),
             "historical_case_data_loaded": False,
         },

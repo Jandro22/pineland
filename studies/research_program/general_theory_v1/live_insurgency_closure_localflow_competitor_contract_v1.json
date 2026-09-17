@@ -1,0 +1,53 @@
+{
+  "schema_version": "pineland.closure_localflow_competitor_contract.v1",
+  "status": "FROZEN_BEFORE_FRESH_LOCALFLOW_OUTCOMES",
+  "registered_date": "2026-09-17",
+  "discovery_basis": {
+    "source": "Post-hoc analysis of the completed exact ring-1 screen.",
+    "findings": [
+      "Pending incoming/outgoing movement strength and ETA mismatch was zero across the selected ring-1 anchor pairs, arguing against hidden queued movement orders as the immediate explanation.",
+      "Among coordinates omitted from the ring-1 matcher, absolute normalized mismatch in local net transport pressure and local recruitment hazard was more associated with demonstrable failure than most other omitted coordinates.",
+      "The combined net-transport plus recruitment-hazard mismatch had a descriptive AUC of approximately 0.686 for ring-1 demonstrable failure on 24 post-hoc pairs."
+    ],
+    "guard": "These are outcome-informed development findings, not confirmatory evidence."
+  },
+  "competing_hypotheses": {
+    "H_spatial_cone": "Residual 30-day closure failure is primarily caused by source state outside the one-hop neighborhood.",
+    "H_local_flow": "Residual 30-day closure failure is materially caused by omitted local flow/regeneration state even after executable net flux and the one-hop reservoir are matched."
+  },
+  "candidate": {
+    "name": "rootedstock_execnet_ring1_localflow17v7",
+    "base": "rootedstock_execnet_ring1_15v5",
+    "added_coordinates": [
+      "pre_net_transport_pressure",
+      "pre_recruitment_hazard"
+    ],
+    "dimension": 17,
+    "rationale": "Retain command-reliability-weighted executable net flux while separately matching intended net movement pressure and current local regeneration hazard."
+  },
+  "fresh_development_screen": {
+    "dynamic_seed_base": 2026170000,
+    "initialization_seed": 2026169900,
+    "pool_worlds": 48,
+    "agents": 300,
+    "localities": 34,
+    "anchor_days": 60,
+    "horizon_days": 30,
+    "pairs": 6,
+    "branches": 4,
+    "threads": 2,
+    "recruitment_multiplier": 0.0625,
+    "require_live_anchor": true,
+    "max_match_distance": 1.25,
+    "bootstrap_replicates": 5000,
+    "bootstrap_seed": 2026170091,
+    "compute_guard": "Development screen is intentionally capped at two worker threads. Do not automatically scale the screen if other workloads share the machine."
+  },
+  "decision_rule": {
+    "promising": "Zero demonstrably non-equivalent pairs in the six-pair development screen, or a material reduction in demonstrable failure relative to the already-observed ring-1 failure pattern without pathological match distances.",
+    "not_promising": "Persistent transport-dominated demonstrable failures despite acceptable match distances.",
+    "confirmation_guard": "Any promising development result requires a new independent frozen confirmation block before a closure claim."
+  },
+  "relationship_to_ring2_contract": "This is an independent competing-state development test on a distinct fresh seed block. It must not reuse the stopped ring-2 fresh block or alter the preregistered interpretation of that contract.",
+  "scientific_guard": "Synthetic model-state sufficiency experiment only; no empirical claim about real insurgencies."
+}

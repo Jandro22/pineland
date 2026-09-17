@@ -112,6 +112,44 @@ and insurgent physical and administrative control structurally identifiable in
 the declared one-snapshot measurement system. This is structural measurement
 identifiability, not proof of practical finite-sample recoverability.
 
+Rank-nullity also puts a hard lower bound on any attempt to identify the full
+18-coordinate snapshot state from this reporting menu. The current design has
+rank 8, so no inference algorithm can recover ten missing independent
+measurement dimensions from those eight scalar equations without importing
+restrictions from dynamics or priors. Achieving full snapshot rank would
+require at least ten additional independent scalar measurement equations. The
+Research-v1 objective is therefore not to add synthetic channels until every
+coordinate becomes identifiable; it is to state clearly which coordinate or
+linear-combination claims the actual observation contract licenses.
+
+### Measurement-aligned estimands
+
+Exactly four named coordinates are individually identifiable from the current
+one-snapshot mixed-proxy design without extra prior/dynamic restrictions:
+government physical control, government administrative control, insurgent
+physical control, and insurgent administrative control. Other coordinates may
+still be estimable in the dynamic model, but any such estimate necessarily
+combines observation information with model-imposed restrictions and must be
+labeled accordingly.
+
+Research-v1 now evaluates the observable subspace directly as a companion to
+coordinate-level recovery. For every declared report channel, the benchmark
+projects each coherent Pineland world into the channel's latent expected value
+(`estimand::<channel>`). A channel-aligned importance reconstruction then uses
+only reports from that channel and declared spatial neighborhood to estimate
+that scalar. This asks whether the information that the measurement design
+actually contains is recoverable without pretending that a rank-deficient
+decomposition into underlying coordinates is unique.
+
+These measurement-aligned quantities do not replace substantive latent
+variables. They separate whether the estimator can recover the latent
+combination actually measured by a reporting stream from whether the collection
+design contains enough independent information to split that combination into
+the substantive coordinates a researcher wants to discuss. Strong recovery in
+measurement space combined with weak coordinate recovery is therefore evidence
+of an observation-design/identification limit rather than a generic estimator
+failure.
+
 ## Development profiles
 
 The 8-particle/14-day configuration is a software smoke test only. It is not a
@@ -267,9 +305,43 @@ much less sensitive to contamination, suggesting that vulnerability depends on
 the report/latent measurement block rather than being a uniform property of the
 estimator.
 
-All of these repeated-dynamic values remain four-world development diagnostics.
-The confirmatory world count, particle count, severity grid, and promotion
-criteria must be frozen before any paper-level failure-envelope claim is made.
+The four-world values above remain early development diagnostics. A subsequent
+content-addressed development replication on execution fingerprint
+`73213a0f5842b9359a255eef472648724dbb0bff1c7c3916574e01e00fd2d664`
+used eight worlds and 32 particles per world. Under nominal mixed-proxy
+observation, coordinate-level MSE improves by about 10.39% with 8/8 worlds
+improving, 92.4% empirical coverage for nominal 90% intervals, and a paired
+normal diagnostic interval for posterior-minus-prior MSE entirely below zero.
+The measurement-aligned estimand space improves by about 10.92%, also with 8/8
+worlds improving and its paired diagnostic interval entirely below zero. The
+direct-oracle diagnostic improves by about 12.30%, again 8/8 worlds, supporting
+the interpretation that mixed-proxy coordinate limitations are substantially a
+measurement-design issue.
+
+At 10% fabricated reports, the same 8x32 design gives -5.00% average coordinate
+information gain under the strict Gaussian likelihood (5/8 worlds improve) and
++2.42% under the fixed 10% contamination mixture (6/8 improve). Measurement-space
+gains are -1.34% and +4.70% respectively. The robust mixture therefore still
+reverses the average direction of the contamination failure, but the paired
+diagnostic intervals cross zero at eight worlds. It remains a promising
+robustness mechanism rather than an established rescue result.
+
+These eight-world runs are content-addressed development evidence, not a
+confirmatory batch. The final world count, particle count, severity grid, and
+promotion criteria must be frozen independently before any paper-level
+failure-envelope claim is made.
+
+## Executable provenance guard
+
+Research-v1 long-running recovery scripts content-address the executable
+scientific bundle before simulation begins. The fingerprint includes the live
+Pineland model source plus the benchmark runner code (and, for the repeated
+dynamic runner, the synthetic-recovery runner it imports). The bundle is hashed
+again after the experiment. If executable scientific content changed while the
+run was in flight, the runner raises an error and refuses to certify/write that
+run as admissible evidence. This is deliberately content-based rather than
+commit-based so unrelated Git history movement does not invalidate a stable
+experiment, while live scientific edits do.
 
 ## Repository and data boundary
 
@@ -281,6 +353,8 @@ tests. Data-bound historical certification remains a local-workspace test and
 must not be inferred from a green clean-clone CI run.
 
 ## Claim firewall
+
+The operational claim taxonomy is maintained in [`paper1-claim-matrix.md`](paper1-claim-matrix.md).
 
 The synthetic benchmark may support statements such as "under this declared
 observation and transition process, physical control is recoverable with this

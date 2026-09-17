@@ -119,7 +119,9 @@
     "failure_envelope_sweeps_must_use_paired_observation_substreams": true,
     "aggregate_recovery_cannot_license_every_latent_target": true,
     "target_specific_claims_require_variable_level_recovery": true,
-    "robustness_hyperparameters_must_be_frozen_before_confirmatory_batch": true
+    "robustness_hyperparameters_must_be_frozen_before_confirmatory_batch": true,
+    "measurement_space_and_coordinate_space_must_be_reported_separately": true,
+    "long_runs_must_hold_executable_content_fingerprint_constant": true
   },
   "inference_contract": {
     "development_default_state_localization": "component",
@@ -128,7 +130,10 @@
     "strict_observation_likelihood": "Gaussian measurement model plus declared spatial-geolocation mixture",
     "robust_false_report_ablation": "state-dependent likelihood mixed with a broad state-independent contamination component; contamination mass must be declared before each run",
     "joint_posterior_claim": false,
-    "note": "Component-localized outputs are marginal approximations over coherent full-world trajectories, not an exact joint posterior."
+    "note": "Component-localized outputs are marginal approximations over coherent full-world trajectories, not an exact joint posterior.",
+    "measurement_aligned_estimands": "For each declared report channel, estimate the channel's latent expected value directly using channel-local evidence. These estimands represent the measured subspace and must be distinguished from uniquely identified substantive coordinates.",
+    "snapshot_rank_rule": "With 18 latent coordinates and current mixed-proxy rank 8, at least 10 additional independent scalar measurement equations would be required for full snapshot coordinate rank; priors/dynamics must not be relabeled as observation information.",
+    "executable_provenance_guard": "Hash live model source and benchmark runner bundle before and after each long recovery run; reject certification if the fingerprint changes in flight."
   },
   "current_executables": [
     "studies/research_program/scripts/run_research_v1_synthetic_recovery.py",

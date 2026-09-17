@@ -355,6 +355,15 @@ def observation_design_diagnostics(
             if abs(value) > tolerance
         })
 
+    individually_identifiable = [
+        variable
+        for variable in variables
+        if all(
+            abs(direction.get(variable, 0.0)) <= tolerance
+            for direction in nullspace_basis
+        )
+    ]
+
     linked = [variable for variable in variables if loaded_by[variable]]
     unlinked = [variable for variable in variables if not loaded_by[variable]]
     return {
@@ -365,6 +374,12 @@ def observation_design_diagnostics(
         "pivot_variables": [variables[index] for index in pivot_columns],
         "free_variables": [variables[index] for index in free_columns],
         "nullspace_basis": nullspace_basis,
+        "individually_identifiable_variables": individually_identifiable,
+        "non_individually_identifiable_variables": [
+            variable
+            for variable in variables
+            if variable not in individually_identifiable
+        ],
         "full_snapshot_identification_possible": rank == len(variables),
         "observation_linked_variables": linked,
         "snapshot_unobserved_variables": unlinked,
@@ -889,6 +904,124 @@ def component_localized_importance_reconstruction(
     return points, diagnostics
 
 
+def project_state_to_channel_estimands(
+    state: StateField,
+    channels: Sequence[ObservationChannel],
+) -> StateField:
+    """Project latent coordinates into the scalars declared by report channels.
+
+    These are measurement-aligned estimands: the latent channel expectations
+    that the observation system actually measures.  They are useful when the
+    underlying coordinate vector is rank-deficient because recovery can then be
+    evaluated in the identifiable measurement space without pretending that an
+    arbitrary decomposition of the same signal is separately observed.
+    """
+
+    return {
+        unit_id: {
+            f"estimand::{channel.name}": channel.expected_value(unit_state)
+            for channel in channels
+        }
+        for unit_id, unit_state in state.items()
+    }
+
+
+def channel_aligned_importance_reconstruction(
+    truth: StateField,
+    particle_fields: Sequence[StateField],
+    observations: Sequence[SyntheticObservation],
+    *,
+    channels: Sequence[ObservationChannel],
+    adjacency: Mapping[str, Iterable[str]],
+    time: float,
+    radius: int = 0,
+    assumed_geolocation_error_probability: float = 0.0,
+    assumed_measurement_noise_multiplier: float = 1.0,
+    assumed_false_report_probability: float = 0.0,
+) -> tuple[list[PosteriorPoint], list[ComponentLocalizedSupportDiagnostic]]:
+    """Recover the latent linear/nonlinear scalar measured by each report channel.
+
+    Each estimand uses only reports from its own channel and spatial
+    neighborhood.  Particles remain coherent complete worlds; only the marginal
+    importance weights differ by channel.  This estimates the measurement
+    space directly and makes no claim that a rank-deficient set of underlying
+    coordinates has been uniquely decomposed.
+    """
+
+    if not particle_fields:
+        raise ValueError("channel-aligned reconstruction requires particles")
+    if radius < 0:
+        raise ValueError("localization radius cannot be negative")
+
+    from .state_estimation import effective_sample_size, normalize_log_weights
+
+    points: list[PosteriorPoint] = []
+    diagnostics: list[ComponentLocalizedSupportDiagnostic] = []
+    uniform = [1.0 / len(particle_fields)] * len(particle_fields)
+    projected_truth = project_state_to_channel_estimands(truth, channels)
+    projected_particles = [
+        project_state_to_channel_estimands(field, channels)
+        for field in particle_fields
+    ]
+
+    for unit_id in sorted(truth):
+        neighborhood = set(graph_neighborhood(adjacency, unit_id, radius))
+        for channel in channels:
+            estimand = f"estimand::{channel.name}"
+            local_observations = [
+                observation
+                for observation in observations
+                if (
+                    observation.reported_unit_id in neighborhood
+                    and observation.channel == channel.name
+                )
+            ]
+            if local_observations:
+                log_weights = [
+                    observation_batch_log_likelihood(
+                        field,
+                        local_observations,
+                        channels=(channel,),
+                        adjacency=adjacency,
+                        assumed_geolocation_error_probability=(
+                            assumed_geolocation_error_probability
+                        ),
+                        assumed_measurement_noise_multiplier=(
+                            assumed_measurement_noise_multiplier
+                        ),
+                        assumed_false_report_probability=(
+                            assumed_false_report_probability
+                        ),
+                    )
+                    for field in particle_fields
+                ]
+                weights = normalize_log_weights(log_weights, strict=True)
+            else:
+                weights = uniform
+
+            unit_fields = [
+                {unit_id: field[unit_id]} for field in projected_particles
+            ]
+            points.extend(summarize_posterior_field(
+                {unit_id: projected_truth[unit_id]},
+                unit_fields,
+                weights,
+                time=time,
+                variables=(estimand,),
+            ))
+            diagnostics.append(ComponentLocalizedSupportDiagnostic(
+                time=float(time),
+                unit_id=unit_id,
+                variable=estimand,
+                radius=radius,
+                reports=len(local_observations),
+                relevant_channels=1,
+                ess=effective_sample_size(weights),
+                maximum_weight=max(weights),
+            ))
+    return points, diagnostics
+
+
 def _weighted_quantile(
     values: Sequence[float], weights: Sequence[float], probability: float
 ) -> float:
@@ -1228,6 +1361,68 @@ def direct_proxy_baseline(
         "eligible_variable_rmse": (
             sqrt(statistics.fmean(error * error for error in eligible_errors))
             if eligible_errors else None
+        ),
+    }
+
+
+def channel_estimand_direct_report_baseline(
+    observations: Sequence[SyntheticObservation],
+    *,
+    truth_points: Sequence[PosteriorPoint],
+    prior_points: Sequence[PosteriorPoint],
+) -> dict[str, object]:
+    """Score the simplest fixed-lag measurement-space reconstruction.
+
+    For each channel estimand/locality/state-time point, use the raw report that
+    describes that state once it exists.  If no report was generated for that
+    point, retain the matched prior mean.  This is deliberately stronger than a
+    real-time baseline because the Research-v1 localized benchmark is a
+    retrospective/fixed-lag reconstruction that also assigns delayed reports
+    back to the state they describe.
+    """
+
+    prior_by_key = {
+        (point.time, point.unit_id, point.variable): point.mean
+        for point in prior_points
+    }
+    by_key: dict[tuple[float, str, str], list[SyntheticObservation]] = {}
+    for observation in observations:
+        estimand = f"estimand::{observation.channel}"
+        by_key.setdefault(
+            (observation.state_time, observation.reported_unit_id, estimand), []
+        ).append(observation)
+
+    errors: list[float] = []
+    direct_errors: list[float] = []
+    direct_count = 0
+    for point in truth_points:
+        key = (point.time, point.unit_id, point.variable)
+        candidates = by_key.get(key, ())
+        if candidates:
+            # One synthetic report per channel/unit/state-time is the normal
+            # contract; max(arrival) keeps the baseline deterministic if future
+            # generators allow duplicates.
+            estimate = max(candidates, key=lambda item: item.arrival_time).value
+            direct_count += 1
+            direct_errors.append(float(estimate - point.truth))
+        else:
+            estimate = prior_by_key[key]
+        errors.append(float(estimate - point.truth))
+
+    return {
+        "name": "fixed_lag_latest_channel_report_or_matched_prior",
+        "points": len(errors),
+        "direct_report_points": direct_count,
+        "direct_report_coverage": direct_count / len(errors) if errors else 0.0,
+        "bias": statistics.fmean(errors) if errors else None,
+        "mae": statistics.fmean(abs(error) for error in errors) if errors else None,
+        "rmse": (
+            sqrt(statistics.fmean(error * error for error in errors))
+            if errors else None
+        ),
+        "direct_only_rmse": (
+            sqrt(statistics.fmean(error * error for error in direct_errors))
+            if direct_errors else None
         ),
     }
 

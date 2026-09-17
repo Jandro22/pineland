@@ -354,5 +354,143 @@
     },
     "interpretation": "A modest contamination floor behaves as robustness insurance in this development batch: little clean-data cost, higher support, and positive average information gain under 10-20% fabricated reports where the strict Gaussian likelihood becomes worse than the prior."
   },
-  "legacy_observation_rng_note": "Repeated-snapshot and prior-width pilot numbers above predate the purpose-separated observation-substream change. They remain useful hypothesis-generating development evidence but must be rerun under the paired generator before confirmatory use."
+  "legacy_observation_rng_note": "Repeated-snapshot and prior-width pilot numbers above predate the purpose-separated observation-substream change. They remain useful hypothesis-generating development evidence but must be rerun under the paired generator before confirmatory use.",
+  "current_content_addressed_development_batch": {
+    "status": "development_evidence_not_confirmatory",
+    "execution_sha256": "73213a0f5842b9359a255eef472648724dbb0bff1c7c3916574e01e00fd2d664",
+    "model_sha256": "30bfe7edc0511e3d43aacdba7b8bebaea127c2378df3b835d7bd8538bc5020b6",
+    "runner_sha256": "927ccbd19f176ecca6e3324bd8feca283efdfc716dd50d61203e338694828e9b",
+    "synthetic_runner_sha256": "8e2603c932df3201ddc76612b063e7516828428ead13f7e19caabbea5a9326db",
+    "design": {
+      "worlds": 8,
+      "particles_per_world": 32,
+      "agents": 60,
+      "localities": 17,
+      "days": 14,
+      "interval_days": 7,
+      "historical_case_data_loaded": false
+    },
+    "nominal_mixed_proxy": {
+      "coordinate_mse_information_gain_fraction": 0.10387690037424102,
+      "coordinate_world_win_rate": 1.0,
+      "coordinate_posterior_coverage_90": 0.9237132352941176,
+      "coordinate_confidently_wrong_rate": 0.023590686274509803,
+      "coordinate_paired_mse_delta_normal_95": [
+        -0.0015203325706057544,
+        -0.00018001194992462582
+      ],
+      "measurement_estimand_mse_information_gain_fraction": 0.1091740171426292,
+      "measurement_estimand_world_win_rate": 1.0,
+      "measurement_estimand_posterior_coverage_90": 0.8988970588235294,
+      "measurement_estimand_paired_mse_delta_normal_95": [
+        -0.0009033981682376028,
+        -0.00030152175335230883
+      ]
+    },
+    "direct_oracle": {
+      "coordinate_mse_information_gain_fraction": 0.123,
+      "coordinate_world_win_rate": 1.0,
+      "coordinate_posterior_coverage_90": 0.918,
+      "coordinate_paired_mse_delta_normal_95": [
+        -0.0013847912387275443,
+        -0.0005445675617926796
+      ]
+    },
+    "false_report_0_10": {
+      "strict": {
+        "coordinate_mse_information_gain_fraction": -0.05,
+        "world_win_rate": 0.625,
+        "posterior_coverage_90": 0.921,
+        "measurement_estimand_mse_information_gain_fraction": -0.0134
+      },
+      "robust_0_10": {
+        "coordinate_mse_information_gain_fraction": 0.0242,
+        "world_win_rate": 0.75,
+        "posterior_coverage_90": 0.924,
+        "measurement_estimand_mse_information_gain_fraction": 0.047
+      },
+      "interpretation": "The fixed contamination mixture reverses the average direction under 10% fabricated reports, but eight-world paired diagnostic intervals still cross zero; treat as a promising robustness mechanism, not a confirmed rescue."
+    },
+    "measurement_estimand_nominal_gain_fraction": {
+      "administrative_function_report": 0.2218,
+      "organizational_presence_report": 0.1336,
+      "security_presence_report": 0.1015,
+      "insurgent_physical_anchor": 0.0954,
+      "government_admin_anchor": 0.0874,
+      "taxation_coercion_report": 0.0332,
+      "logistics_readiness_report": 0.0319,
+      "public_alignment_report": 0.0122
+    },
+    "software_integrity": {
+      "full_pytest_passed": 717,
+      "full_pytest_skipped": 2,
+      "full_pytest_failed": 0,
+      "note": "Windows pytest temp cleanup emitted an atexit PermissionError after successful test completion; no test failure."
+    }
+  },
+  "current_model_sha256": "30bfe7edc0511e3d43aacdba7b8bebaea127c2378df3b835d7bd8538bc5020b6",
+  "direct_report_baseline_development_control": {
+    "status": "content_addressed_development_evidence_not_confirmatory",
+    "execution_sha256": "a1f8f57bffe1886fadd05120e3bb01d2278615a461dce5f18c6c3a13cabfd621",
+    "model_sha256": "e12394615e8a6e2e0cfab3639f45aae2895487ef89c2aea5d598347cd5feec6a",
+    "design": {
+      "worlds": 8,
+      "particles_per_world": 32,
+      "agents": 60,
+      "localities": 17,
+      "days": 14,
+      "interval_days": 7
+    },
+    "baseline_contract": "At each measurement estimand/locality/state-time, use the raw report if one was generated; otherwise use the matched prior mean. This is a retrospective/fixed-lag baseline matching the estimator scoring contract.",
+    "nominal": {
+      "posterior_mse": 0.004915885672744196,
+      "matched_prior_mse": 0.005518345633539153,
+      "direct_report_or_prior_mse": 0.009231354442118285,
+      "direct_report_coverage": 0.3851102941176471,
+      "posterior_mse_improvement_vs_direct_report_baseline": 0.46747947946670265,
+      "world_win_rate_vs_direct_report_baseline": 1.0,
+      "paired_posterior_minus_direct_mse_delta": -0.004315468769374089,
+      "paired_delta_normal_95": [
+        -0.005288610199164848,
+        -0.00334232733958333
+      ]
+    },
+    "zero_geolocation_error_control": {
+      "posterior_mse": 0.004582751667200908,
+      "matched_prior_mse": 0.005518345633539153,
+      "direct_report_or_prior_mse": 0.008423880842641892,
+      "direct_report_coverage": 0.40670955882352944,
+      "posterior_mse_improvement_vs_direct_report_baseline": 0.45598094835305525,
+      "world_win_rate_vs_direct_report_baseline": 1.0,
+      "paired_posterior_minus_direct_mse_delta": -0.0038411291754409838,
+      "paired_delta_normal_95": [
+        -0.004585980087481711,
+        -0.003096278263400256
+      ],
+      "posterior_mse_information_gain_vs_prior": 0.1695424731375893
+    },
+    "interpretation": "Pineland substantially outperforms a simple raw-report/prior measurement-space reconstruction. The advantage survives exact report geolocation, so it is not mainly a map-error correction effect.",
+    "near_noiseless_exact_geolocation_control": {
+      "measurement_noise_multiplier": 0.01,
+      "posterior_mse": 0.0036965776072096913,
+      "matched_prior_mse": 0.005518345633539153,
+      "direct_report_or_prior_mse": 0.003512389529878919,
+      "direct_report_coverage": 0.40670955882352944,
+      "posterior_mse_improvement_vs_direct_report_baseline": -0.052439536037770296,
+      "world_win_rate_vs_direct_report_baseline": 0.0,
+      "paired_posterior_minus_direct_mse_delta": 0.0001841880773307727,
+      "paired_delta_normal_95": [
+        -0.00011139039781908936,
+        0.00047976655248063477
+      ],
+      "posterior_mse_information_gain_vs_prior": 0.3301293806711203,
+      "interpretation": "When reports are almost exact, direct measurement slightly outperforms the finite-particle posterior. This falsifies any universal superiority claim and supports interpreting the nominal raw-report advantage as denoising/shrinkage under uncertainty."
+    },
+    "software_integrity_after_direct_baseline": {
+      "full_pytest_passed": 719,
+      "full_pytest_skipped": 2,
+      "full_pytest_failed": 0,
+      "note": "Same post-success Windows pytest-current cleanup PermissionError; no test failure."
+    }
+  }
 }

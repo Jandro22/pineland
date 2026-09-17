@@ -10,6 +10,8 @@ from pineland_sim.recovery import (
     PosteriorPoint,
     SyntheticObservation,
     component_localized_importance_reconstruction,
+    channel_aligned_importance_reconstruction,
+    channel_estimand_direct_report_baseline,
     evaluate_recovery,
     extract_pineland_latent_state,
     generate_observations,
@@ -17,6 +19,7 @@ from pineland_sim.recovery import (
     observation_batch_log_likelihood,
     observation_design_diagnostics,
     posterior_identifiability,
+    project_state_to_channel_estimands,
     summarize_posterior_field,
 )
 
@@ -233,6 +236,17 @@ def test_observation_design_nullspace_exposes_proxy_tradeoff():
     basis = report["nullspace_basis"][0]
     assert basis["x"] == pytest.approx(-2.0)
     assert basis["y"] == pytest.approx(1.0)
+    assert report["individually_identifiable_variables"] == []
+
+
+def test_observation_design_identifiable_coordinate_is_orthogonal_to_nullspace():
+    channels = (
+        ObservationChannel("x", (("x", 1.0),), measurement_sd=0.1),
+        ObservationChannel("mix", (("y", 1.0), ("z", 1.0)), measurement_sd=0.1),
+    )
+    report = observation_design_diagnostics(channels, ("x", "y", "z"))
+    assert report["individually_identifiable_variables"] == ["x"]
+    assert report["non_individually_identifiable_variables"] == ["y", "z"]
 
 
 def test_direct_oracle_measurement_design_is_full_rank():
@@ -380,3 +394,93 @@ def test_component_localization_does_not_reweight_unrelated_variable():
     y_support = next(row for row in support if row.variable == "y")
     assert y_support.reports == 0
     assert y_support.ess == pytest.approx(2.0)
+
+
+def test_channel_estimand_projection_preserves_declared_measurement_equation():
+    state = {"A": {"x": 0.2, "y": 0.6}}
+    channel = ObservationChannel(
+        "mixed", (("x", 0.25), ("y", 0.75)), measurement_sd=0.05
+    )
+    projected = project_state_to_channel_estimands(state, (channel,))
+    assert projected["A"]["estimand::mixed"] == pytest.approx(0.5)
+
+
+def test_channel_aligned_reconstruction_targets_measured_combination_not_decomposition():
+    truth = {"A": {"x": 0.2, "y": 0.8}}
+    particles = [
+        {"A": {"x": 0.2, "y": 0.8}},
+        {"A": {"x": 0.8, "y": 0.2}},
+    ]
+    channel = ObservationChannel(
+        "sum", (("x", 0.5), ("y", 0.5)), measurement_sd=0.05
+    )
+    observation = SyntheticObservation(
+        observation_id="sum",
+        channel="sum",
+        state_time=0.0,
+        arrival_time=0.0,
+        true_unit_id="A",
+        reported_unit_id="A",
+        value=0.5,
+        measurement_sd=0.05,
+    )
+    points, support = channel_aligned_importance_reconstruction(
+        truth,
+        particles,
+        (observation,),
+        channels=(channel,),
+        adjacency={"A": ()},
+        time=0.0,
+    )
+    assert len(points) == 1
+    assert points[0].variable == "estimand::sum"
+    assert points[0].truth == pytest.approx(0.5)
+    assert points[0].mean == pytest.approx(0.5)
+    assert support[0].reports == 1
+
+
+def test_channel_estimand_direct_report_baseline_uses_report_then_prior_fallback():
+    def point(unit: str, truth: float, mean: float) -> PosteriorPoint:
+        return PosteriorPoint(
+            time=0.0,
+            unit_id=unit,
+            variable="estimand::x",
+            truth=truth,
+            mean=mean,
+            median=mean,
+            lower_50=mean,
+            upper_50=mean,
+            lower_90=mean,
+            upper_90=mean,
+            lower_95=mean,
+            upper_95=mean,
+            posterior_sd=0.0,
+        )
+    truth_points = [
+        point("A", 0.8, 0.0),
+        point("B", 0.3, 0.0),
+    ]
+    prior_points = [
+        point("A", 0.8, 0.5),
+        point("B", 0.3, 0.4),
+    ]
+    observations = [
+        SyntheticObservation(
+            observation_id="x",
+            channel="x",
+            state_time=0.0,
+            arrival_time=2.0,
+            true_unit_id="A",
+            reported_unit_id="A",
+            value=0.7,
+            measurement_sd=0.1,
+        )
+    ]
+    baseline = channel_estimand_direct_report_baseline(
+        observations,
+        truth_points=truth_points,
+        prior_points=prior_points,
+    )
+    assert baseline["direct_report_coverage"] == pytest.approx(0.5)
+    # Errors are -0.1 from the delayed raw report and +0.1 from prior fallback.
+    assert baseline["rmse"] == pytest.approx(0.1)
