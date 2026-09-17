@@ -4,10 +4,11 @@ use pineland_core::scheduler::EventPayload;
 use pineland_core::state::{ParticleState, CONTROL_DIMENSIONS};
 use pineland_model::{SimulationEngine, GOVERNMENT, INSURGENT, MILITARY};
 use rayon::prelude::*;
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::error::Error;
 use std::fs::{create_dir_all, File};
-use std::io::{BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
 
 const NONE_ORG: u32 = u32::MAX;
@@ -1538,6 +1539,15 @@ fn select_closure_pairs(
         "rootedstock_execnet_ring2_18v6" => {
             &[18, 26, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 27, 28, 29, 30, 31, 32]
         }
+        "rootedstock_execnet_ring1_localflow17v7" => {
+            &[18, 26, 17, 19, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 27, 28, 29]
+        }
+        "rootedstock_execnet_ring1_rawnet16v7" => {
+            &[18, 26, 17, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 27, 28, 29]
+        }
+        "rootedstock_execnet_ring1_hazard16v7" => {
+            &[18, 26, 19, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 27, 28, 29]
+        }
         _ => &[0, 1, 2, 3],
     };
     let locality_count = engines
@@ -1938,6 +1948,9 @@ fn closure_candidate_supported(candidate: &str) -> bool {
             | "rootedstock_execnet12v4"
             | "rootedstock_execnet_ring1_15v5"
             | "rootedstock_execnet_ring2_18v6"
+            | "rootedstock_execnet_ring1_localflow17v7"
+            | "rootedstock_execnet_ring1_rawnet16v7"
+            | "rootedstock_execnet_ring1_hazard16v7"
     )
 }
 
@@ -1947,6 +1960,7 @@ fn closure_candidate_uses_state_regeneration(candidate: &str) -> bool {
         || candidate.ends_with("v4")
         || candidate.ends_with("v5")
         || candidate.ends_with("v6")
+        || candidate.ends_with("v7")
 }
 
 const CLOSURE_CSV_HEADER: &str = "pair_id,candidate,anchor_days,horizon_days,branch,side,left_seed,right_seed,locality,match_distance,stratum,pre_M,pre_logF,pre_E,pre_C,pre_logKo,pre_NM,pre_L,pre_Kintel,pre_X,pre_S,pre_U,pre_police_professionalism,pre_government_veterancy,pre_insurgent_veterancy,pre_renewal_potential,pre_organization_persistence,pre_inbound_transport_pressure,pre_net_transport_pressure,pre_Mstar,pre_recruitment_hazard,pre_social_exposure,pre_pending_incoming_strength,pre_pending_incoming_mean_eta_days,pre_pending_outgoing_strength,pre_pending_outgoing_mean_eta_days,pre_executable_inbound_transport_pressure,pre_executable_net_transport_pressure,pre_neighbor_transportable_strength,pre_neighbor_rooted_mass,pre_neighbor_recruitment_hazard,pre_ring2_transportable_strength,pre_ring2_rooted_mass,pre_ring2_recruitment_hazard,viable,log1p_actions_delta,log1p_recruits_delta,final_M,final_logF,final_E,control_delta,final_C,final_state_control,final_Mstar,final_recruitment_hazard,final_social_exposure,final_inbound_transport_pressure,final_net_transport_pressure,final_pending_incoming_strength,final_pending_incoming_mean_eta_days,final_pending_outgoing_strength,final_pending_outgoing_mean_eta_days,final_executable_inbound_transport_pressure,final_executable_net_transport_pressure,final_neighbor_transportable_strength,final_neighbor_rooted_mass,final_neighbor_recruitment_hazard,final_ring2_transportable_strength,final_ring2_rooted_mass,final_ring2_recruitment_hazard,pre_org_active,final_org_active,pre_active_owner_logF,final_active_owner_logF";
@@ -1972,7 +1986,7 @@ fn run_distributional_closure(args: &[String]) -> Result<(), Box<dyn Error>> {
     let require_live_anchor = require_live_anchor != 0;
     if !closure_candidate_supported(candidate) {
         return Err(format!(
-            "candidate must be minimal4, core5, core6spatial, operational9, competitive11, competitive11v2, professionalism12v2, veterancy13v2, competitive14v2, renewal15v2, memory15v2, regenerative16v2, transport15v2, reaction_transport17v2, transport12v2, reaction_transport14v2, nettransport12v2, transportnet13v2, rootedstock11v3, rootedstock_hazard12v3, rootedstock_social12v3, rootedstock_net12v3, rootedstock_social_net13v3, rootedstock_hazard_net13v3, rootedstock_transport_net13v3, rootedstock_delay16v4, rootedstock_execnet12v4, rootedstock_execnet_ring1_15v5, or rootedstock_execnet_ring2_18v6; got {candidate}"
+            "candidate must be minimal4, core5, core6spatial, operational9, competitive11, competitive11v2, professionalism12v2, veterancy13v2, competitive14v2, renewal15v2, memory15v2, regenerative16v2, transport15v2, reaction_transport17v2, transport12v2, reaction_transport14v2, nettransport12v2, transportnet13v2, rootedstock11v3, rootedstock_hazard12v3, rootedstock_social12v3, rootedstock_net12v3, rootedstock_social_net13v3, rootedstock_hazard_net13v3, rootedstock_transport_net13v3, rootedstock_delay16v4, rootedstock_execnet12v4, rootedstock_execnet_ring1_15v5, rootedstock_execnet_ring2_18v6, rootedstock_execnet_ring1_localflow17v7, rootedstock_execnet_ring1_rawnet16v7, or rootedstock_execnet_ring1_hazard16v7; got {candidate}"
         )
         .into());
     }
@@ -2215,7 +2229,7 @@ fn run_closure_hidden_diagnostics(args: &[String]) -> Result<(), Box<dyn Error>>
                 let mut c = synthetic_config(seed, agents, localities, anchor);
                 c.initialization_seed = Some(initialization_seed);
                 c.recruitment_rate *= recruitment_multiplier.max(0.0);
-                if candidate.ends_with("v2") || candidate.ends_with("v3") || candidate.ends_with("v4") {
+                if closure_candidate_uses_state_regeneration(candidate) {
                     c.state_regeneration.enabled = true;
                 }
                 let mut engine = SimulationEngine::new(c).map_err(|e| e.to_string())?;
@@ -2276,6 +2290,249 @@ fn run_closure_hidden_diagnostics(args: &[String]) -> Result<(), Box<dyn Error>>
     println!(
         "wrote {out} pairs={} recruitment_multiplier={:.6} live_anchor_filter={}",
         pairs.len(), recruitment_multiplier, require_live_anchor
+    );
+    Ok(())
+}
+
+#[derive(Clone, Debug)]
+struct ClosureReplayPair {
+    pair_id: usize,
+    candidate: String,
+    left_seed: u64,
+    right_seed: u64,
+    locality: usize,
+    stratum: String,
+    match_distance: f64,
+    anchor_days: f64,
+    // Small deterministic fingerprint copied from the source closure CSV.
+    // Replayed anchors must reproduce these values before hidden diagnostics
+    // are accepted as belonging to the original matched pair.
+    left_fingerprint: [f64; 6],
+    right_fingerprint: [f64; 6],
+}
+
+fn closure_csv_column(headers: &[&str], name: &str) -> Result<usize, Box<dyn Error>> {
+    headers
+        .iter()
+        .position(|value| *value == name)
+        .ok_or_else(|| format!("closure replay input missing column {name}").into())
+}
+
+fn parse_closure_hidden_replay_pairs(path: &str) -> Result<Vec<ClosureReplayPair>, Box<dyn Error>> {
+    let file = BufReader::new(File::open(path)?);
+    let mut lines = file.lines();
+    let header_line = lines.next().ok_or("closure replay input is empty")??;
+    let headers = header_line.split(',').collect::<Vec<_>>();
+    let pair_id_i = closure_csv_column(&headers, "pair_id")?;
+    let candidate_i = closure_csv_column(&headers, "candidate")?;
+    let anchor_i = closure_csv_column(&headers, "anchor_days")?;
+    let branch_i = closure_csv_column(&headers, "branch")?;
+    let side_i = closure_csv_column(&headers, "side")?;
+    let left_seed_i = closure_csv_column(&headers, "left_seed")?;
+    let right_seed_i = closure_csv_column(&headers, "right_seed")?;
+    let locality_i = closure_csv_column(&headers, "locality")?;
+    let distance_i = closure_csv_column(&headers, "match_distance")?;
+    let stratum_i = closure_csv_column(&headers, "stratum")?;
+    let fingerprint_columns = [
+        closure_csv_column(&headers, "pre_logF")?,
+        closure_csv_column(&headers, "pre_Mstar")?,
+        closure_csv_column(&headers, "pre_executable_net_transport_pressure")?,
+        closure_csv_column(&headers, "pre_neighbor_transportable_strength")?,
+        closure_csv_column(&headers, "pre_neighbor_rooted_mass")?,
+        closure_csv_column(&headers, "pre_neighbor_recruitment_hazard")?,
+    ];
+
+    let mut partial: BTreeMap<usize, (Option<ClosureReplayPair>, Option<[f64; 6]>)> =
+        BTreeMap::new();
+    for line in lines {
+        let line = line?;
+        if line.trim().is_empty() {
+            continue;
+        }
+        let fields = line.split(',').collect::<Vec<_>>();
+        if fields.len() != headers.len() {
+            return Err(format!(
+                "closure replay row has {} fields but header has {}",
+                fields.len(),
+                headers.len()
+            )
+            .into());
+        }
+        if fields[branch_i] != "0" {
+            continue;
+        }
+        let pair_id = fields[pair_id_i].parse::<usize>()?;
+        let fingerprint = std::array::from_fn(|k| {
+            fields[fingerprint_columns[k]].parse::<f64>().unwrap_or(f64::NAN)
+        });
+        if fingerprint.iter().any(|value| !value.is_finite()) {
+            return Err(format!("pair {pair_id}: invalid replay fingerprint").into());
+        }
+        let entry = partial.entry(pair_id).or_insert((None, None));
+        match fields[side_i] {
+            "L" => {
+                let pair = ClosureReplayPair {
+                    pair_id,
+                    candidate: fields[candidate_i].to_string(),
+                    left_seed: fields[left_seed_i].parse()?,
+                    right_seed: fields[right_seed_i].parse()?,
+                    locality: fields[locality_i].parse()?,
+                    stratum: fields[stratum_i].to_string(),
+                    match_distance: fields[distance_i].parse()?,
+                    anchor_days: fields[anchor_i].parse()?,
+                    left_fingerprint: fingerprint,
+                    right_fingerprint: [f64::NAN; 6],
+                };
+                entry.0 = Some(pair);
+            }
+            "R" => entry.1 = Some(fingerprint),
+            other => return Err(format!("pair {pair_id}: unexpected side {other}").into()),
+        }
+    }
+
+    let mut pairs = Vec::with_capacity(partial.len());
+    for (pair_id, (left, right_fingerprint)) in partial {
+        let mut pair = left.ok_or_else(|| format!("pair {pair_id}: missing branch-0 L row"))?;
+        pair.right_fingerprint =
+            right_fingerprint.ok_or_else(|| format!("pair {pair_id}: missing branch-0 R row"))?;
+        pairs.push(pair);
+    }
+    if pairs.is_empty() {
+        return Err("closure replay input contained no branch-0 pairs".into());
+    }
+    Ok(pairs)
+}
+
+fn run_closure_hidden_replay(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let input = args
+        .get(2)
+        .cloned()
+        .ok_or("closure-hidden-replay requires INPUT.csv")?;
+    let out = args
+        .get(3)
+        .cloned()
+        .unwrap_or_else(|| "../closure_hidden_replay.csv".to_string());
+    let agents: usize = arg(args, 4, 300);
+    let localities: usize = arg(args, 5, 34);
+    let threads: usize = arg(args, 6, 2);
+    let initialization_seed: u64 = arg(args, 7, 2026145900u64);
+    let recruitment_multiplier: f64 = arg(args, 8, 0.0625f64);
+    let pairs = parse_closure_hidden_replay_pairs(&input)?;
+    let candidate = pairs[0].candidate.clone();
+    let anchor = pairs[0].anchor_days;
+    if pairs.iter().any(|pair| pair.candidate != candidate) {
+        return Err("closure-hidden-replay requires a single candidate CSV".into());
+    }
+    if pairs
+        .iter()
+        .any(|pair| (pair.anchor_days - anchor).abs() > 1.0e-12)
+    {
+        return Err("closure-hidden-replay requires one anchor horizon".into());
+    }
+
+    let seeds = pairs
+        .iter()
+        .flat_map(|pair| [pair.left_seed, pair.right_seed])
+        .collect::<BTreeSet<_>>();
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads.max(1))
+        .build()?;
+    let built: Vec<Result<(u64, SimulationEngine), String>> = pool.install(|| {
+        seeds
+            .iter()
+            .copied()
+            .collect::<Vec<_>>()
+            .into_par_iter()
+            .map(|seed| {
+                let mut c = synthetic_config(seed, agents, localities, anchor);
+                c.initialization_seed = Some(initialization_seed);
+                c.recruitment_rate *= recruitment_multiplier.max(0.0);
+                if closure_candidate_uses_state_regeneration(&candidate) {
+                    c.state_regeneration.enabled = true;
+                }
+                let mut engine = SimulationEngine::new(c).map_err(|e| e.to_string())?;
+                engine.particle_execution = true;
+                engine.advance_until(anchor).map_err(|e| e.to_string())?;
+                Ok((seed, engine))
+            })
+            .collect()
+    });
+    let mut engines = BTreeMap::new();
+    for result in built {
+        let (seed, engine) =
+            result.map_err(|e| format!("closure hidden replay generation failed: {e}"))?;
+        engines.insert(seed, engine);
+    }
+
+    if let Some(parent) = Path::new(&out).parent() {
+        if !parent.as_os_str().is_empty() {
+            create_dir_all(parent)?;
+        }
+    }
+    let mut writer = BufWriter::new(File::create(&out)?);
+    let mut header = vec![
+        "pair_id",
+        "candidate",
+        "side",
+        "seed",
+        "other_seed",
+        "locality",
+        "stratum",
+        "match_distance",
+        "replay_fingerprint_max_abs_error",
+    ]
+    .into_iter()
+    .map(str::to_string)
+    .collect::<Vec<_>>();
+    header.extend(CLOSURE_HIDDEN_NAMES.iter().map(|x| x.to_string()));
+    writeln!(writer, "{}", header.join(","))?;
+
+    let fingerprint_indices = [1usize, 18, 26, 27, 28, 29];
+    let mut global_max_error = 0.0f64;
+    for pair in &pairs {
+        for (side, seed, other_seed, expected) in [
+            ("L", pair.left_seed, pair.right_seed, pair.left_fingerprint),
+            ("R", pair.right_seed, pair.left_seed, pair.right_fingerprint),
+        ] {
+            let engine = engines
+                .get(&seed)
+                .ok_or_else(|| format!("pair {}: missing replay seed {seed}", pair.pair_id))?;
+            let replay_features = closure_features(engine, pair.locality);
+            let max_error = fingerprint_indices
+                .iter()
+                .enumerate()
+                .map(|(k, index)| (replay_features[*index] - expected[k]).abs())
+                .fold(0.0f64, f64::max);
+            global_max_error = global_max_error.max(max_error);
+            if max_error > 1.0e-9 {
+                return Err(format!(
+                    "pair {} side {side}: replay fingerprint mismatch {max_error:.3e}",
+                    pair.pair_id
+                )
+                .into());
+            }
+            let diagnostic = closure_hidden_diagnostics(engine, pair.locality);
+            let mut row = vec![
+                pair.pair_id.to_string(),
+                pair.candidate.clone(),
+                side.to_string(),
+                seed.to_string(),
+                other_seed.to_string(),
+                pair.locality.to_string(),
+                pair.stratum.clone(),
+                format!("{:.17}", pair.match_distance),
+                format!("{max_error:.17}"),
+            ];
+            row.extend(diagnostic.iter().map(|value| format!("{value:.17}")));
+            writeln!(writer, "{}", row.join(","))?;
+        }
+    }
+    writer.flush()?;
+    println!(
+        "wrote {out} pairs={} unique_seeds={} candidate={} max_fingerprint_error={global_max_error:.3e}",
+        pairs.len(),
+        seeds.len(),
+        candidate
     );
     Ok(())
 }
@@ -5185,9 +5442,10 @@ fn usage() {
     eprintln!("pineland-general-theory-probe state-regeneration-metadata OUT.csv [seeds=8] [agents=300] [localities=34] [focals=8] [seed_base=2026093100]");
     eprintln!("pineland-general-theory-probe veterancy-controlled OUT.csv [replicates=1024] [engagements=12] [threads=16] [seed_base=2026110000]");
     eprintln!("pineland-general-theory-probe veterancy-naturalistic OUT.csv [seeds=32] [agents=300] [localities=34] [anchor=60] [horizon=180] [threads=16] [seed_base=2026111000]");
-    eprintln!("pineland-general-theory-probe closure OUT.csv [pool_seeds=24] [agents=300] [localities=34] [anchor=60] [horizon=30] [pairs=24] [branches=32] [threads=16] [candidate=minimal4|core5|core6spatial|operational9|competitive11|competitive11v2|professionalism12v2|veterancy13v2|competitive14v2|renewal15v2|memory15v2|regenerative16v2|transport15v2|reaction_transport17v2|transport12v2|reaction_transport14v2|nettransport12v2|transportnet13v2|rootedstock11v3|rootedstock_hazard12v3|rootedstock_social12v3|rootedstock_net12v3|rootedstock_social_net13v3|rootedstock_hazard_net13v3|rootedstock_transport_net13v3|rootedstock_delay16v4|rootedstock_execnet12v4|rootedstock_execnet_ring1_15v5|rootedstock_execnet_ring2_18v6] [dynamic_seed_base=2026092000] [initialization_seed=2026091900]");
+    eprintln!("pineland-general-theory-probe closure OUT.csv [pool_seeds=24] [agents=300] [localities=34] [anchor=60] [horizon=30] [pairs=24] [branches=32] [threads=16] [candidate=minimal4|core5|core6spatial|operational9|competitive11|competitive11v2|professionalism12v2|veterancy13v2|competitive14v2|renewal15v2|memory15v2|regenerative16v2|transport15v2|reaction_transport17v2|transport12v2|reaction_transport14v2|nettransport12v2|transportnet13v2|rootedstock11v3|rootedstock_hazard12v3|rootedstock_social12v3|rootedstock_net12v3|rootedstock_social_net13v3|rootedstock_hazard_net13v3|rootedstock_transport_net13v3|rootedstock_delay16v4|rootedstock_execnet12v4|rootedstock_execnet_ring1_15v5|rootedstock_execnet_ring2_18v6|rootedstock_execnet_ring1_localflow17v7|rootedstock_execnet_ring1_rawnet16v7|rootedstock_execnet_ring1_hazard16v7] [dynamic_seed_base=2026092000] [initialization_seed=2026091900]");
     eprintln!("pineland-general-theory-probe closure-battery OUT_DIR CANDIDATE1,CANDIDATE2 [pool_seeds=48] [agents=300] [localities=34] [anchor=60] [horizon=30] [pairs=24] [branches=32] [threads=16] [dynamic_seed_base=2026092000] [initialization_seed=2026091900] [recruitment_multiplier=1.0] [require_live_anchor=0]");
     eprintln!("pineland-general-theory-probe closure-hidden-diagnostics OUT.csv [pool_seeds=36] [agents=300] [localities=34] [anchor=60] [pairs=24] [threads=8] [candidate=nettransport12v2] [dynamic_seed_base=2026107000] [initialization_seed=2026106900] [recruitment_multiplier=1.0] [require_live_anchor=0]");
+    eprintln!("pineland-general-theory-probe closure-hidden-replay INPUT.csv OUT.csv [agents=300] [localities=34] [threads=2] [initialization_seed=2026145900] [recruitment_multiplier=0.0625]");
     eprintln!("pineland-general-theory-probe closure-stress OUT.csv [seeds=8] [agents=300] [localities=34] [anchor=60] [horizon=30] [focals=3] [branches=32] [threads=16] [block=police_professionalism|government_veterancy|insurgent_veterancy]");
 }
 
@@ -5209,6 +5467,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some("closure") => run_distributional_closure(&args),
         Some("closure-battery") => run_distributional_closure_battery(&args),
         Some("closure-hidden-diagnostics") => run_closure_hidden_diagnostics(&args),
+        Some("closure-hidden-replay") => run_closure_hidden_replay(&args),
         Some("closure-stress") => run_v2_omitted_state_stress(&args),
         _ => {
             usage();

@@ -428,5 +428,69 @@
       "note": "Windows pytest temp cleanup emitted an atexit PermissionError after successful test completion; no test failure."
     }
   },
-  "current_model_sha256": "30bfe7edc0511e3d43aacdba7b8bebaea127c2378df3b835d7bd8538bc5020b6"
+  "current_model_sha256": "30bfe7edc0511e3d43aacdba7b8bebaea127c2378df3b835d7bd8538bc5020b6",
+  "direct_report_baseline_development_control": {
+    "status": "content_addressed_development_evidence_not_confirmatory",
+    "execution_sha256": "a1f8f57bffe1886fadd05120e3bb01d2278615a461dce5f18c6c3a13cabfd621",
+    "model_sha256": "e12394615e8a6e2e0cfab3639f45aae2895487ef89c2aea5d598347cd5feec6a",
+    "design": {
+      "worlds": 8,
+      "particles_per_world": 32,
+      "agents": 60,
+      "localities": 17,
+      "days": 14,
+      "interval_days": 7
+    },
+    "baseline_contract": "At each measurement estimand/locality/state-time, use the raw report if one was generated; otherwise use the matched prior mean. This is a retrospective/fixed-lag baseline matching the estimator scoring contract.",
+    "nominal": {
+      "posterior_mse": 0.004915885672744196,
+      "matched_prior_mse": 0.005518345633539153,
+      "direct_report_or_prior_mse": 0.009231354442118285,
+      "direct_report_coverage": 0.3851102941176471,
+      "posterior_mse_improvement_vs_direct_report_baseline": 0.46747947946670265,
+      "world_win_rate_vs_direct_report_baseline": 1.0,
+      "paired_posterior_minus_direct_mse_delta": -0.004315468769374089,
+      "paired_delta_normal_95": [
+        -0.005288610199164848,
+        -0.00334232733958333
+      ]
+    },
+    "zero_geolocation_error_control": {
+      "posterior_mse": 0.004582751667200908,
+      "matched_prior_mse": 0.005518345633539153,
+      "direct_report_or_prior_mse": 0.008423880842641892,
+      "direct_report_coverage": 0.40670955882352944,
+      "posterior_mse_improvement_vs_direct_report_baseline": 0.45598094835305525,
+      "world_win_rate_vs_direct_report_baseline": 1.0,
+      "paired_posterior_minus_direct_mse_delta": -0.0038411291754409838,
+      "paired_delta_normal_95": [
+        -0.004585980087481711,
+        -0.003096278263400256
+      ],
+      "posterior_mse_information_gain_vs_prior": 0.1695424731375893
+    },
+    "interpretation": "Pineland substantially outperforms a simple raw-report/prior measurement-space reconstruction. The advantage survives exact report geolocation, so it is not mainly a map-error correction effect.",
+    "near_noiseless_exact_geolocation_control": {
+      "measurement_noise_multiplier": 0.01,
+      "posterior_mse": 0.0036965776072096913,
+      "matched_prior_mse": 0.005518345633539153,
+      "direct_report_or_prior_mse": 0.003512389529878919,
+      "direct_report_coverage": 0.40670955882352944,
+      "posterior_mse_improvement_vs_direct_report_baseline": -0.052439536037770296,
+      "world_win_rate_vs_direct_report_baseline": 0.0,
+      "paired_posterior_minus_direct_mse_delta": 0.0001841880773307727,
+      "paired_delta_normal_95": [
+        -0.00011139039781908936,
+        0.00047976655248063477
+      ],
+      "posterior_mse_information_gain_vs_prior": 0.3301293806711203,
+      "interpretation": "When reports are almost exact, direct measurement slightly outperforms the finite-particle posterior. This falsifies any universal superiority claim and supports interpreting the nominal raw-report advantage as denoising/shrinkage under uncertainty."
+    },
+    "software_integrity_after_direct_baseline": {
+      "full_pytest_passed": 719,
+      "full_pytest_skipped": 2,
+      "full_pytest_failed": 0,
+      "note": "Same post-success Windows pytest-current cleanup PermissionError; no test failure."
+    }
+  }
 }

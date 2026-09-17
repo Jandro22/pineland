@@ -72,6 +72,31 @@ CANDIDATE_EXTRA = {
         "final_ring2_rooted_mass",
         "final_ring2_recruitment_hazard",
     ],
+    "rootedstock_execnet_ring1_localflow17v7": [
+        "final_Mstar",
+        "final_executable_net_transport_pressure",
+        "final_neighbor_transportable_strength",
+        "final_neighbor_rooted_mass",
+        "final_neighbor_recruitment_hazard",
+        "final_net_transport_pressure",
+        "final_recruitment_hazard",
+    ],
+    "rootedstock_execnet_ring1_rawnet16v7": [
+        "final_Mstar",
+        "final_executable_net_transport_pressure",
+        "final_neighbor_transportable_strength",
+        "final_neighbor_rooted_mass",
+        "final_neighbor_recruitment_hazard",
+        "final_net_transport_pressure",
+    ],
+    "rootedstock_execnet_ring1_hazard16v7": [
+        "final_Mstar",
+        "final_executable_net_transport_pressure",
+        "final_neighbor_transportable_strength",
+        "final_neighbor_rooted_mass",
+        "final_neighbor_recruitment_hazard",
+        "final_recruitment_hazard",
+    ],
 }
 
 BASE_CONTINUOUS = [
@@ -137,6 +162,9 @@ def analyze(csv_path: str, out_path: str, draws: int, seed: int, max_match_dista
         "candidate",
         "branch",
         "side",
+        "left_seed",
+        "right_seed",
+        "locality",
         "stratum",
         "match_distance",
         "viable",
@@ -161,7 +189,6 @@ def analyze(csv_path: str, out_path: str, draws: int, seed: int, max_match_dista
     # Correct the fielded-force future coordinate before any audit.
     work = df.copy()
     work["final_logF"] = work["final_active_owner_logF"].astype(float)
-    rng = np.random.default_rng(seed)
     pair_results = []
     tests = []
     for pair_id, g in work.groupby("pair_id", sort=True):
@@ -172,7 +199,19 @@ def analyze(csv_path: str, out_path: str, draws: int, seed: int, max_match_dista
         if not np.array_equal(left.branch.to_numpy(), right.branch.to_numpy()):
             raise SystemExit(f"pair {pair_id}: branch identities do not align")
         n = len(left)
-        indices = rng.integers(0, n, size=(draws, n))
+        # Bootstrap common random numbers must be tied to immutable pair
+        # provenance, not candidate-local pair ordinals or iteration order.
+        # Otherwise the same state pair selected by two candidates can receive
+        # different resamples and therefore different borderline equivalence
+        # classifications even though its continuation outcomes are identical.
+        first = g.iloc[0]
+        provenance = (
+            f"{seed}:{int(first.left_seed)}:{int(first.right_seed)}:"
+            f"{int(first.locality)}"
+        ).encode("utf-8")
+        pair_seed = int.from_bytes(hashlib.sha256(provenance).digest()[:8], "little")
+        pair_rng = np.random.default_rng(pair_seed)
+        indices = pair_rng.integers(0, n, size=(draws, n))
         pair_tests = []
 
         a = left.viable.to_numpy(float)
@@ -222,7 +261,6 @@ def analyze(csv_path: str, out_path: str, draws: int, seed: int, max_match_dista
         all_equiv = all(t["equivalent"] for t in pair_tests)
         any_non = any(t["demonstrably_non_equivalent"] for t in pair_tests)
         classification = "equivalent" if all_equiv else ("demonstrably_non_equivalent" if any_non else "inconclusive")
-        first = g.iloc[0]
         pair_results.append(
             {
                 "pair_id": int(pair_id),
