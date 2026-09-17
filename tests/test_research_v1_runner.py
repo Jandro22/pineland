@@ -8,6 +8,7 @@ from studies.research_program.scripts.run_research_v1_repeated_snapshot_recovery
 from studies.research_program.scripts.run_research_v1_repeated_dynamic_recovery import (
     _aggregate as _dynamic_aggregate,
     _aggregate_variables as _dynamic_aggregate_variables,
+    _execution_fingerprint as _dynamic_execution_fingerprint,
     build_parser as build_dynamic_parser,
 )
 
@@ -97,6 +98,14 @@ def test_repeated_dynamic_defaults_to_component_localization():
     assert args.assumed_false_report_probability == 0.0
 
 
+def test_repeated_dynamic_execution_fingerprint_is_content_addressed():
+    fingerprint = _dynamic_execution_fingerprint()
+    assert len(fingerprint["model_sha256"]) == 64
+    assert len(fingerprint["runner_sha256"]) == 64
+    assert len(fingerprint["synthetic_runner_sha256"]) == 64
+    assert len(fingerprint["execution_sha256"]) == 64
+
+
 def test_repeated_dynamic_accepts_misspecified_measurement_assumptions():
     args = build_dynamic_parser().parse_args([
         "--geolocation-error-probability", "0.20",
@@ -171,3 +180,35 @@ def test_repeated_dynamic_variable_summary_is_paired_by_world():
     assert result["mse_information_gain_fraction"] == pytest.approx(0.5)
     assert result["world_win_rate"] == 1.0
     assert result["posterior_coverage_90"] == pytest.approx(0.85)
+
+
+def test_repeated_dynamic_target_summary_accepts_measurement_estimand_field():
+    rows = [
+        {
+            "measurement_estimands": {
+                "estimand::x": {
+                    "prior_mse": 2.0,
+                    "posterior_mse": 1.0,
+                    "posterior_coverage_90": 0.9,
+                    "prior_coverage_90": 0.8,
+                    "posterior_confidently_wrong_rate": 0.0,
+                },
+            },
+        },
+        {
+            "measurement_estimands": {
+                "estimand::x": {
+                    "prior_mse": 4.0,
+                    "posterior_mse": 2.0,
+                    "posterior_coverage_90": 0.8,
+                    "prior_coverage_90": 0.7,
+                    "posterior_confidently_wrong_rate": 0.1,
+                },
+            },
+        },
+    ]
+    result = _dynamic_aggregate_variables(
+        rows, field="measurement_estimands"
+    )["estimand::x"]
+    assert result["mse_information_gain_fraction"] == pytest.approx(0.5)
+    assert result["world_win_rate"] == 1.0

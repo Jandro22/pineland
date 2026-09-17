@@ -29,13 +29,37 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from pineland_sim.recovery import ObservationProcessConfig  # noqa: E402
-from pineland_sim.reproducibility import model_sha256  # noqa: E402
+from pineland_sim.reproducibility import (  # noqa: E402
+    canonical_sha256,
+    file_sha256,
+    model_sha256,
+)
 from studies.research_program.scripts.run_research_v1_synthetic_recovery import (  # noqa: E402
     _base_simulation,
     _prior_ensemble_history,
     _run_localized_reconstruction,
     _truth_and_reports,
 )
+
+
+def _execution_fingerprint() -> dict[str, str]:
+    runner = Path(__file__).resolve()
+    synthetic_runner = (
+        ROOT
+        / "studies"
+        / "research_program"
+        / "scripts"
+        / "run_research_v1_synthetic_recovery.py"
+    )
+    components = {
+        "model_sha256": model_sha256(ROOT),
+        "runner_sha256": file_sha256(runner),
+        "synthetic_runner_sha256": file_sha256(synthetic_runner),
+    }
+    return {
+        **components,
+        "execution_sha256": canonical_sha256(components),
+    }
 
 
 def _mean(values: list[float]) -> float:
@@ -93,17 +117,21 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _aggregate_variables(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Aggregate paired prior/posterior recovery by latent variable across worlds."""
+def _aggregate_variables(
+    rows: list[dict[str, Any]],
+    *,
+    field: str = "variables",
+) -> dict[str, dict[str, Any]]:
+    """Aggregate paired prior/posterior recovery by named target across worlds."""
 
     variables = sorted({
         variable
         for row in rows
-        for variable in row.get("variables", {})
+        for variable in row.get(field, {})
     })
     output: dict[str, dict[str, Any]] = {}
     for variable in variables:
-        variable_rows = [row["variables"][variable] for row in rows]
+        variable_rows = [row[field][variable] for row in rows]
         prior_mse = _mean([row["prior_mse"] for row in variable_rows])
         posterior_mse = _mean([row["posterior_mse"] for row in variable_rows])
         deltas = [
@@ -140,6 +168,7 @@ def _aggregate_variables(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    execution_start = _execution_fingerprint()
     if args.worlds < 2:
         raise ValueError("repeated dynamic recovery requires at least two worlds")
     if args.particles < 2:
@@ -188,6 +217,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             prior_metrics = result["prior_metrics_observation_linked"]
             by_variable = result["metrics_by_variable"]
             prior_by_variable = result["prior_metrics_by_variable"]
+            estimand_result = result["measurement_aligned_estimands"]
+            estimand_by_name = estimand_result["metrics_by_estimand"]
+            estimand_prior_by_name = estimand_result["prior_metrics_by_estimand"]
+            estimand_metrics = estimand_result["metrics"]
+            estimand_prior_metrics = estimand_result["prior_metrics"]
             profile_rows[profile].append({
                 "world_index": world_index,
                 "particles": args.particles,
@@ -216,8 +250,40 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     }
                     for variable, metrics in by_variable.items()
                 },
+                "measurement_estimands": {
+                    estimand: {
+                        "posterior_mse": metrics["rmse"] ** 2,
+                        "prior_mse": estimand_prior_by_name[estimand]["rmse"] ** 2,
+                        "posterior_coverage_90": metrics["coverage_90"],
+                        "prior_coverage_90": (
+                            estimand_prior_by_name[estimand]["coverage_90"]
+                        ),
+                        "posterior_confidently_wrong_rate": (
+                            metrics["confidently_wrong_rate"]
+                        ),
+                    }
+                    for estimand, metrics in estimand_by_name.items()
+                },
+                "measurement_estimand_summary": {
+                    "particles": args.particles,
+                    "posterior_mse": estimand_metrics["rmse"] ** 2,
+                    "prior_mse": estimand_prior_metrics["rmse"] ** 2,
+                    "posterior_coverage_90": estimand_metrics["coverage_90"],
+                    "prior_coverage_90": estimand_prior_metrics["coverage_90"],
+                    "posterior_confidently_wrong_rate": (
+                        estimand_metrics["confidently_wrong_rate"]
+                    ),
+                    "mean_ess": estimand_result["support"]["mean_ess"],
+                    "minimum_ess": estimand_result["support"]["minimum_ess"],
+                },
             })
 
+    execution_end = _execution_fingerprint()
+    if execution_end != execution_start:
+        raise RuntimeError(
+            "Research-v1 executable source changed during the experiment; "
+            "discard this run and rerun from a stable source checkpoint."
+        )
     return {
         "schema_version": "pineland.research_v1.repeated_dynamic_recovery.v1",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -228,7 +294,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "to the matched dynamically propagated prior?"
         ),
         "provenance": {
-            "model_sha256": model_sha256(ROOT),
+            **execution_start,
             "historical_case_data_loaded": False,
         },
         "design": {
@@ -271,6 +337,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             profile: {
                 "aggregate": _aggregate(rows),
                 "variables": _aggregate_variables(rows),
+                "measurement_estimands": _aggregate_variables(
+                    rows, field="measurement_estimands"
+                ),
+                "measurement_estimand_aggregate": _aggregate([
+                    row["measurement_estimand_summary"] for row in rows
+                ]),
                 "worlds": rows,
             }
             for profile, rows in profile_rows.items()

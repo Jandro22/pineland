@@ -889,6 +889,124 @@ def component_localized_importance_reconstruction(
     return points, diagnostics
 
 
+def project_state_to_channel_estimands(
+    state: StateField,
+    channels: Sequence[ObservationChannel],
+) -> StateField:
+    """Project latent coordinates into the scalars declared by report channels.
+
+    These are measurement-aligned estimands: the latent channel expectations
+    that the observation system actually measures.  They are useful when the
+    underlying coordinate vector is rank-deficient because recovery can then be
+    evaluated in the identifiable measurement space without pretending that an
+    arbitrary decomposition of the same signal is separately observed.
+    """
+
+    return {
+        unit_id: {
+            f"estimand::{channel.name}": channel.expected_value(unit_state)
+            for channel in channels
+        }
+        for unit_id, unit_state in state.items()
+    }
+
+
+def channel_aligned_importance_reconstruction(
+    truth: StateField,
+    particle_fields: Sequence[StateField],
+    observations: Sequence[SyntheticObservation],
+    *,
+    channels: Sequence[ObservationChannel],
+    adjacency: Mapping[str, Iterable[str]],
+    time: float,
+    radius: int = 0,
+    assumed_geolocation_error_probability: float = 0.0,
+    assumed_measurement_noise_multiplier: float = 1.0,
+    assumed_false_report_probability: float = 0.0,
+) -> tuple[list[PosteriorPoint], list[ComponentLocalizedSupportDiagnostic]]:
+    """Recover the latent linear/nonlinear scalar measured by each report channel.
+
+    Each estimand uses only reports from its own channel and spatial
+    neighborhood.  Particles remain coherent complete worlds; only the marginal
+    importance weights differ by channel.  This estimates the measurement
+    space directly and makes no claim that a rank-deficient set of underlying
+    coordinates has been uniquely decomposed.
+    """
+
+    if not particle_fields:
+        raise ValueError("channel-aligned reconstruction requires particles")
+    if radius < 0:
+        raise ValueError("localization radius cannot be negative")
+
+    from .state_estimation import effective_sample_size, normalize_log_weights
+
+    points: list[PosteriorPoint] = []
+    diagnostics: list[ComponentLocalizedSupportDiagnostic] = []
+    uniform = [1.0 / len(particle_fields)] * len(particle_fields)
+    projected_truth = project_state_to_channel_estimands(truth, channels)
+    projected_particles = [
+        project_state_to_channel_estimands(field, channels)
+        for field in particle_fields
+    ]
+
+    for unit_id in sorted(truth):
+        neighborhood = set(graph_neighborhood(adjacency, unit_id, radius))
+        for channel in channels:
+            estimand = f"estimand::{channel.name}"
+            local_observations = [
+                observation
+                for observation in observations
+                if (
+                    observation.reported_unit_id in neighborhood
+                    and observation.channel == channel.name
+                )
+            ]
+            if local_observations:
+                log_weights = [
+                    observation_batch_log_likelihood(
+                        field,
+                        local_observations,
+                        channels=(channel,),
+                        adjacency=adjacency,
+                        assumed_geolocation_error_probability=(
+                            assumed_geolocation_error_probability
+                        ),
+                        assumed_measurement_noise_multiplier=(
+                            assumed_measurement_noise_multiplier
+                        ),
+                        assumed_false_report_probability=(
+                            assumed_false_report_probability
+                        ),
+                    )
+                    for field in particle_fields
+                ]
+                weights = normalize_log_weights(log_weights, strict=True)
+            else:
+                weights = uniform
+
+            unit_fields = [
+                {unit_id: field[unit_id]} for field in projected_particles
+            ]
+            points.extend(summarize_posterior_field(
+                {unit_id: projected_truth[unit_id]},
+                unit_fields,
+                weights,
+                time=time,
+                variables=(estimand,),
+            ))
+            diagnostics.append(ComponentLocalizedSupportDiagnostic(
+                time=float(time),
+                unit_id=unit_id,
+                variable=estimand,
+                radius=radius,
+                reports=len(local_observations),
+                relevant_channels=1,
+                ess=effective_sample_size(weights),
+                maximum_weight=max(weights),
+            ))
+    return points, diagnostics
+
+
 def _weighted_quantile(
     values: Sequence[float], weights: Sequence[float], probability: float
 ) -> float:

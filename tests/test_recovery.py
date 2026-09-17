@@ -10,6 +10,7 @@ from pineland_sim.recovery import (
     PosteriorPoint,
     SyntheticObservation,
     component_localized_importance_reconstruction,
+    channel_aligned_importance_reconstruction,
     evaluate_recovery,
     extract_pineland_latent_state,
     generate_observations,
@@ -17,6 +18,7 @@ from pineland_sim.recovery import (
     observation_batch_log_likelihood,
     observation_design_diagnostics,
     posterior_identifiability,
+    project_state_to_channel_estimands,
     summarize_posterior_field,
 )
 
@@ -380,3 +382,46 @@ def test_component_localization_does_not_reweight_unrelated_variable():
     y_support = next(row for row in support if row.variable == "y")
     assert y_support.reports == 0
     assert y_support.ess == pytest.approx(2.0)
+
+
+def test_channel_estimand_projection_preserves_declared_measurement_equation():
+    state = {"A": {"x": 0.2, "y": 0.6}}
+    channel = ObservationChannel(
+        "mixed", (("x", 0.25), ("y", 0.75)), measurement_sd=0.05
+    )
+    projected = project_state_to_channel_estimands(state, (channel,))
+    assert projected["A"]["estimand::mixed"] == pytest.approx(0.5)
+
+
+def test_channel_aligned_reconstruction_targets_measured_combination_not_decomposition():
+    truth = {"A": {"x": 0.2, "y": 0.8}}
+    particles = [
+        {"A": {"x": 0.2, "y": 0.8}},
+        {"A": {"x": 0.8, "y": 0.2}},
+    ]
+    channel = ObservationChannel(
+        "sum", (("x", 0.5), ("y", 0.5)), measurement_sd=0.05
+    )
+    observation = SyntheticObservation(
+        observation_id="sum",
+        channel="sum",
+        state_time=0.0,
+        arrival_time=0.0,
+        true_unit_id="A",
+        reported_unit_id="A",
+        value=0.5,
+        measurement_sd=0.05,
+    )
+    points, support = channel_aligned_importance_reconstruction(
+        truth,
+        particles,
+        (observation,),
+        channels=(channel,),
+        adjacency={"A": ()},
+        time=0.0,
+    )
+    assert len(points) == 1
+    assert points[0].variable == "estimand::sum"
+    assert points[0].truth == pytest.approx(0.5)
+    assert points[0].mean == pytest.approx(0.5)
+    assert support[0].reports == 1

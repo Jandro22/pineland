@@ -112,6 +112,36 @@ and insurgent physical and administrative control structurally identifiable in
 the declared one-snapshot measurement system. This is structural measurement
 identifiability, not proof of practical finite-sample recoverability.
 
+Rank-nullity also puts a hard lower bound on any attempt to identify the full
+18-coordinate snapshot state from this reporting menu. The current design has
+rank 8, so no inference algorithm can recover ten missing independent
+measurement dimensions from those eight scalar equations without importing
+restrictions from dynamics or priors. Achieving full snapshot rank would
+require at least ten additional independent scalar measurement equations. The
+Research-v1 objective is therefore not to add synthetic channels until every
+coordinate becomes identifiable; it is to state clearly which coordinate or
+linear-combination claims the actual observation contract licenses.
+
+### Measurement-aligned estimands
+
+Research-v1 now evaluates the observable subspace directly as a companion to
+coordinate-level recovery. For every declared report channel, the benchmark
+projects each coherent Pineland world into the channel's latent expected value
+(`estimand::<channel>`). A channel-aligned importance reconstruction then uses
+only reports from that channel and declared spatial neighborhood to estimate
+that scalar. This asks whether the information that the measurement design
+actually contains is recoverable without pretending that a rank-deficient
+decomposition into underlying coordinates is unique.
+
+These measurement-aligned quantities do not replace substantive latent
+variables. They separate whether the estimator can recover the latent
+combination actually measured by a reporting stream from whether the collection
+design contains enough independent information to split that combination into
+the substantive coordinates a researcher wants to discuss. Strong recovery in
+measurement space combined with weak coordinate recovery is therefore evidence
+of an observation-design/identification limit rather than a generic estimator
+failure.
+
 ## Development profiles
 
 The 8-particle/14-day configuration is a software smoke test only. It is not a
@@ -270,6 +300,18 @@ estimator.
 All of these repeated-dynamic values remain four-world development diagnostics.
 The confirmatory world count, particle count, severity grid, and promotion
 criteria must be frozen before any paper-level failure-envelope claim is made.
+
+## Executable provenance guard
+
+Research-v1 long-running recovery scripts content-address the executable
+scientific bundle before simulation begins. The fingerprint includes the live
+Pineland model source plus the benchmark runner code (and, for the repeated
+dynamic runner, the synthetic-recovery runner it imports). The bundle is hashed
+again after the experiment. If executable scientific content changed while the
+run was in flight, the runner raises an error and refuses to certify/write that
+run as admissible evidence. This is deliberately content-based rather than
+commit-based so unrelated Git history movement does not invalidate a stable
+experiment, while live scientific edits do.
 
 ## Repository and data boundary
 
