@@ -354,5 +354,79 @@
     },
     "interpretation": "A modest contamination floor behaves as robustness insurance in this development batch: little clean-data cost, higher support, and positive average information gain under 10-20% fabricated reports where the strict Gaussian likelihood becomes worse than the prior."
   },
-  "legacy_observation_rng_note": "Repeated-snapshot and prior-width pilot numbers above predate the purpose-separated observation-substream change. They remain useful hypothesis-generating development evidence but must be rerun under the paired generator before confirmatory use."
+  "legacy_observation_rng_note": "Repeated-snapshot and prior-width pilot numbers above predate the purpose-separated observation-substream change. They remain useful hypothesis-generating development evidence but must be rerun under the paired generator before confirmatory use.",
+  "current_content_addressed_development_batch": {
+    "status": "development_evidence_not_confirmatory",
+    "execution_sha256": "73213a0f5842b9359a255eef472648724dbb0bff1c7c3916574e01e00fd2d664",
+    "model_sha256": "30bfe7edc0511e3d43aacdba7b8bebaea127c2378df3b835d7bd8538bc5020b6",
+    "runner_sha256": "927ccbd19f176ecca6e3324bd8feca283efdfc716dd50d61203e338694828e9b",
+    "synthetic_runner_sha256": "8e2603c932df3201ddc76612b063e7516828428ead13f7e19caabbea5a9326db",
+    "design": {
+      "worlds": 8,
+      "particles_per_world": 32,
+      "agents": 60,
+      "localities": 17,
+      "days": 14,
+      "interval_days": 7,
+      "historical_case_data_loaded": false
+    },
+    "nominal_mixed_proxy": {
+      "coordinate_mse_information_gain_fraction": 0.10387690037424102,
+      "coordinate_world_win_rate": 1.0,
+      "coordinate_posterior_coverage_90": 0.9237132352941176,
+      "coordinate_confidently_wrong_rate": 0.023590686274509803,
+      "coordinate_paired_mse_delta_normal_95": [
+        -0.0015203325706057544,
+        -0.00018001194992462582
+      ],
+      "measurement_estimand_mse_information_gain_fraction": 0.1091740171426292,
+      "measurement_estimand_world_win_rate": 1.0,
+      "measurement_estimand_posterior_coverage_90": 0.8988970588235294,
+      "measurement_estimand_paired_mse_delta_normal_95": [
+        -0.0009033981682376028,
+        -0.00030152175335230883
+      ]
+    },
+    "direct_oracle": {
+      "coordinate_mse_information_gain_fraction": 0.123,
+      "coordinate_world_win_rate": 1.0,
+      "coordinate_posterior_coverage_90": 0.918,
+      "coordinate_paired_mse_delta_normal_95": [
+        -0.0013847912387275443,
+        -0.0005445675617926796
+      ]
+    },
+    "false_report_0_10": {
+      "strict": {
+        "coordinate_mse_information_gain_fraction": -0.05,
+        "world_win_rate": 0.625,
+        "posterior_coverage_90": 0.921,
+        "measurement_estimand_mse_information_gain_fraction": -0.0134
+      },
+      "robust_0_10": {
+        "coordinate_mse_information_gain_fraction": 0.0242,
+        "world_win_rate": 0.75,
+        "posterior_coverage_90": 0.924,
+        "measurement_estimand_mse_information_gain_fraction": 0.047
+      },
+      "interpretation": "The fixed contamination mixture reverses the average direction under 10% fabricated reports, but eight-world paired diagnostic intervals still cross zero; treat as a promising robustness mechanism, not a confirmed rescue."
+    },
+    "measurement_estimand_nominal_gain_fraction": {
+      "administrative_function_report": 0.2218,
+      "organizational_presence_report": 0.1336,
+      "security_presence_report": 0.1015,
+      "insurgent_physical_anchor": 0.0954,
+      "government_admin_anchor": 0.0874,
+      "taxation_coercion_report": 0.0332,
+      "logistics_readiness_report": 0.0319,
+      "public_alignment_report": 0.0122
+    },
+    "software_integrity": {
+      "full_pytest_passed": 717,
+      "full_pytest_skipped": 2,
+      "full_pytest_failed": 0,
+      "note": "Windows pytest temp cleanup emitted an atexit PermissionError after successful test completion; no test failure."
+    }
+  },
+  "current_model_sha256": "30bfe7edc0511e3d43aacdba7b8bebaea127c2378df3b835d7bd8538bc5020b6"
 }
