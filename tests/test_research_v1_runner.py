@@ -5,6 +5,10 @@ import pytest
 from studies.research_program.scripts.run_research_v1_repeated_snapshot_recovery import (
     _paired_summary,
 )
+from studies.research_program.scripts.run_research_v1_repeated_dynamic_recovery import (
+    _aggregate as _dynamic_aggregate,
+    build_parser as build_dynamic_parser,
+)
 
 from studies.research_program.scripts.run_research_v1_synthetic_recovery import (
     DEFAULT_VARIABLES,
@@ -80,3 +84,53 @@ def test_repeated_snapshot_summary_uses_world_paired_mse():
     assert result["mse_ratio_vs_prior"] == pytest.approx(0.6)
     assert result["mse_information_gain_fraction"] == pytest.approx(0.4)
     assert result["world_win_rate"] == pytest.approx(0.5)
+
+
+def test_repeated_dynamic_defaults_to_component_localization():
+    args = build_dynamic_parser().parse_args([])
+    assert args.state_localization == "component"
+    assert args.localization_radius == 0
+    assert args.assumed_geolocation_error_probability is None
+    assert args.assumed_measurement_noise_multiplier is None
+
+
+def test_repeated_dynamic_accepts_misspecified_measurement_assumptions():
+    args = build_dynamic_parser().parse_args([
+        "--geolocation-error-probability", "0.20",
+        "--assumed-geolocation-error-probability", "0.0",
+        "--measurement-noise-multiplier", "2.0",
+        "--assumed-measurement-noise-multiplier", "1.0",
+    ])
+    assert args.geolocation_error_probability == pytest.approx(0.20)
+    assert args.assumed_geolocation_error_probability == pytest.approx(0.0)
+    assert args.measurement_noise_multiplier == pytest.approx(2.0)
+    assert args.assumed_measurement_noise_multiplier == pytest.approx(1.0)
+
+
+def test_repeated_dynamic_summary_is_world_paired():
+    rows = [
+        {
+            "prior_mse": 4.0,
+            "posterior_mse": 2.0,
+            "posterior_coverage_90": 0.9,
+            "prior_coverage_90": 0.8,
+            "posterior_confidently_wrong_rate": 0.1,
+            "mean_ess": 8.0,
+            "minimum_ess": 4.0,
+            "particles": 16,
+        },
+        {
+            "prior_mse": 2.0,
+            "posterior_mse": 1.0,
+            "posterior_coverage_90": 0.8,
+            "prior_coverage_90": 0.7,
+            "posterior_confidently_wrong_rate": 0.2,
+            "mean_ess": 12.0,
+            "minimum_ess": 2.0,
+            "particles": 16,
+        },
+    ]
+    result = _dynamic_aggregate(rows)
+    assert result["mse_ratio_vs_prior"] == pytest.approx(0.5)
+    assert result["mse_information_gain_fraction"] == pytest.approx(0.5)
+    assert result["world_win_rate"] == 1.0

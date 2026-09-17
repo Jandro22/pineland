@@ -11,6 +11,12 @@
       "skipped": 2,
       "failed": 0
     },
+    "portable_clean_clone_pytest": {
+      "passed": 650,
+      "skipped": 2,
+      "failed": 0,
+      "scope": "GitHub-portable suite excluding tests whose declared inputs are gitignored historical panels, sealed holdouts, or generated result bundles"
+    },
     "notes": [
       "Native scheduler-oracle horizon clipping was aligned with reference exact-continuation semantics.",
       "Research-readiness scoring no longer infers empirical readiness from synthetic data-status wording."
@@ -124,11 +130,63 @@
     },
     "interpretation": "The broad-prior failure of locality-only weighting is largely a state-component dimensionality problem. Mixed proxies remain weak at broad priors, which is a measurement-identifiability result rather than a reason to add simulator mechanics."
   },
+  "repeated_dynamic_pilot": {
+    "design": {
+      "worlds": 4,
+      "particles_per_world": 16,
+      "agents": 60,
+      "localities": 17,
+      "days": 14,
+      "interval_days": 7,
+      "truth_sd": 0.1,
+      "prior_sd": 0.1,
+      "localization_radius": 0,
+      "historical_case_data_loaded": false
+    },
+    "component_localization": {
+      "mixed_proxy": {
+        "mse_information_gain_fraction": 0.2129407428822666,
+        "world_win_rate": 1.0,
+        "posterior_coverage_90": 0.9007352941176471,
+        "posterior_confidently_wrong_rate": 0.037377450980392156,
+        "mean_support_fraction": 0.9626687063651382
+      },
+      "direct_oracle": {
+        "mse_information_gain_fraction": 0.083941543757038,
+        "world_win_rate": 1.0,
+        "posterior_coverage_90": 0.9027777777777778,
+        "posterior_confidently_wrong_rate": 0.029820261437908495,
+        "mean_support_fraction": 0.9678890977616093
+      }
+    },
+    "locality_only_ablation": {
+      "mixed_proxy": {
+        "mse_information_gain_fraction": 0.2224951812357091,
+        "world_win_rate": 1.0,
+        "posterior_coverage_90": 0.8713235294117647,
+        "posterior_confidently_wrong_rate": 0.061887254901960786,
+        "mean_support_fraction": 0.6948528542306203
+      },
+      "direct_oracle": {
+        "mse_information_gain_fraction": 0.1298943368333041,
+        "world_win_rate": 1.0,
+        "posterior_coverage_90": 0.8337418300653594,
+        "posterior_confidently_wrong_rate": 0.07965686274509803,
+        "mean_support_fraction": 0.5860204493215049
+      }
+    },
+    "interpretation": [
+      "Component localization now has positive information gain across repeated live synthetic trajectories, not only one-snapshot assays.",
+      "Locality-only weighting is sharper at this narrow prior but sacrifices posterior support and interval calibration, and it fails under broader priors.",
+      "Four worlds are intentionally underpowered; paired normal intervals cross zero and no confirmatory threshold is licensed."
+    ]
+  },
   "reproduction_commands": [
     "python pineland.py reproduce paper1 --profile smoke",
     "python studies/research_program/scripts/run_research_v1_weight_collapse_diagnostic.py",
     "python studies/research_program/scripts/run_research_v1_channel_ablation.py --agents 60 --particles 64",
     "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 16 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.10",
-    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 8 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.30 --state-localization component"
+    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 8 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.30 --state-localization component",
+    "python studies/research_program/scripts/run_research_v1_repeated_dynamic_recovery.py --worlds 4 --particles 16 --agents 60 --days 14 --interval-days 7"
   ]
 }
