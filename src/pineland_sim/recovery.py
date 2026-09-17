@@ -157,6 +157,20 @@ class LocalizedSupportDiagnostic:
 
 
 @dataclass(frozen=True, slots=True)
+class ComponentLocalizedSupportDiagnostic:
+    """Support diagnostic for one locality-variable marginal posterior."""
+
+    time: float
+    unit_id: str
+    variable: str
+    radius: int
+    reports: int
+    relevant_channels: int
+    ess: float
+    maximum_weight: float
+
+
+@dataclass(frozen=True, slots=True)
 class MisspecificationScenario:
     """Declared mismatch between data generation and estimator assumptions."""
 
@@ -666,6 +680,114 @@ def localized_importance_reconstruction(
             ess=effective_sample_size(weights),
             maximum_weight=max(weights),
         ))
+    return points, diagnostics
+
+
+def component_localized_importance_reconstruction(
+    truth: StateField,
+    particle_fields: Sequence[StateField],
+    observations: Sequence[SyntheticObservation],
+    *,
+    channels: Sequence[ObservationChannel],
+    adjacency: Mapping[str, Iterable[str]],
+    time: float,
+    variables: Sequence[str] | None = None,
+    radius: int = 0,
+    assumed_geolocation_error_probability: float = 0.0,
+    assumed_measurement_noise_multiplier: float = 1.0,
+) -> tuple[list[PosteriorPoint], list[ComponentLocalizedSupportDiagnostic]]:
+    """Estimate locality-variable marginals using only structurally relevant reports.
+
+    Locality localization prevents evidence from distant places from collapsing a
+    whole-country particle ensemble. This second localization prevents a report
+    about one latent construct from reweighting unrelated coordinates merely
+    because a finite particle ensemble happens to correlate them.
+
+    A report is relevant to a target variable when its declared observation
+    channel has a non-zero loading on that variable. Mixed-proxy channels may
+    therefore inform several marginals, preserving their intended ambiguity.
+    Particles remain complete coherent Pineland worlds; only the importance
+    weights used to summarize each marginal differ.
+    """
+
+    if not particle_fields:
+        raise ValueError("component-localized reconstruction requires particles")
+    if radius < 0:
+        raise ValueError("localization radius cannot be negative")
+
+    from .state_estimation import effective_sample_size, normalize_log_weights
+
+    channel_by_name = {channel.name: channel for channel in channels}
+    variables_by_channel = {
+        channel.name: {
+            variable for variable, weight in channel.loadings if abs(weight) > 0.0
+        }
+        for channel in channels
+    }
+    points: list[PosteriorPoint] = []
+    diagnostics: list[ComponentLocalizedSupportDiagnostic] = []
+    uniform = [1.0 / len(particle_fields)] * len(particle_fields)
+
+    for unit_id in sorted(truth):
+        neighborhood = set(graph_neighborhood(adjacency, unit_id, radius))
+        available_variables = variables or tuple(sorted(truth[unit_id]))
+        unit_fields = [{unit_id: field[unit_id]} for field in particle_fields]
+        for variable in available_variables:
+            if variable not in truth[unit_id]:
+                continue
+            relevant_names = {
+                name for name, loaded_variables in variables_by_channel.items()
+                if variable in loaded_variables
+            }
+            relevant_channels = tuple(
+                channel_by_name[name] for name in sorted(relevant_names)
+            )
+            local_observations = [
+                observation
+                for observation in observations
+                if (
+                    observation.reported_unit_id in neighborhood
+                    and observation.channel in relevant_names
+                )
+            ]
+            if local_observations:
+                log_weights = [
+                    observation_batch_log_likelihood(
+                        field,
+                        local_observations,
+                        channels=relevant_channels,
+                        adjacency=adjacency,
+                        assumed_geolocation_error_probability=(
+                            assumed_geolocation_error_probability
+                        ),
+                        assumed_measurement_noise_multiplier=(
+                            assumed_measurement_noise_multiplier
+                        ),
+                    )
+                    for field in particle_fields
+                ]
+                weights = normalize_log_weights(log_weights, strict=True)
+            else:
+                weights = uniform
+
+            points.extend(summarize_posterior_field(
+                {unit_id: truth[unit_id]},
+                unit_fields,
+                weights,
+                time=time,
+                variables=(variable,),
+            ))
+            diagnostics.append(ComponentLocalizedSupportDiagnostic(
+                time=float(time),
+                unit_id=unit_id,
+                variable=variable,
+                radius=radius,
+                reports=len(local_observations),
+                relevant_channels=len(relevant_channels),
+                ess=effective_sample_size(weights),
+                maximum_weight=max(weights),
+            ))
+
     return points, diagnostics
 
 

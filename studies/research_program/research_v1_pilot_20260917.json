@@ -4,6 +4,7 @@
   "status": "development_pilot_not_confirmatory",
   "north_star": "Estimate hidden political and organizational conditions in irregular warfare from incomplete observations, with calibrated uncertainty.",
   "model_sha256_repeated_snapshot_pilot": "1c6ef1bfc1a7251a1e8e40cf81b353fa40597aa9b92c636f63b1647a32cb6525",
+  "model_sha256_component_localization_pilot": "1ccd1dcf2df64dfc10bbbb7dc706b198adc60cbdce8d56c0cd76208c160e196a",
   "software_integrity": {
     "full_pytest": {
       "passed": 702,
@@ -35,6 +36,22 @@
       "full_mixed_proxy_mse_ratio_vs_prior": 1.0035512289367068,
       "full_mixed_proxy_coverage_90": 0.9166666666666666,
       "interpretation": "No single channel explains the weak one-world information gain; single-channel effects are small and the full design remains rank-deficient."
+    },
+    "component_localization": {
+      "finding": "Locality-only weighting still allowed finite-ensemble correlations to make reports reweight latent variables that the observation channel did not measure. Component localization restricts each marginal to channels with a declared non-zero loading on that variable.",
+      "dynamic_smoke_16_particles": {
+        "linked_rmse_ratio_vs_prior": 0.94658964190137,
+        "posterior_coverage_90": 0.8709150326797386,
+        "minimum_ess": 3.773833805311731
+      },
+      "dynamic_development_32_particles_28_days": {
+        "linked_rmse_ratio_vs_prior": 0.8568623598774779,
+        "posterior_coverage_90": 0.886437908496732,
+        "minimum_ess": 2.43411617570753,
+        "global_filter_rmse_ratio_vs_prior": 1.125603550763013,
+        "global_filter_coverage_90": 0.3047385620915033
+      },
+      "interpretation": "Component localization is now the development estimator; locality-only and global weighting are retained as explicit ablations."
     }
   },
   "repeated_snapshot_pilot": {
@@ -75,10 +92,43 @@
       "Confirmatory world counts, particle counts, severity levels, and promotion gates remain to be frozen before a confirmatory run."
     ]
   },
+  "component_localization_prior_width_pilot": {
+    "design": {
+      "worlds_per_condition": 8,
+      "particles_per_world": 64,
+      "agents": 60,
+      "localities": 17,
+      "truth_sd": 0.1,
+      "state_localization": "component",
+      "historical_case_data_loaded": false
+    },
+    "conditions": {
+      "prior_sd_0.10": {
+        "mixed_proxy_mse_information_gain_fraction": 0.0964520256241238,
+        "direct_oracle_mse_information_gain_fraction": 0.08299271448357637,
+        "mixed_proxy_world_win_rate": 1.0,
+        "direct_oracle_world_win_rate": 1.0
+      },
+      "prior_sd_0.20": {
+        "mixed_proxy_mse_information_gain_fraction": 0.03371648030188856,
+        "direct_oracle_mse_information_gain_fraction": 0.07792569671191718,
+        "mixed_proxy_world_win_rate": 0.875,
+        "direct_oracle_world_win_rate": 1.0
+      },
+      "prior_sd_0.30": {
+        "mixed_proxy_mse_information_gain_fraction": 0.010909396270531113,
+        "direct_oracle_mse_information_gain_fraction": 0.10231445240621473,
+        "mixed_proxy_world_win_rate": 0.75,
+        "direct_oracle_world_win_rate": 1.0
+      }
+    },
+    "interpretation": "The broad-prior failure of locality-only weighting is largely a state-component dimensionality problem. Mixed proxies remain weak at broad priors, which is a measurement-identifiability result rather than a reason to add simulator mechanics."
+  },
   "reproduction_commands": [
     "python pineland.py reproduce paper1 --profile smoke",
     "python studies/research_program/scripts/run_research_v1_weight_collapse_diagnostic.py",
     "python studies/research_program/scripts/run_research_v1_channel_ablation.py --agents 60 --particles 64",
-    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 16 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.10"
+    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 16 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.10",
+    "python studies/research_program/scripts/run_research_v1_repeated_snapshot_recovery.py --worlds 8 --particles 64 --agents 60 --truth-sd 0.10 --prior-sd 0.30 --state-localization component"
   ]
 }

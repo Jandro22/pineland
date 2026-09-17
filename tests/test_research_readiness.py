@@ -71,7 +71,9 @@ def test_bargaining_default_is_belief_based():
 def test_global_accounting_is_explicit_and_reconciled():
     world = Simulation(generate_pineland(_config())).run().world
     accounting = world.global_accounting_diagnostics()
-    assert accounting["max_abs_stock_residual"] == 0.0
+    # Floating-point reduction order differs slightly across platforms. The
+    # accounting contract is numerical closure, not bitwise zero.
+    assert accounting["max_abs_stock_residual"] <= 1e-6
     assert abs(accounting["population_residual"]) < 1e-6
     assert set(accounting["flow_kinds"]) == {
         "internal_transfer", "production", "consumption", "destruction",

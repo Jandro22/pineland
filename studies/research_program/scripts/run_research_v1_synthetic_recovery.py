@@ -40,6 +40,7 @@ from pineland_sim.recovery import (  # noqa: E402
     evaluate_recovery_by_variable,
     extract_pineland_latent_state,
     generate_observations,
+    component_localized_importance_reconstruction,
     localized_importance_reconstruction,
     observation_batch_log_likelihood,
     observation_design_diagnostics,
@@ -553,7 +554,12 @@ def _run_localized_reconstruction(
             observation for observation in reports
             if observation.state_time == state_time
         ]
-        local_points, local_support = localized_importance_reconstruction(
+        reconstruction = (
+            component_localized_importance_reconstruction
+            if args.state_localization == "component"
+            else localized_importance_reconstruction
+        )
+        local_points, local_support = reconstruction(
             truth_states[state_time],
             prior_history[state_time],
             time_reports,
@@ -585,6 +591,7 @@ def _run_localized_reconstruction(
     return {
         "status": "localized_marginal_approximation_not_joint_posterior",
         "radius": radius,
+        "state_localization": args.state_localization,
         "metrics": asdict(metrics),
         "metrics_observation_linked": asdict(linked_metrics),
         "prior_metrics_same_targets": asdict(prior_metrics),
@@ -715,6 +722,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "particles": args.particles,
             "ess_fraction": args.ess_fraction,
             "prior_control_sd": args.prior_sd,
+            "state_localization": args.state_localization,
             "truth_control_sd": args.truth_sd,
             "variables": list(DEFAULT_VARIABLES),
             "observation_process": asdict(process),
@@ -767,6 +775,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=0,
         help="graph radius of reports used for each localized marginal posterior",
+    )
+    parser.add_argument(
+        "--state-localization",
+        choices=["locality", "component"],
+        default="locality",
+        help=(
+            "locality uses every same-neighborhood report for each latent "
+            "coordinate; component only uses channels with a declared loading "
+            "on the coordinate being summarized"
+        ),
     )
     parser.add_argument(
         "--localization-radius-sweep",

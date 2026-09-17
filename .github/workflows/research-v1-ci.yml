@@ -37,7 +37,7 @@ jobs:
       - name: Emit paper contract
         run: python pineland.py paper-spec --output outputs/ci-paper-spec.json
 
-  full-suite:
+  portable-suite:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,5 +50,19 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install --upgrade pip && python -m pip install -e ".[research,dev]"
-      - name: Full regression suite
-        run: python -m pytest -q
+      - name: Portable regression suite
+        # Historical processed panels, sealed holdouts, and generated result
+        # bundles are intentionally gitignored and remain local research
+        # artifacts. Their tests are part of the local certification suite,
+        # not a clean-clone CI contract.
+        run: >-
+          python -m pytest -q
+          --ignore=tests/test_afghanistan_acled_mapping.py
+          --ignore=tests/test_afghanistan_case.py
+          --ignore=tests/test_afghanistan_filtered_state_estimation.py
+          --ignore=tests/test_afghanistan_historical_inputs.py
+          --ignore=tests/test_case_readiness.py
+          --ignore=tests/test_historical_database_v2.py
+          --ignore=tests/test_mechanism_evidence.py
+          --ignore=tests/test_predictive_competition_gate.py
+          --ignore=tests/test_research_program.py

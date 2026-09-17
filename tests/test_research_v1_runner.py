@@ -44,6 +44,11 @@ def test_parser_accepts_matched_localization_radius_sweep():
     assert args.localization_radius_sweep == [0, 1, 2]
 
 
+def test_parser_accepts_component_state_localization():
+    args = build_parser().parse_args(["--state-localization", "component"])
+    assert args.state_localization == "component"
+
+
 def test_repeated_snapshot_summary_uses_world_paired_mse():
     rows = [
         {

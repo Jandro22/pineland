@@ -35,6 +35,7 @@ from pineland_sim.recovery import (  # noqa: E402
     ObservationProcessConfig,
     default_hidden_war_channels,
     direct_hidden_war_channels,
+    component_localized_importance_reconstruction,
     evaluate_recovery,
     extract_pineland_latent_state,
     generate_observations,
@@ -183,22 +184,27 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 ),
                 observation_prefix=f"repeated:{world_index}:{profile}",
             )
-            posterior_points, support = localized_importance_reconstruction(
-                truth,
-                particle_fields,
-                observations,
-                channels=channels,
-                adjacency=adjacency,
-                time=0.0,
-                variables=variables,
-                radius=0,
-                assumed_geolocation_error_probability=(
-                    args.geolocation_error_probability
-                ),
-                assumed_measurement_noise_multiplier=(
-                    args.measurement_noise_multiplier
-                ),
+            reconstruction = (
+                component_localized_importance_reconstruction
+                if args.state_localization == "component"
+                else localized_importance_reconstruction
             )
+            posterior_points, support = reconstruction(
+                    truth,
+                    particle_fields,
+                    observations,
+                    channels=channels,
+                    adjacency=adjacency,
+                    time=0.0,
+                    variables=variables,
+                    radius=0,
+                    assumed_geolocation_error_probability=(
+                        args.geolocation_error_probability
+                    ),
+                    assumed_measurement_noise_multiplier=(
+                        args.measurement_noise_multiplier
+                    ),
+                )
             prior_points = summarize_posterior_field(
                 truth,
                 particle_fields,
@@ -254,6 +260,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "false_report_probability": args.false_report_probability,
             "profiles": args.profile,
             "localization_radius": 0,
+            "state_localization": args.state_localization,
         },
         "profiles": {
             profile: {
@@ -284,6 +291,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--geolocation-error-probability", type=float, default=0.0)
     parser.add_argument("--measurement-noise-multiplier", type=float, default=1.0)
     parser.add_argument("--false-report-probability", type=float, default=0.0)
+    parser.add_argument(
+        "--state-localization",
+        choices=["locality", "component"],
+        default="locality",
+        help=(
+            "locality uses all same-locality reports for each latent coordinate; "
+            "component additionally restricts each marginal to channels that "
+            "load on that coordinate"
+        ),
+    )
     parser.add_argument(
         "--profile",
         action="append",
