@@ -90,6 +90,21 @@ def test_repeated_dynamic_defaults_to_component_localization():
     args = build_dynamic_parser().parse_args([])
     assert args.state_localization == "component"
     assert args.localization_radius == 0
+    assert args.assumed_geolocation_error_probability is None
+    assert args.assumed_measurement_noise_multiplier is None
+
+
+def test_repeated_dynamic_accepts_misspecified_measurement_assumptions():
+    args = build_dynamic_parser().parse_args([
+        "--geolocation-error-probability", "0.20",
+        "--assumed-geolocation-error-probability", "0.0",
+        "--measurement-noise-multiplier", "2.0",
+        "--assumed-measurement-noise-multiplier", "1.0",
+    ])
+    assert args.geolocation_error_probability == pytest.approx(0.20)
+    assert args.assumed_geolocation_error_probability == pytest.approx(0.0)
+    assert args.measurement_noise_multiplier == pytest.approx(2.0)
+    assert args.assumed_measurement_noise_multiplier == pytest.approx(1.0)
 
 
 def test_repeated_dynamic_summary_is_world_paired():

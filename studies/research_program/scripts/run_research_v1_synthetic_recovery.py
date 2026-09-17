@@ -542,6 +542,20 @@ def _run_localized_reconstruction(
     if radius < 0:
         raise ValueError("localization radius cannot be negative")
     channels = _channels(args)
+    assumed_geo = getattr(
+        args,
+        "assumed_geolocation_error_probability",
+        None,
+    )
+    if assumed_geo is None:
+        assumed_geo = args.geolocation_error_probability
+    assumed_noise = getattr(
+        args,
+        "assumed_measurement_noise_multiplier",
+        None,
+    )
+    if assumed_noise is None:
+        assumed_noise = args.measurement_noise_multiplier
     design = observation_design_diagnostics(channels, DEFAULT_VARIABLES)
     linked = set(design["observation_linked_variables"])
     points: list[PosteriorPoint] = []
@@ -568,8 +582,8 @@ def _run_localized_reconstruction(
             time=state_time,
             variables=DEFAULT_VARIABLES,
             radius=radius,
-            assumed_geolocation_error_probability=args.geolocation_error_probability,
-            assumed_measurement_noise_multiplier=args.measurement_noise_multiplier,
+            assumed_geolocation_error_probability=assumed_geo,
+            assumed_measurement_noise_multiplier=assumed_noise,
         )
         points.extend(local_points)
         support.extend(local_support)
@@ -592,6 +606,8 @@ def _run_localized_reconstruction(
         "status": "localized_marginal_approximation_not_joint_posterior",
         "radius": radius,
         "state_localization": args.state_localization,
+        "assumed_geolocation_error_probability": assumed_geo,
+        "assumed_measurement_noise_multiplier": assumed_noise,
         "metrics": asdict(metrics),
         "metrics_observation_linked": asdict(linked_metrics),
         "prior_metrics_same_targets": asdict(prior_metrics),

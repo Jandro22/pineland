@@ -191,6 +191,18 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     args.geographic_reporting_bias_strength
                 ),
             },
+            "estimator_assumptions": {
+                "geolocation_error_probability": (
+                    args.assumed_geolocation_error_probability
+                    if args.assumed_geolocation_error_probability is not None
+                    else args.geolocation_error_probability
+                ),
+                "measurement_noise_multiplier": (
+                    args.assumed_measurement_noise_multiplier
+                    if args.assumed_measurement_noise_multiplier is not None
+                    else args.measurement_noise_multiplier
+                ),
+            },
         },
         "profiles": {
             profile: {
@@ -220,8 +232,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--initial-insurgent-share", type=float, default=0.001)
     parser.add_argument("--reporting-multiplier", type=float, default=1.0)
     parser.add_argument("--geolocation-error-probability", type=float, default=0.08)
+    parser.add_argument(
+        "--assumed-geolocation-error-probability",
+        type=float,
+        default=None,
+        help="estimator assumption; defaults to the data-generating value",
+    )
     parser.add_argument("--maximum-delay-days", type=float, default=3.0)
     parser.add_argument("--measurement-noise-multiplier", type=float, default=1.0)
+    parser.add_argument(
+        "--assumed-measurement-noise-multiplier",
+        type=float,
+        default=None,
+        help="estimator assumption; defaults to the data-generating value",
+    )
     parser.add_argument("--false-report-probability", type=float, default=0.0)
     parser.add_argument("--geographic-reporting-bias-strength", type=float, default=0.0)
     parser.add_argument("--localization-radius", type=int, default=0)
