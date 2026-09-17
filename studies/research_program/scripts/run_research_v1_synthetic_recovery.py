@@ -514,8 +514,12 @@ def _run_no_assimilation_baseline(
         "metrics": asdict(overall),
         "metric_groups": {
             "all_targets": asdict(overall),
-            "observation_linked_targets": asdict(evaluate_recovery(linked_points)),
-            "snapshot_unobserved_targets": asdict(evaluate_recovery(unlinked_points)),
+            "observation_linked_targets": (
+                asdict(evaluate_recovery(linked_points)) if linked_points else None
+            ),
+            "snapshot_unobserved_targets": (
+                asdict(evaluate_recovery(unlinked_points)) if unlinked_points else None
+            ),
         },
         "metrics_by_variable": evaluate_recovery_by_variable(points),
         "posterior_points": [asdict(point) for point in points],
