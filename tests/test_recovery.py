@@ -11,7 +11,9 @@ from pineland_sim.recovery import (
     evaluate_recovery,
     extract_pineland_latent_state,
     generate_observations,
+    direct_hidden_war_channels,
     observation_batch_log_likelihood,
+    observation_design_diagnostics,
     posterior_identifiability,
     summarize_posterior_field,
 )
@@ -167,3 +169,45 @@ def test_change_detection_reports_non_detection_instead_of_hiding_it():
     assert metrics.detected_change_events == 0
     assert metrics.change_detection_rate == 0.0
     assert metrics.mean_detection_lag_days is None
+
+
+def test_observation_design_reports_rank_deficiency_and_unobserved_variables():
+    channels = (
+        ObservationChannel("a", (("x", 1.0),), measurement_sd=0.1),
+        ObservationChannel("b", (("x", 1.0), ("y", 1.0)), measurement_sd=0.1),
+    )
+    report = observation_design_diagnostics(channels, ("x", "y", "z"))
+    assert report["snapshot_design_rank"] == 2
+    assert report["snapshot_nullity"] == 1
+    assert report["full_snapshot_identification_possible"] is False
+    assert report["snapshot_unobserved_variables"] == ["z"]
+
+
+def test_direct_oracle_measurement_design_is_full_rank():
+    variables = ("a", "b", "c")
+    report = observation_design_diagnostics(
+        direct_hidden_war_channels(variables), variables
+    )
+    assert report["snapshot_design_rank"] == 3
+    assert report["snapshot_nullity"] == 0
+    assert report["full_snapshot_identification_possible"] is True
+
+
+def test_geographic_reporting_bias_changes_collection_probability():
+    state = {"A": {"x": 0.5}, "B": {"x": 0.5}}
+    channel = ObservationChannel(
+        "x", (("x", 1.0),), measurement_sd=0.1, reporting_probability=0.5
+    )
+    observations = generate_observations(
+        state,
+        state_time=0.0,
+        channels=(channel,),
+        process=ObservationProcessConfig(
+            geographic_reporting_bias_strength=1.0,
+            maximum_delay_days=0.0,
+        ),
+        adjacency={"A": ("B",), "B": ("A",)},
+        rng=random.Random(2),
+        unit_reporting_multipliers={"A": 0.0, "B": 2.0},
+    )
+    assert all(observation.true_unit_id == "B" for observation in observations)

@@ -34,12 +34,15 @@ from pineland_sim.recovery import (  # noqa: E402
     PosteriorPoint,
     SyntheticObservation,
     default_hidden_war_channels,
+    direct_hidden_war_channels,
     direct_proxy_baseline,
     evaluate_recovery,
     evaluate_recovery_by_variable,
     extract_pineland_latent_state,
     generate_observations,
+    localized_importance_reconstruction,
     observation_batch_log_likelihood,
+    observation_design_diagnostics,
     observation_diagnostics,
     posterior_identifiability,
     summarize_posterior_field,
@@ -89,6 +92,14 @@ SCENARIOS = {
         dropped_channels=("government_admin_anchor", "insurgent_physical_anchor"),
     ),
 }
+
+
+def _channels(args: argparse.Namespace):
+    if args.observation_profile == "mixed-proxy":
+        return default_hidden_war_channels()
+    if args.observation_profile == "direct-oracle":
+        return direct_hidden_war_channels(DEFAULT_VARIABLES)
+    raise ValueError(f"unknown observation profile: {args.observation_profile}")
 
 
 @dataclass(slots=True)
@@ -207,7 +218,7 @@ def _truth_and_reports(
     list[SyntheticObservation],
     dict[str, tuple[str, ...]],
 ]:
-    channels = default_hidden_war_channels()
+    channels = _channels(args)
     truth = _clone_initial_state(
         base,
         namespace="research-v1:truth",
@@ -221,6 +232,15 @@ def _truth_and_reports(
     adjacency = {
         locality_id: tuple(sorted(neighbors))
         for locality_id, neighbors in truth.world.adjacency.items()
+    }
+    observability = {
+        locality_id: max(1e-12, float(locality.observability))
+        for locality_id, locality in truth.world.localities.items()
+    }
+    mean_observability = sum(observability.values()) / max(1, len(observability))
+    reporting_multipliers = {
+        locality_id: value / mean_observability
+        for locality_id, value in observability.items()
     }
     reports: list[SyntheticObservation] = []
     rng = random.Random(args.observation_seed)
@@ -241,6 +261,7 @@ def _truth_and_reports(
             adjacency=adjacency,
             rng=rng,
             observation_prefix="research-v1",
+            unit_reporting_multipliers=reporting_multipliers,
         ))
     reports.sort(key=lambda observation: (
         observation.arrival_time,
@@ -250,11 +271,11 @@ def _truth_and_reports(
     return states, reports, adjacency
 
 
-def _active_channels(scenario: MisspecificationScenario):
+def _active_channels(scenario: MisspecificationScenario, args: argparse.Namespace):
     dropped = set(scenario.dropped_channels)
     return tuple(
         channel
-        for channel in default_hidden_war_channels()
+        for channel in _channels(args)
         if channel.name not in dropped
     )
 
@@ -268,7 +289,7 @@ def _run_scenario(
     no_assimilation: dict[str, Any],
     args: argparse.Namespace,
 ) -> dict[str, Any]:
-    active_channels = _active_channels(scenario)
+    active_channels = _active_channels(scenario, args)
     active_channel_names = {channel.name for channel in active_channels}
     active_reports = [
         observation for observation in reports
@@ -377,6 +398,19 @@ def _run_scenario(
 
     overall = evaluate_recovery(posterior_points)
     by_variable = evaluate_recovery_by_variable(posterior_points)
+    design = observation_design_diagnostics(active_channels, DEFAULT_VARIABLES)
+    linked = set(design["observation_linked_variables"])
+    linked_points = [point for point in posterior_points if point.variable in linked]
+    unlinked_points = [point for point in posterior_points if point.variable not in linked]
+    grouped_metrics = {
+        "all_targets": asdict(overall),
+        "observation_linked_targets": (
+            asdict(evaluate_recovery(linked_points)) if linked_points else None
+        ),
+        "snapshot_unobserved_targets": (
+            asdict(evaluate_recovery(unlinked_points)) if unlinked_points else None
+        ),
+    }
     identifiability = posterior_identifiability(
         latest_fields,
         latest_weights,
@@ -409,7 +443,9 @@ def _run_scenario(
         "reports_assimilated": len(consumed),
         "filter_updates": filter_updates,
         "metrics": asdict(overall),
+        "metric_groups": grouped_metrics,
         "metrics_by_variable": by_variable,
+        "observation_design": design,
         "identifiability": identifiability,
         "direct_report_baseline": baseline,
         "relative_to_no_assimilation": relative,
@@ -417,12 +453,11 @@ def _run_scenario(
     }
 
 
-def _run_no_assimilation_baseline(
+def _prior_ensemble_history(
     base: Simulation,
-    truth_states: dict[float, dict[str, dict[str, float]]],
     args: argparse.Namespace,
-) -> dict[str, Any]:
-    """Propagate the matched prior ensemble without consuming observations."""
+) -> dict[float, list[dict[str, dict[str, float]]]]:
+    """Propagate one matched prior ensemble once and retain latent snapshots."""
 
     states: list[RecoveryParticleState] = []
     for index in range(args.particles):
@@ -437,27 +472,129 @@ def _run_no_assimilation_baseline(
         )
         state.history[0.0] = extract_pineland_latent_state(state.particle.world)
         states.append(state)
-    weights = [1.0 / len(states)] * len(states)
-    points: list[PosteriorPoint] = []
+    history = {
+        0.0: [state.history[0.0] for state in states]
+    }
     for boundary in _boundaries(args.days, args.interval_days)[1:]:
         for state in states:
             state.advance_to(boundary)
-        fields = [
+        history[boundary] = [
             extract_pineland_latent_state(state.particle.world)
             for state in states
         ]
+    return history
+
+
+def _run_no_assimilation_baseline(
+    prior_history: dict[float, list[dict[str, dict[str, float]]]],
+    truth_states: dict[float, dict[str, dict[str, float]]],
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    """Score the matched prior ensemble without consuming observations."""
+
+    particle_count = len(next(iter(prior_history.values())))
+    weights = [1.0 / particle_count] * particle_count
+    points: list[PosteriorPoint] = []
+    for boundary in _boundaries(args.days, args.interval_days)[1:]:
         points.extend(summarize_posterior_field(
             truth_states[boundary],
-            fields,
+            prior_history[boundary],
             weights,
             time=boundary,
             variables=DEFAULT_VARIABLES,
         ))
     overall = evaluate_recovery(points)
+    design = observation_design_diagnostics(_channels(args), DEFAULT_VARIABLES)
+    linked = set(design["observation_linked_variables"])
+    linked_points = [point for point in points if point.variable in linked]
+    unlinked_points = [point for point in points if point.variable not in linked]
     return {
         "name": "matched_prior_no_assimilation",
         "status": "synthetic_baseline",
         "metrics": asdict(overall),
+        "metric_groups": {
+            "all_targets": asdict(overall),
+            "observation_linked_targets": asdict(evaluate_recovery(linked_points)),
+            "snapshot_unobserved_targets": asdict(evaluate_recovery(unlinked_points)),
+        },
+        "metrics_by_variable": evaluate_recovery_by_variable(points),
+        "posterior_points": [asdict(point) for point in points],
+    }
+
+
+def _run_localized_reconstruction(
+    prior_history: dict[float, list[dict[str, dict[str, float]]]],
+    truth_states: dict[float, dict[str, dict[str, float]]],
+    reports: Sequence[SyntheticObservation],
+    adjacency: dict[str, tuple[str, ...]],
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    """Run a localized fixed-lag reconstruction over coherent prior worlds."""
+
+    channels = _channels(args)
+    design = observation_design_diagnostics(channels, DEFAULT_VARIABLES)
+    linked = set(design["observation_linked_variables"])
+    points: list[PosteriorPoint] = []
+    support = []
+    prior_points: list[PosteriorPoint] = []
+    uniform = [1.0 / args.particles] * args.particles
+    report_times = sorted({observation.state_time for observation in reports})
+    for state_time in report_times:
+        time_reports = [
+            observation for observation in reports
+            if observation.state_time == state_time
+        ]
+        local_points, local_support = localized_importance_reconstruction(
+            truth_states[state_time],
+            prior_history[state_time],
+            time_reports,
+            channels=channels,
+            adjacency=adjacency,
+            time=state_time,
+            variables=DEFAULT_VARIABLES,
+            radius=args.localization_radius,
+            assumed_geolocation_error_probability=args.geolocation_error_probability,
+            assumed_measurement_noise_multiplier=args.measurement_noise_multiplier,
+        )
+        points.extend(local_points)
+        support.extend(local_support)
+        prior_points.extend(summarize_posterior_field(
+            truth_states[state_time],
+            prior_history[state_time],
+            uniform,
+            time=state_time,
+            variables=DEFAULT_VARIABLES,
+        ))
+    metrics = evaluate_recovery(points)
+    prior_metrics = evaluate_recovery(prior_points)
+    linked_points = [point for point in points if point.variable in linked]
+    linked_prior_points = [
+        point for point in prior_points if point.variable in linked
+    ]
+    linked_metrics = evaluate_recovery(linked_points)
+    linked_prior_metrics = evaluate_recovery(linked_prior_points)
+    return {
+        "status": "localized_marginal_approximation_not_joint_posterior",
+        "radius": args.localization_radius,
+        "metrics": asdict(metrics),
+        "metrics_observation_linked": asdict(linked_metrics),
+        "prior_metrics_same_targets": asdict(prior_metrics),
+        "prior_metrics_observation_linked": asdict(linked_prior_metrics),
+        "relative_to_prior": {
+            "rmse_ratio": metrics.rmse / prior_metrics.rmse,
+            "linked_rmse_ratio": linked_metrics.rmse / linked_prior_metrics.rmse,
+            "coverage_90_delta": metrics.coverage_90 - prior_metrics.coverage_90,
+        },
+        "support": {
+            "unit_time_updates": len(support),
+            "mean_ess": sum(row.ess for row in support) / len(support),
+            "minimum_ess": min(row.ess for row in support),
+            "maximum_weight": max(row.maximum_weight for row in support),
+            "mean_reports_per_local_posterior": (
+                sum(row.reports for row in support) / len(support)
+            ),
+        },
+        "support_rows": [asdict(row) for row in support],
         "metrics_by_variable": evaluate_recovery_by_variable(points),
         "posterior_points": [asdict(point) for point in points],
     }
@@ -480,10 +617,21 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         maximum_delay_days=args.maximum_delay_days,
         measurement_noise_multiplier=args.measurement_noise_multiplier,
         false_report_probability=args.false_report_probability,
+        geographic_reporting_bias_strength=args.geographic_reporting_bias_strength,
     )
     base = _base_simulation(args)
     truth_states, reports, adjacency = _truth_and_reports(base, args, process)
-    no_assimilation = _run_no_assimilation_baseline(base, truth_states, args)
+    prior_history = _prior_ensemble_history(base, args)
+    no_assimilation = _run_no_assimilation_baseline(
+        prior_history, truth_states, args
+    )
+    localized_reconstruction = _run_localized_reconstruction(
+        prior_history,
+        truth_states,
+        reports,
+        adjacency,
+        args,
+    )
     scenario_names = list(SCENARIOS) if args.scenario == ["all"] else args.scenario
     unknown = sorted(set(scenario_names) - set(SCENARIOS))
     if unknown:
@@ -525,11 +673,16 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "prior_control_sd": args.prior_sd,
             "variables": list(DEFAULT_VARIABLES),
             "observation_process": asdict(process),
-            "channels": [channel.to_dict() for channel in default_hidden_war_channels()],
+            "observation_profile": args.observation_profile,
+            "channels": [channel.to_dict() for channel in _channels(args)],
+            "observation_design": observation_design_diagnostics(
+                _channels(args), DEFAULT_VARIABLES
+            ),
         },
         "observation_diagnostics": observation_diagnostics(reports),
         "truth_boundaries": sorted(truth_states),
         "no_assimilation_baseline": no_assimilation,
+        "localized_reconstruction": localized_reconstruction,
         "scenario_results": results,
     }
     return payload
@@ -557,6 +710,24 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--maximum-delay-days", type=float, default=3.0)
     parser.add_argument("--measurement-noise-multiplier", type=float, default=1.0)
     parser.add_argument("--false-report-probability", type=float, default=0.0)
+    parser.add_argument(
+        "--localization-radius",
+        type=int,
+        default=0,
+        help="graph radius of reports used for each localized marginal posterior",
+    )
+    parser.add_argument(
+        "--geographic-reporting-bias-strength",
+        type=float,
+        default=0.0,
+        help="0 disables heterogeneous coverage; 1 uses the full locality-observability gradient",
+    )
+    parser.add_argument(
+        "--observation-profile",
+        choices=["mixed-proxy", "direct-oracle"],
+        default="mixed-proxy",
+        help="mixed proxy design or deliberately favorable full-rank direct measurements",
+    )
     parser.add_argument(
         "--scenario",
         action="append",
@@ -596,6 +767,12 @@ def main() -> int:
                 "direct_report_rmse": result["direct_report_baseline"]["rmse"],
             }
             for name, result in payload["scenario_results"].items()
+        },
+        "localized_reconstruction": {
+            "rmse": payload["localized_reconstruction"]["metrics"]["rmse"],
+            "linked_rmse_ratio_vs_prior": payload["localized_reconstruction"]["relative_to_prior"]["linked_rmse_ratio"],
+            "coverage_90": payload["localized_reconstruction"]["metrics"]["coverage_90"],
+            "minimum_ess": payload["localized_reconstruction"]["support"]["minimum_ess"],
         },
     }
     print(json.dumps(summary, indent=2, sort_keys=True))
