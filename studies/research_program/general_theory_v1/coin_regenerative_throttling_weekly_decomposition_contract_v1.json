@@ -1,0 +1,62 @@
+{
+  "schema_version": "pineland.coin_regenerative_throttling_weekly_decomposition_contract.v1",
+  "status": "registered_post-outcome_mechanistic_decomposition",
+  "registered_before_new_weekly_diagnostic_measurements": true,
+  "historical_outcomes_used": false,
+  "parent_result": "coin_pressure_regeneration_metabolic_phase_findings_v1.json",
+  "purpose": "Explain why underground disruption produces progressively less realized recruitment as the configured recruitment rate rises, despite enlarging the recruitable population. Decompose the exact implemented recruitment hazard into eligible stock, access channels, and mobilization intensity over the intervention period.",
+  "design": {
+    "reuse_seed_block": "2026186000-2026186011",
+    "reason_for_reuse": "These outcomes are already known; this is a mechanism decomposition and cannot independently confirm the throttling hypothesis.",
+    "seeds": 12,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "diagnostic_end_day": 240,
+    "anchor_recruitment_multiplier": 0.0625,
+    "post_anchor_recruitment_multipliers": [0.03125, 0.0625, 0.125],
+    "underground_disruption": [false, true],
+    "sampling": "day60 anchor, then each scheduled seven-day recruitment/ecology boundary beginning day63, plus day240",
+    "no_model_semantic_changes": true,
+    "measurement_surface": "pineland_model::recruitment::recruitment_diagnostic_summary"
+  },
+  "integrity_gates": [
+    "The new diagnostic helper must pass its exact hazard identity unit test.",
+    "All six cells for a seed must share an identical day60 anchor.",
+    "Day240 legacy outputs must match the previously completed pressure-regeneration phase-map CSV for the same seed/rate/disruption branch.",
+    "The diagnostic must consume no RNG and mutate no state."
+  ],
+  "exact_hazard_identity": "H = recruitment_rate * eligible_represented_mass * mean_combined_intensity, where mean_combined_intensity is the recruitable-population-weighted mean of base_intensity * selected_access.",
+  "new_measurements": [
+    "eligible_represented_mass",
+    "accessible_eligible_represented_mass",
+    "mean_social_access",
+    "mean_effective_formation_access",
+    "mean_effective_member_access",
+    "mean_effective_foothold_access",
+    "mean_selected_access",
+    "mean_base_intensity",
+    "mean_combined_intensity",
+    "mean_grievance",
+    "mean_fear",
+    "mean_political_access",
+    "mean_local_rootedness_congruence",
+    "dominant access-channel fractions",
+    "canonical insurgent social capital",
+    "weekly realized recruitment increments"
+  ],
+  "primary_decomposition_questions": [
+    "At each recruitment rate, how much of the paired hazard change is attributable algebraically to a larger eligible population versus a lower mean combined intensity?",
+    "At 0.125, does the disrupted branch spend a substantial fraction of the intervention with mean combined intensity below baseline despite greater eligibility?",
+    "Is any intensity decline primarily associated with selected-access deterioration, base-mobilization-intensity deterioration, or both?",
+    "Which access channels change most strongly under disruption, and does the dominant channel composition shift?",
+    "Does the time-integrated paired hazard difference have the same sign as the paired realized recruitment-flow difference?"
+  ],
+  "interpretation_rules": [
+    "No relationship discovered on this known seed block is confirmatory.",
+    "A larger eligible pool plus lower hazard mathematically requires lower mean combined intensity under the exact hazard identity; the diagnostic determines which underlying terms carry that reduction.",
+    "Do not infer an empirical counterinsurgency effect from these synthetic coefficients.",
+    "Any fresh confirmation of regenerative throttling must use a new seed block and a contract written after this decomposition."
+  ],
+  "guard": "Synthetic Pineland mechanism decomposition only."
+}

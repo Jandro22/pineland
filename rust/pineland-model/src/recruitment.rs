@@ -984,6 +984,275 @@ pub fn recruitment_hazard_access_sensitivity_by_locality(
     recruitment_hazard_and_access_sensitivity_by_locality(particle, topology, config, target).1
 }
 
+/// Aggregate, RNG-free decomposition of the exact recruitment state used at
+/// the interval boundary for one target insurgent organization. All means are
+/// weighted by represented recruitable population. This is measurement-only
+/// instrumentation: it mutates no state and consumes no RNG.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct RecruitmentDiagnosticSummary {
+    pub hazard_mass: f64,
+    pub eligible_represented_mass: f64,
+    pub accessible_eligible_represented_mass: f64,
+    pub mean_social_access: f64,
+    pub mean_formation_access: f64,
+    pub mean_member_access: f64,
+    pub mean_foothold_access: f64,
+    pub mean_selected_access: f64,
+    pub mean_base_intensity: f64,
+    pub mean_combined_intensity: f64,
+    pub mean_grievance: f64,
+    pub mean_fear: f64,
+    pub mean_political_access: f64,
+    pub mean_local_congruence: f64,
+    pub dominant_social_fraction: f64,
+    pub dominant_formation_fraction: f64,
+    pub dominant_member_fraction: f64,
+    pub dominant_foothold_fraction: f64,
+    pub capital_social: f64,
+}
+
+pub fn recruitment_diagnostic_summary(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    target: usize,
+) -> RecruitmentDiagnosticSummary {
+    let locality_count = topology.locality_count();
+    let organization_count = particle.organizations.kind.len();
+    let hazard_mass = python_sum(
+        &recruitment_hazard_mass_by_locality(particle, topology, config, target),
+    );
+    if target >= organization_count
+        || particle.organizations.active[target] == 0
+        || particle.organizations.kind[target] != KIND_INSURGENT
+    {
+        return RecruitmentDiagnosticSummary {
+            hazard_mass,
+            ..RecruitmentDiagnosticSummary::default()
+        };
+    }
+
+    let active_insurgents = (0..organization_count)
+        .filter(|organization| {
+            particle.organizations.active[*organization] != 0
+                && particle.organizations.kind[*organization] == KIND_INSURGENT
+        })
+        .collect::<Vec<_>>();
+    let mut active_mask = vec![false; organization_count];
+    for organization in &active_insurgents {
+        active_mask[*organization] = true;
+    }
+
+    let mut formation_personnel = vec![0.0; locality_count];
+    let mut member_weight = vec![0.0; locality_count];
+    for formation in 0..particle.formations.personnel.len() {
+        let locality = particle.formations.locality[formation] as usize;
+        if particle.formations.organization[formation] as usize == target
+            && locality < locality_count
+            && particle.formations.personnel[formation] > 0.0
+            && particle.formations.active[formation] != 0
+            && particle.formations.operational_status[formation] == 1
+            && particle.formations.moving[formation] == 0
+            && particle.formations.outside_pineland[formation] == 0
+        {
+            formation_personnel[locality] += particle.formations.personnel[formation];
+        }
+    }
+    for person in 0..particle.people.locality.len() {
+        let locality = particle.people.residence[person] as usize;
+        if particle.people.organization[person] as usize == target
+            && locality < locality_count
+            && particle.people.armed_fraction[person] > 0.0
+        {
+            member_weight[locality] += particle.people.represented_population[person]
+                * particle.people.armed_fraction[person];
+        }
+    }
+
+    let rooted = (0..locality_count)
+        .map(|locality| rootedness(particle, topology, target, locality))
+        .collect::<Vec<_>>();
+    let global_profile = local_profile(particle, target, None);
+    let local_profiles = (0..locality_count)
+        .map(|locality| local_profile(particle, target, Some(locality)))
+        .collect::<Vec<_>>();
+    let minimum_formation = config
+        .organization_ecology
+        .minimum_formation_personnel
+        .max(1.0e-9);
+    let minimum_proto = config
+        .organization_ecology
+        .minimum_proto_represented_population
+        .max(1.0e-9);
+
+    let mut out = RecruitmentDiagnosticSummary {
+        hazard_mass,
+        capital_social: particle.organizations.capital_social[target],
+        ..RecruitmentDiagnosticSummary::default()
+    };
+    let mut social_sum = 0.0;
+    let mut formation_sum = 0.0;
+    let mut member_sum = 0.0;
+    let mut foothold_sum = 0.0;
+    let mut selected_sum = 0.0;
+    let mut base_intensity_sum = 0.0;
+    let mut combined_intensity_sum = 0.0;
+    let mut grievance_sum = 0.0;
+    let mut fear_sum = 0.0;
+    let mut political_access_sum = 0.0;
+    let mut local_congruence_sum = 0.0;
+    let mut dominant_social = 0.0;
+    let mut dominant_formation = 0.0;
+    let mut dominant_member = 0.0;
+    let mut dominant_foothold = 0.0;
+
+    for person in 0..particle.people.locality.len() {
+        let locality = particle.people.residence[person] as usize;
+        if locality >= locality_count {
+            continue;
+        }
+        let current_value = particle.people.organization[person];
+        let current_organization = if current_value != NO_ORGANIZATION
+            && (current_value as usize) < organization_count
+            && active_mask[current_value as usize]
+        {
+            Some(current_value as usize)
+        } else {
+            None
+        };
+        if current_organization.is_some_and(|current| current != target) {
+            continue;
+        }
+        let current_fraction = if current_organization == Some(target) {
+            particle.people.armed_fraction[person]
+        } else {
+            0.0
+        };
+        let eligible_fraction = (1.0 - current_fraction).max(0.0);
+        if eligible_fraction <= 1.0e-12 {
+            continue;
+        }
+        let represented = particle.people.represented_population[person].max(0.0);
+        let weight = represented * eligible_fraction;
+        if weight <= 0.0 {
+            continue;
+        }
+
+        let exposure = particle.people.social_exposure[person * organization_count + target]
+            .clamp(0.0, 1.0);
+        let formation_access =
+            (formation_personnel[locality] / minimum_formation).clamp(0.0, 1.0);
+        let member_access = (member_weight[locality] / minimum_proto).clamp(0.0, 1.0);
+        let formation_language = access_language_factor(particle, person, global_profile);
+        let member_language =
+            access_language_factor(particle, person, local_profiles[locality]);
+        let foothold_index = target * locality_count + locality;
+        let foothold_access = if foothold_index < particle.footholds.strength.len()
+            && particle.footholds.renewal_count[foothold_index] > 0
+        {
+            particle.footholds.strength[foothold_index].clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let effective_formation = formation_access * formation_language;
+        let effective_member = member_access * member_language;
+        let effective_foothold = foothold_access * formation_language;
+        let access_strength = exposure
+            .max(effective_formation)
+            .max(effective_member)
+            .max(effective_foothold);
+
+        let federal_identity = particle.people.identities[person * 3 + 2];
+        let compatibility =
+            1.0 - (federal_identity - particle.organizations.ideology[target * 2]).abs();
+        let (_, home_locality_share, home_district_share) = rooted[locality];
+        let local_salience = particle.people.identities[person * 3];
+        let district_salience = particle.people.identities[person * 3 + 1];
+        let salience_total = local_salience + district_salience;
+        let local_congruence = if salience_total <= 1.0e-12 {
+            0.0
+        } else {
+            let rooted_match = (local_salience * home_locality_share
+                + district_salience * home_district_share)
+                / salience_total;
+            let salience_strength = (salience_total / 2.0).clamp(0.0, 1.0);
+            ((2.0 * rooted_match - 1.0) * salience_strength).clamp(-1.0, 1.0)
+        };
+        let logit = 1.5 * particle.people.grievance[person]
+            + config.social_network.recruitment_exposure_weight * exposure
+            + compatibility
+            + particle.organizations.capital_social[target]
+            - particle.people.fear[person]
+            - 2.6
+            - config.political_order.peaceful_channel_strength
+                * particle.people.political_access[person]
+            + config.organization_ecology.local_rootedness_weight * local_congruence;
+        let base_intensity = logistic(logit);
+        let combined_intensity = if config.organization_ecology.recruitment_requires_access {
+            base_intensity * access_strength
+        } else {
+            base_intensity
+        };
+
+        out.eligible_represented_mass += weight;
+        if access_strength > 0.0 {
+            out.accessible_eligible_represented_mass += weight;
+        }
+        social_sum += weight * exposure;
+        formation_sum += weight * effective_formation;
+        member_sum += weight * effective_member;
+        foothold_sum += weight * effective_foothold;
+        selected_sum += weight * access_strength;
+        base_intensity_sum += weight * base_intensity;
+        combined_intensity_sum += weight * combined_intensity;
+        grievance_sum += weight * particle.people.grievance[person];
+        fear_sum += weight * particle.people.fear[person];
+        political_access_sum += weight * particle.people.political_access[person];
+        local_congruence_sum += weight * local_congruence;
+
+        // Exclusive tie-breaking follows the same channel ordering used by
+        // the chained maximum expression above: social, formation, member,
+        // foothold. This is descriptive only; tied channels remain equally
+        // capable of sustaining access in the actual recruitment rule.
+        let channels = [
+            exposure,
+            effective_formation,
+            effective_member,
+            effective_foothold,
+        ];
+        let mut winner = 0usize;
+        for index in 1..channels.len() {
+            if channels[index] > channels[winner] {
+                winner = index;
+            }
+        }
+        match winner {
+            0 => dominant_social += weight,
+            1 => dominant_formation += weight,
+            2 => dominant_member += weight,
+            _ => dominant_foothold += weight,
+        }
+    }
+
+    let denom = out.eligible_represented_mass.max(1.0e-12);
+    out.mean_social_access = social_sum / denom;
+    out.mean_formation_access = formation_sum / denom;
+    out.mean_member_access = member_sum / denom;
+    out.mean_foothold_access = foothold_sum / denom;
+    out.mean_selected_access = selected_sum / denom;
+    out.mean_base_intensity = base_intensity_sum / denom;
+    out.mean_combined_intensity = combined_intensity_sum / denom;
+    out.mean_grievance = grievance_sum / denom;
+    out.mean_fear = fear_sum / denom;
+    out.mean_political_access = political_access_sum / denom;
+    out.mean_local_congruence = local_congruence_sum / denom;
+    out.dominant_social_fraction = dominant_social / denom;
+    out.dominant_formation_fraction = dominant_formation / denom;
+    out.dominant_member_fraction = dominant_member / denom;
+    out.dominant_foothold_fraction = dominant_foothold / denom;
+    out
+}
+
 pub fn recruit(
     particle: &mut ParticleState,
     topology: &StaticTopology,
@@ -1332,4 +1601,57 @@ pub fn foothold_viability(
             .copied()
             .unwrap_or(0.0)
             > threshold
+}
+
+#[cfg(test)]
+mod diagnostic_tests {
+    use super::*;
+    use crate::{SimulationEngine, INSURGENT};
+
+    #[test]
+    fn recruitment_diagnostic_summary_matches_hazard_identity() {
+        let mut config = SimulationConfig::default();
+        config.agent_count = 120;
+        config.locality_count = 17;
+        config.horizon_days = 60.0;
+        config.foreign_affairs.enabled = false;
+        config.state_regeneration.enabled = true;
+        config.recruitment_rate *= 0.0625;
+        let mut engine = SimulationEngine::new(config).expect("engine");
+        engine.particle_execution = true;
+        engine.advance_until(60.0).expect("advance");
+
+        let summary = recruitment_diagnostic_summary(
+            &engine.particle,
+            &engine.topology,
+            &engine.config,
+            INSURGENT,
+        );
+        let hazard = python_sum(&recruitment_hazard_mass_by_locality(
+            &engine.particle,
+            &engine.topology,
+            &engine.config,
+            INSURGENT,
+        ));
+        assert!((summary.hazard_mass - hazard).abs() <= 1.0e-9);
+
+        let implied = engine.config.recruitment_rate.max(0.0)
+            * summary.eligible_represented_mass
+            * summary.mean_combined_intensity;
+        assert!(
+            (summary.hazard_mass - implied).abs()
+                <= 1.0e-8 * summary.hazard_mass.max(1.0),
+            "hazard={} implied={} eligible={} mean_intensity={}",
+            summary.hazard_mass,
+            implied,
+            summary.eligible_represented_mass,
+            summary.mean_combined_intensity
+        );
+
+        let dominant = summary.dominant_social_fraction
+            + summary.dominant_formation_fraction
+            + summary.dominant_member_fraction
+            + summary.dominant_foothold_fraction;
+        assert!((dominant - 1.0).abs() <= 1.0e-9);
+    }
 }
