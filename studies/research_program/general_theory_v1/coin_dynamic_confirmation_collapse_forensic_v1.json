@@ -1,0 +1,30 @@
+{
+  "schema_version": "pineland.coin_dynamic_confirmation_collapse_forensic.v1",
+  "status": "post_primary_forensic_classification",
+  "historical_outcomes_used": false,
+  "seed": 2026185002,
+  "parent_result": "coin_compensatory_recruitment_dynamic_confirmation_findings_v1.json",
+  "paired_outcome": {
+    "baseline_final_active": true,
+    "treatment_final_active": false,
+    "treatment_final_capital": 66500.9,
+    "treatment_minus_baseline_rooted_effect_day360": -130533.24202455966,
+    "treatment_minus_baseline_hazard_effect_day360": -67.31544987017473
+  },
+  "forensic_reproduction": {
+    "trace_enabled": "PINELAND_ORG_TRACE",
+    "treatment_last_live_ecology_boundary_day": 126.0,
+    "rooted_represented_membership_before_collapse": 112472.71372660097,
+    "cohesion_before_collapse": 0.9424131941232106,
+    "loss_pressure_input": 0.00491699237407054,
+    "capital_positive": true
+  },
+  "collapse_rule_elimination": {
+    "capital_exhaustion": false,
+    "cohesion_below_0_12": false,
+    "rooted_membership_exhaustion": false,
+    "remaining_trigger": "stochastic weekly organization-collapse draw"
+  },
+  "interpretation": "The single treatment-only collapse in the 24-seed confirmation is a stochastic ecology outcome after branch divergence, not a deterministic underground-exhaustion or metabolic-collapse event. It should not be used to infer that underground disruption normally destroys the organization outright.",
+  "guard": "Synthetic-model forensic diagnosis only."
+}
