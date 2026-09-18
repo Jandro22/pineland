@@ -199,8 +199,50 @@ def main() -> None:
     ]
 
     capital_accounting_by_rate = {}
+    phase_coordinates_by_rate = {}
     accounting_pass = True
     for rate in RATES:
+        anchor_capital = [
+            value(seed, rate, 0, "anchor", "canonical_insurgent_capital")
+            for seed in seeds
+        ]
+        direct_disruption_240 = [
+            value(
+                seed,
+                rate,
+                1,
+                "intervention_end",
+                "cumulative_underground_disruption_since_anchor",
+            )
+            for seed in seeds
+        ]
+        direct_disruption_360 = [
+            value(
+                seed,
+                rate,
+                1,
+                "final",
+                "cumulative_underground_disruption_since_anchor",
+            )
+            for seed in seeds
+        ]
+        excess_recruits_240 = [
+            value(
+                seed,
+                rate,
+                1,
+                "intervention_end",
+                "cumulative_recruitment_mass_since_anchor",
+            )
+            - value(
+                seed,
+                rate,
+                0,
+                "intervention_end",
+                "cumulative_recruitment_mass_since_anchor",
+            )
+            for seed in seeds
+        ]
         excess_recruits = [
             value(seed, rate, 1, "final", "cumulative_recruitment_mass_since_anchor")
             - value(seed, rate, 0, "final", "cumulative_recruitment_mass_since_anchor")
@@ -221,6 +263,80 @@ def main() -> None:
             "mean_capital_effect": mean_capital,
             "pearson_excess_recruitment_vs_capital_effect": corr,
             "mean_first_order_predicted_capital_effect": -1.92 * mean_excess,
+        }
+        rho_240 = [
+            excess / disruption
+            for excess, disruption in zip(excess_recruits_240, direct_disruption_240)
+            if disruption > 0.0
+        ]
+        rho_360 = [
+            excess / disruption
+            for excess, disruption in zip(excess_recruits, direct_disruption_360)
+            if disruption > 0.0
+        ]
+        delta_lambda_240 = [
+            1.92 * excess / capital
+            for excess, capital in zip(excess_recruits_240, anchor_capital)
+            if capital > 0.0
+        ]
+        delta_lambda_360 = [
+            1.92 * excess / capital
+            for excess, capital in zip(excess_recruits, anchor_capital)
+            if capital > 0.0
+        ]
+        lambda_u0_240 = [
+            1.92
+            * value(
+                seed,
+                rate,
+                0,
+                "intervention_end",
+                "cumulative_recruitment_mass_since_anchor",
+            )
+            / capital
+            for seed, capital in zip(seeds, anchor_capital)
+            if capital > 0.0
+        ]
+        lambda_u1_240 = [
+            1.92
+            * value(
+                seed,
+                rate,
+                1,
+                "intervention_end",
+                "cumulative_recruitment_mass_since_anchor",
+            )
+            / capital
+            for seed, capital in zip(seeds, anchor_capital)
+            if capital > 0.0
+        ]
+        lambda_u0_360 = [
+            1.92
+            * value(seed, rate, 0, "final", "cumulative_recruitment_mass_since_anchor")
+            / capital
+            for seed, capital in zip(seeds, anchor_capital)
+            if capital > 0.0
+        ]
+        lambda_u1_360 = [
+            1.92
+            * value(seed, rate, 1, "final", "cumulative_recruitment_mass_since_anchor")
+            / capital
+            for seed, capital in zip(seeds, anchor_capital)
+            if capital > 0.0
+        ]
+        phase_coordinates_by_rate[f"{rate:.5f}"] = {
+            "rho_day240": summarize(rho_240) if rho_240 else None,
+            "rho_day360": summarize(rho_360) if rho_360 else None,
+            "delta_lambda_k_day240": (
+                summarize(delta_lambda_240) if delta_lambda_240 else None
+            ),
+            "delta_lambda_k_day360": (
+                summarize(delta_lambda_360) if delta_lambda_360 else None
+            ),
+            "lambda_k_u0_day240": summarize(lambda_u0_240),
+            "lambda_k_u1_day240": summarize(lambda_u1_240),
+            "lambda_k_u0_day360": summarize(lambda_u0_360),
+            "lambda_k_u1_day360": summarize(lambda_u1_360),
         }
 
     predictions = {
@@ -250,6 +366,7 @@ def main() -> None:
         "cell_summary": cell_summary,
         "paired_u_effects": paired_u_effects,
         "capital_accounting_by_rate": capital_accounting_by_rate,
+        "phase_coordinates_by_rate": phase_coordinates_by_rate,
         "interpretation_guard": (
             "Fresh synthetic phase map only. Do not rank real strategies or "
             "treat tested recruitment multipliers as empirical estimates."
@@ -261,6 +378,7 @@ def main() -> None:
             {
                 "prediction_results": predictions,
                 "capital_accounting_by_rate": capital_accounting_by_rate,
+                "phase_coordinates_by_rate": phase_coordinates_by_rate,
                 "paired_u_root_effect_day240": {
                     f"{rate:.5f}": paired_u_effects[f"{rate:.5f}"][
                         "intervention_end"
