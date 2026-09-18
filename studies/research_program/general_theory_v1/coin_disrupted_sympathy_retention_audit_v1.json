@@ -1,0 +1,15 @@
+{
+  "schema_version": "pineland.coin_disrupted_sympathy_retention_audit.v1",
+  "status": "source_audit_requires_targeted_test_before_correction",
+  "historical_outcomes_used": false,
+  "documented_semantics": "disrupted_sympathy_retention is documented as the fraction of disrupted membership retained as latent sympathy rather than erased from the social state.",
+  "observed_implementation": [
+    "Membership assignment writes rebel_sympathy equal to the armed membership fraction and insurgent_affinity equal to that fraction.",
+    "Underground disruption computes retained_sympathy = prior_armed_fraction * disrupted_sympathy_retention.",
+    "It then writes rebel_sympathy = max(existing_rebel_sympathy, retained_sympathy) and likewise maxes insurgent_affinity.",
+    "For a member whose existing sympathy/affinity already equals the prior armed fraction, any retention value <= 1 therefore cannot lower those continuous fields.",
+    "A fully disrupted armed participant is changed to the discrete insurgent-sympathy public behavior, whose social signal is 0.7 independent of disrupted_sympathy_retention."
+  ],
+  "implication": "The retention parameter appears to act as a floor rather than a retained fraction in the common one-insurgent membership path, and may be largely ineffective at controlling the magnitude of post-disruption social support.",
+  "decision": "Do not alter the mechanism from this source audit alone. Add a focused unit/assay test before any correction, and treat existing rebound findings as properties of the currently implemented model."
+}
