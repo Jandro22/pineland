@@ -103,6 +103,14 @@ def main() -> None:
             value(seed, "001", "final", "fielded_force_personnel")
             - value(seed, "000", "final", "fielded_force_personnel")
         )
+        capital_240 = (
+            value(seed, "001", "intervention_end", "canonical_insurgent_capital")
+            - value(seed, "000", "intervention_end", "canonical_insurgent_capital")
+        )
+        capital_360 = (
+            value(seed, "001", "final", "canonical_insurgent_capital")
+            - value(seed, "000", "final", "canonical_insurgent_capital")
+        )
         b240_recruits = value(
             seed, "000", "intervention_end", "cumulative_recruitment_mass_since_anchor"
         )
@@ -129,8 +137,17 @@ def main() -> None:
                 "eligible_effect_day360": eligible_360,
                 "foothold_effect_day360": foothold_360,
                 "fielded_force_effect_day360": fielded_360,
+                "capital_effect_day240": capital_240,
+                "capital_effect_day360": capital_360,
                 "excess_recruited_mass_day240": excess_240,
                 "excess_recruited_mass_post_day240_to_day360": excess_post,
+                "cumulative_excess_recruited_mass_day360": (
+                    u360_recruits - b360_recruits
+                ),
+                "predicted_capital_effect_day240_from_recruitment": -1.92 * excess_240,
+                "predicted_capital_effect_day360_from_recruitment": -1.92 * (
+                    u360_recruits - b360_recruits
+                ),
             }
         )
 
@@ -163,6 +180,35 @@ def main() -> None:
         and nonpositive_rebound_fraction is not None
         else None
     )
+    cumulative_excess_360 = vals("cumulative_excess_recruited_mass_day360")
+    capital_240 = vals("capital_effect_day240")
+    capital_360 = vals("capital_effect_day360")
+    capital_corr_240 = pearson(vals("excess_recruited_mass_day240"), capital_240)
+    capital_corr_360 = pearson(cumulative_excess_360, capital_360)
+    capital_residual_240 = [
+        observed - predicted
+        for observed, predicted in zip(
+            capital_240,
+            vals("predicted_capital_effect_day240_from_recruitment"),
+        )
+    ]
+    capital_residual_360 = [
+        observed - predicted
+        for observed, predicted in zip(
+            capital_360,
+            vals("predicted_capital_effect_day360_from_recruitment"),
+        )
+    ]
+    rebound_capital = [
+        float(row["capital_effect_day360"])
+        for row in seed_results
+        if bool(row["rebounded_day360"])
+    ]
+    suppressed_capital = [
+        float(row["capital_effect_day360"])
+        for row in seed_results
+        if not bool(row["rebounded_day360"])
+    ]
 
     predictions = {
         "mean_rooted_effect_day240_negative": mean(vals("rooted_effect_day240")) < 0.0,
@@ -176,6 +222,22 @@ def main() -> None:
             risk_difference is not None and risk_difference > 0.0
         ),
     }
+    capital_predictions = {
+        "day240_recruitment_capital_correlation_at_most_minus_0_95": (
+            capital_corr_240 is not None and capital_corr_240 <= -0.95
+        ),
+        "day360_recruitment_capital_correlation_at_most_minus_0_95": (
+            capital_corr_360 is not None and capital_corr_360 <= -0.95
+        ),
+        "rebound_mean_capital_effect_negative": (
+            bool(rebound_capital) and mean(rebound_capital) < 0.0
+        ),
+        "rebound_mean_capital_effect_more_negative_than_suppressed": (
+            bool(rebound_capital)
+            and bool(suppressed_capital)
+            and mean(rebound_capital) < mean(suppressed_capital)
+        ),
+    }
 
     payload = {
         "schema_version": "pineland.coin_compensatory_recruitment_dynamic_confirmation_results.v1",
@@ -185,6 +247,8 @@ def main() -> None:
         "seed_count": len(seeds),
         "primary_prediction_results": predictions,
         "all_primary_predictions_passed": all(predictions.values()),
+        "capital_addendum_prediction_results": capital_predictions,
+        "all_capital_addendum_predictions_passed": all(capital_predictions.values()),
         "summaries": {
             "rooted_effect_day240": summarize(vals("rooted_effect_day240")),
             "rooted_effect_day360": summarize(vals("rooted_effect_day360")),
@@ -194,8 +258,13 @@ def main() -> None:
             "eligible_effect_day360": summarize(vals("eligible_effect_day360")),
             "foothold_effect_day360": summarize(vals("foothold_effect_day360")),
             "fielded_force_effect_day360": summarize(vals("fielded_force_effect_day360")),
+            "capital_effect_day240": summarize(capital_240),
+            "capital_effect_day360": summarize(capital_360),
             "excess_recruited_mass_day240": summarize(vals("excess_recruited_mass_day240")),
             "excess_recruited_mass_post_day240_to_day360": summarize(post_flow),
+            "cumulative_excess_recruited_mass_day360": summarize(cumulative_excess_360),
+            "capital_accounting_residual_day240": summarize(capital_residual_240),
+            "capital_accounting_residual_day360": summarize(capital_residual_360),
         },
         "flow_rebound_test": {
             "pearson_post_flow_vs_day360_rooted_effect": flow_root_correlation,
@@ -204,6 +273,19 @@ def main() -> None:
             "nonpositive_post_flow_n": len(nonpositive_group),
             "nonpositive_post_flow_rebound_fraction": nonpositive_rebound_fraction,
             "rebound_risk_difference": risk_difference,
+        },
+        "capital_accounting_test": {
+            "source_marginal_cost_coefficient": 1.92,
+            "pearson_excess_recruitment_vs_capital_effect_day240": capital_corr_240,
+            "pearson_cumulative_excess_recruitment_vs_capital_effect_day360": capital_corr_360,
+            "rebound_n": len(rebound_capital),
+            "rebound_mean_capital_effect_day360": (
+                mean(rebound_capital) if rebound_capital else None
+            ),
+            "suppressed_n": len(suppressed_capital),
+            "suppressed_mean_capital_effect_day360": (
+                mean(suppressed_capital) if suppressed_capital else None
+            ),
         },
         "seed_results": seed_results,
         "interpretation_guard": "Fresh synthetic confirmation only; no historical or operational inference."
@@ -214,8 +296,10 @@ def main() -> None:
             {
                 "all_primary_predictions_passed": payload["all_primary_predictions_passed"],
                 "primary_prediction_results": predictions,
+                "capital_addendum_prediction_results": capital_predictions,
                 "summaries": payload["summaries"],
                 "flow_rebound_test": payload["flow_rebound_test"],
+                "capital_accounting_test": payload["capital_accounting_test"],
             },
             indent=2,
         )
