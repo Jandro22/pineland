@@ -1,0 +1,18 @@
+{
+  "schema_version": "pineland.coin_pressure_admin_preoutcome_note.v1",
+  "status": "source_derived_secondary_hypotheses_registered_before_factorial_output",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_pressure_admin_factorial_contract_v1.json",
+  "source_observations": [
+    "The local underground-disruption hazard explicitly multiplies disruption rate by intelligence penetration, security, and administrative capacity. Local S/A/U complementarity is therefore partly structural and must not itself be presented as an emergent discovery.",
+    "Underground disruption removes rooted armed membership and unfielded fighter-equivalent manpower but deliberately leaves already-fielded formations intact.",
+    "Disrupted members retain latent sympathy by default, while their removed armed fraction becomes eligible for future recruitment.",
+    "Recruitment depends on dynamic grievance, social exposure/access, political access, fear, organizational resources, and local rootedness rather than on a fixed rebound coefficient."
+  ],
+  "secondary_hypotheses": {
+    "lagged_force_effect": "If U reduces rooted membership at day 240 while fielded force changes little, but fielded force is lower by day 360, that pattern is consistent with reproductive-pool suppression propagating into coercive capacity with a lag.",
+    "suppression_without_durable_conversion": "If rooted membership is lower at day 240 but the cell-versus-baseline advantage shrinks or reverses by day 360 after U is switched off, the implemented system exhibits organizational rebound rather than durable elimination.",
+    "macro_complementarity_test": "Because local disruption hazard is already multiplicative, the scientifically interesting SxU/AxU question is whether that local mechanism survives endogenous recruitment, mobility, fielded-force dynamics, and organizational ecology strongly enough to alter macro survival and relapse."
+  },
+  "interpretation_guard": "These are source-derived synthetic mechanism hypotheses, not real-world counterinsurgency prescriptions. The lagged-force and rebound patterns are secondary/exploratory relative to the already committed primary factorial estimands."
+}
