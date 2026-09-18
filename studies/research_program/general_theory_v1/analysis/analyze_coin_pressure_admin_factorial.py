@@ -68,7 +68,7 @@ def main() -> None:
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
-    with open(args.csv_path, newline="", encoding="utf8-sig") as handle:
+    with open(args.csv_path, newline="", encoding="utf-8-sig") as handle:
         rows = list(csv.DictReader(handle))
     if not rows:
         raise SystemExit("empty factorial CSV")
