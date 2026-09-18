@@ -94,8 +94,9 @@ fn selected_cell_ids(profile: &str) -> Result<Vec<&'static str>, String> {
     match profile {
         "full" => Ok(cell_ids().to_vec()),
         "baseline_only" => Ok(vec!["000"]),
+        "u_only" => Ok(vec!["000", "001"]),
         _ => Err(format!(
-            "unknown cell profile {profile}; expected full or baseline_only"
+            "unknown cell profile {profile}; expected full, baseline_only, or u_only"
         )),
     }
 }

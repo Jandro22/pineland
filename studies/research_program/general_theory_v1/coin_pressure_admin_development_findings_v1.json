@@ -1,0 +1,25 @@
+{
+  "schema_version": "pineland.coin_pressure_admin_development_findings.v1",
+  "status": "development_findings_not_confirmatory",
+  "historical_outcomes_used": false,
+  "source_seeds": 8,
+  "integrity_gate_passed": true,
+  "key_findings": {
+    "underground_disruption_day240_mean_rooted_effect": -6369.644618,
+    "underground_disruption_day240_mean_fielded_force_effect": 38.116786,
+    "underground_disruption_day360_mean_rooted_effect": -8540.560289,
+    "underground_disruption_day360_mean_fielded_force_effect": -156.511706,
+    "day240_rooted_suppression_seeds": "8/8",
+    "day360_rooted_suppression_seeds": "6/8",
+    "day360_lower_fielded_force_seeds": "5/8",
+    "rooted_gap_deepened_after_intervention_removal": "5/8",
+    "median_day360_amplification_ratio": 1.4336970327951641
+  },
+  "interpretation": [
+    "The development run is consistent with direct attack on the rooted reproductive pool preceding a delayed fielded-force response.",
+    "Two of eight worlds rebound above baseline rooted membership by day 360, indicating substantial state dependence rather than deterministic durable suppression.",
+    "The security-surge interaction is contaminated by target-normalization semantics: raising police/military targets lowers the normalized local-security score before staffing catches up, reducing intelligence penetration and underground-disruption efficiency. It is treated as a model-design diagnostic, not a substantive COIN finding.",
+    "Administrative-surge effects were negligible at the tested intensity because cumulative rebuild was tiny relative to existing administrative stocks."
+  ],
+  "next_test": "coin_underground_durability_replication_contract_v1.json"
+}
