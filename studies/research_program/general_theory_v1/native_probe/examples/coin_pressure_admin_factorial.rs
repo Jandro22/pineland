@@ -44,6 +44,13 @@ struct Snapshot {
     cumulative_security_deployments: f64,
     cumulative_admin_rebuild: f64,
     cumulative_underground_disruption: f64,
+    cumulative_recruitment_mass: f64,
+    eligible_recruitment_mass: f64,
+    mean_social_exposure_to_canonical: f64,
+    mean_grievance: f64,
+    mean_fear: f64,
+    mean_political_access: f64,
+    canonical_insurgent_social_capital: f64,
 }
 
 fn arg<T: std::str::FromStr>(args: &[String], index: usize, default: T) -> T {
@@ -135,14 +142,42 @@ fn snapshot(engine: &SimulationEngine) -> Snapshot {
     let mut rooted = 0.0;
     let mut gov_leg_num = 0.0;
     let mut state_leg_num = 0.0;
+    let mut social_exposure_num = 0.0;
+    let mut grievance_num = 0.0;
+    let mut fear_num = 0.0;
+    let mut political_access_num = 0.0;
+    let mut eligible_recruitment_mass = 0.0;
     let mut people_weight = 0.0;
+    let organization_count = p.organizations.kind.len();
     for person in 0..p.people.organization.len() {
         let w = p.people.represented_population[person].max(0.0);
-        if p.people.organization[person] as usize == INSURGENT {
+        let raw_organization = p.people.organization[person] as usize;
+        if raw_organization == INSURGENT {
             rooted += w * p.people.armed_fraction[person].clamp(0.0, 1.0);
+        }
+        let current_active_insurgent =
+            (raw_organization < organization_count
+                && p.organizations.active[raw_organization] != 0
+                && p.organizations.kind[raw_organization] == 3)
+                .then_some(raw_organization);
+        if current_active_insurgent.is_none_or(|current| current == INSURGENT) {
+            let current_fraction = if current_active_insurgent == Some(INSURGENT) {
+                p.people.armed_fraction[person].clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            eligible_recruitment_mass += w * (1.0 - current_fraction).max(0.0);
         }
         gov_leg_num += w * p.people.government_legitimacy[person];
         state_leg_num += w * p.people.state_legitimacy[person];
+        let exposure_index = person * organization_count + INSURGENT;
+        if exposure_index < p.people.social_exposure.len() {
+            social_exposure_num +=
+                w * p.people.social_exposure[exposure_index].clamp(0.0, 1.0);
+        }
+        grievance_num += w * p.people.grievance[person];
+        fear_num += w * p.people.fear[person];
+        political_access_num += w * p.people.political_access[person];
         people_weight += w;
     }
 
@@ -346,6 +381,18 @@ fn snapshot(engine: &SimulationEngine) -> Snapshot {
         cumulative_security_deployments,
         cumulative_admin_rebuild,
         cumulative_underground_disruption,
+        cumulative_recruitment_mass: p.counters.recruitment,
+        eligible_recruitment_mass,
+        mean_social_exposure_to_canonical: social_exposure_num / people_weight.max(1e-12),
+        mean_grievance: grievance_num / people_weight.max(1e-12),
+        mean_fear: fear_num / people_weight.max(1e-12),
+        mean_political_access: political_access_num / people_weight.max(1e-12),
+        canonical_insurgent_social_capital: p
+            .organizations
+            .capital_social
+            .get(INSURGENT)
+            .copied()
+            .unwrap_or(0.0),
     }
 }
 
@@ -405,6 +452,8 @@ fn snapshot_row(
     let underground_disruption = usize::from(bytes.get(2) == Some(&b'1'));
     let actions_since_anchor = s.cumulative_insurgent_actions - anchor.cumulative_insurgent_actions;
     let losses_since_anchor = s.government_military_losses - anchor.government_military_losses;
+    let recruitment_since_anchor =
+        s.cumulative_recruitment_mass - anchor.cumulative_recruitment_mass;
     let population_loss = (anchor.population_total - s.population_total).max(0.0);
     let displaced_fraction = s.displaced_population / anchor.population_total.max(1e-12);
     vec![
@@ -446,6 +495,13 @@ fn snapshot_row(
         format!("{:.17}", s.cumulative_security_deployments),
         format!("{:.17}", s.cumulative_admin_rebuild),
         format!("{:.17}", s.cumulative_underground_disruption),
+        format!("{:.17}", recruitment_since_anchor),
+        format!("{:.17}", s.eligible_recruitment_mass),
+        format!("{:.17}", s.mean_social_exposure_to_canonical),
+        format!("{:.17}", s.mean_grievance),
+        format!("{:.17}", s.mean_fear),
+        format!("{:.17}", s.mean_political_access),
+        format!("{:.17}", s.canonical_insurgent_social_capital),
     ]
     .join(",")
 }
@@ -564,7 +620,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     let mut writer = BufWriter::new(File::create(&out)?);
-    writeln!(writer, "seed,cell,security_surge,administrative_surge,underground_disruption,timepoint,time,rooted_armed_membership_mass,fielded_force_personnel,foothold_strength_sum,recruitment_hazard_mass,population_weighted_insurgent_control,population_weighted_government_control,cumulative_insurgent_actions_since_anchor,mean_government_legitimacy,mean_state_legitimacy,mean_local_institution_capacity,mean_intelligence_penetration,government_military_losses_since_anchor,population_loss_since_anchor,displaced_population_fraction,government_capital,government_capital_inflow_intervention,government_capital_outflow_intervention,political_order_outflow_intervention,governance_outflow_intervention,state_regeneration_outflow_intervention,other_outflow_intervention,canonical_insurgent_active,canonical_insurgent_capital,ecosystem_rooted_membership,ecosystem_operational_force,ecosystem_recruitment_hazard,active_insurgent_organizations,cumulative_security_recruits,cumulative_security_deployments,cumulative_admin_rebuild,cumulative_underground_disruption")?;
+    writeln!(writer, "seed,cell,security_surge,administrative_surge,underground_disruption,timepoint,time,rooted_armed_membership_mass,fielded_force_personnel,foothold_strength_sum,recruitment_hazard_mass,population_weighted_insurgent_control,population_weighted_government_control,cumulative_insurgent_actions_since_anchor,mean_government_legitimacy,mean_state_legitimacy,mean_local_institution_capacity,mean_intelligence_penetration,government_military_losses_since_anchor,population_loss_since_anchor,displaced_population_fraction,government_capital,government_capital_inflow_intervention,government_capital_outflow_intervention,political_order_outflow_intervention,governance_outflow_intervention,state_regeneration_outflow_intervention,other_outflow_intervention,canonical_insurgent_active,canonical_insurgent_capital,ecosystem_rooted_membership,ecosystem_operational_force,ecosystem_recruitment_hazard,active_insurgent_organizations,cumulative_security_recruits,cumulative_security_deployments,cumulative_admin_rebuild,cumulative_underground_disruption,cumulative_recruitment_mass_since_anchor,eligible_recruitment_mass,mean_social_exposure_to_canonical,mean_grievance,mean_fear,mean_political_access,canonical_insurgent_social_capital")?;
     for result in results {
         for row in result.map_err(std::io::Error::other)? {
             writeln!(writer, "{row}")?;
