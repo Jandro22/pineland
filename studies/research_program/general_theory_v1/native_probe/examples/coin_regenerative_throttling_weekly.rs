@@ -157,7 +157,9 @@ fn output_row(
         format!("{:.17}", d.mean_grievance),
         format!("{:.17}", d.mean_fear),
         format!("{:.17}", d.mean_political_access),
+        format!("{:.17}", d.mean_compatibility),
         format!("{:.17}", d.mean_local_congruence),
+        format!("{:.17}", d.mean_logit),
         format!("{:.17}", d.dominant_social_fraction),
         format!("{:.17}", d.dominant_formation_fraction),
         format!("{:.17}", d.dominant_member_fraction),
@@ -235,9 +237,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let anchor_day: f64 = arg(&args, 7, 60.0);
     let end_day: f64 = arg(&args, 8, 240.0);
     let anchor_recruitment_multiplier: f64 = arg(&args, 9, 0.0625);
+    let rate_profile = args.get(10).map(String::as_str).unwrap_or("all");
     ensure_parent(&out)?;
 
-    let rates = [0.03125f64, 0.0625, 0.125];
+    let rates = match rate_profile {
+        "all" => vec![0.03125f64, 0.0625, 0.125],
+        "high_only" => vec![0.125f64],
+        other => return Err(format!("unknown rate profile {other}").into()),
+    };
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
         .build()?;
@@ -271,7 +278,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let tasks = anchors_ok
         .iter()
         .flat_map(|(seed, engine)| {
-            rates.into_iter().flat_map(move |rate| {
+            rates.iter().copied().flat_map(move |rate| {
                 [false, true]
                     .into_iter()
                     .map(move |disruption| (*seed, engine, rate, disruption))
@@ -290,7 +297,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut writer = BufWriter::new(File::create(&out)?);
     writeln!(
         writer,
-        "seed,recruitment_multiplier,underground_disruption,time,rooted_armed_membership_mass,fielded_force_personnel,foothold_strength_sum,canonical_insurgent_capital,cumulative_recruitment_mass_since_anchor,cumulative_underground_disruption_since_anchor,canonical_insurgent_active,hazard_mass,eligible_represented_mass,accessible_eligible_represented_mass,mean_social_access,mean_formation_access,mean_member_access,mean_foothold_access,mean_selected_access,mean_base_intensity,mean_combined_intensity,mean_grievance,mean_fear,mean_political_access,mean_local_congruence,dominant_social_fraction,dominant_formation_fraction,dominant_member_fraction,dominant_foothold_fraction,canonical_insurgent_social_capital"
+        "seed,recruitment_multiplier,underground_disruption,time,rooted_armed_membership_mass,fielded_force_personnel,foothold_strength_sum,canonical_insurgent_capital,cumulative_recruitment_mass_since_anchor,cumulative_underground_disruption_since_anchor,canonical_insurgent_active,hazard_mass,eligible_represented_mass,accessible_eligible_represented_mass,mean_social_access,mean_formation_access,mean_member_access,mean_foothold_access,mean_selected_access,mean_base_intensity,mean_combined_intensity,mean_grievance,mean_fear,mean_political_access,mean_compatibility,mean_local_congruence,mean_logit,dominant_social_fraction,dominant_formation_fraction,dominant_member_fraction,dominant_foothold_fraction,canonical_insurgent_social_capital"
     )?;
     let mut count = 0usize;
     for result in results {

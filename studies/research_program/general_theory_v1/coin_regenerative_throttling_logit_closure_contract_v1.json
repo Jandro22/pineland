@@ -1,0 +1,42 @@
+{
+  "schema_version": "pineland.coin_regenerative_throttling_logit_closure_contract.v1",
+  "status": "registered_post-outcome_logit_closure",
+  "registered_before_compatibility_measurements": true,
+  "historical_outcomes_used": false,
+  "parent_decomposition": "coin_regenerative_throttling_weekly_decomposition_contract_v1.json",
+  "purpose": "Close the only omitted term in the high-rate recruitment logit and determine whether the observed reduction in base mobilization intensity is carried primarily by rootedness congruence or by a change in the compatibility composition of the enlarged recruitable pool.",
+  "design": {
+    "reuse_seed_block": "2026186000-2026186011",
+    "rate": 0.125,
+    "cells": ["no underground disruption", "underground disruption"],
+    "anchor_day": 60,
+    "end_day": 240,
+    "weekly_sampling": true,
+    "runner_profile": "high_only",
+    "no_model_semantic_changes": true
+  },
+  "exact_weighted_mean_logit_identity": {
+    "formula": "mean_logit = 1.5*mean_grievance + mean_social_exposure + mean_compatibility + insurgent_social_capital - mean_fear - 2.6 - 0.5*mean_political_access + 0.75*mean_local_congruence",
+    "unit_test_required": true
+  },
+  "comparison_terms": [
+    "grievance contribution",
+    "social-exposure contribution",
+    "compatibility contribution",
+    "social-capital contribution",
+    "fear contribution",
+    "political-access contribution",
+    "rootedness-congruence contribution"
+  ],
+  "decision_rule_for_next_hypothesis": [
+    "If the rootedness-congruence contribution has the largest absolute mean paired contribution over post-anchor weekly observations and compatibility is materially smaller, promote a rootedness-composition feedback hypothesis to fresh-seed testing.",
+    "If compatibility is comparable to or larger than rootedness, frame the mechanism more broadly as recruitable-pool composition rather than rootedness specifically.",
+    "If neither term explains the mean-logit shift, do not promote the throttling mechanism without further decomposition."
+  ],
+  "integrity": [
+    "High-rate day240 legacy outputs must reproduce the existing weekly decomposition/phase-map state.",
+    "The weighted mean-logit identity must close to floating-point tolerance.",
+    "This is known-seed mechanism selection and is not confirmatory evidence."
+  ],
+  "guard": "Synthetic Pineland mechanism decomposition only."
+}

@@ -1003,7 +1003,9 @@ pub struct RecruitmentDiagnosticSummary {
     pub mean_grievance: f64,
     pub mean_fear: f64,
     pub mean_political_access: f64,
+    pub mean_compatibility: f64,
     pub mean_local_congruence: f64,
+    pub mean_logit: f64,
     pub dominant_social_fraction: f64,
     pub dominant_formation_fraction: f64,
     pub dominant_member_fraction: f64,
@@ -1100,7 +1102,9 @@ pub fn recruitment_diagnostic_summary(
     let mut grievance_sum = 0.0;
     let mut fear_sum = 0.0;
     let mut political_access_sum = 0.0;
+    let mut compatibility_sum = 0.0;
     let mut local_congruence_sum = 0.0;
+    let mut logit_sum = 0.0;
     let mut dominant_social = 0.0;
     let mut dominant_formation = 0.0;
     let mut dominant_member = 0.0;
@@ -1208,7 +1212,9 @@ pub fn recruitment_diagnostic_summary(
         grievance_sum += weight * particle.people.grievance[person];
         fear_sum += weight * particle.people.fear[person];
         political_access_sum += weight * particle.people.political_access[person];
+        compatibility_sum += weight * compatibility;
         local_congruence_sum += weight * local_congruence;
+        logit_sum += weight * logit;
 
         // Exclusive tie-breaking follows the same channel ordering used by
         // the chained maximum expression above: social, formation, member,
@@ -1245,7 +1251,9 @@ pub fn recruitment_diagnostic_summary(
     out.mean_grievance = grievance_sum / denom;
     out.mean_fear = fear_sum / denom;
     out.mean_political_access = political_access_sum / denom;
+    out.mean_compatibility = compatibility_sum / denom;
     out.mean_local_congruence = local_congruence_sum / denom;
+    out.mean_logit = logit_sum / denom;
     out.dominant_social_fraction = dominant_social / denom;
     out.dominant_formation_fraction = dominant_formation / denom;
     out.dominant_member_fraction = dominant_member / denom;
@@ -1653,5 +1661,23 @@ mod diagnostic_tests {
             + summary.dominant_member_fraction
             + summary.dominant_foothold_fraction;
         assert!((dominant - 1.0).abs() <= 1.0e-9);
+
+        let implied_mean_logit = 1.5 * summary.mean_grievance
+            + engine.config.social_network.recruitment_exposure_weight
+                * summary.mean_social_access
+            + summary.mean_compatibility
+            + summary.capital_social
+            - summary.mean_fear
+            - 2.6
+            - engine.config.political_order.peaceful_channel_strength
+                * summary.mean_political_access
+            + engine.config.organization_ecology.local_rootedness_weight
+                * summary.mean_local_congruence;
+        assert!(
+            (summary.mean_logit - implied_mean_logit).abs() <= 1.0e-12,
+            "mean_logit={} implied={}",
+            summary.mean_logit,
+            implied_mean_logit
+        );
     }
 }
