@@ -20,6 +20,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("csv_path")
     parser.add_argument("--out", required=True)
+    parser.add_argument("--expected-seeds", type=int, default=16)
     args = parser.parse_args()
 
     with open(args.csv_path, newline="", encoding="utf-8-sig") as handle:
@@ -104,7 +105,7 @@ def main() -> None:
             )
 
     passed = (
-        len(seeds) == 16
+        len(seeds) == args.expected_seeds
         and observed_cells == sorted(CELLS)
         and observed_timepoints == sorted(TIMEPOINTS)
         and len(rows) == expected_rows
@@ -117,6 +118,7 @@ def main() -> None:
         "schema_version": "pineland.coin_underground_durability_integrity.v1",
         "input": str(Path(args.csv_path).as_posix()),
         "seed_count": len(seeds),
+        "expected_seed_count": args.expected_seeds,
         "row_count": len(rows),
         "expected_row_count": expected_rows,
         "cells": observed_cells,
