@@ -1,0 +1,95 @@
+{
+  "schema_version": "pineland.coin_pressure_regeneration_metabolic_phase_findings.v1",
+  "status": "fresh_phase_map_complete_mixed_support_regenerative_throttling_hypothesis",
+  "historical_outcomes_used": false,
+  "integrity": {
+    "passed": true,
+    "seed_count": 12,
+    "recruitment_rates": [0.03125, 0.0625, 0.125],
+    "underground_disruption_conditions": [false, true],
+    "common_anchor_identity_passed": true
+  },
+  "directional_predictions": {
+    "passed": 3,
+    "failed": 1,
+    "all_passed": false,
+    "results": {
+      "u0_recruitment_monotonic_with_rate": true,
+      "u_root_effect_day240_negative_all_rates": true,
+      "u_root_deficit_larger_at_0_03125_than_0_0625": false,
+      "positive_excess_recruitment_implies_negative_mean_capital_effect": true
+    }
+  },
+  "day240_rooted_effect_by_recruitment_rate": {
+    "0.03125": -7273.358681432156,
+    "0.06250": -7324.419799927993,
+    "0.12500": -7301.025179568686,
+    "interpretation": "The direct underground-stock effect is nearly invariant across the tested recruitment-rate band at intervention end. Higher ordinary recruitment rate did not buffer the day240 stock shock."
+  },
+  "day360_paired_effects": {
+    "0.03125": {
+      "rooted_membership": -4945.104,
+      "cumulative_recruitment": 366.67018569448015,
+      "canonical_insurgent_capital": -703.9602462398761,
+      "recruitment_hazard": 1.440,
+      "fielded_force": 48.732
+    },
+    "0.06250": {
+      "rooted_membership": -5083.053,
+      "cumulative_recruitment": -366.6738254863305,
+      "canonical_insurgent_capital": 700.4804085671749,
+      "recruitment_hazard": -0.906,
+      "fielded_force": -62.852
+    },
+    "0.12500": {
+      "rooted_membership": -10303.274,
+      "cumulative_recruitment": -3177.7953629755334,
+      "canonical_insurgent_capital": 5645.562583609455,
+      "recruitment_hazard": 0.137,
+      "fielded_force": -291.554
+    }
+  },
+  "phase_coordinates": {
+    "mean_rho_day360": {
+      "0.03125": 0.05423724728949502,
+      "0.06250": -0.06591445459977469,
+      "0.12500": -0.43217839724451373
+    },
+    "mean_delta_lambda_k_day360": {
+      "0.03125": 0.009611578551008224,
+      "0.06250": -0.008467666540643352,
+      "0.12500": -0.07745163036067783
+    },
+    "mean_total_lambda_k_u0_day360": {
+      "0.03125": 0.16845269960998435,
+      "0.06250": 0.3500213768495563,
+      "0.12500": 0.7877450796298726
+    },
+    "mean_total_lambda_k_u1_day360": {
+      "0.03125": 0.1780642781609926,
+      "0.06250": 0.34155371030891296,
+      "0.12500": 0.7102934492691948
+    }
+  },
+  "collapse_results": {
+    "all_six_cells_final_collapse_fraction": 0.0,
+    "interpretation": "The preregistered 0.03125-0.125 grid did not realize a pressure-induced overmobilization-collapse region by day360."
+  },
+  "capital_accounting": {
+    "excess_recruitment_vs_capital_effect_pearson": {
+      "0.03125": -0.9999997673905994,
+      "0.06250": -0.9999991575909877,
+      "0.12500": -0.9962279247206094
+    },
+    "interpretation": "The replacement-capital accounting relationship remains extremely stable across the entire phase grid."
+  },
+  "claim_updates": [
+    "The expected recruitment-rate buffering of the direct day240 underground shock is falsified over the tested band.",
+    "The tested grid does not support a pressure-induced overmobilization-collapse phase by day360.",
+    "At the highest tested recruitment rate, temporary underground pressure is followed by substantially less cumulative recruitment, a larger persistent rooted-stock deficit, and preserved capital relative to the no-disruption branch.",
+    "This high-rate pattern is labeled regenerative throttling or hysteresis only as a development hypothesis until its dynamic access mechanism is decomposed and then confirmed on fresh seeds.",
+    "The source-derived recruitment-capital tradeoff is the most robust cross-rate mechanism in this phase map."
+  ],
+  "next_requirement": "Decompose weekly recruitment hazard, realized recruitment, eligible stock, and access-channel state on the same seed block without changing model semantics; preregister any fresh confirmation only after that diagnostic.",
+  "guard": "Synthetic Pineland mechanism phase-map findings only."
+}
