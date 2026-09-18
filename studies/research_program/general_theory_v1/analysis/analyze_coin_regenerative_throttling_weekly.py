@@ -139,17 +139,36 @@ def main() -> None:
         "eligible_represented_mass": "eligible_recruitment_mass",
     }
     endpoint_failures = []
+    maximum_hazard_absolute_difference = 0.0
     for key, cell_rows in sorted(by_cell.items()):
         endpoint = cell_rows[-1]
         ref = reference.get(key)
         if ref is None:
             endpoint_failures.append({"key": key, "reason": "missing_reference"})
             continue
-        differing = [
-            [new_column, old_column, endpoint[new_column], ref[old_column]]
-            for new_column, old_column in endpoint_mapping.items()
-            if endpoint[new_column] != ref[old_column]
-        ]
+        differing = []
+        for new_column, old_column in endpoint_mapping.items():
+            if new_column == "hazard_mass":
+                absolute_difference = abs(
+                    float(endpoint[new_column]) - float(ref[old_column])
+                )
+                maximum_hazard_absolute_difference = max(
+                    maximum_hazard_absolute_difference, absolute_difference
+                )
+                if absolute_difference > 1.0e-12:
+                    differing.append(
+                        [
+                            new_column,
+                            old_column,
+                            endpoint[new_column],
+                            ref[old_column],
+                            absolute_difference,
+                        ]
+                    )
+            elif endpoint[new_column] != ref[old_column]:
+                differing.append(
+                    [new_column, old_column, endpoint[new_column], ref[old_column]]
+                )
         if differing:
             endpoint_failures.append({"key": key, "differences": differing})
 
@@ -303,6 +322,14 @@ def main() -> None:
             "anchor_failures": 0,
             "endpoint_failures": 0,
             "seed_count": len(seeds),
+            "state_and_counter_columns_exact": True,
+            "hazard_absolute_tolerance": 1.0e-12,
+            "maximum_hazard_absolute_difference": maximum_hazard_absolute_difference,
+            "hazard_tolerance_reason": (
+                "The weekly diagnostic uses Python-compatible summation over the "
+                "locality hazard vector while the reference phase runner used an "
+                "ordinary Rust iterator sum; trajectory state is otherwise exact."
+            ),
         },
         "decomposition": decomposition,
         "interpretation_guard": (
