@@ -89,6 +89,9 @@ The inexpensive repository-only portion of this gate can be rerun at any time:
 Immediately before release, run it with `--strict` after resolving every
 warning that is relevant to public distribution.
 
+The latest dated engineering snapshot is
+[`docs/public-release-readiness-2026-09-19.md`](public-release-readiness-2026-09-19.md).
+
 ## After publication
 
 - [ ] Define whether the project is actively maintained or in maintenance mode.

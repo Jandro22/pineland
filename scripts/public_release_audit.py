@@ -57,6 +57,10 @@ GENERATED_TRACKED = re.compile(
     r"\.py[co]$|(^|/)outputs/"
 )
 
+RUST_EXTERNAL_MODULE = re.compile(
+    r"^\s*(?:pub\s+)?mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;"
+)
+
 
 def git(*args: str, check: bool = True) -> str:
     result = subprocess.run(
@@ -168,6 +172,34 @@ def scan_current_tree_for_replacement_characters(paths: list[str]) -> list[str]:
     return findings
 
 
+def missing_rust_modules(paths: list[str]) -> list[str]:
+    """Return external Rust module declarations whose source file is absent."""
+    missing: list[str] = []
+    for relative in paths:
+        normalized = relative.replace("\\", "/")
+        if not normalized.startswith("rust/") or not normalized.endswith(".rs"):
+            continue
+        source = ROOT / relative
+        try:
+            lines = source.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            continue
+        for lineno, line in enumerate(lines, start=1):
+            match = RUST_EXTERNAL_MODULE.match(line)
+            if not match:
+                continue
+            name = match.group(1)
+            file_candidate = source.parent / f"{name}.rs"
+            dir_candidate = source.parent / name / "mod.rs"
+            if not file_candidate.exists() and not dir_candidate.exists():
+                missing.append(
+                    f"{relative}:{lineno} declares mod {name} but neither "
+                    f"{file_candidate.relative_to(ROOT)} nor "
+                    f"{dir_candidate.relative_to(ROOT)} exists"
+                )
+    return missing
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -244,6 +276,12 @@ def main() -> int:
         failures.extend(secrets)
     else:
         passes.append("current tracked tree passes high-signal secret-pattern scan")
+
+    rust_modules = missing_rust_modules(tracked)
+    if rust_modules:
+        failures.extend(f"missing Rust module source: {item}" for item in rust_modules)
+    else:
+        passes.append("all tracked external Rust module declarations resolve")
 
     tag = f"v{package_version}"
     if git("tag", "--list", tag).strip() == tag:
