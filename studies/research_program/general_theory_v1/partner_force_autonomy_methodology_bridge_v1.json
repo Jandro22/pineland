@@ -1,0 +1,66 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_methodology_bridge.v1",
+  "status": "FROZEN_DESIGN_INHERITANCE",
+  "created_after": "mobilization_runway_phase_law_findings_v1.json",
+  "purpose": "Record which methodological lessons from the completed partial-transport mobilization-runway study are inherited by the partner-force autonomy program, without importing its fitted coefficients or substantive claim.",
+  "source_result": {
+    "claim_status": "PARTIAL_TRANSPORT",
+    "primary_coordinate": "Omega_K",
+    "pooled_held_out_auc": 0.8583,
+    "pooled_held_out_brier": 0.1498,
+    "pooled_calibration_slope": 0.4406,
+    "completed_holdout_families": [
+      "H1 endogenous capital replenishment",
+      "H2 external capital subsidy",
+      "H3 logistics burden"
+    ],
+    "key_transport_observation": "A realized state-flow runway coordinate transported across mechanism shifts better than a crude static parameter proxy, especially when logistics burden changed.",
+    "important_failure": "Absolute probability calibration compressed out of distribution even while discrimination remained useful."
+  },
+  "inherit": [
+    {
+      "id": "PF-M1",
+      "rule": "Prefer realized state and flow measurements over nominal parameter settings when predicting post-support behavior.",
+      "partner_force_implication": "Do not infer autonomy from force size, training multipliers, donor settings, or headline supported performance alone."
+    },
+    {
+      "id": "PF-M2",
+      "rule": "Freeze candidate coordinates, transformations, outcome definitions, and success gates before held-out mechanism tests.",
+      "partner_force_implication": "Autonomy predictors must be frozen before withdrawal-architecture holdouts and before any historical Afghanistan diagnostic."
+    },
+    {
+      "id": "PF-M3",
+      "rule": "Use zero-refit transport across unseen mechanism families as the main test of whether a synthetic relation is structural rather than interpolation-specific.",
+      "partner_force_implication": "A predictor discovered under one assistance architecture must be evaluated unchanged under distinct support compositions, complexity burdens, and force-generation regimes."
+    },
+    {
+      "id": "PF-M4",
+      "rule": "Separate discrimination from calibration.",
+      "partner_force_implication": "A high AUC does not license a universal probability law; calibration slopes and Brier scores remain independent gates."
+    },
+    {
+      "id": "PF-M5",
+      "rule": "Use physical accounting identities to motivate coordinates, but do not assume their functional form is universal.",
+      "partner_force_implication": "Candidate regenerative-runway and bottleneck coordinates should be derived from measured stocks/flows, then compared against arithmetic-mean, minimum, geometric-mean, and interaction alternatives."
+    }
+  ],
+  "do_not_inherit": [
+    "The fitted Omega_K logistic intercept or slope.",
+    "The 60-120 day observation window as a universal partner-force window.",
+    "Capital exhaustion as a proxy for partner-force collapse.",
+    "Any claim that the mobilization runway relation is a real-world conflict law."
+  ],
+  "new_candidate_family": {
+    "name": "regenerative runway",
+    "concept": "For an indigenous subsystem j, compare the stock or service buffer available at withdrawal with its endogenous post-withdrawal net depletion/recovery timescale.",
+    "generic_form": "Omega_j = tau_j / h, with tau_j derived from observed indigenous stock and endogenous net flow; exact subsystem definitions must be source-audited before implementation.",
+    "bottleneck_candidate": "Omega_min = min_j(Omega_j)",
+    "complementarity_candidate": "Omega_geo = geometric_mean_j(Omega_j)",
+    "warning": "The partner-force experiment must estimate these from partner-owned state/flows only. Externally supplied flows must be separately metered so support does not masquerade as endogenous regeneration."
+  },
+  "compute_policy": {
+    "current_action": "No new simulation sweep.",
+    "reason": "The prior battery was cancelled for compute contention. This bridge is a design artifact only.",
+    "next_compute_gate": "Do not launch partner-force runs until source audit, support-overlay design, paired-branch determinism checks, and outcome assay are frozen."
+  }
+}
