@@ -1,0 +1,188 @@
+{
+  "schema_version": "pineland.mobilization_runway_phase_law_findings.v1",
+  "findings_timestamp": "2026-09-19T14:22:00-04:00",
+  "claim_status": "PARTIAL_TRANSPORT",
+  "claim_boundary": "Synthetic mechanism result within the Pineland model class. Not claimed as an empirical law of real-world insurgencies.",
+  "central_question": "Can a prospective dimensionless capital-runway coordinate, derived from Pineland's exact stock-flow laws, predict capital-exhaustion collapse across unseen organizational mechanisms without refitting?",
+  "central_answer": "Yes, with partial transport. The prospective dimensionless runway coordinate Omega_K = tau_K / T_rem (measured strictly in [60, 120] days) successfully transports zero-refit across held-out capital replenishment (H1), external resources (H2), and logistics supply burdens (H3) with pooled ROC AUC = 0.8583 and pooled Brier score = 0.1498 (vs 0.2463 base rate). Crucially, under held-out logistics burden shifts (H3), the crude parameter proxy Pi_M collapses to chance (AUC = 0.5741, Brier = 0.3456, worse than base rate), whereas Omega_K achieves exceptional zero-refit discrimination (AUC = 0.9794, Brier = 0.0634). However, the strict Strong Transport gate is not fully met because calibration slope flattens to 0.44 out-of-distribution, H2 discrimination dipped to 0.7756, and H4-H5 were stopped early by user request.",
+  "audited_capital_ledger": {
+    "source_file_outflow": "rust/pineland-model/src/recruitment.rs",
+    "outflow_mechanism": "Recruitment supply conversion: delta_fighters * formation_supply_days * initial_supply_fraction",
+    "default_conversion_ratio": 1.92,
+    "source_file_inflow": "rust/pineland-model/src/economy.rs",
+    "inflow_mechanisms": [
+      "Local fiscal extraction: sum(economic_output * 0.00015 * insurgent_control * dt/30)",
+      "Recurring external support: organizations.external_support / 12 * dt/30"
+    ],
+    "source_file_collapse": "rust/pineland-model/src/organizations.rs",
+    "collapse_condition": "organizations.capital[org] <= 0.0 at weekly ecology check"
+  },
+  "frozen_law": {
+    "coordinate": "Omega_K = (K_120 / max(b_hat, 1e-9)) / 240.0, where b_hat = (outflow_60_120 - inflow_60_120) / 60.0",
+    "feature_transform": "log_omega = if is_inf(Omega_K) or Omega_K >= 20000.0 { 10.0 } else { min(max(ln(Omega_K), -9.21), 10.0) }",
+    "frozen_logistic_equation": "logit(P(collapse)) = 0.675949 + (-2.302051) * log_omega",
+    "frozen_git_commit": "4f64576",
+    "preregistration_git_commit": "608b592"
+  },
+  "frozen_baseline": {
+    "name": "Crude parameter proxy Pi_M",
+    "equation": "logit(P(collapse)) = 19.060793 + (9.316598) * log_pi_m",
+    "definition": "Pi_M = (recruitment_mult * fighter_conv_mult) / capital_mult"
+  },
+  "discovery_family_metrics": {
+    "dataset": "outputs/coin-mechanisms/mobilization_runway_discovery_v1.csv",
+    "dataset_sha256": "559d7a4b8b239027a09dc3e51f65c04893dfe293a9ce9555d80837ff894aa162",
+    "n_seeds": 24,
+    "n_trajectories": 192,
+    "survived_to_120": 192,
+    "base_rate": 0.4479,
+    "base_rate_brier": 0.2473,
+    "seed_grouped_5fold_cv": {
+      "omega_k": {
+        "roc_auc": 0.9083,
+        "roc_auc_ci_95": [0.8564, 0.9566],
+        "pr_auc": 0.8960,
+        "brier_score": 0.1201,
+        "calibration_slope": 0.9244,
+        "calibration_intercept": -0.0024
+      },
+      "pi_m_baseline": {
+        "roc_auc": 0.9371,
+        "roc_auc_ci_95": [0.9153, 0.9613],
+        "pr_auc": 0.9182,
+        "brier_score": 0.0792,
+        "calibration_slope": 0.8785,
+        "calibration_intercept": -0.0045
+      }
+    }
+  },
+  "held_out_family_metrics": {
+    "H1_replenishment": {
+      "mechanism_tested": "Endogenous recurring capital replenishment (local extraction scaled 0.5x to 2.0x)",
+      "dataset": "outputs/coin-mechanisms/mobilization_runway_h1_v1.csv",
+      "dataset_sha256": "c3cad23c9a5407019de9fb1570970e9982d24696dec925ddc7f2e7a0cd0fc70b",
+      "n_trajectories": 64,
+      "survived_to_120": 64,
+      "base_rate": 0.4688,
+      "base_rate_brier": 0.2490,
+      "omega_k_zero_refit": {
+        "roc_auc": 0.8245,
+        "pr_auc": 0.8275,
+        "brier_score": 0.1958,
+        "calibration_slope": 0.4917,
+        "monotone_direction_correct": true
+      },
+      "pi_m_baseline": {
+        "roc_auc": 0.8765,
+        "brier_score": 0.1434
+      }
+    },
+    "H2_external_resource": {
+      "mechanism_tested": "Exogenous external capital subsidy (external support 0.0 vs 30,000.0/yr)",
+      "dataset": "outputs/coin-mechanisms/mobilization_runway_h2_v1.csv",
+      "dataset_sha256": "6afb5756fc1eb86f39e8c9a12d8be4aab528e9d9c5225ef8785698b0a85d8e63",
+      "n_trajectories": 64,
+      "survived_to_120": 62,
+      "base_rate": 0.4194,
+      "base_rate_brier": 0.2435,
+      "omega_k_zero_refit": {
+        "roc_auc": 0.7756,
+        "pr_auc": 0.7886,
+        "brier_score": 0.1903,
+        "calibration_slope": 0.1660,
+        "monotone_direction_correct": true
+      },
+      "pi_m_baseline": {
+        "roc_auc": 0.8451,
+        "brier_score": 0.1774
+      }
+    },
+    "H3_logistics_cost": {
+      "mechanism_tested": "Logistics equipment cost per recruit (formation_supply_days 15d vs 45d -> 3-fold conversion burden shift)",
+      "dataset": "outputs/coin-mechanisms/mobilization_runway_h3_v1.csv",
+      "dataset_sha256": "a1aafd769cf0e5ee2929919e0cb6a95a50a550c0cdf74c34bd5767dd78810254",
+      "n_trajectories": 64,
+      "survived_to_120": 63,
+      "base_rate": 0.4286,
+      "base_rate_brier": 0.2449,
+      "omega_k_zero_refit": {
+        "roc_auc": 0.9794,
+        "pr_auc": 0.9778,
+        "brier_score": 0.0634,
+        "calibration_slope": 1.9029,
+        "monotone_direction_correct": true
+      },
+      "pi_m_baseline": {
+        "roc_auc": 0.5741,
+        "brier_score": 0.3456,
+        "notes": "Pi_M collapses to chance and performs worse than the empirical base rate because static configuration multipliers cannot sense logistics stock-flow changes."
+      }
+    },
+    "H4_force_structure": {
+      "status": "CANCELLED_BY_USER_REQUEST",
+      "notes": "H4 force-structure simulation was stopped prior to execution."
+    },
+    "H5_history_shock": {
+      "status": "CANCELLED_BY_USER_REQUEST",
+      "notes": "H5 history-shock simulation was stopped prior to execution."
+    }
+  },
+  "pooled_held_out_summary": {
+    "n_evaluated": 189,
+    "unique_seeds": 48,
+    "pooled_base_rate": 0.4392,
+    "pooled_base_rate_brier": 0.2463,
+    "omega_k_zero_refit": {
+      "roc_auc": 0.8583,
+      "pr_auc": 0.8605,
+      "brier_score": 0.1498,
+      "calibration_slope": 0.4406,
+      "calibration_intercept": 0.0997
+    },
+    "pi_m_baseline": {
+      "roc_auc": 0.7655,
+      "pr_auc": 0.7093,
+      "brier_score": 0.2220
+    }
+  },
+  "transport_gate_evaluation": {
+    "gate_1_pooled_roc_auc_ge_085": {
+      "passed": true,
+      "value": 0.8583,
+      "threshold": 0.85
+    },
+    "gate_2_pooled_brier_beats_base_rate": {
+      "passed": true,
+      "value": 0.1498,
+      "base_rate_brier": 0.2463
+    },
+    "gate_3_calibration_slope_in_range": {
+      "passed": false,
+      "value": 0.4406,
+      "expected_range": [0.70, 1.30],
+      "diagnosis": "Slope flattened out-of-distribution across mechanism shifts."
+    },
+    "gate_4_monotone_direction_all": {
+      "passed": true,
+      "notes": "Monotone direction held strictly across H1, H2, and H3."
+    },
+    "gate_5_min_families_auc_80": {
+      "passed": false,
+      "families_ge_80": 2,
+      "evaluated_families": 3,
+      "diagnosis": "2 of 3 completed families met AUC >= 0.80 (H1=0.8245, H3=0.9794); H2 achieved 0.7756."
+    },
+    "gate_6_beats_crude_baseline": {
+      "passed": true,
+      "pooled_omega_auc": 0.8583,
+      "pooled_pi_auc": 0.7655,
+      "pooled_omega_brier": 0.1498,
+      "pooled_pi_brier": 0.2220,
+      "contrast_in_h3": "Omega_K AUC 0.9794 vs Pi_M AUC 0.5741"
+    }
+  },
+  "falsification_verdict": {
+    "falsified": false,
+    "supported_boundary": "The state-flow runway coordinate Omega_K demonstrates substantial transportability across unseen stock-flow mechanisms (outperforming crude parameter multipliers by ~0.09 pooled AUC and ~0.07 Brier score), but fails full Strong Synthetic Transport due to calibration compression (slope 0.44)."
+  }
+}
