@@ -13,6 +13,12 @@ set -euo pipefail
 module reset
 module load foss/2025b
 
+submit_root="${SLURM_SUBMIT_DIR:?SLURM_SUBMIT_DIR is not set}"
+pineland_bin="${PINELAND_BIN:-${submit_root}/rust/target/release/pineland}"
+pineland_config="${PINELAND_CONFIG:-${submit_root}/experiment.json}"
+[[ -x "${pineland_bin}" ]] || { echo "missing executable: ${pineland_bin}" >&2; exit 2; }
+[[ -f "${pineland_config}" ]] || { echo "missing config: ${pineland_config}" >&2; exit 2; }
+
 export RAYON_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 run_root="/scratch/${USER}/pineland/${SLURM_JOB_ID}"
 mkdir -p "${run_root}"
@@ -21,4 +27,4 @@ mkdir -p "${run_root}"
 # deliberately optional so Windows/local builds do not need an MPI SDK.
 # pineland-hpc owns canonical ownership, reductions, packed parent states, and
 # the cross-rank resampling exchange.
-srun --mpi=pmix ./pineland filter experiment.json --mpi --output "${run_root}/filter"
+srun --mpi=pmix "${pineland_bin}" filter "${pineland_config}" --mpi --output "${run_root}/filter"

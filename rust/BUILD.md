@@ -11,6 +11,10 @@ Do not use `RUSTFLAGS="-C target-cpu=native"` for either certified build.  Do
 not mix the resulting binaries in one ensemble.  Record each binary SHA256 in
 the provenance manifest.
 
+The ARC helper `rust/hpc/arc_build.sh` implements the portable class with
+`-C target-cpu=x86-64-v3` and rejects inherited `RUSTFLAGS` so an
+environmental override cannot silently change the certified binary.
+
 ```bash
 rustc --version
 rustc --print target-list | grep x86_64

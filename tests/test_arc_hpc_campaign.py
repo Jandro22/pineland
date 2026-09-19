@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,6 +54,7 @@ class ArcCampaignTests(unittest.TestCase):
             self.assertEqual(first, second)
             self.assertEqual(first["task_count"], 6)
             self.assertEqual((root / "a/tasks.jsonl").read_bytes(), (root / "b/tasks.jsonl").read_bytes())
+            self.assertEqual((root / "a/tasks.idx").read_bytes(), (root / "b/tasks.idx").read_bytes())
             manifest, tasks = self.arc.load_campaign(root / "a")
             self.assertEqual(manifest["campaign_id"], "unit-v1")
             self.assertEqual([task["task_id"] for task in tasks], list(range(6)))
@@ -60,6 +62,8 @@ class ArcCampaignTests(unittest.TestCase):
             self.assertEqual({task["seed"] for task in tasks}, {11, 22, 33})
             self.assertTrue(all(task["config_sha256"] for task in tasks))
             self.assertTrue(all(task["binary_sha256"] for task in tasks))
+            self.assertEqual(self.arc.load_task(root / "a", 4)["task_id"], 4)
+            self.assertEqual(self.arc.load_task(root / "a", 4)["seed"], 22)
 
     def test_manifest_tampering_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -72,6 +76,38 @@ class ArcCampaignTests(unittest.TestCase):
             tasks.write_text(tasks.read_text(encoding="utf-8") + "{}\n", encoding="utf-8")
             with self.assertRaises(self.arc.CampaignError):
                 self.arc.load_campaign(root / "manifest")
+
+    def test_task_index_tampering_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._inputs(root)
+            spec_path = root / "spec.json"
+            spec_path.write_text(json.dumps(self._spec()), encoding="utf-8")
+            manifest_dir = root / "manifest"
+            self.arc.build_campaign(spec_path, manifest_dir, root)
+            index_path = manifest_dir / "tasks.idx"
+            data = bytearray(index_path.read_bytes())
+            data[self.arc.TASK_INDEX.size] ^= 1
+            index_path.write_bytes(data)
+            with self.assertRaises(self.arc.CampaignError):
+                self.arc.load_campaign(manifest_dir)
+            with self.assertRaises(self.arc.CampaignError):
+                self.arc.load_task(manifest_dir, 1)
+
+    def test_campaign_spec_tampering_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._inputs(root)
+            spec_path = root / "spec.json"
+            spec_path.write_text(json.dumps(self._spec()), encoding="utf-8")
+            manifest_dir = root / "manifest"
+            self.arc.build_campaign(spec_path, manifest_dir, root)
+            campaign_spec = manifest_dir / "campaign_spec.json"
+            value = json.loads(campaign_spec.read_text(encoding="utf-8"))
+            value["days"] = 999
+            campaign_spec.write_text(json.dumps(value), encoding="utf-8")
+            with self.assertRaises(self.arc.CampaignError):
+                self.arc.load_campaign(manifest_dir)
 
     def test_unsafe_config_id_is_rejected(self):
         spec = self._spec()
@@ -124,6 +160,50 @@ class ArcCampaignTests(unittest.TestCase):
                     dry_run=True,
                 )
 
+    def test_run_task_dry_run_does_not_create_scratch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._inputs(root)
+            spec_path = root / "spec.json"
+            spec_path.write_text(json.dumps(self._spec()), encoding="utf-8")
+            manifest_dir = root / "manifest"
+            self.arc.build_campaign(spec_path, manifest_dir, root)
+            scratch = root / "scratch"
+            self.assertFalse(scratch.exists())
+            self.assertEqual(
+                self.arc.run_task(manifest_dir, 0, root, scratch, dry_run=True),
+                0,
+            )
+            self.assertFalse(scratch.exists())
+
+    def test_matching_files_requires_minimums_and_returns_full_tree(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            (output / "summary.json").write_text("{}", encoding="utf-8")
+            (output / "events.jsonl").write_text('{"event":1}\n', encoding="utf-8")
+            checkpoint = output / "checkpoint_0000"
+            checkpoint.mkdir()
+            (checkpoint / "manifest.json").write_text("{}", encoding="utf-8")
+            (checkpoint / "rank_0000.pld").write_bytes(b"state")
+            files = self.arc._matching_files(
+                output,
+                ["summary.json", "checkpoint_*/manifest.json"],
+            )
+            relative = {
+                str(path.relative_to(output)).replace("\\", "/") for path in files
+            }
+            self.assertEqual(
+                relative,
+                {
+                    "summary.json",
+                    "events.jsonl",
+                    "checkpoint_0000/manifest.json",
+                    "checkpoint_0000/rank_0000.pld",
+                },
+            )
+            with self.assertRaises(self.arc.CampaignError):
+                self.arc._matching_files(output, ["missing.json"])
+
     def test_budget_projection_guards_full_requested_walltime(self):
         profiles, profile = self.arc.load_profile(
             ROOT / "rust/hpc/arc_resource_profiles.json",
@@ -163,8 +243,12 @@ class ArcCampaignTests(unittest.TestCase):
                 dry_run=True,
             )
             self.assertEqual(summary["account"], "will_taggart_mcll")
+            self.assertEqual(summary["qos"], "tc_normal_base")
             self.assertIn("--array=0-5%3", summary["command"])
             self.assertIn("--cpus-per-task=1", summary["command"])
+            self.assertIn("--qos=tc_normal_base", summary["command"])
+            self.assertNotIn("PINELAND_MANIFEST_DIR=", summary["command"])
+            self.assertIn("PINELAND_MANIFEST_DIR", summary["environment"])
 
     def test_submit_can_bundle_short_trajectories(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -190,7 +274,64 @@ class ArcCampaignTests(unittest.TestCase):
             self.assertEqual(summary["array_elements"], 3)
             self.assertEqual(summary["tasks_per_array_element"], 2)
             self.assertIn("--array=0-2%3", summary["command"])
-            self.assertIn("PINELAND_TASKS_PER_ARRAY=2", summary["command"])
+            self.assertEqual(summary["environment"]["PINELAND_TASKS_PER_ARRAY"], "2")
+
+    def test_owl_profile_pins_genoa_and_base_qos(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._inputs(root)
+            spec_path = root / "spec.json"
+            spec_path.write_text(json.dumps(self._spec()), encoding="utf-8")
+            manifest_dir = root / "manifest"
+            self.arc.build_campaign(spec_path, manifest_dir, root)
+            summary = self.arc.submit_campaign(
+                manifest_dir,
+                root,
+                root / "scratch",
+                ROOT / "rust/hpc/arc_resource_profiles.json",
+                "owl-trajectory-normal",
+                max_concurrent=2,
+                tasks_per_array_element=1,
+                budget_cap_su=50000,
+                allow_budget_overrun=False,
+                dry_run=True,
+            )
+            self.assertEqual(summary["qos"], "owl_normal_base")
+            self.assertEqual(summary["constraint"], "avx512")
+            self.assertIn("--qos=owl_normal_base", summary["command"])
+            self.assertIn("--constraint=avx512", summary["command"])
+
+    def test_slurm_array_limit_is_parsed_and_enforced(self):
+        fake_config = "ClusterName = tinkercliffs\nMaxArraySize = 100\n"
+        completed = mock.Mock(returncode=0, stdout=fake_config, stderr="")
+        with mock.patch.object(self.arc.shutil, "which", return_value="/usr/bin/scontrol"), mock.patch.object(
+            self.arc.subprocess, "run", return_value=completed
+        ):
+            self.assertEqual(self.arc.slurm_max_array_size(), 100)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._inputs(root)
+            spec = self._spec()
+            spec["seeds"] = list(range(101))
+            spec_path = root / "spec.json"
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+            manifest_dir = root / "manifest"
+            self.arc.build_campaign(spec_path, manifest_dir, root)
+            with mock.patch.object(self.arc, "slurm_max_array_size", return_value=100):
+                with self.assertRaisesRegex(self.arc.CampaignError, "tasks-per-array-element 3"):
+                    self.arc.submit_campaign(
+                        manifest_dir,
+                        root,
+                        root / "scratch",
+                        ROOT / "rust/hpc/arc_resource_profiles.json",
+                        "tinkercliffs-trajectory-normal",
+                        max_concurrent=None,
+                        tasks_per_array_element=1,
+                        budget_cap_su=50000,
+                        allow_budget_overrun=False,
+                        dry_run=True,
+                    )
 
     def test_submit_refuses_budget_overrun(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -40,8 +40,14 @@ For the MPI-enabled binary:
 bash rust/hpc/arc_build.sh --mpi
 ~~~
 
-The build script pins Rust 1.93.1. MPI builds also pin foss/2025b rather than
-depending on whichever compiler/MPI modules happen to be the defaults.
+The build script pins Rust 1.93.1 and explicitly compiles the portable
+x86-64-v3 target required by the repository's certified-build contract. It
+refuses to inherit an arbitrary RUSTFLAGS value. MPI builds also pin
+foss/2025b rather than depending on whichever compiler/MPI modules happen to
+be the defaults.
+Preflight checks the live Slurm cluster, account association, base QoS,
+software modules, release binary, and performs an "sbatch --test-only"
+validation. That scheduler check does not submit a job or consume SUs.
 
 ## Build a campaign
 
@@ -80,7 +86,10 @@ requires the compiled binary and every config to exist. Their SHA256 hashes
 are embedded in the task fingerprints and verified again immediately before
 execution, so a later config edit or binary rebuild cannot silently mix
 scientific conditions inside one campaign. The task file is itself hashed by
-the campaign manifest, so manual manifest edits also fail validation.
+the campaign manifest, so manual manifest edits also fail validation. A
+fixed-width byte-offset index lets each array worker seek directly to its
+task instead of reparsing the entire campaign manifest; full validation and
+collection still verify both files end-to-end.
 
 ## Dry-run and submit
 
@@ -96,7 +105,9 @@ python3 rust/hpc/arc_campaign.py submit \
 
 Remove "--dry-run" to submit. Available resource profiles are in
 arc_resource_profiles.json. Normal trajectory profiles request one CPU because
-a single world is serial.
+a single world is serial. Profiles explicitly request ARC's base QoS so the
+budget calculation cannot silently drift to the 2x-billed short QoS. Owl
+profiles also request "avx512", which ARC maps to the Zen 4 Genoa CPU nodes.
 
 For very short trajectories, bundle several model tasks into each Slurm array
 element so scheduler overhead does not dominate:
@@ -113,6 +124,8 @@ python3 rust/hpc/arc_campaign.py submit \
 
 Bundling does not weaken recovery. Each underlying Pineland task still gets
 its own fingerprint, attempt directory, success marker, and artifact hashes.
+When run on ARC, submission reads Slurm's live MaxArraySize and rejects a
+campaign that would exceed it, reporting the minimum required bundle size.
 
 ## Recovery and evidence integrity
 
@@ -125,6 +138,11 @@ Array work is written under:
 Each execution attempt gets a separate directory. A task becomes complete
 only after the process exits successfully, all required products exist, their
 SHA256 hashes are recorded, and an atomic _SUCCESS.json marker is published.
+The required-product list is only a minimum completeness check: after it
+passes, every file in the task output tree is hashed, including event and
+observation streams and checkpoint shards.
+The array worker also pins Rayon/OpenMP/BLAS thread counts to the Slurm CPU
+request and appends Slurm logs across requeues instead of truncating them.
 
 On requeue or resubmission:
 

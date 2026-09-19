@@ -3,6 +3,7 @@
 # supplied by arc_campaign.py submit so they remain coupled to the manifest.
 #SBATCH --job-name=pineland-array
 #SBATCH --requeue
+#SBATCH --open-mode=append
 
 set -euo pipefail
 
@@ -13,6 +14,11 @@ set -euo pipefail
 : "${SLURM_ARRAY_TASK_ID:?this script must run as a Slurm array}"
 
 cd "${PINELAND_REPO_ROOT}"
+
+export RAYON_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
+export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
+export OPENBLAS_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
+export MKL_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 
 python3 rust/hpc/arc_campaign.py run-bundle \
   --manifest-dir "${PINELAND_MANIFEST_DIR}" \

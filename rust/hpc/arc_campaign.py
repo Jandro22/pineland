@@ -10,9 +10,11 @@ from pathlib import Path
 import shlex
 import shutil
 import socket
+import struct
 import subprocess
 import sys
 import time
+import re
 from typing import Any, Iterable
 
 
@@ -21,7 +23,8 @@ DEFAULT_PROFILES = HERE / "arc_resource_profiles.json"
 SCHEMA = "pineland-arc-campaign-v1"
 SUCCESS_SCHEMA = "pineland-arc-task-success-v1"
 DEFAULT_BUDGET_SU = 50_000.0
-_HASH_CACHE: dict[str, tuple[int, int, str]] = {}
+_HASH_CACHE: dict[str, tuple[tuple[int, int, int, int], str]] = {}
+TASK_INDEX = struct.Struct("<Q")
 
 
 class CampaignError(RuntimeError):
@@ -49,11 +52,11 @@ def _file_sha256_cached(path: Path) -> str:
     stat = resolved.stat()
     key = str(resolved)
     cached = _HASH_CACHE.get(key)
-    signature = (stat.st_size, stat.st_mtime_ns)
-    if cached is not None and cached[:2] == signature:
-        return cached[2]
+    signature = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+    if cached is not None and cached[0] == signature:
+        return cached[1]
     digest = _file_sha256(resolved)
-    _HASH_CACHE[key] = (signature[0], signature[1], digest)
+    _HASH_CACHE[key] = (signature, digest)
     return digest
 
 
@@ -61,6 +64,13 @@ def _atomic_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
     tmp.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _atomic_bytes(path: Path, value: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    tmp.write_bytes(value)
     os.replace(tmp, path)
 
 
@@ -216,6 +226,9 @@ def build_campaign(spec_path: Path, manifest_dir: Path, repo_root: Path) -> dict
         config_path = _resolve_repo_path(repo_root, config["path"])
         if not config_path.is_file():
             raise CampaignError(f"campaign config does not exist: {config_path}")
+        config_value = _load_json(config_path)
+        if not isinstance(config_value, dict):
+            raise CampaignError(f"campaign config root must be a JSON object: {config_path}")
         locked_configs.append(
             {
                 **config,
@@ -229,11 +242,20 @@ def build_campaign(spec_path: Path, manifest_dir: Path, repo_root: Path) -> dict
     }
     tasks = expand_tasks(spec)
     manifest_dir.mkdir(parents=True, exist_ok=True)
-    task_lines = b"".join(_json_bytes(task) for task in tasks)
+    task_chunks: list[bytes] = []
+    offsets: list[int] = []
+    cursor = 0
+    for task in tasks:
+        line = _json_bytes(task)
+        offsets.append(cursor)
+        task_chunks.append(line)
+        cursor += len(line)
+    task_lines = b"".join(task_chunks)
+    index_bytes = b"".join(TASK_INDEX.pack(offset) for offset in offsets)
     tasks_path = manifest_dir / "tasks.jsonl"
-    tmp = tasks_path.with_name(f".{tasks_path.name}.tmp-{os.getpid()}")
-    tmp.write_bytes(task_lines)
-    os.replace(tmp, tasks_path)
+    index_path = manifest_dir / "tasks.idx"
+    _atomic_bytes(tasks_path, task_lines)
+    _atomic_bytes(index_path, index_bytes)
     _atomic_json(manifest_dir / "campaign_spec.json", spec)
     manifest = {
         "schema": SCHEMA,
@@ -241,6 +263,9 @@ def build_campaign(spec_path: Path, manifest_dir: Path, repo_root: Path) -> dict
         "task_count": len(tasks),
         "tasks_file": "tasks.jsonl",
         "tasks_sha256": hashlib.sha256(task_lines).hexdigest(),
+        "task_index_file": "tasks.idx",
+        "task_index_sha256": hashlib.sha256(index_bytes).hexdigest(),
+        "task_index_entry_bytes": TASK_INDEX.size,
         "spec_sha256": _digest(spec),
         "budget_su_cap": spec["budget_su_cap"],
     }
@@ -249,7 +274,7 @@ def build_campaign(spec_path: Path, manifest_dir: Path, repo_root: Path) -> dict
     return manifest
 
 
-def load_campaign(manifest_dir: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def load_campaign_header(manifest_dir: Path) -> dict[str, Any]:
     manifest = _load_json(manifest_dir / "campaign_manifest.json")
     if manifest.get("schema") != SCHEMA:
         raise CampaignError(f"unsupported manifest schema: {manifest.get('schema')!r}")
@@ -257,28 +282,104 @@ def load_campaign(manifest_dir: Path) -> tuple[dict[str, Any], list[dict[str, An
     stored_manifest_hash = expected_manifest.pop("manifest_sha256", None)
     if stored_manifest_hash != _digest(expected_manifest):
         raise CampaignError("campaign_manifest.json hash does not verify")
+    spec = _load_json(manifest_dir / "campaign_spec.json")
+    if _digest(spec) != manifest.get("spec_sha256"):
+        raise CampaignError("campaign_spec.json hash does not match campaign manifest")
+    if spec.get("campaign_id") != manifest.get("campaign_id"):
+        raise CampaignError("campaign_spec.json campaign_id does not match campaign manifest")
+    if int(manifest.get("task_index_entry_bytes", -1)) != TASK_INDEX.size:
+        raise CampaignError("unsupported task index entry size")
+    return manifest
+
+
+def _validate_task(task: dict[str, Any], expected_id: int | None = None) -> dict[str, Any]:
+    fingerprint = task.get("fingerprint")
+    base = dict(task)
+    base.pop("fingerprint", None)
+    if fingerprint != _digest(base):
+        raise CampaignError(f"task {task.get('task_id')} fingerprint does not verify")
+    if expected_id is not None and task.get("task_id") != expected_id:
+        raise CampaignError(
+            f"task index points to task {task.get('task_id')}, expected {expected_id}"
+        )
+    return task
+
+
+def load_task(
+    manifest_dir: Path,
+    task_id: int,
+    manifest: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    manifest = manifest or load_campaign_header(manifest_dir)
+    count = int(manifest.get("task_count", -1))
+    if task_id < 0 or task_id >= count:
+        raise CampaignError(f"task id {task_id} outside 0..{count - 1}")
+    index_path = manifest_dir / str(manifest.get("task_index_file", "tasks.idx"))
+    expected_index_size = count * TASK_INDEX.size
+    try:
+        if index_path.stat().st_size != expected_index_size:
+            raise CampaignError("task index size does not match campaign task_count")
+        with index_path.open("rb") as handle:
+            handle.seek(task_id * TASK_INDEX.size)
+            raw_offset = handle.read(TASK_INDEX.size)
+        if len(raw_offset) != TASK_INDEX.size:
+            raise CampaignError(f"task index entry {task_id} is truncated")
+        offset = TASK_INDEX.unpack(raw_offset)[0]
+        tasks_path = manifest_dir / str(manifest.get("tasks_file", "tasks.jsonl"))
+        with tasks_path.open("rb") as handle:
+            handle.seek(offset)
+            line = handle.readline()
+    except OSError as exc:
+        raise CampaignError(f"failed reading task {task_id}: {exc}") from exc
+    if not line:
+        raise CampaignError(f"task {task_id} points past the end of tasks.jsonl")
+    try:
+        task = json.loads(line.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CampaignError(f"invalid task JSON for task {task_id}") from exc
+    if not isinstance(task, dict):
+        raise CampaignError(f"task {task_id} is not a JSON object")
+    return _validate_task(task, task_id)
+
+
+def load_campaign(manifest_dir: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    manifest = load_campaign_header(manifest_dir)
     tasks_path = manifest_dir / str(manifest.get("tasks_file", "tasks.jsonl"))
     data = tasks_path.read_bytes()
     if hashlib.sha256(data).hexdigest() != manifest.get("tasks_sha256"):
         raise CampaignError("tasks.jsonl hash does not match campaign manifest")
+    index_path = manifest_dir / str(manifest.get("task_index_file", "tasks.idx"))
+    index_data = index_path.read_bytes()
+    if hashlib.sha256(index_data).hexdigest() != manifest.get("task_index_sha256"):
+        raise CampaignError("tasks.idx hash does not match campaign manifest")
+    if len(index_data) != int(manifest.get("task_count", -1)) * TASK_INDEX.size:
+        raise CampaignError("tasks.idx size does not match campaign task_count")
+    indexed_offsets = [
+        TASK_INDEX.unpack_from(index_data, position)[0]
+        for position in range(0, len(index_data), TASK_INDEX.size)
+    ]
     tasks: list[dict[str, Any]] = []
-    for line_number, line in enumerate(data.decode("utf-8").splitlines(), 1):
+    observed_offsets: list[int] = []
+    cursor = 0
+    for line_number, raw_line in enumerate(data.splitlines(keepends=True), 1):
+        observed_offsets.append(cursor)
+        cursor += len(raw_line)
+        line = raw_line.decode("utf-8")
         if not line.strip():
             continue
         try:
             task = json.loads(line)
         except json.JSONDecodeError as exc:
             raise CampaignError(f"invalid task JSON on line {line_number}") from exc
-        fingerprint = task.get("fingerprint")
-        base = dict(task)
-        base.pop("fingerprint", None)
-        if fingerprint != _digest(base):
-            raise CampaignError(f"task {task.get('task_id')} fingerprint does not verify")
-        tasks.append(task)
+        if not isinstance(task, dict):
+            raise CampaignError(f"task JSON on line {line_number} is not an object")
+        tasks.append(_validate_task(task))
     if len(tasks) != int(manifest.get("task_count", -1)):
         raise CampaignError("manifest task_count does not match tasks.jsonl")
     if [task.get("task_id") for task in tasks] != list(range(len(tasks))):
         raise CampaignError("task ids must be contiguous and zero-based")
+    if indexed_offsets != observed_offsets:
+        raise CampaignError("tasks.idx offsets do not match tasks.jsonl")
     return manifest, tasks
 
 
@@ -298,16 +399,17 @@ def _attempt_name() -> str:
 
 
 def _matching_files(output: Path, patterns: Iterable[str]) -> list[Path]:
-    files: list[Path] = []
     for pattern in patterns:
         matches = sorted(path for path in output.glob(pattern) if path.is_file())
         if not matches:
             raise CampaignError(f"expected output pattern {pattern!r} matched no files in {output}")
-        files.extend(matches)
-    unique: dict[str, Path] = {}
-    for path in files:
-        unique[str(path.relative_to(output))] = path
-    return [unique[key] for key in sorted(unique)]
+    files = sorted(
+        (path for path in output.rglob("*") if path.is_file()),
+        key=lambda path: str(path.relative_to(output)).replace("\\", "/"),
+    )
+    if not files:
+        raise CampaignError(f"task produced an empty output directory: {output}")
+    return files
 
 
 def verify_success(task_root: Path, task: dict[str, Any]) -> dict[str, Any] | None:
@@ -319,11 +421,14 @@ def verify_success(task_root: Path, task: dict[str, Any]) -> dict[str, Any] | No
         raise CampaignError(f"invalid success marker schema in {marker_path}")
     if marker.get("task_fingerprint") != task["fingerprint"]:
         raise CampaignError(f"success marker fingerprint mismatch for task {task['task_id']}")
+    if marker.get("campaign_id") != task["campaign_id"] or marker.get("task_id") != task["task_id"]:
+        raise CampaignError(f"success marker identity mismatch for task {task['task_id']}")
     if marker.get("binary_sha256") != task["binary_sha256"]:
         raise CampaignError(f"success marker binary hash mismatch for task {task['task_id']}")
     if marker.get("config_sha256") != task["config_sha256"]:
         raise CampaignError(f"success marker config hash mismatch for task {task['task_id']}")
-    attempt = task_root / str(marker.get("attempt", ""))
+    attempt_name = _safe_token(marker.get("attempt"), "success marker attempt")
+    attempt = task_root / attempt_name
     output = attempt / "output"
     if not output.is_dir():
         raise CampaignError(f"success marker points to missing output directory: {output}")
@@ -331,7 +436,10 @@ def verify_success(task_root: Path, task: dict[str, Any]) -> dict[str, Any] | No
     if not isinstance(recorded, list) or not recorded:
         raise CampaignError(f"success marker has no file hashes: {marker_path}")
     for item in recorded:
-        path = output / str(item.get("path", ""))
+        relative = Path(str(item.get("path", "")))
+        if relative.is_absolute() or ".." in relative.parts or not relative.parts:
+            raise CampaignError(f"invalid completed artifact path in {marker_path}: {relative}")
+        path = output / relative
         if not path.is_file() or _file_sha256(path) != item.get("sha256"):
             raise CampaignError(f"completed task artifact changed or disappeared: {path}")
     return marker
@@ -344,11 +452,10 @@ def run_task(
     scratch_root: Path,
     *,
     dry_run: bool = False,
+    _manifest: dict[str, Any] | None = None,
 ) -> int:
-    manifest, tasks = load_campaign(manifest_dir)
-    if task_id < 0 or task_id >= len(tasks):
-        raise CampaignError(f"task id {task_id} outside 0..{len(tasks) - 1}")
-    task = tasks[task_id]
+    manifest = _manifest or load_campaign_header(manifest_dir)
+    task = load_task(manifest_dir, task_id, manifest)
     binary = _resolve_repo_path(repo_root, task["argv"][0])
     if not binary.is_file():
         raise CampaignError(f"Pineland binary does not exist: {binary}")
@@ -369,7 +476,6 @@ def run_task(
         )
     campaign_root = scratch_root / manifest["campaign_id"]
     task_root = campaign_root / "tasks" / f"{task_id:06d}-{task['task_key']}"
-    task_root.mkdir(parents=True, exist_ok=True)
     completed = verify_success(task_root, task)
     if completed is not None:
         print(json.dumps({"status": "already_complete", "task_id": task_id, "task_root": str(task_root)}))
@@ -382,7 +488,6 @@ def run_task(
         serial += 1
         attempt = task_root / f"{attempt_name}-{serial}"
     output = attempt / "output"
-    attempt.mkdir(parents=True)
 
     argv: list[str] = []
     for index, value in enumerate(task["argv"]):
@@ -405,10 +510,12 @@ def run_task(
         "slurm_array_job_id": os.environ.get("SLURM_ARRAY_JOB_ID"),
         "slurm_array_task_id": os.environ.get("SLURM_ARRAY_TASK_ID"),
     }
-    _atomic_json(attempt / "command.json", command_record)
     if dry_run:
         print(shlex.join(argv))
         return 0
+    task_root.mkdir(parents=True, exist_ok=True)
+    attempt.mkdir(parents=True)
+    _atomic_json(attempt / "command.json", command_record)
 
     output.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
@@ -464,12 +571,13 @@ def run_bundle(
 ) -> int:
     if tasks_per_bundle < 1:
         raise CampaignError("tasks_per_bundle must be positive")
-    _manifest, tasks = load_campaign(manifest_dir)
-    bundle_count = (len(tasks) + tasks_per_bundle - 1) // tasks_per_bundle
+    manifest = load_campaign_header(manifest_dir)
+    task_count = int(manifest["task_count"])
+    bundle_count = (task_count + tasks_per_bundle - 1) // tasks_per_bundle
     if bundle_id < 0 or bundle_id >= bundle_count:
         raise CampaignError(f"bundle id {bundle_id} outside 0..{bundle_count - 1}")
     start = bundle_id * tasks_per_bundle
-    stop = min(start + tasks_per_bundle, len(tasks))
+    stop = min(start + tasks_per_bundle, task_count)
     for task_id in range(start, stop):
         code = run_task(
             manifest_dir,
@@ -477,6 +585,7 @@ def run_bundle(
             repo_root,
             scratch_root,
             dry_run=dry_run,
+            _manifest=manifest,
         )
         if code != 0:
             return code
@@ -552,17 +661,67 @@ def load_profile(profile_file: Path, name: str) -> tuple[dict[str, Any], dict[st
         raise CampaignError(f"unknown resource profile {name!r}; choices: {', '.join(sorted(profiles))}")
     profile = dict(profiles[name])
     profile["name"] = name
+    required = {
+        "cluster",
+        "partition",
+        "qos",
+        "cpus_per_task",
+        "memory_gb",
+        "walltime",
+        "max_concurrent",
+        "tasks_per_array_element",
+        "cpu_su_per_hour",
+        "memory_su_per_gb_hour",
+        "usage_factor",
+        "preemptable",
+    }
+    missing = sorted(required - profile.keys())
+    if missing:
+        raise CampaignError(f"resource profile {name!r} is missing: {', '.join(missing)}")
+    if int(profile["cpus_per_task"]) < 1 or int(profile["memory_gb"]) < 1:
+        raise CampaignError(f"resource profile {name!r} has invalid CPU or memory sizing")
+    if float(profile["usage_factor"]) < 0:
+        raise CampaignError(f"resource profile {name!r} has a negative usage factor")
+    if bool(profile["preemptable"]) != (float(profile["usage_factor"]) == 0.0):
+        raise CampaignError(
+            f"resource profile {name!r} preemptable flag and usage factor disagree"
+        )
     return document, profile
 
 
 def budget_projection(array_elements: int, profile: dict[str, Any]) -> dict[str, float]:
     hours = _parse_walltime(str(profile["walltime"]))
-    per_hour = float(profile["billing_su_per_hour"])
+    raw_per_hour = (
+        int(profile["cpus_per_task"]) * float(profile["cpu_su_per_hour"])
+        + int(profile["memory_gb"]) * float(profile["memory_su_per_gb_hour"])
+    )
+    usage_factor = float(profile["usage_factor"])
+    per_hour = raw_per_hour * usage_factor
     return {
         "task_walltime_hours": hours,
+        "raw_resource_su_per_hour": raw_per_hour,
+        "usage_factor": usage_factor,
         "billing_su_per_hour": per_hour,
         "worst_case_su": array_elements * hours * per_hour,
     }
+
+
+def slurm_max_array_size() -> int | None:
+    if shutil.which("scontrol") is None:
+        return None
+    completed = subprocess.run(
+        ["scontrol", "show", "config"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    match = re.search(r"(?m)^\s*MaxArraySize\s*=\s*(\d+)\s*$", completed.stdout)
+    if match is None:
+        return None
+    value = int(match.group(1))
+    return value if value > 0 else None
 
 
 def submit_campaign(
@@ -583,13 +742,22 @@ def submit_campaign(
     count = len(tasks)
     if count == 0:
         raise CampaignError("cannot submit an empty campaign")
-    concurrency = int(max_concurrent or profile["max_concurrent"])
-    if concurrency < 1:
+    requested_concurrency = int(max_concurrent or profile["max_concurrent"])
+    if requested_concurrency < 1:
         raise CampaignError("max_concurrent must be positive")
     tasks_per_element = int(tasks_per_array_element or profile.get("tasks_per_array_element", 1))
     if tasks_per_element < 1:
         raise CampaignError("tasks_per_array_element must be positive")
     array_elements = (count + tasks_per_element - 1) // tasks_per_element
+    concurrency = min(requested_concurrency, array_elements)
+    max_array_size = slurm_max_array_size()
+    if max_array_size is not None and array_elements > max_array_size:
+        minimum_bundle = (count + max_array_size - 1) // max_array_size
+        raise CampaignError(
+            f"campaign needs {array_elements} Slurm array elements, but this cluster's "
+            f"MaxArraySize is {max_array_size}; use --tasks-per-array-element "
+            f"{max(tasks_per_element, minimum_bundle)} or greater"
+        )
     projection = budget_projection(array_elements, profile)
     cap = float(budget_cap_su if budget_cap_su is not None else manifest.get("budget_su_cap", DEFAULT_BUDGET_SU))
     if projection["worst_case_su"] > cap and not allow_budget_overrun:
@@ -614,20 +782,17 @@ def submit_campaign(
         )
     slurm_script = HERE / "arc_array.sbatch"
     logs = manifest_dir / "slurm_logs"
-    logs.mkdir(parents=True, exist_ok=True)
-    export = ",".join(
-        [
-            "ALL",
-            f"PINELAND_MANIFEST_DIR={manifest_dir.resolve()}",
-            f"PINELAND_REPO_ROOT={repo_root.resolve()}",
-            f"PINELAND_SCRATCH_ROOT={scratch_root}",
-            f"PINELAND_TASKS_PER_ARRAY={tasks_per_element}",
-        ]
-    )
+    job_environment = {
+        "PINELAND_MANIFEST_DIR": str(manifest_dir.resolve()),
+        "PINELAND_REPO_ROOT": str(repo_root.resolve()),
+        "PINELAND_SCRATCH_ROOT": str(scratch_root),
+        "PINELAND_TASKS_PER_ARRAY": str(tasks_per_element),
+    }
     argv = [
         "sbatch",
         f"--account={account}",
         f"--partition={profile['partition']}",
+        f"--qos={profile['qos']}",
         "--nodes=1",
         "--ntasks=1",
         f"--cpus-per-task={int(profile['cpus_per_task'])}",
@@ -636,27 +801,45 @@ def submit_campaign(
         f"--array=0-{array_elements - 1}%{concurrency}",
         f"--output={logs / 'slurm-%A_%a.out'}",
         f"--error={logs / 'slurm-%A_%a.err'}",
-        f"--export={export}",
+        "--export=ALL",
         str(slurm_script),
     ]
+    constraint = profile.get("constraint")
+    if constraint:
+        argv.insert(4, f"--constraint={constraint}")
     summary = {
         "campaign_id": manifest["campaign_id"],
         "profile": profile_name,
         "account": account,
+        "qos": profile["qos"],
+        "constraint": constraint,
         "tasks": count,
         "array_elements": array_elements,
         "tasks_per_array_element": tasks_per_element,
+        "slurm_max_array_size": max_array_size,
+        "requested_max_concurrent": requested_concurrency,
         "max_concurrent": concurrency,
         "budget_cap_su": cap,
         **projection,
+        "environment": job_environment,
         "command": shlex.join(argv),
     }
     print(json.dumps(summary, indent=2, sort_keys=True))
     if dry_run:
         return summary
+    logs.mkdir(parents=True, exist_ok=True)
     if shutil.which("sbatch") is None:
         raise CampaignError("sbatch is not on PATH; submit from an ARC login node")
-    completed = subprocess.run(argv, cwd=repo_root, text=True, capture_output=True, check=False)
+    submit_env = os.environ.copy()
+    submit_env.update(job_environment)
+    completed = subprocess.run(
+        argv,
+        cwd=repo_root,
+        env=submit_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
     if completed.returncode != 0:
         raise CampaignError(f"sbatch failed: {completed.stderr.strip() or completed.stdout.strip()}")
     summary["sbatch_stdout"] = completed.stdout.strip()
