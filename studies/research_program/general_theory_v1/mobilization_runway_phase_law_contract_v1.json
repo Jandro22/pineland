@@ -1,0 +1,73 @@
+{
+  "schema_version": "pineland.mobilization_runway_phase_law_contract.v1",
+  "contract_timestamp": "2026-09-19T12:16:00-04:00",
+  "status": "PREREGISTERED_FROZEN_CONTRACT",
+  "observation_window": {
+    "anchor_day": 60.0,
+    "window_start_day": 60.0,
+    "window_end_day": 120.0,
+    "duration_days": 60.0,
+    "outcome_horizon_day": 360.0,
+    "remaining_horizon_days": 240.0,
+    "strict_information_boundary": "No measurement or event occurring at t > 120.0 may be used in any coordinate or feature calculation."
+  },
+  "candidate_coordinates": {
+    "A_net_burn_rate": {
+      "symbol": "b_hat",
+      "formula": "(capital_outflow_60_120 - capital_inflow_60_120) / 60.0",
+      "units": "capital units per day",
+      "notes": "Net rate of liquid capital loss over [60, 120]."
+    },
+    "B_runway_time": {
+      "symbol": "tau_K",
+      "formula": "if b_hat > 0.0 { K_120 / b_hat } else { +inf }",
+      "units": "days",
+      "notes": "Remaining time in days until capital is fully depleted under stable burn."
+    },
+    "C_dimensionless_runway": {
+      "symbol": "Omega_K",
+      "formula": "tau_K / 240.0",
+      "interpretation": "Dimensionless ratio of remaining runway to remaining horizon (240 days). Omega_K < 1.0 implies exhaustion before day 360 if net burn persists.",
+      "zero_or_negative_burn_handling": "When b_hat <= 0, tau_K = +inf and Omega_K = +inf. For monotone/logistic transforms, log(Omega_K) is capped at +10.0 (equivalent to Omega_K ~ 22026, infinite sustainable runway)."
+    },
+    "D_gross_mobilization_load": {
+      "symbol": "Lambda_K",
+      "formula": "recruitment_burn_60_120 / max(K_60 + capital_inflow_60_120, 1.0e-9)",
+      "interpretation": "Fraction of available capital (initial at t=60 plus subsequent inflow) consumed by recruitment equipment conversion in [60, 120]."
+    },
+    "E_optional_two_coordinate": {
+      "X1": "log(Omega_K)",
+      "X2": "fielded_personnel_120 / max(minimum_formation_personnel * active_formations_120, 1.0)",
+      "activation_rule": "Activated ONLY if 1D candidate fails discovery cross-validation AUC >= 0.90 or calibration slope outside [0.6, 1.4]."
+    },
+    "baseline_crude_parameter_proxy": {
+      "symbol": "Pi_M",
+      "formula": "recruitment_multiplier * fighter_conversion_fraction_multiplier / initial_capital_multiplier",
+      "notes": "Static configuration-space multiplier baseline with zero endogenous state information."
+    }
+  },
+  "epsilon": 1.0e-9,
+  "exclusions_and_boundary_handling": {
+    "collapse_before_window": "Worlds where the insurgent organization collapses before day 120.0 are excluded from prospective horizon evaluation (survived_to_120 == false).",
+    "stochastic_or_non_capital_collapse": "Classified by pre-collapse state: capital (pre_capital <= 1e-9), cohesion (pre_cohesion < 0.12), rooted_fielded (pre_rooted <= 1e-9 && pre_force < min_force), stochastic (draw < hazard).",
+    "primary_outcome": "capital_exhaustion_collapse_by_360 (1 if collapse_cause == 'capital' and collapse_time <= 360.0, else 0)."
+  },
+  "evaluation_metrics": {
+    "primary_metric": "ROC AUC on seed-grouped cross-validation",
+    "secondary_metrics": [
+      "PR AUC",
+      "Brier score (compared against empirical base rate)",
+      "Log loss",
+      "Calibration slope and intercept (logistic regression of y on logit(p))"
+    ],
+    "tie_breaking_rule": "Simplest 1D model with lowest Brier score among candidates with ROC AUC >= 0.85; prefer Omega_K if within 0.01 Brier score of Lambda_K."
+  },
+  "transport_success_gates": {
+    "pooled_held_out_roc_auc_min": 0.85,
+    "brier_score_gate": "Must beat null base-rate predictor Brier score",
+    "calibration_slope_range": [0.70, 1.30],
+    "monotone_direction": "Must be strictly monotonic in expected direction (higher runway -> lower collapse probability) across all held-out families",
+    "family_level_roc_auc_gate": "At least 4 of 5 families have ROC AUC >= 0.80 (where both classes exist)",
+    "superiority_to_baseline": "Must outperform crude Pi_M on pooled held-out AUC and transport generalization."
+  }
+}

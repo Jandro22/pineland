@@ -1,0 +1,182 @@
+{
+  "schema_version": "pineland.mobilization_runway_source_audit.v1",
+  "audit_timestamp": "2026-09-19T12:15:00-04:00",
+  "audited_crates": [
+    "rust/pineland-model",
+    "rust/pineland-core"
+  ],
+  "focal_actor": "INSURGENT (organization kind=3, index=6)",
+  "state_variable_definitions": {
+    "organization.capital": {
+      "type": "f64",
+      "units": "liquid capital currency units",
+      "initial_default": 80000.0,
+      "description": "Central liquid capital account of the organization. If <= 0.0 at organization ecology evaluation, triggers deterministic capital collapse."
+    },
+    "manpower.supply_reserve": {
+      "type": "Vec<f64>",
+      "units": "supply units (person-days of supply)",
+      "initial_default": 0.0,
+      "description": "Locality-indexed buffer of supply/equipment dedicated to unfielded recruits or awaiting formation transfer."
+    },
+    "counters.recruitment": {
+      "type": "f64",
+      "units": "represented recruits",
+      "description": "Simulation-wide counter incremented by represented population recruited."
+    },
+    "fielded_personnel": {
+      "type": "f64",
+      "units": "fighters",
+      "description": "Sum of personnel across active, operational, inside-pineland formations belonging to the insurgent organization."
+    },
+    "collapse_causes": {
+      "capital": "organizations.capital[org] <= 0.0 at weekly ecology check",
+      "cohesion": "organizations.cohesion[org] < 0.12 at weekly ecology check",
+      "rooted_and_fielded_exhaustion": "represented_weight <= 1e-9 AND operational_fielded < minimum_formation_personnel (when collapse_requires_fielded_exhaustion=true)",
+      "stochastic": "collapse_draw < collapse_hazard at weekly ecology check"
+    }
+  },
+  "ledger_terms": [
+    {
+      "term_id": "capital_initialization",
+      "source_file": "rust/pineland-model/src/lib.rs",
+      "function": "SimulationEngine::initialize_organizations",
+      "state_variable_read": "config.include_insurgency",
+      "state_variable_written": "particle.organizations.capital[6]",
+      "units": "capital units",
+      "sign": "+",
+      "event_cadence": "initialization (t=0)",
+      "exact_formula": "if config.include_insurgency { 80_000.0 } else { 0.0 }",
+      "active_in_intended_experiment": true,
+      "notes": "Base initial capital endowment."
+    },
+    {
+      "term_id": "recruitment_supply_conversion",
+      "source_file": "rust/pineland-model/src/recruitment.rs",
+      "function": "apply_local_fighter_change",
+      "state_variable_read": "particle.manpower.pool, particle.manpower.supply_reserve, particle.organizations.capital[org], config.logistics.formation_supply_days, config.logistics.initial_supply_fraction",
+      "state_variable_written": "particle.organizations.capital[org] (decreased), particle.manpower.supply_reserve (increased)",
+      "units": "capital units converted to supply units",
+      "sign": "-",
+      "event_cadence": "intervals.recruitment (default 7.0 days)",
+      "exact_formula": "converted = min(max(manpower.pool * supply_per_fighter - manpower.supply_reserve, 0.0), max(capital, 0.0)); capital -= converted",
+      "active_in_intended_experiment": true,
+      "notes": "Exact SL4 conversion. Under balanced reserve, converted = recruit_fighters * formation_supply_days * initial_supply_fraction = represented_recruits * fighter_conversion_fraction * 30.0 * 0.8 = represented_recruits * 1.92."
+    },
+    {
+      "term_id": "local_fiscal_extraction",
+      "source_file": "rust/pineland-model/src/economy.rs",
+      "function": "update",
+      "state_variable_read": "particle.locality.economic_output, particle.locality.insurgent_control, elapsed_days",
+      "state_variable_written": "particle.organizations.capital[org]",
+      "units": "capital units",
+      "sign": "+",
+      "event_cadence": "intervals.economy (default 30.0 days)",
+      "exact_formula": "sum_localities(locality.economic_output[loc] * 0.00015 * insurgent_control[loc, FISCAL] * (elapsed_days / 30.0))",
+      "active_in_intended_experiment": true,
+      "notes": "Endogenous recurring revenue from local territorial and fiscal control."
+    },
+    {
+      "term_id": "recurring_external_support",
+      "source_file": "rust/pineland-model/src/economy.rs",
+      "function": "update",
+      "state_variable_read": "particle.organizations.external_support[org], elapsed_days",
+      "state_variable_written": "particle.organizations.capital[org]",
+      "units": "capital units",
+      "sign": "+",
+      "event_cadence": "intervals.economy (default 30.0 days)",
+      "exact_formula": "particle.organizations.external_support[org] / 12.0 * (elapsed_days / 30.0)",
+      "active_in_intended_experiment": true,
+      "notes": "Default insurgent external_support is 10,000.0/year -> 833.333 units per 30-day cycle."
+    },
+    {
+      "term_id": "dynamic_foreign_transfer",
+      "source_file": "rust/pineland-model/src/foreign.rs",
+      "function": "deliver_support",
+      "state_variable_read": "particle.foreign.resources, config.foreign_affairs.support_budget_fraction, willingness",
+      "state_variable_written": "particle.organizations.capital[recipient]",
+      "units": "capital units",
+      "sign": "+",
+      "event_cadence": "intervals.foreign_affairs (default 30.0 days)",
+      "exact_formula": "total = foreign.resources * budget_fraction * willingness; financial = total * 0.22; capital[recipient] += financial",
+      "active_in_intended_experiment": false,
+      "notes": "Active only when foreign_affairs.enabled is true. In core discovery family, foreign affairs is disabled to isolate internal metabolic burn; held-out family H2 activates external mechanisms."
+    },
+    {
+      "term_id": "proto_birth_initial_capital",
+      "source_file": "rust/pineland-model/src/organizations.rs",
+      "function": "birth_organization",
+      "state_variable_read": "particle.protos.capital_material",
+      "state_variable_written": "particle.organizations.capital",
+      "units": "capital units",
+      "sign": "+",
+      "event_cadence": "intervals.organization_ecology (default 7.0 days, stochastic birth)",
+      "exact_formula": "particle.organizations.capital.push(contributed)",
+      "active_in_intended_experiment": false,
+      "notes": "Applies only to newly birthed organizations, not the focal incumbent insurgent."
+    },
+    {
+      "term_id": "proto_birth_formation_deduction",
+      "source_file": "rust/pineland-model/src/organizations.rs",
+      "function": "birth_organization",
+      "state_variable_read": "personnel, config.logistics.formation_supply_days",
+      "state_variable_written": "particle.organizations.capital[org]",
+      "units": "capital units",
+      "sign": "-",
+      "event_cadence": "on organization birth",
+      "exact_formula": "stock = min(capacity * 0.25, contributed); capital[org] -= stock",
+      "active_in_intended_experiment": false,
+      "notes": "Applies only to newly birthed organizations."
+    },
+    {
+      "term_id": "field_maintenance",
+      "source_file": "NONE",
+      "function": "NONE",
+      "state_variable_read": "NONE",
+      "state_variable_written": "NONE",
+      "units": "NONE",
+      "sign": "0",
+      "event_cadence": "NONE",
+      "exact_formula": "0.0 (no code exists in pineland-model debiting capital for formation maintenance)",
+      "active_in_intended_experiment": false,
+      "notes": "Audited: Formations consume physical supply_stock via logistics.rs, but pay zero liquid capital maintenance."
+    },
+    {
+      "term_id": "logistics_transport_cost",
+      "source_file": "rust/pineland-model/src/logistics.rs",
+      "function": "update",
+      "state_variable_read": "convoy, source_stock",
+      "state_variable_written": "supply_stock, source_stock",
+      "units": "supply units",
+      "sign": "0",
+      "event_cadence": "intervals.logistics (default 1.0 day)",
+      "exact_formula": "0.0 capital impact (logistics moves physical supplies without charging liquid capital)",
+      "active_in_intended_experiment": false,
+      "notes": "Audited: Logistics affects physical supply quantities, not organizations.capital."
+    },
+    {
+      "term_id": "combat_casualty_cost",
+      "source_file": "rust/pineland-model/src/combat.rs",
+      "function": "resolve_engagement",
+      "state_variable_read": "air support cost (GOVERNMENT ONLY)",
+      "state_variable_written": "organizations.capital[GOVERNMENT]",
+      "units": "capital units",
+      "sign": "0",
+      "event_cadence": "engagement occurrence",
+      "exact_formula": "0.0 for INSURGENT (only government air support debits capital)",
+      "active_in_intended_experiment": false,
+      "notes": "Audited: Insurgents pay zero liquid capital for combat casualties or engagements."
+    }
+  ],
+  "audit_summary": {
+    "capital_equation_valid": true,
+    "conclusions": [
+      "Insurgent organization capital has exactly ONE recurring outflow: recruitment supply conversion in recruitment.rs.",
+      "Insurgent organization capital has exactly TWO baseline recurring inflows in economy.rs: local fiscal extraction (endogenous) and external support (exogenous).",
+      "When foreign_affairs is enabled, dynamic transfers can provide an additional inflow via foreign.rs.",
+      "No maintenance, logistics transport fees, or combat casualty cash penalties exist for the insurgent.",
+      "The conversion factor between represented recruits and liquid capital is exactly fighter_conversion_fraction * formation_supply_days * initial_supply_fraction = 0.08 * 30 * 0.8 = 1.92 under defaults.",
+      "The capital equation in the research task is strictly verified by source code audit."
+    ]
+  }
+}
