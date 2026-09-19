@@ -1,0 +1,16 @@
+{
+  "schema_version": "pineland.partner_force_policy_placeholder.v1",
+  "execution_status": "BLOCKED_STAGE4_ADAPTIVE_POLICY_NOT_FROZEN",
+  "architecture_id": "bottleneck_targeted",
+  "name": "Bottleneck-Targeted Assistance",
+  "description": "Future adaptive policy family that would allocate an equal donor budget toward a prospectively measured binding indigenous subsystem.",
+  "blocked_reason": "The Stage-3 experiment must first identify and freeze autonomy coordinates. No adaptive allocation rule, measurement timing rule, or persistent capacity-building action is yet frozen.",
+  "required_before_activation": [
+    "complete Stage-3 discovery",
+    "freeze the autonomy predictor without inspecting Stage-4 outcomes",
+    "preregister adaptive observation and allocation rules",
+    "implement equal-cost action mappings"
+  ],
+  "partner_force_support": {"enabled": false},
+  "prohibited_interpretation": "No claim is made that bottleneck targeting is efficient or superior."
+}

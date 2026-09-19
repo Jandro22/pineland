@@ -1,0 +1,16 @@
+{
+  "schema_version": "pineland.partner_force_policy_placeholder.v1",
+  "execution_status": "BLOCKED_STAGE4_PERSISTENT_CAPACITY_MECHANISM_NOT_IMPLEMENTED",
+  "architecture_id": "capacity_heavy",
+  "name": "Capacity-Heavy Assistance",
+  "description": "Future equal-cost policy family that would shift assistance toward persistent indigenous capability formation rather than removable substitution.",
+  "blocked_reason": "partner_force_support.v1 implements removable training-throughput substitution only. No persistent capacity-building state transition is scientifically frozen or implemented.",
+  "required_before_activation": [
+    "freeze a mechanism-specific persistent capacity-building law",
+    "implement the law as indigenous state change that survives withdrawal",
+    "add isolation and persistence tests",
+    "freeze equal-cost policy-comparison rules after Stage-3 discovery"
+  ],
+  "partner_force_support": {"enabled": false},
+  "prohibited_interpretation": "This file is not an executable treatment and encodes no expected outcome."
+}

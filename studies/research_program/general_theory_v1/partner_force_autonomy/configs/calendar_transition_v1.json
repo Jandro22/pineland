@@ -1,0 +1,15 @@
+{
+  "schema_version": "pineland.partner_force_policy_placeholder.v1",
+  "execution_status": "BLOCKED_STAGE4_TRANSITION_POLICY_NOT_FROZEN",
+  "architecture_id": "calendar_transition",
+  "name": "Calendar-Based Transition",
+  "description": "Future policy family in which assistance tapers or ends according to elapsed time rather than endogenous autonomy measurements.",
+  "blocked_reason": "Stage 3 uses a single prospective withdrawal time to identify autonomy. Policy taper schedules and equal-cost comparators are deliberately deferred.",
+  "required_before_activation": [
+    "complete and freeze Stage-3 autonomy results",
+    "preregister taper schedule family",
+    "equalize donor budget against competing policy rules"
+  ],
+  "partner_force_support": {"enabled": false},
+  "prohibited_interpretation": "This placeholder is not an executable schedule."
+}

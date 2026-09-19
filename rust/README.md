@@ -60,6 +60,9 @@ filter RNG, weights, guided proposal, and MCSE monitor.  A filter can be
 continued with `--checkpoint` when its sibling `filter_state.json` and
 `config.json` are present.
 
+For Virginia Tech ARC ensemble execution, resource sizing, retry semantics,
+budget guards, and Slurm job arrays are documented in rust/hpc/ARC.md.
+
 The MPI-enabled filter accepts the same completed checkpoint and continuation
 files, repartitions particles canonically for the current world size, and can
 therefore restart with a different number of ranks.  MPI restart currently

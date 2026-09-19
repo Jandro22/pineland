@@ -248,12 +248,22 @@ def main() -> None:
         return
 
     # Deepest paths first so deleting a cache never invalidates an outer path.
+    delete_failures: list[tuple[Path, OSError]] = []
     for path in sorted(delete, key=lambda p: len(p.parts), reverse=True):
         if path.exists():
-            remove_tree(path)
+            try:
+                remove_tree(path)
+            except OSError as exc:
+                # Cache directories can be held open briefly by editors, test
+                # runners, or antivirus software on Windows. A locked
+                # disposable tree should not abort every other cleanup step.
+                delete_failures.append((path, exc))
+                print(f"SKIP    delete failed       {path.relative_to(ROOT)}: {exc}")
     for path in compression:
         if path.exists():
             compact_ntfs(path)
+    if delete_failures:
+        print(f"delete_failures={len(delete_failures)} (safe to retry later)")
 
 
 if __name__ == "__main__":

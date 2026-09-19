@@ -1,0 +1,162 @@
+{
+  "schema_version": "pineland.partner_force_complexity_levers_audit.v1",
+  "status": "FROZEN_PRE_EXECUTION",
+  "historical_outcomes_used": false,
+  "description": "Comprehensive audit of the 4 partner-force assistance channels, complexity levers, parameter sensitivity, and anti-scalar design rationale.",
+  "assistance_channels": [
+    {
+      "channel_id": "air_support",
+      "name": "External Air Support Overlay",
+      "source_module": "rust/pineland-model/src/combat.rs",
+      "governing_equations": {
+        "firepower_decomposition": "A_total = A_organic + A_external",
+        "organic_air_intensity": "A_organic = config.government_air_support_intensity",
+        "external_air_intensity": "A_external = partner_support.air.intensity",
+        "effective_intensity": "A_eff = A_total if support_active else A_organic",
+        "organic_cost_billing": "cost_organic = contacts_organic * config.government_air_support_cost_per_contact",
+        "donor_cost_billing": "cost_donor = contacts_assisted * partner_support.air.cost_per_assisted_contact"
+      },
+      "parameters": {
+        "intensity": {
+          "domain": "[0.0, 1.0]",
+          "default": 0.0,
+          "description": "External air support probability augmenting government combat effectiveness."
+        },
+        "firepower_bonus": {
+          "domain": "[0.0, inf)",
+          "default": 0.0,
+          "description": "Additive firepower increment delivered during assisted contacts."
+        },
+        "cost_per_assisted_contact": {
+          "domain": "[0.0, inf)",
+          "default": 800.0,
+          "description": "Cost borne strictly by the external donor per assisted contact."
+        }
+      },
+      "metered_accounting": [
+        "opportunities",
+        "assisted_contacts",
+        "cumulative_intensity",
+        "cumulative_firepower_bonus",
+        "cumulative_donor_cost"
+      ]
+    },
+    {
+      "channel_id": "logistics_support",
+      "name": "External Logistics Delivery & Sustainment Channel",
+      "source_module": "rust/pineland-model/src/logistics.rs",
+      "governing_equations": {
+        "flow_conservation": "Q_offered = Q_delivered + Q_rejected + Q_lost",
+        "delivery_cap": "Q_daily <= max_daily_capacity",
+        "throughput_augmentation": "delivered_to_depots_and_units = min(offered, max_daily_capacity)",
+        "donor_cost_billing": "cost_donor = Q_delivered * cost_per_supply_unit"
+      },
+      "parameters": {
+        "daily_delivery_rate": {
+          "domain": "[0.0, inf)",
+          "default": 0.0,
+          "description": "Target supply throughput offered per day by donor logistics."
+        },
+        "max_daily_capacity": {
+          "domain": "[0.0, inf)",
+          "default": 0.0,
+          "description": "Maximum supply throughput delivered per day."
+        },
+        "cost_per_supply_unit": {
+          "domain": "[0.0, inf)",
+          "default": 8.0,
+          "description": "External donor cost per unit of logistics delivered."
+        }
+      },
+      "metered_accounting": [
+        "indigenous_cumulative_produced",
+        "indigenous_cumulative_delivered",
+        "indigenous_cumulative_consumed",
+        "cumulative_offered",
+        "cumulative_delivered",
+        "cumulative_rejected",
+        "cumulative_lost",
+        "cumulative_donor_cost"
+      ]
+    },
+    {
+      "channel_id": "command_support",
+      "name": "Advisory & Command Enabler Overlay",
+      "source_module": "rust/pineland-model/src/movement.rs",
+      "governing_equations": {
+        "bounded_reliability_boost": "r_eff = 1.0 - (1.0 - r_indig) * (1.0 - reliability_boost)",
+        "fractional_latency_reduction": "L_eff = max(min_latency_floor_hours, L_indig * (1.0 - latency_reduction_fraction))",
+        "donor_cost_billing": "cost_donor = assisted_events * cost_per_formation_day"
+      },
+      "parameters": {
+        "reliability_boost": {
+          "domain": "[0.0, 1.0]",
+          "default": 0.0,
+          "description": "Bounded factor reducing command-edge failure probability."
+        },
+        "latency_reduction_fraction": {
+          "domain": "[0.0, 1.0]",
+          "default": 0.0,
+          "description": "Fractional reduction in order transmission latency, bounded by physical floor."
+        },
+        "min_latency_floor_hours": {
+          "domain": "[0.0, inf)",
+          "default": 0.5,
+          "description": "Physical minimum floor for order transmission delay."
+        },
+        "cost_per_formation_day": {
+          "domain": "[0.0, inf)",
+          "default": 80.0,
+          "description": "Fixed donor cost per assisted formation day."
+        }
+      },
+      "metered_accounting": [
+        "assisted_events",
+        "cumulative_reliability_boost",
+        "cumulative_latency_reduction_hours",
+        "cumulative_donor_cost"
+      ]
+    },
+    {
+      "channel_id": "force_generation_support",
+      "name": "Removable Training-Throughput Assistance",
+      "source_module": "rust/pineland-model/src/state_regeneration.rs",
+      "governing_equations": {
+        "training_rate_augmentation": "rate_total = rate_indig + training_rate_boost",
+        "throughput_separation": "graduates_organic = min(pipeline, rate_indig); graduates_incremental = min(pipeline - graduates_organic, training_rate_boost)",
+        "donor_cost_billing": "cost_donor = graduates_incremental * cost_per_incremental_trainee"
+      },
+      "parameters": {
+        "training_rate_boost": {
+          "domain": "[0.0, inf)",
+          "default": 0.0,
+          "description": "Removable donor trainer throughput augmenting recruit training rate."
+        },
+        "cost_per_incremental_trainee": {
+          "domain": "[0.0, inf)",
+          "default": 80.0,
+          "description": "Donor cost incurred per incremental trainee graduated through external assistance."
+        }
+      },
+      "metered_accounting": [
+        "indigenous_recruits",
+        "indigenous_graduates",
+        "external_incremental_graduates",
+        "cumulative_donor_cost"
+      ]
+    }
+  ],
+  "anti_scalar_design_rationale": {
+    "prohibition_of_scalar_hacks": "Traditional ABMs often inject arbitrary 'morale multipliers', 'will-to-fight scalars', or 'corruption coefficients' to mimic sudden post-withdrawal collapse. Pineland explicitly rejects this approach.",
+    "scientific_reasons": [
+      "Scalar multipliers obscure the structural distinction between supported performance and organic capacity.",
+      "Scalar corruption variables are unmeasurable, unfalsifiable, and tautological.",
+      "Structural channels preserve conservation laws: logistics strictly conserves physical units, combat strictly partitions organic vs external sorties, force generation tracks individual personnel graduating through the pipeline.",
+      "At withdrawal time T, removal of external channels leaves indigenous assets (depots, formations, recruits, communication edges) physically intact, allowing true observation of endogenous decay rates and bottleneck failure modes."
+    ]
+  },
+  "complexity_capacity_mismatch_hypothesis_alignment": {
+    "mechanism": "When external assistance injects high-intensity combat and complex operational demands, indigenous formations adapt their operating tempo to external logistics and air cover. When external support is withdrawn, formations consume organic reserves rapidly, leading to rapid starvation or command paralysis if organic replenishment pipelines are inadequate.",
+    "testable_prediction": "Formations operating under high substitution assistance experience post-withdrawal performance drops determined by whether indigenous regenerative throughput meets ongoing operating losses and consumption."
+  }
+}

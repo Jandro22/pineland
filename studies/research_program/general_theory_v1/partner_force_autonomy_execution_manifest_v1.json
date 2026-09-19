@@ -1,0 +1,77 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_execution_manifest.v1",
+  "status": "STAGE3_DISCOVERY_READY_STAGE4_BLOCKED",
+  "historical_outcomes_used": false,
+  "stage3": {
+    "design_contract": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage3_discovery_design_v1.json",
+    "cell_manifest": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv",
+    "capability_assay_contract": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json",
+    "withdrawal_time_days": 120,
+    "observation_window_days": 60,
+    "horizons_days": [
+      7,
+      30,
+      90,
+      180
+    ],
+    "design_cells": 60,
+    "default_seed_count": 12,
+    "prehistories": 720,
+    "counterfactual_pairs": 2880,
+    "raw_branch_rows": 5760,
+    "execution_note": "Each prehistory is simulated once to T. One ON and one OFF clone are then advanced sequentially through all four horizons, so 2880 measurement pairs do not imply 5760 independent full prehistory runs.",
+    "preferred_compute_plane": "VT ARC Slurm array",
+    "array_unit": "one frozen design cell x one seed; the task internally runs both branches and all four horizons",
+    "array_task_count": 720,
+    "default_array_concurrency": 8,
+    "production_memory_per_task": "1G",
+    "production_walltime_per_task": "01:00:00",
+    "rows_per_array_task": 8,
+    "trajectory_contract": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_contract_v1.json",
+    "trajectory_schema": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_schema_v1.json",
+    "trajectory_rows_per_array_task": 66,
+    "trajectory_rows": 47520,
+    "trajectory_role": "diagnostic/exploratory only; does not alter confirmatory H1/H2/H3 outcome or model-selection rules",
+    "preferred_arc_cluster": "Owl normal_q / owl_normal_base (matched Stage-3 benchmark faster than laptop and TinkerCliffs)"
+  },
+  "commands": {
+    "no_compute_design_check": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --design studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv",
+    "no_compute_config_validation": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --validate-configs",
+    "tiny_smoke_only": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --smoke --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/stage3_smoke.csv",
+    "arc_build_runner": "cargo build --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3",
+    "arc_submit_stage3": "sbatch --array=0-719%8 studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
+    "arc_merge_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py --input-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs/arc_stage3_shards --expected-tasks 720 --output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv --trajectory-output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_trajectory_v1.csv",
+    "local_monolithic_fallback": "cargo run --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv",
+    "analyze_and_freeze_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --input-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv --freeze-predictor-json studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_frozen_predictor_v1.json",
+    "arc_holdout_pattern": "sbatch --array=0-95%8 --export=ALL,PF_MODE=holdout,PF_HOLDOUT_CONTRACT=<frozen-contract>,PF_OUTPUT_DIR=<family-shard-dir> studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
+    "analyze_stage3_trajectories_diagnostic_only": "python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/analyze_partner_force_trajectories.py --trajectory-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_trajectory_v1.csv --output-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs/trajectory_diagnostics"
+  },
+  "safety": {
+    "runner_requires_execute_flag": true,
+    "analysis_never_launches_simulation": true,
+    "analysis_requires_real_input_csv_unless_dry_run": true,
+    "dry_run_fixture_status": "PLUMBING_ONLY_NO_SCIENTIFIC_EVALUATION",
+    "production_runner_requires_frozen_selected_design": true,
+    "arc_shards_require_exact_cell_and_seed": true,
+    "arc_merge_rejects_missing_duplicate_or_malformed_tasks": true,
+    "holdout_evaluator_requires_complete_frozen_contract_coverage": true,
+    "trajectory_sidecar_required_for_arc_task_success": true,
+    "trajectory_analysis_is_diagnostic_only": true,
+    "telemetry_noninterference_byte_identity_audited": true
+  },
+  "cost_interpretation": {
+    "stage3_equal_cost_policy_comparison": false,
+    "reason": "Stage 3 identifies dependence/autonomy relationships across support compositions. Donor costs are metered but no architecture is ranked for efficiency.",
+    "stage4_equal_cost_required": true
+  },
+  "stage4": {
+    "status": "BLOCKED",
+    "blocked_policy_families": [
+      "capacity_heavy",
+      "bottleneck_targeted",
+      "calendar_transition",
+      "capability_conditioned"
+    ],
+    "unblock_condition": "Complete Stage-3 discovery, freeze candidate predictors, run zero-refit held-out mechanism tests, then preregister persistent/adaptive policy mechanisms and equal-cost rules."
+  }
+}

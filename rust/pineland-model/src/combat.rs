@@ -91,7 +91,7 @@ fn organization_is_insurgent(particle: &ParticleState, organization: usize) -> b
     particle.organizations.kind.get(organization).copied() == Some(3)
 }
 
-fn organizations_hostile(particle: &ParticleState, first: usize, second: usize) -> bool {
+pub fn organizations_hostile(particle: &ParticleState, first: usize, second: usize) -> bool {
     if first == second {
         return false;
     }
@@ -108,7 +108,7 @@ fn organizations_hostile(particle: &ParticleState, first: usize, second: usize) 
         })
 }
 
-fn formation_microzone(
+pub fn formation_microzone(
     particle: &ParticleState,
     topology: &StaticTopology,
     formation: usize,
@@ -236,13 +236,44 @@ fn government_air_support_level(
     detected_opponent: bool,
 ) -> f64 {
     if config.combat.government_air_support_intensity <= 0.0
-        || !detected_opponent
         || particle.formations.organization[formation] as usize != crate::MILITARY
     {
         return 0.0;
     }
+    let detection_factor = if detected_opponent { 1.0 } else { 0.75 };
     config.combat.government_air_support_intensity
+        * detection_factor
         * (0.5 + 0.5 * particle.formations.information[formation].clamp(0.0, 1.0))
+}
+
+fn partner_air_support_level(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    formation: usize,
+    detected_opponent: bool,
+) -> (f64, f64) {
+    let partner_config = &config.partner_force_support;
+    if !partner_config.enabled
+        || !partner_config.air.enabled
+        || particle.partner_support.support_withdrawn
+        || particle.formations.organization[formation] as usize != crate::MILITARY
+    {
+        return (0.0, 0.0);
+    }
+    particle.partner_support.air.opportunities += 1;
+    let detection_factor = if detected_opponent { 1.0 } else { 0.75 };
+    let intensity = partner_config.air.intensity
+        * detection_factor
+        * (0.5 + 0.5 * particle.formations.information[formation].clamp(0.0, 1.0));
+    let firepower_bonus = intensity * partner_config.air.firepower_bonus;
+    let cost = partner_config.air.cost_per_assisted_contact;
+
+    particle.partner_support.air.assisted_contacts += 1;
+    particle.partner_support.air.cumulative_intensity += intensity;
+    particle.partner_support.air.cumulative_firepower_bonus += firepower_bonus;
+    particle.partner_support.air.cumulative_donor_cost += cost;
+
+    (intensity, firepower_bonus)
 }
 
 fn presence_personnel(
@@ -616,31 +647,101 @@ fn resolve_engagement(
     initiator_organization: usize,
     contact_cause: &str,
 ) {
-    if first >= particle.formations.personnel.len()
-        || second >= particle.formations.personnel.len()
-        || first == second
-        || particle.formations.active[first] == 0
-        || particle.formations.active[second] == 0
-        || !organizations_hostile(
-            particle,
-            particle.formations.organization[first] as usize,
-            particle.formations.organization[second] as usize,
-        )
-        || particle.formations.operational_status[first] != 1
-        || particle.formations.operational_status[second] != 1
-        || particle.formations.personnel[first] <= 0.0
-        || particle.formations.personnel[second] <= 0.0
-        || particle.formations.moving[first] != 0
-        || particle.formations.moving[second] != 0
-        || particle.formations.outside_pineland[first] != 0
-        || particle.formations.outside_pineland[second] != 0
-        || particle.formations.locality[first] != particle.formations.locality[second]
-    {
+    if first >= particle.formations.personnel.len() {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!("COMBAT_REJECT: first formation index {} out of bounds (len {})", first, particle.formations.personnel.len());
+        }
+        return;
+    }
+    if second >= particle.formations.personnel.len() {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!("COMBAT_REJECT: second formation index {} out of bounds (len {})", second, particle.formations.personnel.len());
+        }
+        return;
+    }
+    if first == second {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!("COMBAT_REJECT: first == second ({first})");
+        }
+        return;
+    }
+    if particle.formations.active[first] == 0 || particle.formations.active[second] == 0 {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!(
+                "COMBAT_REJECT: inactive formation first={first}(active={}) second={second}(active={})",
+                particle.formations.active[first], particle.formations.active[second]
+            );
+        }
+        return;
+    }
+    if !organizations_hostile(
+        particle,
+        particle.formations.organization[first] as usize,
+        particle.formations.organization[second] as usize,
+    ) {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!(
+                "COMBAT_REJECT: non-hostile organizations first={first}(org {}) second={second}(org {})",
+                particle.formations.organization[first], particle.formations.organization[second]
+            );
+        }
+        return;
+    }
+    if particle.formations.operational_status[first] != 1 || particle.formations.operational_status[second] != 1 {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!(
+                "COMBAT_REJECT: operational_status ineligible first={first}(status {}) second={second}(status {})",
+                particle.formations.operational_status[first], particle.formations.operational_status[second]
+            );
+        }
+        return;
+    }
+    if particle.formations.personnel[first] <= 0.0 || particle.formations.personnel[second] <= 0.0 {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!(
+                "COMBAT_REJECT: non-positive personnel first={first}({:.2}) second={second}({:.2})",
+                particle.formations.personnel[first], particle.formations.personnel[second]
+            );
+        }
+        return;
+    }
+    if particle.formations.moving[first] != 0 || particle.formations.moving[second] != 0 {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!(
+                "COMBAT_REJECT: moving formation first={first}(moving {}) second={second}(moving {})",
+                particle.formations.moving[first], particle.formations.moving[second]
+            );
+        }
+        return;
+    }
+    if particle.formations.outside_pineland[first] != 0 || particle.formations.outside_pineland[second] != 0 {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!(
+                "COMBAT_REJECT: outside pineland first={first}({}) second={second}({})",
+                particle.formations.outside_pineland[first], particle.formations.outside_pineland[second]
+            );
+        }
+        return;
+    }
+    if particle.formations.locality[first] != particle.formations.locality[second] {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!(
+                "COMBAT_REJECT: locality mismatch first={first}(loc {}) second={second}(loc {})",
+                particle.formations.locality[first], particle.formations.locality[second]
+            );
+        }
         return;
     }
     let locality = particle.formations.locality[first] as usize;
     let microzone = formation_microzone(particle, topology, first);
-    if formation_microzone(particle, topology, second) != microzone {
+    let second_microzone = formation_microzone(particle, topology, second);
+    if second_microzone != microzone {
+        if crate::trace_env!("PINELAND_COMBAT_TRACE") {
+            eprintln!(
+                "COMBAT_REJECT: microzone mismatch first={first}(micro {microzone}, raw {}) second={second}(micro {second_microzone}, raw {}) in loc {locality}",
+                particle.formations.microzone[first], particle.formations.microzone[second]
+            );
+        }
         return;
     }
     let initiative_first = 1.0
@@ -655,11 +756,17 @@ fn resolve_engagement(
         } else {
             0.0
         };
+
     let air_first = government_air_support_level(particle, config, first, detected_first);
     let air_second = government_air_support_level(particle, config, second, detected_second);
-    let air_multiplier_first = 1.0 + air_first * config.combat.government_air_support_firepower_bonus;
-    let air_multiplier_second =
-        1.0 + air_second * config.combat.government_air_support_firepower_bonus;
+    let (_partner_air_first, partner_bonus_first) =
+        partner_air_support_level(particle, config, first, detected_first);
+    let (_partner_air_second, partner_bonus_second) =
+        partner_air_support_level(particle, config, second, detected_second);
+    let organic_bonus_first = air_first * config.combat.government_air_support_firepower_bonus;
+    let organic_bonus_second = air_second * config.combat.government_air_support_firepower_bonus;
+    let air_multiplier_first = 1.0 + organic_bonus_first + partner_bonus_first;
+    let air_multiplier_second = 1.0 + organic_bonus_second + partner_bonus_second;
     let capability_first = capability(
         particle,
         topology,

@@ -1,0 +1,50 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_exclusion_manifest.v1",
+  "status": "FROZEN_PRE_EXECUTION",
+  "historical_outcomes_used": false,
+  "description": "Explicit manifest of mechanisms, parameters, and historical calibrations excluded from the Partner-Force Autonomy Experiment v1 to maintain scientific rigor and prevent post-hoc fitting.",
+  "exclusions": [
+    {
+      "exclusion_id": "EXCL-01",
+      "category": "corruption_scalar",
+      "mechanism": "Payroll ghost soldiers, absenteeism, and financial diversion coefficients",
+      "rationale": "Representing institutional decay via an arbitrary scalar corruption parameter violates conservation laws and introduces an untestable fudge factor. Pineland requires physical stock-flow accounting. Corruption mechanisms are deferred until explicit payroll ledgers and physical personnel muster audits are modeled.",
+      "prerequisite_for_inclusion": "Explicit payroll audit mechanism with verifiable personnel verification events."
+    },
+    {
+      "exclusion_id": "EXCL-02",
+      "category": "contractor_logistics",
+      "mechanism": "Contractor-dependent maintenance cliff without tracked parts inventory",
+      "rationale": "Simulating fleet grounding by setting equipment readiness to zero upon withdrawal without modeling parts inventories, repair cycles, and technician hours constitutes an ad-hoc cliff rather than an endogenous capability failure.",
+      "prerequisite_for_inclusion": "Discrete equipment maintenance queue with spare parts supply chains."
+    },
+    {
+      "exclusion_id": "EXCL-03",
+      "category": "ai_puppetry",
+      "mechanism": "Tactical AI replacement or external omniscient puppet controllers",
+      "rationale": "External support must act as an environmental overlay (firepower, logistics deliveries, order transmission assistance) rather than replacing indigenous decision-making agents with an external tactical brain. When support is withdrawn, indigenous commanders must continue executing indigenous operational logic.",
+      "prerequisite_for_inclusion": "None; permanent architectural prohibition."
+    },
+    {
+      "exclusion_id": "EXCL-04",
+      "category": "historical_calibration",
+      "mechanism": "Tuning parameters to fit the 2021 Afghan National Army (ANA) collapse or other specific historical episodes",
+      "rationale": "Violates the historical case firewall registered in partner_force_autonomy_program_contract_v1.json. Pineland models the general theory of counterinsurgency and partner-force autonomy. Historical episodes serve as post-freeze external validity tests, never as calibration targets for synthetic mechanism discovery.",
+      "prerequisite_for_inclusion": "Frozen pre-registered evaluation protocol evaluated strictly out-of-sample."
+    },
+    {
+      "exclusion_id": "EXCL-05",
+      "category": "unconserved_flows",
+      "mechanism": "Unmetered donor resources or secondary unconserved supply layers",
+      "rationale": "Every supply unit, flight hour, and trained recruit provided by an external partner must be metered and accounted for in the donor ledger. Logistics deliveries must merge into existing physical inventories and respect storage capacities.",
+      "prerequisite_for_inclusion": "None; permanent architectural prohibition."
+    },
+    {
+      "exclusion_id": "EXCL-06",
+      "category": "topology_mutation",
+      "mechanism": "Permanent alteration of indigenous command hierarchy edges by external advisors",
+      "rationale": "Advisory support provides temporary reliability boosts and latency reductions for order transmission. Mutating the persistent indigenous command network would leave permanent artificial infrastructure in place after withdrawal, masking true post-withdrawal autonomous network capability.",
+      "prerequisite_for_inclusion": "Explicit doctrine reform mechanism modeled over multi-year horizons."
+    }
+  ]
+}

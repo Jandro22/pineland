@@ -551,13 +551,54 @@ pub fn update(
             particle.locality.government_security_recruit_pipeline[locality] += recruits;
             particle.locality.government_cumulative_security_recruits[locality] += recruits;
             summary.recruited += recruits;
+            let partner_config = &config.partner_force_support;
+            // Organic flow instrumentation must continue after support withdrawal.
+            // The master partner-force switch controls instrumentation; channel
+            // activity controls only the external increment.
+            if partner_config.enabled {
+                particle.partner_support.force_generation.indigenous_recruits += recruits;
+            }
         }
 
-        let graduation_fraction = clamp01(
-            1.0 - python_exp(-config.state_regeneration.security_training_rate * elapsed_days),
-        );
+        let base_rate = config.state_regeneration.security_training_rate;
+        let partner_config = &config.partner_force_support;
+        let partner_fg_active = partner_config.enabled
+            && partner_config.force_generation.enabled
+            && !particle.partner_support.support_withdrawn;
+
+        let (total_graduation_fraction, indig_graduated, incremental_graduated, fg_cost) =
+            if partner_fg_active {
+                let boost = partner_config.force_generation.training_rate_boost.max(0.0);
+                let total_rate = base_rate + boost;
+                let indig_frac = clamp01(1.0 - python_exp(-base_rate * elapsed_days));
+                let total_frac = clamp01(1.0 - python_exp(-total_rate * elapsed_days));
+                let cur_pipeline = particle.locality.government_security_recruit_pipeline[locality];
+                let indig_grad = cur_pipeline * indig_frac;
+                let total_grad = cur_pipeline * total_frac;
+                let inc_grad = (total_grad - indig_grad).max(0.0);
+                let cost = inc_grad
+                    * partner_config.force_generation.cost_per_incremental_trainee
+                    + (partner_config.force_generation.capacity_building_investment_rate
+                        * elapsed_days
+                        / locality_count as f64);
+                (total_frac, indig_grad, inc_grad, cost)
+            } else {
+                let frac = clamp01(1.0 - python_exp(-base_rate * elapsed_days));
+                let cur_pipeline = particle.locality.government_security_recruit_pipeline[locality];
+                (frac, cur_pipeline * frac, 0.0, 0.0)
+            };
+
+        if partner_config.enabled {
+            particle.partner_support.force_generation.indigenous_graduates += indig_graduated;
+        }
+        if partner_fg_active {
+            particle.partner_support.force_generation.external_incremental_graduates +=
+                incremental_graduated;
+            particle.partner_support.force_generation.cumulative_donor_cost += fg_cost;
+        }
+
         let graduated =
-            particle.locality.government_security_recruit_pipeline[locality] * graduation_fraction;
+            particle.locality.government_security_recruit_pipeline[locality] * total_graduation_fraction;
         particle.locality.government_security_recruit_pipeline[locality] -= graduated;
         particle.locality.government_security_reserve[locality] += graduated;
         summary.graduated += graduated;

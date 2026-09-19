@@ -11,7 +11,8 @@ use crate::sha256;
 use crate::state::{
     decode_event, encode_event, BeliefKey, ByteReader, Counters, EventRecord,
     InformationHistoryEntry, InformationObservation, InformationRelay, ObservationRecord,
-    ParticleState, PresenceKey, PresenceState, StateError,
+    ParticleState, PartnerSupportLedger, PresenceKey, PresenceState, StateError,
+    SupportWindowSnapshot,
 };
 use std::collections::BTreeMap;
 use std::fmt;
@@ -21,7 +22,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 14;
+pub const CHECKPOINT_VERSION: u32 = 16;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -171,6 +172,7 @@ impl CheckpointStore {
             put_u32(&mut buffer, record.locality);
             put_f64(&mut buffer, record.value);
         }
+        encode_partner_support(&mut buffer, &particle.partner_support);
         Ok(buffer)
     }
 
@@ -179,7 +181,8 @@ impl CheckpointStore {
         if reader.take(8)? != CHECKPOINT_MAGIC {
             return Err(CheckpointError::Invalid("bad magic".to_string()));
         }
-        if reader.u32()? != CHECKPOINT_VERSION {
+        let version = reader.u32()?;
+        if version != 15 && version != CHECKPOINT_VERSION {
             return Err(CheckpointError::Invalid(
                 "unsupported checkpoint version".to_string(),
             ));
@@ -268,6 +271,8 @@ impl CheckpointStore {
                 value: reader.f64()?,
             });
         }
+        decode_partner_support(&mut reader, &mut particle.partner_support, version)
+            .map_err(|e| section_error("partner_support", e))?;
         if reader.remaining() != 0 {
             return Err(CheckpointError::Invalid(
                 "trailing bytes after particle payload".to_string(),
@@ -2195,9 +2200,123 @@ fn decode_counters(r: &mut ByteReader<'_>, c: &mut Counters) -> Result<(), Check
     Ok(())
 }
 
+fn encode_partner_support(b: &mut Vec<u8>, s: &PartnerSupportLedger) {
+    put_string(b, &s.schema_version);
+    b.push(if s.support_withdrawn { 1 } else { 0 });
+    match s.withdrawal_time {
+        Some(t) => {
+            b.push(1);
+            put_f64(b, t);
+        }
+        None => b.push(0),
+    }
+    // air
+    put_u64(b, s.air.opportunities);
+    put_u64(b, s.air.assisted_contacts);
+    put_f64(b, s.air.cumulative_intensity);
+    put_f64(b, s.air.cumulative_firepower_bonus);
+    put_f64(b, s.air.cumulative_donor_cost);
+    // logistics
+    put_f64(b, s.logistics.indigenous_cumulative_produced);
+    put_f64(b, s.logistics.indigenous_cumulative_delivered);
+    put_f64(b, s.logistics.indigenous_cumulative_consumed);
+    put_f64(b, s.logistics.cumulative_offered);
+    put_f64(b, s.logistics.cumulative_delivered);
+    put_f64(b, s.logistics.cumulative_rejected);
+    put_f64(b, s.logistics.cumulative_lost);
+    put_f64(b, s.logistics.cumulative_donor_cost);
+    // command
+    put_u64(b, s.command.assisted_events);
+    put_f64(b, s.command.cumulative_reliability_boost);
+    put_f64(b, s.command.cumulative_latency_reduction_hours);
+    put_f64(b, s.command.cumulative_donor_cost);
+    // force_generation
+    put_f64(b, s.force_generation.indigenous_recruits);
+    put_f64(b, s.force_generation.external_recruits);
+    put_f64(b, s.force_generation.indigenous_graduates);
+    put_f64(b, s.force_generation.external_incremental_graduates);
+    put_f64(b, s.force_generation.cumulative_donor_cost);
+    // snapshots
+    put_u64(b, s.window_snapshots.len() as u64);
+    for snap in &s.window_snapshots {
+        put_f64(b, snap.time_days);
+        put_f64(b, snap.air_intensity);
+        put_f64(b, snap.air_donor_cost);
+        put_f64(b, snap.logistics_delivered);
+        put_f64(b, snap.logistics_donor_cost);
+        put_u64(b, snap.command_assisted_events);
+        put_f64(b, snap.command_donor_cost);
+        put_f64(b, snap.forcegen_incremental_graduates);
+        put_f64(b, snap.forcegen_donor_cost);
+        put_f64(b, snap.total_donor_cost);
+    }
+}
+
+fn decode_partner_support(
+    r: &mut ByteReader<'_>,
+    s: &mut PartnerSupportLedger,
+    version: u32,
+) -> Result<(), CheckpointError> {
+    s.schema_version = r.string()?;
+    s.support_withdrawn = r.u8()? != 0;
+    let has_wt = r.u8()? != 0;
+    s.withdrawal_time = if has_wt { Some(r.f64()?) } else { None };
+    // air
+    s.air.opportunities = r.u64()?;
+    s.air.assisted_contacts = r.u64()?;
+    s.air.cumulative_intensity = r.f64()?;
+    s.air.cumulative_firepower_bonus = r.f64()?;
+    s.air.cumulative_donor_cost = r.f64()?;
+    // logistics
+    if version >= 16 {
+        s.logistics.indigenous_cumulative_produced = r.f64()?;
+        s.logistics.indigenous_cumulative_delivered = r.f64()?;
+        s.logistics.indigenous_cumulative_consumed = r.f64()?;
+    } else {
+        s.logistics.indigenous_cumulative_produced = 0.0;
+        s.logistics.indigenous_cumulative_delivered = 0.0;
+        s.logistics.indigenous_cumulative_consumed = 0.0;
+    }
+    s.logistics.cumulative_offered = r.f64()?;
+    s.logistics.cumulative_delivered = r.f64()?;
+    s.logistics.cumulative_rejected = r.f64()?;
+    s.logistics.cumulative_lost = r.f64()?;
+    s.logistics.cumulative_donor_cost = r.f64()?;
+    // command
+    s.command.assisted_events = r.u64()?;
+    s.command.cumulative_reliability_boost = r.f64()?;
+    s.command.cumulative_latency_reduction_hours = r.f64()?;
+    s.command.cumulative_donor_cost = r.f64()?;
+    // force_generation
+    s.force_generation.indigenous_recruits = r.f64()?;
+    s.force_generation.external_recruits = r.f64()?;
+    s.force_generation.indigenous_graduates = r.f64()?;
+    s.force_generation.external_incremental_graduates = r.f64()?;
+    s.force_generation.cumulative_donor_cost = r.f64()?;
+    // snapshots
+    let n = bounded_count(r.u64()?)?;
+    s.window_snapshots = Vec::with_capacity(n);
+    for _ in 0..n {
+        s.window_snapshots.push(SupportWindowSnapshot {
+            time_days: r.f64()?,
+            air_intensity: r.f64()?,
+            air_donor_cost: r.f64()?,
+            logistics_delivered: r.f64()?,
+            logistics_donor_cost: r.f64()?,
+            command_assisted_events: r.u64()?,
+            command_donor_cost: r.f64()?,
+            forcegen_incremental_graduates: r.f64()?,
+            forcegen_donor_cost: r.f64()?,
+            total_donor_cost: r.f64()?,
+        });
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
-    use super::CheckpointStore;
+    use super::*;
+    use crate::state::PartnerSupportLedger;
     use crate::ids::PatrolId;
     use crate::rng::RngStreams;
     use crate::scheduler::EventPayload;
@@ -2456,5 +2575,99 @@ mod tests {
         assert_eq!(manifest, read_manifest);
         assert_eq!(particles, vec![first, second]);
         std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn partner_support_round_trip_is_exact() {
+        let mut particle = representative_particle();
+        particle.partner_support.support_withdrawn = true;
+        particle.partner_support.withdrawal_time = Some(45.5);
+        particle.partner_support.air.opportunities = 10;
+        particle.partner_support.air.assisted_contacts = 8;
+        particle.partner_support.air.cumulative_intensity = 150.0;
+        particle.partner_support.air.cumulative_firepower_bonus = 35.0;
+        particle.partner_support.air.cumulative_donor_cost = 50_000.0;
+        particle.partner_support.logistics.cumulative_offered = 200.0;
+        particle.partner_support.logistics.cumulative_delivered = 180.0;
+        particle.partner_support.logistics.cumulative_rejected = 20.0;
+        particle.partner_support.logistics.cumulative_lost = 5.0;
+        particle.partner_support.logistics.cumulative_donor_cost = 25_000.0;
+        particle.partner_support.command.assisted_events = 14;
+        particle.partner_support.command.cumulative_reliability_boost = 0.75;
+        particle.partner_support.command.cumulative_latency_reduction_hours = 12.0;
+        particle.partner_support.command.cumulative_donor_cost = 15_000.0;
+        particle.partner_support.force_generation.indigenous_recruits = 50.0;
+        particle.partner_support.force_generation.external_recruits = 30.0;
+        particle.partner_support.force_generation.indigenous_graduates = 45.0;
+        particle.partner_support.force_generation.external_incremental_graduates = 25.0;
+        particle.partner_support.force_generation.cumulative_donor_cost = 10_000.0;
+        particle.partner_support.take_snapshot(30.0);
+        particle.partner_support.take_snapshot(45.5);
+
+        let bytes = CheckpointStore::encode_particle(&particle).unwrap();
+        let restored = CheckpointStore::decode_particle(&bytes).unwrap();
+        assert_eq!(particle, restored);
+        assert_eq!(particle.state_hash(), restored.state_hash());
+    }
+
+    #[test]
+    fn v15_checkpoint_is_backward_compatible() {
+        let mut particle = representative_particle();
+        particle.partner_support.logistics.indigenous_cumulative_produced = 0.0;
+        particle.partner_support.logistics.indigenous_cumulative_delivered = 0.0;
+        particle.partner_support.logistics.indigenous_cumulative_consumed = 0.0;
+        particle.partner_support.logistics.cumulative_offered = 100.0;
+        particle.partner_support.logistics.cumulative_delivered = 90.0;
+
+        let bytes = CheckpointStore::encode_particle(&particle).unwrap();
+        // Modify version from 16 to 15 at byte offset 8..12
+        let mut v15_bytes = bytes.clone();
+        v15_bytes[8..12].copy_from_slice(&15u32.to_le_bytes());
+
+        // Locate where partner support logistics fields start in particle payload.
+        // Rather than hardcoding offsets, encode a dummy v15 buffer directly or test decode_partner_support:
+        let mut ledger = PartnerSupportLedger::default();
+        ledger.air.cumulative_intensity = 50.0;
+        ledger.logistics.cumulative_offered = 200.0;
+        ledger.logistics.cumulative_delivered = 180.0;
+
+        let mut buf = Vec::new();
+        put_string(&mut buf, &ledger.schema_version);
+        buf.push(0); // support_withdrawn = false
+        buf.push(0); // has_wt = false
+        // air
+        put_u64(&mut buf, ledger.air.opportunities);
+        put_u64(&mut buf, ledger.air.assisted_contacts);
+        put_f64(&mut buf, ledger.air.cumulative_intensity);
+        put_f64(&mut buf, ledger.air.cumulative_firepower_bonus);
+        put_f64(&mut buf, ledger.air.cumulative_donor_cost);
+        // logistics (v15: NO indigenous_cumulative_* fields)
+        put_f64(&mut buf, ledger.logistics.cumulative_offered);
+        put_f64(&mut buf, ledger.logistics.cumulative_delivered);
+        put_f64(&mut buf, ledger.logistics.cumulative_rejected);
+        put_f64(&mut buf, ledger.logistics.cumulative_lost);
+        put_f64(&mut buf, ledger.logistics.cumulative_donor_cost);
+        // command
+        put_u64(&mut buf, ledger.command.assisted_events);
+        put_f64(&mut buf, ledger.command.cumulative_reliability_boost);
+        put_f64(&mut buf, ledger.command.cumulative_latency_reduction_hours);
+        put_f64(&mut buf, ledger.command.cumulative_donor_cost);
+        // force_generation
+        put_f64(&mut buf, ledger.force_generation.indigenous_recruits);
+        put_f64(&mut buf, ledger.force_generation.external_recruits);
+        put_f64(&mut buf, ledger.force_generation.indigenous_graduates);
+        put_f64(&mut buf, ledger.force_generation.external_incremental_graduates);
+        put_f64(&mut buf, ledger.force_generation.cumulative_donor_cost);
+        // snapshots
+        put_u64(&mut buf, 0);
+
+        let mut decoded = PartnerSupportLedger::default();
+        let mut reader = ByteReader::new(&buf);
+        decode_partner_support(&mut reader, &mut decoded, 15).unwrap();
+        assert_eq!(decoded.logistics.indigenous_cumulative_produced, 0.0);
+        assert_eq!(decoded.logistics.indigenous_cumulative_delivered, 0.0);
+        assert_eq!(decoded.logistics.indigenous_cumulative_consumed, 0.0);
+        assert_eq!(decoded.logistics.cumulative_offered, 200.0);
+        assert_eq!(decoded.logistics.cumulative_delivered, 180.0);
     }
 }

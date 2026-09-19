@@ -365,7 +365,7 @@ impl StaticTopology {
             .map(|locality| {
                 let next = (locality + 1) % locality_count;
                 let distance = euclidean(x_km[locality], y_km[locality], x_km[next], y_km[next]);
-                (locality as u32, next as u32, distance.max(1.0))
+                (locality as u32, next as u32, 0.65 + distance / 55.0)
             })
             .collect::<Vec<_>>();
         let locality_graph =

@@ -6,6 +6,8 @@ working tree never destroys scientific evidence.
 
 ## Canonical tracked material
 
+- Root project metadata — `README.md`, `LICENSE`, `CITATION.cff`,
+  `CONTRIBUTING.md`, package metadata, lockfiles, and VCS configuration.
 - `src/` — Python model and analysis-facing API.
 - `rust/` — native workspace source. Cargo `target*` directories are rebuildable
   and intentionally ignored.

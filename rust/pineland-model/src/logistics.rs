@@ -63,7 +63,17 @@ pub fn update(
         let produced = production.min(available_capacity);
         particle.logistics.source_stock[source] += produced;
         particle.logistics.cumulative_produced += produced;
+        if config.partner_force_support.enabled {
+            let org = particle.logistics.organization[source] as usize;
+            if org == crate::GOVERNMENT || org == crate::MILITARY {
+                particle
+                    .partner_support
+                    .logistics
+                    .indigenous_cumulative_produced += produced;
+            }
+        }
     }
+    deliver_partner_logistics(particle, config, dt);
 
     // Deliver shipments that have reached their destination before evaluating
     // new demand.  The Python world retains the complete shipment archive but
@@ -109,6 +119,14 @@ pub fn update(
                 );
             }
             particle.logistics.cumulative_delivered += accepted;
+            if config.partner_force_support.enabled
+                && particle.formations.organization[formation] as usize == crate::MILITARY
+            {
+                particle
+                    .partner_support
+                    .logistics
+                    .indigenous_cumulative_delivered += accepted;
+            }
             if overflow > 0.0 {
                 particle.logistics.cumulative_lost += overflow;
             }
@@ -142,6 +160,14 @@ pub fn update(
         particle.formations.supply_stock[formation] -= consumed;
         particle.formations.sustainment[formation] = supply_ratio(particle, formation);
         particle.logistics.cumulative_consumed += consumed;
+        if config.partner_force_support.enabled
+            && particle.formations.organization[formation] as usize == crate::MILITARY
+        {
+            particle
+                .partner_support
+                .logistics
+                .indigenous_cumulative_consumed += consumed;
+        }
         let fulfillment = if demand > 0.0 { consumed / demand } else { 1.0 };
         if shortfall > 0.0 {
             particle.formations.readiness[formation] = clamp01(
@@ -643,6 +669,92 @@ pub fn supply_ratio(particle: &ParticleState, formation: usize) -> f64 {
     } else {
         particle.formations.supply_stock[formation] / particle.formations.supply_capacity[formation]
     }
+}
+
+fn deliver_partner_logistics(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    dt: f64,
+) {
+    let partner_config = &config.partner_force_support;
+    if !partner_config.enabled
+        || !partner_config.logistics.enabled
+        || particle.partner_support.support_withdrawn
+        || dt <= 0.0
+    {
+        return;
+    }
+    let offered = (partner_config.logistics.daily_delivery_rate * dt)
+        .min(partner_config.logistics.max_daily_capacity * dt)
+        .max(0.0);
+    if offered <= 0.0 {
+        return;
+    }
+
+    let mut accepted = 0.0;
+    if partner_config.logistics.mode == "direct_delivery" || partner_config.logistics.mode == "push" {
+        let mut deficits = Vec::new();
+        let mut total_deficit = 0.0;
+        for formation in 0..particle.formations.personnel.len() {
+            if particle.formations.active[formation] == 0
+                || particle.formations.organization[formation] as usize != crate::MILITARY
+            {
+                continue;
+            }
+            let cap = particle.formations.supply_capacity[formation];
+            let stock = particle.formations.supply_stock[formation];
+            let def = (cap - stock).max(0.0);
+            if def > 0.0 {
+                deficits.push((formation, def));
+                total_deficit += def;
+            }
+        }
+        let deliverable = offered.min(total_deficit);
+        for (formation, def) in deficits {
+            let share = if total_deficit > 0.0 {
+                deliverable * (def / total_deficit)
+            } else {
+                0.0
+            };
+            particle.formations.supply_stock[formation] += share;
+            particle.formations.sustainment[formation] = supply_ratio(particle, formation);
+            accepted += share;
+        }
+    } else {
+        let mut cap_avail = 0.0;
+        let mut sources = Vec::new();
+        for source in 0..particle.logistics.source_stock.len() {
+            let org = particle.logistics.organization[source] as usize;
+            if org == crate::GOVERNMENT || org == crate::MILITARY {
+                let avail = (particle.logistics.source_capacity[source]
+                    - particle.logistics.source_stock[source])
+                    .max(0.0);
+                if avail > 0.0 {
+                    sources.push((source, avail));
+                    cap_avail += avail;
+                }
+            }
+        }
+        let deliverable = offered.min(cap_avail);
+        for (source, avail) in sources {
+            let share = if cap_avail > 0.0 {
+                deliverable * (avail / cap_avail)
+            } else {
+                0.0
+            };
+            particle.logistics.source_stock[source] += share;
+            accepted += share;
+        }
+    }
+
+    let rejected = (offered - accepted).max(0.0);
+    let donor_cost = accepted * partner_config.logistics.cost_per_supply_delivered;
+
+    particle.partner_support.logistics.cumulative_offered += offered;
+    particle.partner_support.logistics.cumulative_delivered += accepted;
+    particle.partner_support.logistics.cumulative_rejected += rejected;
+    particle.partner_support.logistics.cumulative_lost += 0.0;
+    particle.partner_support.logistics.cumulative_donor_cost += donor_cost;
 }
 
 #[cfg(test)]

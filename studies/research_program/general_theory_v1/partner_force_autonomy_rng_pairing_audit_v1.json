@@ -1,0 +1,22 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_rng_pairing_audit.v1",
+  "status": "FROZEN_PRE_EXECUTION",
+  "historical_outcomes_used": false,
+  "branching": {
+    "rule": "At T, in-memory deep clones inherit identical complete ParticleState, scheduler, and RngStreams. SUPPORT_OFF then changes only partner-support withdrawal metadata.",
+    "immediate_invariant": "All indigenous physical/political/logistics/formation/command state and RNG streams are identical immediately after withdrawal.",
+    "verified_by": [
+      "partner_support_withdrawal_immediate_diff_allowlist",
+      "paired_counterfactual_cloning_and_branch_determinism"
+    ]
+  },
+  "common_random_numbers": {
+    "status": "PARTIAL_PROCESS_LEVEL_CRN_AFTER_TREATMENT_DIVERGENCE",
+    "exact_at_branch": true,
+    "support_channels_consume_extra_rng_draws": false,
+    "process_streams": "Pineland uses named process-specific RNG streams, reducing cross-process desynchronization.",
+    "limitation": "Once treatment changes endogenous state, a process can take different control-flow paths or execute a different number of stochastic decisions. The corresponding process stream can then diverge. Therefore future exogenous shocks are not claimed to remain draw-for-draw identical indefinitely.",
+    "interpretation": "Pairing provides exact initial stochastic coupling and substantial variance reduction, not a guarantee of identical future random draws after endogenous divergence."
+  },
+  "analysis_requirement": "Treat seed/world as the pairing unit; do not describe the design as perfect CRN beyond the branch point."
+}

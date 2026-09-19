@@ -1,0 +1,154 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_program_contract.v1",
+  "status": "STAGE3_DISCOVERY_DESIGN_FROZEN_READY_FOR_EXECUTION",
+  "historical_outcomes_used": false,
+  "central_question": "When does security-force assistance create autonomous military capability, and when does it create only externally supported performance?",
+  "claim_boundary": "All primary tests are synthetic mechanism tests inside Pineland. Historical cases may be used only after the synthetic forms and analysis are frozen, and only as external consistency diagnostics rather than calibration targets.",
+  "core_distinctions": [
+    "supported performance",
+    "organic capacity",
+    "autonomy after withdrawal",
+    "long-horizon regenerative resilience"
+  ],
+  "primary_counterfactual_design": {
+    "withdrawal_time_symbol": "T",
+    "branching_rule": "At T, clone the identical world state and future random stream into SUPPORT_ON and SUPPORT_OFF branches.",
+    "support_on": "All designated removable external-support channels continue under their pre-T policy.",
+    "support_off": "All designated removable external-support channels are set to zero at T; all indigenous stocks and state variables remain unchanged.",
+    "preferred_common_random_numbers": true,
+    "measurement_horizons_days": [7, 30, 90, 180],
+    "retention_metric": "R_h = C_OFF(T+h) / max(C_ON(T+h), epsilon)",
+    "withdrawal_effect_metric": "Delta_h = C_ON(T+h) - C_OFF(T+h)"
+  },
+  "capability_assay_requirements": {
+    "rule": "C must be behavioral and outcome-facing rather than a direct weighted sum of autonomy predictors.",
+    "candidate_components": [
+      "territorial retention under matched threat",
+      "formation survival",
+      "mission or operational-task completion",
+      "casualty exchange under matched threat",
+      "reinforcement of threatened sectors",
+      "readiness restoration after losses"
+    ],
+    "freeze_before_discovery": true,
+    "frozen_contract": "partner_force_capability_assay_contract_v1.json",
+    "warning": "Do not define C from training throughput, logistics autonomy, command reliability, or other variables that later appear as autonomy predictors."
+  },
+  "primary_hypotheses": [
+    {
+      "id": "PF-H1",
+      "name": "Performance Masking",
+      "prediction": "Supported battlefield performance can substantially overstate post-withdrawal autonomous capability under substitution-heavy assistance.",
+      "falsifier": "Across assistance architectures, supported performance predicts post-withdrawal retention as well as or better than explicitly indigenous state-flow measures."
+    },
+    {
+      "id": "PF-H2",
+      "name": "Autonomy Bottleneck",
+      "prediction": "Post-withdrawal retention is better predicted by subsystem complementarity or binding constraints than by average indigenous capability.",
+      "frozen_competitors": [
+        "arithmetic mean of subsystem autonomy coordinates",
+        "minimum subsystem autonomy coordinate",
+        "geometric mean of subsystem autonomy coordinates",
+        "regularized additive model with no interactions"
+      ],
+      "falsifier": "Mean/additive capability transports at least as well as bottleneck/complementarity forms on held-out support and burden families."
+    },
+    {
+      "id": "PF-H3",
+      "name": "Regeneration",
+      "prediction": "Long-horizon withdrawal resilience is predicted more strongly by indigenous regeneration flows than by withdrawal-day readiness/personnel/supply stocks.",
+      "stock_group": [
+        "personnel",
+        "supply stock",
+        "readiness",
+        "experienced personnel / formation experience"
+      ],
+      "flow_group": [
+        "recruitment throughput",
+        "training graduation throughput",
+        "replacement/deployment throughput",
+        "indigenous logistics replenishment",
+        "readiness recovery",
+        "command recovery or continuity if implemented"
+      ],
+      "falsifier": "Frozen stock-only models transport as well as stock-flow models at 90- and 180-day horizons."
+    },
+    {
+      "id": "PF-H4",
+      "name": "Complexity-Capacity Mismatch",
+      "prediction": "Increasing force-system complexity can raise supported performance while reducing autonomous retention when indigenous regenerative capacity is insufficient.",
+      "falsifier": "After cost and threat are controlled, added modeled complexity never creates a negative supported-performance/autonomy tradeoff."
+    }
+  ],
+  "assistance_architecture_tests_after_primary_discovery": [
+    {
+      "name": "substitution-heavy",
+      "definition": "Allocate a larger equal-cost share to removable external combat/logistics/command effects."
+    },
+    {
+      "name": "capacity-heavy",
+      "definition": "Allocate a larger equal-cost share to endogenous training, logistics, command, and replacement-generation capacity."
+    },
+    {
+      "name": "bottleneck-targeted",
+      "definition": "Allocate equal-cost capacity-building assistance toward the currently measured binding indigenous subsystem using only information permitted by the frozen policy rule."
+    },
+    {
+      "name": "calendar transition",
+      "definition": "Withdraw or taper support according to elapsed time."
+    },
+    {
+      "name": "capability-conditioned transition",
+      "definition": "Withdraw or taper according to frozen indigenous-autonomy criteria."
+    }
+  ],
+  "cost_control": {
+    "required": true,
+    "rule": "Assistance architectures compared as policy designs must have equal discounted donor cost or an explicitly reported cost-effectiveness frontier.",
+    "prohibition": "Do not allow a 'more support for longer' treatment to masquerade as an architecture result."
+  },
+  "methodological_inheritance_from_runway_study": {
+    "artifact": "partner_force_autonomy_methodology_bridge_v1.json",
+    "rules": [
+      "measure realized partner-owned stocks and flows",
+      "meter external flows separately",
+      "freeze predictors before holdout families",
+      "zero-refit transport",
+      "report AUC/discrimination and Brier/calibration separately",
+      "preserve negative or null results"
+    ]
+  },
+  "candidate_regenerative_coordinates": {
+    "status": "CANDIDATE_ONLY_NOT_YET_FITTED",
+    "generic_subsystem_coordinate": "Omega_j = tau_j / h",
+    "definition_rule": "tau_j must be computed from an audited indigenous stock/service buffer and observed endogenous net flow; external support must be excluded from the regenerative numerator/denominator accounting.",
+    "aggregate_candidates": [
+      "Omega_mean",
+      "Omega_min",
+      "Omega_geo"
+    ],
+    "dynamic_bottleneck_test": "Estimate local marginal response of R_h to each subsystem intervention; after relieving the strongest binding dimension, repeat to test whether the binding subsystem changes."
+  },
+  "historical_case_firewall": {
+    "afghanistan": "Motivation and later diagnostic only until all primary synthetic forms, gates, and code are frozen.",
+    "prohibited_before_freeze": [
+      "tuning coefficients to reproduce 2021 collapse",
+      "choosing autonomy thresholds because they fit ANA outcomes",
+      "adding contractor maintenance solely to force an Afghanistan-like failure",
+      "selecting successful predictors after inspecting historical case fit"
+    ]
+  },
+  "compute_gate": {
+    "current_phase": "stage3_discovery_ready_not_executed",
+    "no_large_sweeps_during_preparation": true,
+    "required_before_simulation": [
+      "support-overlay source design",
+      "external-vs-indigenous flow counters",
+      "capability assay freeze",
+      "paired-branch/common-random-number equivalence test",
+      "small smoke test proving support-off removes only designated external channels"
+    ],
+    "gate_status": "SATISFIED_FOR_STAGE3_DISCOVERY",
+    "stage4_policy_gate": "BLOCKED_UNTIL_DISCOVERY_AND_ZERO_REFIT_HOLDOUTS_ARE_FROZEN"
+  }
+}

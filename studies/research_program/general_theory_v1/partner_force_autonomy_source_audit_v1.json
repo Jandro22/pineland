@@ -1,0 +1,96 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_source_audit.v1",
+  "status": "INITIAL_SOURCE_AUDIT_COMPLETE_NO_MODEL_CHANGE",
+  "historical_outcomes_used": false,
+  "question": "Which existing Pineland mechanisms can support a synthetic study of supported military performance, indigenous capacity, autonomy after support withdrawal, and long-horizon regeneration?",
+  "existing_organic_capacity_channels": [
+    {
+      "channel": "security recruitment",
+      "source": "rust/pineland-model/src/state_regeneration.rs:518-553",
+      "mechanism": "Personnel deficits plus a desired reserve generate recruitment demand; recruitment is gated by legitimacy/political access and by government training affordability."
+    },
+    {
+      "channel": "training pipeline and trained reserve",
+      "source": "rust/pineland-model/src/state_regeneration.rs:556-567",
+      "mechanism": "Recruit-pipeline stock graduates into government security reserve according to security_training_rate; reserve subsequently attrits."
+    },
+    {
+      "channel": "professionalism / institutional standard",
+      "source": "rust/pineland-model/src/state_regeneration.rs:491-515",
+      "mechanism": "Security-post professionalism converges toward an institutional/legitimacy/administrative-capacity target at the security-training timescale."
+    },
+    {
+      "channel": "formation readiness and cohesion",
+      "source": "rust/pineland-model/src/combat.rs and rust/pineland-model/src/logistics.rs",
+      "mechanism": "Combat and supply shortfalls degrade readiness/cohesion; logistics proximity and fulfillment permit recovery."
+    },
+    {
+      "channel": "formation supply stock and sustainment",
+      "source": "rust/pineland-model/src/logistics.rs; rust/pineland-model/src/combat.rs:225-228",
+      "mechanism": "Formations hold conserved supply stocks that are consumed by operations/combat and replenish through logistics."
+    },
+    {
+      "channel": "command performance",
+      "source": "rust/pineland-model/src/movement.rs:1608-1625 and command-edge state",
+      "mechanism": "Command-edge reliability and latency affect execution timing; formations also carry command state."
+    },
+    {
+      "channel": "formation experience",
+      "source": "existing human-capital experiments and state-regeneration replacement logic",
+      "mechanism": "Replacement flow can restore personnel faster than experience-adjusted capability because inexperienced replacements dilute veterancy."
+    }
+  ],
+  "existing_externally_substitutable_channels": [
+    {
+      "channel": "government air support",
+      "source": "rust/pineland-model/src/combat.rs:232-246, 658-680",
+      "mechanism": "A separable government_air_support_intensity provides contact-level firepower conditional on detection and incurs a government cost.",
+      "autonomy_use": "Can serve as the first removable combat-enabler channel after an explicit external/organic ownership wrapper is added."
+    },
+    {
+      "channel": "foreign financial / training / organizational / material support",
+      "source": "rust/pineland-model/src/foreign.rs:890-969",
+      "mechanism": "Foreign resources can add government capital and institutional learning; other recipient types can receive training/material effects.",
+      "audit_warning": "Current government institutional-learning transfer has known dose-response/absorption defects recorded in foreign_statebuilding_absorption_audit_v1.json. Do not treat it as a validated partner-force capacity-building law."
+    }
+  ],
+  "important_structural_gaps": [
+    {
+      "id": "PF-G1",
+      "gap": "No explicit ownership accounting separates indigenous military capability from externally substituted capability.",
+      "required_change": "Add metered support channels whose contributions can be removed while preserving the partner state."
+    },
+    {
+      "id": "PF-G2",
+      "gap": "No clean external logistics-throughput support channel for government formations.",
+      "required_change": "Overlay external supply throughput on existing conserved logistics rather than creating a second unconserved supply system."
+    },
+    {
+      "id": "PF-G3",
+      "gap": "No clean advisory command-support channel.",
+      "required_change": "Overlay temporary reliability/latency effects on existing command edges and meter their contribution."
+    },
+    {
+      "id": "PF-G4",
+      "gap": "No explicit contractor-maintenance workforce or equipment-maintenance stock.",
+      "required_change": "Do not emulate this with an undocumented scalar in v1; either leave it out or add it later as a separately audited subsystem."
+    },
+    {
+      "id": "PF-G5",
+      "gap": "No payroll ghost-soldier, absenteeism, fuel diversion, or salary-diversion mechanisms.",
+      "required_change": "Exclude generic 'corruption' from v1 rather than representing it as a magic coefficient."
+    },
+    {
+      "id": "PF-G6",
+      "gap": "No explicit desertion/abandonment process distinct from attrition and ordinary personnel turnover.",
+      "required_change": "Exclude from v1 unless later added with a mechanism-specific contract."
+    }
+  ],
+  "measurement_separation": {
+    "supported_performance": "Behavioral outcome under support-on branch; must not be defined directly from the same autonomy state variables used as predictors.",
+    "organic_capacity": "Partner-owned stocks and endogenous regeneration flows only.",
+    "autonomy": "Counterfactual performance retention after designated removable external channels are switched off.",
+    "resilience": "Persistence/recovery of autonomous performance over longer horizons after losses and turnover."
+  },
+  "audit_conclusion": "Pineland already has enough endogenous force-generation, command, readiness, logistics, supply, experience, and air-support machinery for a minimal autonomy experiment. The correct next model change is a small metered external-support overlay, not an Afghanistan-specific subsystem expansion."
+}

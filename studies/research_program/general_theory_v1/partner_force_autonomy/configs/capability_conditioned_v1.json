@@ -1,0 +1,16 @@
+{
+  "schema_version": "pineland.partner_force_policy_placeholder.v1",
+  "execution_status": "BLOCKED_STAGE4_THRESHOLD_POLICY_NOT_FROZEN",
+  "architecture_id": "capability_conditioned",
+  "name": "Capability-Conditioned Transition",
+  "description": "Future policy family in which taper or withdrawal is triggered by frozen indigenous autonomy criteria.",
+  "blocked_reason": "Choosing thresholds before Stage-3 discovery/holdout validation would leak the answer into the policy rule. No thresholds are currently specified.",
+  "required_before_activation": [
+    "complete Stage-3 discovery and zero-refit holdout validation",
+    "freeze observable autonomy criteria",
+    "preregister threshold/taper rules",
+    "equalize donor budget against competing policies"
+  ],
+  "partner_force_support": {"enabled": false},
+  "prohibited_interpretation": "No numerical autonomy threshold is frozen in this placeholder."
+}

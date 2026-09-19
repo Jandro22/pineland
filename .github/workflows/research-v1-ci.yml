@@ -1,4 +1,4 @@
-name: Research v1 core
+name: Pineland CI
 
 on:
   push:

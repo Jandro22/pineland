@@ -53,6 +53,7 @@ studies/*/results/
 /studies/research_program/general_theory_v1/screen_*_results*.json
 /studies/research_program/general_theory_v1/live_*_screen_v1/
 /studies/research_program/general_theory_v1/live_*_screen_v2/
+/studies/research_program/general_theory_v1/partner_force_autonomy/fixtures/temp_*
 
 # Research-program caches / transient orchestration logs
 /studies/research_program/source_cache/

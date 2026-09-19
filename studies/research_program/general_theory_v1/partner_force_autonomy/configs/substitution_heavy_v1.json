@@ -1,0 +1,16 @@
+{
+  "schema_version": "pineland.partner_force_support_reference.v1",
+  "execution_status": "REFERENCE_ONLY_ENGINE_MECHANISM_IMPLEMENTED_STAGE4_POLICY_COMPARISON_BLOCKED",
+  "architecture_id": "substitution_heavy",
+  "name": "Substitution-Heavy Reference",
+  "description": "Illustrative removable-support composition. Stage-3 discovery uses the frozen cell manifest instead of this file; this file makes no claim about post-withdrawal outcomes or policy quality.",
+  "partner_force_support": {
+    "schema_version": "pineland.partner_force_support.v1",
+    "enabled": true,
+    "air": {"enabled": true, "intensity": 0.8, "firepower_bonus": 0.5, "cost_per_assisted_contact": 1200.0},
+    "logistics": {"enabled": true, "mode": "throughput_augmentation", "daily_delivery_rate": 1200.0, "max_daily_capacity": 2000.0, "cost_per_supply_delivered": 12.0},
+    "command": {"enabled": false, "reliability_boost": 0.0, "latency_reduction_fraction": 0.0, "min_latency_floor_hours": 0.0, "cost_per_formation_day": 0.0},
+    "force_generation": {"enabled": false, "mode": "substitution", "training_rate_boost": 0.0, "cost_per_incremental_trainee": 0.0, "capacity_building_investment_rate": 0.0}
+  },
+  "prohibited_interpretation": "Not an equal-cost policy recommendation."
+}
