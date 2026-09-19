@@ -759,6 +759,59 @@ mod tests {
         config
     }
 
+    fn local_insurgent_rooted_mass(
+        particle: &pineland_core::state::ParticleState,
+        locality: usize,
+    ) -> f64 {
+        python_sum(
+            &(0..particle.people.residence.len())
+                .filter(|person| {
+                    particle.people.residence[*person] as usize == locality
+                        && (particle.people.organization[*person] as usize)
+                            < particle.organizations.kind.len()
+                        && particle.organizations.kind
+                            [particle.people.organization[*person] as usize]
+                            == 3
+                        && particle.people.armed_fraction[*person] > 0.0
+                })
+                .map(|person| {
+                    particle.people.represented_population[person]
+                        * particle.people.armed_fraction[person]
+                })
+                .collect::<Vec<_>>(),
+        )
+    }
+
+    fn insurgent_member_population_sum(
+        particle: &pineland_core::state::ParticleState,
+    ) -> f64 {
+        python_sum(
+            &(0..particle.organizations.kind.len())
+                .filter(|organization| particle.organizations.kind[*organization] == 3)
+                .map(|organization| particle.organizations.member_population[organization])
+                .collect::<Vec<_>>(),
+        )
+    }
+
+    fn local_insurgent_unfielded_pool(
+        particle: &pineland_core::state::ParticleState,
+        locality: usize,
+    ) -> f64 {
+        python_sum(
+            &(0..particle.manpower.pool.len())
+                .filter(|row| {
+                    particle.manpower.locality[*row] as usize == locality
+                        && (particle.manpower.organization[*row] as usize)
+                            < particle.organizations.kind.len()
+                        && particle.organizations.kind
+                            [particle.manpower.organization[*row] as usize]
+                            == 3
+                })
+                .map(|row| particle.manpower.pool[row].max(0.0))
+                .collect::<Vec<_>>(),
+        )
+    }
+
     #[test]
     fn disabled_process_is_exact_noop() {
         let config = small_config();
@@ -889,6 +942,152 @@ mod tests {
         assert!(summary.underground_disrupted > 0.0);
         assert!(engine.particle.people.armed_fraction[person] < 1.0);
         assert_eq!(fielded_before.to_bits(), fielded_after.to_bits());
+    }
+
+    #[test]
+    fn structural_laws_underground_decay_and_force_separation_stress_battery() {
+        let rates = [0.0005, 0.002, 0.01];
+        let elapsed_values = [1.0, 7.0, 30.0];
+        let intelligence_values = [0.2, 0.7, 1.0];
+        let security_values = [0.1, 0.6, 1.0];
+        let administrative_values = [0.0, 0.5, 1.0];
+        let mut checked = 0usize;
+        let mut maximum_decay_relative_residual = 0.0f64;
+        let mut maximum_return_relative_residual = 0.0f64;
+        let mut maximum_member_relative_residual = 0.0f64;
+
+        for offset in 0..12u64 {
+            let seed = 2026192000u64 + offset;
+            let mut config = small_config();
+            config.seed = seed;
+            config.initialization_seed = Some(seed);
+            config.agent_count = 120;
+            config.state_regeneration.enabled = true;
+            let engine = SimulationEngine::new(config.clone()).expect("engine");
+
+            let locality = (0..engine.topology.locality_count())
+                .max_by(|left, right| {
+                    local_insurgent_rooted_mass(&engine.particle, *left)
+                        .total_cmp(&local_insurgent_rooted_mass(&engine.particle, *right))
+                })
+                .expect("locality");
+            let initial_rooted = local_insurgent_rooted_mass(&engine.particle, locality);
+            assert!(
+                initial_rooted > 1.0e-9,
+                "fresh structural seed must contain rooted insurgent mass"
+            );
+
+            for (rate_index, rate) in rates.into_iter().enumerate() {
+                for (elapsed_index, elapsed) in elapsed_values.into_iter().enumerate() {
+                    let mut particle = engine.particle.clone();
+                    let mut case_config = config.clone();
+                    case_config.state_regeneration.underground_disruption_rate = rate;
+                    let intelligence = intelligence_values[elapsed_index];
+                    let security = security_values[rate_index];
+                    let administrative =
+                        administrative_values[(offset as usize + rate_index + elapsed_index) % 3];
+                    particle.locality.administrative_capacity[locality] = administrative;
+
+                    let rooted_before = local_insurgent_rooted_mass(&particle, locality);
+                    let member_before = insurgent_member_population_sum(&particle);
+                    let pool_before = local_insurgent_unfielded_pool(&particle, locality);
+                    let formations_before = particle.formations.personnel.clone();
+                    let capital_before = particle.organizations.capital.clone();
+
+                    let hazard = rate
+                        * intelligence
+                        * (0.35 + 0.65 * security)
+                        * (0.45 + 0.55 * administrative);
+                    let survival = python_exp(-hazard * elapsed);
+                    let predicted_after = rooted_before * survival;
+                    let predicted_removed = rooted_before - predicted_after;
+
+                    let returned = disrupt_underground(
+                        &mut particle,
+                        &case_config,
+                        locality,
+                        intelligence,
+                        security,
+                        elapsed,
+                    );
+                    let rooted_after = local_insurgent_rooted_mass(&particle, locality);
+                    let member_after = insurgent_member_population_sum(&particle);
+                    let pool_after = local_insurgent_unfielded_pool(&particle, locality);
+
+                    let decay_residual = (rooted_after - predicted_after).abs();
+                    let return_residual = (returned - predicted_removed).abs();
+                    let member_residual =
+                        ((member_before - member_after) - returned).abs();
+                    let decay_relative =
+                        decay_residual / rooted_before.abs().max(1.0);
+                    let return_relative =
+                        return_residual / rooted_before.abs().max(1.0);
+                    let member_relative =
+                        member_residual / member_before.abs().max(1.0);
+                    maximum_decay_relative_residual =
+                        maximum_decay_relative_residual.max(decay_relative);
+                    maximum_return_relative_residual =
+                        maximum_return_relative_residual.max(return_relative);
+                    maximum_member_relative_residual =
+                        maximum_member_relative_residual.max(member_relative);
+
+                    assert!(
+                        decay_relative <= 1.0e-12,
+                        "seed={seed} rate={rate} elapsed={elapsed} predicted_after={predicted_after} observed_after={rooted_after}"
+                    );
+                    assert!(
+                        return_relative <= 1.0e-12,
+                        "seed={seed} rate={rate} elapsed={elapsed} predicted_removed={predicted_removed} returned={returned}"
+                    );
+                    assert!(
+                        member_relative <= 1.0e-12,
+                        "seed={seed} rate={rate} elapsed={elapsed} member_delta={} returned={returned}",
+                        member_before - member_after
+                    );
+                    assert_eq!(
+                        formations_before
+                            .iter()
+                            .map(|value| value.to_bits())
+                            .collect::<Vec<_>>(),
+                        particle
+                            .formations
+                            .personnel
+                            .iter()
+                            .map(|value| value.to_bits())
+                            .collect::<Vec<_>>(),
+                        "direct underground disruption must not change fielded formations"
+                    );
+                    assert_eq!(
+                        capital_before
+                            .iter()
+                            .map(|value| value.to_bits())
+                            .collect::<Vec<_>>(),
+                        particle
+                            .organizations
+                            .capital
+                            .iter()
+                            .map(|value| value.to_bits())
+                            .collect::<Vec<_>>(),
+                        "direct underground disruption must not spend organization capital"
+                    );
+                    let removed_pool = (pool_before - pool_after).max(0.0);
+                    let fighter_equivalent = returned
+                        * case_config
+                            .organization_ecology
+                            .fighter_conversion_fraction;
+                    assert!(
+                        removed_pool <= fighter_equivalent + 1.0e-9,
+                        "unfielded pool removal {removed_pool} exceeded fighter equivalent {fighter_equivalent}"
+                    );
+                    checked += 1;
+                }
+            }
+        }
+
+        assert_eq!(checked, 108);
+        println!(
+            "STRUCTURAL_SL1_SL2 cases={checked} max_decay_rel={maximum_decay_relative_residual:.17e} max_return_rel={maximum_return_relative_residual:.17e} max_member_rel={maximum_member_relative_residual:.17e}"
+        );
     }
 
     #[test]
