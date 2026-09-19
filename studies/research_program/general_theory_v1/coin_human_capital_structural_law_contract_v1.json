@@ -1,0 +1,48 @@
+{
+  "schema_version": "pineland.coin_human_capital_structural_law_contract.v1",
+  "status": "preregistered_before_math_and_production_equivalence_battery",
+  "historical_outcomes_used": false,
+  "purpose": "Elevate the prospectively confirmed quantity-quality regeneration tradeoff into an exact local replacement-memory law, then distinguish that theorem from the stochastic/dynamic rate-to-throughput relationship.",
+  "candidate_law": {
+    "id": "SL7",
+    "name": "replacement-share veterancy dilution",
+    "production_update": "E_plus = (P*E + R*E_R)/(P+R)",
+    "equivalent_form": "E_plus = E - alpha*(E-E_R), alpha=R/(P+R)",
+    "default_replacement_experience": 0.10,
+    "fixed_headcount_capability_multiplier": "g(E)=0.75+0.50*E",
+    "fixed_headcount_capability_deficit": "D_E = 1-g(E_plus)/g(E) = 0.50*alpha*(E-E_R)/(0.75+0.50*E)"
+  },
+  "theorem_conditions": [
+    "P>=0, R>=0, P+R>0",
+    "0<=E<=1 and 0<=E_R<=1",
+    "fixed-headcount capability comparison holds personnel, quality, cohesion, observation, mobility, embeddedness, initiative, firepower, and supply state constant"
+  ],
+  "consequences": [
+    "E_plus lies between E and E_R.",
+    "If R>0 and E_R<E, then E_plus<E and D_E>0.",
+    "For fixed P,E,E_R with E_R<E, D_E is strictly increasing with replacement amount R.",
+    "For fixed alpha and E, D_E is strictly increasing as replacement experience E_R falls.",
+    "Losses alone do not lower survivor experience in combat; dilution occurs when lower-experience replacements enter."
+  ],
+  "stress_grid": {
+    "incumbent_personnel": [1, 10, 100, 1000, 10000],
+    "replacement_amount": [0.001, 0.1, 1, 10, 100, 1000, 10000],
+    "incumbent_experience": [0.1, 0.25, 0.5, 0.75, 0.9, 1.0],
+    "replacement_experience": [0.0, 0.1, 0.25, 0.5, 0.9]
+  },
+  "production_equivalence_required": [
+    "The exact deploy_military update must match the theorem formula at machine precision across a state stress battery.",
+    "The production combat experience multiplier must equal 0.75+0.50*E whenever state_regeneration is enabled.",
+    "A direct loss-only combat mutation must not reduce surviving formation experience; any later decrease must be attributable to replacement flow."
+  ],
+  "dynamic_evidence": {
+    "source": "human_capital_absorption_confirmation_results_v1.json",
+    "fresh_seeds": 16,
+    "fast_minus_slow_headcount_recovery": 0.3802381764902142,
+    "fast_minus_slow_experience": -0.24279678910775176,
+    "fast_minus_slow_veterancy_deficit": 0.10116532879489656,
+    "all_primary_gates_passed": true
+  },
+  "promotion_rule": "Promote SL7 only if the algebraic grid and production-equivalence battery both pass. The separate claim that faster configured regeneration causes more replacement throughput remains an emergent synthetic result supported by the existing fresh confirmation, not part of the theorem.",
+  "claim_boundary": "Synthetic Pineland formation-memory law only; real military replacement quality, learning, and combat returns need not share these coefficients."
+}
