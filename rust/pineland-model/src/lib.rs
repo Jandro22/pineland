@@ -2588,6 +2588,12 @@ impl SimulationEngine {
             counts.insert(k, JsonValue::number(*v as f64));
         }
         o.insert("event_counts", counts);
+        if self.config.partner_force_support.enabled
+            || self.particle.partner_support != pineland_core::state::PartnerSupportLedger::default()
+        {
+            o.insert("partner_support_ledger", self.particle.partner_support.to_json());
+            o.insert("indigenous_metrics", self.indigenous_state_flow_metrics());
+        }
         o
     }
 
@@ -2596,6 +2602,44 @@ impl SimulationEngine {
     }
     pub fn decision_hash(&self) -> String {
         self.particle.decision_hash()
+    }
+
+    pub fn withdraw_external_partner_support(&mut self) {
+        self.particle.partner_support.take_snapshot(self.particle.time);
+        self.particle.partner_support.support_withdrawn = true;
+        self.particle.partner_support.withdrawal_time = Some(self.particle.time);
+    }
+
+    pub fn indigenous_state_flow_metrics(&self) -> JsonValue {
+        let mut obj = JsonValue::object();
+        let total_air_intensity = self.config.combat.government_air_support_intensity;
+        let partner_air_intensity = if self.config.partner_force_support.enabled && self.config.partner_force_support.air.enabled {
+            self.config.partner_force_support.air.intensity
+        } else {
+            0.0
+        };
+        obj.insert("indigenous_air_intensity_baseline", JsonValue::number(total_air_intensity));
+        obj.insert("partner_air_intensity_overlay", JsonValue::number(partner_air_intensity));
+        obj.insert("partner_air_assisted_contacts", JsonValue::number(self.particle.partner_support.air.assisted_contacts as f64));
+        obj.insert("partner_air_delivered_intensity", JsonValue::number(self.particle.partner_support.air.cumulative_intensity));
+
+        let indigenous_production = self.particle.logistics.cumulative_produced;
+        let partner_logistics_delivered = self.particle.partner_support.logistics.cumulative_delivered;
+        obj.insert("indigenous_logistics_cumulative_produced", JsonValue::number(indigenous_production));
+        obj.insert("partner_logistics_cumulative_delivered", JsonValue::number(partner_logistics_delivered));
+
+        let indigenous_graduates = self.particle.partner_support.force_generation.indigenous_graduates;
+        let incremental_graduates = self.particle.partner_support.force_generation.external_incremental_graduates;
+        obj.insert("indigenous_graduates", JsonValue::number(indigenous_graduates));
+        obj.insert("external_incremental_graduates", JsonValue::number(incremental_graduates));
+
+        let donor_total_cost = self.particle.partner_support.cumulative_donor_cost();
+        obj.insert("cumulative_donor_cost", JsonValue::number(donor_total_cost));
+        obj.insert("support_withdrawn", JsonValue::Bool(self.particle.partner_support.support_withdrawn));
+        if let Some(wt) = self.particle.partner_support.withdrawal_time {
+            obj.insert("withdrawal_time", JsonValue::number(wt));
+        }
+        obj
     }
 }
 
@@ -3906,5 +3950,298 @@ mod tests {
                 "missing typed process {kind}"
             );
         }
+    }
+
+    #[test]
+    fn default_partner_force_support_is_exact_noop() {
+        let config_baseline = SimulationConfig {
+            locality_count: 3,
+            agent_count: 60,
+            burn_in_days: 0.0,
+            horizon_days: 10.0,
+            ..Default::default()
+        };
+        let mut config_partner = config_baseline.clone();
+        config_partner.partner_force_support =
+            pineland_core::config::PartnerForceSupportConfig::default();
+
+        let mut engine_baseline = SimulationEngine::new(config_baseline).unwrap();
+        let mut engine_partner = SimulationEngine::new(config_partner).unwrap();
+
+        let summary_baseline = engine_baseline.run().unwrap();
+        let summary_partner = engine_partner.run().unwrap();
+
+        assert_eq!(engine_baseline.state_hash(), engine_partner.state_hash());
+        assert_eq!(
+            engine_baseline.decision_hash(),
+            engine_partner.decision_hash()
+        );
+        assert_eq!(summary_baseline, summary_partner);
+    }
+
+    #[test]
+    fn partner_support_channels_can_be_isolated() {
+        let mut config_air = SimulationConfig {
+            locality_count: 3,
+            agent_count: 60,
+            burn_in_days: 0.0,
+            horizon_days: 10.0,
+            ..Default::default()
+        };
+        config_air.partner_force_support.enabled = true;
+        config_air.partner_force_support.air.enabled = true;
+        config_air.partner_force_support.air.intensity = 0.8;
+        config_air.partner_force_support.air.firepower_bonus = 0.5;
+        config_air.partner_force_support.air.cost_per_assisted_contact = 500.0;
+
+        let mut engine_air = SimulationEngine::new(config_air).unwrap();
+        engine_air.run().unwrap();
+
+        assert_eq!(
+            engine_air
+                .particle
+                .partner_support
+                .logistics
+                .cumulative_donor_cost,
+            0.0
+        );
+        assert_eq!(
+            engine_air
+                .particle
+                .partner_support
+                .command
+                .cumulative_donor_cost,
+            0.0
+        );
+        assert_eq!(
+            engine_air
+                .particle
+                .partner_support
+                .force_generation
+                .cumulative_donor_cost,
+            0.0
+        );
+        assert_eq!(
+            engine_air
+                .particle
+                .partner_support
+                .logistics
+                .cumulative_delivered,
+            0.0
+        );
+        assert_eq!(
+            engine_air
+                .particle
+                .partner_support
+                .command
+                .assisted_events,
+            0
+        );
+        assert_eq!(
+            engine_air
+                .particle
+                .partner_support
+                .force_generation
+                .external_incremental_graduates,
+            0.0
+        );
+    }
+
+    #[test]
+    fn partner_support_withdrawal_immediate_diff_allowlist() {
+        let mut config = SimulationConfig {
+            locality_count: 4,
+            agent_count: 100,
+            burn_in_days: 0.0,
+            horizon_days: 30.0,
+            ..Default::default()
+        };
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.air.enabled = true;
+        config.partner_force_support.air.intensity = 0.8;
+        config.partner_force_support.logistics.enabled = true;
+        config.partner_force_support.logistics.daily_delivery_rate = 50.0;
+        config.partner_force_support.command.enabled = true;
+        config.partner_force_support.command.reliability_boost = 0.2;
+        config.partner_force_support.force_generation.enabled = true;
+        config.partner_force_support.force_generation.training_rate_boost = 0.05;
+
+        let mut engine = SimulationEngine::new(config).unwrap();
+        engine.advance_until(15.0).unwrap();
+
+        let mut withdrawn_engine = engine.clone();
+        withdrawn_engine.withdraw_external_partner_support();
+
+        // ALLOWLIST: Only partner_support.support_withdrawn, withdrawal_time, and snapshots may change
+        assert!(!engine.particle.partner_support.support_withdrawn);
+        assert_eq!(engine.particle.partner_support.withdrawal_time, None);
+        assert!(withdrawn_engine.particle.partner_support.support_withdrawn);
+        assert_eq!(
+            withdrawn_engine.particle.partner_support.withdrawal_time,
+            Some(15.0)
+        );
+        assert_eq!(
+            withdrawn_engine
+                .particle
+                .partner_support
+                .window_snapshots
+                .len(),
+            1
+        );
+
+        // STRICT FORBIDDEN LIST: Every other indigenous field MUST BE EXACTLY IDENTICAL
+        assert_eq!(
+            engine.particle.formations,
+            withdrawn_engine.particle.formations
+        );
+        assert_eq!(engine.particle.people, withdrawn_engine.particle.people);
+        assert_eq!(
+            engine.particle.organizations,
+            withdrawn_engine.particle.organizations
+        );
+        assert_eq!(engine.particle.leaders, withdrawn_engine.particle.leaders);
+        assert_eq!(
+            engine.particle.social_edges,
+            withdrawn_engine.particle.social_edges
+        );
+        assert_eq!(
+            engine.particle.command_edges,
+            withdrawn_engine.particle.command_edges
+        );
+        assert_eq!(
+            engine.particle.manpower,
+            withdrawn_engine.particle.manpower
+        );
+        assert_eq!(
+            engine.particle.political,
+            withdrawn_engine.particle.political
+        );
+        assert_eq!(engine.particle.foreign, withdrawn_engine.particle.foreign);
+        assert_eq!(
+            engine.particle.relations,
+            withdrawn_engine.particle.relations
+        );
+        assert_eq!(
+            engine.particle.logistics,
+            withdrawn_engine.particle.logistics
+        );
+        assert_eq!(
+            engine.particle.security_posts,
+            withdrawn_engine.particle.security_posts
+        );
+        assert_eq!(
+            engine.particle.footholds,
+            withdrawn_engine.particle.footholds
+        );
+        assert_eq!(
+            engine.particle.locality,
+            withdrawn_engine.particle.locality
+        );
+        assert_eq!(engine.particle.zones, withdrawn_engine.particle.zones);
+        assert_eq!(
+            engine.particle.counters,
+            withdrawn_engine.particle.counters
+        );
+        assert_eq!(engine.particle.rng, withdrawn_engine.particle.rng);
+    }
+
+    #[test]
+    fn paired_counterfactual_cloning_and_branch_determinism() {
+        let mut config = SimulationConfig {
+            locality_count: 3,
+            agent_count: 80,
+            burn_in_days: 0.0,
+            horizon_days: 20.0,
+            ..Default::default()
+        };
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.air.enabled = true;
+        config.partner_force_support.air.intensity = 0.8;
+        config.partner_force_support.logistics.enabled = true;
+        config.partner_force_support.logistics.daily_delivery_rate = 100.0;
+        config.partner_force_support.logistics.cost_per_supply_delivered = 10.0;
+        config.partner_force_support.command.enabled = true;
+        config.partner_force_support.command.cost_per_formation_day = 50.0;
+
+        let mut engine = SimulationEngine::new(config).unwrap();
+        engine.advance_until(10.0).unwrap();
+
+        let mut engine_on = engine.clone();
+        let mut engine_off_1 = engine.clone();
+        let mut engine_off_2 = engine.clone();
+
+        engine_off_1.withdraw_external_partner_support();
+        engine_off_2.withdraw_external_partner_support();
+
+        engine_on.advance_until(20.0).unwrap();
+        engine_off_1.advance_until(20.0).unwrap();
+        engine_off_2.advance_until(20.0).unwrap();
+
+        assert_eq!(engine_off_1.state_hash(), engine_off_2.state_hash());
+        assert_eq!(
+            engine_off_1.decision_hash(),
+            engine_off_2.decision_hash()
+        );
+        assert_eq!(engine_off_1.summary(), engine_off_2.summary());
+
+        assert_ne!(engine_on.state_hash(), engine_off_1.state_hash());
+        assert!(
+            engine_on
+                .particle
+                .partner_support
+                .logistics
+                .cumulative_delivered
+                > engine_off_1
+                    .particle
+                    .partner_support
+                    .logistics
+                    .cumulative_delivered
+        );
+        assert!(
+            engine_on.particle.partner_support.cumulative_donor_cost()
+                > engine_off_1
+                    .particle
+                    .partner_support
+                    .cumulative_donor_cost()
+        );
+    }
+
+    #[test]
+    fn partner_support_accounting_identities() {
+        let mut config = SimulationConfig {
+            locality_count: 3,
+            agent_count: 80,
+            burn_in_days: 0.0,
+            horizon_days: 15.0,
+            ..Default::default()
+        };
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.air.enabled = true;
+        config.partner_force_support.air.intensity = 0.8;
+        config.partner_force_support.air.cost_per_assisted_contact = 100.0;
+        config.partner_force_support.logistics.enabled = true;
+        config.partner_force_support.logistics.daily_delivery_rate = 50.0;
+        config.partner_force_support.logistics.cost_per_supply_delivered = 5.0;
+        config.partner_force_support.command.enabled = true;
+        config.partner_force_support.command.cost_per_formation_day = 20.0;
+        config.state_regeneration.enabled = true;
+        config.partner_force_support.force_generation.enabled = true;
+        config.partner_force_support.force_generation.training_rate_boost = 0.04;
+        config.partner_force_support.force_generation.cost_per_incremental_trainee = 25.0;
+
+        let mut engine = SimulationEngine::new(config).unwrap();
+        engine.run().unwrap();
+
+        let ledger = &engine.particle.partner_support;
+        let channel_sum = ledger.air.cumulative_donor_cost
+            + ledger.logistics.cumulative_donor_cost
+            + ledger.command.cumulative_donor_cost
+            + ledger.force_generation.cumulative_donor_cost;
+        assert!((ledger.cumulative_donor_cost() - channel_sum).abs() < 1.0e-9);
+
+        let log_sum = ledger.logistics.cumulative_delivered
+            + ledger.logistics.cumulative_rejected
+            + ledger.logistics.cumulative_lost;
+        assert!((ledger.logistics.cumulative_offered - log_sum).abs() < 1.0e-9);
     }
 }

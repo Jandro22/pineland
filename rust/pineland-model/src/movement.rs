@@ -397,6 +397,22 @@ pub fn command(
     if elapsed_days <= 0.0 {
         return Ok(());
     }
+    let partner_config = &config.partner_force_support;
+    if partner_config.enabled
+        && partner_config.command.enabled
+        && !particle.partner_support.support_withdrawn
+    {
+        let active_military = particle
+            .formations
+            .organization
+            .iter()
+            .zip(&particle.formations.active)
+            .filter(|(org, active)| **org as usize == crate::MILITARY && **active != 0)
+            .count() as f64;
+        let command_cost =
+            active_military * partner_config.command.cost_per_formation_day * elapsed_days;
+        particle.partner_support.command.cumulative_donor_cost += command_cost;
+    }
     let daily_probability = config.logistics.reallocation_rate.clamp(0.0, 1.0);
     let decision_probability = if daily_probability <= 0.0 {
         0.0
@@ -1605,7 +1621,23 @@ fn issue_movement_order(
         * config.logistics.movement_consumption_per_person_km
         * restriction_multiplier
         * equipment_supply_burden(particle, config, formation);
-    let (reliability, latency_hours) = command_metrics(particle, organization, formation);
+    let (mut reliability, mut latency_hours) = command_metrics(particle, organization, formation);
+    let partner_config = &config.partner_force_support;
+    if partner_config.enabled
+        && partner_config.command.enabled
+        && !particle.partner_support.support_withdrawn
+        && organization == crate::MILITARY
+    {
+        let boosted = (reliability + partner_config.command.reliability_boost).clamp(0.0, 1.0);
+        let reduced = (latency_hours - partner_config.command.latency_reduction)
+            .max(partner_config.command.min_latency_floor_hours)
+            .max(0.0);
+        particle.partner_support.command.assisted_events += 1;
+        particle.partner_support.command.cumulative_reliability_boost += boosted - reliability;
+        particle.partner_support.command.cumulative_latency_reduction_hours += latency_hours - reduced;
+        reliability = boosted;
+        latency_hours = reduced;
+    }
     let command_draw = rng.random();
     let status = if command_draw <= reliability {
         MOVE_PENDING

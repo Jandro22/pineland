@@ -1,0 +1,41 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_rng_pairing_audit.v1",
+  "status": "FROZEN_PRE_EXECUTION",
+  "historical_outcomes_used": false,
+  "description": "RNG pairing architecture, seed-branching guarantees, and Common Random Numbers (CRN) protocol for paired counterfactual partner-force autonomy experiment.",
+  "counterfactual_branching_design": {
+    "withdrawal_time_symbol": "T",
+    "formalism": "W_T -> (W_ON_{T+h}, W_OFF_{T+h})",
+    "cloning_protocol": {
+      "state_cloning": "Exact deep clone of ParticleWorld at time T via checkpoint deserialization or in-memory clone.",
+      "rng_state_preservation": "Cloned world inherits identical deterministic PRNG state (particle.rng) at time T.",
+      "immediate_diff_allowlist": [
+        "particle.config.partner_support.enabled (switched to false on OFF branch)",
+        "particle.partner_support.support_withdrawn (set to true on OFF branch)",
+        "particle.partner_support.withdrawal_time (set to Some(T) on OFF branch)",
+        "particle.partner_support.window_snapshots (records withdrawal event snapshot on OFF branch)"
+      ],
+      "bit_for_bit_invariant": "All indigenous state arrays (formations, people, organizations, leaders, social_edges, command_edges, manpower, political, foreign, relations, logistics, security_posts, footholds, locality, zones, counters, rng) are bit-for-bit identical immediately after withdrawal call."
+    }
+  },
+  "common_random_numbers_guarantees": {
+    "policy": "Common Random Numbers (CRN) are enforced across paired ON and OFF trajectories starting from W_T.",
+    "variance_reduction": "Pairwise differencing Delta_h = C_ON(T+h) - C_OFF(T+h) and ratio R_h = C_OFF(T+h) / max(C_ON(T+h), epsilon) removes exogenous environmental and stochastic noise common to both branches.",
+    "stochastic_coupling": "Both branches experience identical weather, insurgent strategic draws, and locality background shocks unless endogenous divergence alters subsequent event schedules.",
+    "substream_isolation": "External assistance channels (air support sorties, logistics deliveries, movement advisory boosts, force gen pipeline increments) consume zero exogenous PRNG draws or use deterministic bounded allocations to preserve cross-branch synchronization as long as contact states remain matched."
+  },
+  "verification_tests": [
+    {
+      "test_name": "paired_counterfactual_cloning_and_branch_determinism",
+      "location": "rust/pineland-model/src/lib.rs:885",
+      "property": "Cloning at step 5 produces identical trajectories if both branches maintain support; OFF branch diverges deterministically only through external channel removal.",
+      "status": "PASSING"
+    },
+    {
+      "test_name": "partner_support_withdrawal_immediate_diff_allowlist",
+      "location": "rust/pineland-model/src/lib.rs:850",
+      "property": "Verifies that immediately upon calling withdraw_external_partner_support(), zero indigenous fields, formations, edges, or counters are mutated.",
+      "status": "PASSING"
+    }
+  ]
+}

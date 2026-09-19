@@ -1,0 +1,42 @@
+{
+  "architecture_metadata": {
+    "architecture_id": "substitution_heavy",
+    "name": "Substitution-Heavy Assistance",
+    "version": "v1",
+    "description": "High external air combat sorties and direct-to-unit logistics throughput; zero external investment in indigenous training pipelines or command networks. Masks organic deficits during support-on.",
+    "intended_hypotheses": ["PF-H1", "PF-H4"],
+    "target_discounted_donor_cost": 500000.0,
+    "withdrawal_epochs_ticks": [60, 120, 180]
+  },
+  "partner_force_support": {
+    "schema_version": "pineland.partner_force_support.v1",
+    "enabled": true,
+    "air": {
+      "enabled": true,
+      "intensity": 0.80,
+      "firepower_bonus": 0.50,
+      "cost_per_assisted_contact": 1200.0
+    },
+    "logistics": {
+      "enabled": true,
+      "mode": "throughput_augmentation",
+      "daily_delivery_rate": 1200.0,
+      "max_daily_capacity": 2000.0,
+      "cost_per_supply_delivered": 12.0
+    },
+    "command": {
+      "enabled": false,
+      "reliability_boost": 0.0,
+      "latency_reduction": 0.0,
+      "min_latency_floor_hours": 0.0,
+      "cost_per_formation_day": 0.0
+    },
+    "force_generation": {
+      "enabled": false,
+      "mode": "substitution",
+      "training_rate_boost": 0.0,
+      "cost_per_incremental_trainee": 0.0,
+      "capacity_building_investment_rate": 0.0
+    }
+  }
+}

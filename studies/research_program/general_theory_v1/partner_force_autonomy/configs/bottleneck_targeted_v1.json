@@ -1,0 +1,42 @@
+{
+  "architecture_metadata": {
+    "architecture_id": "bottleneck_targeted",
+    "name": "Bottleneck-Targeted Assistance",
+    "version": "v1",
+    "description": "Balanced assistance directed toward relieving the measured binding constraint subsystem min(Omega_M, Omega_F, Omega_G, Omega_C). Maximizes post-withdrawal autonomy per donor dollar.",
+    "intended_hypotheses": ["PF-H2"],
+    "target_discounted_donor_cost": 500000.0,
+    "withdrawal_epochs_ticks": [60, 120, 180]
+  },
+  "partner_force_support": {
+    "schema_version": "pineland.partner_force_support.v1",
+    "enabled": true,
+    "air": {
+      "enabled": true,
+      "intensity": 0.25,
+      "firepower_bonus": 0.30,
+      "cost_per_assisted_contact": 800.0
+    },
+    "logistics": {
+      "enabled": true,
+      "mode": "bottleneck_directed",
+      "daily_delivery_rate": 600.0,
+      "max_daily_capacity": 1000.0,
+      "cost_per_supply_delivered": 10.0
+    },
+    "command": {
+      "enabled": true,
+      "reliability_boost": 0.20,
+      "latency_reduction": 0.25,
+      "min_latency_floor_hours": 1.0,
+      "cost_per_formation_day": 120.0
+    },
+    "force_generation": {
+      "enabled": true,
+      "mode": "bottleneck_relief",
+      "training_rate_boost": 0.25,
+      "cost_per_incremental_trainee": 100.0,
+      "capacity_building_investment_rate": 1000.0
+    }
+  }
+}

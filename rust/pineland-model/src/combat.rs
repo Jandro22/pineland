@@ -245,6 +245,35 @@ fn government_air_support_level(
         * (0.5 + 0.5 * particle.formations.information[formation].clamp(0.0, 1.0))
 }
 
+fn partner_air_support_level(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    formation: usize,
+    detected_opponent: bool,
+) -> (f64, f64) {
+    let partner_config = &config.partner_force_support;
+    if !partner_config.enabled
+        || !partner_config.air.enabled
+        || particle.partner_support.support_withdrawn
+        || !detected_opponent
+        || particle.formations.organization[formation] as usize != crate::MILITARY
+    {
+        return (0.0, 0.0);
+    }
+    particle.partner_support.air.opportunities += 1;
+    let intensity = partner_config.air.intensity
+        * (0.5 + 0.5 * particle.formations.information[formation].clamp(0.0, 1.0));
+    let firepower_bonus = intensity * partner_config.air.firepower_bonus;
+    let cost = partner_config.air.cost_per_assisted_contact;
+
+    particle.partner_support.air.assisted_contacts += 1;
+    particle.partner_support.air.cumulative_intensity += intensity;
+    particle.partner_support.air.cumulative_firepower_bonus += firepower_bonus;
+    particle.partner_support.air.cumulative_donor_cost += cost;
+
+    (intensity, firepower_bonus)
+}
+
 fn presence_personnel(
     _particle: &ParticleState,
     state: &pineland_core::state::PresenceState,
@@ -655,11 +684,17 @@ fn resolve_engagement(
         } else {
             0.0
         };
+
     let air_first = government_air_support_level(particle, config, first, detected_first);
     let air_second = government_air_support_level(particle, config, second, detected_second);
-    let air_multiplier_first = 1.0 + air_first * config.combat.government_air_support_firepower_bonus;
-    let air_multiplier_second =
-        1.0 + air_second * config.combat.government_air_support_firepower_bonus;
+    let (_partner_air_first, partner_bonus_first) =
+        partner_air_support_level(particle, config, first, detected_first);
+    let (_partner_air_second, partner_bonus_second) =
+        partner_air_support_level(particle, config, second, detected_second);
+    let organic_bonus_first = air_first * config.combat.government_air_support_firepower_bonus;
+    let organic_bonus_second = air_second * config.combat.government_air_support_firepower_bonus;
+    let air_multiplier_first = 1.0 + organic_bonus_first + partner_bonus_first;
+    let air_multiplier_second = 1.0 + organic_bonus_second + partner_bonus_second;
     let capability_first = capability(
         particle,
         topology,

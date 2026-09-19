@@ -701,6 +701,118 @@ impl Default for StateRegenerationConfig {
     }
 }
 
+/// Channel A: External air support configuration.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AirSupportChannelConfig {
+    pub enabled: bool,
+    pub intensity: f64,
+    pub firepower_bonus: f64,
+    pub cost_per_assisted_contact: f64,
+}
+
+impl Default for AirSupportChannelConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            intensity: 0.0,
+            firepower_bonus: 0.5,
+            cost_per_assisted_contact: 0.0,
+        }
+    }
+}
+
+/// Channel B: Conserved external logistics configuration.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LogisticsSupportChannelConfig {
+    pub enabled: bool,
+    pub mode: String,
+    pub daily_delivery_rate: f64,
+    pub max_daily_capacity: f64,
+    pub cost_per_supply_delivered: f64,
+}
+
+impl Default for LogisticsSupportChannelConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            mode: "throughput_augmentation".to_string(),
+            daily_delivery_rate: 0.0,
+            max_daily_capacity: 1.0e9,
+            cost_per_supply_delivered: 0.0,
+        }
+    }
+}
+
+/// Channel C: External command/advisory support configuration.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CommandSupportChannelConfig {
+    pub enabled: bool,
+    pub reliability_boost: f64,
+    pub latency_reduction: f64,
+    pub min_latency_floor_hours: f64,
+    pub cost_per_formation_day: f64,
+}
+
+impl Default for CommandSupportChannelConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            reliability_boost: 0.0,
+            latency_reduction: 0.0,
+            min_latency_floor_hours: 0.0,
+            cost_per_formation_day: 0.0,
+        }
+    }
+}
+
+/// Channel D: External force-generation and training support configuration.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ForceGenSupportChannelConfig {
+    pub enabled: bool,
+    pub mode: String,
+    pub training_rate_boost: f64,
+    pub cost_per_incremental_trainee: f64,
+    pub capacity_building_investment_rate: f64,
+}
+
+impl Default for ForceGenSupportChannelConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            mode: "substitution".to_string(),
+            training_rate_boost: 0.0,
+            cost_per_incremental_trainee: 0.0,
+            capacity_building_investment_rate: 0.0,
+        }
+    }
+}
+
+/// First-class external partner-force support overlay configuration.
+///
+/// Version: pineland.partner_force_support.v1
+#[derive(Clone, Debug, PartialEq)]
+pub struct PartnerForceSupportConfig {
+    pub schema_version: String,
+    pub enabled: bool,
+    pub air: AirSupportChannelConfig,
+    pub logistics: LogisticsSupportChannelConfig,
+    pub command: CommandSupportChannelConfig,
+    pub force_generation: ForceGenSupportChannelConfig,
+}
+
+impl Default for PartnerForceSupportConfig {
+    fn default() -> Self {
+        Self {
+            schema_version: "pineland.partner_force_support.v1".to_string(),
+            enabled: false,
+            air: AirSupportChannelConfig::default(),
+            logistics: LogisticsSupportChannelConfig::default(),
+            command: CommandSupportChannelConfig::default(),
+            force_generation: ForceGenSupportChannelConfig::default(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct ForeignAffairsConfig {
     pub enabled: bool,
@@ -865,6 +977,7 @@ pub struct SimulationConfig {
     pub civilian_dynamics: CivilianDynamicsConfig,
     pub political_order: PoliticalOrderConfig,
     pub state_regeneration: StateRegenerationConfig,
+    pub partner_force_support: PartnerForceSupportConfig,
     pub foreign_affairs: ForeignAffairsConfig,
     pub peace_process: PeaceProcessConfig,
     pub recording: RecordingConfig,
@@ -906,6 +1019,7 @@ impl Default for SimulationConfig {
             civilian_dynamics: CivilianDynamicsConfig::default(),
             political_order: PoliticalOrderConfig::default(),
             state_regeneration: StateRegenerationConfig::default(),
+            partner_force_support: PartnerForceSupportConfig::default(),
             foreign_affairs: ForeignAffairsConfig::default(),
             peace_process: PeaceProcessConfig::default(),
             recording: RecordingConfig::default(),
@@ -1035,6 +1149,9 @@ impl SimulationConfig {
         if let Some(value) = object.get("state_regeneration") {
             apply_state_regeneration(value, &mut config.state_regeneration)?;
         }
+        if let Some(value) = object.get("partner_force_support") {
+            apply_partner_force_support(value, &mut config.partner_force_support)?;
+        }
         if let Some(value) = object.get("foreign_affairs") {
             apply_foreign(value, &mut config.foreign_affairs)?;
         }
@@ -1077,6 +1194,7 @@ impl SimulationConfig {
             "civilian_dynamics",
             "political_order",
             "state_regeneration",
+            "partner_force_support",
             "foreign_affairs",
             "peace_process",
             "recording",
@@ -1371,6 +1489,71 @@ impl SimulationConfig {
                 )));
             }
         }
+        if self.partner_force_support.enabled {
+            if !self.partner_force_support.air.intensity.is_finite()
+                || !(0.0..=1.0).contains(&self.partner_force_support.air.intensity)
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.air.intensity must be finite and in [0,1]".to_string(),
+                ));
+            }
+            if !self.partner_force_support.air.cost_per_assisted_contact.is_finite()
+                || self.partner_force_support.air.cost_per_assisted_contact < 0.0
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.air.cost_per_assisted_contact must be finite and non-negative".to_string(),
+                ));
+            }
+            if !self.partner_force_support.command.reliability_boost.is_finite()
+                || !(0.0..=1.0).contains(&self.partner_force_support.command.reliability_boost)
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.command.reliability_boost must be finite and in [0,1]".to_string(),
+                ));
+            }
+            if !self.partner_force_support.command.latency_reduction.is_finite()
+                || !(0.0..=1.0).contains(&self.partner_force_support.command.latency_reduction)
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.command.latency_reduction must be finite and in [0,1]".to_string(),
+                ));
+            }
+            if !self.partner_force_support.command.cost_per_formation_day.is_finite()
+                || self.partner_force_support.command.cost_per_formation_day < 0.0
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.command.cost_per_formation_day must be finite and non-negative".to_string(),
+                ));
+            }
+            if !self.partner_force_support.force_generation.training_rate_boost.is_finite()
+                || self.partner_force_support.force_generation.training_rate_boost < 0.0
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.force_generation.training_rate_boost must be finite and non-negative".to_string(),
+                ));
+            }
+            if !self.partner_force_support.force_generation.cost_per_incremental_trainee.is_finite()
+                || self.partner_force_support.force_generation.cost_per_incremental_trainee < 0.0
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.force_generation.cost_per_incremental_trainee must be finite and non-negative".to_string(),
+                ));
+            }
+            if !self.partner_force_support.logistics.daily_delivery_rate.is_finite()
+                || self.partner_force_support.logistics.daily_delivery_rate < 0.0
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.logistics.daily_delivery_rate must be finite and non-negative".to_string(),
+                ));
+            }
+            if !self.partner_force_support.logistics.cost_per_supply_delivered.is_finite()
+                || self.partner_force_support.logistics.cost_per_supply_delivered < 0.0
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.logistics.cost_per_supply_delivered must be finite and non-negative".to_string(),
+                ));
+            }
+        }
         validate_json_numbers(&self.to_json(), "config")?;
         if self.locality_count > (u32::MAX as usize) || self.agent_count > (u32::MAX as usize) {
             return Err(ConfigError::Invalid(
@@ -1443,6 +1626,9 @@ impl SimulationConfig {
         // Any non-default v2 configuration emits the complete section.
         if self.state_regeneration != StateRegenerationConfig::default() {
             root.insert("state_regeneration", self.state_regeneration.to_json());
+        }
+        if self.partner_force_support != PartnerForceSupportConfig::default() {
+            root.insert("partner_force_support", self.partner_force_support.to_json());
         }
         root.insert("foreign_affairs", self.foreign_affairs.to_json());
         root.insert("peace_process", self.peace_process.to_json());
@@ -1719,6 +1905,79 @@ impl StateRegenerationConfig {
         };
         o.insert("enabled", JsonValue::Bool(self.enabled));
         o
+    }
+}
+impl PartnerForceSupportConfig {
+    pub fn to_json(&self) -> JsonValue {
+        let mut root = JsonValue::object();
+        root.insert("schema_version", JsonValue::string(&self.schema_version));
+        root.insert("enabled", JsonValue::Bool(self.enabled));
+
+        let mut air = JsonValue::object();
+        air.insert("enabled", JsonValue::Bool(self.air.enabled));
+        air.insert("intensity", JsonValue::number(self.air.intensity));
+        air.insert("firepower_bonus", JsonValue::number(self.air.firepower_bonus));
+        air.insert(
+            "cost_per_assisted_contact",
+            JsonValue::number(self.air.cost_per_assisted_contact),
+        );
+        root.insert("air", air);
+
+        let mut logistics = JsonValue::object();
+        logistics.insert("enabled", JsonValue::Bool(self.logistics.enabled));
+        logistics.insert("mode", JsonValue::string(&self.logistics.mode));
+        logistics.insert(
+            "daily_delivery_rate",
+            JsonValue::number(self.logistics.daily_delivery_rate),
+        );
+        logistics.insert(
+            "max_daily_capacity",
+            JsonValue::number(self.logistics.max_daily_capacity),
+        );
+        logistics.insert(
+            "cost_per_supply_delivered",
+            JsonValue::number(self.logistics.cost_per_supply_delivered),
+        );
+        root.insert("logistics", logistics);
+
+        let mut command = JsonValue::object();
+        command.insert("enabled", JsonValue::Bool(self.command.enabled));
+        command.insert(
+            "reliability_boost",
+            JsonValue::number(self.command.reliability_boost),
+        );
+        command.insert(
+            "latency_reduction",
+            JsonValue::number(self.command.latency_reduction),
+        );
+        command.insert(
+            "min_latency_floor_hours",
+            JsonValue::number(self.command.min_latency_floor_hours),
+        );
+        command.insert(
+            "cost_per_formation_day",
+            JsonValue::number(self.command.cost_per_formation_day),
+        );
+        root.insert("command", command);
+
+        let mut force_generation = JsonValue::object();
+        force_generation.insert("enabled", JsonValue::Bool(self.force_generation.enabled));
+        force_generation.insert("mode", JsonValue::string(&self.force_generation.mode));
+        force_generation.insert(
+            "training_rate_boost",
+            JsonValue::number(self.force_generation.training_rate_boost),
+        );
+        force_generation.insert(
+            "cost_per_incremental_trainee",
+            JsonValue::number(self.force_generation.cost_per_incremental_trainee),
+        );
+        force_generation.insert(
+            "capacity_building_investment_rate",
+            JsonValue::number(self.force_generation.capacity_building_investment_rate),
+        );
+        root.insert("force_generation", force_generation);
+
+        root
     }
 }
 impl ForeignAffairsConfig {
@@ -2211,6 +2470,90 @@ fn apply_state_regeneration(
     }
     Ok(())
 }
+
+fn apply_partner_force_support(
+    v: &JsonValue,
+    t: &mut PartnerForceSupportConfig,
+) -> Result<(), ConfigError> {
+    let o = object(v, "partner_force_support")?;
+    if let Some(x) = o.get("enabled") {
+        t.enabled = required_bool(x, "enabled")?;
+    }
+    if let Some(x) = o.get("schema_version") {
+        t.schema_version = required_string(x, "schema_version")?;
+    }
+    if let Some(x) = o.get("air") {
+        let air_obj = object(x, "air")?;
+        if let Some(b) = air_obj.get("enabled") {
+            t.air.enabled = required_bool(b, "enabled")?;
+        }
+        if let Some(val) = air_obj.get("intensity") {
+            t.air.intensity = required_f64(val, "intensity")?;
+        }
+        if let Some(val) = air_obj.get("firepower_bonus") {
+            t.air.firepower_bonus = required_f64(val, "firepower_bonus")?;
+        }
+        if let Some(val) = air_obj.get("cost_per_assisted_contact") {
+            t.air.cost_per_assisted_contact = required_f64(val, "cost_per_assisted_contact")?;
+        }
+    }
+    if let Some(x) = o.get("logistics") {
+        let log_obj = object(x, "logistics")?;
+        if let Some(b) = log_obj.get("enabled") {
+            t.logistics.enabled = required_bool(b, "enabled")?;
+        }
+        if let Some(val) = log_obj.get("mode") {
+            t.logistics.mode = required_string(val, "mode")?;
+        }
+        if let Some(val) = log_obj.get("daily_delivery_rate") {
+            t.logistics.daily_delivery_rate = required_f64(val, "daily_delivery_rate")?;
+        }
+        if let Some(val) = log_obj.get("max_daily_capacity") {
+            t.logistics.max_daily_capacity = required_f64(val, "max_daily_capacity")?;
+        }
+        if let Some(val) = log_obj.get("cost_per_supply_delivered") {
+            t.logistics.cost_per_supply_delivered = required_f64(val, "cost_per_supply_delivered")?;
+        }
+    }
+    if let Some(x) = o.get("command") {
+        let cmd_obj = object(x, "command")?;
+        if let Some(b) = cmd_obj.get("enabled") {
+            t.command.enabled = required_bool(b, "enabled")?;
+        }
+        if let Some(val) = cmd_obj.get("reliability_boost") {
+            t.command.reliability_boost = required_f64(val, "reliability_boost")?;
+        }
+        if let Some(val) = cmd_obj.get("latency_reduction") {
+            t.command.latency_reduction = required_f64(val, "latency_reduction")?;
+        }
+        if let Some(val) = cmd_obj.get("min_latency_floor_hours") {
+            t.command.min_latency_floor_hours = required_f64(val, "min_latency_floor_hours")?;
+        }
+        if let Some(val) = cmd_obj.get("cost_per_formation_day") {
+            t.command.cost_per_formation_day = required_f64(val, "cost_per_formation_day")?;
+        }
+    }
+    if let Some(x) = o.get("force_generation") {
+        let fg_obj = object(x, "force_generation")?;
+        if let Some(b) = fg_obj.get("enabled") {
+            t.force_generation.enabled = required_bool(b, "enabled")?;
+        }
+        if let Some(val) = fg_obj.get("mode") {
+            t.force_generation.mode = required_string(val, "mode")?;
+        }
+        if let Some(val) = fg_obj.get("training_rate_boost") {
+            t.force_generation.training_rate_boost = required_f64(val, "training_rate_boost")?;
+        }
+        if let Some(val) = fg_obj.get("cost_per_incremental_trainee") {
+            t.force_generation.cost_per_incremental_trainee = required_f64(val, "cost_per_incremental_trainee")?;
+        }
+        if let Some(val) = fg_obj.get("capacity_building_investment_rate") {
+            t.force_generation.capacity_building_investment_rate = required_f64(val, "capacity_building_investment_rate")?;
+        }
+    }
+    Ok(())
+}
+
 fn apply_foreign(v: &JsonValue, t: &mut ForeignAffairsConfig) -> Result<(), ConfigError> {
     let o = object(v, "foreign_affairs")?;
     if let Some(x) = o.get("enabled") {
@@ -2306,7 +2649,7 @@ fn apply_recording(v: &JsonValue, t: &mut RecordingConfig) -> Result<(), ConfigE
 
 #[cfg(test)]
 mod tests {
-    use super::{SimulationConfig, StateRegenerationConfig};
+    use super::{PartnerForceSupportConfig, SimulationConfig, StateRegenerationConfig};
     use crate::json::parse;
 
     #[test]
@@ -2350,5 +2693,53 @@ mod tests {
         let round_trip = SimulationConfig::from_json(&parse(&encoded).unwrap()).unwrap();
         assert_eq!(round_trip, config);
         assert_eq!(round_trip.canonical_hash(), config.canonical_hash());
+    }
+
+    #[test]
+    fn default_partner_force_support_does_not_change_legacy_canonical_json() {
+        let config = SimulationConfig::default();
+        assert_eq!(
+            config.partner_force_support,
+            PartnerForceSupportConfig::default()
+        );
+        assert!(config.to_json().get("partner_force_support").is_none());
+    }
+
+    #[test]
+    fn enabled_partner_force_support_round_trips_exactly() {
+        let mut config = SimulationConfig::default();
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.air.enabled = true;
+        config.partner_force_support.air.intensity = 0.75;
+        config.partner_force_support.air.cost_per_assisted_contact = 15.0;
+        config.partner_force_support.logistics.enabled = true;
+        config.partner_force_support.logistics.daily_delivery_rate = 45.0;
+        config.partner_force_support.logistics.cost_per_supply_delivered = 2.5;
+        config.partner_force_support.command.enabled = true;
+        config.partner_force_support.command.reliability_boost = 0.4;
+        config.partner_force_support.command.latency_reduction = 0.5;
+        config.partner_force_support.command.cost_per_formation_day = 10.0;
+        config.partner_force_support.force_generation.enabled = true;
+        config.partner_force_support.force_generation.training_rate_boost = 0.05;
+        config.partner_force_support.force_generation.cost_per_incremental_trainee = 25.0;
+
+        let encoded = config.to_json().to_compact();
+        assert!(encoded.contains("partner_force_support"));
+        assert!(encoded.contains("pineland.partner_force_support.v1"));
+        let round_trip = SimulationConfig::from_json(&parse(&encoded).unwrap()).unwrap();
+        assert_eq!(round_trip, config);
+        assert_eq!(round_trip.canonical_hash(), config.canonical_hash());
+    }
+
+    #[test]
+    fn invalid_partner_force_support_parameters_are_rejected() {
+        let mut config = SimulationConfig::default();
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.air.intensity = 1.5;
+        assert!(config.validate().is_err());
+
+        config.partner_force_support.air.intensity = 0.5;
+        config.partner_force_support.command.reliability_boost = -0.1;
+        assert!(config.validate().is_err());
     }
 }

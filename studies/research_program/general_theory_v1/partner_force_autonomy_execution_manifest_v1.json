@@ -1,0 +1,65 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_execution_manifest.v1",
+  "status": "READY_FOR_EXECUTION_ZERO_COMPUTE_GATE_ENFORCED",
+  "historical_outcomes_used": false,
+  "description": "Execution protocol, battery plan, CLI launch instructions, and compute gate enforcement for the Partner-Force Autonomy Experiment.",
+  "preparation_phase_compute_enforcement": {
+    "compute_gate": "PASSED_ZERO_EXPERIMENTAL_COMPUTE",
+    "verification_actions_completed": [
+      "Rust workspace compilation and 46/46 unit tests passing",
+      "Immediate diff allowlist invariant verified",
+      "Paired counterfactual cloning and CRN determinism verified",
+      "Channel isolation and flow conservation accounting identities verified",
+      "Synthetic pairing fixtures and analysis pipelines verified without simulation runs"
+    ]
+  },
+  "planned_experimental_battery": {
+    "design": "Paired counterfactual factorial across 5 assistance architectures",
+    "withdrawal_epochs_ticks": [60, 120, 180],
+    "measurement_horizons_days": [7, 30, 90, 180],
+    "seeds_per_cell": 16,
+    "total_counterfactual_pairs": 80,
+    "configurations": [
+      {
+        "name": "substitution_heavy",
+        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/substitution_heavy_v1.json",
+        "emphasis": "High external air & logistics delivery; minimal indigenous training/command investment"
+      },
+      {
+        "name": "capacity_heavy",
+        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capacity_heavy_v1.json",
+        "emphasis": "High force-generation throughput and institutional command advisory; moderate direct firepower"
+      },
+      {
+        "name": "bottleneck_targeted",
+        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/bottleneck_targeted_v1.json",
+        "emphasis": "Assistance directed dynamically to the binding indigenous constraint subsystem"
+      },
+      {
+        "name": "calendar_transition",
+        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/calendar_transition_v1.json",
+        "emphasis": "Fixed chronological phased step-down of external support channels"
+      },
+      {
+        "name": "capability_conditioned",
+        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capability_conditioned_v1.json",
+        "emphasis": "Withdrawal triggered strictly upon indigenous forces reaching autonomous benchmark thresholds"
+      }
+    ]
+  },
+  "cost_control_protocol": {
+    "discount_rate_annual": 0.05,
+    "equal_donor_cost_normalization": true,
+    "target_discounted_donor_cost": 500000.0,
+    "tolerance_band": 0.05
+  },
+  "launch_instructions": {
+    "single_command_execution": "python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --config-dir studies/research_program/general_theory_v1/partner_force_autonomy/configs --output-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs",
+    "pre_launch_validator": "python studies/research_program/general_theory_v1/partner_force_autonomy/validate_partner_force_autonomy_environment.py"
+  },
+  "data_outputs_contract": {
+    "panel_dataset": "studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_panel_v1.csv",
+    "summary_metrics": "studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_metrics_v1.json",
+    "schema_file": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_output_schema_v1.json"
+  }
+}
