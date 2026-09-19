@@ -1,0 +1,391 @@
+{
+  "schema_version": "pineland.falsification_ledger.v7",
+  "status": "completed_synthetic_mechanism_layer_with_rootedness_feedback_failure_preserved",
+  "historical_outcomes_used": false,
+  "firewall_certified": true,
+  "negative_results_permanent": true,
+  "falsifications": [
+    {
+      "id": "FALS-001",
+      "hypothesis": "Naive Scalar Strain Law: Insurgent survival probability is a universal monotonic function of scalar strain sigma = (r * f) / c.",
+      "tested_in": "studies/research_program/general_theory_v1/mobilization_resource_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "within_strain_dispersion": 0.625,
+        "dispersion_threshold": 0.15,
+        "collapse_count": 607,
+        "hard_capital_depletion_fraction": 1.0,
+        "matched_monotonicity_score": 1.0
+      },
+      "causal_mechanism": "Mobilization creates a two-timescale burn: upfront supply reservation (24.0 units/fighter) and ongoing maintenance costs. Survival cannot be collapsed to a single scalar strain; it requires a multi-term burn law Burn = kappa_r * r + kappa_rf * r * f + kappa_f * f, or the two-timescale ratio Pi_M = tau_replenish / tau_mobilize.",
+      "consequence_for_theory": "The naive 1D strain equation is discarded. The general theory incorporates the 3-term operational burn law."
+    },
+    {
+      "id": "FALS-002",
+      "hypothesis": "Passive Fiscal State Institutional Regeneration: Local administrative capacity recovers passively toward baseline following central budget subsidy over 180 days.",
+      "tested_in": "studies/research_program/general_theory_v1/state_regeneration_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "mean_final_gap_closure_Q180": 0.0067985487031977515,
+        "median_final_gap_closure": -0.004481180039466848,
+        "fraction_reaching_Q50": 0.0,
+        "monotone_rescue_fraction": 0.0,
+        "mean_log_capital_slope": -0.0004954068792604839
+      },
+      "causal_mechanism": "Government administrative and governance capacity is deeply hysteretic and path-dependent. Central financial injections do not translate into organic local administrative recovery on sub-annual timescales (tau_renewal >> 180d).",
+      "consequence_for_theory": "State-side capacity cannot be modeled as a fast-regenerating linear elastic spring. The general theory treats state capacity as an asymmetric, slow-decay/slow-build stock."
+    },
+    {
+      "id": "FALS-003",
+      "hypothesis": "Non-Rooted Spatial Reproduction: Fielded fighters (F) or footholds (E) alone can propagate insurgent spatial branching to adjacent districts without rooted civilian membership (M).",
+      "tested_in": "studies/research_program/general_theory_v1/reproduction_kernel_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "E_only_children_30d": 0.0,
+        "F_only_children_30d": 0.0,
+        "G_only_children_30d": 0.0,
+        "FG_children_30d": 0.0,
+        "M_parent_children_30d": 1.5514705882352942,
+        "MF_parent_children_30d": 1.75
+      },
+      "causal_mechanism": "In native Pineland dynamics, geographic cell establishment is triggered strictly through civilian recruitment and radicalization fronts. Fielded armed units lacking a local civilian base cannot establish organic root structures.",
+      "consequence_for_theory": "The reproduction operator K_ij strictly conditions spatial branching on rooted membership M_i. Non-rooted military excursions do not yield generational reproduction."
+    },
+    {
+      "id": "FALS-004",
+      "hypothesis": "Pure Force-Ratio Dominance: Military force ratio (F_ins / S_gov) is the superior predictor of territorial control shift and survival compared to holistic institutional net margin Gamma.",
+      "tested_in": "studies/research_program/general_theory_v1/competitive_dynamics_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "gamma_survival_auc": 0.766103656551774,
+        "force_ratio_survival_auc": 0.7455799980644026,
+        "violence_survival_auc": 0.5828448827725732,
+        "violence_delta_control_r2": -0.0010972280365020293
+      },
+      "causal_mechanism": "Insurgency is fundamentally a competitive governance struggle rather than purely kinetic attrition. Pure violence levels have zero explanatory power for territorial control shift; institutional net margin Gamma(t) provides superior trajectory forecasting.",
+      "consequence_for_theory": "Pure force ratio is not sufficient for survival discrimination on the tested panel, and Gamma carries useful survival information. However later audit shows raw force ratio can outperform Gamma for continuous control change and Gamma expansion AUC can fall below 0.5. Therefore Gamma is NOT licensed as a universal territorial-control order parameter.",
+      "interpretation_correction": "SCIENTIFIC_AUDIT_v1.json supersedes the original universal-order-parameter promotion language."
+    },
+    {
+      "id": "FALS-005",
+      "hypothesis": "Infinite-Dimensional Microstate Irreducibility: The 70+ agent-level microstate attributes cannot be compressed into a low-dimensional state vector without severe (> 10%) forecasting regret.",
+      "tested_in": "studies/research_program/general_theory_v1/macrostate_closure_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "closure_test_count": 14,
+        "closure_pass_count": 14,
+        "closure_pass_fraction": 1.0,
+        "max_regret_vs_expanded_microstate": 0.06848855911730567,
+        "regret_threshold": 0.1
+      },
+      "causal_mechanism": "Microstate distributions exhibit strong statistical manifold collapse onto the 4-dimensional manifold (M, F, E, C). Additional agent features provide negligible conditional mutual information for macrostate trajectories.",
+      "consequence_for_theory": "Low-dimensional predictive compression is supported on the tested panel, refuting severe microstate irreducibility for those forecasts. This does NOT license (M,F,E,C) as a minimal Markov-sufficient state; later common-RNG distributional closure tests fail for v2 strategic states.",
+      "interpretation_correction": "Predictive compression and distributional state closure are distinct claims; SCIENTIFIC_AUDIT_v1.json and later closure results supersede minimal-sufficiency language."
+    },
+    {
+      "id": "FALS-006",
+      "hypothesis": "Equal Channel Knockout Symmetry: Logistics supply (L) and tactical intelligence (K) can independently sustain local foothold viability in the absence of civilian membership (M), fielded forces (F), or institutional capacity (I).",
+      "tested_in": "studies/research_program/general_theory_v1/channel_factorial_8seed_90d_analysis_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "M_single_rescue_viability": 0.75,
+        "F_single_rescue_viability": 0.75,
+        "I_single_rescue_viability": 0.75,
+        "L_single_rescue_viability": 0.0,
+        "K_single_rescue_viability": 0.0
+      },
+      "causal_mechanism": "Logistics and intelligence are non-substitutable enabling conditions rather than autonomous generators of political-military presence.",
+      "consequence_for_theory": "Logistics and intelligence enter the dynamical system as scaling modulators rather than autonomous state variables in the minimal core."
+    },
+    {
+      "id": "FALS-007",
+      "hypothesis": "Police Professionalism Redundancy: Initial local police professionalism is screened off by headcount and parent institutional variables at all positive horizons.",
+      "tested_in": "studies/research_program/general_theory_v1/force_discrimination_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "mean_prof_difference_t14": 0.6847516187298122,
+        "mean_prof_difference_t112": 0.23048073579640738,
+        "monotone_convergence_decay": true,
+        "mean_intelligence_difference_t112": 0.04581740414585093,
+        "mean_cumulative_disrupted_difference_t112": 202.9076251166787,
+        "screened_off_by_staffing": false
+      },
+      "causal_mechanism": "Equal police headcount with differing professionalism yields substantially different effective local security, information collection, and underground disruption. Professionalism acts as an independent local stock that converges endogenously toward parent standards rather than inheriting them instantaneously.",
+      "consequence_for_theory": "Police professionalism is confirmed as an irreducible dynamical stock P_i(t) in the local security vector. It cannot be collapsed into headcount or parent institutional quality."
+    },
+    {
+      "id": "FALS-008",
+      "hypothesis": "Formation Veterancy Static Quality Redundancy: Formation combat capability can be reduced to static structural quality, with experience being a redundant decorative alias under personnel turnover.",
+      "tested_in": "studies/research_program/general_theory_v1/force_discrimination_results_v1.json",
+      "verdict": "FALSIFIED",
+      "empirical_evidence": {
+        "pre_turnover_exact_equivalence_max_loss_diff": 0.0,
+        "pre_turnover_exact_equivalence_max_cap_diff": 0.0,
+        "turnover_06_paired_loss_diff": 0.0013348128038848774,
+        "turnover_06_paired_t_statistic": 35.43906869162973,
+        "diverges_under_turnover": true
+      },
+      "causal_mechanism": "While instantaneously equivalent quality-experience pairs are indistinguishable under common RNG before turnover, green replacements dilute formation veterancy while structural quality remains static. High-casualty formations lose institutional combat capability even when headcount is fully refilled.",
+      "consequence_for_theory": "Formation veterancy V_f(t) is confirmed as a genuine dynamic memory stock governed by field learning and replacement dilution, strictly distinct from structural quality Q_f."
+    },
+    {
+      "id": "FALS-009",
+      "hypothesis": "Fast-Timescale State Capacity Elasticity: Hierarchical state institutional regeneration restores induced local institutional damage within a single 180-day operational cycle.",
+      "tested_in": "studies/research_program/general_theory_v1/state_regeneration_results_v2.json",
+      "verdict": "FALSIFIED_IN_TESTED_SYNTHETIC_SYSTEM",
+      "empirical_evidence": {
+        "mean_final_Q_capacity_180d": 0.06087440082316223,
+        "median_final_Q_capacity_180d": 0.058203518865799664,
+        "fraction_reaching_Q50": 0.0,
+        "fraction_reaching_Q80": 0.0,
+        "mean_Q_effective_control_180d": -0.025214868998323026,
+        "fraction_with_admin_rebuild": 1.0,
+        "fraction_with_security_flow": 1.0,
+        "mean_log_capital_slope_on_final_Q": -0.0003142048363775224
+      },
+      "causal_mechanism": "The implemented v2 recruitment, reserve, deployment, intelligence, and administrative-rebuild pathways engage, but they do not restore even half of the induced institutional-capacity gap within 180 days. This establishes weak short-horizon recovery under the tested synthetic design, not a unique long-run time constant.",
+      "consequence_for_theory": "State capacity cannot be assumed to behave as a fast elastic spring. The recovery timescale and functional form remain unidentified and must be estimated over longer horizons and under active competitive dynamics before entering a reduced theory.",
+      "interpretation_guard": "Do not infer tau_state\u22483000 days or a universal tau_state/tau_insurgent ratio by linear extrapolation from the 180-day Q result."
+    },
+    {
+      "id": "FALS-010",
+      "hypothesis": "Signed Net Transport Sufficiency: Adding local signed insurgent net transport flux to the competitive strategic state is sufficient to restore 30-day distributional closure on fresh support.",
+      "tested_in": "studies/research_program/general_theory_v1/netflux_nettransport12v2_36x24x32_30d_results_v1.json",
+      "verdict": "FALSIFIED_IN_TESTED_SYNTHETIC_SYSTEM",
+      "empirical_evidence": {
+        "raw_practically_large_pair_rate": 0.6666666666666666,
+        "multiplicity_significant_and_large_pair_rate": 0.25,
+        "high_activity_significant_and_large_pair_rate": 0.625,
+        "median_match_distance": 0.1830593516712625,
+        "max_match_distance": 0.5103144269930427
+      },
+      "causal_mechanism": "Signed transport is a valid conservative spatial-flow coordinate, but hidden-state diagnostics show residual strategic divergence is more strongly associated with rooted membership stock and social exposure than with omitted tactical quality or transport alone.",
+      "consequence_for_theory": "Retain reaction/transport/source decomposition conceptually, but do not promote net transport as the missing closure coordinate by itself."
+    },
+    {
+      "id": "FALS-011",
+      "hypothesis": "Nearest-Neighbor Reproduction: Insurgent spatial reproduction is predominantly an adjacent-locality propagation process.",
+      "tested_in": "studies/research_program/general_theory_v1/nonlocal_reproduction_confirmation_results_v1.json",
+      "verdict": "FALSIFIED_IN_ISOLATED_PARENT_SYNTHETIC_ASSAY",
+      "empirical_evidence": {
+        "positive_nonadjacent_fraction_180d": 0.7594587822600852,
+        "recruitment_trigger_share_nonadjacent_180d": 0.9709666776641372,
+        "seeds_with_nonadjacent_fraction_gt_0_5": 8,
+        "seed_count": 8
+      },
+      "causal_mechanism": "Rooted recruitment reproduces across the locality system without requiring adjacency; geographic distance retains predictive information, but adjacency is not the governing propagation rule.",
+      "consequence_for_theory": "Spatial reproduction must permit nonlocal coupling. The exact geographic/social kernel remains unresolved; the preregistered social-kernel direction gate did not pass."
+    },
+    {
+      "id": "FALS-012",
+      "hypothesis": "Material Low-Capital Rescue: In the fresh low-capital state-recovery grid, raising central capital from 0.05x to 0.25x produces at least 0.02 additional 180-day recovery in administrative or institutional capacity before a higher-capital plateau.",
+      "tested_in": "studies/research_program/general_theory_v1/state_regeneration_capital_transition_results_v1.json",
+      "verdict": "FALSIFIED_BY_PREREGISTERED_GATE",
+      "empirical_evidence": {
+        "Q_admin_0_05": 0.09750298445164203,
+        "Q_admin_0_25": 0.1039732669164462,
+        "Q_admin_gain": 0.006470282464804175,
+        "required_gain": 0.02,
+        "Q_admin_0_35": 0.1039732669164462,
+        "Q_admin_0_5": 0.1039732669164462,
+        "Q_admin_1_0": 0.1039732669164462
+      },
+      "causal_mechanism": "Financial stock can become scarce, but on this support the directly fundable pathways saturate quickly and broader institutional/service-quality dynamics dominate recovery.",
+      "consequence_for_theory": "A sharp marginal-capital plateau is observed, but the simple two-regime money-limited -> absorptive-limited architecture is not confirmed by its preregistered effect-size gate. Fiscal and institutional absorptive capacity should be distinguished."
+    },
+    {
+      "id": "FALS-013",
+      "hypothesis": "Aggregate Headcount-Minus-Capability Recovery Gap: After a personnel shock, headcount recovery should exceed aggregate combat-capability recovery when green replacements dilute veterancy.",
+      "tested_in": "studies/research_program/general_theory_v1/human_capital_absorption_results_v1.json",
+      "verdict": "MEASUREMENT_DESIGN_FALSIFIED",
+      "empirical_evidence": {
+        "reason": "Aggregate combat capability contains sublinear personnel term P^0.72, so capability fraction can exceed headcount fraction even while experience is diluted.",
+        "slow_360d_headcount_recovery": 0.6212761238665852,
+        "slow_360d_experience": 0.7465827743619537,
+        "fast_360d_headcount_recovery": 0.9938853089080717,
+        "fast_360d_experience": 0.509196502405608
+      },
+      "causal_mechanism": "The intended human-capital mechanism is real, but the preregistered aggregate metric mixes sublinear personnel scaling with experience dilution.",
+      "consequence_for_theory": "Preserve the failed endpoint. A separate fresh contract now preregisters the fixed-realized-headcount veterancy-specific capability deficit before promotion testing."
+    },
+    {
+      "id": "FALS-014",
+      "hypothesis": "Rooted Membership Plus Social Exposure Strategic Closure: Adding rooted civilian membership stock M* and mean social exposure to the competitive strategic state is sufficient to achieve <=10% distributional closure across all activity strata on fresh support.",
+      "tested_in": "studies/research_program/general_theory_v1/confirm_rootedstock_social12v3_48x24x32_results_v1.json",
+      "verdict": "FALSIFIED_ON_FRESH_CONFIRMATION_SUPPORT",
+      "empirical_evidence": {
+        "pair_count": 24,
+        "raw_practically_large_pair_rate": 0.7083333333333334,
+        "multiplicity_significant_and_large_pair_rate": 0.25,
+        "high_activity_significant_and_large_pair_rate": 0.375,
+        "mid_activity_significant_and_large_pair_rate": 0.375,
+        "low_activity_significant_and_large_pair_rate": 0.0
+      },
+      "causal_mechanism": "Social exposure primes individual radicalization but does not bound tactical combat attrition or recruit timing under active insurgent contestation.",
+      "consequence_for_theory": "The development-only pass was a hypothesis-selection artifact. Do not promote M* + social as a deterministic Markov macrostate."
+    },
+    {
+      "id": "FALS-015",
+      "hypothesis": "Rooted Membership Plus Net Transport Strategic Closure: Adding rooted civilian membership stock M* and signed net transport flux to the competitive strategic state achieves <=10% distributional closure across all activity strata on fresh support.",
+      "tested_in": "studies/research_program/general_theory_v1/confirm_rootedstock_net12v3_48x24x32_results_v1.json",
+      "verdict": "FALSIFIED_BY_PREREGISTERED_OVERALL_GATE",
+      "empirical_evidence": {
+        "pair_count": 24,
+        "raw_practically_large_pair_rate": 0.5416666666666666,
+        "multiplicity_significant_and_large_pair_rate": 0.125,
+        "high_activity_significant_and_large_pair_rate": 0.375,
+        "mid_activity_significant_and_large_pair_rate": 0.0,
+        "low_activity_significant_and_large_pair_rate": 0.0
+      },
+      "causal_mechanism": "Net transport flux successfully eliminates significant divergence in low and mid activity (0/8 pairs in both), but high-activity combat encounters create irreversible microscopic branching.",
+      "consequence_for_theory": "Net transport flux is retained as a structurally necessary spatial coordinate, but the overall candidate fails the <=10% gate due to high-activity variance."
+    },
+    {
+      "id": "FALS-016",
+      "hypothesis": "Rooted Membership Plus Social Plus Net Transport Strategic Closure: Simultaneously adding M*, social exposure, and signed net transport flux achieves <=10% distributional closure across all activity strata on fresh support.",
+      "tested_in": "studies/research_program/general_theory_v1/confirm_rootedstock_social_net13v3_48x24x32_results_v1.json",
+      "verdict": "FALSIFIED_ON_FRESH_CONFIRMATION_SUPPORT",
+      "empirical_evidence": {
+        "pair_count": 24,
+        "raw_practically_large_pair_rate": 0.5833333333333334,
+        "multiplicity_significant_and_large_pair_rate": 0.16666666666666666,
+        "high_activity_significant_and_large_pair_rate": 0.375,
+        "mid_activity_significant_and_large_pair_rate": 0.125,
+        "low_activity_significant_and_large_pair_rate": 0.0
+      },
+      "causal_mechanism": "Combining social and net transport increases dimensionality and match distance (max 0.557) without repairing high-activity kinetic attrition divergence.",
+      "consequence_for_theory": "Dimensional expansion beyond net transport yields diminishing returns."
+    },
+    {
+      "id": "FALS-017",
+      "hypothesis": "Universal Deterministic Low-Dimensional Markov Closure: There exists a finite-dimensional state representation (<= 15 coordinates) that completely eliminates macroscopic counterfactual branch divergence in high-activity combat without microscopic agent tracking.",
+      "tested_in": "studies/research_program/general_theory_v1/strategic_closure_residual_uncertainty_v1.json",
+      "verdict": "FALSIFIED_BY_IRREDUCIBLE_STOCHASTIC_INNOVATION",
+      "empirical_evidence": {
+        "high_activity_divergence_persistence": "37.5% significant large pair rate across all 11, 12, 13, and 14-variable candidates",
+        "failing_outcomes": [
+          "final_logF",
+          "final_E"
+        ],
+        "stable_outcomes": [
+          "final_C",
+          "control_delta",
+          "final_state_control",
+          "final_M",
+          "viable"
+        ],
+        "high_activity_control_smd": 0.0528,
+        "high_activity_logF_smd": 0.5123
+      },
+      "causal_mechanism": "Under sustained contact, discrete combat resolution, tactical movement timing, and individual member recruitment create genuine microscopic path-dependence. Macrostates can tightly bound governance and control trajectories, but force attrition retains intrinsic stochastic variance.",
+      "consequence_for_theory": "Cease altering the state vector every few experiments in pursuit of zero-variance deterministic Markov closure. Formally specify the reduced theory as a stochastic dynamical system with characterized residual covariance Sigma_res(activity)."
+    },
+    {
+      "id": "FALS-018",
+      "hypothesis": "Lagged Fielded-Force Suppression After Temporary Underground Disruption: a temporary intelligence-led attack on rooted armed membership should reliably propagate into a lower already-fielded insurgent force by day360.",
+      "tested_in": "studies/research_program/general_theory_v1/coin_underground_durability_replication_findings_v1.json",
+      "verdict": "FAILED_FRESH_SEED_REPLICATION",
+      "empirical_evidence": {
+        "fresh_seed_count": 16,
+        "mean_fielded_force_effect_day240": 151.068485,
+        "mean_fielded_force_effect_day360": 115.695726,
+        "development_claim": "The eight-seed development set suggested a delayed negative fielded-force effect, but the 16-seed fresh block did not reproduce it."
+      },
+      "causal_mechanism": "Underground disruption directly attacks rooted membership and unfielded manpower while deliberately leaving already-fielded formations intact. Replacement, formation access, and other endogenous force processes prevent a reliable short-horizon transmission from M to F.",
+      "consequence_for_theory": "Do not claim that temporary underground disruption reliably lowers fielded force over the tested 120-day post-intervention horizon. Preserve M and F as distinct timescale/state coordinates."
+    },
+    {
+      "id": "FALS-019",
+      "hypothesis": "Universal Endpoint Recruitment-Pressure Rebound: temporary underground disruption should produce a positive mean treatment-minus-baseline recruitment-hazard effect at day360 in the live-insurgency regime.",
+      "tested_in": "studies/research_program/general_theory_v1/coin_compensatory_recruitment_dynamic_confirmation_findings_v1.json",
+      "verdict": "FALSIFIED_ON_24_SEED_FRESH_CONFIRMATION",
+      "empirical_evidence": {
+        "fresh_seed_count": 24,
+        "mean_hazard_effect_day360": -2.8379775912843024,
+        "median_hazard_effect_day360": 0.4718771617028743,
+        "both_live_pair_count": 23,
+        "both_live_mean_hazard_effect_day360": -0.034609231332544746,
+        "both_live_median_hazard_effect_day360": 0.5120832837798872,
+        "development_context": "A prior 16-seed block showed a +17.8% mean endpoint hazard effect, but it did not generalize."
+      },
+      "causal_mechanism": "Partial stock thinning can mechanically raise replacement pressure under frozen access, but the dynamic system simultaneously evolves access, footholds, realized recruitment, stochastic organization survival, and other state variables. The static compensatory window therefore does not imply a universal positive endpoint hazard shift.",
+      "consequence_for_theory": "Retain the conditional compensatory-recruitment identity and access-redundancy result, but demote any general claim that disruption raises endpoint recruitment hazard."
+    },
+    {
+      "id": "FALS-020",
+      "hypothesis": "Strong Continuous Replacement-Flow Predictor: across fresh paired worlds, post-intervention excess recruited mass should correlate with the day360 rooted-membership effect at Pearson r > +0.50.",
+      "tested_in": "studies/research_program/general_theory_v1/coin_compensatory_recruitment_dynamic_confirmation_findings_v1.json",
+      "verdict": "PREREGISTERED_THRESHOLD_NOT_MET",
+      "empirical_evidence": {
+        "fresh_seed_count": 24,
+        "pearson_all_pairs": 0.4949183042764344,
+        "threshold": 0.5,
+        "positive_post_flow_rebound_fraction": 0.3333333333333333,
+        "nonpositive_post_flow_rebound_fraction": 0.08333333333333333,
+        "rebound_risk_difference": 0.25,
+        "exploratory_spearman_all_pairs": 0.6408695652173914,
+        "exploratory_pearson_both_live_pairs": 0.5705557088801693
+      },
+      "causal_mechanism": "Realized replacement flow is informative about rebound but is not a deterministic one-dimensional predictor; stochastic organization collapse and other endogenous stock-flow pathways contribute substantial branch variance.",
+      "consequence_for_theory": "Report the preregistered correlation gate as failed. Retain the separately passed binary risk contrast and treat replacement flow as one coordinate in a stochastic phase description rather than a sufficient predictor."
+    },
+    {
+      "id": "FALS-021",
+      "hypothesis": "Regenerative-Rate Buffering of Underground Shock: at intervention end, the rooted-membership deficit caused by temporary underground disruption should be larger at recruitment multiplier 0.03125 than at 0.0625 because the higher regenerative rate should replace a larger share of direct losses.",
+      "tested_in": "studies/research_program/general_theory_v1/coin_pressure_regeneration_metabolic_phase_findings_v1.json",
+      "verdict": "FALSIFIED_ON_FRESH_PHASE_MAP",
+      "empirical_evidence": {
+        "fresh_seed_count": 12,
+        "mean_day240_rooted_effect_0_03125": -7273.358681432156,
+        "mean_day240_rooted_effect_0_0625": -7324.419799927993,
+        "mean_day240_rooted_effect_0_125": -7301.025179568686,
+        "all_three_day240_effects_negative": true,
+        "interpretation": "The direct day240 underground-stock deficit is essentially invariant across the tested recruitment-rate band rather than being buffered at the higher rate."
+      },
+      "causal_mechanism": "The stock shock and recruitment process operate on distinct pathways/timescales. Higher configured recruitment rate does not automatically translate into greater realized compensatory flow because access and mobilization intensity coevolve after disruption.",
+      "consequence_for_theory": "Do not model ordinary recruitment-rate capacity as a simple linear buffer against direct underground disruption. Decompose realized access/intensity and recruitment flow dynamically."
+    },
+    {
+      "id": "FALS-022",
+      "hypothesis": "Spatial Rootedness-Composition Feedback as the General Driver of High-Rate Regenerative Throttling: disruption should lower the recruitable-pool-weighted rootedness contribution to the recruitment logit, and frozen-state removal of that term should attenuate the high-rate hazard deficit.",
+      "tested_in": "studies/research_program/general_theory_v1/coin_rootedness_feedback_fresh_confirmation_findings_v1.json",
+      "verdict": "FALSIFIED_ON_PREREGISTERED_FRESH_24_SEED_CONFIRMATION",
+      "empirical_evidence": {
+        "M1_high_rate_rootedness_logit_negative": false,
+        "M2_rootedness_ablation_attenuates_hazard_deficit": false,
+        "M3_high_minus_low_rootedness_hazard_contribution_negative": false,
+        "high_rate_rootedness_logit_mean": -0.0009389499556049769,
+        "high_rate_rootedness_logit_95": [
+          -0.02467438247052776,
+          0.022796482559317804
+        ],
+        "high_rate_rootedness_log_hazard_mean": 0.00548915516842038,
+        "high_rate_rootedness_log_hazard_95": [
+          -0.023122849306560122,
+          0.03410115964340088
+        ]
+      },
+      "causal_mechanism": "The development-block rootedness correlation was real on that support but did not generalize. Spatial composition can influence recruitment through the implemented logit, but it is not the stable cross-world cause of the rate-conditioned recruitment difference.",
+      "consequence_for_theory": "Reject rootedness composition as the general explanation. Retain only the exact rootedness term in the recruitment equation and any future effects that survive independent replication."
+    },
+    {
+      "id": "FALS-023",
+      "hypothesis": "Early Rate-Conditioned Regenerative Throttling: by day240, disruption-induced cumulative recruitment should be lower at recruitment multiplier 0.125 than at 0.03125.",
+      "tested_in": "studies/research_program/general_theory_v1/coin_rootedness_feedback_fresh_confirmation_findings_v1.json",
+      "verdict": "PREREGISTERED_GATE_NOT_MET",
+      "empirical_evidence": {
+        "high_minus_low_day240_recruitment_effect": -244.45137370417456,
+        "normal_95": [
+          -2664.8710240319097,
+          2175.968276623561
+        ],
+        "corresponding_day360_gate": "passed"
+      },
+      "causal_mechanism": "Any rate-conditioned divergence develops slowly and is strongly stochastic; the immediate underground-stock shock is not accompanied by a reliably distinct high-vs-low replacement flow by intervention end.",
+      "consequence_for_theory": "Do not claim early throttling. The separately replicated delayed day360 recruitment contrast remains a narrower observation, not a full deterministic pathway."
+    }
+  ],
+  "supersedes": "falsification_ledger_v6.json",
+  "historical_rerun_authorized": false,
+  "authoritative_interpretation_audit": "SCIENTIFIC_AUDIT_v1.json"
+}
