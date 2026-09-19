@@ -1,0 +1,26 @@
+{
+  "schema_version": "pineland.partner_force_holdout_contract.v1",
+  "status": "FROZEN_PRE_DISCOVERY",
+  "historical_outcomes_used": false,
+  "holdout_family_id": "complexity_mismatch",
+  "name": "Operational Complexity & Sustainment Friction Holdout Family",
+  "description": "Tests candidate autonomy predictors under elevated operational tempo, higher contact frequency, and supply transport friction not present in the Stage-3 discovery grid.",
+  "seed_namespace": "partner-force-holdout-complexity-v1",
+  "default_seed_count": 12,
+  "seed_base": 2026130000,
+  "horizons_days": [7, 30, 90, 180],
+  "cells_count": 8,
+  "experimental_manipulation": {
+    "patrol_contact_multiplier": "scaled from 1.5 to 2.5",
+    "transport_friction_factor": "scaled from 1.2 to 1.8",
+    "rationale": "High operating friction tests whether candidate Omega coordinates correctly weight sustainment burn versus tactical capability."
+  },
+  "pass_fail_criteria": {
+    "primary_metric": "spearman_rho",
+    "minimum_spearman_rho": 0.60,
+    "maximum_prediction_mae": 0.25,
+    "evaluation_horizons": [90, 180],
+    "refit_permitted": false,
+    "decision_rule": "The frozen discovery predictor must achieve Spearman rho >= 0.60 and MAE <= 0.25 on long horizons (90d and 180d) without parameter recalibration."
+  }
+}

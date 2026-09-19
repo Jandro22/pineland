@@ -85,6 +85,23 @@ def check_runner_compilation_and_safety_gate() -> None:
         "Verified runner exits without creating engine",
     )
 
+    # Test freeze enforcement gate: running with invalid freeze manifest must fail
+    cmd_freeze_gate = [
+        "cargo", "run", "--manifest-path", str(manifest_path), "-p", "pineland-model",
+        "--example", "partner_force_autonomy_stage3", "--",
+        "--freeze", "non_existent_freeze.json", "--allow-dirty", "--execute"
+    ]
+    res_freeze_gate = subprocess.run(cmd_freeze_gate, cwd=REPO_ROOT, capture_output=True, text=True)
+    freeze_gate_passed = (
+        res_freeze_gate.returncode != 0
+        and "Preregistration freeze manifest not found" in (res_freeze_gate.stdout + res_freeze_gate.stderr)
+    )
+    log_check(
+        "Stage-3 freeze enforcement gate (missing freeze => aborts execution)",
+        freeze_gate_passed,
+        "Verified runner enforces freeze before execution",
+    )
+
 
 def check_audit_artifacts() -> None:
     print("\n--- 3. General Theory Audit Artifacts ---")
@@ -215,11 +232,13 @@ def check_preregistration_freeze() -> None:
     freeze_path = CONTRACTS_DIR / "partner_force_autonomy_preregistration_freeze_v1.json"
     exists = freeze_path.exists()
     all_matched = False
+    count = 0
     if exists:
         try:
             data = json.loads(freeze_path.read_text(encoding="utf-8"))
             artifacts = data.get("frozen_artifacts", {})
-            all_matched = len(artifacts) >= 10
+            count = len(artifacts)
+            all_matched = count == 16
             for name, entry in artifacts.items():
                 rel_path = entry["path"]
                 expected_sha = entry["sha256"]
@@ -236,11 +255,55 @@ def check_preregistration_freeze() -> None:
         except Exception as e:
             all_matched = False
             print(f"Freeze validation error: {e}")
-    log_check("Preregistration cryptographic freeze hashes match disk files", exists and all_matched)
+    log_check(f"Preregistration cryptographic freeze ({count}/16 artifacts match disk)", exists and all_matched)
+
+
+def check_holdout_contracts_and_scale_audit() -> None:
+    print("\n--- 8. Preregistered Holdout Families & Scale Resolution Audit ---")
+    holdouts = [
+        ("partner_force_holdout_complexity_v1.json", 0.60, 0.25),
+        ("partner_force_holdout_forcegen_regime_v1.json", 0.60, 0.25),
+        ("partner_force_holdout_threat_pressure_v1.json", 0.55, 0.30),
+        ("partner_force_holdout_support_composition_v1.json", 0.65, 0.20),
+    ]
+    for filename, min_rho, max_mae in holdouts:
+        cpath = CONTRACTS_DIR / filename
+        exists = cpath.exists()
+        valid = False
+        if exists:
+            try:
+                c = json.loads(cpath.read_text(encoding="utf-8"))
+                crit = c.get("pass_fail_criteria", c.get("acceptance_criteria", {}))
+                valid = (
+                    c.get("status") in ("FROZEN_PRE_DISCOVERY", "PREREGISTERED_FROZEN_BEFORE_DISCOVERY_COMPUTE")
+                    and c.get("historical_outcomes_used") is False
+                    and crit.get("minimum_spearman_rho") == min_rho
+                    and crit.get("maximum_prediction_mae") == max_mae
+                    and c.get("default_seed_count", 0) > 0
+                )
+            except Exception:
+                valid = False
+        log_check(f"Holdout contract: {filename} (rho>={min_rho}, MAE<={max_mae})", exists and valid)
+
+    scale_path = CONTRACTS_DIR / "partner_force_scale_resolution_audit_v1.json"
+    scale_ok = False
+    if scale_path.exists():
+        try:
+            s = json.loads(scale_path.read_text(encoding="utf-8"))
+            ca = s.get("convergence_analysis", {})
+            scale_ok = (
+                s.get("status") == "FROZEN_SCALE_CONVERGENCE_ESTABLISHED"
+                and ca.get("is_1000_scale_sufficiently_converged") is True
+                and ca.get("retention_relative_diff_1000_to_2500", 1.0) < 0.05
+                and ca.get("government_control_relative_diff_1000_to_2500", 1.0) < 0.05
+            )
+        except Exception:
+            scale_ok = False
+    log_check("Scale resolution convergence audit (1000 agents / 72 localities justified)", scale_ok)
 
 
 def check_python_analysis_pipeline() -> None:
-    print("\n--- 8. Python Analysis Pipeline & Dry-Run ---")
+    print("\n--- 9. Python Analysis Pipeline & Zero-Refit Dry-Runs ---")
     sys.path.insert(0, str(ANALYSIS_DIR))
     try:
         import partner_force_metrics
@@ -253,18 +316,29 @@ def check_python_analysis_pipeline() -> None:
         print(f"Import error: {e}")
     log_check("Python analysis modules imported successfully", imports_ok)
 
-    cmd = [sys.executable, str(ANALYSIS_DIR / "evaluate_partner_force_autonomy.py"), "--dry-run"]
-    res = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+    # Discovery analysis dry run
+    cmd_eval = [sys.executable, str(ANALYSIS_DIR / "evaluate_partner_force_autonomy.py"), "--dry-run"]
+    res_eval = subprocess.run(cmd_eval, cwd=REPO_ROOT, capture_output=True, text=True)
     eval_ok = (
-        res.returncode == 0
-        and "PLUMBING_ONLY_PASS" in res.stdout
-        and "NO_SCIENTIFIC_EVALUATION" in res.stdout
+        res_eval.returncode == 0
+        and "PLUMBING_ONLY_PASS" in res_eval.stdout
+        and "NO_SCIENTIFIC_EVALUATION" in res_eval.stdout
     )
-    log_check("End-to-end CLI evaluation execution (dry-run mode)", eval_ok)
+    log_check("Stage-3 discovery analysis dry-run (PLUMBING_ONLY_PASS)", eval_ok)
+
+    # Holdout zero-refit evaluation dry run
+    cmd_hold = [sys.executable, str(ANALYSIS_DIR / "partner_force_autonomy_holdouts.py"), "--dry-run"]
+    res_hold = subprocess.run(cmd_hold, cwd=REPO_ROOT, capture_output=True, text=True)
+    hold_ok = (
+        res_hold.returncode == 0
+        and "PLUMBING_ONLY_PASS" in res_hold.stdout
+        and "NO_HOLDOUT_EVALUATION" in res_hold.stdout
+    )
+    log_check("Holdout zero-refit evaluation dry-run (PLUMBING_ONLY_PASS)", hold_ok)
 
 
 def check_strict_cleanliness_and_compute_gate() -> None:
-    print("\n--- 9. Strict Cleanliness & Zero Experimental Compute Gate ---")
+    print("\n--- 10. Strict Cleanliness & Zero Experimental Compute Gate ---")
     prohibited_files = [
         CONTRACTS_DIR / "partner_force_autonomy_output_schema_v1.json",
         FIXTURES_DIR / "synthetic_pairing_fixture_v1.csv",
@@ -274,6 +348,7 @@ def check_strict_cleanliness_and_compute_gate() -> None:
         OUTPUTS_DIR / "partner_force_autonomy_stage3_raw_v2.csv",
         OUTPUTS_DIR / "partner_force_autonomy_stage3_paired_v1.csv",
         OUTPUTS_DIR / "partner_force_autonomy_stage3_discovery_metrics_v1.json",
+        OUTPUTS_DIR / "partner_force_autonomy_frozen_predictor_v1.json",
     ]
     stale_found = [str(p.name) for p in prohibited_files if p.exists()]
     clean = len(stale_found) == 0
@@ -297,6 +372,7 @@ def main() -> None:
     check_stage4_blocked_configs()
     check_schema_and_fixtures()
     check_preregistration_freeze()
+    check_holdout_contracts_and_scale_audit()
     check_python_analysis_pipeline()
     check_strict_cleanliness_and_compute_gate()
 

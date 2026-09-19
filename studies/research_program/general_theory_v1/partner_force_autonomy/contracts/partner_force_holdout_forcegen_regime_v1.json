@@ -1,0 +1,26 @@
+{
+  "schema_version": "pineland.partner_force_holdout_contract.v1",
+  "status": "FROZEN_PRE_DISCOVERY",
+  "historical_outcomes_used": false,
+  "holdout_family_id": "forcegen_regime",
+  "name": "Force Generation Dynamics & Pipeline Latency Holdout Family",
+  "description": "Tests candidate autonomy predictors under constrained recruit pool elasticity and delayed security training graduation cycles.",
+  "seed_namespace": "partner-force-holdout-forcegen-v1",
+  "default_seed_count": 12,
+  "seed_base": 2026140000,
+  "horizons_days": [7, 30, 90, 180],
+  "cells_count": 8,
+  "experimental_manipulation": {
+    "security_training_rate_fraction": "scaled from 0.50 to 0.75 of baseline",
+    "recruitment_pool_elasticity": "restricted to 0.50",
+    "rationale": "Severe pipeline friction tests whether omega_manpower correctly identifies human capital replacement bottlenecks."
+  },
+  "pass_fail_criteria": {
+    "primary_metric": "spearman_rho",
+    "minimum_spearman_rho": 0.60,
+    "maximum_prediction_mae": 0.25,
+    "evaluation_horizons": [30, 90, 180],
+    "refit_permitted": false,
+    "decision_rule": "The frozen discovery predictor must achieve Spearman rho >= 0.60 and MAE <= 0.25 across horizons 30d, 90d, and 180d without refitting."
+  }
+}

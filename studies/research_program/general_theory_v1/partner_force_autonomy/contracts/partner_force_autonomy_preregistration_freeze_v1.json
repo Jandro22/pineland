@@ -2,7 +2,7 @@
   "schema_version": "pineland.partner_force_autonomy_preregistration_freeze.v1",
   "status": "FROZEN_BEFORE_DISCOVERY_COMPUTE",
   "historical_outcomes_used": false,
-  "description": "Cryptographic freeze manifest recording SHA-256 hashes of all preregistered design contracts, schemas, cell specifications, and blocked Stage-4 configurations.",
+  "description": "Cryptographic freeze manifest recording SHA-256 hashes of all preregistered design contracts, schemas, cell specifications, holdout contracts, scale resolution audit, and blocked Stage-4 configurations.",
   "frozen_artifacts": {
     "raw_branch_schema": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_raw_branch_schema_v2.json",
@@ -47,6 +47,26 @@
     "stage4_capability_conditioned_blocked": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capability_conditioned_v1.json",
       "sha256": "fa2e8bf5c7b87d609fc90008f9bcfea4a53dea56677bc6f0ac2e400855bd77a6"
+    },
+    "holdout_complexity": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_complexity_v1.json",
+      "sha256": "ec4b48552b17a606eb9d233ecba449834c542b1865bcfc62e5d55ce60012e8a3"
+    },
+    "holdout_forcegen_regime": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_forcegen_regime_v1.json",
+      "sha256": "9e8b48895a4b4e8a66179495bec46f4fcd50a7e3194969db5625a079cc651934"
+    },
+    "holdout_threat_pressure": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_threat_pressure_v1.json",
+      "sha256": "cb180b258fff811750c1a40556aeedde80ea7c5fc8f26876aa010b5c6960b869"
+    },
+    "holdout_support_composition": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_support_composition_v1.json",
+      "sha256": "c9394b94b30db764659d06f957eaf36aa62ae48289f60173e6b872eea74b3d1e"
+    },
+    "scale_resolution_audit": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_scale_resolution_audit_v1.json",
+      "sha256": "09057fab1ca2eaf4df5455639848d1d530c60ffcdcfe51abbdcb4f493907dd19"
     }
   }
 }

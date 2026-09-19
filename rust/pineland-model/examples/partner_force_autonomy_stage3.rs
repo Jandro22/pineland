@@ -144,6 +144,166 @@ fn git_commit() -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
+fn sha256(data: &[u8]) -> String {
+    let k: [u32; 64] = [
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+        0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+        0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+        0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+        0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+    ];
+
+    let mut h: [u32; 8] = [
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    ];
+
+    let bit_len = (data.len() as u64) * 8;
+    let mut padded = data.to_vec();
+    padded.push(0x80);
+    while (padded.len() % 64) != 56 {
+        padded.push(0x00);
+    }
+    padded.extend_from_slice(&bit_len.to_be_bytes());
+
+    for chunk in padded.chunks_exact(64) {
+        let mut w = [0u32; 64];
+        for i in 0..16 {
+            w[i] = u32::from_be_bytes([chunk[4 * i], chunk[4 * i + 1], chunk[4 * i + 2], chunk[4 * i + 3]]);
+        }
+        for i in 16..64 {
+            let s0 = w[i - 15].rotate_right(7) ^ w[i - 15].rotate_right(18) ^ (w[i - 15] >> 3);
+            let s1 = w[i - 2].rotate_right(17) ^ w[i - 2].rotate_right(19) ^ (w[i - 2] >> 10);
+            w[i] = w[i - 16].wrapping_add(s0).wrapping_add(w[i - 7]).wrapping_add(s1);
+        }
+
+        let mut a = h[0];
+        let mut b = h[1];
+        let mut c = h[2];
+        let mut d = h[3];
+        let mut e = h[4];
+        let mut f = h[5];
+        let mut g = h[6];
+        let mut h_val = h[7];
+
+        for i in 0..64 {
+            let s1 = e.rotate_right(6) ^ e.rotate_right(11) ^ e.rotate_right(25);
+            let ch = (e & f) ^ ((!e) & g);
+            let temp1 = h_val.wrapping_add(s1).wrapping_add(ch).wrapping_add(k[i]).wrapping_add(w[i]);
+            let s0 = a.rotate_right(2) ^ a.rotate_right(13) ^ a.rotate_right(22);
+            let maj = (a & b) ^ (a & c) ^ (b & c);
+            let temp2 = s0.wrapping_add(maj);
+
+            h_val = g;
+            g = f;
+            f = e;
+            e = d.wrapping_add(temp1);
+            d = c;
+            c = b;
+            b = a;
+            a = temp1.wrapping_add(temp2);
+        }
+
+        h[0] = h[0].wrapping_add(a);
+        h[1] = h[1].wrapping_add(b);
+        h[2] = h[2].wrapping_add(c);
+        h[3] = h[3].wrapping_add(d);
+        h[4] = h[4].wrapping_add(e);
+        h[5] = h[5].wrapping_add(f);
+        h[6] = h[6].wrapping_add(g);
+        h[7] = h[7].wrapping_add(h_val);
+    }
+
+    format!(
+        "{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}",
+        h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7]
+    )
+}
+
+fn parse_freeze_manifest(content: &str) -> Vec<(String, String)> {
+    let mut entries = Vec::new();
+    let mut current_path: Option<String> = None;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("\"path\":") {
+            if let Some(first_quote) = trimmed.find('"') {
+                let rest = &trimmed[first_quote + 1..];
+                if let Some(second_quote) = rest.find('"') {
+                    let colon_rest = &rest[second_quote + 1..];
+                    if let Some(val_start) = colon_rest.find('"') {
+                        let val_rest = &colon_rest[val_start + 1..];
+                        if let Some(val_end) = val_rest.find('"') {
+                            current_path = Some(val_rest[..val_end].to_string());
+                        }
+                    }
+                }
+            }
+        } else if trimmed.starts_with("\"sha256\":") {
+            if let Some(path) = current_path.take() {
+                if let Some(first_quote) = trimmed.find('"') {
+                    let rest = &trimmed[first_quote + 1..];
+                    if let Some(second_quote) = rest.find('"') {
+                        let colon_rest = &rest[second_quote + 1..];
+                        if let Some(val_start) = colon_rest.find('"') {
+                            let val_rest = &colon_rest[val_start + 1..];
+                            if let Some(val_end) = val_rest.find('"') {
+                                entries.push((path, val_rest[..val_end].to_string()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    entries
+}
+
+fn verify_preregistration_freeze(freeze_path: &Path) -> Result<(), String> {
+    if !freeze_path.exists() {
+        return Err(format!(
+            "Preregistration freeze manifest not found at {}. Refusing execution without frozen contracts. Use --allow-unfrozen or --smoke to override.",
+            freeze_path.display()
+        ));
+    }
+    let content = fs::read_to_string(freeze_path)
+        .map_err(|e| format!("Failed to read freeze manifest at {}: {e}", freeze_path.display()))?;
+    let entries = parse_freeze_manifest(&content);
+    if entries.len() < 16 {
+        return Err(format!(
+            "Expected at least 16 frozen artifacts in manifest, found {}",
+            entries.len()
+        ));
+    }
+    for (rel_path, expected_hash) in &entries {
+        let file_path = Path::new(rel_path);
+        let bytes = fs::read(file_path).map_err(|e| {
+            format!("Frozen artifact not found or unreadable at {rel_path}: {e}")
+        })?;
+        let actual_hash = sha256(&bytes);
+        if actual_hash != *expected_hash {
+            return Err(format!(
+                "Preregistration freeze hash mismatch for {rel_path}!\nExpected: {expected_hash}\nActual:   {actual_hash}\nRefusing execution with modified contracts. Use --allow-unfrozen to override."
+            ));
+        }
+    }
+    println!(
+        "Preregistration freeze verified: {} artifacts matched cryptographic manifest.",
+        entries.len()
+    );
+    Ok(())
+}
+
 fn check_git_clean() -> Result<(), String> {
     let output = Command::new("git")
         .args(["status", "--porcelain"])
@@ -157,9 +317,27 @@ fn check_git_clean() -> Result<(), String> {
         .lines()
         .filter(|line| {
             let trimmed = line.trim();
-            trimmed.contains("rust/")
-                || trimmed.contains("partner_force_autonomy")
-                || trimmed.contains("pineland")
+            let path = if trimmed.len() > 3 {
+                trimmed[3..].trim().trim_matches('"')
+            } else {
+                trimmed
+            };
+            if path.starts_with("rust/hpc/")
+                || path == "rust/BUILD.md"
+                || path == "rust/README.md"
+                || path == "tests/test_arc_hpc_campaign.py"
+                || path.starts_with("studies/research_program/general_theory_v1/graph_markov_")
+                || path.starts_with("studies/research_program/general_theory_v1/localflow_")
+                || path.starts_with("studies/research_program/general_theory_v1/ring1_")
+                || path.starts_with("studies/research_program/general_theory_v1/probabilistic_causal_cone_")
+            {
+                return false;
+            }
+            path.starts_with("rust/pineland-core/")
+                || path.starts_with("rust/pineland-model/")
+                || path.contains("partner_force")
+                || path.contains("stage3")
+                || path.contains("stage4")
         })
         .collect();
     if !dirty_lines.is_empty() {
@@ -513,7 +691,7 @@ fn write_row(
 }
 
 fn usage() {
-    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--design PATH] [--output PATH] [--seed-count N] [--seed-base N] [--max-cells N] [--agent-count N] [--locality-count N] [--allow-dirty] [--smoke] --execute");
+    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--design PATH] [--freeze PATH] [--output PATH] [--seed-count N] [--seed-base N] [--max-cells N] [--agent-count N] [--locality-count N] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
     eprintln!("Without --execute the runner performs NO simulation and only prints the frozen design summary.");
 }
 
@@ -524,6 +702,7 @@ fn main() -> Result<(), String> {
         return Ok(());
     }
     let mut design = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv");
+    let mut freeze = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v1.json");
     let mut output = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv");
     let mut seed_count = 12usize;
     let mut seed_base = 2_026_120_000u64;
@@ -533,17 +712,19 @@ fn main() -> Result<(), String> {
     let execute = args.iter().any(|x| x == "--execute");
     let smoke = args.iter().any(|x| x == "--smoke");
     let allow_dirty = args.iter().any(|x| x == "--allow-dirty");
+    let allow_unfrozen = args.iter().any(|x| x == "--allow-unfrozen");
 
     let mut i = 0usize;
     while i < args.len() {
         match args[i].as_str() {
-            "--design" | "--output" | "--seed-count" | "--seed-base" | "--max-cells"
+            "--design" | "--freeze" | "--output" | "--seed-count" | "--seed-base" | "--max-cells"
             | "--agent-count" | "--locality-count" => {
                 if i + 1 >= args.len() {
                     return Err(format!("{} requires a value", args[i]));
                 }
                 match args[i].as_str() {
                     "--design" => design = PathBuf::from(&args[i + 1]),
+                    "--freeze" => freeze = PathBuf::from(&args[i + 1]),
                     "--output" => output = PathBuf::from(&args[i + 1]),
                     "--seed-count" => {
                         seed_count = args[i + 1].parse().map_err(|_| "invalid --seed-count")?
@@ -569,7 +750,7 @@ fn main() -> Result<(), String> {
                 }
                 i += 2;
             }
-            "--execute" | "--smoke" | "--allow-dirty" => i += 1,
+            "--execute" | "--smoke" | "--allow-dirty" | "--allow-unfrozen" => i += 1,
             other => return Err(format!("unknown argument '{other}'")),
         }
     }
@@ -592,6 +773,10 @@ fn main() -> Result<(), String> {
     if !execute {
         println!("NO COMPUTE: --execute not supplied; no SimulationEngine was created.");
         return Ok(());
+    }
+
+    if !smoke && !allow_unfrozen {
+        verify_preregistration_freeze(&freeze)?;
     }
 
     if !smoke && !allow_dirty {
