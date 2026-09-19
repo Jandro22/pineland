@@ -23,6 +23,7 @@ pub mod recording;
 pub mod recruitment;
 pub mod social;
 pub mod state_regeneration;
+pub mod treatment_gate;
 
 use pineland_core::config::{ConfigError, SimulationConfig};
 use pineland_core::json::JsonValue;

@@ -1,0 +1,79 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_stage3_discovery_design.v2",
+  "status": "FROZEN_BEFORE_DISCOVERY_EXECUTION",
+  "historical_outcomes_used": false,
+  "purpose": "Prospective Stage-3 identification design v2 for partner-force autonomy. This design integrates the preflight treatment-relevance gate verified environment (resolving spatial segregation, active Close Air Support, and multi-channel partner support binding) varying indigenous force-generation, logistics, and command capacity together with removable support composition, then performing paired support-on/support-off branching at T without any persistent capacity-building policy mechanism.",
+  "scale": {
+    "smoke": {
+      "agent_count": 300,
+      "locality_count": 34,
+      "horizons_days": [7],
+      "seeds": 1
+    },
+    "discovery": {
+      "agent_count": 1000,
+      "locality_count": 72,
+      "horizons_days": [7, 30, 90, 180],
+      "seeds": 12
+    }
+  },
+  "world": {
+    "agent_count": 1000,
+    "locality_count": 72,
+    "agent_count_smoke": 300,
+    "locality_count_smoke": 34,
+    "state_regeneration_enabled": true,
+    "foreign_affairs_enabled": false,
+    "withdrawal_time_days": 120,
+    "prewithdrawal_observation_window_days": 60,
+    "measurement_horizons_days": [7, 30, 90, 180],
+    "default_seed_count": 12,
+    "seed_base": 2026120000
+  },
+  "capability_assay": {
+    "schema_version": "pineland.partner_force_capability_assay.v1",
+    "components": [
+      "mean government effective territorial control",
+      "fielded military personnel retention relative to the shared T baseline",
+      "operational military formation survival relative to the shared T baseline",
+      "military geographic coverage retention relative to the shared T baseline"
+    ],
+    "composite": "unweighted geometric mean of the four bounded [0,1] behavioral components",
+    "predictor_firewall": "Training throughput, logistics throughput, command reliability, readiness, experience, and external-support ledgers are excluded from the composite capability outcome."
+  },
+  "indigenous_design": {
+    "force_generation_multiplier": "multiplies security recruitment and training rates",
+    "logistics_multiplier": "multiplies indigenous logistics source daily production fraction",
+    "command_multiplier": "applied at initialization to indigenous formation command and command-edge reliability, with inverse scaling of indigenous latency",
+    "prospective_profiles_count": 10,
+    "levels_are_synthetic": true
+  },
+  "support_design": {
+    "type": "removable substitution only",
+    "profiles": ["none", "balanced", "air_heavy", "logistics_heavy", "command_heavy", "forcegen_heavy"],
+    "equal_cost_policy_comparison": false,
+    "non_saturation_justification": {
+      "air_intensity": "Levels 0.08, 0.35, 0.90 cover light to decisive fire support without trivializing insurgent survival or causing floor/ceiling saturation in combat.",
+      "logistics_throughput": "Levels 100, 450, 1200 supply units/day span austerity, replacement, and high surge without exceeding formation storage buffers.",
+      "command_advisory": "Boosts 0.05, 0.18, 0.55 and latency reductions 0.05, 0.20, 0.55 ensure effective reliability r_eff remains below 1.0 and latency stays above the physical minimum floor.",
+      "force_generation": "Training boosts 0.0015, 0.006, 0.035 day^-1 accelerate training throughput without depleting the recruit pipeline to zero."
+    },
+    "warning": "Stage 3 identifies autonomy and dependence. It must not be interpreted as a comparison of optimal assistance policies."
+  },
+  "cell_manifest": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v2.csv",
+  "preflight_gate": {
+    "mechanism_verification": "Automated preflight treatment-relevance gate verifying 12 representative worlds across combat liveness, air support, logistics delivery, forcegen replacements, command advisory, counterfactual exactness on negative controls, and treated branch divergence before campaign launch.",
+    "world_count": 12,
+    "cli_option": "--preflight-gate"
+  },
+  "execution_gate": "The Rust runner requires --execute and passes --preflight-gate. Without --execute, it prints the design and exits before creating a SimulationEngine.",
+  "model_selection_protocol": {
+    "target_horizons_days": [90, 180],
+    "selection_criterion": "grouped_cv_isotonic_rmse_by_seed",
+    "rationale": "Long-horizon resilience (90d and 180d) directly evaluates post-withdrawal autonomy without being dominated by short-term 7d/30d inertia carryover.",
+    "candidates": ["omega_min", "omega_geo", "omega_mean", "regularized_additive"],
+    "tie_break_priority": ["omega_min", "omega_geo", "omega_mean", "regularized_additive"],
+    "tie_break_tolerance": 0.0001,
+    "horizon_fitting": "After selecting the winning coordinate Omega* on target horizons [90, 180], horizon-specific mappings f_h(Omega*) are fitted for all h in [7, 30, 90, 180]."
+  }
+}

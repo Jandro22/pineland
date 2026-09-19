@@ -1118,6 +1118,13 @@ pub fn opportunities(
                 }
             }
         }
+        if pairs.is_empty() {
+            for actor in own.iter().copied() {
+                for opponent in opponents.iter().copied() {
+                    pairs.push((actor, opponent));
+                }
+            }
+        }
         if trace {
             eprintln!(
                 "ACTION armed_confrontation org={} loc={} own={} opponents={} matched_pairs={}",
@@ -1132,6 +1139,8 @@ pub fn opportunities(
             Err(_) => return,
         };
         let (actor, opponent) = pairs[selected];
+        let opponent_microzone = crate::combat::formation_microzone(particle, topology, opponent);
+        particle.formations.microzone[actor] = opponent_microzone as u32;
         let opponent_organization = particle.formations.organization[opponent] as usize;
         let defender_aware =
             particle

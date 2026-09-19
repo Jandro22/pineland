@@ -1227,8 +1227,8 @@ fn default_trajectory_output(output: &Path) -> PathBuf {
 }
 
 fn usage() {
-    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--design PATH | --holdout-contract PATH] [--freeze PATH] [--output PATH] [--trajectory-output PATH] [--seed-count N] [--seed-base N | --seed N] [--cell-id ID | --cell-index N] [--max-cells N] [--agent-count N] [--locality-count N] [--validate-configs] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
-    eprintln!("Without --execute the runner performs NO simulation and only prints the frozen design summary.");
+    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--preflight-gate] [--design PATH | --holdout-contract PATH] [--freeze PATH] [--output PATH] [--trajectory-output PATH] [--seed-count N] [--seed-base N | --seed N] [--cell-id ID | --cell-index N] [--max-cells N] [--agent-count N] [--locality-count N] [--validate-configs] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
+    eprintln!("Without --execute or --preflight-gate the runner performs NO simulation and only prints the frozen design summary.");
     eprintln!(
         "--cell-index is zero-based and, with --seed, is intended for ARC/Slurm array sharding."
     );
@@ -1239,6 +1239,25 @@ fn main() -> Result<(), String> {
     if args.iter().any(|x| x == "--help" || x == "-h") {
         usage();
         return Ok(());
+    }
+
+    if args.iter().any(|x| x == "--preflight-gate") {
+        let smoke = args.iter().any(|x| x == "--smoke");
+        let options = pineland_model::treatment_gate::GateOptions {
+            locality_count: if smoke { 34 } else { 72 },
+            agent_count: if smoke { 300 } else { 1000 },
+            withdrawal_time_days: 120.0,
+            observation_start_days: 60.0,
+            horizon_days: 7.0,
+            verbose: true,
+        };
+        let summary = pineland_model::treatment_gate::run_preflight_treatment_gate(&options)?;
+        if summary.overall_pass {
+            println!("Preflight Treatment-Relevance Gate passed successfully.");
+            return Ok(());
+        } else {
+            return Err("Preflight Treatment-Relevance Gate failed. Halting campaign launch.".to_string());
+        }
     }
     let mut design = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv");
     let mut design_explicit = false;
