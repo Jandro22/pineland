@@ -1,140 +1,136 @@
-# Partner-Force Autonomy: Stage-3 Discovery & Program Architecture
+# Partner-Force Autonomy — Stage 3
 
-## 1. Central Scientific Question
+> **Research question:** When does security-force assistance create autonomous
+> military capability, and when does it create only externally supported
+> performance?
 
-> **When does security-force assistance create autonomous military capability, and when does it create only externally supported performance?**
+This directory is a preregistered synthetic discovery program inside Pineland
+General Theory v1. It is designed to separate **supported performance** from
+**partner-owned regenerative capacity** using paired counterfactual branches,
+common random numbers, removable assistance overlays, and held-out tests.
 
-Security-force assistance (SFA) often produces partner formations that fight effectively while embedded with external enablers (air support, logistics push, advisory command), only to suffer rapid collapse or severe performance cliffs once foreign assistance is withdrawn. Traditional modeling frequently obscures this dynamic with post-hoc scalar fudge factors (e.g. arbitrary "morale" decay or unmeasurable "corruption" coefficients).
+**Current status:** Stage 3 mechanistic discovery is active. Stage 4
+policy-comparison configurations remain blocked until the Stage-3 coordinates,
+holdouts, and resolution checks are frozen and passed.
 
-The Pineland Partner-Force Autonomy Program provides an instrumented, structural, paired counterfactual framework to investigate how external assistance composition interacts with indigenous regenerative capacity.
+## Directory map
 
----
+| Path | Purpose |
+|---|---|
+| **configs/** | Stage-3 design cells and blocked future policy configs |
+| **contracts/** | Preregistration freeze, raw schema, holdouts, and resolution audit |
+| **analysis/** | Metric derivation, regenerative coordinates, holdouts, and transport |
+| **fixtures/** | Small deterministic validation fixtures |
+| **outputs/** | Generated outputs; ignored except the directory sentinel |
+| **validate_partner_force_autonomy_environment.py** | Preflight consistency checks |
 
-## 2. Program Stage Architecture: Stage 3 vs Stage 4
+## Core distinction
 
-This program enforces a strict scientific boundary between **mechanistic discovery** and **policy comparison**:
+The program keeps four concepts separate:
 
-| Dimension | Stage 3: Discovery (Active) | Stage 4: Policy Comparison (Blocked) |
+1. **Supported performance (C_ON)** — capability while external support is
+   available.
+2. **Organic capacity (Ω)** — partner-owned stocks and endogenous regeneration
+   flows.
+3. **Autonomy after withdrawal (R_h)** — retained capability in a paired
+   support-OFF branch relative to the support-ON branch.
+4. **Long-horizon resilience** — persistence and renewal after losses and
+   operational friction.
+
+At withdrawal time **T = 120d**, the simulation world is cloned. One branch
+retains external assistance; the paired branch removes only the designated
+assistance overlays. Indigenous formations, people, organizations, supply
+stocks, governance state, topology, and RNG streams remain identical at the
+split.
+
+## Assistance channels
+
+| Channel | Mechanism | Accounting rule |
 |---|---|---|
-| **Objective** | Identify autonomy coordinates ($\Omega$), test bottleneck vs mean models, measure dependence under removable substitution. | Compare adaptive, persistent, or conditioned assistance policy rules under equal donor budgets. |
-| **Mechanisms** | Removable external assistance overlays only. Indigenous capacity parameters are synthetic discovery coordinates. | Preregistered persistent capacity-building laws or adaptive allocation algorithms. |
-| **Policy Firewalls** | No claims of policy superiority, efficiency, or optimal allocation. | Explicitly blocked until Stage 3 discovery coordinates are frozen and holdouts verified. |
-| **Configs** | `configs/stage3_discovery_cells_v1.csv` (60 cells) | `capacity_heavy_v1.json`, `bottleneck_targeted_v1.json`, `calendar_transition_v1.json`, `capability_conditioned_v1.json` are `BLOCKED_*` with `enabled = false`. |
+| Air support | External firepower increment during eligible contacts | Metered separately from organic firepower |
+| Logistics | External supply push with capacity/loss accounting | Offered = delivered + rejected + lost |
+| Command advisory | Reliability boost and latency reduction | Does not mutate underlying command topology |
+| Force generation | Removable training-throughput increment | Organic and external graduates remain separable |
 
----
+## Capability assay
 
-## 3. Core Theoretical Distinctions
+Outcome capability is measured with the frozen behavioral assay
+**pineland.partner_force_capability_assay.v1**:
 
-The research program rigorously separates four operational concepts:
+    C(t) = (c_gov · c_personnel · c_formation · c_coverage)^(1/4)
 
-```
-+-------------------------------------------------------------------------+
-| Supported Performance != Organic Capacity != Autonomy != Resilience     |
-+-------------------------------------------------------------------------+
-```
+The predictor firewall excludes regenerative stocks, flows, command-edge
+parameters, and training throughput from the capability outcome itself. This
+prevents the proposed explanatory coordinates from being mechanically embedded
+in the dependent variable.
 
-1. **Supported Performance ($C_{ON}$)**: Observed capability while external donor support channels are active ($T - 60 \to T$ or post-withdrawal ON branch).
-2. **Organic Capacity ($\Omega$)**: Partner-owned stocks (depots, formations, reserves) and endogenous regeneration flows (recruitment, training graduation, logistics production).
-3. **Autonomy after Withdrawal ($R_h$)**: Post-withdrawal retention measured counterfactually against the paired supported branch:
-   $$R_h = \frac{C_{OFF}(T+h)}{\max(C_{ON}(T+h), \epsilon)}$$
-4. **Long-Horizon Resilience**: Persistence and renewal of autonomous performance over longer horizons ($h \in \{7, 30, 90, 180\}$ days) following operational friction and combat losses.
+## Stage-3 design
 
----
+The discovery manifest **configs/stage3_discovery_cells_v1.csv** defines
+capacity profiles crossed with removable support compositions. The design
+includes explicit negative-control cells in which no support is present; those
+cells require paired ON/OFF capability to remain identical.
 
-## 4. Paired Counterfactual Branching & Common Random Numbers
+### Prospective holdouts
 
-At withdrawal time $T = 120\text{d}$, an identical simulation world state $W_T$ is cloned into two paired trajectories:
+Four independently specified holdout families live under **contracts/**:
 
-$$
-W_T \longrightarrow
-\begin{cases}
-W^{ON}_{T+h} & \text{(external assistance continues)} \\
-W^{OFF}_{T+h} & \text{(designated external assistance channels removed at } T\text{)}
-\end{cases}
-$$
+- **complexity** — changes environmental or operational complexity;
+- **force-generation regime** — changes indigenous regeneration conditions;
+- **support composition** — changes the mixture of removable assistance;
+- **threat pressure** — changes adversary pressure.
 
-### Immediate Diff Allowlist Invariant
-Calling `withdraw_external_partner_support()` at step $T$ mutates **only**:
-- `particle.config.partner_support.enabled = false`
-- `particle.partner_support.support_withdrawn = true`
-- `particle.partner_support.withdrawal_time = Some(T)`
-- `particle.partner_support.window_snapshots` (records withdrawal state)
+Holdout evaluation is separate from discovery fitting. Contracts specify their
+own evaluation horizons, and required short- and long-horizon gates must both
+be satisfied rather than allowing a favorable early horizon to mask later
+failure.
 
-All indigenous physical state arrays—formations, people, organizations, leaders, command edges, supply inventories, governance control, and RNG streams—are **bit-for-bit identical** immediately upon withdrawal.
+The separate **partner_force_scale_resolution_audit_v1.json** checks whether
+substantive conclusions remain stable when simulation resolution changes.
 
----
+## Verification
 
-## 5. Assistance Channels & Governing Mechanics
+### Preflight
 
-External assistance operates as a non-invasive environmental and resource overlay across four structural channels:
+    python studies/research_program/general_theory_v1/partner_force_autonomy/validate_partner_force_autonomy_environment.py
 
-| Channel | Module | Governing Equation | Accounting Invariant |
-|---|---|---|---|
-| **Air Support** (`air`) | `combat.rs` | $A_{\rm total} = A_{\rm organic} + A_{\rm external}$ | Firepower increment during contacts; metered per assisted contact. |
-| **Logistics Support** (`logistics`) | `logistics.rs` | $Q_{\rm offered} = Q_{\rm delivered} + Q_{\rm rejected} + Q_{\rm lost}$ | Conserved supply push up to `max_daily_capacity`; insurgent flows strictly excluded from partner metrics. |
-| **Command Advisory** (`command`) | `movement.rs` | $r_{\rm eff} = 1 - (1 - r_i)(1 - b_r)$<br>$L_{\rm eff} = \max(L_{\min}, L_i(1 - b_L))$ | Bounded reliability and fractional latency reduction without mutating underlying topology. |
-| **Force Generation** (`force_generation`) | `state_regeneration.rs` | $k_{\rm total} = k_{\rm indig} + k_{\rm boost}$ | Removable training-throughput assistance; separates organic vs incremental graduates. Persistent capacity-building is firewalled. |
+### Rust tests
 
----
+    cargo test --workspace --manifest-path rust/Cargo.toml
 
-## 6. Behavioral Capability Assay
+### Zero-compute design check
 
-To eliminate tautological leakage, outcome capability $C(t)$ is measured via a frozen behavioral assay (`pineland.partner_force_capability_assay.v1`) evaluated relative to a shared baseline:
+    cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3
 
-$$C(t) = \left( c_{\rm gov}(t) \cdot c_{\rm personnel}(t) \cdot c_{\rm formation}(t) \cdot c_{\rm coverage}(t) \right)^{1/4}$$
+Without an explicit execution flag, the runner prints the design summary and
+exits without instantiating a scientific run.
 
-- $c_{\rm gov}(t)$: Effective government territorial control ($\in [0, 1]$).
-- $c_{\rm personnel}(t)$: Fielded military personnel retention relative to baseline ($\in [0, 1]$).
-- $c_{\rm formation}(t)$: Operational military formation survival relative to baseline ($\in [0, 1]$).
-- $c_{\rm coverage}(t)$: Geographic locality coverage retention relative to baseline ($\in [0, 1]$).
-- **Predictor Firewall**: Autonomy predictors (stocks, flows, command edge parameters, training throughput) are strictly excluded from $C(t)$.
-- **Degenerate Baseline Rule**: If baseline personnel or operational formations $\le 10^{-12}$, retention and composite capability evaluate to `0.0`.
+### Tiny plumbing smoke
 
----
+    cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --smoke --execute
 
-## 7. Experimental Design (Stage 3)
+### Analysis dry-runs
 
-The Stage-3 design manifest (`configs/stage3_discovery_cells_v1.csv`) specifies 60 prospective cells:
-- **10 Capacity Profiles**: Uniform strong (1.4, 1.4, 1.4), baseline (1.0, 1.0, 1.0), mediocre (0.6, 0.6, 0.6), single bottlenecks (forcegen 0.4, logistics 0.4, command 0.4), dual bottlenecks, and sub-baseline profiles, designed to separate $\Omega_{\min}$, $\Omega_{\rm mean}$, and $\Omega_{\rm geo}$.
-- **6 Support Compositions**: `none` (negative control), `balanced`, `air_heavy`, `logistics_heavy`, `command_heavy`, `forcegen_heavy`.
-- **Negative Control Invariant**: Cells with profile `none` assert identical $C_{ON} = C_{OFF}$ across all horizons.
+    python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --dry-run
+    python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_autonomy_holdouts.py --dry-run
 
----
+## Execution
 
-## 8. Usage & Verification Commands
+A local Stage-3 run can be launched with:
 
-### A. Pre-Flight Environment Validation
-```powershell
-python studies/research_program/general_theory_v1/partner_force_autonomy/validate_partner_force_autonomy_environment.py
-```
+    cargo run --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --execute
 
-### B. Rust Unit Tests
-```powershell
-cargo test --manifest-path rust/Cargo.toml
-```
+Generated scientific outputs belong under **outputs/** and are intentionally
+ignored by Git.
 
-### C. Safety Gate Check (Zero Compute)
-```powershell
-cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3
-```
-*Outputs design summary and exits with `NO COMPUTE: --execute not supplied` without instantiating simulation engines.*
+## Interpretation boundary
 
-### D. Plumbing Smoke Test (Allowed Tiny Run)
-```powershell
-cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --smoke --execute
-```
-*Simulates 1 cell, 1 seed, $h=7\text{d}$ to verify end-to-end execution, negative control assertion, and raw output formatting.*
+Stage 3 can establish relationships **inside the synthetic model** between
+assistance composition, indigenous regeneration, supported capability, and
+post-withdrawal retention. It does not by itself establish that a historical
+partner force failed for the same reason, nor does it license a recommendation
+for a real assistance policy.
 
-### E. Python Analysis Pipeline Dry-Run
-```powershell
-python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --dry-run
-python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_autonomy_holdouts.py --dry-run
-```
-*Validates pairing, metric derivation, coordinate computation, and holdout evaluation without writing scientific output files.*
-
-### F. Launching Stage-3 Discovery (When Greenlit for Compute)
-```powershell
-cargo run --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --execute
-python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py \
-  --input-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv
-```
+Historical application requires a separately frozen measurement/transport
+design and evidence that the relevant model quantities can be connected to
+observed data.

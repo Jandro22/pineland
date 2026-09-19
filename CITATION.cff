@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use Pineland COIN-SIM in research, please cite the software and the specific study artifact or frozen contract you relied on."
+title: "Pineland COIN-SIM"
+type: software
+authors:
+  - family-names: "Grenier"
+    given-names: "Alejandro"
+repository-code: "https://github.com/Jandro22/pineland"
+url: "https://github.com/Jandro22/pineland"
+version: "0.13.0"
+license: "MIT"
+keywords:
+  - agent-based modeling
+  - insurgency
+  - counterinsurgency
+  - state estimation
+  - political violence
+  - simulation
+  - reproducibility
