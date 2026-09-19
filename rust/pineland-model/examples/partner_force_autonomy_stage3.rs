@@ -279,9 +279,9 @@ fn verify_preregistration_freeze(freeze_path: &Path) -> Result<(), String> {
     let content = fs::read_to_string(freeze_path)
         .map_err(|e| format!("Failed to read freeze manifest at {}: {e}", freeze_path.display()))?;
     let entries = parse_freeze_manifest(&content);
-    if entries.len() < 16 {
+    if entries.len() < 21 {
         return Err(format!(
-            "Expected at least 16 frozen artifacts in manifest, found {}",
+            "Expected at least 21 frozen artifacts in manifest, found {}",
             entries.len()
         ));
     }

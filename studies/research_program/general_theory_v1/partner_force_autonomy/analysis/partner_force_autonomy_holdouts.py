@@ -127,15 +127,74 @@ def evaluate_zero_refit(
         criteria = contract.get("pass_fail_criteria", contract.get("acceptance_criteria", {}))
         min_rho = float(criteria.get("minimum_spearman_rho", 0.0))
         max_mae = float(criteria.get("maximum_prediction_mae", float("inf")))
-        rho_pass = bool(spearman >= min_rho)
-        mae_pass = bool(mae <= max_mae)
+        eval_horizons_raw = criteria.get("evaluation_horizons")
+        eval_horizons = [int(h) for h in eval_horizons_raw] if eval_horizons_raw else [int(h) for h in df["horizon_days"].unique()]
+
+        # Filter strictly to specified evaluation horizons for pooled contract evaluation
+        eval_df = df[df["horizon_days"].isin(eval_horizons)]
+        if not eval_df.empty:
+            eval_y_true = eval_df["autonomy_ratio"].to_numpy(float)
+            eval_y_pred = predict_zero_refit(frozen_model, eval_df, horizon=None)
+            eval_variance = len(np.unique(eval_y_pred)) > 1 and len(np.unique(eval_y_true)) > 1
+            pooled_rho = float(pd.Series(eval_y_pred).corr(pd.Series(eval_y_true), method="spearman")) if eval_variance else 0.0
+            if np.isnan(pooled_rho):
+                pooled_rho = 0.0
+            pooled_mae = float(np.mean(np.abs(eval_y_pred - eval_y_true)))
+            pooled_rmse = float(np.sqrt(np.mean((eval_y_pred - eval_y_true) ** 2)))
+        else:
+            pooled_rho = 0.0
+            pooled_mae = float("inf")
+            pooled_rmse = float("inf")
+
+        # Check each specified evaluation horizon independently
+        horizon_verdicts = {}
+        for h in eval_horizons:
+            h_key = str(h)
+            h_metrics = by_horizon.get(h_key)
+            if h_metrics is not None:
+                h_rho = h_metrics["spearman_rho"]
+                h_mae = h_metrics["mae_zero_refit"]
+                h_rho_pass = bool(h_rho >= min_rho)
+                h_mae_pass = bool(h_mae <= max_mae)
+                horizon_verdicts[h_key] = {
+                    "spearman_rho": h_rho,
+                    "mae_zero_refit": h_mae,
+                    "spearman_rho_pass": h_rho_pass,
+                    "mae_pass": h_mae_pass,
+                    "pass": h_rho_pass and h_mae_pass,
+                }
+            else:
+                horizon_verdicts[h_key] = {
+                    "spearman_rho": 0.0,
+                    "mae_zero_refit": float("inf"),
+                    "spearman_rho_pass": False,
+                    "mae_pass": False,
+                    "pass": False,
+                }
+
+        all_horizons_pass = bool(len(horizon_verdicts) > 0 and all(v["pass"] for v in horizon_verdicts.values()))
+        pooled_rho_pass = bool(pooled_rho >= min_rho)
+        pooled_mae_pass = bool(pooled_mae <= max_mae)
+        pooled_pass = pooled_rho_pass and pooled_mae_pass
+        gate_verdict = "PASS" if (all_horizons_pass and pooled_pass) else "FAIL"
+
         res["contract_evaluation"] = {
-            "contract_id": contract.get("contract_id", contract.get("schema_version")),
+            "contract_id": contract.get("contract_id", contract.get("holdout_family_id", contract.get("schema_version"))),
+            "evaluation_horizons": eval_horizons,
+            "decision_rule": criteria.get("decision_rule", "Dual-pass: each specified horizon must pass independently AND pooled evaluation across specified horizons must pass."),
             "minimum_spearman_rho": min_rho,
             "maximum_prediction_mae": max_mae,
-            "spearman_rho_pass": rho_pass,
-            "mae_pass": mae_pass,
-            "gate_verdict": "PASS" if (rho_pass and mae_pass) else "FAIL",
+            "pooled_evaluation": {
+                "spearman_rho": pooled_rho,
+                "mae_zero_refit": pooled_mae,
+                "rmse_zero_refit": pooled_rmse,
+                "spearman_rho_pass": pooled_rho_pass,
+                "mae_pass": pooled_mae_pass,
+                "pass": pooled_pass,
+            },
+            "horizon_verdicts": horizon_verdicts,
+            "all_horizons_independently_passed": all_horizons_pass,
+            "gate_verdict": gate_verdict,
         }
 
     return res

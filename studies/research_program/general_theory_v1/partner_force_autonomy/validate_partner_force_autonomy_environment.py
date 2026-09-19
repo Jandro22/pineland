@@ -238,7 +238,7 @@ def check_preregistration_freeze() -> None:
             data = json.loads(freeze_path.read_text(encoding="utf-8"))
             artifacts = data.get("frozen_artifacts", {})
             count = len(artifacts)
-            all_matched = count == 16
+            all_matched = count == 21
             for name, entry in artifacts.items():
                 rel_path = entry["path"]
                 expected_sha = entry["sha256"]
@@ -255,7 +255,7 @@ def check_preregistration_freeze() -> None:
         except Exception as e:
             all_matched = False
             print(f"Freeze validation error: {e}")
-    log_check(f"Preregistration cryptographic freeze ({count}/16 artifacts match disk)", exists and all_matched)
+    log_check(f"Preregistration cryptographic freeze ({count}/21 artifacts match disk)", exists and all_matched)
 
 
 def check_holdout_contracts_and_scale_audit() -> None:
@@ -274,16 +274,18 @@ def check_holdout_contracts_and_scale_audit() -> None:
             try:
                 c = json.loads(cpath.read_text(encoding="utf-8"))
                 crit = c.get("pass_fail_criteria", c.get("acceptance_criteria", {}))
+                cells = c.get("cells", [])
                 valid = (
                     c.get("status") in ("FROZEN_PRE_DISCOVERY", "PREREGISTERED_FROZEN_BEFORE_DISCOVERY_COMPUTE")
                     and c.get("historical_outcomes_used") is False
                     and crit.get("minimum_spearman_rho") == min_rho
                     and crit.get("maximum_prediction_mae") == max_mae
                     and c.get("default_seed_count", 0) > 0
+                    and len(cells) == 8
                 )
             except Exception:
                 valid = False
-        log_check(f"Holdout contract: {filename} (rho>={min_rho}, MAE<={max_mae})", exists and valid)
+        log_check(f"Holdout contract: {filename} (8 cells, rho>={min_rho}, MAE<={max_mae})", exists and valid)
 
     scale_path = CONTRACTS_DIR / "partner_force_scale_resolution_audit_v1.json"
     scale_ok = False
@@ -291,15 +293,17 @@ def check_holdout_contracts_and_scale_audit() -> None:
         try:
             s = json.loads(scale_path.read_text(encoding="utf-8"))
             ca = s.get("convergence_analysis", {})
+            seeds = s.get("seeds_evaluated", [])
             scale_ok = (
                 s.get("status") == "FROZEN_SCALE_CONVERGENCE_ESTABLISHED"
+                and len(seeds) >= 3
                 and ca.get("is_1000_scale_sufficiently_converged") is True
                 and ca.get("retention_relative_diff_1000_to_2500", 1.0) < 0.05
                 and ca.get("government_control_relative_diff_1000_to_2500", 1.0) < 0.05
             )
         except Exception:
             scale_ok = False
-    log_check("Scale resolution convergence audit (1000 agents / 72 localities justified)", scale_ok)
+    log_check("Scale resolution convergence audit (multi-seed 1000 vs 2500 justified)", scale_ok)
 
 
 def check_python_analysis_pipeline() -> None:

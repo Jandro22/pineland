@@ -137,29 +137,39 @@ def fit_and_export_frozen_predictor(
     source_path: Path,
     output_json_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    bottleneck_res = evaluate_bottleneck_competitors(paired)
-    metrics = bottleneck_res["metrics"]
+    # Preregistered target horizons: long-horizon resilience (90d and 180d)
+    long_horizons = [90, 180]
+    target_df = paired[paired["horizon_days"].isin(long_horizons)]
+    selection_target_horizons = long_horizons if not target_df.empty else sorted([int(h) for h in paired["horizon_days"].unique()])
+    selection_df = target_df if not target_df.empty else paired
+
+    bottleneck_res = evaluate_bottleneck_competitors(selection_df)
+    target_metrics = bottleneck_res["metrics"]
     ranking = bottleneck_res["competitor_ranking_by_grouped_cv_rmse"]
+
+    # Also compute pooled metrics across all horizons for complete reporting
+    pooled_res = evaluate_bottleneck_competitors(paired)
+    pooled_metrics = pooled_res["metrics"]
 
     # Preregistered tie-break rule: on diff < 1e-4, priority order
     priority = ["omega_min", "omega_geo", "omega_mean", "regularized_additive"]
     best_rmse = float("inf")
     for cand in ranking:
-        m = metrics.get(cand, {})
+        m = target_metrics.get(cand, {})
         rmse = m.get("grouped_cv_isotonic_rmse", m.get("rmse", float("inf")))
         if not np.isnan(rmse) and rmse < best_rmse:
             best_rmse = rmse
 
     close_candidates = []
     for cand in ranking:
-        m = metrics.get(cand, {})
+        m = target_metrics.get(cand, {})
         rmse = m.get("grouped_cv_isotonic_rmse", m.get("rmse", float("inf")))
         if not np.isnan(rmse) and (rmse - best_rmse) <= 1e-4:
             close_candidates.append(cand)
 
     winner = min(close_candidates, key=lambda c: priority.index(c)) if close_candidates else ranking[0]
 
-    # Fit horizon-specific models
+    # Fit horizon-specific models for all horizons present in paired
     horizons = sorted(paired["horizon_days"].unique())
     horizon_models = {}
     for h in horizons:
@@ -181,9 +191,11 @@ def fit_and_export_frozen_predictor(
             "preregistration_freeze_sha256": get_file_sha256(freeze_manifest_path),
         },
         "selection_protocol": {
-            "criterion": "grouped_cv_isotonic_rmse_by_seed",
+            "criterion": "grouped_cv_isotonic_rmse_by_seed_on_target_horizons",
+            "target_horizons_days": selection_target_horizons,
+            "target_metrics_summary": target_metrics,
+            "pooled_all_horizons_metrics_summary": pooled_metrics,
             "candidate_ranking": ranking,
-            "metrics_summary": metrics,
             "tie_break_priority": priority,
             "tie_break_tolerance": 1e-4,
             "winning_coordinate": winner,

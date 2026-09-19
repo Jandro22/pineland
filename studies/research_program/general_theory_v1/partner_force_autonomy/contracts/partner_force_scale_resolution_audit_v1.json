@@ -1,61 +1,36 @@
 {
   "schema_version": "pineland.partner_force_scale_resolution_audit.v1",
   "status": "FROZEN_SCALE_CONVERGENCE_ESTABLISHED",
-  "purpose": "Engineering-only resolution audit establishing that 1,000 agents / 72 localities stabilizes macroscopic dynamics against discrete agent granularity while keeping Stage-3 discovery compute tractable.",
-  "evaluations": {
-    "scale_300_smoke": {
-      "agent_count": 300,
-      "locality_count": 34,
-      "horizon_days": 30.0,
-      "initial_military_personnel": 22000.0000,
-      "final_military_personnel": 21980.7213,
-      "military_personnel_retention": 0.999124,
-      "contacts_total": 2,
-      "contacts_per_agent": 0.006667,
-      "organized_actions_total": 0,
-      "mean_government_control": 0.595169,
-      "mean_insurgent_control": 0.033354,
-      "contested_localities_count": 9,
-      "contested_localities_fraction": 0.264706
-    },
-    "scale_1000_discovery": {
-      "agent_count": 1000,
-      "locality_count": 72,
-      "horizon_days": 30.0,
-      "initial_military_personnel": 22000.0000,
-      "final_military_personnel": 21965.1712,
-      "military_personnel_retention": 0.998417,
-      "contacts_total": 6,
-      "contacts_per_agent": 0.006000,
-      "organized_actions_total": 0,
-      "mean_government_control": 0.594275,
-      "mean_insurgent_control": 0.025727,
-      "contested_localities_count": 5,
-      "contested_localities_fraction": 0.069444
-    },
-    "scale_2500_high_res": {
-      "agent_count": 2500,
-      "locality_count": 72,
-      "horizon_days": 30.0,
-      "initial_military_personnel": 22000.0000,
-      "final_military_personnel": 21955.0045,
-      "military_personnel_retention": 0.997955,
-      "contacts_total": 9,
-      "contacts_per_agent": 0.003600,
-      "organized_actions_total": 0,
-      "mean_government_control": 0.593815,
-      "mean_insurgent_control": 0.026653,
-      "contested_localities_count": 6,
-      "contested_localities_fraction": 0.083333
-    }
+  "purpose": "Multi-seed resolution audit comparing 1,000 agents vs 2,500 agents across fixed seeds to determine resolution sensitivity of macro-level estimands versus micro-level interaction rates.",
+  "seeds_evaluated": [2026120000, 2026120001, 2026120002],
+  "horizon_days": 30.0,
+  "summary_1000_agents": {
+    "retention_median": 0.998417,
+    "retention_range": [0.998043, 0.999302],
+    "government_control_median": 0.593223,
+    "government_control_range": [0.589422, 0.594275],
+    "contested_localities_fraction_median": 0.069444,
+    "contested_localities_fraction_range": [0.069444, 0.083333],
+    "contacts_per_agent_median": 0.005000,
+    "contacts_per_agent_range": [0.003000, 0.006000]
+  },
+  "summary_2500_agents": {
+    "retention_median": 0.998803,
+    "retention_range": [0.997955, 0.999299],
+    "government_control_median": 0.593043,
+    "government_control_range": [0.589275, 0.593815],
+    "contested_localities_fraction_median": 0.083333,
+    "contested_localities_fraction_range": [0.055556, 0.097222],
+    "contacts_per_agent_median": 0.001600,
+    "contacts_per_agent_range": [0.001200, 0.003600]
   },
   "convergence_analysis": {
-    "retention_relative_diff_300_to_1000": 0.000708,
-    "retention_relative_diff_1000_to_2500": 0.000463,
-    "government_control_relative_diff_300_to_1000": 0.001505,
-    "government_control_relative_diff_1000_to_2500": 0.000774,
+    "retention_relative_diff_1000_to_2500": 0.000387,
+    "government_control_relative_diff_1000_to_2500": 0.000303,
+    "contested_localities_relative_diff_1000_to_2500": 0.166667,
+    "contacts_per_agent_relative_diff_1000_to_2500": 2.125000,
     "granularity_threshold_percent": 5.0,
     "is_1000_scale_sufficiently_converged": true,
-    "scientific_justification": "At 1,000 agents, macroscopic state variables (formation personnel retention, territorial control, and contested locality fractions) deviate by less than 3% from the 2,500-agent high-resolution reference, whereas 300 agents exhibits noticeable discretization noise. 1,000 agents / 72 localities provides sufficient spatial and demographic density to support 48 operational formations and realistic logistics transit networks without computational bottleneck."
+    "scientific_assessment": "The primary macroscopic outcome estimands entering the Stage-3 capability assay (force retention and government territorial control) show strong resolution stability between 1,000 and 2,500 agents (relative difference of medians is < 0.1% for both, with tight inter-seed dispersion). Micro-level rates (contacts per agent and contested locality fractions) exhibit density-dependent scaling as expected under discrete spatial agent distribution across 72 localities. Because the partner-force research program assesses macro-level capability retention R_h and Delta_h, 1,000 agents / 72 localities provides resolution-stable estimands while preserving computational feasibility for the 60-cell discovery grid."
   }
 }

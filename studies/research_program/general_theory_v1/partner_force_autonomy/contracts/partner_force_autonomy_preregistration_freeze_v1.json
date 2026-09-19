@@ -2,7 +2,7 @@
   "schema_version": "pineland.partner_force_autonomy_preregistration_freeze.v1",
   "status": "FROZEN_BEFORE_DISCOVERY_COMPUTE",
   "historical_outcomes_used": false,
-  "description": "Cryptographic freeze manifest recording SHA-256 hashes of all preregistered design contracts, schemas, cell specifications, holdout contracts, scale resolution audit, and blocked Stage-4 configurations.",
+  "description": "Cryptographic freeze manifest recording SHA-256 hashes of all preregistered design contracts, schemas, cell specifications, holdout contracts, scale resolution audit, analysis code, and Stage-3 runner source code.",
   "frozen_artifacts": {
     "raw_branch_schema": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_raw_branch_schema_v2.json",
@@ -10,7 +10,7 @@
     },
     "stage3_discovery_design": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage3_discovery_design_v1.json",
-      "sha256": "6292d96d3d1fa345063229f768823483c82fa6de7b9d16b9c1c4cac796c085e8"
+      "sha256": "2578e9bd1e4a0dfd33ade9b21cb7ff2b689b6fea9ade4e034ac965136c23a3b9"
     },
     "stage3_discovery_cells": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv",
@@ -50,23 +50,43 @@
     },
     "holdout_complexity": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_complexity_v1.json",
-      "sha256": "ec4b48552b17a606eb9d233ecba449834c542b1865bcfc62e5d55ce60012e8a3"
+      "sha256": "9974dcd657f44fe2cd8811fedaaaa5f17dfb32ca027b7daf3f204c090f18b863"
     },
     "holdout_forcegen_regime": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_forcegen_regime_v1.json",
-      "sha256": "9e8b48895a4b4e8a66179495bec46f4fcd50a7e3194969db5625a079cc651934"
+      "sha256": "bc0e67040a611afc7215f47e2a62323586194e6920b432054c852b11dd954965"
     },
     "holdout_threat_pressure": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_threat_pressure_v1.json",
-      "sha256": "cb180b258fff811750c1a40556aeedde80ea7c5fc8f26876aa010b5c6960b869"
+      "sha256": "93e7a445ab6ed4268ad6647cdd7d8f914f29db2be9f0ce98b3fdee560cc902f3"
     },
     "holdout_support_composition": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_support_composition_v1.json",
-      "sha256": "c9394b94b30db764659d06f957eaf36aa62ae48289f60173e6b872eea74b3d1e"
+      "sha256": "97e05e0731c77cffc5a24ec8d4a74741e16eee035c196ec1fcfd2a3b50f5d6d7"
     },
     "scale_resolution_audit": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_scale_resolution_audit_v1.json",
-      "sha256": "09057fab1ca2eaf4df5455639848d1d530c60ffcdcfe51abbdcb4f493907dd19"
+      "sha256": "7b66dc7b1dd9e3e5e5b8b19b0688a8d7f9a2a3ef981da61bc1998c9615666c4d"
+    },
+    "partner_force_metrics_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_metrics.py",
+      "sha256": "6b35c652b07c0ddb9873e7fc68a07458ea8e522baa4658856fa0f481c2edc244"
+    },
+    "partner_force_coordinates_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_regenerative_coordinates.py",
+      "sha256": "a8d5c1ad52a7f859ed131ae7e44f68acaff50c20de5d815852e2de19c5960943"
+    },
+    "evaluate_partner_force_autonomy_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py",
+      "sha256": "b26dd1be32d5ed26184f261a0561523a4fdabc90794f093a5f10ddd67eb957b9"
+    },
+    "partner_force_holdouts_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_autonomy_holdouts.py",
+      "sha256": "d45d8d9c54e4856d10396e507f8af17fc40aac1c73e5a084db9f617a83d6c3b9"
+    },
+    "stage3_runner_code": {
+      "path": "rust/pineland-model/examples/partner_force_autonomy_stage3.rs",
+      "sha256": "1dee97b191183302e4e2a755b0d4dd1127437a015dcb04e3847f2da11327274f"
     }
   }
 }

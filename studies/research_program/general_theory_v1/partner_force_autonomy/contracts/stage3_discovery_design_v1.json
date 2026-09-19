@@ -61,5 +61,14 @@
     "warning": "Stage 3 identifies autonomy and dependence. It must not be interpreted as a comparison of optimal assistance policies."
   },
   "cell_manifest": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv",
-  "execution_gate": "The Rust runner requires --execute. Without it, it prints the design and exits before creating a SimulationEngine."
+  "execution_gate": "The Rust runner requires --execute. Without it, it prints the design and exits before creating a SimulationEngine.",
+  "model_selection_protocol": {
+    "target_horizons_days": [90, 180],
+    "selection_criterion": "grouped_cv_isotonic_rmse_by_seed",
+    "rationale": "Long-horizon resilience (90d and 180d) directly evaluates post-withdrawal autonomy without being dominated by short-term 7d/30d inertia carryover.",
+    "candidates": ["omega_min", "omega_geo", "omega_mean", "regularized_additive"],
+    "tie_break_priority": ["omega_min", "omega_geo", "omega_mean", "regularized_additive"],
+    "tie_break_tolerance": 0.0001,
+    "horizon_fitting": "After selecting the winning coordinate Omega* on target horizons [90, 180], horizon-specific mappings f_h(Omega*) are fitted for all h in [7, 30, 90, 180]."
+  }
 }
