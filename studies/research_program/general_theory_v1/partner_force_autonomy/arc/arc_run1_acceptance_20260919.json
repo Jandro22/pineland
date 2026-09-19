@@ -1,0 +1,84 @@
+{
+  "schema_version": "pineland.partner_force_arc_acceptance.v1",
+  "status": "PASS_ENGINEERING_ONLY_DO_NOT_INTERPRET_SCIENTIFICALLY",
+  "date": "2026-09-19",
+  "cluster": "tinkercliffs",
+  "partition": "normal_q",
+  "qos": "tc_normal_base",
+  "account": "will_taggart_mcll",
+  "source_commit": "835d1d3a27aeaca4a9d6862e83afec08b6ed5731",
+  "slurm_array_job_id": "7634497",
+  "engineering_seed": 2026999000,
+  "cells": [
+    "none_02",
+    "none_03",
+    "balanced_02",
+    "balanced_03",
+    "air_04",
+    "log_05",
+    "cmd_06",
+    "fg_04"
+  ],
+  "pilot_request": {
+    "cpus_per_task": 1,
+    "memory_gb": 4,
+    "walltime": "02:00:00",
+    "max_concurrent": 4
+  },
+  "task_simulation_elapsed_seconds": {
+    "none_02": 465,
+    "none_03": 105,
+    "balanced_02": 717,
+    "balanced_03": 120,
+    "air_04": 104,
+    "log_05": 92,
+    "cmd_06": 90,
+    "fg_04": 106
+  },
+  "scheduler_elapsed_seconds": [
+    468,
+    109,
+    721,
+    124,
+    108,
+    96,
+    94,
+    109
+  ],
+  "scheduler_total_elapsed_seconds": 1829,
+  "scheduler_total_cpu_wall_hours": 0.508056,
+  "peak_simulation_rss_kib": 180908,
+  "peak_simulation_rss_mib": 176.668,
+  "pilot_estimated_su": 0.762083,
+  "integrity": {
+    "completed_tasks": 8,
+    "merged_rows": 64,
+    "paired_counterfactuals": 32,
+    "selected_cells_present": 8,
+    "negative_control_pairs_checked": 8,
+    "negative_controls_exact_on_off_identity": true,
+    "support_off_postwithdrawal_donor_cost_zero_rows": 32,
+    "shard_metadata_sha256_verified": 8,
+    "merge_output_sha256": "fac1cea3ab8985e567899b3baf57b9b53f4f3506d39de99266ace1a895655b2d"
+  },
+  "production_defaults_selected": {
+    "cpus_per_task": 1,
+    "memory_gb": 1,
+    "walltime": "01:00:00",
+    "max_concurrent": 8,
+    "rationale": "Pilot peak RSS was <181 MiB and slowest scheduler task was 721 s; defaults retain >5x memory and ~5x walltime headroom while limiting shared-cluster concurrency."
+  },
+  "production_projection_from_pilot_mean": {
+    "tasks": 720,
+    "cpu_wall_hours": 45.725,
+    "estimated_su_at_1gb": 51.441,
+    "idealized_wall_hours_at_concurrency_8": 5.716,
+    "warning": "Engineering projection only; seed/cell runtime heterogeneity can change realized usage."
+  },
+  "conservative_projection_if_every_task_equals_slowest_pilot_task": {
+    "cpu_wall_hours": 144.2,
+    "estimated_su_at_1gb": 162.225,
+    "idealized_wall_hours_at_concurrency_8": 18.025
+  },
+  "scientific_firewall": "No capability outcome values were inspected or used to select scientific hypotheses, thresholds, or model parameters during ARC Run 1."
+}

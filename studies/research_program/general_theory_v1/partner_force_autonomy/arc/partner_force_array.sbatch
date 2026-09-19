@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=pf-autonomy
-#SBATCH --array=0-719%16
+#SBATCH --array=0-719%8
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=4G
-#SBATCH --time=02:00:00
+#SBATCH --mem=1G
+#SBATCH --time=01:00:00
 
 set -euo pipefail
 
 # The script intentionally does not hard-code an ARC account or partition.
 # Supply site/account-specific options at submission time. Command-line sbatch
-# options override the defaults above (e.g. --array=0-95%16 for one holdout).
+# options override the defaults above (e.g. --array=0-95%8 for one holdout).
 
 REPO_ROOT="${PINELAND_REPO_ROOT:-${SLURM_SUBMIT_DIR:-$(pwd)}}"
 cd "$REPO_ROOT"

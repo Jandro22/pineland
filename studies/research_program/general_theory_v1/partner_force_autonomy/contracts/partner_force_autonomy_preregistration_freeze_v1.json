@@ -90,11 +90,11 @@
     },
     "arc_array_wrapper": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
-      "sha256": "dbaf3c366dc2cad7290ee824a9135cf9291e17d885ee98bb3f584f4aab020abc"
+      "sha256": "3727180bd023482e94f216925a3f4279ff4503179916ee0212bdf0592dc64572"
     },
     "arc_shard_merger": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py",
-      "sha256": "dd810827549c1ff75d9f9be81e0d3b6579aeed9c4091adecf9732c9c3c3b02bf"
+      "sha256": "9c796f3d197fd0b9cd782facf44fc8f97192324704f7aa8ff2cfdc097a09d0fd"
     }
   },
   "required_artifact_count": 23

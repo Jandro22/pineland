@@ -20,7 +20,12 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--input-dir", required=True)
     p.add_argument("--output-csv", required=True)
-    p.add_argument("--expected-tasks", type=int, required=True)
+    group = p.add_mutually_exclusive_group(required=True)
+    group.add_argument("--expected-tasks", type=int)
+    group.add_argument(
+        "--expected-task-ids",
+        help="Comma-separated exact Slurm array task IDs, for sparse pilot arrays",
+    )
     p.add_argument("--metadata-json")
     return p.parse_args()
 
@@ -35,11 +40,25 @@ def file_sha256(path: Path) -> str:
 
 def main() -> None:
     ns = parse_args()
+    if ns.expected_task_ids:
+        try:
+            expected_ids = {int(x.strip()) for x in ns.expected_task_ids.split(",") if x.strip()}
+        except ValueError as exc:
+            raise SystemExit(f"invalid --expected-task-ids: {exc}") from exc
+        if not expected_ids:
+            raise SystemExit("--expected-task-ids must contain at least one integer task id")
+        expected_tasks = len(expected_ids)
+    else:
+        if ns.expected_tasks is None or ns.expected_tasks <= 0:
+            raise SystemExit("--expected-tasks must be a positive integer")
+        expected_tasks = ns.expected_tasks
+        expected_ids = set(range(expected_tasks))
+
     input_dir = Path(ns.input_dir)
     shards = sorted(input_dir.glob("task_*_cell_*_seed_*.csv"))
-    if len(shards) != ns.expected_tasks:
+    if len(shards) != expected_tasks:
         raise SystemExit(
-            f"expected {ns.expected_tasks} completed CSV shards, found {len(shards)} in {input_dir}"
+            f"expected {expected_tasks} completed CSV shards, found {len(shards)} in {input_dir}"
         )
 
     task_ids = []
@@ -55,7 +74,6 @@ def main() -> None:
             raise SystemExit(f"{shard} has {len(df)} rows; expected 8 (4 horizons x ON/OFF)")
         frames.append(df)
 
-    expected_ids = set(range(ns.expected_tasks))
     actual_ids = set(task_ids)
     if len(task_ids) != len(actual_ids):
         raise SystemExit("duplicate ARC task ids detected in shard filenames")
@@ -79,7 +97,8 @@ def main() -> None:
     metadata = {
         "schema_version": "pineland.partner_force_arc_merge.v1",
         "input_directory": str(input_dir),
-        "expected_tasks": ns.expected_tasks,
+        "expected_tasks": expected_tasks,
+        "expected_task_ids": sorted(expected_ids),
         "merged_rows": int(len(merged)),
         "unique_pairs": int(merged["pair_id"].nunique()),
         "experiment_ids": sorted(merged["experiment_id"].astype(str).unique().tolist()),

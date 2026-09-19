@@ -415,11 +415,19 @@ def check_arc_execution_layer() -> None:
     )
     log_check("ARC shard merger Python syntax", merge_compile.returncode == 0, merge_compile.stderr)
 
+    merge_text = merge_path.read_text(encoding="utf-8") if merge_path.exists() else ""
+    log_check(
+        "ARC shard merger supports exact sparse task-id sets for acceptance pilots",
+        "--expected-task-ids" in merge_text,
+    )
+
     sbatch_text = sbatch_path.read_text(encoding="utf-8") if sbatch_path.exists() else ""
     wrapper_semantics_ok = all(
         token in sbatch_text
         for token in (
-            "--array=0-719%16",
+            "--array=0-719%8",
+            "#SBATCH --mem=1G",
+            "#SBATCH --time=01:00:00",
             "--cell-index",
             "--seed",
             "PF_MODE",
