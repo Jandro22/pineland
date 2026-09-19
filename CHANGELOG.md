@@ -12,6 +12,8 @@ contracts, manifests, and study-specific ledgers.
 - GitHub contribution and security-reporting scaffolding.
 - Full-history Gitleaks configuration and release security-scan wrapper.
 - Explicit redistribution/license dispositions for the historical case source manifests.
+- Windows/Python 3.14 pytest temp-retention hardening and cross-platform CI coverage.
+- Rust workspace and full-history secret scanning in GitHub CI.
 
 ### Changed
 

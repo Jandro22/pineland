@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Jandro22/pineland/actions/workflows/research-v1-ci.yml"><img src="https://github.com/Jandro22/pineland/actions/workflows/research-v1-ci.yml/badge.svg?branch=main" alt="Pineland CI"></a>
+  <a href="https://github.com/Jandro22/pineland/actions/workflows/pineland-ci.yml"><img src="https://github.com/Jandro22/pineland/actions/workflows/pineland-ci.yml/badge.svg?branch=main" alt="Pineland CI"></a>
   &nbsp; Python 3.11+ &nbsp;&middot;&nbsp; Rust &nbsp;&middot;&nbsp; MIT
 </p>
 

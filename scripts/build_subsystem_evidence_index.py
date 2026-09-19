@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Build a compact, auditable index of subsystem-facing test evidence."""
 from __future__ import annotations
 
@@ -259,5 +259,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

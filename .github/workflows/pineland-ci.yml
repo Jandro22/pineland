@@ -8,19 +8,29 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: research-v1-${{ github.ref }}
+  group: pineland-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   repo-hygiene:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Public-release metadata audit
         run: python scripts/public_release_audit.py
+      - name: Full-history secret scan
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_ENABLE_COMMENTS: "false"
 
   core-tests:
     runs-on: ubuntu-latest
@@ -29,8 +39,8 @@ jobs:
       matrix:
         python-version: ["3.11", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -50,21 +60,14 @@ jobs:
   portable-suite:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
         with:
-          # Keep the broad historical/research dependency surface on the
-          # conservative supported interpreter. Core Research-v1 tests above
-          # still exercise Python 3.14 explicitly.
           python-version: "3.11"
           cache: pip
       - name: Install
         run: python -m pip install --upgrade pip && python -m pip install -e ".[research,dev]"
       - name: Portable regression suite
-        # Historical processed panels, sealed holdouts, and generated result
-        # bundles are intentionally gitignored and remain local research
-        # artifacts. Their tests are part of the local certification suite,
-        # not a clean-clone CI contract.
         run: >-
           python -m pytest -q
           --ignore=tests/test_afghanistan_acled_mapping.py
@@ -76,3 +79,36 @@ jobs:
           --ignore=tests/test_mechanism_evidence.py
           --ignore=tests/test_predictive_competition_gate.py
           --ignore=tests/test_research_program.py
+
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[research,dev]"
+      - name: Focused Windows tests
+        run: >-
+          python -m pytest
+          tests/test_recovery.py
+          tests/test_research_v1_runner.py
+          tests/test_state_estimation.py
+          tests/test_empirical.py
+          -q
+
+  rust-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Show pinned Rust toolchain
+        working-directory: rust
+        run: rustup show active-toolchain
+      - name: Rust workspace tests
+        working-directory: rust
+        env:
+          CARGO_BUILD_JOBS: "2"
+        run: cargo test --workspace --locked --quiet

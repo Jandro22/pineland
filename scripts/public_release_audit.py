@@ -25,6 +25,7 @@ REQUIRED_FILES = (
     "CONTRIBUTING.md",
     "SECURITY.md",
     "CHANGELOG.md",
+    ".github/workflows/pineland-ci.yml",
     "docs/release-policy.md",
     "docs/archive-policy.md",
     "docs/data-redistribution.md",
@@ -203,10 +204,13 @@ def main() -> int:
         )
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    if "badge.svg?branch=main" in readme:
+    if (
+        "actions/workflows/pineland-ci.yml" in readme
+        and "badge.svg?branch=main" in readme
+    ):
         passes.append("README CI badge targets main")
     else:
-        warnings.append("README CI badge does not target main")
+        warnings.append("README CI badge does not target pineland-ci.yml on main")
     if "\ufffd" in readme:
         failures.append("README contains Unicode replacement characters")
     else:

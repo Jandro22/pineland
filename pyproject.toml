@@ -37,3 +37,4 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+tmp_path_retention_count = "0"

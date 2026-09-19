@@ -18,6 +18,7 @@ repository into a public research artifact. It is intentionally stricter than
 - [ ] Fresh clone installs on a documented supported Python version.
 - [ ] Rust workspace builds from the checked-in lockfile/toolchain.
 - [ ] Public CI passes from a clean clone.
+- [ ] Linux Python, Windows Python, and Rust CI jobs pass on the release candidate.
 - [ ] README quick-start commands are tested literally.
 - [ ] Small reproduction/smoke profile completes without private files.
 - [ ] Paper reproduction either completes publicly or documents required archived inputs.
