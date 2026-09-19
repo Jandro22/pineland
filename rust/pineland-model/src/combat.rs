@@ -81,6 +81,7 @@ pub fn schedule_contacts(
 #[cfg(test)]
 mod structural_law_tests {
     use super::*;
+    use crate::SimulationEngine;
     use pineland_core::rng::PyRandomCompat;
 
     #[test]
@@ -210,6 +211,120 @@ mod structural_law_tests {
             assert_eq!(old_second.to_bits(), new_second.to_bits());
             assert_eq!(old_rng.random().to_bits(), new_rng.random().to_bits());
         }
+    }
+
+    #[test]
+    fn structural_law_replacement_quantity_quality_matches_production_capability() {
+        let mut config = SimulationConfig::default();
+        config.seed = 2026192700;
+        config.initialization_seed = Some(config.seed);
+        config.agent_count = 120;
+        config.locality_count = 17;
+        config.state_regeneration.enabled = true;
+        let mut engine = SimulationEngine::new(config.clone()).expect("engine");
+        let formation = engine
+            .particle
+            .formations
+            .organization
+            .iter()
+            .enumerate()
+            .find(|(_, organization)| **organization as usize == crate::MILITARY)
+            .map(|(formation, _)| formation)
+            .expect("military formation");
+
+        engine.particle.formations.active[formation] = 1;
+        engine.particle.formations.operational_status[formation] = 1;
+        engine.particle.formations.moving[formation] = 0;
+        engine.particle.formations.outside_pineland[formation] = 0;
+        engine.particle.formations.availability[formation] = 1.0;
+        engine.particle.formations.readiness[formation] = 1.0;
+        engine.particle.formations.fatigue[formation] = 0.0;
+        engine.particle.formations.command[formation] = 1.0;
+        engine.particle.formations.supply_capacity[formation] = 1_000.0;
+        engine.particle.formations.supply_stock[formation] = 1_000.0;
+        engine.particle.formations.sustainment[formation] = 1.0;
+        let microzone = formation_microzone(&engine.particle, &engine.topology, formation);
+        let initiative = 1.0;
+        let original_personnel = 1_000.0;
+        let experience_values = [0.1, 0.25, 0.5, 0.75, 0.9, 1.0];
+        let replacement_experience_values = [0.0, 0.1, 0.25, 0.5, 0.9];
+        let loss_values = [0.05, 0.1, 0.25, 0.5, 0.75];
+        let replacement_values = [0.0, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0];
+        let mut cases = 0usize;
+        let mut maximum_residual = 0.0f64;
+        let mut maximum_one_for_one_residual = 0.0f64;
+
+        for experience in experience_values {
+            for replacement_experience in replacement_experience_values {
+                if replacement_experience > experience {
+                    continue;
+                }
+                let q = experience_capability_multiplier(true, replacement_experience)
+                    / experience_capability_multiplier(true, experience);
+                for loss in loss_values {
+                    let survivor_fraction = 1.0 - loss;
+                    engine.particle.formations.personnel[formation] = original_personnel;
+                    engine.particle.formations.experience[formation] = experience;
+                    let before = capability(
+                        &engine.particle,
+                        &engine.topology,
+                        &config,
+                        formation,
+                        microzone,
+                        initiative,
+                    );
+                    for replacement in replacement_values {
+                        let final_fraction = survivor_fraction + replacement;
+                        let final_experience = (survivor_fraction * experience
+                            + replacement * replacement_experience)
+                            / final_fraction;
+                        engine.particle.formations.personnel[formation] =
+                            original_personnel * final_fraction;
+                        engine.particle.formations.experience[formation] = final_experience;
+                        let after = capability(
+                            &engine.particle,
+                            &engine.topology,
+                            &config,
+                            formation,
+                            microzone,
+                            initiative,
+                        );
+                        let observed = after / before;
+                        let predicted =
+                            final_fraction.powf(-0.28) * (survivor_fraction + replacement * q);
+                        let residual = (observed - predicted).abs();
+                        maximum_residual = maximum_residual.max(residual);
+                        assert!(
+                            residual <= 1.0e-12,
+                            "E={experience} E_R={replacement_experience} loss={loss} replacement={replacement} observed={observed} predicted={predicted}"
+                        );
+                        cases += 1;
+                    }
+
+                    let final_experience =
+                        survivor_fraction * experience + loss * replacement_experience;
+                    engine.particle.formations.personnel[formation] = original_personnel;
+                    engine.particle.formations.experience[formation] = final_experience;
+                    let one_for_one_after = capability(
+                        &engine.particle,
+                        &engine.topology,
+                        &config,
+                        formation,
+                        microzone,
+                        initiative,
+                    );
+                    let observed_one_for_one = one_for_one_after / before;
+                    let predicted_one_for_one = 1.0 - loss * (1.0 - q);
+                    maximum_one_for_one_residual = maximum_one_for_one_residual
+                        .max((observed_one_for_one - predicted_one_for_one).abs());
+                    assert!((observed_one_for_one - predicted_one_for_one).abs() <= 1.0e-12);
+                }
+            }
+        }
+        assert_eq!(cases, 1035);
+        println!(
+            "STRUCTURAL_SL9 cases={cases} max_capability_residual={maximum_residual:.17e} max_one_for_one_residual={maximum_one_for_one_residual:.17e}"
+        );
     }
 }
 
