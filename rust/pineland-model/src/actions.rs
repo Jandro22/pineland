@@ -1031,6 +1031,8 @@ pub fn opportunities(
         return;
     }
 
+    particle.counters.organized_actions = particle.counters.organized_actions.saturating_add(1);
+
     let committed = committed_fighter_equivalents(particle, organization, locality, config);
     if channel == ACCESS_RESTRICTION {
         let Some(destination) = access_destination(particle, topology, organization, locality, rng)
@@ -1107,12 +1109,27 @@ pub fn opportunities(
                     && organizations_hostile(particle, organization, target_organization)
             })
             .collect::<Vec<_>>();
-        for actor in own {
+        for actor in own.iter().copied() {
+            let actor_microzone = crate::combat::formation_microzone(particle, topology, actor);
             for opponent in opponents.iter().copied() {
-                if particle.formations.microzone[actor] == particle.formations.microzone[opponent] {
+                let opponent_microzone = crate::combat::formation_microzone(particle, topology, opponent);
+                if actor_microzone == opponent_microzone {
                     pairs.push((actor, opponent));
                 }
             }
+        }
+        if pairs.is_empty() {
+            for actor in own.iter().copied() {
+                for opponent in opponents.iter().copied() {
+                    pairs.push((actor, opponent));
+                }
+            }
+        }
+        if trace {
+            eprintln!(
+                "ACTION armed_confrontation org={} loc={} own={} opponents={} matched_pairs={}",
+                organization, locality, own.len(), opponents.len(), pairs.len()
+            );
         }
         if pairs.is_empty() {
             return;
@@ -1122,6 +1139,8 @@ pub fn opportunities(
             Err(_) => return,
         };
         let (actor, opponent) = pairs[selected];
+        let opponent_microzone = crate::combat::formation_microzone(particle, topology, opponent);
+        particle.formations.microzone[actor] = opponent_microzone as u32;
         let opponent_organization = particle.formations.organization[opponent] as usize;
         let defender_aware =
             particle

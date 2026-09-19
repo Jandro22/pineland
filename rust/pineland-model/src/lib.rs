@@ -23,6 +23,8 @@ pub mod recording;
 pub mod recruitment;
 pub mod social;
 pub mod state_regeneration;
+pub mod treatment_gate;
+pub mod assays;
 
 use pineland_core::config::{ConfigError, SimulationConfig};
 use pineland_core::json::JsonValue;
@@ -109,6 +111,42 @@ impl CapabilityAssayResult {
             "composite_capability",
             JsonValue::number(self.composite_capability),
         );
+        o
+    }
+}
+
+/// Time-to-failure dynamic telemetry tracking post-withdrawal collapse trajectory.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct DynamicFailureMetrics {
+    pub time_to_capability_deficit_90: Option<f64>,
+    pub time_to_readiness_collapse: Option<f64>,
+    pub time_to_supply_exhaustion: Option<f64>,
+    pub time_to_first_formation_loss: Option<f64>,
+    pub recovery_time_days: Option<f64>,
+}
+
+impl DynamicFailureMetrics {
+    pub fn to_json(&self) -> JsonValue {
+        let mut o = JsonValue::object();
+        o.insert(
+            "schema_version",
+            JsonValue::string("pineland.partner_force_dynamic_failure.v1"),
+        );
+        if let Some(t) = self.time_to_capability_deficit_90 {
+            o.insert("time_to_capability_deficit_90", JsonValue::number(t));
+        }
+        if let Some(t) = self.time_to_readiness_collapse {
+            o.insert("time_to_readiness_collapse", JsonValue::number(t));
+        }
+        if let Some(t) = self.time_to_supply_exhaustion {
+            o.insert("time_to_supply_exhaustion", JsonValue::number(t));
+        }
+        if let Some(t) = self.time_to_first_formation_loss {
+            o.insert("time_to_first_formation_loss", JsonValue::number(t));
+        }
+        if let Some(t) = self.recovery_time_days {
+            o.insert("recovery_time_days", JsonValue::number(t));
+        }
         o
     }
 }
@@ -2758,6 +2796,50 @@ impl SimulationEngine {
         }
     }
 
+    pub fn mean_military_readiness(&self) -> f64 {
+        let mut sum = 0.0;
+        let mut count = 0usize;
+        for i in 0..self.particle.formations.readiness.len() {
+            if self.particle.formations.organization[i] as usize == MILITARY
+                && self.particle.formations.active[i] != 0
+                && self.particle.formations.operational_status[i] != 0
+            {
+                sum += self.particle.formations.readiness[i];
+                count += 1;
+            }
+        }
+        if count > 0 { sum / count as f64 } else { 0.0 }
+    }
+
+    pub fn min_operational_military_supply_stock(&self) -> f64 {
+        let mut min_supply = f64::MAX;
+        let mut found = false;
+        for i in 0..self.particle.formations.supply_stock.len() {
+            if self.particle.formations.organization[i] as usize == MILITARY
+                && self.particle.formations.active[i] != 0
+                && self.particle.formations.operational_status[i] != 0
+            {
+                if self.particle.formations.supply_stock[i] < min_supply {
+                    min_supply = self.particle.formations.supply_stock[i];
+                }
+                found = true;
+            }
+        }
+        if found { min_supply } else { 0.0 }
+    }
+
+    pub fn active_operational_military_formations(&self) -> usize {
+        (0..self.particle.formations.organization.len())
+            .filter(|&i| {
+                self.particle.formations.organization[i] as usize == MILITARY
+                    && self.particle.formations.active[i] != 0
+                    && self.particle.formations.operational_status[i] != 0
+                    && self.particle.formations.outside_pineland[i] == 0
+                    && self.particle.formations.personnel[i] > 0.0
+            })
+            .count()
+    }
+
     pub fn indigenous_state_flow_metrics(&self) -> JsonValue {
         let mut obj = JsonValue::object();
         let total_air_intensity = self.config.combat.government_air_support_intensity;
@@ -4627,5 +4709,139 @@ mod tests {
             let assay_off = engine_off.capability_assay(&baseline);
             assert_eq!(assay_on, assay_off);
         }
+    }
+
+    #[test]
+    fn hostility_relationships_verified() {
+        let config = SimulationConfig {
+            locality_count: 4,
+            agent_count: 100,
+            burn_in_days: 0.0,
+            ..Default::default()
+        };
+        let engine = SimulationEngine::new(config).unwrap();
+        let particle = &engine.particle;
+        assert!(crate::combat::organizations_hostile(particle, crate::MILITARY, crate::INSURGENT));
+        assert!(crate::combat::organizations_hostile(particle, crate::INSURGENT, crate::MILITARY));
+        assert!(crate::combat::organizations_hostile(particle, crate::POLICE, crate::INSURGENT));
+        assert!(crate::combat::organizations_hostile(particle, crate::INSURGENT, crate::POLICE));
+        assert!(!crate::combat::organizations_hostile(particle, crate::MILITARY, crate::POLICE));
+        assert!(!crate::combat::organizations_hostile(particle, crate::MILITARY, crate::GOVERNMENT));
+        assert!(!crate::combat::organizations_hostile(particle, crate::INSURGENT, crate::INSURGENT));
+    }
+
+    #[test]
+    fn end_to_end_combat_liveness_test() {
+        let mut config = SimulationConfig {
+            locality_count: 4,
+            agent_count: 100,
+            burn_in_days: 0.0,
+            horizon_days: 10.0,
+            ..Default::default()
+        };
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.air.enabled = true;
+        config.partner_force_support.air.intensity = 0.5;
+        config.partner_force_support.air.firepower_bonus = 0.4;
+        config.partner_force_support.air.cost_per_assisted_contact = 500.0;
+
+        let mut engine = SimulationEngine::new(config).unwrap();
+
+        // Identify one military formation and one insurgent formation
+        let mil_opt = (0..engine.particle.formations.personnel.len())
+            .find(|&f| engine.particle.formations.organization[f] as usize == crate::MILITARY);
+        let ins_opt = (0..engine.particle.formations.personnel.len())
+            .find(|&f| engine.particle.formations.organization[f] as usize == crate::INSURGENT);
+
+        assert!(mil_opt.is_some(), "military formation must exist");
+        assert!(ins_opt.is_some(), "insurgent formation must exist");
+        let mil = mil_opt.unwrap();
+        let ins = ins_opt.unwrap();
+
+        // Place both formations in the same locality and primary microzone
+        let target_loc = 0;
+        let target_zone = engine.topology.primary_zone[target_loc] as u32;
+        engine.particle.formations.locality[mil] = target_loc as u32;
+        engine.particle.formations.locality[ins] = target_loc as u32;
+        engine.particle.formations.microzone[mil] = target_zone;
+        engine.particle.formations.microzone[ins] = target_zone;
+        engine.particle.formations.moving[mil] = 0;
+        engine.particle.formations.moving[ins] = 0;
+        engine.particle.formations.outside_pineland[mil] = 0;
+        engine.particle.formations.outside_pineland[ins] = 0;
+        engine.particle.formations.operational_status[mil] = 1;
+        engine.particle.formations.operational_status[ins] = 1;
+
+        let initial_mil_pers = engine.particle.formations.personnel[mil];
+        let initial_ins_pers = engine.particle.formations.personnel[ins];
+        let initial_contacts = engine.particle.counters.contacts;
+
+        // Resolve an organized engagement between them
+        let mut rng = pineland_core::rng::PyRandomCompat::from_seed(42);
+        crate::combat::resolve_organized_engagement(
+            &mut engine.particle,
+            &engine.topology,
+            &engine.config,
+            &mut rng,
+            1.0,
+            ins,
+            mil,
+            crate::INSURGENT,
+            true,
+        );
+
+        // Assert contacts incremented
+        assert_eq!(engine.particle.counters.contacts, initial_contacts + 1);
+        // Assert personnel losses occurred
+        assert!(engine.particle.formations.personnel[mil] < initial_mil_pers);
+        assert!(engine.particle.formations.personnel[ins] < initial_ins_pers);
+        assert!(engine.particle.formations.cumulative_losses[mil] > 0.0);
+        assert!(engine.particle.formations.cumulative_losses[ins] > 0.0);
+
+        // Assert partner air support was invoked for the military formation
+        assert_eq!(engine.particle.partner_support.air.assisted_contacts, 1);
+        assert!(engine.particle.partner_support.air.cumulative_firepower_bonus > 0.0);
+        assert!(engine.particle.partner_support.air.cumulative_donor_cost > 0.0);
+    }
+
+    #[test]
+    fn spatial_encounter_liveness_test() {
+        let mut config = SimulationConfig {
+            locality_count: 4,
+            agent_count: 100,
+            burn_in_days: 0.0,
+            horizon_days: 60.0,
+            ..Default::default()
+        };
+        config.logistics.reallocation_rate = 0.5;
+        config.include_insurgency = true;
+
+        let mut engine = SimulationEngine::new(config).unwrap();
+
+        let mil = (0..engine.particle.formations.personnel.len())
+            .find(|&f| engine.particle.formations.organization[f] as usize == crate::MILITARY)
+            .expect("military formation must exist");
+        let ins = (0..engine.particle.formations.personnel.len())
+            .find(|&f| engine.particle.formations.organization[f] as usize == crate::INSURGENT)
+            .expect("insurgent formation must exist");
+
+        // Start them in separated localities with ample movement logistics
+        engine.particle.formations.locality[mil] = 0;
+        engine.particle.formations.microzone[mil] = engine.topology.primary_zone[0] as u32;
+        engine.particle.formations.supply_capacity[mil] = 1000.0;
+        engine.particle.formations.supply_stock[mil] = 1000.0;
+
+        engine.particle.formations.locality[ins] = 1;
+        engine.particle.formations.microzone[ins] = engine.topology.primary_zone[1] as u32;
+        engine.particle.formations.home_locality[ins] = 1;
+        engine.particle.formations.supply_capacity[ins] = 1000.0;
+        engine.particle.formations.supply_stock[ins] = 1000.0;
+
+        engine.advance_until(45.0).unwrap();
+
+        let final_mil_loc = engine.particle.formations.locality[mil];
+        let final_ins_loc = engine.particle.formations.locality[ins];
+        let moved = final_mil_loc != 0 || final_ins_loc != 1;
+        assert!(moved, "operational reallocation must move forces from static garrison");
     }
 }
