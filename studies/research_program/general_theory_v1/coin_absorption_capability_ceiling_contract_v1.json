@@ -1,0 +1,46 @@
+{
+  "schema_version": "pineland.coin_absorption_capability_ceiling_contract.v1",
+  "status": "preregistered_before_math_and_production_target-cap_tests",
+  "historical_outcomes_used": false,
+  "depends_on": [
+    "SL7 replacement-share veterancy dilution",
+    "SL9 replacement quantity-quality capability law",
+    "SL10 state security absorption pipeline",
+    "production deploy_military target-deficit cap"
+  ],
+  "candidate_law": {
+    "id": "SL11",
+    "name": "absorption-limited authorized-strength capability ceiling",
+    "setup": "A military formation begins at personnel target T with experience E, loses fraction ell, and can receive replacements of experience E_R<E. The target T and all other capability factors remain fixed. A cohort N=n*T enters an empty training pipeline; there is initially no trained reserve; all available trained replacements can be assigned to this formation until its personnel target is refilled.",
+    "training_survival_per_interval": "a=exp(-tau*Delta)",
+    "reserve_survival_per_interval": "b=exp(-mu*Delta)",
+    "cumulative_replacement_fraction_after_m_updates": "r_m=min(n*b*(1-a^m), ell)",
+    "capability_recovery_path": "C_m/C_0=(1-ell+r_m)^(-0.28)*((1-ell)+r_m*q), q=(0.75+0.50*E_R)/(0.75+0.50*E)",
+    "authorized_strength_ceiling": "If the pipeline is sufficient to refill the target, lim C_m/C_0 at r_m=ell equals 1-ell*(1-q)<1 whenever E_R<E.",
+    "headcount_refill_condition": "Finite eventual refill from the one-time cohort requires n*b>ell. The first interval index reaching target is ceil(log(1-ell/(n*b))/log(a)) when 0<a<1."
+  },
+  "predictions": [
+    "Production deploy_military never deploys more than the personnel deficit to target, even when offered arbitrarily large replacement mass.",
+    "Once the target is refilled, another deploy_military call returns zero if no new deficit appears.",
+    "For E_R<E, capability recovery is monotone in absorbed replacement r_m but its fixed-target ceiling remains below 1.",
+    "More training throughput shortens time to nominal headcount recovery but does not change the veterancy-limited capability ceiling.",
+    "A one-time recruit cohort equal exactly to personnel losses cannot achieve finite-time full headcount refill when reserve attrition is positive; extra intake is required."
+  ],
+  "stress_grid": {
+    "loss_fraction": [0.05, 0.1, 0.25, 0.5],
+    "baseline_experience": [0.5, 0.9, 1.0],
+    "replacement_experience": [0.0, 0.1, 0.5],
+    "recruit_intake_fraction_of_original": [0.05, 0.1, 0.25, 0.5, 1.0, 2.0],
+    "training_rate_per_day": [0.005555555555555556, 0.011111111111111112, 0.03333333333333333],
+    "reserve_attrition_rate_per_day": [0.0, 0.0005, 0.01],
+    "interval_days": [7, 14, 30],
+    "updates": [1, 2, 4, 8, 16, 32]
+  },
+  "production_equivalence_required": [
+    "A real initialized military formation at target must accept exactly its induced deficit and no more from deploy_military.",
+    "The production experience after full target refill must equal the SL7 weighted replacement value using E_R=0.10.",
+    "A second oversized deployment attempt with no new deficit must deploy exactly zero.",
+    "The analytic r_m trajectory must match an explicit recurrence of SL10 graduation, reserve attrition, and target-capped deployment across the stress grid."
+  ],
+  "claim_boundary": "SL11 is a theorem of Pineland's synthetic training, target-strength, replacement-memory, and combat-capability equations. It does not prescribe real force-structure or replacement policy."
+}

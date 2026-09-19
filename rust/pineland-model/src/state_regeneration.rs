@@ -1035,6 +1035,81 @@ mod tests {
     }
 
     #[test]
+    fn structural_law_absorption_capability_authorized_strength_cap_is_exact() {
+        let mut config = small_config();
+        config.state_regeneration.enabled = true;
+        config.state_regeneration.military_target_multiplier = 1.0;
+        let mut engine = SimulationEngine::new(config.clone()).expect("engine");
+        let formation = engine
+            .particle
+            .formations
+            .organization
+            .iter()
+            .enumerate()
+            .find(|(formation, organization)| {
+                **organization as usize == crate::MILITARY
+                    && engine.particle.formations.outside_pineland[*formation] == 0
+            })
+            .map(|(formation, _)| formation)
+            .expect("military formation");
+        let locality = engine.particle.formations.locality[formation] as usize;
+        let target = military_target_per_formation(&engine.particle, &config);
+        assert!(target > 0.0);
+
+        // Remove all other local deficits so an oversized deployment offer can
+        // only be absorbed by the deliberately damaged formation.
+        for candidate in 0..engine.particle.formations.personnel.len() {
+            if engine.particle.formations.organization[candidate] as usize == crate::MILITARY
+                && engine.particle.formations.outside_pineland[candidate] == 0
+                && engine.particle.formations.locality[candidate] as usize == locality
+            {
+                engine.particle.formations.personnel[candidate] = target;
+            }
+        }
+
+        let loss_fraction = 0.25;
+        let experience_before = 0.90;
+        engine.particle.formations.personnel[formation] = target * (1.0 - loss_fraction);
+        engine.particle.formations.experience[formation] = experience_before;
+        let personnel_before = engine.particle.formations.personnel[formation];
+        let expected_deficit = (target - personnel_before).max(0.0);
+        let expected_experience = replacement_weighted_experience(
+            personnel_before,
+            experience_before,
+            expected_deficit,
+            0.10,
+        );
+
+        let deployed = deploy_military(&mut engine.particle, &config, locality, target * 10.0);
+        assert_eq!(
+            deployed.to_bits(),
+            expected_deficit.to_bits(),
+            "oversized replacement offer must be capped exactly at target deficit"
+        );
+        assert!(
+            (engine.particle.formations.personnel[formation] - target).abs()
+                <= 1.0e-12 * target.max(1.0)
+        );
+        assert_eq!(
+            engine.particle.formations.experience[formation].to_bits(),
+            expected_experience.to_bits()
+        );
+
+        let second = deploy_military(&mut engine.particle, &config, locality, target * 10.0);
+        assert_eq!(
+            second.to_bits(),
+            0.0f64.to_bits(),
+            "once authorized personnel target is full, additional replacements cannot be absorbed"
+        );
+        let q = (0.75 + 0.50 * 0.10) / (0.75 + 0.50 * experience_before);
+        let capability_ceiling = 1.0 - loss_fraction * (1.0 - q);
+        assert!(capability_ceiling < 1.0);
+        println!(
+            "STRUCTURAL_SL11 target={target:.17} loss_fraction={loss_fraction:.17} deployed={deployed:.17} E_before={experience_before:.17} E_after={expected_experience:.17} capability_ceiling={capability_ceiling:.17}"
+        );
+    }
+
+    #[test]
     fn disabled_process_is_exact_noop() {
         let config = small_config();
         let mut engine = SimulationEngine::new(config.clone()).expect("engine");

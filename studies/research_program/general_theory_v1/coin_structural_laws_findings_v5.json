@@ -1,0 +1,57 @@
+{
+  "schema_version": "pineland.coin_structural_laws_findings.v5",
+  "status": "ELEVEN_IMPLEMENTED_MECHANISM_LAWS_PROMOTED",
+  "historical_outcomes_used": false,
+  "supersedes": "coin_structural_laws_findings_v4.json",
+  "promotion_result": {
+    "SL1_local_underground_exponential_survival": "PROMOTED",
+    "SL2_underground_fielded_force_separation": "PROMOTED",
+    "SL3_recruitment_hazard_factorization": "PROMOTED",
+    "SL4_fighter_equipment_capital_conversion": "PROMOTED",
+    "SL5_finite_subcohort_recruitment_sampling": "PROMOTED",
+    "SL6_conditional_organization_collapse_hazard": "PROMOTED",
+    "SL7_replacement_share_veterancy_dilution": "PROMOTED",
+    "SL8_experience_to_exchange_elasticity": "PROMOTED",
+    "SL9_replacement_quantity_quality_capability": "PROMOTED",
+    "SL10_state_security_absorption_pipeline": "PROMOTED",
+    "SL11_absorption_limited_authorized_strength_capability_ceiling": "PROMOTED"
+  },
+  "evidence_files": {
+    "SL1_to_SL4": "coin_structural_laws_findings_v1.json",
+    "SL5_to_SL6": "coin_stochastic_laws_findings_v1.json",
+    "SL7": "coin_human_capital_structural_law_findings_v1.json",
+    "SL8": "coin_veterancy_exchange_structural_law_findings_v1.json",
+    "SL9": "coin_replacement_capability_structural_law_findings_v1.json",
+    "SL10": "coin_security_absorption_pipeline_findings_v1.json",
+    "SL11": "coin_absorption_capability_ceiling_findings_v1.json"
+  },
+  "structural_theory": {
+    "insurgent_pressure_regeneration": [
+      "Underground disruption obeys exact exponential stock decay while remaining instantaneously separated from fielded force.",
+      "Recruitment hazard factors exactly into configured rate, eligible stock, and mean mobilization/access intensity.",
+      "Recruitment realization is finite-subcohort stochastic sampling.",
+      "Fighter regeneration generates an exact supply-capital burden and high mobilization produces a replicated leverage/ruin frontier."
+    ],
+    "state_absorption_and_human_capital": [
+      "Security recruits pass through an exact exponential training pipeline and trained reserve before deployment.",
+      "Deployment into formations is capped by authorized-strength deficit.",
+      "Lower-experience replacements dilute veterancy by exact weighted memory.",
+      "Nominal headcount restoration can therefore leave a strict residual capability deficit.",
+      "Training speed changes time-to-refill but does not eliminate the lower-experience authorized-strength capability ceiling.",
+      "Experience-induced capability changes map to uncapped combat exchange through exact elasticities."
+    ],
+    "organizational_stochasticity": [
+      "Conditional recruitment and organization-collapse distributions are exactly specified, so exact local mechanisms can still generate stochastic world-level branches."
+    ],
+    "emergent_phase_result": "The fresh mobilization frontier supports a probabilistic leverage/ruin regime rather than a universal deterministic threshold."
+  },
+  "verification": {
+    "SL11_math_cases": 34992,
+    "SL11_maximum_absorption_residual": 1.6653345369377348e-16,
+    "SL11_maximum_capability_residual": 3.3306690738754696e-16,
+    "SL11_production_target_cap_test": "passed",
+    "SL11_production_first_deployment": 125.0,
+    "SL11_production_second_deployment": 0.0
+  },
+  "claim_boundary": "All eleven laws are mathematical/stochastic laws of implemented Pineland mechanisms. Their coefficients, timescales, and synthetic phase boundaries are not empirical laws of real conflict."
+}
