@@ -4,6 +4,9 @@ Pineland mixes executable model code with a large empirical research program.
 The repository should keep the two easy to distinguish so that cleaning a
 working tree never destroys scientific evidence.
 
+Long-term movement of superseded material is governed separately by
+[`docs/archive-policy.md`](archive-policy.md).
+
 ## Canonical tracked material
 
 - Root project metadata — `README.md`, `LICENSE`, `CITATION.cff`,

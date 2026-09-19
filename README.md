@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Jandro22/pineland/actions/workflows/research-v1-ci.yml"><img src="https://github.com/Jandro22/pineland/actions/workflows/research-v1-ci.yml/badge.svg?branch=research-v1" alt="Research v1 CI"></a>
-  &nbsp; Python 3.11+ &nbsp;·&nbsp; Rust &nbsp;·&nbsp; MIT
+  <a href="https://github.com/Jandro22/pineland/actions/workflows/research-v1-ci.yml"><img src="https://github.com/Jandro22/pineland/actions/workflows/research-v1-ci.yml/badge.svg?branch=main" alt="Pineland CI"></a>
+  &nbsp; Python 3.11+ &nbsp;&middot;&nbsp; Rust &nbsp;&middot;&nbsp; MIT
 </p>
 
 Pineland COIN-SIM is a research-oriented simulation platform for studying how
@@ -117,6 +117,11 @@ See [rust/README.md](rust/README.md), [rust/BUILD.md](rust/BUILD.md), and
 The package has no mandatory runtime dependencies; the **research** extra adds
 the analysis stack and **dev** adds pytest.
 
+From a source checkout, `python pineland.py ...` is a thin repository-local
+wrapper around that same `pineland-sim` CLI. It exists so reproduction commands
+work without requiring an editable install; it is not a second simulation
+implementation.
+
 ### Research-v1 reproduction smoke
 
     python pineland.py reproduce paper1 --profile smoke
@@ -146,6 +151,10 @@ flag is supplied.
 
 The complete evidence/retention policy is in
 [docs/repository-layout.md](docs/repository-layout.md).
+
+For a compact view of which subsystems are currently research-load-bearing,
+implemented but secondary, or still under active validation, see
+[docs/subsystem-status.md](docs/subsystem-status.md).
 
 ## Reproducibility and evidence policy
 
@@ -196,3 +205,7 @@ between exploratory and confirmatory work.
 
 Citation metadata is provided in [CITATION.cff](CITATION.cff). Pineland is
 released under the [MIT License](LICENSE).
+
+Release conventions are documented in
+[docs/release-policy.md](docs/release-policy.md). The public-release gate is in
+[docs/public-release-checklist.md](docs/public-release-checklist.md).

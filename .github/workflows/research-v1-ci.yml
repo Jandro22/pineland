@@ -2,9 +2,9 @@ name: Pineland CI
 
 on:
   push:
-    branches: [research-v1]
+    branches: [main, research-v1]
   pull_request:
-    branches: [research-v1]
+    branches: [main, research-v1]
   workflow_dispatch:
 
 concurrency:
@@ -12,6 +12,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  repo-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Public-release metadata audit
+        run: python scripts/public_release_audit.py
+
   core-tests:
     runs-on: ubuntu-latest
     strategy:
