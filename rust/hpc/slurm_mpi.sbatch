@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=pineland-filter
+#SBATCH --account=will_taggart_mcll
 #SBATCH --partition=normal_q
 #SBATCH --constraint=avx512
 #SBATCH --nodes=4
@@ -10,7 +11,7 @@
 
 set -euo pipefail
 module reset
-module load foss/2023b
+module load foss/2025b
 
 export RAYON_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 run_root="/scratch/${USER}/pineland/${SLURM_JOB_ID}"

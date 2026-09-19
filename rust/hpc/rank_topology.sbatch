@@ -3,6 +3,7 @@
 # Submit with: sbatch --export=ALL,RANKS_PER_NODE=1,THREADS_PER_RANK=96 ...
 # Repeat for (2,48), (4,24), and (8,12).
 #SBATCH --job-name=pineland-topology
+#SBATCH --account=will_taggart_mcll
 #SBATCH --partition=normal_q
 #SBATCH --constraint=avx512
 #SBATCH --nodes=1
@@ -11,7 +12,7 @@
 
 set -euo pipefail
 module reset
-module load foss/2023b
+module load foss/2025b
 export RAYON_NUM_THREADS="${THREADS_PER_RANK:?set THREADS_PER_RANK}"
 run_root="/scratch/${USER}/pineland/${SLURM_JOB_ID}/ranks-${RANKS_PER_NODE}-threads-${THREADS_PER_RANK}"
 mkdir -p "${run_root}"

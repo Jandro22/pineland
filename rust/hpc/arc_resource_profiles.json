@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "account": "will_taggart_mcll",
+  "billing_verified_on": "2026-09-19",
+  "profiles": {
+    "tinkercliffs-trajectory-normal": {
+      "cluster": "tinkercliffs",
+      "partition": "normal_q",
+      "cpus_per_task": 1,
+      "memory_gb": 6,
+      "walltime": "04:00:00",
+      "max_concurrent": 200,
+      "tasks_per_array_element": 1,
+      "billing_su_per_hour": 1.75,
+      "preemptable": false
+    },
+    "tinkercliffs-trajectory-heavy": {
+      "cluster": "tinkercliffs",
+      "partition": "normal_q",
+      "cpus_per_task": 1,
+      "memory_gb": 8,
+      "walltime": "08:00:00",
+      "max_concurrent": 200,
+      "tasks_per_array_element": 1,
+      "billing_su_per_hour": 2.0,
+      "preemptable": false
+    },
+    "tinkercliffs-trajectory-preemptable": {
+      "cluster": "tinkercliffs",
+      "partition": "preemptable_q",
+      "cpus_per_task": 1,
+      "memory_gb": 6,
+      "walltime": "12:00:00",
+      "max_concurrent": 200,
+      "tasks_per_array_element": 1,
+      "billing_su_per_hour": 0.0,
+      "preemptable": true
+    },
+    "owl-trajectory-normal": {
+      "cluster": "owl",
+      "partition": "normal_q",
+      "cpus_per_task": 1,
+      "memory_gb": 6,
+      "walltime": "04:00:00",
+      "max_concurrent": 200,
+      "tasks_per_array_element": 1,
+      "billing_su_per_hour": 2.25,
+      "preemptable": false
+    },
+    "owl-trajectory-heavy": {
+      "cluster": "owl",
+      "partition": "normal_q",
+      "cpus_per_task": 1,
+      "memory_gb": 8,
+      "walltime": "08:00:00",
+      "max_concurrent": 200,
+      "tasks_per_array_element": 1,
+      "billing_su_per_hour": 2.5,
+      "preemptable": false
+    },
+    "owl-trajectory-preemptable": {
+      "cluster": "owl",
+      "partition": "preemptable_q",
+      "cpus_per_task": 1,
+      "memory_gb": 6,
+      "walltime": "12:00:00",
+      "max_concurrent": 200,
+      "tasks_per_array_element": 1,
+      "billing_su_per_hour": 0.0,
+      "preemptable": true
+    }
+  }
+}

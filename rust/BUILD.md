@@ -20,11 +20,12 @@ cargo build --release --locked --manifest-path rust/Cargo.toml -p pineland-cli
 sha256sum rust/target/release/pineland
 ```
 
-On an MPI-equipped Owl image, build the live hybrid launcher with:
+On an MPI-equipped ARC image, build the live hybrid launcher with:
 
 ```bash
 module reset
-module load foss/2023b
+module load foss/2025b
+module load Rust/1.93.1-GCCcore-14.3.0
 cargo build --release --locked --manifest-path rust/Cargo.toml -p pineland-cli --features mpi
 sha256sum rust/target/release/pineland
 ```
@@ -36,6 +37,11 @@ frames with `MPI_Alltoallv`, and writes one checkpoint shard per rank.  A
 completed MPI checkpoint can be resumed with `filter --mpi --checkpoint`; the
 state is repartitioned by logical particle ID so the restart may use a
 different rank count.  The MPI path expects the unguided filter continuation.
+
+Independent trajectory ensembles use the ARC Slurm-array layer documented in
+rust/hpc/ARC.md. The normal run command is serial, so its production ensemble
+profile requests one CPU per executing array element rather than reserving
+idle many-core nodes.
 
 The default release profile is deliberately conservative: `opt-level=3`,
 `lto=fat`, `codegen-units=1`, `panic=abort`, no debug symbols, and no relaxed
