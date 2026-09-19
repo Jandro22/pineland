@@ -3,7 +3,7 @@ use pineland_model::{SimulationEngine, INSURGENT};
 use rayon::prelude::*;
 use std::env;
 use std::error::Error;
-use std::fs::{create_dir_all, File};
+use std::fs::{create_dir_all, read_to_string, File};
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
@@ -132,7 +132,7 @@ fn run_case(
         // before *every* event; preserve identical accounting/classification
         // while paying that cost only at the scientifically relevant boundary.
         let capital_event = matches!(kind.as_str(), "recruitment" | "economy");
-        let organization_event = kind == "organization";
+        let organization_event = kind == "organization_ecology";
         let capital_before = capital_event
             .then(|| e.particle.organizations.capital[INSURGENT]);
         let collapse_pre = organization_event.then(|| {
@@ -219,6 +219,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let seed_base: u64 = arg(&args, 6, 2026128000u64);
     let horizon: f64 = arg(&args, 7, 180.0);
     let profile = args.get(8).map(String::as_str).unwrap_or("main");
+    let repair_source = args.get(9).map(String::as_str);
     ensure_parent(&out)?;
     let rates: Vec<f64> = match profile {
         "main" => vec![0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 4.0],
@@ -237,7 +238,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             )
         }
     };
-    let cases = (0..seeds)
+    let mut cases = (0..seeds)
         .flat_map(|s| {
             rates
                 .iter()
@@ -245,6 +246,39 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .map(move |r| (seed_base + s as u64, r))
         })
         .collect::<Vec<_>>();
+    if let Some(path) = repair_source {
+        let source = read_to_string(path)?;
+        let mut selected = Vec::<(u64, f64)>::new();
+        for (index, line) in source.lines().enumerate() {
+            if index == 0 || line.trim().is_empty() {
+                continue;
+            }
+            let fields = line.split(',').collect::<Vec<_>>();
+            if fields.len() < 3 {
+                continue;
+            }
+            if !matches!(
+                fields[2].trim().to_ascii_lowercase().as_str(),
+                "true" | "1"
+            ) {
+                continue;
+            }
+            selected.push((
+                fields[0].trim().parse::<u64>()?,
+                fields[1].trim().parse::<f64>()?,
+            ));
+        }
+        cases.retain(|(seed, rate)| {
+            selected.iter().any(|(wanted_seed, wanted_rate)| {
+                *seed == *wanted_seed && (*rate - *wanted_rate).abs() <= 1.0e-12
+            })
+        });
+        eprintln!(
+            "instrumentation repair filter source={} selected_cases={}",
+            path,
+            cases.len()
+        );
+    }
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
         .build()?;
