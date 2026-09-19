@@ -37,4 +37,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+# Keep pytest's temporary tree inside the checkout. This avoids Windows
+# reparse-point/ACL failures in the shared system pytest temp root.
+addopts = "--basetemp=.pytest-tmp"
 tmp_path_retention_count = "0"
