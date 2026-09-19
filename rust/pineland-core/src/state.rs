@@ -1827,6 +1827,61 @@ impl PartnerSupportLedger {
         discounted
     }
 
+    /// Pre-T external logistics dependence fraction: external / (indigenous + external).
+    pub fn dependence_logistics(&self) -> f64 {
+        let total = self.logistics.indigenous_cumulative_delivered + self.logistics.cumulative_delivered;
+        if total > 1e-9 {
+            (self.logistics.cumulative_delivered / total).clamp(0.0, 1.0)
+        } else {
+            0.0
+        }
+    }
+
+    /// Pre-T external force generation dependence fraction: external / (indigenous + external).
+    pub fn dependence_forcegen(&self) -> f64 {
+        let total = self.force_generation.indigenous_graduates + self.force_generation.external_incremental_graduates;
+        if total > 1e-9 {
+            (self.force_generation.external_incremental_graduates / total).clamp(0.0, 1.0)
+        } else {
+            0.0
+        }
+    }
+
+    /// Pre-T external command dependence fraction: assisted / total command events.
+    pub fn dependence_command(&self, total_command_events: u64) -> f64 {
+        let total = total_command_events.max(self.command.assisted_events);
+        if total > 0 {
+            (self.command.assisted_events as f64 / total as f64).clamp(0.0, 1.0)
+        } else {
+            0.0
+        }
+    }
+
+    /// Pre-T external air support dependence fraction: assisted contacts / total military contacts.
+    pub fn dependence_air(&self, total_military_contacts: u64) -> f64 {
+        let total = total_military_contacts.max(self.air.assisted_contacts);
+        if total > 0 {
+            (self.air.assisted_contacts as f64 / total as f64).clamp(0.0, 1.0)
+        } else {
+            0.0
+        }
+    }
+
+    /// Operational manpower burden ratio: replacement demand / organic replacement capacity.
+    pub fn manpower_burden(window_losses: f64, window_graduates: f64) -> f64 {
+        window_losses / (window_graduates + 1e-6)
+    }
+
+    /// Operational logistics burden ratio: operational consumption / organic logistics generation.
+    pub fn logistics_burden(window_consumed: f64, window_produced: f64) -> f64 {
+        window_consumed / (window_produced + 1e-6)
+    }
+
+    /// Flow-based regenerative coordinate: 1 / (burden + epsilon).
+    pub fn omega_flow(burden: f64) -> f64 {
+        1.0 / (burden + 1e-6)
+    }
+
     pub fn to_json(&self) -> crate::json::JsonValue {
         use crate::json::JsonValue;
         let mut root = JsonValue::object();
