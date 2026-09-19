@@ -1110,6 +1110,116 @@ mod tests {
     }
 
     #[test]
+    fn structural_law_constant_intake_security_throughput_matches_closed_form() {
+        let g0_values = [0.0, 10.0, 100.0, 1_000.0];
+        let intakes = [1.0, 10.0, 100.0, 1_000.0];
+        let training_rates = [0.001, 1.0 / 180.0, 1.0 / 90.0, 1.0 / 30.0, 0.1];
+        let attrition_rates: [f64; 4] = [0.0, 0.0005, 0.01, 0.05];
+        let elapsed_values = [1.0, 7.0, 14.0, 30.0];
+        let updates = [1usize, 2, 4, 8, 16, 32, 64];
+        let mut cases = 0usize;
+        let mut max_pipeline_residual = 0.0f64;
+        let mut max_graduation_residual = 0.0f64;
+        let mut max_reserve_residual = 0.0f64;
+
+        for g0 in g0_values {
+            for intake in intakes {
+                for training_rate in training_rates {
+                    for elapsed in elapsed_values {
+                        let a = python_exp(-training_rate * elapsed);
+                        for m in updates {
+                            let mut pipeline = g0;
+                            let mut graduated = 0.0;
+                            for _ in 0..m {
+                                let total = pipeline + intake;
+                                let (next, d) =
+                                    security_training_transition(total, training_rate, elapsed);
+                                pipeline = next;
+                                graduated = d;
+                            }
+                            let closed = a.powi(m as i32) * g0
+                                + a * intake * (1.0 - a.powi(m as i32)) / (1.0 - a);
+                            let prev = if m == 1 {
+                                g0
+                            } else {
+                                a.powi((m - 1) as i32) * g0
+                                    + a * intake
+                                        * (1.0 - a.powi((m - 1) as i32))
+                                        / (1.0 - a)
+                            };
+                            let expected_graduated = (prev + intake) * (1.0 - a);
+                            max_pipeline_residual =
+                                max_pipeline_residual.max((pipeline - closed).abs());
+                            max_graduation_residual = max_graduation_residual
+                                .max((graduated - expected_graduated).abs());
+                            assert!(
+                                (pipeline - closed).abs()
+                                    <= 2.0e-12 * pipeline.abs().max(closed.abs()).max(1.0)
+                            );
+                            assert!(
+                                (graduated - expected_graduated).abs()
+                                    <= 2.0e-12
+                                        * graduated
+                                            .abs()
+                                            .max(expected_graduated.abs())
+                                            .max(1.0)
+                            );
+                            cases += 1;
+                        }
+
+                        let steady_pipeline = a * intake / (1.0 - a);
+                        let steady_graduation = (steady_pipeline + intake) * (1.0 - a);
+                        assert!(
+                            (steady_graduation - intake).abs()
+                                <= 2.0e-12 * intake.max(1.0)
+                        );
+
+                        for attrition_rate in attrition_rates {
+                            let b = python_exp(-attrition_rate * elapsed);
+                            if b < 1.0 - 1.0e-15 {
+                                for fraction in [0.5, 1.0, 1.25] {
+                                    let deployment = fraction * b * intake;
+                                    let reserve_star =
+                                        (b * intake - deployment) / (1.0 - b);
+                                    let before_deployment =
+                                        security_reserve_after_attrition(
+                                            reserve_star,
+                                            intake,
+                                            attrition_rate,
+                                            elapsed,
+                                        );
+                                    let recurrence = before_deployment - deployment;
+                                    max_reserve_residual =
+                                        max_reserve_residual.max((recurrence - reserve_star).abs());
+                                    assert!(
+                                        (recurrence - reserve_star).abs()
+                                            <= 2.0e-12
+                                                * recurrence
+                                                    .abs()
+                                                    .max(reserve_star.abs())
+                                                    .max(1.0)
+                                    );
+                                    if fraction <= 1.0 {
+                                        assert!(reserve_star >= -1.0e-12);
+                                    } else {
+                                        assert!(reserve_star < 0.0);
+                                    }
+                                }
+                            } else {
+                                assert_eq!(b.to_bits(), 1.0f64.to_bits());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 4 * 4 * 5 * 4 * 7);
+        println!(
+            "STRUCTURAL_SL12 cases={cases} max_pipeline_residual={max_pipeline_residual:.17e} max_graduation_residual={max_graduation_residual:.17e} max_reserve_residual={max_reserve_residual:.17e}"
+        );
+    }
+
+    #[test]
     fn disabled_process_is_exact_noop() {
         let config = small_config();
         let mut engine = SimulationEngine::new(config.clone()).expect("engine");
