@@ -1,0 +1,51 @@
+{
+  "schema_version": "pineland.coin_stochastic_laws_contract.v1",
+  "status": "preregistered_before_stochastic_implementation_battery",
+  "historical_outcomes_used": false,
+  "model_provenance_for_contract": "0f3ed24",
+  "purpose": "Formalize and verify the stochastic layer that operates around the promoted deterministic stock-flow laws SL1-SL4.",
+  "laws": [
+    {
+      "id": "SL5",
+      "name": "finite-subcohort recruitment sampling",
+      "statement": "For a frozen representative cohort with eligible fraction e, combined recruitment intensity I, recruitment rate r, elapsed interval dt, and n recruitment subcohorts: p = 1-exp(-r*I*dt), a=min(ceil(e*n),n), K~Binomial(a,p), and realized recruited fraction is min(K/n,e).",
+      "implication": "Conditional recruitment variance is intrinsic even when the hazard state is identical; the cap makes the exact expectation a finite binomial sum rather than simply e*p whenever e*n is non-integer.",
+      "stress_grid": {
+        "eligible_fractions": [0.05, 0.1, 0.25, 0.5, 0.75, 1.0],
+        "combined_intensities": [0.01, 0.05, 0.1, 0.25, 0.5, 1.0],
+        "rate_multipliers": [0.03125, 0.0625, 0.125, 0.25],
+        "elapsed_days": [1, 7, 30],
+        "subcohort_counts": [5, 20, 50]
+      },
+      "verification": [
+        "factor the exact probability and cap into a pure helper used by the production recruitment path without changing semantics",
+        "enumerate the exact finite distribution and moments",
+        "for selected cases, compare empirical draws from PyRandomCompat against the exact mean/variance with a preregistered Monte Carlo tolerance",
+        "preserve existing deterministic parity tests"
+      ]
+    },
+    {
+      "id": "SL6",
+      "name": "conditional organization-collapse hazard",
+      "statement": "When deterministic collapse gates are false and observed-active conditioning is absent, one organization-ecology interval collapses iff U<q for U~Uniform(0,1), where q=1-exp(-lambda*dt/7) and lambda=collapse_base_hazard*exp(2*(1-cohesion)+2*losses-3*social_base-1.5*external_sanctuary).",
+      "implication": "At frozen state, stochastic-collapse survival composes multiplicatively across intervals: 1-q(dt1+dt2)=(1-q(dt1))*(1-q(dt2)). Collapse risk rises monotonically with losses and falls monotonically with cohesion, social base, and sanctuary.",
+      "stress_grid": {
+        "cohesion": [0.2, 0.5, 0.8, 1.0],
+        "losses": [0.0, 0.1, 0.5, 1.0],
+        "social_base": [0.0, 0.25, 0.5, 1.0],
+        "sanctuary": [0.0, 0.5, 1.0],
+        "elapsed_days": [1, 7, 30]
+      },
+      "verification": [
+        "factor the production collapse probability into a pure helper without changing semantics",
+        "test the semigroup identity across the full grid",
+        "test monotonic direction in each state variable",
+        "compare selected empirical Uniform draws to q with a preregistered binomial tolerance",
+        "verify deterministic capital/cohesion/rootedness gates still override the stochastic draw"
+      ]
+    }
+  ],
+  "promotion_rule": "Promote SL5/SL6 only after the production code calls the verified pure helpers and all exact, monotonicity, semigroup, and Monte Carlo checks pass. A failed direction or distribution check blocks promotion.",
+  "claim_boundary": "These are stochastic laws of the implemented Pineland process, not empirical distributions for real organizations.",
+  "guard": "Do not modify production semantics while the preregistered mobilization-risk-frontier run is in progress."
+}
