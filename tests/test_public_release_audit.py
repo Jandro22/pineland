@@ -50,3 +50,56 @@ def test_missing_rust_modules_accepts_file_and_directory_modules(tmp_path: Path)
     )
 
     assert missing == []
+
+
+def test_restricted_source_artifacts_tracked_flags_declared_local_path(
+    tmp_path: Path,
+) -> None:
+    audit = load_audit_module()
+    audit.ROOT = tmp_path
+    manifest = tmp_path / "studies" / "case_a" / "data" / "manifests" / "sources.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(
+        """{
+  "sources": [{
+    "dataset": "restricted example",
+    "local_path": "data/raw/source.zip",
+    "redistribution": "permission_required"
+  }]
+}
+""",
+        encoding="utf-8",
+    )
+
+    findings = audit.restricted_source_artifacts_tracked(
+        {"studies/case_a/data/raw/source.zip"}
+    )
+
+    assert len(findings) == 1
+    assert "permission_required" in findings[0]
+
+
+def test_restricted_source_artifacts_tracked_allows_manifest_only(
+    tmp_path: Path,
+) -> None:
+    audit = load_audit_module()
+    audit.ROOT = tmp_path
+    manifest = tmp_path / "studies" / "case_a" / "data" / "manifests" / "sources.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(
+        """{
+  "sources": [{
+    "dataset": "metadata-only example",
+    "local_path": "data/raw/source.zip",
+    "redistribution": "metadata_only"
+  }]
+}
+""",
+        encoding="utf-8",
+    )
+
+    findings = audit.restricted_source_artifacts_tracked(
+        {"studies/case_a/data/manifests/sources.json"}
+    )
+
+    assert findings == []

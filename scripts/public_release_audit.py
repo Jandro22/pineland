@@ -129,6 +129,41 @@ def source_manifest_warnings() -> list[str]:
     return warnings
 
 
+def restricted_source_artifacts_tracked(tracked: set[str]) -> list[str]:
+    """Flag locally acquired source artifacts whose manifest forbids default publication."""
+    findings: list[str] = []
+    restricted_states = {
+        "metadata_only",
+        "permission_required",
+        "prohibited",
+        "review_required",
+    }
+    for manifest in sorted(ROOT.glob("studies/*/data/manifests/sources.json")):
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        case_dir = manifest.parents[2]
+        for index, source in enumerate(data.get("sources", [])):
+            state = source.get("redistribution")
+            local_path = source.get("local_path")
+            if state not in restricted_states or not local_path:
+                continue
+            artifact = (case_dir / local_path).relative_to(ROOT).as_posix()
+            if artifact in tracked:
+                source_id = (
+                    source.get("source_id")
+                    or source.get("dataset")
+                    or source.get("provider")
+                    or f"source[{index}]"
+                )
+                findings.append(
+                    f"{artifact} is tracked but source {source_id!r} has "
+                    f"redistribution={state!r}"
+                )
+    return findings
+
+
 def tracked_files() -> list[str]:
     return [p for p in git("ls-files").splitlines() if p]
 
@@ -249,6 +284,7 @@ def main() -> int:
         passes.append("README contains no Unicode replacement characters")
 
     tracked = tracked_files()
+    tracked_set = {p.replace("\\", "/") for p in tracked}
     replacement_character_files = scan_current_tree_for_replacement_characters(tracked)
     if replacement_character_files:
         failures.append(
@@ -282,6 +318,16 @@ def main() -> int:
         failures.extend(f"missing Rust module source: {item}" for item in rust_modules)
     else:
         passes.append("all tracked external Rust module declarations resolve")
+
+    restricted_artifacts = restricted_source_artifacts_tracked(tracked_set)
+    if restricted_artifacts:
+        failures.extend(
+            f"restricted source artifact tracked: {item}" for item in restricted_artifacts
+        )
+    else:
+        passes.append(
+            "no declared restricted/review-required source artifacts are tracked"
+        )
 
     tag = f"v{package_version}"
     if git("tag", "--list", tag).strip() == tag:
