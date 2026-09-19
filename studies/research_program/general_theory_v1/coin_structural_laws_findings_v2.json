@@ -1,0 +1,54 @@
+{
+  "schema_version": "pineland.coin_structural_laws_findings.v2",
+  "status": "EIGHT_IMPLEMENTED_MECHANISM_LAWS_PROMOTED",
+  "historical_outcomes_used": false,
+  "supersedes": "coin_structural_laws_findings_v1.json",
+  "promotion_result": {
+    "SL1_local_underground_exponential_survival": "PROMOTED",
+    "SL2_underground_fielded_force_separation": "PROMOTED",
+    "SL3_recruitment_hazard_factorization": "PROMOTED",
+    "SL4_fighter_equipment_capital_conversion": "PROMOTED",
+    "SL5_finite_subcohort_recruitment_sampling": "PROMOTED",
+    "SL6_conditional_organization_collapse_hazard": "PROMOTED",
+    "SL7_replacement_share_veterancy_dilution": "PROMOTED",
+    "SL8_experience_to_exchange_elasticity": "PROMOTED"
+  },
+  "evidence_files": {
+    "SL1_to_SL4": "coin_structural_laws_findings_v1.json",
+    "SL5_to_SL6": "coin_stochastic_laws_findings_v1.json",
+    "SL7": "coin_human_capital_structural_law_findings_v1.json",
+    "SL8": "coin_veterancy_exchange_structural_law_findings_v1.json"
+  },
+  "structural_theory": {
+    "deterministic_skeleton": [
+      "Underground pressure removes rooted membership by an exact local exponential survival law.",
+      "That immediate event is separated from already-fielded force and organization capital.",
+      "Recruitment propensity factors exactly into rate x eligible stock x mean mobilization/access intensity.",
+      "Realized fighter regeneration converts capital into the required supply reserve under an exact accounting identity.",
+      "Lower-experience replacement flow dilutes formation experience by an exact weighted-memory law.",
+      "At uncapped matched contact, experience-induced capability changes map to loss exchange through exact power elasticities."
+    ],
+    "stochastic_layer": [
+      "Recruitment realization is a finite-subcohort binomial sampling process conditional on the frozen hazard state.",
+      "Organization stochastic collapse is a continuous-hazard Bernoulli event conditional on the frozen organization state, with deterministic capital/cohesion/rooted-force gates overriding the draw."
+    ],
+    "emergent_phase_result": "The fresh 24-seed mobilization frontier shows how these laws combine into a leverage/ruin regime: additional recruitment initially grows rooted and fielded stock while consuming runway, then capital-triggered collapse rises sharply as cumulative burn approaches available resources."
+  },
+  "verification": {
+    "structural_law_tests": "11/11 passed",
+    "pineland_model_unit_tests": "28/28 passed",
+    "model_semantics_changed": false,
+    "refactor_role": "Existing formulas were factored into tested helpers; equivalence and RNG-continuation tests guard against semantic drift.",
+    "integrated_cross_tree_parity": {
+      "evidence": "coin_sl5_sl8_integrated_production_parity_v1.json",
+      "baseline_commit": "b3a9e07",
+      "complete_worlds": 10,
+      "horizon_days": 90,
+      "rates": 5,
+      "byte_equal": true,
+      "maximum_numeric_absolute_residual": 0.0,
+      "sha256": "d3719d73855917f4142331d50f976f2cbbf70ca1f5f28e6596fbb16ee76d1638"
+    }
+  },
+  "claim_boundary": "These are mathematical and stochastic laws of the implemented Pineland model. Their coefficients and resulting synthetic phase boundaries are not empirical laws of real insurgency."
+}

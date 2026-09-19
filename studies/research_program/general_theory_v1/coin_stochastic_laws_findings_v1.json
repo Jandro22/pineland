@@ -1,0 +1,54 @@
+{
+  "schema_version": "pineland.coin_stochastic_laws_findings.v1",
+  "status": "SL5_SL6_PROMOTED_PRODUCTION_EQUIVALENCE_VERIFIED",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_stochastic_laws_contract_v1.json",
+  "SL5_finite_subcohort_recruitment": {
+    "promotion": "PROMOTED",
+    "law": "p=1-exp(-r*I*dt); a=min(ceil(e*n),n); K~Binomial(a,p); realized recruited fraction=min(K/n,e).",
+    "pure_math_verification": {
+      "grid_cases": 1296,
+      "maximum_probability_sum_residual": 1.1102230246251565e-16,
+      "monotonicity_failures": 0,
+      "python_monte_carlo_max_abs_z": 1.40
+    },
+    "production_equivalence": {
+      "old_inline_vs_helper_cases": 1296,
+      "output_equivalence": "bitwise exact",
+      "next_rng_draw_equivalence": "bitwise exact in every case",
+      "pyrandom_draws": 100000,
+      "pyrandom_mean_z": -1.601355
+    },
+    "interpretation": "Conditional on a frozen recruitment state, realized recruitment contains irreducible finite-subcohort sampling variance even though its probability law is exactly known."
+  },
+  "SL6_conditional_organization_collapse": {
+    "promotion": "PROMOTED",
+    "law": "When deterministic gates are false and active-state conditioning is absent, q=1-exp(-lambda*dt/7), lambda=lambda0*exp(2*(1-C)+2*L-3*S-1.5*X), and collapse occurs iff U<q.",
+    "pure_math_verification": {
+      "semigroup_cases": 1728,
+      "maximum_semigroup_residual": 1.6653345369377348e-16,
+      "monotonicity_failures": 0,
+      "python_monte_carlo_max_abs_z": 1.02
+    },
+    "production_equivalence": {
+      "state_grid_cases": 576,
+      "inline_formula_maximum_residual": 0.0,
+      "semigroup_maximum_residual": 1.1102230246251565e-16,
+      "deterministic_gate_override_checks": "passed",
+      "pyrandom_draws": 100000,
+      "pyrandom_frequency_z": 0.447957
+    },
+    "directional_theorems": [
+      "Collapse probability rises with losses.",
+      "Collapse probability falls with cohesion.",
+      "Collapse probability falls with social base.",
+      "Collapse probability falls with external sanctuary.",
+      "At frozen state, survival over adjacent intervals composes multiplicatively."
+    ]
+  },
+  "regression": {
+    "pineland_model_unit_tests": "28/28 passed",
+    "structural_law_tests": "11/11 passed"
+  },
+  "claim_boundary": "SL5 and SL6 are exact probability laws of the implemented Pineland process. They are not empirical distributions for real insurgent organizations."
+}

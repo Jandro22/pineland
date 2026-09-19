@@ -290,6 +290,19 @@ fn deploy_police(particle: &mut ParticleState, locality: usize, amount: f64) -> 
     deployed
 }
 
+fn replacement_weighted_experience(
+    old_personnel: f64,
+    old_experience: f64,
+    replacement: f64,
+    replacement_experience: f64,
+) -> f64 {
+    let new_personnel = (old_personnel + replacement).max(1.0e-12);
+    clamp01(
+        (old_personnel * clamp01(old_experience) + replacement * clamp01(replacement_experience))
+            / new_personnel,
+    )
+}
+
 fn deploy_military(
     particle: &mut ParticleState,
     config: &SimulationConfig,
@@ -331,12 +344,11 @@ fn deploy_military(
         let old_personnel = particle.formations.personnel[formation].max(0.0);
         let old_experience = clamp01(particle.formations.experience[formation]);
         particle.formations.personnel[formation] += share;
-        let new_personnel = particle.formations.personnel[formation].max(1.0e-12);
         // Graduates are trained but not veterans.  Replacement therefore
         // dilutes experience in proportion to turnover instead of magically
         // inheriting the unit's combat history.
         particle.formations.experience[formation] =
-            clamp01((old_personnel * old_experience + share * 0.10) / new_personnel);
+            replacement_weighted_experience(old_personnel, old_experience, share, 0.10);
         particle.formations.active[formation] = 1;
         particle.formations.operational_status[formation] = 1;
         let added_capacity = share * config.logistics.formation_supply_days;
@@ -782,9 +794,7 @@ mod tests {
         )
     }
 
-    fn insurgent_member_population_sum(
-        particle: &pineland_core::state::ParticleState,
-    ) -> f64 {
+    fn insurgent_member_population_sum(particle: &pineland_core::state::ParticleState) -> f64 {
         python_sum(
             &(0..particle.organizations.kind.len())
                 .filter(|organization| particle.organizations.kind[*organization] == 3)
@@ -810,6 +820,56 @@ mod tests {
                 .map(|row| particle.manpower.pool[row].max(0.0))
                 .collect::<Vec<_>>(),
         )
+    }
+
+    #[test]
+    fn structural_law_replacement_experience_identity_stress_battery() {
+        let personnel_values = [1.0, 10.0, 100.0, 1000.0, 10_000.0];
+        let replacement_values = [0.001, 0.1, 1.0, 10.0, 100.0, 1000.0, 10_000.0];
+        let experience_values = [0.1, 0.25, 0.5, 0.75, 0.9, 1.0];
+        let replacement_experience_values = [0.0, 0.1, 0.25, 0.5, 0.9];
+        let mut cases = 0usize;
+        let mut maximum_closed_form_residual = 0.0f64;
+
+        for personnel in personnel_values {
+            for replacement in replacement_values {
+                for experience in experience_values {
+                    for replacement_experience in replacement_experience_values {
+                        let helper = replacement_weighted_experience(
+                            personnel,
+                            experience,
+                            replacement,
+                            replacement_experience,
+                        );
+                        let legacy = clamp01(
+                            (personnel * clamp01(experience)
+                                + replacement * replacement_experience)
+                                / (personnel + replacement).max(1.0e-12),
+                        );
+                        assert_eq!(helper.to_bits(), legacy.to_bits());
+                        let alpha = replacement / (personnel + replacement);
+                        let closed = experience - alpha * (experience - replacement_experience);
+                        maximum_closed_form_residual =
+                            maximum_closed_form_residual.max((helper - closed).abs());
+                        assert!(
+                            (helper - closed).abs() <= 5.0e-16,
+                            "P={personnel} R={replacement} E={experience} ER={replacement_experience} helper={helper} closed={closed}"
+                        );
+                        let lo = experience.min(replacement_experience);
+                        let hi = experience.max(replacement_experience);
+                        assert!(helper >= lo - 1.0e-15 && helper <= hi + 1.0e-15);
+                        if replacement_experience < experience {
+                            assert!(helper < experience);
+                        }
+                        cases += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 1050);
+        println!(
+            "STRUCTURAL_SL7_MATH cases={cases} max_closed_form_residual={maximum_closed_form_residual:.17e}"
+        );
     }
 
     #[test]
@@ -1016,14 +1076,10 @@ mod tests {
 
                     let decay_residual = (rooted_after - predicted_after).abs();
                     let return_residual = (returned - predicted_removed).abs();
-                    let member_residual =
-                        ((member_before - member_after) - returned).abs();
-                    let decay_relative =
-                        decay_residual / rooted_before.abs().max(1.0);
-                    let return_relative =
-                        return_residual / rooted_before.abs().max(1.0);
-                    let member_relative =
-                        member_residual / member_before.abs().max(1.0);
+                    let member_residual = ((member_before - member_after) - returned).abs();
+                    let decay_relative = decay_residual / rooted_before.abs().max(1.0);
+                    let return_relative = return_residual / rooted_before.abs().max(1.0);
+                    let member_relative = member_residual / member_before.abs().max(1.0);
                     maximum_decay_relative_residual =
                         maximum_decay_relative_residual.max(decay_relative);
                     maximum_return_relative_residual =
@@ -1071,10 +1127,8 @@ mod tests {
                         "direct underground disruption must not spend organization capital"
                     );
                     let removed_pool = (pool_before - pool_after).max(0.0);
-                    let fighter_equivalent = returned
-                        * case_config
-                            .organization_ecology
-                            .fighter_conversion_fraction;
+                    let fighter_equivalent =
+                        returned * case_config.organization_ecology.fighter_conversion_fraction;
                     assert!(
                         removed_pool <= fighter_equivalent + 1.0e-9,
                         "unfielded pool removal {removed_pool} exceeded fighter equivalent {fighter_equivalent}"
@@ -1133,10 +1187,19 @@ mod tests {
         let target = military_target_per_formation(&engine.particle, &config);
         engine.particle.formations.personnel[formation] = (target - 100.0).max(1.0);
         engine.particle.formations.experience[formation] = 0.90;
+        let personnel_before = engine.particle.formations.personnel[formation];
         let before = engine.particle.formations.experience[formation];
         let deployed = deploy_military(&mut engine.particle, &config, locality, 100.0);
         assert!(deployed > 0.0);
+        let personnel_after = engine.particle.formations.personnel[formation];
+        let replacement = personnel_after - personnel_before;
         let after = engine.particle.formations.experience[formation];
+        let expected = replacement_weighted_experience(personnel_before, before, replacement, 0.10);
+        assert_eq!(
+            after.to_bits(),
+            expected.to_bits(),
+            "production deploy_military must use the exact SL7 weighted-experience update"
+        );
         assert!(after < before);
         assert!(after > 0.10);
     }

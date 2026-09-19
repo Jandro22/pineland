@@ -6,6 +6,52 @@ use pineland_core::rng::{python_exp, python_sum, PyRandomCompat};
 use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
 use pineland_core::topology::StaticTopology;
 
+fn organization_collapse_rate(
+    base_hazard: f64,
+    cohesion: f64,
+    losses: f64,
+    social_base: f64,
+    external_sanctuary: f64,
+) -> f64 {
+    base_hazard
+        * python_exp(
+            2.0 * (1.0 - cohesion) + 2.0 * losses - 3.0 * social_base - 1.5 * external_sanctuary,
+        )
+}
+
+fn organization_collapse_probability(
+    base_hazard: f64,
+    cohesion: f64,
+    losses: f64,
+    social_base: f64,
+    external_sanctuary: f64,
+    elapsed_days: f64,
+) -> f64 {
+    let rate = organization_collapse_rate(
+        base_hazard,
+        cohesion,
+        losses,
+        social_base,
+        external_sanctuary,
+    );
+    1.0 - python_exp(-rate * elapsed_days / 7.0)
+}
+
+fn organization_collapse_realized(
+    conditioned: bool,
+    capital: f64,
+    cohesion: f64,
+    rooted_exhaustion_collapse: bool,
+    collapse_draw: f64,
+    collapse_hazard: f64,
+) -> bool {
+    !conditioned
+        && (capital <= 0.0
+            || cohesion < 0.12
+            || rooted_exhaustion_collapse
+            || collapse_draw < collapse_hazard)
+}
+
 /// Current local organizational renewal potential before foothold memory is
 /// applied.  This is public for theory diagnostics/coarse-graining assays;
 /// callers must treat it as a pure read of the production transition, not as
@@ -582,20 +628,24 @@ fn materialize_proto_birth(
     particle.organizations.member_population.push(python_sum(
         &members
             .iter()
-            .map(|person| {
-                particle.people.represented_population[*person as usize] * founder_scale
-            })
+            .map(|person| particle.people.represented_population[*person as usize] * founder_scale)
             .collect::<Vec<_>>(),
     ));
     particle.organizations.founded_at.push(time);
     particle.organizations.succession_count.push(0);
     particle.organizations.capital_social.push(social_capital);
-    particle.organizations.capital_political.push(political_capital);
+    particle
+        .organizations
+        .capital_political
+        .push(political_capital);
     particle
         .organizations
         .capital_organizational
         .push(organizational_capital);
-    particle.organizations.capital_material.push(material_capital);
+    particle
+        .organizations
+        .capital_material
+        .push(material_capital);
 
     // The phenotype dictionary insertion order is part of the Python RNG
     // contract, so keep these four draws ahead of leader construction.
@@ -613,13 +663,10 @@ fn materialize_proto_birth(
         social_capital,
         0.1,
     ]);
-    particle
-        .organizations
-        .ideology
-        .extend_from_slice(&[
-            particle.protos.ideology_reform[proto],
-            particle.protos.ideology_separatism[proto],
-        ]);
+    particle.organizations.ideology.extend_from_slice(&[
+        particle.protos.ideology_reform[proto],
+        particle.protos.ideology_separatism[proto],
+    ]);
     particle.organizations.external_sanctuary.push(0.0);
     particle
         .organizations
@@ -651,14 +698,12 @@ fn materialize_proto_birth(
             .copy_from_slice(&[0.0, 0.005, 0.0, 0.005, 0.005, 0.015, 0.03]);
     }
     for other in 0..organization {
-        let (status, hostility, cooperation) = if matches!(
-            particle.organizations.kind[other],
-            0 | 1 | 2
-        ) {
-            (4, 1.0, 0.0)
-        } else {
-            (2, 0.0, 0.0)
-        };
+        let (status, hostility, cooperation) =
+            if matches!(particle.organizations.kind[other], 0 | 1 | 2) {
+                (4, 1.0, 0.0)
+            } else {
+                (2, 0.0, 0.0)
+            };
         crate::foreign::append_relation(
             particle,
             organization,
@@ -780,7 +825,10 @@ fn materialize_proto_birth(
     particle.patrols.presence_accounted_at.push(-1.0e300);
     particle.patrols.detections.push(0);
 
-    particle.command_edges.organization.push(organization as u32);
+    particle
+        .command_edges
+        .organization
+        .push(organization as u32);
     particle.command_edges.formation.push(formation as u32);
     particle.command_edges.reliability.push(0.45);
     particle.command_edges.latency_hours.push(8.0);
@@ -1141,9 +1189,7 @@ pub fn update(
             let represented = particle.people.represented_population[person]
                 * particle.people.armed_fraction[person];
             represented_values.push(represented);
-            identity_weighted_values.push(
-                represented * particle.people.identities[person * 3 + 2],
-            );
+            identity_weighted_values.push(represented * particle.people.identities[person * 3 + 2]);
         }
         let represented_weight = python_sum(&represented_values);
         let identity_weighted = python_sum(&identity_weighted_values);
@@ -1254,17 +1300,14 @@ pub fn update(
             .unwrap_or(false);
 
         let social_base = survival_social_base(particle, config, organization);
-        let collapse_hazard = 1.0
-            - python_exp(
-                -config.organization_ecology.collapse_base_hazard
-                    * python_exp(
-                        2.0 * (1.0 - particle.organizations.cohesion[organization]) + 2.0 * losses
-                            - 3.0 * social_base
-                            - 1.5 * particle.organizations.external_sanctuary[organization],
-                    )
-                    * elapsed_days
-                    / 7.0,
-            );
+        let collapse_hazard = organization_collapse_probability(
+            config.organization_ecology.collapse_base_hazard,
+            particle.organizations.cohesion[organization],
+            losses,
+            social_base,
+            particle.organizations.external_sanctuary[organization],
+            elapsed_days,
+        );
         let collapse_draw = rng.random();
         let operational_fielded = (0..particle.formations.personnel.len())
             .filter(|&formation| {
@@ -1288,11 +1331,14 @@ pub fn update(
         } else {
             represented_weight <= 1e-9
         };
-        let collapse_realized = !conditioned
-            && (particle.organizations.capital[organization] <= 0.0
-                || particle.organizations.cohesion[organization] < 0.12
-                || rooted_exhaustion_collapse
-                || collapse_draw < collapse_hazard);
+        let collapse_realized = organization_collapse_realized(
+            conditioned,
+            particle.organizations.capital[organization],
+            particle.organizations.cohesion[organization],
+            rooted_exhaustion_collapse,
+            collapse_draw,
+            collapse_hazard,
+        );
         if collapse_realized {
             collapse_organization(particle, organization);
         }
@@ -1313,4 +1359,126 @@ pub fn onset_hazard(
     config.organization_ecology.birth_base_hazard
         * (1.0 - particle.locality.government_control[offset + 5])
         * (1.0 + particle.locality.violence[locality])
+}
+
+#[cfg(test)]
+mod structural_law_tests {
+    use super::*;
+
+    #[test]
+    fn structural_law_collapse_probability_matches_inline_formula_and_semigroup() {
+        let cohesions = [0.2, 0.5, 0.8, 1.0];
+        let losses_values = [0.0, 0.1, 0.5, 1.0];
+        let social_values = [0.0, 0.25, 0.5, 1.0];
+        let sanctuary_values = [0.0, 0.5, 1.0];
+        let elapsed_values = [1.0, 7.0, 30.0];
+        let base = SimulationConfig::default()
+            .organization_ecology
+            .collapse_base_hazard;
+        let mut cases = 0usize;
+        let mut max_inline_residual = 0.0f64;
+        let mut max_semigroup_residual = 0.0f64;
+
+        for cohesion in cohesions {
+            for losses in losses_values {
+                for social in social_values {
+                    for sanctuary in sanctuary_values {
+                        for elapsed in elapsed_values {
+                            let helper = organization_collapse_probability(
+                                base, cohesion, losses, social, sanctuary, elapsed,
+                            );
+                            let inline = 1.0
+                                - python_exp(
+                                    -base
+                                        * python_exp(
+                                            2.0 * (1.0 - cohesion) + 2.0 * losses
+                                                - 3.0 * social
+                                                - 1.5 * sanctuary,
+                                        )
+                                        * elapsed
+                                        / 7.0,
+                                );
+                            max_inline_residual = max_inline_residual.max((helper - inline).abs());
+                            assert_eq!(helper.to_bits(), inline.to_bits());
+
+                            for elapsed2 in elapsed_values {
+                                let total = organization_collapse_probability(
+                                    base,
+                                    cohesion,
+                                    losses,
+                                    social,
+                                    sanctuary,
+                                    elapsed + elapsed2,
+                                );
+                                let second = organization_collapse_probability(
+                                    base, cohesion, losses, social, sanctuary, elapsed2,
+                                );
+                                let residual =
+                                    ((1.0 - total) - (1.0 - helper) * (1.0 - second)).abs();
+                                max_semigroup_residual = max_semigroup_residual.max(residual);
+                                assert!(residual <= 1.0e-12);
+                            }
+                            cases += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 576);
+        println!(
+            "STRUCTURAL_SL6_EXACT cases={cases} max_inline_residual={max_inline_residual:.17e} max_semigroup_residual={max_semigroup_residual:.17e}"
+        );
+    }
+
+    #[test]
+    fn structural_law_collapse_probability_monotonicity_and_gate_override() {
+        let base = SimulationConfig::default()
+            .organization_ecology
+            .collapse_base_hazard;
+        let q_low_cohesion = organization_collapse_probability(base, 0.2, 0.2, 0.4, 0.3, 7.0);
+        let q_high_cohesion = organization_collapse_probability(base, 0.9, 0.2, 0.4, 0.3, 7.0);
+        assert!(q_low_cohesion > q_high_cohesion);
+        let q_low_losses = organization_collapse_probability(base, 0.7, 0.0, 0.4, 0.3, 7.0);
+        let q_high_losses = organization_collapse_probability(base, 0.7, 1.0, 0.4, 0.3, 7.0);
+        assert!(q_high_losses > q_low_losses);
+        let q_low_social = organization_collapse_probability(base, 0.7, 0.2, 0.0, 0.3, 7.0);
+        let q_high_social = organization_collapse_probability(base, 0.7, 0.2, 1.0, 0.3, 7.0);
+        assert!(q_high_social < q_low_social);
+        let q_low_sanctuary = organization_collapse_probability(base, 0.7, 0.2, 0.4, 0.0, 7.0);
+        let q_high_sanctuary = organization_collapse_probability(base, 0.7, 0.2, 0.4, 1.0, 7.0);
+        assert!(q_high_sanctuary < q_low_sanctuary);
+
+        assert!(organization_collapse_realized(
+            false, 0.0, 0.9, false, 1.0, 0.0
+        ));
+        assert!(organization_collapse_realized(
+            false, 100.0, 0.11, false, 1.0, 0.0
+        ));
+        assert!(organization_collapse_realized(
+            false, 100.0, 0.9, true, 1.0, 0.0
+        ));
+        assert!(organization_collapse_realized(
+            false, 100.0, 0.9, false, 0.01, 0.02
+        ));
+        assert!(!organization_collapse_realized(
+            true, 0.0, 0.0, true, 0.0, 1.0
+        ));
+    }
+
+    #[test]
+    fn structural_law_collapse_pyrandom_frequency_matches_probability() {
+        let base = SimulationConfig::default()
+            .organization_ecology
+            .collapse_base_hazard;
+        let q = organization_collapse_probability(base, 0.5, 0.5, 0.25, 0.0, 7.0);
+        let draws = 100_000usize;
+        let mut rng = PyRandomCompat::from_seed(2026192400);
+        let observed = (0..draws).filter(|_| rng.random() < q).count() as f64 / draws as f64;
+        let se = (q * (1.0 - q) / draws as f64).sqrt();
+        let z = (observed - q) / se.max(1.0e-18);
+        assert!(z.abs() <= 6.0, "observed={observed} expected={q} z={z}");
+        println!(
+            "STRUCTURAL_SL6_PYRANDOM draws={draws} expected={q:.17} observed={observed:.17} z={z:.6}"
+        );
+    }
 }
