@@ -48,14 +48,15 @@ For non-redistributable inputs, a public case package should still retain:
 - derived products that are themselves redistributable;
 - a clear explanation of what the reproducer must obtain independently.
 
-## Current gap
+## Current status
 
-The Nepal source manifest already records license information for several
-sources, although some redistribution fields still need normalization.
-Colombia, Iraq, and Vietnam source manifests contain strong provenance and hash
-information but do not yet consistently record license and redistribution
-fields.
+The tracked Afghanistan, Colombia, Iraq, Nepal, and Vietnam source manifests now
+record an explicit license/rights source and redistribution disposition for
+every listed source. A disposition of `review_required` is intentionally not
+treated as permission: it means the source may be used internally under the
+current research workflow, but the source artifact must not be shipped with a
+public release until the missing rights question is resolved.
 
-`scripts/public_release_audit.py` reports these gaps automatically. The audit
-does **not** infer legal rights from provider identity or public accessibility;
-terms must be verified from the source itself before a release is marked ready.
+`scripts/public_release_audit.py` reports missing fields and unresolved
+`review_required` entries automatically. The audit does **not** infer legal
+rights from provider identity or public accessibility.

@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "afghanistan_2004_2021",
+  "rights_reviewed_at": "2026-09-19",
+  "sources": [
+    {
+      "source_id": "cod_boundaries",
+      "role": "harmonized region/province/district polygons and administrative-center points",
+      "provider": "UN OCHA Humanitarian Data Exchange / Afghanistan COD-AB",
+      "url": "https://data.humdata.org/dataset/4c303d7b-8eae-4a5a-a3aa-b2331fa39d74",
+      "artifact_sha256": "5ac4daf868a9a03cbb26d5702fdb52d06eb00d4b084483f991bffcf956aa8cc3",
+      "license": "CC BY 3.0 IGO (HDX license id: cc-by-igo)",
+      "license_url": "https://data.humdata.org/dataset/4c303d7b-8eae-4a5a-a3aa-b2331fa39d74",
+      "redistribution": "permitted",
+      "redistribution_note": "Current HDX metadata identifies the Afghanistan COD-AB dataset as cc-by-igo. Preserve source/custodian attribution."
+    },
+    {
+      "source_id": "worldpop_2004",
+      "role": "2004 initial population spatial distribution",
+      "provider": "WorldPop",
+      "url": "https://data.worldpop.org/GIS/Population/Global_2000_2020_1km_UNadj/2004/AFG/afg_ppp_2004_1km_UNadj_ASCII_XYZ.zip",
+      "artifact_sha256": "73e4fa24825238ccf361c09f45908f343f2c8b659d6df7b90ab91c6671139919",
+      "license": "CC BY 4.0",
+      "license_url": "https://www.worldpop.org/faq/",
+      "redistribution": "permitted",
+      "redistribution_note": "WorldPop permits use, copying, distribution, transmission, and adaptation with attribution; dataset-specific exceptions should still be respected."
+    },
+    {
+      "source_id": "cso_2016_crosscheck",
+      "role": "later official district-population cross-check only",
+      "provider": "Afghanistan CSO via UN OCHA HDX",
+      "url": "https://data.humdata.org/dataset/914eb41e-adbc-4b1b-9ab3-b3787f3c7191",
+      "artifact_sha256": "d2d145d929deb166973bdacde9cb1cf10921cc0d3269b5059d6f3a7bcb427a71",
+      "license": "review_required",
+      "license_url": "https://data.humdata.org/dataset/914eb41e-adbc-4b1b-9ab3-b3787f3c7191",
+      "redistribution": "review_required",
+      "redistribution_note": "The historical HDX resource is publicly accessible, but a current dataset-specific redistribution license was not independently verified during this review."
+    },
+    {
+      "source_id": "ucdp_ged_26_1",
+      "role": "organized-violence event observations",
+      "provider": "Uppsala Conflict Data Program",
+      "url": "https://ucdp.uu.se/downloads/ged/ged261-csv.zip",
+      "artifact_sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
+      "license": "CC BY 4.0",
+      "license_url": "https://ucdp.uu.se/downloads/",
+      "redistribution": "permitted",
+      "redistribution_note": "UCDP states its datasets are CC BY 4.0 and may be redistributed with citation."
+    },
+    {
+      "source_id": "geonames",
+      "role": "settlement-name and coordinate cross-check / future locality expansion",
+      "provider": "GeoNames",
+      "url": "https://download.geonames.org/export/dump/AF.zip",
+      "artifact_sha256": "09e9b3748ba4ff999ab6fc58d466679d26157ae0a76ca99d416d97079e4b94",
+      "license": "CC BY 4.0",
+      "license_url": "https://www.geonames.org/export/",
+      "redistribution": "permitted",
+      "redistribution_note": "GeoNames permits free commercial and non-commercial use under a Creative Commons attribution license."
+    }
+  ]
+}

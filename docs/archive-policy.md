@@ -85,3 +85,6 @@ but the older native-kernel path still has an active verification role.
 
 Revisit `native/` only after that build/exactness dependency is deliberately
 retired or migrated.
+
+The first concrete General Theory inventory is recorded in
+[`docs/general-theory-archive-review.md`](general-theory-archive-review.md).

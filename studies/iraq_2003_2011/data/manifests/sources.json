@@ -13,7 +13,12 @@
       "local_path": "data/raw/ged261-csv.zip",
       "sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
       "bytes": 39122522,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "CC BY 4.0",
+      "license_url": "https://ucdp.uu.se/downloads/",
+      "redistribution": "permitted",
+      "redistribution_note": "UCDP states all datasets are CC BY 4.0 and may be redistributed with citation.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "urban_control_and_governance_context",
@@ -25,7 +30,12 @@
       "local_path": "data/raw/sigir_rusafa.pdf",
       "sha256": "e86d821df6c3342df89f898f73c963d9cfbad86dc32ea3be469af6878c7deff6",
       "bytes": 1665426,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "U.S. Government work generally public domain; embedded third-party material may differ",
+      "license_url": "https://www.govinfo.gov/about/policies",
+      "redistribution": "metadata_only",
+      "redistribution_note": "GovInfo states U.S.-government works are generally public domain but publications may contain third-party copyrighted material. Pineland will not redistribute the source PDF by default.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "geography",
@@ -37,7 +47,12 @@
       "local_path": "data/raw/gadm41_IRQ_2.json.zip",
       "sha256": "bfbcf24f0b1efd44767103a5238ca63490981f288531770b171fb7790ba87e79",
       "bytes": 57637,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "GADM academic/non-commercial license",
+      "license_url": "https://gadm.org/license.html",
+      "redistribution": "permission_required",
+      "redistribution_note": "GADM permits academic/non-commercial use but states redistribution is not allowed without prior permission; raw geometry must not be published from Pineland.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "population",
@@ -49,7 +64,12 @@
       "local_path": "data/raw/worldbank_irq_population_2003_2011.json",
       "sha256": "00940227d8dcf5035690718c37e2c3d7dc0d25a68e2efeb4cefd5ad4aa4aa020",
       "bytes": 1828,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "CC BY 4.0 with World Bank dataset terms",
+      "license_url": "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
+      "redistribution": "permitted",
+      "redistribution_note": "Default World Bank open-data license permits copying and sharing with attribution, subject to dataset-specific labeling and additional terms.",
+      "rights_verified_at": "2026-09-19"
     }
   ],
   "rule": "All listed input and anchor-control files are acquired and hashed; no case run is licensed until processed panels, crosswalks, and measurement joins are frozen."

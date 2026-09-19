@@ -8,24 +8,46 @@
       "url": "https://ucdp.uu.se/downloads/ged/ged261-csv.zip",
       "download_page": "https://ucdp.uu.se/downloads/",
       "license": "CC BY 4.0",
-      "redistribution": "permitted with attribution",
+      "redistribution": "permitted",
       "acquired_at_utc": "2026-09-04T00:23:06Z",
       "archive_filename": "ged261-csv.zip",
       "archive_sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
       "required_fields": [
-        "id", "relid", "date_start", "date_end", "date_prec",
-        "side_a", "side_b", "dyad_name", "type_of_violence",
-        "latitude", "longitude", "where_prec", "adm_1", "adm_2",
-        "source_article", "source_original", "low", "best", "high"
-      ]
+        "id",
+        "relid",
+        "date_start",
+        "date_end",
+        "date_prec",
+        "side_a",
+        "side_b",
+        "dyad_name",
+        "type_of_violence",
+        "latitude",
+        "longitude",
+        "where_prec",
+        "adm_1",
+        "adm_2",
+        "source_article",
+        "source_original",
+        "low",
+        "best",
+        "high"
+      ],
+      "license_url": "https://ucdp.uu.se/downloads/",
+      "redistribution_note": "UCDP states all datasets are CC BY 4.0 and may be redistributed with citation.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "source_id": "ohchr_nepal_conflict_report_2012",
       "role": "independent_documentary_stream",
       "url": "https://www.ohchr.org/Documents/Countries/NP/OHCHR_Nepal_Conflict_Report2012.pdf",
-      "license": "review required for redistribution",
+      "license": "United Nations copyright / permission terms",
       "status": "catalogued_not_yet_transformed",
-      "acquisition_note": "Official URL resolves through the OHCHR web index, but local TLS certificate validation failed; no certificate bypass was used and no raw PDF was ingested."
+      "acquisition_note": "Official URL resolves through the OHCHR web index, but local TLS certificate validation failed; no certificate bypass was used and no raw PDF was ingested.",
+      "license_url": "https://www.un.org/en/node/133488",
+      "redistribution": "metadata_only",
+      "redistribution_note": "UN web materials are not generally licensed for unrestricted redistribution. Retain citation and provenance; do not republish the source PDF absent a specific permission or license.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "source_id": "nepal_population_census_2001",
@@ -36,25 +58,38 @@
       "archive_filename": "nepal_census_2001_national_report.zip",
       "archive_sha256": "3cf0048fce15aba12adb9558ca45d5e3679d10e325e8911f7232f963cb137f9a",
       "status": "acquired",
-      "caveat": "The source marks districts whose enumeration was affected; that flag is propagated as input uncertainty."
+      "caveat": "The source marks districts whose enumeration was affected; that flag is propagated as input uncertainty.",
+      "license": "NSO Nepal research-use terms",
+      "license_url": "https://microdata.nsonepal.gov.np/index.php/policies-and-procedures",
+      "redistribution": "permission_required",
+      "redistribution_note": "NSO terms state that data and other materials may not be redistributed or sold without written agreement. Keep source material out of the public repository unless written permission is recorded.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "source_id": "insec_victim_profile",
       "role": "independent_victim_stream",
       "url": "https://www.insec.org.np/victim/candidate_display_user.php?lang=eng",
-      "license": "non-profit use with acknowledgement; automated acquisition not assumed",
-      "status": "manual_or_permission-aware_acquisition_required"
+      "license": "Non-profit use with due acknowledgement",
+      "status": "manual_or_permission-aware_acquisition_required",
+      "license_url": "https://www.insec.org.np/victim/",
+      "redistribution": "metadata_only",
+      "redistribution_note": "INSEC permits non-profit use with due acknowledgement but does not provide an explicit blanket redistribution grant. Publish provenance/derived summaries, not the source material, absent permission.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "source_id": "insec_complete_report",
       "role": "independent_spatial_cross_check",
       "url": "https://www.insec.org.np/victim/reports/total.pdf",
-      "license": "non-profit use with acknowledgement according to linked INSEC page",
+      "license": "Non-profit use with due acknowledgement",
       "archive_filename": "insec_total.pdf",
       "archive_sha256": "43159c6af16656d03fc77bf3cee989bdbf4405991de2e5db1b86ddb1d2b2f336",
       "status": "acquired_and_extracted",
       "period": "1996-02-13 through 2006-11-21",
-      "caveat": "cumulative district table; Mustang is not listed; not merged into district-week target"
+      "caveat": "cumulative district table; Mustang is not listed; not merged into district-week target",
+      "license_url": "https://www.insec.org.np/victim/",
+      "redistribution": "metadata_only",
+      "redistribution_note": "INSEC permits non-profit use with due acknowledgement but does not provide an explicit blanket redistribution grant. Publish provenance/derived summaries, not the source material, absent permission.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "source_id": "historical_75_district_boundaries",
@@ -62,10 +97,13 @@
       "version": "GADM 4.1 NPL level 3",
       "url": "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_NPL_3.json.zip",
       "license_url": "https://gadm.org/license.html",
-      "license": "academic/non-commercial use; raw geometry is not redistributed",
+      "license": "GADM academic/non-commercial license",
       "archive_sha256": "028544920ca55f21d342b31c280554368aebf1f4415164ed30f64658c1975385",
       "status": "acquired_provisional",
-      "caveat": "Exact historical 75-district topology, but not a Government of Nepal source; replace only through a preregistered data correction if an authoritative redistributable boundary is obtained."
+      "caveat": "Exact historical 75-district topology, but not a Government of Nepal source; replace only through a preregistered data correction if an authoritative redistributable boundary is obtained.",
+      "redistribution": "permission_required",
+      "redistribution_note": "GADM permits academic/non-commercial use but states redistribution is not allowed without prior permission; raw geometry must not be published from Pineland.",
+      "rights_verified_at": "2026-09-19"
     }
   ]
 }

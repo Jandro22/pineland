@@ -10,6 +10,8 @@ contracts, manifests, and study-specific ledgers.
 
 - Public-release preparation: release, archive, and subsystem-status policies.
 - GitHub contribution and security-reporting scaffolding.
+- Full-history Gitleaks configuration and release security-scan wrapper.
+- Explicit redistribution/license dispositions for the historical case source manifests.
 
 ### Changed
 

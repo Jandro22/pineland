@@ -12,7 +12,12 @@
       "acquisition_status": "catalog_metadata_acquired_data_pending",
       "metadata_artifact": "data/raw/nara_catalog_records.json",
       "metadata_sha256": "e1caeda1de6ed33b34135748e65d9768ada014a5606808671329ce7170a440c0",
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "U.S. federal-records public-domain presumption; item-level exceptions possible",
+      "license_url": "https://www.archives.gov/research/still-pictures/permissions",
+      "redistribution": "review_required",
+      "redistribution_note": "NARA states most federal records are public domain but some holdings contain copyrighted or donor-restricted material. Verify the specific record series before redistributing source files.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "violence_and_operations_secondary_cleaning",
@@ -25,7 +30,12 @@
       "sha256": "02372b4a134b1f39ec9c6575db7d257d6f353a77fe5855c1fb699c28511dd038",
       "bytes": 14418204,
       "source_provenance": "secondary_cleaning_of_nara_macv_records",
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "MIT repository license; underlying NARA records subject to NARA rights caveats",
+      "license_url": "https://github.com/gl-smith/VietnamWarData",
+      "redistribution": "permitted",
+      "redistribution_note": "The VietnamWarData repository identifies an MIT license and distributes the cleaned release files; retain attribution/citation to Smith (2025) and the repository, and preserve underlying NARA provenance.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "control_and_operations_secondary_cleaning",
@@ -38,7 +48,12 @@
       "sha256": "9992189ff2802352a17b9b263eab7db9afa780705adc0eecf6a828c7a1a6ac83",
       "bytes": 9792408,
       "source_provenance": "secondary_cleaning_of_nara_macv_records",
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "MIT repository license; underlying NARA records subject to NARA rights caveats",
+      "license_url": "https://github.com/gl-smith/VietnamWarData",
+      "redistribution": "permitted",
+      "redistribution_note": "The VietnamWarData repository identifies an MIT license and distributes the cleaned release files; retain attribution/citation to Smith (2025) and the repository, and preserve underlying NARA provenance.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "civilian_harm_secondary_cleaning",
@@ -51,7 +66,12 @@
       "sha256": "14c367586d6c124466f34993ebaa738a943ae7b1da1e6a25e5c17ae3f9909dbf",
       "bytes": 4259104,
       "source_provenance": "secondary_cleaning_of_nara_macv_records",
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "MIT repository license; underlying NARA records subject to NARA rights caveats",
+      "license_url": "https://github.com/gl-smith/VietnamWarData",
+      "redistribution": "permitted",
+      "redistribution_note": "The VietnamWarData repository identifies an MIT license and distributes the cleaned release files; retain attribution/citation to Smith (2025) and the repository, and preserve underlying NARA provenance.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "violence_crosscheck",
@@ -60,7 +80,12 @@
       "url": "https://ucdp.uu.se/downloads/",
       "coverage": "1955-1975 where coded",
       "acquisition_status": "pending",
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "CC BY 4.0",
+      "license_url": "https://ucdp.uu.se/downloads/",
+      "redistribution": "permitted",
+      "redistribution_note": "UCDP states all datasets are CC BY 4.0 and may be redistributed with citation.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "geography",
@@ -72,7 +97,12 @@
       "local_path": "data/raw/gadm41_VNM_2.json.zip",
       "sha256": "6f0871c6a1a3580c4405869668cc14228698e290b51d489d326da9b066ca2cd6",
       "bytes": 560161,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "GADM academic/non-commercial license",
+      "license_url": "https://gadm.org/license.html",
+      "redistribution": "permission_required",
+      "redistribution_note": "GADM permits academic/non-commercial use but states redistribution is not allowed without prior permission; raw geometry must not be published from Pineland.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "population",
@@ -84,7 +114,12 @@
       "local_path": "data/raw/worldbank_vnm_population_1955_1975.json",
       "sha256": "f25e0039e5c86fb843454ea592ffe45131b63567f8523f5bec8c30ee2b4b1b13",
       "bytes": 3244,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "CC BY 4.0 with World Bank dataset terms",
+      "license_url": "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
+      "redistribution": "permitted",
+      "redistribution_note": "Default World Bank open-data license permits copying and sharing with attribution, subject to dataset-specific labeling and additional terms.",
+      "rights_verified_at": "2026-09-19"
     }
   ],
   "rule": "Geography and population are acquired and hashed. Secondary cleaned NARA-derived artifacts are retained for data construction only; direct NARA operations/control files, provenance reconciliation, and complete processed panels remain required before any run."

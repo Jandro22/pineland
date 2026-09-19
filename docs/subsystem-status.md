@@ -53,3 +53,6 @@ standalone Rust workspace.
 
 This page should be updated when a subsystem becomes newly load-bearing, is
 retired, or receives a materially stronger or weaker validation status.
+
+For the current mechanical inventory of selected test counts and concrete evidence
+paths, see [docs/subsystem-evidence-index.md](subsystem-evidence-index.md).

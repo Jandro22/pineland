@@ -13,11 +13,16 @@
       "local_path": "data/raw/ged261-csv.zip",
       "sha256": "8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667",
       "bytes": 39122522,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "CC BY 4.0",
+      "license_url": "https://ucdp.uu.se/downloads/",
+      "redistribution": "permitted",
+      "redistribution_note": "UCDP states all datasets are CC BY 4.0 and may be redistributed with citation.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "civilian_harm",
-      "provider": "Centro Nacional de Memoria Histórica",
+      "provider": "Centro Nacional de Memoria Hist?rica",
       "dataset": "OMC ArcGIS municipality-year aggregate",
       "url": "https://serviciosgiscnmh.centrodememoriahistorica.gov.co/agccnmh/rest/services/OMC/Hechos_violencia/MapServer/0/query",
       "coverage": "1984-2016",
@@ -25,20 +30,30 @@
       "local_path": "data/processed/cnmh_omc_municipality_year_1984_2016.json",
       "sha256": "2db6c44b115a033233b5086a2f301d51b9bfea89deff2e713a05bf6a3d048389",
       "bytes": 5155698,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "review_required",
+      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "redistribution": "review_required",
+      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "control_or_presence",
-      "provider": "Centro Nacional de Memoria Histórica",
+      "provider": "Centro Nacional de Memoria Hist?rica",
       "dataset": "Portal de Datos / paramilitary structure presence records",
       "url": "https://centrodememoriahistorica.gov.co/micrositios/portal-de-datos/",
       "coverage": "case-dependent",
       "acquisition_status": "pending",
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "review_required",
+      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "redistribution": "review_required",
+      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "control_or_presence_partial",
-      "provider": "Centro Nacional de Memoria Histórica, Dirección de Acuerdos para la Verdad",
+      "provider": "Centro Nacional de Memoria Hist?rica, Direcci?n de Acuerdos para la Verdad",
       "dataset": "DAV Bloque_ACPB FeatureServer / Puntos Control",
       "url": "https://serviciosgiscnmh.centrodememoriahistorica.gov.co/agccnmh/rest/services/DAV/Bloque_ACPB/FeatureServer/1/query",
       "coverage": "partial structure-specific control/base points; no period field and not a complete national panel",
@@ -47,11 +62,16 @@
       "sha256": "f39e19d770a8e8de6b2ac72df844bcc8dbfe0b395127edd3de7b00c1c8e4ca98",
       "bytes": 23892,
       "future_outcome_used": false,
-      "run_license": false
+      "run_license": false,
+      "license": "review_required",
+      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "redistribution": "review_required",
+      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "control_or_presence_partial_collection",
-      "provider": "Centro Nacional de Memoria Histórica, Dirección de Acuerdos para la Verdad",
+      "provider": "Centro Nacional de Memoria Hist?rica, Direcci?n de Acuerdos para la Verdad",
       "dataset": "DAV control/presence layer acquisition index (11 official FeatureServer layers)",
       "url": "https://serviciosgiscnmh.centrodememoriahistorica.gov.co/agccnmh/rest/services/DAV",
       "coverage": "partial structure-specific control/presence layers; layer periods and geography vary",
@@ -60,11 +80,16 @@
       "sha256": "dc2737eaa5aebe913315defa55fd15dc2ef7ede7ffbadbe0997a30c6feb7d1c5",
       "bytes": 3092,
       "future_outcome_used": false,
-      "run_license": false
+      "run_license": false,
+      "license": "review_required",
+      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "redistribution": "review_required",
+      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "control_or_presence_partial_inventory",
-      "provider": "Centro Nacional de Memoria Histórica, Dirección de Acuerdos para la Verdad",
+      "provider": "Centro Nacional de Memoria Hist?rica, Direcci?n de Acuerdos para la Verdad",
       "dataset": "Reproducible flattened inventory of acquired DAV layers",
       "url": "https://serviciosgiscnmh.centrodememoriahistorica.gov.co/agccnmh/rest/services/DAV",
       "coverage": "399 structure-layer features; 274 with reported period, 125 without period",
@@ -73,11 +98,16 @@
       "sha256": "3d3a4d399161e5a712873be5f49b3eef26f84ff71f9d8a209e8eb3be02f8d8b9",
       "bytes": 549,
       "future_outcome_used": false,
-      "run_license": false
+      "run_license": false,
+      "license": "review_required",
+      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "redistribution": "review_required",
+      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "control_or_presence_partial",
-      "provider": "Centro Nacional de Memoria Histórica, Dirección de Acuerdos para la Verdad",
+      "provider": "Centro Nacional de Memoria Hist?rica, Direcci?n de Acuerdos para la Verdad",
       "dataset": "DAV Bloque_ACPB_ACMM FeatureServer / Punto de control",
       "url": "https://serviciosgiscnmh.centrodememoriahistorica.gov.co/agccnmh/rest/services/DAV/Bloque_ACPB_ACMM/FeatureServer/0/query",
       "coverage": "partial structure-specific control points; Periodo is null and this is not a complete national panel",
@@ -86,7 +116,12 @@
       "sha256": "050463cd082a8dab53ed748c190ce05a2b3d7b74549558f3d396f5e517a12dd0",
       "bytes": 21739,
       "future_outcome_used": false,
-      "run_license": false
+      "run_license": false,
+      "license": "review_required",
+      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "redistribution": "review_required",
+      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "geography",
@@ -98,7 +133,12 @@
       "local_path": "data/raw/gadm41_COL_2.json.zip",
       "sha256": "557aa8699b9b6f3928bc3cfa87371ccc618677304322386ca7d7b9e954a55dc0",
       "bytes": 1133733,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "GADM academic/non-commercial license",
+      "license_url": "https://gadm.org/license.html",
+      "redistribution": "permission_required",
+      "redistribution_note": "GADM permits academic/non-commercial use but states redistribution is not allowed without prior permission; raw geometry must not be published from Pineland.",
+      "rights_verified_at": "2026-09-19"
     },
     {
       "construct": "population",
@@ -110,7 +150,12 @@
       "local_path": "data/raw/worldbank_col_population_full.json",
       "sha256": "e037744e0b210a2729016d26a46cfa2128d0cdd973cfb27b4422c1584442256d",
       "bytes": 13095,
-      "future_outcome_used": false
+      "future_outcome_used": false,
+      "license": "CC BY 4.0 with World Bank dataset terms",
+      "license_url": "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
+      "redistribution": "permitted",
+      "redistribution_note": "Default World Bank open-data license permits copying and sharing with attribution, subject to dataset-specific labeling and additional terms.",
+      "rights_verified_at": "2026-09-19"
     }
   ],
   "rule": "Violence/civilian-harm, geography, and population artifacts are acquired and hashed; control/presence and complete processed panels remain required before any run."

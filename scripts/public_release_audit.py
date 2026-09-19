@@ -27,8 +27,12 @@ REQUIRED_FILES = (
     "CHANGELOG.md",
     "docs/release-policy.md",
     "docs/archive-policy.md",
+    "docs/data-redistribution.md",
     "docs/public-release-checklist.md",
     "docs/subsystem-status.md",
+    "docs/subsystem-evidence-index.md",
+    ".gitleaks.toml",
+    "scripts/scan_git_history_secrets.py",
 )
 
 SECRET_PATTERNS = {
@@ -84,6 +88,7 @@ def source_manifest_warnings() -> list[str]:
             continue
         missing_license: list[str] = []
         missing_redistribution: list[str] = []
+        review_required: list[str] = []
         sources = data.get("sources", [])
         for index, source in enumerate(sources):
             source_id = (
@@ -96,6 +101,11 @@ def source_manifest_warnings() -> list[str]:
                 missing_license.append(str(source_id))
             if "redistribution" not in source:
                 missing_redistribution.append(str(source_id))
+            if (
+                source.get("license") == "review_required"
+                or source.get("redistribution") == "review_required"
+            ):
+                review_required.append(str(source_id))
         if missing_license:
             warnings.append(
                 f"{manifest.relative_to(ROOT)}: {len(missing_license)}/{len(sources)} "
@@ -105,6 +115,11 @@ def source_manifest_warnings() -> list[str]:
             warnings.append(
                 f"{manifest.relative_to(ROOT)}: {len(missing_redistribution)}/{len(sources)} "
                 "sources lack redistribution status"
+            )
+        if review_required:
+            warnings.append(
+                f"{manifest.relative_to(ROOT)}: {len(review_required)}/{len(sources)} "
+                "sources remain review_required"
             )
     return warnings
 
@@ -131,6 +146,24 @@ def scan_current_tree_for_secrets(paths: list[str]) -> list[str]:
         for label, pattern in SECRET_PATTERNS.items():
             if pattern.search(text):
                 findings.append(f"{label} pattern in tracked file: {relative}")
+    return findings
+
+
+def scan_current_tree_for_replacement_characters(paths: list[str]) -> list[str]:
+    findings: list[str] = []
+    for relative in paths:
+        path = ROOT / relative
+        try:
+            if not path.is_file() or path.stat().st_size > 2_000_000:
+                continue
+            raw = path.read_bytes()
+            if b"\0" in raw:
+                continue
+            text = raw.decode("utf-8", errors="ignore")
+        except OSError:
+            continue
+        if "\ufffd" in text:
+            findings.append(relative)
     return findings
 
 
@@ -180,6 +213,15 @@ def main() -> int:
         passes.append("README contains no Unicode replacement characters")
 
     tracked = tracked_files()
+    replacement_character_files = scan_current_tree_for_replacement_characters(tracked)
+    if replacement_character_files:
+        failures.append(
+            "Unicode replacement characters found in tracked text files: "
+            + ", ".join(replacement_character_files[:20])
+        )
+    else:
+        passes.append("tracked text files contain no Unicode replacement characters")
+
     generated = [
         p
         for p in tracked

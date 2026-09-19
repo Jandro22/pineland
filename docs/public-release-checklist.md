@@ -46,6 +46,13 @@ repository into a public research artifact. It is intentionally stricter than
 Historical-source decisions should follow
 [`docs/data-redistribution.md`](data-redistribution.md).
 
+The full-history credential scan is:
+
+    python scripts/scan_git_history_secrets.py
+
+It uses the repository's narrow `.gitleaks.toml` checksum allowlists and
+redacts detected values from reports.
+
 ## Licensing and attribution
 
 - [ ] Final software license is explicitly chosen (currently MIT; Apache-2.0 remains
