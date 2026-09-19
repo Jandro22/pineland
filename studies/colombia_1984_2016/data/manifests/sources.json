@@ -32,9 +32,9 @@
       "bytes": 5155698,
       "future_outcome_used": false,
       "license": "review_required",
-      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "license_url": "https://micrositios.centrodememoriahistorica.gov.co/observatorio/geoportal/",
       "redistribution": "review_required",
-      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "redistribution_note": "CNMH describes its Geoportal as openly and freely available for public consultation, analysis, and download, but this review did not verify an explicit dataset-level redistribution license for the ArcGIS artifacts. Do not republish the source artifact until that right is confirmed.",
       "rights_verified_at": "2026-09-19"
     },
     {
@@ -46,9 +46,9 @@
       "acquisition_status": "pending",
       "future_outcome_used": false,
       "license": "review_required",
-      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "license_url": "https://micrositios.centrodememoriahistorica.gov.co/observatorio/geoportal/",
       "redistribution": "review_required",
-      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "redistribution_note": "CNMH describes its Geoportal as openly and freely available for public consultation, analysis, and download, but this review did not verify an explicit dataset-level redistribution license for the ArcGIS artifacts. Do not republish the source artifact until that right is confirmed.",
       "rights_verified_at": "2026-09-19"
     },
     {
@@ -64,9 +64,9 @@
       "future_outcome_used": false,
       "run_license": false,
       "license": "review_required",
-      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "license_url": "https://micrositios.centrodememoriahistorica.gov.co/observatorio/geoportal/",
       "redistribution": "review_required",
-      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "redistribution_note": "CNMH describes its Geoportal as openly and freely available for public consultation, analysis, and download, but this review did not verify an explicit dataset-level redistribution license for the ArcGIS artifacts. Do not republish the source artifact until that right is confirmed.",
       "rights_verified_at": "2026-09-19"
     },
     {
@@ -82,9 +82,9 @@
       "future_outcome_used": false,
       "run_license": false,
       "license": "review_required",
-      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "license_url": "https://micrositios.centrodememoriahistorica.gov.co/observatorio/geoportal/",
       "redistribution": "review_required",
-      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "redistribution_note": "CNMH describes its Geoportal as openly and freely available for public consultation, analysis, and download, but this review did not verify an explicit dataset-level redistribution license for the ArcGIS artifacts. Do not republish the source artifact until that right is confirmed.",
       "rights_verified_at": "2026-09-19"
     },
     {
@@ -100,9 +100,9 @@
       "future_outcome_used": false,
       "run_license": false,
       "license": "review_required",
-      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "license_url": "https://micrositios.centrodememoriahistorica.gov.co/observatorio/geoportal/",
       "redistribution": "review_required",
-      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "redistribution_note": "CNMH describes its Geoportal as openly and freely available for public consultation, analysis, and download, but this review did not verify an explicit dataset-level redistribution license for the ArcGIS artifacts. Do not republish the source artifact until that right is confirmed.",
       "rights_verified_at": "2026-09-19"
     },
     {
@@ -118,9 +118,9 @@
       "future_outcome_used": false,
       "run_license": false,
       "license": "review_required",
-      "license_url": "https://centrodememoriahistorica.gov.co/terminos-y-condiciones/",
+      "license_url": "https://micrositios.centrodememoriahistorica.gov.co/observatorio/geoportal/",
       "redistribution": "review_required",
-      "redistribution_note": "CNMH has an official open-data program, but a dataset-specific license for this ArcGIS/Portal artifact was not verified. Do not redistribute the source artifact until confirmed.",
+      "redistribution_note": "CNMH describes its Geoportal as openly and freely available for public consultation, analysis, and download, but this review did not verify an explicit dataset-level redistribution license for the ArcGIS artifacts. Do not republish the source artifact until that right is confirmed.",
       "rights_verified_at": "2026-09-19"
     },
     {
@@ -151,10 +151,10 @@
       "sha256": "e037744e0b210a2729016d26a46cfa2128d0cdd973cfb27b4422c1584442256d",
       "bytes": 13095,
       "future_outcome_used": false,
-      "license": "CC BY 4.0 with World Bank dataset terms",
-      "license_url": "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
+      "license": "CC BY 4.0",
+      "license_url": "https://data.worldbank.org/indicator/SP.POP.TOTL",
       "redistribution": "permitted",
-      "redistribution_note": "Default World Bank open-data license permits copying and sharing with attribution, subject to dataset-specific labeling and additional terms.",
+      "redistribution_note": "The World Bank indicator page for SP.POP.TOTL explicitly labels this indicator CC BY 4.0; redistribution is permitted with attribution and the applicable World Bank dataset terms.",
       "rights_verified_at": "2026-09-19"
     }
   ],

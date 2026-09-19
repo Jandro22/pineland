@@ -5,7 +5,7 @@ Counts show where executable verification effort exists; they do not establish
 historical validity, realism, or correctness by themselves.
 
 Current repository baseline: **725 Python test functions across 108 test files** and
-**72 Rust test cases across 22 Rust source files**.
+**76 Rust test cases across 23 Rust source files**.
 
 | Subsystem | Role | Selected Python tests | Selected Rust tests | Primary evidence |
 |---|---|---:|---:|---|
@@ -15,9 +15,9 @@ Current repository baseline: **725 Python test functions across 108 test files**
 | Organization ecology and reproduction | Research-load-bearing in General Theory v1 | 97 | 8 | [docs/organization-ecology.md](organization-ecology.md); [studies/research_program/general_theory_v1/README.md](../studies/research_program/general_theory_v1/README.md) |
 | Information, observations, and actor beliefs | Research-load-bearing mechanism | 52 | 1 | [docs/information-model.md](information-model.md); [docs/social-network-semantics.md](social-network-semantics.md); [docs/research-readiness.md](research-readiness.md) |
 | State estimation and inference | Research-load-bearing inference layer | 50 | 9 | [docs/state-estimation.md](state-estimation.md); [docs/research-v1.md](research-v1.md) |
-| Organized action and combat | Implemented and used by active studies | 52 | 15 | [docs/action-model.md](action-model.md); [docs/combat-model.md](combat-model.md) |
+| Organized action and combat | Implemented and used by active studies | 52 | 18 | [docs/action-model.md](action-model.md); [docs/combat-model.md](combat-model.md) |
 | Political order and governance | Implemented; secondary to the first-paper inference program | 11 | 0 | [docs/political-order.md](political-order.md) |
-| Foreign affairs and partner-force support | Implemented; partner-force support is an active Stage-3 program | 33 | 25 | [docs/foreign-affairs.md](foreign-affairs.md); [studies/research_program/general_theory_v1/partner_force_autonomy/README.md](../studies/research_program/general_theory_v1/partner_force_autonomy/README.md) |
+| Foreign affairs and partner-force support | Implemented; partner-force support is an active Stage-3 program | 33 | 28 | [docs/foreign-affairs.md](foreign-affairs.md); [studies/research_program/general_theory_v1/partner_force_autonomy/README.md](../studies/research_program/general_theory_v1/partner_force_autonomy/README.md) |
 | Peace process | Implemented; currently peripheral | 16 | 0 | [docs/peace-process.md](peace-process.md) |
 | Historical measurement and case transport | Active external-validation layer | 51 | 0 | [docs/empirical-benchmarking.md](empirical-benchmarking.md); [docs/research-validation.md](research-validation.md) |
 | HPC and distributed execution | Research-load-bearing execution infrastructure | 34 | 6 | [rust/hpc/ARC.md](../rust/hpc/ARC.md); [rust/README.md](../rust/README.md) |
@@ -125,7 +125,7 @@ Python:
 - [tests/test_insurgent_portfolio_synthetic_validation.py](../tests/test_insurgent_portfolio_synthetic_validation.py) - 3 test functions
 
 Rust:
-- [rust/pineland-model/src/lib.rs](../rust/pineland-model/src/lib.rs) - 15 test cases
+- [rust/pineland-model/src/lib.rs](../rust/pineland-model/src/lib.rs) - 18 test cases
 
 ### Political order and governance
 
@@ -139,7 +139,7 @@ Python:
 - [tests/test_arc_hpc_campaign.py](../tests/test_arc_hpc_campaign.py) - 17 test functions
 
 Rust:
-- [rust/pineland-model/src/lib.rs](../rust/pineland-model/src/lib.rs) - 15 test cases
+- [rust/pineland-model/src/lib.rs](../rust/pineland-model/src/lib.rs) - 18 test cases
 - [rust/pineland-model/src/logistics.rs](../rust/pineland-model/src/logistics.rs) - 1 test cases
 - [rust/pineland-model/src/movement.rs](../rust/pineland-model/src/movement.rs) - 1 test cases
 - [rust/pineland-model/src/state_regeneration.rs](../rust/pineland-model/src/state_regeneration.rs) - 8 test cases

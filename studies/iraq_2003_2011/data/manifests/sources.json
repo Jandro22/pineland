@@ -65,10 +65,10 @@
       "sha256": "00940227d8dcf5035690718c37e2c3d7dc0d25a68e2efeb4cefd5ad4aa4aa020",
       "bytes": 1828,
       "future_outcome_used": false,
-      "license": "CC BY 4.0 with World Bank dataset terms",
-      "license_url": "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
+      "license": "CC BY 4.0",
+      "license_url": "https://data.worldbank.org/indicator/SP.POP.TOTL",
       "redistribution": "permitted",
-      "redistribution_note": "Default World Bank open-data license permits copying and sharing with attribution, subject to dataset-specific labeling and additional terms.",
+      "redistribution_note": "The World Bank indicator page for SP.POP.TOTL explicitly labels this indicator CC BY 4.0; redistribution is permitted with attribution and the applicable World Bank dataset terms.",
       "rights_verified_at": "2026-09-19"
     }
   ],
