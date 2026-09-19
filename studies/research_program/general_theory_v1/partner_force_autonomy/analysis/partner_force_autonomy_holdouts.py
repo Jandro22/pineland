@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 import sys
 from typing import Any, Dict, Optional
+import hashlib
 import numpy as np
 import pandas as pd
 
@@ -21,6 +22,99 @@ sys.path.insert(0, str(HERE))
 
 from partner_force_metrics import pair_counterfactual_rows
 from partner_force_regenerative_coordinates import add_candidate_regenerative_coordinates
+
+
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def verify_contract_is_frozen(contract_path: Path) -> None:
+    freeze_path = BASE / "contracts" / "partner_force_autonomy_preregistration_freeze_v1.json"
+    freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+    target = contract_path.resolve()
+    for entry in freeze.get("frozen_artifacts", {}).values():
+        candidate = Path(entry.get("path", ""))
+        if not candidate.is_absolute():
+            candidate = (BASE.parents[3] / candidate).resolve()
+        if candidate == target:
+            actual = _sha256_file(contract_path)
+            if actual != entry.get("sha256"):
+                raise ValueError(
+                    f"holdout contract hash mismatch for frozen artifact {contract_path}: "
+                    f"expected {entry.get('sha256')}, got {actual}"
+                )
+            return
+    raise ValueError(f"holdout contract is not registered in preregistration freeze: {contract_path}")
+
+
+def validate_holdout_panel_against_contract(
+    paired: pd.DataFrame,
+    contract: Dict[str, Any],
+) -> None:
+    family = str(contract["holdout_family_id"])
+    expected_experiment = f"partner_force_autonomy_holdout_{family}_v1"
+    expected_cells = {str(c["cell_id"]): c for c in contract["cells"]}
+    expected_seeds = set(
+        range(
+            int(contract["seed_base"]),
+            int(contract["seed_base"]) + int(contract["default_seed_count"]),
+        )
+    )
+    expected_horizons = {int(h) for h in contract["horizons_days"]}
+
+    actual_experiments = set(paired["experiment_id"].astype(str))
+    if actual_experiments != {expected_experiment}:
+        raise ValueError(
+            f"holdout experiment_id mismatch: expected {expected_experiment}, got {sorted(actual_experiments)}"
+        )
+    actual_versions = set(paired["design_version"].astype(str))
+    if actual_versions != {"pineland.partner_force_holdout_contract.v1"}:
+        raise ValueError(f"holdout design_version mismatch: {sorted(actual_versions)}")
+    actual_cells = set(paired["cell_id"].astype(str))
+    if actual_cells != set(expected_cells):
+        raise ValueError(
+            f"holdout cell coverage mismatch; missing={sorted(set(expected_cells)-actual_cells)}, "
+            f"extra={sorted(actual_cells-set(expected_cells))}"
+        )
+    actual_seeds = {int(x) for x in paired["seed"].unique()}
+    if actual_seeds != expected_seeds:
+        raise ValueError(
+            f"holdout seed coverage mismatch; missing={sorted(expected_seeds-actual_seeds)}, "
+            f"extra={sorted(actual_seeds-expected_seeds)}"
+        )
+    actual_horizons = {int(x) for x in paired["horizon_days"].unique()}
+    if actual_horizons != expected_horizons:
+        raise ValueError(
+            f"holdout horizon coverage mismatch; expected={sorted(expected_horizons)}, got={sorted(actual_horizons)}"
+        )
+
+    field_map = {
+        "forcegen_mult": "indigenous_forcegen_multiplier",
+        "logistics_mult": "indigenous_logistics_multiplier",
+        "command_mult": "indigenous_command_multiplier",
+        "air_intensity": "support_air_intensity",
+        "air_bonus": "support_air_bonus",
+        "logistics_rate": "support_logistics_rate",
+        "command_reliability_boost": "support_command_reliability_boost",
+        "command_latency_reduction_fraction": "support_command_latency_reduction_fraction",
+        "forcegen_training_rate_boost": "support_forcegen_training_rate_boost",
+    }
+    for cell_id, spec in expected_cells.items():
+        rows = paired[paired["cell_id"].astype(str) == cell_id]
+        if set(rows["support_profile"].astype(str)) != {str(spec["support_profile"])}:
+            raise ValueError(f"holdout support_profile mismatch for {cell_id}")
+        for contract_key, column in field_map.items():
+            expected = float(spec[contract_key])
+            values = rows[column].to_numpy(float)
+            if not np.allclose(values, expected, rtol=1e-12, atol=1e-12):
+                raise ValueError(
+                    f"holdout treatment mismatch for {cell_id}.{contract_key}: "
+                    f"expected {expected}, observed range [{values.min()}, {values.max()}]"
+                )
 
 
 def args() -> argparse.Namespace:
@@ -73,6 +167,21 @@ def predict_zero_refit(
         return np.dot(X_scaled, coef) + intercept
     else:
         raise ValueError(f"Unsupported frozen functional form: {func_form}")
+
+
+def predict_zero_refit_by_horizon(
+    frozen_model: Dict[str, Any],
+    df: pd.DataFrame,
+) -> np.ndarray:
+    """Predict each row with its preregistered horizon-specific frozen mapping."""
+    if "horizon_days" not in df.columns:
+        raise ValueError("holdout DataFrame is missing horizon_days")
+    prediction = pd.Series(index=df.index, dtype=float)
+    for h, hdf in df.groupby("horizon_days", sort=False):
+        prediction.loc[hdf.index] = predict_zero_refit(frozen_model, hdf, horizon=int(h))
+    if prediction.isna().any():
+        raise ValueError("failed to generate horizon-specific predictions for every holdout row")
+    return prediction.loc[df.index].to_numpy(float)
 
 
 def evaluate_zero_refit(
@@ -134,7 +243,11 @@ def evaluate_zero_refit(
         eval_df = df[df["horizon_days"].isin(eval_horizons)]
         if not eval_df.empty:
             eval_y_true = eval_df["autonomy_ratio"].to_numpy(float)
-            eval_y_pred = predict_zero_refit(frozen_model, eval_df, horizon=None)
+            # The pooled gate pools errors/ranks across the preregistered target
+            # horizons, but every row is predicted with its frozen horizon-specific
+            # calibration.  Using the overall model here would silently evaluate a
+            # different predictor from the one used by the per-horizon gates.
+            eval_y_pred = predict_zero_refit_by_horizon(frozen_model, eval_df)
             eval_variance = len(np.unique(eval_y_pred)) > 1 and len(np.unique(eval_y_true)) > 1
             pooled_rho = float(pd.Series(eval_y_pred).corr(pd.Series(eval_y_true), method="spearman")) if eval_variance else 0.0
             if np.isnan(pooled_rho):
@@ -226,8 +339,10 @@ def main() -> None:
         print("NO_HOLDOUT_EVALUATION: dry-run executed no scientific evaluation and wrote no output files.")
         return
 
-    if not ns.discovery_model_json or not ns.holdout_raw_csv:
-        raise SystemExit("--discovery-model-json and --holdout-raw-csv are required for zero-refit evaluation")
+    if not ns.discovery_model_json or not ns.holdout_raw_csv or not ns.contract_json:
+        raise SystemExit(
+            "--discovery-model-json, --holdout-raw-csv, and --contract-json are all required for scientific zero-refit evaluation"
+        )
 
     model_path = Path(ns.discovery_model_json)
     if not model_path.exists():
@@ -238,15 +353,32 @@ def main() -> None:
         raise SystemExit(f"holdout raw CSV not found: {raw_path}")
 
     frozen_model = json.loads(model_path.read_text(encoding="utf-8"))
+    if frozen_model.get("schema_version") != "pineland.partner_force_autonomy_frozen_predictor.v1":
+        raise SystemExit("discovery model is not a partner-force frozen predictor v1 artifact")
+    if frozen_model.get("status") != "FROZEN_PREDICTOR_READY_FOR_ZERO_REFIT_HOLDOUTS":
+        raise SystemExit("discovery model is not marked ready for zero-refit holdouts")
+    freeze_path = BASE / "contracts" / "partner_force_autonomy_preregistration_freeze_v1.json"
+    current_freeze_sha = _sha256_file(freeze_path)
+    recorded_freeze_sha = frozen_model.get("discovery_provenance", {}).get("preregistration_freeze_sha256")
+    if recorded_freeze_sha != current_freeze_sha:
+        raise SystemExit(
+            "frozen predictor was created under a different preregistration freeze; refusing holdout evaluation"
+        )
     holdout_raw = pd.read_csv(raw_path)
     holdout_paired = pair_counterfactual_rows(holdout_raw)
 
-    contract = None
-    if ns.contract_json:
-        c_path = Path(ns.contract_json)
-        if not c_path.exists():
-            raise SystemExit(f"contract JSON not found: {c_path}")
-        contract = json.loads(c_path.read_text(encoding="utf-8"))
+    c_path = Path(ns.contract_json)
+    if not c_path.exists():
+        raise SystemExit(f"contract JSON not found: {c_path}")
+    try:
+        verify_contract_is_frozen(c_path)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    contract = json.loads(c_path.read_text(encoding="utf-8"))
+    try:
+        validate_holdout_panel_against_contract(holdout_paired, contract)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
     result = evaluate_zero_refit(holdout_paired, frozen_model, contract)
 

@@ -14,19 +14,33 @@
     "prehistories": 720,
     "counterfactual_pairs": 2880,
     "raw_branch_rows": 5760,
-    "execution_note": "Each prehistory is simulated once to T. One ON and one OFF clone are then advanced sequentially through all four horizons, so 2880 measurement pairs do not imply 5760 independent full prehistory runs."
+    "execution_note": "Each prehistory is simulated once to T. One ON and one OFF clone are then advanced sequentially through all four horizons, so 2880 measurement pairs do not imply 5760 independent full prehistory runs.",
+    "preferred_compute_plane": "VT ARC Slurm array",
+    "array_unit": "one frozen design cell x one seed; the task internally runs both branches and all four horizons",
+    "array_task_count": 720,
+    "default_array_concurrency": 16,
+    "rows_per_array_task": 8
   },
   "commands": {
     "no_compute_design_check": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --design studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv",
+    "no_compute_config_validation": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --validate-configs",
     "tiny_smoke_only": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --smoke --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/stage3_smoke.csv",
-    "full_stage3_discovery": "cargo run --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv",
-    "analyze_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --input-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv"
+    "arc_build_runner": "cargo build --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3",
+    "arc_submit_stage3": "sbatch --array=0-719%16 studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
+    "arc_merge_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py --input-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs/arc_stage3_shards --expected-tasks 720 --output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv",
+    "local_monolithic_fallback": "cargo run --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv",
+    "analyze_and_freeze_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --input-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv --freeze-predictor-json studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_frozen_predictor_v1.json",
+    "arc_holdout_pattern": "sbatch --array=0-95%16 --export=ALL,PF_MODE=holdout,PF_HOLDOUT_CONTRACT=<frozen-contract>,PF_OUTPUT_DIR=<family-shard-dir> studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch"
   },
   "safety": {
     "runner_requires_execute_flag": true,
     "analysis_never_launches_simulation": true,
     "analysis_requires_real_input_csv_unless_dry_run": true,
-    "dry_run_fixture_status": "PLUMBING_ONLY_NO_SCIENTIFIC_EVALUATION"
+    "dry_run_fixture_status": "PLUMBING_ONLY_NO_SCIENTIFIC_EVALUATION",
+    "production_runner_requires_frozen_selected_design": true,
+    "arc_shards_require_exact_cell_and_seed": true,
+    "arc_merge_rejects_missing_duplicate_or_malformed_tasks": true,
+    "holdout_evaluator_requires_complete_frozen_contract_coverage": true
   },
   "cost_interpretation": {
     "stage3_equal_cost_policy_comparison": false,

@@ -2,6 +2,16 @@
 # Force stable checkout bytes regardless of the user's global core.autocrlf.
 studies/nepal_2001_2006/config/split_manifest.json text eol=lf
 
+# Partner-force preregistration artifacts are SHA-256 frozen and executed on
+# both Windows development machines and Linux/ARC nodes. Force byte-identical
+# LF checkouts so the cryptographic freeze is portable across platforms.
+studies/research_program/general_theory_v1/partner_force_autonomy/** text eol=lf
+studies/research_program/general_theory_v1/partner_force_autonomy_program_contract_v1.json text eol=lf
+studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json text eol=lf
+studies/research_program/general_theory_v1/partner_force_autonomy_exclusion_manifest_v1.json text eol=lf
+studies/research_program/general_theory_v1/partner_force_complexity_levers_audit_v1.json text eol=lf
+rust/pineland-model/examples/partner_force_autonomy_stage3.rs text eol=lf
+
 # Generated/binary research artifacts must never be newline-normalized or
 # presented as text diffs. This also prevents core.autocrlf from corrupting
 # byte-stable PDFs and columnar data on Windows checkouts.

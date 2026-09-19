@@ -90,7 +90,13 @@ def evaluate_bottleneck_competitors(paired: pd.DataFrame) -> Dict[str, Any]:
     metrics: Dict[str, Any] = {}
     for col in ["omega_min", "omega_mean", "omega_geo"]:
         x = df[col].to_numpy(float)
-        rho = spearmanr(x, y).statistic if len(np.unique(x)) > 1 else 0.0
+        rho = (
+            spearmanr(x, y).statistic
+            if len(np.unique(x)) > 1 and len(np.unique(y)) > 1
+            else 0.0
+        )
+        if np.isnan(rho):
+            rho = 0.0
         metrics[col] = {
             "grouped_cv_isotonic_rmse": _cv_isotonic_rmse(x, y, groups),
             "spearman_rho_descriptive": float(rho),

@@ -1,4 +1,5 @@
 use pineland_core::config::SimulationConfig;
+use pineland_core::json::{parse as parse_json, JsonValue};
 use pineland_model::{
     CapabilityAssayBaseline, CapabilityAssayResult, SimulationEngine, INSURGENT, MILITARY,
 };
@@ -9,7 +10,39 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_raw_branch.v2";
-const DESIGN_VERSION: &str = "pineland.partner_force_autonomy_stage3_discovery_design.v1";
+const DISCOVERY_DESIGN_VERSION: &str = "pineland.partner_force_autonomy_stage3_discovery_design.v1";
+
+#[derive(Clone, Debug, Default)]
+struct HoldoutOverrides {
+    convoy_speed_factor: Option<f64>,
+    shipment_loss_per_travel_hour: Option<f64>,
+    route_interdiction_enabled: Option<bool>,
+    route_interdiction_rate: Option<f64>,
+    combat_interval_hours: Option<f64>,
+    combat_base_attrition_rate: Option<f64>,
+    security_recruitment_rate: Option<f64>,
+    security_training_rate: Option<f64>,
+    reserve_attrition_rate: Option<f64>,
+    police_allocation_share: Option<f64>,
+    insurgent_target_personnel: Option<f64>,
+    surprise_initiative: Option<f64>,
+    accidental_contact_fraction: Option<f64>,
+}
+
+#[derive(Clone, Debug)]
+struct RunDesign {
+    experiment_id: String,
+    design_version: String,
+    rng_namespace: String,
+    seed_base: u64,
+    seed_count: usize,
+    withdrawal_time_days: f64,
+    observation_start_days: f64,
+    horizons_days: Vec<f64>,
+    agent_count: usize,
+    locality_count: usize,
+    cells: Vec<Cell>,
+}
 
 #[derive(Clone, Debug)]
 struct Cell {
@@ -30,6 +63,7 @@ struct Cell {
     command_cost_per_formation_day: f64,
     forcegen_training_rate_boost: f64,
     forcegen_cost_per_incremental_trainee: f64,
+    overrides: HoldoutOverrides,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -125,12 +159,244 @@ fn load_cells(path: &Path) -> Result<Vec<Cell>, String> {
                 p[16],
                 "forcegen_cost_per_incremental_trainee",
             )?,
+            overrides: HoldoutOverrides::default(),
         });
     }
     if cells.is_empty() {
         return Err("stage3 cell manifest contains no design cells".to_string());
     }
     Ok(cells)
+}
+
+fn json_required_str<'a>(value: &'a JsonValue, key: &str) -> Result<&'a str, String> {
+    value
+        .get(key)
+        .and_then(JsonValue::as_str)
+        .ok_or_else(|| format!("missing or invalid string field '{key}'"))
+}
+
+fn json_required_f64(value: &JsonValue, key: &str) -> Result<f64, String> {
+    value
+        .get(key)
+        .and_then(JsonValue::as_f64)
+        .ok_or_else(|| format!("missing or invalid numeric field '{key}'"))
+}
+
+fn json_optional_f64(value: &JsonValue, key: &str) -> Result<Option<f64>, String> {
+    match value.get(key) {
+        None | Some(JsonValue::Null) => Ok(None),
+        Some(v) => v
+            .as_f64()
+            .map(Some)
+            .ok_or_else(|| format!("invalid numeric field '{key}'")),
+    }
+}
+
+fn json_optional_bool(value: &JsonValue, key: &str) -> Result<Option<bool>, String> {
+    match value.get(key) {
+        None | Some(JsonValue::Null) => Ok(None),
+        Some(v) => v
+            .as_bool()
+            .map(Some)
+            .ok_or_else(|| format!("invalid boolean field '{key}'")),
+    }
+}
+
+fn support_cost_defaults(profile: &str) -> Option<(f64, f64, f64, f64, f64)> {
+    match profile {
+        "none" => Some((0.0, 0.0, 0.0, 0.0, 0.0)),
+        "balanced" => Some((800.0, 8.0, 1.0, 80.0, 80.0)),
+        "air_heavy" => Some((1300.0, 8.0, 1.0, 30.0, 80.0)),
+        "logistics_heavy" => Some((600.0, 10.0, 1.0, 30.0, 80.0)),
+        "command_heavy" => Some((600.0, 8.0, 0.5, 240.0, 80.0)),
+        "forcegen_heavy" => Some((600.0, 8.0, 1.0, 30.0, 120.0)),
+        _ => None,
+    }
+}
+
+fn resolved_holdout_cost(
+    cell: &JsonValue,
+    key: &str,
+    profile_defaults: Option<(f64, f64, f64, f64, f64)>,
+    default_index: usize,
+) -> Result<f64, String> {
+    if let Some(value) = json_optional_f64(cell, key)? {
+        return Ok(value);
+    }
+    let defaults = profile_defaults.ok_or_else(|| {
+        format!(
+            "holdout cell '{}' uses a novel support_profile and therefore must explicitly define '{key}'",
+            cell.get("cell_id").and_then(JsonValue::as_str).unwrap_or("<unknown>")
+        )
+    })?;
+    Ok(match default_index {
+        0 => defaults.0,
+        1 => defaults.1,
+        2 => defaults.2,
+        3 => defaults.3,
+        4 => defaults.4,
+        _ => unreachable!(),
+    })
+}
+
+fn load_holdout_contract(path: &Path) -> Result<RunDesign, String> {
+    let text = fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
+    let root = parse_json(&text).map_err(|e| format!("{}: {e}", path.display()))?;
+    let schema_version = json_required_str(&root, "schema_version")?;
+    if schema_version != "pineland.partner_force_holdout_contract.v1" {
+        return Err(format!(
+            "{} is not a partner-force holdout v1 contract",
+            path.display()
+        ));
+    }
+    let family_id = json_required_str(&root, "holdout_family_id")?;
+    let rng_namespace = json_required_str(&root, "seed_namespace")?.to_string();
+    let seed_base = root
+        .get("seed_base")
+        .and_then(JsonValue::as_u64)
+        .ok_or_else(|| "missing or invalid holdout seed_base".to_string())?;
+    let seed_count = root
+        .get("default_seed_count")
+        .and_then(JsonValue::as_usize)
+        .ok_or_else(|| "missing or invalid holdout default_seed_count".to_string())?;
+    let horizons_days = root
+        .get("horizons_days")
+        .and_then(JsonValue::as_array)
+        .ok_or_else(|| "missing or invalid holdout horizons_days".to_string())?
+        .iter()
+        .map(|v| {
+            v.as_f64()
+                .ok_or_else(|| "holdout horizons_days must be numeric".to_string())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if horizons_days.is_empty() {
+        return Err("holdout horizons_days cannot be empty".to_string());
+    }
+
+    let environment = root.get("environment");
+    let env_num = |key: &str, default: f64| -> Result<f64, String> {
+        match environment.and_then(|e| e.get(key)) {
+            None => Ok(default),
+            Some(v) => v
+                .as_f64()
+                .ok_or_else(|| format!("invalid holdout environment.{key}")),
+        }
+    };
+    let env_usize = |key: &str, default: usize| -> Result<usize, String> {
+        match environment.and_then(|e| e.get(key)) {
+            None => Ok(default),
+            Some(v) => v
+                .as_usize()
+                .ok_or_else(|| format!("invalid holdout environment.{key}")),
+        }
+    };
+    let agent_count = env_usize("agent_count", 1000)?;
+    let locality_count = env_usize("locality_count", 72)?;
+    let withdrawal_time_days = env_num("withdrawal_time_days", 120.0)?;
+    let observation_start_days = env_num("observation_start_days", 60.0)?;
+
+    let cell_values = root
+        .get("cells")
+        .and_then(JsonValue::as_array)
+        .ok_or_else(|| "holdout contract missing cells array".to_string())?;
+    let mut cells = Vec::with_capacity(cell_values.len());
+    for cell in cell_values {
+        let support_profile = json_required_str(cell, "support_profile")?.to_string();
+        let profile_defaults = support_cost_defaults(&support_profile);
+        cells.push(Cell {
+            cell_id: json_required_str(cell, "cell_id")?.to_string(),
+            support_profile,
+            forcegen_mult: json_required_f64(cell, "forcegen_mult")?,
+            logistics_mult: json_required_f64(cell, "logistics_mult")?,
+            command_mult: json_required_f64(cell, "command_mult")?,
+            air_intensity: json_required_f64(cell, "air_intensity")?,
+            air_bonus: json_required_f64(cell, "air_bonus")?,
+            air_cost_per_contact: resolved_holdout_cost(
+                cell,
+                "air_cost_per_contact",
+                profile_defaults,
+                0,
+            )?,
+            logistics_rate: json_required_f64(cell, "logistics_rate")?,
+            logistics_capacity: json_required_f64(cell, "logistics_capacity")?,
+            logistics_cost_per_unit: resolved_holdout_cost(
+                cell,
+                "logistics_cost_per_unit",
+                profile_defaults,
+                1,
+            )?,
+            command_reliability_boost: json_required_f64(cell, "command_reliability_boost")?,
+            command_latency_reduction_fraction: json_required_f64(
+                cell,
+                "command_latency_reduction_fraction",
+            )?,
+            command_floor_hours: resolved_holdout_cost(
+                cell,
+                "command_floor_hours",
+                profile_defaults,
+                2,
+            )?,
+            command_cost_per_formation_day: resolved_holdout_cost(
+                cell,
+                "command_cost_per_formation_day",
+                profile_defaults,
+                3,
+            )?,
+            forcegen_training_rate_boost: json_required_f64(cell, "forcegen_training_rate_boost")?,
+            forcegen_cost_per_incremental_trainee: resolved_holdout_cost(
+                cell,
+                "forcegen_cost_per_incremental_trainee",
+                profile_defaults,
+                4,
+            )?,
+            overrides: HoldoutOverrides {
+                convoy_speed_factor: json_optional_f64(cell, "convoy_speed_factor")?,
+                shipment_loss_per_travel_hour: json_optional_f64(
+                    cell,
+                    "shipment_loss_per_travel_hour",
+                )?,
+                route_interdiction_enabled: json_optional_bool(cell, "route_interdiction_enabled")?,
+                route_interdiction_rate: json_optional_f64(cell, "route_interdiction_rate")?,
+                combat_interval_hours: json_optional_f64(cell, "combat_interval_hours")?,
+                combat_base_attrition_rate: json_optional_f64(cell, "combat_base_attrition_rate")?,
+                security_recruitment_rate: json_optional_f64(cell, "security_recruitment_rate")?,
+                security_training_rate: json_optional_f64(cell, "security_training_rate")?,
+                reserve_attrition_rate: json_optional_f64(cell, "reserve_attrition_rate")?,
+                police_allocation_share: json_optional_f64(cell, "police_allocation_share")?,
+                insurgent_target_personnel: json_optional_f64(cell, "insurgent_target_personnel")?,
+                surprise_initiative: json_optional_f64(cell, "surprise_initiative")?,
+                accidental_contact_fraction: json_optional_f64(
+                    cell,
+                    "accidental_contact_fraction",
+                )?,
+            },
+        });
+    }
+    if cells.is_empty() {
+        return Err("holdout contract contains no cells".to_string());
+    }
+    if let Some(expected) = root.get("cells_count").and_then(JsonValue::as_usize) {
+        if expected != cells.len() {
+            return Err(format!(
+                "holdout cells_count={expected} but parsed {} cells",
+                cells.len()
+            ));
+        }
+    }
+
+    Ok(RunDesign {
+        experiment_id: format!("partner_force_autonomy_holdout_{family_id}_v1"),
+        design_version: schema_version.to_string(),
+        rng_namespace,
+        seed_base,
+        seed_count,
+        withdrawal_time_days,
+        observation_start_days,
+        horizons_days,
+        agent_count,
+        locality_count,
+        cells,
+    })
 }
 
 fn git_commit() -> String {
@@ -146,27 +412,21 @@ fn git_commit() -> String {
 
 fn sha256(data: &[u8]) -> String {
     let k: [u32; 64] = [
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
-        0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
-        0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
-        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
-        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
-        0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
-        0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
+        0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
+        0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
+        0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc,
+        0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
+        0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116,
+        0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7,
+        0xc67178f2,
     ];
 
     let mut h: [u32; 8] = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
+        0x5be0cd19,
     ];
 
     let bit_len = (data.len() as u64) * 8;
@@ -180,12 +440,20 @@ fn sha256(data: &[u8]) -> String {
     for chunk in padded.chunks_exact(64) {
         let mut w = [0u32; 64];
         for i in 0..16 {
-            w[i] = u32::from_be_bytes([chunk[4 * i], chunk[4 * i + 1], chunk[4 * i + 2], chunk[4 * i + 3]]);
+            w[i] = u32::from_be_bytes([
+                chunk[4 * i],
+                chunk[4 * i + 1],
+                chunk[4 * i + 2],
+                chunk[4 * i + 3],
+            ]);
         }
         for i in 16..64 {
             let s0 = w[i - 15].rotate_right(7) ^ w[i - 15].rotate_right(18) ^ (w[i - 15] >> 3);
             let s1 = w[i - 2].rotate_right(17) ^ w[i - 2].rotate_right(19) ^ (w[i - 2] >> 10);
-            w[i] = w[i - 16].wrapping_add(s0).wrapping_add(w[i - 7]).wrapping_add(s1);
+            w[i] = w[i - 16]
+                .wrapping_add(s0)
+                .wrapping_add(w[i - 7])
+                .wrapping_add(s1);
         }
 
         let mut a = h[0];
@@ -200,7 +468,11 @@ fn sha256(data: &[u8]) -> String {
         for i in 0..64 {
             let s1 = e.rotate_right(6) ^ e.rotate_right(11) ^ e.rotate_right(25);
             let ch = (e & f) ^ ((!e) & g);
-            let temp1 = h_val.wrapping_add(s1).wrapping_add(ch).wrapping_add(k[i]).wrapping_add(w[i]);
+            let temp1 = h_val
+                .wrapping_add(s1)
+                .wrapping_add(ch)
+                .wrapping_add(k[i])
+                .wrapping_add(w[i]);
             let s0 = a.rotate_right(2) ^ a.rotate_right(13) ^ a.rotate_right(22);
             let maj = (a & b) ^ (a & c) ^ (b & c);
             let temp2 = s0.wrapping_add(maj);
@@ -231,42 +503,30 @@ fn sha256(data: &[u8]) -> String {
     )
 }
 
-fn parse_freeze_manifest(content: &str) -> Vec<(String, String)> {
-    let mut entries = Vec::new();
-    let mut current_path: Option<String> = None;
-    for line in content.lines() {
-        let trimmed = line.trim();
-        if trimmed.starts_with("\"path\":") {
-            if let Some(first_quote) = trimmed.find('"') {
-                let rest = &trimmed[first_quote + 1..];
-                if let Some(second_quote) = rest.find('"') {
-                    let colon_rest = &rest[second_quote + 1..];
-                    if let Some(val_start) = colon_rest.find('"') {
-                        let val_rest = &colon_rest[val_start + 1..];
-                        if let Some(val_end) = val_rest.find('"') {
-                            current_path = Some(val_rest[..val_end].to_string());
-                        }
-                    }
-                }
-            }
-        } else if trimmed.starts_with("\"sha256\":") {
-            if let Some(path) = current_path.take() {
-                if let Some(first_quote) = trimmed.find('"') {
-                    let rest = &trimmed[first_quote + 1..];
-                    if let Some(second_quote) = rest.find('"') {
-                        let colon_rest = &rest[second_quote + 1..];
-                        if let Some(val_start) = colon_rest.find('"') {
-                            let val_rest = &colon_rest[val_start + 1..];
-                            if let Some(val_end) = val_rest.find('"') {
-                                entries.push((path, val_rest[..val_end].to_string()));
-                            }
-                        }
-                    }
-                }
-            }
+fn parse_freeze_manifest(content: &str) -> Result<Vec<(String, String)>, String> {
+    let root = parse_json(content).map_err(|e| format!("invalid freeze-manifest JSON: {e}"))?;
+    let artifacts = root
+        .get("frozen_artifacts")
+        .and_then(JsonValue::as_object)
+        .ok_or_else(|| "freeze manifest missing frozen_artifacts object".to_string())?;
+    let mut entries = Vec::with_capacity(artifacts.len());
+    for (artifact_id, value) in artifacts {
+        let path = value
+            .get("path")
+            .and_then(JsonValue::as_str)
+            .ok_or_else(|| format!("freeze artifact '{artifact_id}' missing path"))?;
+        let digest = value
+            .get("sha256")
+            .and_then(JsonValue::as_str)
+            .ok_or_else(|| format!("freeze artifact '{artifact_id}' missing sha256"))?;
+        if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Err(format!(
+                "freeze artifact '{artifact_id}' has invalid SHA-256 digest"
+            ));
         }
+        entries.push((path.to_string(), digest.to_ascii_lowercase()));
     }
-    entries
+    Ok(entries)
 }
 
 fn verify_preregistration_freeze(freeze_path: &Path) -> Result<(), String> {
@@ -276,20 +536,23 @@ fn verify_preregistration_freeze(freeze_path: &Path) -> Result<(), String> {
             freeze_path.display()
         ));
     }
-    let content = fs::read_to_string(freeze_path)
-        .map_err(|e| format!("Failed to read freeze manifest at {}: {e}", freeze_path.display()))?;
-    let entries = parse_freeze_manifest(&content);
-    if entries.len() < 21 {
+    let content = fs::read_to_string(freeze_path).map_err(|e| {
+        format!(
+            "Failed to read freeze manifest at {}: {e}",
+            freeze_path.display()
+        )
+    })?;
+    let entries = parse_freeze_manifest(&content)?;
+    if entries.len() < 23 {
         return Err(format!(
-            "Expected at least 21 frozen artifacts in manifest, found {}",
+            "Expected at least 23 frozen artifacts in manifest, found {}",
             entries.len()
         ));
     }
     for (rel_path, expected_hash) in &entries {
         let file_path = Path::new(rel_path);
-        let bytes = fs::read(file_path).map_err(|e| {
-            format!("Frozen artifact not found or unreadable at {rel_path}: {e}")
-        })?;
+        let bytes = fs::read(file_path)
+            .map_err(|e| format!("Frozen artifact not found or unreadable at {rel_path}: {e}"))?;
         let actual_hash = sha256(&bytes);
         if actual_hash != *expected_hash {
             return Err(format!(
@@ -302,6 +565,34 @@ fn verify_preregistration_freeze(freeze_path: &Path) -> Result<(), String> {
         entries.len()
     );
     Ok(())
+}
+
+fn verify_selected_artifact_frozen(freeze_path: &Path, selected: &Path) -> Result<(), String> {
+    let content = fs::read_to_string(freeze_path).map_err(|e| {
+        format!(
+            "failed to read freeze manifest {}: {e}",
+            freeze_path.display()
+        )
+    })?;
+    let entries = parse_freeze_manifest(&content)?;
+    let selected_canonical = fs::canonicalize(selected).map_err(|e| {
+        format!(
+            "failed to resolve selected design {}: {e}",
+            selected.display()
+        )
+    })?;
+    for (path, _) in entries {
+        if let Ok(candidate) = fs::canonicalize(&path) {
+            if candidate == selected_canonical {
+                return Ok(());
+            }
+        }
+    }
+    Err(format!(
+        "Selected design artifact {} is not registered in preregistration freeze {}. Refusing execution; use --allow-unfrozen only for non-scientific smoke/development runs.",
+        selected.display(),
+        freeze_path.display()
+    ))
 }
 
 fn check_git_clean() -> Result<(), String> {
@@ -329,7 +620,9 @@ fn check_git_clean() -> Result<(), String> {
                 || path.starts_with("studies/research_program/general_theory_v1/graph_markov_")
                 || path.starts_with("studies/research_program/general_theory_v1/localflow_")
                 || path.starts_with("studies/research_program/general_theory_v1/ring1_")
-                || path.starts_with("studies/research_program/general_theory_v1/probabilistic_causal_cone_")
+                || path.starts_with(
+                    "studies/research_program/general_theory_v1/probabilistic_causal_cone_",
+                )
             {
                 return false;
             }
@@ -362,23 +655,70 @@ fn apply_indigenous_command_multiplier(engine: &mut SimulationEngine, multiplier
     }
 }
 
-fn make_engine(
+fn build_config(
     cell: &Cell,
     seed: u64,
     horizon: f64,
     agent_count: usize,
     locality_count: usize,
-) -> Result<SimulationEngine, String> {
+    rng_namespace: &str,
+) -> Result<SimulationConfig, String> {
     let mut config = SimulationConfig::default();
     config.seed = seed;
     config.initialization_seed = Some(seed);
-    config.random_stream_namespace = "partner-force-autonomy-stage3-v1".to_string();
+    config.random_stream_namespace = rng_namespace.to_string();
     config.agent_count = agent_count;
     config.locality_count = locality_count;
     config.horizon_days = horizon;
     config.burn_in_days = 0.0;
     config.state_regeneration.enabled = true;
     config.foreign_affairs.enabled = false;
+
+    // Holdout contracts define concrete mechanism values first; indigenous
+    // capacity multipliers then scale the partner-owned force-generation and
+    // logistics base.  This preserves the intended factorial interpretation:
+    // a forcegen_mult of 0.5 under a delayed-training regime is weaker than a
+    // baseline-capacity force under that same regime.
+    if let Some(v) = cell.overrides.convoy_speed_factor {
+        config.logistics.convoy_speed_factor = v;
+    }
+    if let Some(v) = cell.overrides.shipment_loss_per_travel_hour {
+        config.logistics.shipment_loss_per_travel_hour = v;
+    }
+    if let Some(v) = cell.overrides.route_interdiction_enabled {
+        config.logistics.route_interdiction_enabled = v;
+    }
+    if let Some(v) = cell.overrides.route_interdiction_rate {
+        config.logistics.route_interdiction_rate = v;
+    }
+    if let Some(v) = cell.overrides.combat_interval_hours {
+        config.combat.interval_hours = v;
+    }
+    if let Some(v) = cell.overrides.combat_base_attrition_rate {
+        config.combat.base_attrition_rate = v;
+    }
+    if let Some(v) = cell.overrides.security_recruitment_rate {
+        config.state_regeneration.security_recruitment_rate = v;
+    }
+    if let Some(v) = cell.overrides.security_training_rate {
+        config.state_regeneration.security_training_rate = v;
+    }
+    if let Some(v) = cell.overrides.reserve_attrition_rate {
+        config.state_regeneration.reserve_attrition_rate = v;
+    }
+    if let Some(v) = cell.overrides.police_allocation_share {
+        config.state_regeneration.police_allocation_share = v;
+    }
+    if let Some(v) = cell.overrides.insurgent_target_personnel {
+        config.force_structure.insurgent_target_personnel = v;
+    }
+    if let Some(v) = cell.overrides.surprise_initiative {
+        config.combat.surprise_initiative = v;
+    }
+    if let Some(v) = cell.overrides.accidental_contact_fraction {
+        config.combat.accidental_contact_fraction = v;
+    }
+
     config.state_regeneration.security_recruitment_rate *= cell.forcegen_mult;
     config.state_regeneration.security_training_rate *= cell.forcegen_mult;
     config.logistics.source_daily_production_fraction *= cell.logistics_mult;
@@ -406,6 +746,26 @@ fn make_engine(
     p.force_generation.cost_per_incremental_trainee = cell.forcegen_cost_per_incremental_trainee;
     p.force_generation.capacity_building_investment_rate = 0.0;
 
+    config.validate().map_err(|e| e.to_string())?;
+    Ok(config)
+}
+
+fn make_engine(
+    cell: &Cell,
+    seed: u64,
+    horizon: f64,
+    agent_count: usize,
+    locality_count: usize,
+    rng_namespace: &str,
+) -> Result<SimulationEngine, String> {
+    let config = build_config(
+        cell,
+        seed,
+        horizon,
+        agent_count,
+        locality_count,
+        rng_namespace,
+    )?;
     let mut engine = SimulationEngine::new(config).map_err(|e| e.to_string())?;
     apply_indigenous_command_multiplier(&mut engine, cell.command_mult);
     Ok(engine)
@@ -597,6 +957,8 @@ fn csv_header() -> &'static str {
 #[allow(clippy::too_many_arguments)]
 fn write_row(
     out: &mut BufWriter<File>,
+    experiment_id: &str,
+    design_version: &str,
     commit: &str,
     cell: &Cell,
     seed: u64,
@@ -615,8 +977,8 @@ fn write_row(
         out,
         "{},{},{},{},{},{},{},{},{},{},{:.0},{:.0},{},{:.6},{:.6},{:.6},{:.9},{},{:.9},{},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9}",
         SCHEMA_VERSION,
-        "partner_force_autonomy_stage3_discovery_v1",
-        DESIGN_VERSION,
+        experiment_id,
+        design_version,
         commit,
         world_id,
         pair_id,
@@ -691,8 +1053,11 @@ fn write_row(
 }
 
 fn usage() {
-    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--design PATH] [--freeze PATH] [--output PATH] [--seed-count N] [--seed-base N] [--max-cells N] [--agent-count N] [--locality-count N] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
+    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--design PATH | --holdout-contract PATH] [--freeze PATH] [--output PATH] [--seed-count N] [--seed-base N | --seed N] [--cell-id ID | --cell-index N] [--max-cells N] [--agent-count N] [--locality-count N] [--validate-configs] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
     eprintln!("Without --execute the runner performs NO simulation and only prints the frozen design summary.");
+    eprintln!(
+        "--cell-index is zero-based and, with --seed, is intended for ARC/Slurm array sharding."
+    );
 }
 
 fn main() -> Result<(), String> {
@@ -702,14 +1067,20 @@ fn main() -> Result<(), String> {
         return Ok(());
     }
     let mut design = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv");
+    let mut design_explicit = false;
+    let mut holdout_contract: Option<PathBuf> = None;
     let mut freeze = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v1.json");
-    let mut output = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv");
-    let mut seed_count = 12usize;
-    let mut seed_base = 2_026_120_000u64;
+    let mut output: Option<PathBuf> = None;
+    let mut seed_count_override: Option<usize> = None;
+    let mut seed_base_override: Option<u64> = None;
+    let mut single_seed: Option<u64> = None;
+    let mut cell_id: Option<String> = None;
+    let mut cell_index: Option<usize> = None;
     let mut max_cells: Option<usize> = None;
     let mut custom_agent_count: Option<usize> = None;
     let mut custom_locality_count: Option<usize> = None;
     let execute = args.iter().any(|x| x == "--execute");
+    let validate_configs = args.iter().any(|x| x == "--validate-configs");
     let smoke = args.iter().any(|x| x == "--smoke");
     let allow_dirty = args.iter().any(|x| x == "--allow-dirty");
     let allow_unfrozen = args.iter().any(|x| x == "--allow-unfrozen");
@@ -717,20 +1088,34 @@ fn main() -> Result<(), String> {
     let mut i = 0usize;
     while i < args.len() {
         match args[i].as_str() {
-            "--design" | "--freeze" | "--output" | "--seed-count" | "--seed-base" | "--max-cells"
+            "--design" | "--holdout-contract" | "--freeze" | "--output" | "--seed-count"
+            | "--seed-base" | "--seed" | "--cell-id" | "--cell-index" | "--max-cells"
             | "--agent-count" | "--locality-count" => {
                 if i + 1 >= args.len() {
                     return Err(format!("{} requires a value", args[i]));
                 }
                 match args[i].as_str() {
-                    "--design" => design = PathBuf::from(&args[i + 1]),
+                    "--design" => {
+                        design = PathBuf::from(&args[i + 1]);
+                        design_explicit = true;
+                    }
+                    "--holdout-contract" => holdout_contract = Some(PathBuf::from(&args[i + 1])),
                     "--freeze" => freeze = PathBuf::from(&args[i + 1]),
-                    "--output" => output = PathBuf::from(&args[i + 1]),
+                    "--output" => output = Some(PathBuf::from(&args[i + 1])),
                     "--seed-count" => {
-                        seed_count = args[i + 1].parse().map_err(|_| "invalid --seed-count")?
+                        seed_count_override =
+                            Some(args[i + 1].parse().map_err(|_| "invalid --seed-count")?)
                     }
                     "--seed-base" => {
-                        seed_base = args[i + 1].parse().map_err(|_| "invalid --seed-base")?
+                        seed_base_override =
+                            Some(args[i + 1].parse().map_err(|_| "invalid --seed-base")?)
+                    }
+                    "--seed" => {
+                        single_seed = Some(args[i + 1].parse().map_err(|_| "invalid --seed")?)
+                    }
+                    "--cell-id" => cell_id = Some(args[i + 1].clone()),
+                    "--cell-index" => {
+                        cell_index = Some(args[i + 1].parse().map_err(|_| "invalid --cell-index")?)
                     }
                     "--max-cells" => {
                         max_cells = Some(args[i + 1].parse().map_err(|_| "invalid --max-cells")?)
@@ -750,26 +1135,122 @@ fn main() -> Result<(), String> {
                 }
                 i += 2;
             }
-            "--execute" | "--smoke" | "--allow-dirty" | "--allow-unfrozen" => i += 1,
+            "--execute" | "--validate-configs" | "--smoke" | "--allow-dirty"
+            | "--allow-unfrozen" => i += 1,
             other => return Err(format!("unknown argument '{other}'")),
         }
     }
 
-    let default_agent_count = if smoke { 300 } else { 1000 };
-    let default_locality_count = if smoke { 34 } else { 72 };
-    let agent_count = custom_agent_count.unwrap_or(default_agent_count);
-    let locality_count = custom_locality_count.unwrap_or(default_locality_count);
+    if design_explicit && holdout_contract.is_some() {
+        return Err("--design and --holdout-contract are mutually exclusive".to_string());
+    }
+    if seed_base_override.is_some() && single_seed.is_some() {
+        return Err("--seed-base and --seed are mutually exclusive".to_string());
+    }
+    if cell_id.is_some() && cell_index.is_some() {
+        return Err("--cell-id and --cell-index are mutually exclusive".to_string());
+    }
 
-    let mut cells = load_cells(&design)?;
+    let mut run_design = if let Some(ref contract_path) = holdout_contract {
+        load_holdout_contract(contract_path)?
+    } else {
+        RunDesign {
+            experiment_id: "partner_force_autonomy_stage3_discovery_v1".to_string(),
+            design_version: DISCOVERY_DESIGN_VERSION.to_string(),
+            rng_namespace: "partner-force-autonomy-stage3-v1".to_string(),
+            seed_base: 2_026_120_000,
+            seed_count: 12,
+            withdrawal_time_days: 120.0,
+            observation_start_days: 60.0,
+            horizons_days: vec![7.0, 30.0, 90.0, 180.0],
+            agent_count: 1000,
+            locality_count: 72,
+            cells: load_cells(&design)?,
+        }
+    };
+
+    if let Some(n) = seed_count_override {
+        run_design.seed_count = n;
+    }
+    if let Some(seed) = seed_base_override {
+        run_design.seed_base = seed;
+    }
+    if let Some(seed) = single_seed {
+        run_design.seed_base = seed;
+        run_design.seed_count = 1;
+    }
+    if let Some(id) = cell_id.as_deref() {
+        run_design.cells.retain(|c| c.cell_id == id);
+        if run_design.cells.is_empty() {
+            return Err(format!("cell-id '{id}' was not found in selected design"));
+        }
+    }
+    if let Some(index) = cell_index {
+        let selected = run_design.cells.get(index).cloned().ok_or_else(|| {
+            format!(
+                "cell-index {index} is outside 0..{}",
+                run_design.cells.len()
+            )
+        })?;
+        run_design.cells = vec![selected];
+    }
     if let Some(n) = max_cells {
-        cells.truncate(n);
+        run_design.cells.truncate(n);
     }
     if smoke {
-        cells.truncate(1);
-        seed_count = 1;
+        run_design.cells.truncate(1);
+        run_design.seed_count = 1;
+        run_design.agent_count = 300;
+        run_design.locality_count = 34;
+        run_design.horizons_days = vec![7.0];
     }
-    println!("Stage-3 design: {} cells x {} seeds; scale: {} agents, {} localities; T=120d; horizons=7,30,90,180d", cells.len(), seed_count, agent_count, locality_count);
-    println!("Design manifest: {}", design.display());
+    if run_design.cells.is_empty() {
+        return Err("selected design contains no cells".to_string());
+    }
+    let agent_count = custom_agent_count.unwrap_or(run_design.agent_count);
+    let locality_count = custom_locality_count.unwrap_or(run_design.locality_count);
+    let selected_artifact = holdout_contract.as_ref().unwrap_or(&design);
+    let output = output.unwrap_or_else(|| {
+        let file_name = if holdout_contract.is_some() {
+            format!("{}_raw_v2.csv", run_design.experiment_id)
+        } else {
+            "partner_force_autonomy_stage3_raw_v2.csv".to_string()
+        };
+        PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/outputs")
+            .join(file_name)
+    });
+    println!(
+        "Experiment: {}; design: {} cells x {} seeds; scale: {} agents, {} localities; T={}d; horizons={:?}",
+        run_design.experiment_id,
+        run_design.cells.len(),
+        run_design.seed_count,
+        agent_count,
+        locality_count,
+        run_design.withdrawal_time_days,
+        run_design.horizons_days
+    );
+    println!("Design artifact: {}", selected_artifact.display());
+    if validate_configs {
+        let max_horizon = run_design
+            .horizons_days
+            .iter()
+            .copied()
+            .fold(0.0_f64, f64::max);
+        for cell in &run_design.cells {
+            build_config(
+                cell,
+                run_design.seed_base,
+                run_design.withdrawal_time_days + max_horizon,
+                agent_count,
+                locality_count,
+                &run_design.rng_namespace,
+            )?;
+        }
+        println!(
+            "CONFIG_VALIDATION_PASS: {} selected cells map to valid SimulationConfig values; no SimulationEngine was created.",
+            run_design.cells.len()
+        );
+    }
     if !execute {
         println!("NO COMPUTE: --execute not supplied; no SimulationEngine was created.");
         return Ok(());
@@ -777,6 +1258,7 @@ fn main() -> Result<(), String> {
 
     if !smoke && !allow_unfrozen {
         verify_preregistration_freeze(&freeze)?;
+        verify_selected_artifact_frozen(&freeze, selected_artifact)?;
     }
 
     if !smoke && !allow_dirty {
@@ -790,24 +1272,21 @@ fn main() -> Result<(), String> {
     let mut out = BufWriter::new(file);
     writeln!(out, "{}", csv_header()).map_err(|e| e.to_string())?;
     let commit = git_commit();
-    let withdrawal = 120.0;
-    let observation_start = 60.0;
-    let horizons: Vec<f64> = if smoke {
-        vec![7.0]
-    } else {
-        vec![7.0, 30.0, 90.0, 180.0]
-    };
+    let withdrawal = run_design.withdrawal_time_days;
+    let observation_start = run_design.observation_start_days;
+    let horizons = run_design.horizons_days.clone();
     let max_horizon = *horizons.last().unwrap();
 
-    for (cell_index, cell) in cells.iter().enumerate() {
-        for s in 0..seed_count {
-            let seed = seed_base + s as u64;
+    for (cell_position, cell) in run_design.cells.iter().enumerate() {
+        for s in 0..run_design.seed_count {
+            let seed = run_design.seed_base + s as u64;
             let mut engine = make_engine(
                 cell,
                 seed,
                 withdrawal + max_horizon,
                 agent_count,
                 locality_count,
+                &run_design.rng_namespace,
             )?;
             engine
                 .advance_until(observation_start)
@@ -842,6 +1321,8 @@ fn main() -> Result<(), String> {
                 let post_off = diff(flow_t, flow_snapshot(&off));
                 write_row(
                     &mut out,
+                    &run_design.experiment_id,
+                    &run_design.design_version,
                     &commit,
                     cell,
                     seed,
@@ -855,6 +1336,8 @@ fn main() -> Result<(), String> {
                 )?;
                 write_row(
                     &mut out,
+                    &run_design.experiment_id,
+                    &run_design.design_version,
                     &commit,
                     cell,
                     seed,
@@ -870,8 +1353,8 @@ fn main() -> Result<(), String> {
         }
         eprintln!(
             "completed design cell {}/{}: {}",
-            cell_index + 1,
-            cells.len(),
+            cell_position + 1,
+            run_design.cells.len(),
             cell.cell_id
         );
     }

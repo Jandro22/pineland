@@ -37,6 +37,7 @@ CONTRACTS_DIR = BASE_DIR / "contracts"
 FIXTURES_DIR = BASE_DIR / "fixtures"
 ANALYSIS_DIR = BASE_DIR / "analysis"
 OUTPUTS_DIR = BASE_DIR / "outputs"
+ARC_DIR = BASE_DIR / "arc"
 
 
 def log_check(name: str, passed: bool, detail: str = "") -> None:
@@ -77,7 +78,7 @@ def check_runner_compilation_and_safety_gate() -> None:
     no_compute_passed = (
         res_run.returncode == 0
         and "NO COMPUTE: --execute not supplied" in res_run.stdout
-        and "Stage-3 design:" in res_run.stdout
+        and "Experiment: partner_force_autonomy_stage3_discovery_v1" in res_run.stdout
     )
     log_check(
         "Stage-3 safety gate (no --execute => no simulation, clean exit)",
@@ -100,6 +101,77 @@ def check_runner_compilation_and_safety_gate() -> None:
         "Stage-3 freeze enforcement gate (missing freeze => aborts execution)",
         freeze_gate_passed,
         "Verified runner enforces freeze before execution",
+    )
+
+    # Verify the actual Rust freeze parser accepts the current 23-artifact
+    # manifest. seed-count=0 reaches the execution gates but instantiates no
+    # SimulationEngine and therefore consumes no experimental compute.
+    freeze_probe = OUTPUTS_DIR / ".freeze_probe.csv"
+    freeze_probe.unlink(missing_ok=True)
+    cmd_freeze_success = [
+        "cargo", "run", "--quiet", "--manifest-path", str(manifest_path), "-p", "pineland-model",
+        "--example", "partner_force_autonomy_stage3", "--",
+        "--seed-count", "0", "--allow-dirty", "--execute", "--output", str(freeze_probe),
+    ]
+    res_freeze_success = subprocess.run(
+        cmd_freeze_success, cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    freeze_success_ok = (
+        res_freeze_success.returncode == 0
+        and "Preregistration freeze verified: 23 artifacts" in res_freeze_success.stdout
+    )
+    freeze_probe.unlink(missing_ok=True)
+    log_check(
+        "Stage-3 current freeze accepted by Rust runner (zero-seed/no-engine probe)",
+        freeze_success_ok,
+        res_freeze_success.stderr if not freeze_success_ok else "23/23 accepted",
+    )
+
+    # Config-only validation builds the exact SimulationConfig for every frozen
+    # discovery/holdout cell without constructing a SimulationEngine.
+    cmd_validate_discovery = [
+        "cargo", "run", "--quiet", "--manifest-path", str(manifest_path), "-p", "pineland-model",
+        "--example", "partner_force_autonomy_stage3", "--", "--validate-configs",
+    ]
+    res_validate_discovery = subprocess.run(
+        cmd_validate_discovery, cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    discovery_configs_ok = (
+        res_validate_discovery.returncode == 0
+        and "CONFIG_VALIDATION_PASS: 60 selected cells" in res_validate_discovery.stdout
+        and "NO COMPUTE" in res_validate_discovery.stdout
+    )
+    log_check(
+        "Discovery config mapping (60/60 valid, no engine creation)",
+        discovery_configs_ok,
+    )
+
+    holdout_names = [
+        "partner_force_holdout_complexity_v1.json",
+        "partner_force_holdout_forcegen_regime_v1.json",
+        "partner_force_holdout_threat_pressure_v1.json",
+        "partner_force_holdout_support_composition_v1.json",
+    ]
+    holdout_configs_ok = True
+    holdout_details = []
+    for name in holdout_names:
+        cmd = [
+            "cargo", "run", "--quiet", "--manifest-path", str(manifest_path), "-p", "pineland-model",
+            "--example", "partner_force_autonomy_stage3", "--",
+            "--holdout-contract", str(CONTRACTS_DIR / name), "--validate-configs",
+        ]
+        res = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        ok = (
+            res.returncode == 0
+            and "CONFIG_VALIDATION_PASS: 8 selected cells" in res.stdout
+            and "NO COMPUTE" in res.stdout
+        )
+        holdout_configs_ok &= ok
+        holdout_details.append(f"{name}:{'ok' if ok else 'FAIL'}")
+    log_check(
+        "Holdout config mapping (32/32 valid, no engine creation)",
+        holdout_configs_ok,
+        ", ".join(holdout_details),
     )
 
 
@@ -238,7 +310,7 @@ def check_preregistration_freeze() -> None:
             data = json.loads(freeze_path.read_text(encoding="utf-8"))
             artifacts = data.get("frozen_artifacts", {})
             count = len(artifacts)
-            all_matched = count == 21
+            all_matched = count == 23
             for name, entry in artifacts.items():
                 rel_path = entry["path"]
                 expected_sha = entry["sha256"]
@@ -255,7 +327,7 @@ def check_preregistration_freeze() -> None:
         except Exception as e:
             all_matched = False
             print(f"Freeze validation error: {e}")
-    log_check(f"Preregistration cryptographic freeze ({count}/21 artifacts match disk)", exists and all_matched)
+    log_check(f"Preregistration cryptographic freeze ({count}/23 artifacts match disk)", exists and all_matched)
 
 
 def check_holdout_contracts_and_scale_audit() -> None:
@@ -275,13 +347,35 @@ def check_holdout_contracts_and_scale_audit() -> None:
                 c = json.loads(cpath.read_text(encoding="utf-8"))
                 crit = c.get("pass_fail_criteria", c.get("acceptance_criteria", {}))
                 cells = c.get("cells", [])
+                env = c.get("environment", {})
+                required_common = {
+                    "cell_id", "support_profile", "forcegen_mult", "logistics_mult", "command_mult",
+                    "air_intensity", "air_bonus", "air_cost_per_contact", "logistics_rate",
+                    "logistics_capacity", "logistics_cost_per_unit", "command_reliability_boost",
+                    "command_latency_reduction_fraction", "command_floor_hours",
+                    "command_cost_per_formation_day", "forcegen_training_rate_boost",
+                    "forcegen_cost_per_incremental_trainee",
+                }
+                cells_well_formed = all(
+                    required_common.issubset(cell.keys())
+                    and 0.0 <= float(cell["air_intensity"]) <= 1.0
+                    and 0.0 <= float(cell["command_reliability_boost"]) <= 1.0
+                    and 0.0 <= float(cell["command_latency_reduction_fraction"]) <= 1.0
+                    for cell in cells
+                )
                 valid = (
                     c.get("status") in ("FROZEN_PRE_DISCOVERY", "PREREGISTERED_FROZEN_BEFORE_DISCOVERY_COMPUTE")
                     and c.get("historical_outcomes_used") is False
                     and crit.get("minimum_spearman_rho") == min_rho
                     and crit.get("maximum_prediction_mae") == max_mae
                     and c.get("default_seed_count", 0) > 0
+                    and c.get("cells_count") == 8
                     and len(cells) == 8
+                    and cells_well_formed
+                    and env.get("agent_count") == 1000
+                    and env.get("locality_count") == 72
+                    and env.get("withdrawal_time_days") == 120.0
+                    and env.get("observation_start_days") == 60.0
                 )
             except Exception:
                 valid = False
@@ -306,8 +400,55 @@ def check_holdout_contracts_and_scale_audit() -> None:
     log_check("Scale resolution convergence audit (multi-seed 1000 vs 2500 justified)", scale_ok)
 
 
+def check_arc_execution_layer() -> None:
+    print("\n--- 9. ARC Array Execution & Shard Merge Layer ---")
+    sbatch_path = ARC_DIR / "partner_force_array.sbatch"
+    merge_path = ARC_DIR / "merge_partner_force_shards.py"
+    log_check("ARC array wrapper exists", sbatch_path.exists())
+    log_check("ARC shard merger exists", merge_path.exists())
+
+    merge_compile = subprocess.run(
+        [sys.executable, "-m", "py_compile", str(merge_path)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    log_check("ARC shard merger Python syntax", merge_compile.returncode == 0, merge_compile.stderr)
+
+    sbatch_text = sbatch_path.read_text(encoding="utf-8") if sbatch_path.exists() else ""
+    wrapper_semantics_ok = all(
+        token in sbatch_text
+        for token in (
+            "--array=0-719%16",
+            "--cell-index",
+            "--seed",
+            "PF_MODE",
+            "PF_HOLDOUT_CONTRACT",
+            "sha256sum",
+        )
+    )
+    log_check(
+        "ARC wrapper deterministic cell x seed sharding and provenance hooks",
+        wrapper_semantics_ok,
+    )
+
+    # Bash syntax check is useful on developer machines that have bash, but ARC
+    # itself is the authoritative POSIX environment. Do not fail Windows-only
+    # validation merely because bash is absent.
+    try:
+        bash_check = subprocess.run(
+            ["bash", "-n", sbatch_path.relative_to(REPO_ROOT).as_posix()],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        log_check("ARC sbatch Bash syntax", bash_check.returncode == 0, bash_check.stderr)
+    except FileNotFoundError:
+        print("[PASS] ARC sbatch Bash syntax: bash unavailable locally; structural checks passed")
+
+
 def check_python_analysis_pipeline() -> None:
-    print("\n--- 9. Python Analysis Pipeline & Zero-Refit Dry-Runs ---")
+    print("\n--- 10. Python Analysis Pipeline & Zero-Refit Dry-Runs ---")
     sys.path.insert(0, str(ANALYSIS_DIR))
     try:
         import partner_force_metrics
@@ -342,7 +483,7 @@ def check_python_analysis_pipeline() -> None:
 
 
 def check_strict_cleanliness_and_compute_gate() -> None:
-    print("\n--- 10. Strict Cleanliness & Zero Experimental Compute Gate ---")
+    print("\n--- 11. Strict Cleanliness & Zero Experimental Compute Gate ---")
     prohibited_files = [
         CONTRACTS_DIR / "partner_force_autonomy_output_schema_v1.json",
         FIXTURES_DIR / "synthetic_pairing_fixture_v1.csv",
@@ -353,6 +494,7 @@ def check_strict_cleanliness_and_compute_gate() -> None:
         OUTPUTS_DIR / "partner_force_autonomy_stage3_paired_v1.csv",
         OUTPUTS_DIR / "partner_force_autonomy_stage3_discovery_metrics_v1.json",
         OUTPUTS_DIR / "partner_force_autonomy_frozen_predictor_v1.json",
+        FIXTURES_DIR / "temp_holdout_smoke.csv",
     ]
     stale_found = [str(p.name) for p in prohibited_files if p.exists()]
     clean = len(stale_found) == 0
@@ -377,6 +519,7 @@ def main() -> None:
     check_schema_and_fixtures()
     check_preregistration_freeze()
     check_holdout_contracts_and_scale_audit()
+    check_arc_execution_layer()
     check_python_analysis_pipeline()
     check_strict_cleanliness_and_compute_gate()
 

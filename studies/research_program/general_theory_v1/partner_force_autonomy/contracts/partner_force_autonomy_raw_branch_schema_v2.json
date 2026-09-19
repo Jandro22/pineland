@@ -30,13 +30,19 @@
   "properties": {
     "schema_version": {"const": "pineland.partner_force_autonomy_raw_branch.v2"},
     "experiment_id": {"type": "string", "minLength": 1},
-    "design_version": {"const": "pineland.partner_force_autonomy_stage3_discovery_design.v1"},
+    "design_version": {
+      "type": "string",
+      "enum": [
+        "pineland.partner_force_autonomy_stage3_discovery_design.v1",
+        "pineland.partner_force_holdout_contract.v1"
+      ]
+    },
     "git_commit": {"type": "string", "minLength": 1},
     "world_id": {"type": "string", "minLength": 1},
     "pair_id": {"type": "string", "minLength": 1},
     "run_id": {"type": "string", "minLength": 1},
     "cell_id": {"type": "string", "minLength": 1},
-    "support_profile": {"type": "string", "enum": ["none", "balanced", "air_heavy", "logistics_heavy", "command_heavy", "forcegen_heavy"]},
+    "support_profile": {"type": "string", "minLength": 1},
     "seed": {"type": "integer", "minimum": 0},
     "withdrawal_time_days": {"type": "number", "minimum": 0},
     "horizon_days": {"type": "number", "enum": [7, 30, 90, 180]},
