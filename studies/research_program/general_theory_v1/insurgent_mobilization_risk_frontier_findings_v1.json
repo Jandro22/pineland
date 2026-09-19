@@ -1,0 +1,97 @@
+{
+  "schema_version": "pineland.insurgent_mobilization_risk_frontier_findings.v1",
+  "status": "fresh_24_seed_frontier_supports_mobilization_leverage_ruin_with_stochastic_floor",
+  "historical_outcomes_used": false,
+  "parent_contract": "insurgent_mobilization_risk_frontier_contract_v1.json",
+  "instrumentation_repair": "insurgent_mobilization_risk_frontier_instrumentation_repair_v1.json",
+  "integrity": {
+    "rows": 288,
+    "seeds": 24,
+    "rates": 12,
+    "rows_per_rate": 24,
+    "original_raw_sha256": "87446668ec9c89d9953cba99541e63fbb422e229dfcd7435899f3aa861578b8b",
+    "repaired_merged_sha256": "3e9e4d5a0f0bec16b69c4104bfb6889abb850fb8f6fe6fc5aea8daf73410bbcf",
+    "repaired_collapsed_rows": 78,
+    "original_survivor_rows_preserved": 210
+  },
+  "aggregate": {
+    "collapses": 78,
+    "capital_collapses": 69,
+    "stochastic_collapses": 9,
+    "capital_share_among_all_collapses": 0.8846153846153846
+  },
+  "cause_resolved_frontier": [
+    {"recruitment_multiplier": 0.0, "collapse_count": 1, "capital": 0, "stochastic": 1, "median_runway_ratio": 0.0},
+    {"recruitment_multiplier": 0.03125, "collapse_count": 1, "capital": 0, "stochastic": 1, "median_runway_ratio": 0.15756992691283475},
+    {"recruitment_multiplier": 0.05, "collapse_count": 2, "capital": 0, "stochastic": 2, "median_runway_ratio": 0.315085564668131},
+    {"recruitment_multiplier": 0.0625, "collapse_count": 2, "capital": 0, "stochastic": 2, "median_runway_ratio": 0.3781779703134531},
+    {"recruitment_multiplier": 0.075, "collapse_count": 1, "capital": 0, "stochastic": 1, "median_runway_ratio": 0.42539670804903845},
+    {"recruitment_multiplier": 0.0875, "collapse_count": 1, "capital": 0, "stochastic": 1, "median_runway_ratio": 0.5042245447073072},
+    {"recruitment_multiplier": 0.1, "collapse_count": 2, "capital": 1, "stochastic": 1, "median_runway_ratio": 0.6300783376512558},
+    {"recruitment_multiplier": 0.1125, "collapse_count": 4, "capital": 4, "stochastic": 0, "median_runway_ratio": 0.7088662631515692},
+    {"recruitment_multiplier": 0.125, "collapse_count": 6, "capital": 6, "stochastic": 0, "median_runway_ratio": 0.8193411137874923},
+    {"recruitment_multiplier": 0.15, "collapse_count": 12, "capital": 12, "stochastic": 0, "median_runway_ratio": 0.9999999999999997},
+    {"recruitment_multiplier": 0.2, "collapse_count": 22, "capital": 22, "stochastic": 0, "median_runway_ratio": 1.0},
+    {"recruitment_multiplier": 0.25, "collapse_count": 24, "capital": 24, "stochastic": 0, "median_runway_ratio": 1.0}
+  ],
+  "background_stochastic_floor": {
+    "stochastic_collapse_seed_count": 2,
+    "seeds": [2026136013, 2026136023],
+    "total_stochastic_collapses": 9,
+    "seed_2026136013": {
+      "rates": [0.0, 0.03125, 0.05, 0.0625],
+      "collapse_time_days": 161.0
+    },
+    "seed_2026136023": {
+      "rates": [0.05, 0.0625, 0.075, 0.0875, 0.1],
+      "collapse_time_days": 175.0
+    },
+    "interpretation": "Common-random-number recurrence across adjacent low-rate cells identifies a background stochastic ecology branch distinct from the rate-linked capital-exhaustion branch."
+  },
+  "growth_ruin_pattern": {
+    "median_rooted_membership_unconditional": {
+      "0.0": 95333.33660666054,
+      "0.0875": 118066.6330890585,
+      "0.1": 121733.3138865229,
+      "0.125": 123199.98799334135,
+      "0.15": 61599.99630075014,
+      "0.2": 0.0,
+      "0.25": 0.0
+    },
+    "median_operational_force_unconditional": {
+      "0.0": 7443.6,
+      "0.0875": 9397.7,
+      "0.1": 9602.6,
+      "0.125": 9652.5,
+      "0.15": 4891.8,
+      "0.2": 0.0,
+      "0.25": 0.0
+    },
+    "median_cumulative_recruitment": {
+      "0.0": 0.0,
+      "0.0875": 23466.6,
+      "0.1": 29333.3,
+      "0.125": 38133.3,
+      "0.15": 45466.6,
+      "0.2": 46933.3,
+      "0.25": 46933.3
+    },
+    "interpretation": "Mobilization initially increases organizational stock and fielded force while consuming runway. Once the capital branch becomes common, unconditional organizational stock falls sharply despite larger cumulative recruitment."
+  },
+  "contract_consistent_verdict": {
+    "interior_survival_optimum_supported": false,
+    "growth_risk_frontier_supported": true,
+    "nonlinear_collapse_risk_increase_supported": true,
+    "literal_zero_collapse_transition_band_available": false,
+    "reason_no_zero_collapse_band": "The model has a background stochastic-collapse floor even at zero recruitment; the frozen analyzer therefore correctly returns no highest zero-collapse rate.",
+    "cause_specific_capital_branch_observation": "Capital collapse first appears at recruitment multiplier 0.10 (1/24), rises to 4/24 at 0.1125, 6/24 at 0.125, 12/24 at 0.15, 22/24 at 0.20, and 24/24 at 0.25. This is descriptive cause resolution, not a retroactively defined universal threshold."
+  },
+  "cross_experiment_synthesis": [
+    "The result independently replicates the previously observed high-rate metabolic ceiling on a larger 24-seed, 12-rate fresh block.",
+    "SL4 supplies the exact local capital-conversion accounting mechanism beneath the frontier.",
+    "The independent 960-trajectory recruitment x fielding x capital assay showed the same resource-strain architecture with matched monotonicity and strong predictive compression.",
+    "The 12-seed pressure-regeneration phase map and 24-seed compensatory-recruitment confirmation both independently reproduced near-perfect recruitment-versus-capital anticorrelation.",
+    "The evidence supports a regeneration-runway tradeoff and mobilization leverage/ruin frontier; it does not support a unique interior optimum or a universal calibrated threshold."
+  ],
+  "guard": "Synthetic Pineland mechanism result only. Recruitment-rate and capital scales are not historically calibrated and do not prescribe real insurgent behavior."
+}
