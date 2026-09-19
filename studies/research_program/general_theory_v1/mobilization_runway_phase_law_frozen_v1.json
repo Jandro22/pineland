@@ -1,0 +1,66 @@
+{
+  "schema_version": "pineland.mobilization_runway_phase_law_frozen.v1",
+  "freeze_timestamp": "2026-09-19T13:25:00-04:00",
+  "status": "FROZEN_PREDICTOR_REGISTERED",
+  "primary_coordinate": {
+    "symbol": "Omega_K",
+    "name": "Dimensionless Finite-Horizon Capital Runway",
+    "definition": "tau_K / 240.0",
+    "net_burn_rate_formula": "b_hat = (capital_outflow_60_120 - capital_inflow_60_120) / 60.0",
+    "runway_time_formula": "if b_hat > 0.0 { K_120 / b_hat } else { +inf }",
+    "units": "dimensionless ratio",
+    "interpretation": "Ratio of remaining capital exhaustion time to remaining horizon (240 days)."
+  },
+  "feature_transform": {
+    "name": "log_omega",
+    "formula": "if is_inf(Omega_K) or Omega_K >= 20000.0 { 10.0 } else { min(max(ln(Omega_K), -9.21), 10.0) }",
+    "lower_clamp": -9.21,
+    "upper_clamp": 10.0
+  },
+  "frozen_logistic_model": {
+    "probability_formula": "P(capital_exhaustion_by_360) = 1.0 / (1.0 + exp(-(intercept + beta * log_omega)))",
+    "intercept": 0.6759490167446205,
+    "beta": -2.302050520388151,
+    "direction": "negative (higher runway strictly reduces collapse probability)",
+    "implied_50pct_threshold_omega_k": 1.341257912239463
+  },
+  "frozen_baseline_model": {
+    "name": "Crude parameter proxy Pi_M",
+    "symbol": "Pi_M",
+    "definition": "(recruitment_multiplier * fighter_conversion_fraction_multiplier) / initial_capital_multiplier",
+    "feature_transform": "log_pi_m = ln(max(Pi_M, 1e-6))",
+    "probability_formula": "P(capital_exhaustion_by_360) = 1.0 / (1.0 + exp(-(intercept + beta * log_pi_m)))",
+    "intercept": 19.060792899005303,
+    "beta": 9.316598412741708,
+    "direction": "positive (higher parameter strain increases collapse probability)"
+  },
+  "discovery_audit": {
+    "source_dataset": "outputs/coin-mechanisms/mobilization_runway_discovery_v1.csv",
+    "source_sha256": "559d7a4b8b239027a09dc3e51f65c04893dfe293a9ce9555d80837ff894aa162",
+    "seed_count": 24,
+    "trajectories": 192,
+    "survived_to_120": 192,
+    "excluded_pre_120": 0,
+    "base_rate": 0.4479166666666667,
+    "cross_validation_metrics": {
+      "roc_auc": 0.9083479596314172,
+      "roc_auc_ci_95": [0.856396757620716, 0.9565921126426369],
+      "pr_auc": 0.8960413382354322,
+      "brier_score": 0.12013357628532899,
+      "base_rate_brier": 0.24728732638888876,
+      "calibration_slope": 0.9244331779949491,
+      "calibration_intercept": -0.002384846714515547
+    }
+  },
+  "transport_test_protocol": {
+    "rule": "Apply frozen logistic formula directly to prospective (t=120) measurements of unseen mechanism families H1-H5 with ZERO refitting, zero threshold changes, and zero feature engineering.",
+    "preregistered_success_gates": {
+      "gate_1_pooled_held_out_roc_auc_min": 0.85,
+      "gate_2_pooled_brier_better_than_base_rate": true,
+      "gate_3_calibration_slope_range": [0.70, 1.30],
+      "gate_4_monotone_direction_holds": true,
+      "gate_5_min_families_auc_80": 4,
+      "gate_6_beats_crude_baseline_pi_m": true
+    }
+  }
+}
