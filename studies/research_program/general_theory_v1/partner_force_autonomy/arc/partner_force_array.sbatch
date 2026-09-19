@@ -59,9 +59,11 @@ SEED=$((SEED_BASE + SEED_INDEX))
 
 mkdir -p "$OUTPUT_DIR"
 SHARD="$OUTPUT_DIR/task_${TASK_ID}_cell_${CELL_INDEX}_seed_${SEED}.csv"
+TRAJECTORY_SHARD="$OUTPUT_DIR/task_${TASK_ID}_cell_${CELL_INDEX}_seed_${SEED}.trajectory.csv"
 META="$OUTPUT_DIR/task_${TASK_ID}_cell_${CELL_INDEX}_seed_${SEED}.json"
 TMP="${SHARD}.tmp-${SLURM_JOB_ID:-$$}"
-trap 'rm -f "$TMP"' EXIT
+TRAJECTORY_TMP="${TRAJECTORY_SHARD}.tmp-${SLURM_JOB_ID:-$$}"
+trap 'rm -f "$TMP" "$TRAJECTORY_TMP"' EXIT
 
 START_EPOCH=$(date +%s)
 srun "$BINARY" \
@@ -70,20 +72,23 @@ srun "$BINARY" \
   --cell-index "$CELL_INDEX" \
   --seed "$SEED" \
   --execute \
-  --output "$TMP"
+  --output "$TMP" \
+  --trajectory-output "$TRAJECTORY_TMP"
 END_EPOCH=$(date +%s)
 
 mv "$TMP" "$SHARD"
+mv "$TRAJECTORY_TMP" "$TRAJECTORY_SHARD"
 trap - EXIT
 
 SHA256=$(sha256sum "$SHARD" | awk '{print $1}')
+TRAJECTORY_SHA256=$(sha256sum "$TRAJECTORY_SHARD" | awk '{print $1}')
 GIT_COMMIT=$(git rev-parse HEAD)
 HOST=$(hostname)
-python - "$META" "$MODE" "$TASK_ID" "$CELL_INDEX" "$SEED" "$SHARD" "$SHA256" "$GIT_COMMIT" "$HOST" "$START_EPOCH" "$END_EPOCH" <<'PY'
+python - "$META" "$MODE" "$TASK_ID" "$CELL_INDEX" "$SEED" "$SHARD" "$SHA256" "$TRAJECTORY_SHARD" "$TRAJECTORY_SHA256" "$GIT_COMMIT" "$HOST" "$START_EPOCH" "$END_EPOCH" <<'PY'
 import json, sys
 (
     meta, mode, task_id, cell_index, seed, shard, sha256,
-    git_commit, host, start_epoch, end_epoch,
+    trajectory_shard, trajectory_sha256, git_commit, host, start_epoch, end_epoch,
 ) = sys.argv[1:]
 payload = {
     'schema_version': 'pineland.partner_force_arc_task.v1',
@@ -98,10 +103,12 @@ payload = {
     'elapsed_seconds': int(end_epoch) - int(start_epoch),
     'output_csv': shard,
     'output_sha256': sha256,
+    'trajectory_csv': trajectory_shard,
+    'trajectory_sha256': trajectory_sha256,
 }
 with open(meta, 'w', encoding='utf-8') as f:
     json.dump(payload, f, indent=2, sort_keys=True)
     f.write('\n')
 PY
 
-echo "Completed task=$TASK_ID cell=$CELL_INDEX seed=$SEED shard=$SHARD"
+echo "Completed task=$TASK_ID cell=$CELL_INDEX seed=$SEED shard=$SHARD trajectory=$TRAJECTORY_SHARD"

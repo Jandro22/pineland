@@ -2,7 +2,7 @@
   "schema_version": "pineland.partner_force_autonomy_preregistration_freeze.v1",
   "status": "FROZEN_BEFORE_DISCOVERY_COMPUTE",
   "historical_outcomes_used": false,
-  "description": "Cryptographic freeze manifest recording SHA-256 hashes of all preregistered design contracts, schemas, holdout contracts, scale audit, analysis/runner code, and ARC execution/merge code.",
+  "description": "Cryptographic freeze manifest recording SHA-256 hashes of all preregistered design contracts, schemas, holdout contracts, scale/non-interference audits, confirmatory and diagnostic analysis code, runner code, and ARC execution/merge code.",
   "frozen_artifacts": {
     "raw_branch_schema": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_raw_branch_schema_v2.json",
@@ -86,16 +86,32 @@
     },
     "stage3_runner_code": {
       "path": "rust/pineland-model/examples/partner_force_autonomy_stage3.rs",
-      "sha256": "4e8ecaece8c2d5943c0aea1e245dd61ad83a6772cbceebbfb9f390a7f59b3cb8"
+      "sha256": "9d8ca7e4569c704d792110c76dba78e9dac6ee1693465b16ded1c869f601b125"
     },
     "arc_array_wrapper": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
-      "sha256": "3727180bd023482e94f216925a3f4279ff4503179916ee0212bdf0592dc64572"
+      "sha256": "12a86d367d9a8da9cc3d70c58d45ea2d4200caf5a528e0936b1252115acb7bc2"
     },
     "arc_shard_merger": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py",
-      "sha256": "9c796f3d197fd0b9cd782facf44fc8f97192324704f7aa8ff2cfdc097a09d0fd"
+      "sha256": "925239e7354247691ed13493350a948a5ed78849ae31ff754ca9f4127984952a"
+    },
+    "trajectory_contract": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_contract_v1.json",
+      "sha256": "89858b7eb68e8d52409cc6f61e5ceb06d5972e4ea779b7938e08583e4619c1c5"
+    },
+    "trajectory_schema": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_schema_v1.json",
+      "sha256": "08bd5f01c99db5a024ad2e21e53cec9b8a84f2b82813a52773bb0db949e8287f"
+    },
+    "telemetry_noninterference_audit": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_telemetry_noninterference_audit_v1.json",
+      "sha256": "9a819f472728d488a54f2286a6322ed0fa6ac7ad90b1380049d55a349f31e132"
+    },
+    "trajectory_analysis_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/analyze_partner_force_trajectories.py",
+      "sha256": "b2dc4e828dd720b22cd7b7e8b11cf6d1590fb54786c6702e0f2134b0ceb4e3ba"
     }
   },
-  "required_artifact_count": 23
+  "required_artifact_count": 27
 }

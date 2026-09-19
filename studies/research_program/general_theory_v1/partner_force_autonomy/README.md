@@ -116,7 +116,50 @@ exits without instantiating a scientific run.
 
 ## Execution
 
-A local Stage-3 run can be launched with:
+Production Stage-3 discovery should run on **VT ARC Owl** (`normal_q`,
+`owl_normal_base`) because matched 1,000-agent Stage-3 benchmarks were faster
+than the development laptop on Owl, while TinkerCliffs was slower per task.
+Each Slurm task owns exactly one `(cell, seed)` world and writes two atomic
+products:
+
+1. the frozen 8-row confirmatory branch shard; and
+2. a 66-row diagnostic trajectory sidecar.
+
+The trajectory sidecar samples the supported pre-withdrawal world every seven
+days from day 60 through T=120, then samples both ON and OFF branches weekly
+through day 180 while also including the exact 7/30/90/180 confirmatory
+horizons. It records state, mechanism-flow, donor-support, and cryptographic
+provenance fields. The sidecar is **diagnostic/exploratory only** and cannot be
+used to redefine H1/H2/H3 or the preregistered predictor after outcomes are
+seen. The non-interference audit demonstrates that adding these observations
+left a matched supported production-scale primary output byte-identical.
+
+Build on Owl with the pinned Rust toolchain and submit the frozen 720-task
+array with bounded concurrency:
+
+    cargo build --release --locked --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3
+    sbatch --array=0-719%8 --account=will_taggart_mcll --partition=normal_q --qos=owl_normal_base --constraint=avx512 studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch
+
+After all 720 tasks succeed, merge and validate **both** products:
+
+    python studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py \
+      --input-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs/arc_stage3_shards \
+      --expected-tasks 720 \
+      --output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv \
+      --trajectory-output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_trajectory_v1.csv
+
+The expected production totals are **5,760 confirmatory branch rows** and
+**47,520 diagnostic trajectory rows**. Analysis must not begin unless the
+merger validates complete task coverage and both output classes.
+
+Confirmatory analysis remains unchanged. Diagnostic trajectory analysis is a
+separate downstream step:
+
+    python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/analyze_partner_force_trajectories.py \
+      --trajectory-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_trajectory_v1.csv \
+      --output-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs/trajectory_diagnostics
+
+A local Stage-3 run remains available as a reproducibility fallback:
 
     cargo run --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --execute
 

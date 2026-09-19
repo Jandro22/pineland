@@ -3,6 +3,7 @@ use pineland_core::json::{parse as parse_json, JsonValue};
 use pineland_model::{
     CapabilityAssayBaseline, CapabilityAssayResult, SimulationEngine, INSURGENT, MILITARY,
 };
+use std::collections::BTreeSet;
 use std::env;
 use std::fs::{self, File};
 use std::io::{BufWriter, Write};
@@ -11,6 +12,8 @@ use std::process::Command;
 
 const SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_raw_branch.v2";
 const DISCOVERY_DESIGN_VERSION: &str = "pineland.partner_force_autonomy_stage3_discovery_design.v1";
+const TRAJECTORY_SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_trajectory.v1";
+const TELEMETRY_STEP_DAYS: f64 = 7.0;
 
 #[derive(Clone, Debug, Default)]
 struct HoldoutOverrides {
@@ -66,7 +69,7 @@ struct Cell {
     overrides: HoldoutOverrides,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 struct FlowSnapshot {
     indigenous_recruits: f64,
     indigenous_graduates: f64,
@@ -87,7 +90,13 @@ struct FlowSnapshot {
     donor_cost_command: f64,
     donor_cost_forcegen: f64,
     donor_cost: f64,
+    contacts: u64,
     organized_actions: u64,
+    security_deployments: f64,
+    external_air_assisted_contacts: u64,
+    external_air_firepower_bonus: f64,
+    command_reliability_boost: f64,
+    logistics_system_lost: f64,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -107,6 +116,8 @@ struct StateAtWithdrawal {
     supply_capacity: f64,
     command_reliability: f64,
     command_latency_hours: f64,
+    operational_formations: u64,
+    covered_localities: u64,
 }
 
 fn parse_f64(s: &str, name: &str) -> Result<f64, String> {
@@ -543,9 +554,9 @@ fn verify_preregistration_freeze(freeze_path: &Path) -> Result<(), String> {
         )
     })?;
     let entries = parse_freeze_manifest(&content)?;
-    if entries.len() < 23 {
+    if entries.len() < 27 {
         return Err(format!(
-            "Expected at least 23 frozen artifacts in manifest, found {}",
+            "Expected at least 27 frozen artifacts in manifest, found {}",
             entries.len()
         ));
     }
@@ -805,7 +816,18 @@ fn flow_snapshot(engine: &SimulationEngine) -> FlowSnapshot {
         donor_cost_command: l.command.cumulative_donor_cost,
         donor_cost_forcegen: l.force_generation.cumulative_donor_cost,
         donor_cost: l.cumulative_donor_cost(),
+        contacts: engine.particle.counters.contacts,
         organized_actions: engine.particle.counters.organized_actions,
+        security_deployments: engine
+            .particle
+            .locality
+            .government_cumulative_security_deployments
+            .iter()
+            .sum(),
+        external_air_assisted_contacts: l.air.assisted_contacts,
+        external_air_firepower_bonus: l.air.cumulative_firepower_bonus,
+        command_reliability_boost: l.command.cumulative_reliability_boost,
+        logistics_system_lost: engine.particle.logistics.cumulative_lost,
     }
 }
 
@@ -847,7 +869,18 @@ fn diff(a: FlowSnapshot, b: FlowSnapshot) -> FlowSnapshot {
         donor_cost_command: (b.donor_cost_command - a.donor_cost_command).max(0.0),
         donor_cost_forcegen: (b.donor_cost_forcegen - a.donor_cost_forcegen).max(0.0),
         donor_cost: (b.donor_cost - a.donor_cost).max(0.0),
+        contacts: b.contacts.saturating_sub(a.contacts),
         organized_actions: b.organized_actions.saturating_sub(a.organized_actions),
+        security_deployments: (b.security_deployments - a.security_deployments).max(0.0),
+        external_air_assisted_contacts: b
+            .external_air_assisted_contacts
+            .saturating_sub(a.external_air_assisted_contacts),
+        external_air_firepower_bonus: (b.external_air_firepower_bonus
+            - a.external_air_firepower_bonus)
+            .max(0.0),
+        command_reliability_boost: (b.command_reliability_boost - a.command_reliability_boost)
+            .max(0.0),
+        logistics_system_lost: (b.logistics_system_lost - a.logistics_system_lost).max(0.0),
     }
 }
 
@@ -892,6 +925,18 @@ fn state_at_withdrawal(
         .iter()
         .map(|i| p.formations.personnel[*i].max(0.0))
         .sum();
+    let mut operational_formations = 0u64;
+    let mut covered_localities = BTreeSet::new();
+    for formation in &military {
+        if p.formations.active[*formation] != 0
+            && p.formations.operational_status[*formation] == 1
+            && p.formations.outside_pineland[*formation] == 0
+            && p.formations.personnel[*formation] > 0.0
+        {
+            operational_formations += 1;
+            covered_localities.insert(p.formations.locality[*formation]);
+        }
+    }
     let weighted = |values: &[f64]| -> f64 {
         if military_personnel <= 1.0e-12 {
             0.0
@@ -947,6 +992,8 @@ fn state_at_withdrawal(
         } else {
             0.0
         },
+        operational_formations,
+        covered_localities: covered_localities.len() as u64,
     }
 }
 
@@ -1052,8 +1099,135 @@ fn write_row(
     .map_err(|e| e.to_string())
 }
 
+fn trajectory_csv_header() -> &'static str {
+    "schema_version,experiment_id,design_version,git_commit,world_id,cell_id,support_profile,seed,withdrawal_time_days,time_days,days_from_withdrawal,phase,capability_reference,state_hash,decision_hash,government_control,military_personnel_retention,operational_formation_survival,geographic_coverage_retention,composite_capability,military_personnel,operational_formations,covered_localities,trained_reserve,recruit_pipeline,readiness,experience,supply_stock,supply_capacity,command_reliability,command_latency_hours,insurgent_personnel,insurgent_active_formations,insurgent_territorial_control,contested_localities,interval_indigenous_recruits,interval_indigenous_graduates,interval_security_deployments,interval_military_losses,interval_indigenous_logistics_produced,interval_indigenous_logistics_delivered,interval_indigenous_logistics_consumed,interval_logistics_system_lost,interval_contacts,interval_organized_actions,interval_external_air_assisted_contacts,interval_external_air_intensity,interval_external_air_firepower_bonus,interval_external_logistics_offered,interval_external_logistics_delivered,interval_external_logistics_rejected,interval_external_logistics_lost,interval_external_command_events,interval_command_reliability_boost,interval_command_latency_hours_saved,interval_external_forcegen_graduates,interval_donor_cost_air,interval_donor_cost_logistics,interval_donor_cost_command,interval_donor_cost_forcegen,interval_donor_cost"
+}
+
+#[allow(clippy::too_many_arguments)]
+fn write_trajectory_row(
+    out: &mut BufWriter<File>,
+    experiment_id: &str,
+    design_version: &str,
+    commit: &str,
+    cell: &Cell,
+    seed: u64,
+    withdrawal: f64,
+    time_days: f64,
+    phase: &str,
+    capability_reference: &str,
+    engine: &SimulationEngine,
+    assay: &CapabilityAssayResult,
+    state: StateAtWithdrawal,
+    interval: FlowSnapshot,
+) -> Result<(), String> {
+    let world_id = format!("{}_s{}", cell.cell_id, seed);
+    writeln!(
+        out,
+        "{},{},{},{},{},{},{},{},{:.0},{:.9},{:.9},{},{},{},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{:.9},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9}",
+        TRAJECTORY_SCHEMA_VERSION,
+        experiment_id,
+        design_version,
+        commit,
+        world_id,
+        cell.cell_id,
+        cell.support_profile,
+        seed,
+        withdrawal,
+        time_days,
+        time_days - withdrawal,
+        phase,
+        capability_reference,
+        engine.state_hash(),
+        engine.decision_hash(),
+        assay.government_control,
+        assay.military_personnel_retention,
+        assay.operational_formation_survival,
+        assay.geographic_coverage_retention,
+        assay.composite_capability,
+        state.military_personnel,
+        state.operational_formations,
+        state.covered_localities,
+        state.trained_reserve,
+        state.recruit_pipeline,
+        state.readiness,
+        state.experience,
+        state.supply_stock,
+        state.supply_capacity,
+        state.command_reliability,
+        state.command_latency_hours,
+        state.pre_insurgent_personnel,
+        state.pre_insurgent_active_formations,
+        state.pre_insurgent_territorial_control,
+        state.pre_contested_localities,
+        interval.indigenous_recruits,
+        interval.indigenous_graduates,
+        interval.security_deployments,
+        interval.military_losses,
+        interval.indigenous_logistics_produced,
+        interval.indigenous_logistics_delivered,
+        interval.indigenous_logistics_consumed,
+        interval.logistics_system_lost,
+        interval.contacts,
+        interval.organized_actions,
+        interval.external_air_assisted_contacts,
+        interval.external_air_intensity,
+        interval.external_air_firepower_bonus,
+        interval.external_logistics_offered,
+        interval.external_logistics_delivered,
+        interval.external_logistics_rejected,
+        interval.external_logistics_lost,
+        interval.external_command_events,
+        interval.command_reliability_boost,
+        interval.command_latency_hours_saved,
+        interval.external_forcegen_graduates,
+        interval.donor_cost_air,
+        interval.donor_cost_logistics,
+        interval.donor_cost_command,
+        interval.donor_cost_forcegen,
+        interval.donor_cost,
+    )
+    .map_err(|e| e.to_string())
+}
+
+fn sorted_unique_times(mut values: Vec<f64>) -> Vec<f64> {
+    values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    values.dedup_by(|a, b| (*a - *b).abs() < 1.0e-9);
+    values
+}
+
+fn pre_telemetry_times(start: f64, withdrawal: f64) -> Vec<f64> {
+    let mut values = vec![start, withdrawal];
+    let mut t = start + TELEMETRY_STEP_DAYS;
+    while t < withdrawal - 1.0e-9 {
+        values.push(t);
+        t += TELEMETRY_STEP_DAYS;
+    }
+    sorted_unique_times(values)
+}
+
+fn post_telemetry_offsets(max_horizon: f64, horizons: &[f64]) -> Vec<f64> {
+    let mut values = horizons.to_vec();
+    let mut t = TELEMETRY_STEP_DAYS;
+    while t < max_horizon - 1.0e-9 {
+        values.push(t);
+        t += TELEMETRY_STEP_DAYS;
+    }
+    values.push(max_horizon);
+    sorted_unique_times(values)
+}
+
+fn default_trajectory_output(output: &Path) -> PathBuf {
+    let parent = output.parent().unwrap_or_else(|| Path::new("."));
+    let name = output
+        .file_name()
+        .and_then(|x| x.to_str())
+        .unwrap_or("partner_force_autonomy_raw.csv");
+    let base = name.strip_suffix(".csv").unwrap_or(name);
+    parent.join(format!("{base}.trajectory.csv"))
+}
+
 fn usage() {
-    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--design PATH | --holdout-contract PATH] [--freeze PATH] [--output PATH] [--seed-count N] [--seed-base N | --seed N] [--cell-id ID | --cell-index N] [--max-cells N] [--agent-count N] [--locality-count N] [--validate-configs] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
+    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--design PATH | --holdout-contract PATH] [--freeze PATH] [--output PATH] [--trajectory-output PATH] [--seed-count N] [--seed-base N | --seed N] [--cell-id ID | --cell-index N] [--max-cells N] [--agent-count N] [--locality-count N] [--validate-configs] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
     eprintln!("Without --execute the runner performs NO simulation and only prints the frozen design summary.");
     eprintln!(
         "--cell-index is zero-based and, with --seed, is intended for ARC/Slurm array sharding."
@@ -1071,6 +1245,7 @@ fn main() -> Result<(), String> {
     let mut holdout_contract: Option<PathBuf> = None;
     let mut freeze = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v1.json");
     let mut output: Option<PathBuf> = None;
+    let mut trajectory_output: Option<PathBuf> = None;
     let mut seed_count_override: Option<usize> = None;
     let mut seed_base_override: Option<u64> = None;
     let mut single_seed: Option<u64> = None;
@@ -1088,9 +1263,19 @@ fn main() -> Result<(), String> {
     let mut i = 0usize;
     while i < args.len() {
         match args[i].as_str() {
-            "--design" | "--holdout-contract" | "--freeze" | "--output" | "--seed-count"
-            | "--seed-base" | "--seed" | "--cell-id" | "--cell-index" | "--max-cells"
-            | "--agent-count" | "--locality-count" => {
+            "--design"
+            | "--holdout-contract"
+            | "--freeze"
+            | "--output"
+            | "--trajectory-output"
+            | "--seed-count"
+            | "--seed-base"
+            | "--seed"
+            | "--cell-id"
+            | "--cell-index"
+            | "--max-cells"
+            | "--agent-count"
+            | "--locality-count" => {
                 if i + 1 >= args.len() {
                     return Err(format!("{} requires a value", args[i]));
                 }
@@ -1102,6 +1287,7 @@ fn main() -> Result<(), String> {
                     "--holdout-contract" => holdout_contract = Some(PathBuf::from(&args[i + 1])),
                     "--freeze" => freeze = PathBuf::from(&args[i + 1]),
                     "--output" => output = Some(PathBuf::from(&args[i + 1])),
+                    "--trajectory-output" => trajectory_output = Some(PathBuf::from(&args[i + 1])),
                     "--seed-count" => {
                         seed_count_override =
                             Some(args[i + 1].parse().map_err(|_| "invalid --seed-count")?)
@@ -1219,6 +1405,7 @@ fn main() -> Result<(), String> {
         PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/outputs")
             .join(file_name)
     });
+    let trajectory_output = trajectory_output.unwrap_or_else(|| default_trajectory_output(&output));
     println!(
         "Experiment: {}; design: {} cells x {} seeds; scale: {} agents, {} localities; T={}d; horizons={:?}",
         run_design.experiment_id,
@@ -1268,9 +1455,15 @@ fn main() -> Result<(), String> {
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
+    if let Some(parent) = trajectory_output.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
     let file = File::create(&output).map_err(|e| e.to_string())?;
     let mut out = BufWriter::new(file);
     writeln!(out, "{}", csv_header()).map_err(|e| e.to_string())?;
+    let trajectory_file = File::create(&trajectory_output).map_err(|e| e.to_string())?;
+    let mut trajectory_out = BufWriter::new(trajectory_file);
+    writeln!(trajectory_out, "{}", trajectory_csv_header()).map_err(|e| e.to_string())?;
     let commit = git_commit();
     let withdrawal = run_design.withdrawal_time_days;
     let observation_start = run_design.observation_start_days;
@@ -1293,11 +1486,54 @@ fn main() -> Result<(), String> {
                 .map_err(|e| e.to_string())?;
             let obs_baseline: CapabilityAssayBaseline = engine.capability_assay_baseline();
             let flow_start = flow_snapshot(&engine);
-            engine
-                .advance_until(withdrawal)
-                .map_err(|e| e.to_string())?;
+            let assay_start = engine.capability_assay(&obs_baseline);
+            let state_start = state_at_withdrawal(&engine, assay_start.clone());
+            write_trajectory_row(
+                &mut trajectory_out,
+                &run_design.experiment_id,
+                &run_design.design_version,
+                &commit,
+                cell,
+                seed,
+                withdrawal,
+                observation_start,
+                "PRE_SUPPORTED",
+                "DAY60_BASELINE",
+                &engine,
+                &assay_start,
+                state_start,
+                FlowSnapshot::default(),
+            )?;
+            let mut pre_flow_previous = flow_start;
+            for target in pre_telemetry_times(observation_start, withdrawal)
+                .into_iter()
+                .skip(1)
+            {
+                engine.advance_until(target).map_err(|e| e.to_string())?;
+                let assay = engine.capability_assay(&obs_baseline);
+                let state = state_at_withdrawal(&engine, assay.clone());
+                let flow_now = flow_snapshot(&engine);
+                let interval = diff(pre_flow_previous, flow_now);
+                write_trajectory_row(
+                    &mut trajectory_out,
+                    &run_design.experiment_id,
+                    &run_design.design_version,
+                    &commit,
+                    cell,
+                    seed,
+                    withdrawal,
+                    target,
+                    "PRE_SUPPORTED",
+                    "DAY60_BASELINE",
+                    &engine,
+                    &assay,
+                    state,
+                    interval,
+                )?;
+                pre_flow_previous = flow_now;
+            }
             let pre_assay = engine.capability_assay(&obs_baseline);
-            let pre_state = state_at_withdrawal(&engine, pre_assay);
+            let pre_state = state_at_withdrawal(&engine, pre_assay.clone());
             let flow_t = flow_snapshot(&engine);
             let pre_window = diff(flow_start, flow_t);
             let outcome_baseline = engine.capability_assay_baseline();
@@ -1305,20 +1541,69 @@ fn main() -> Result<(), String> {
             let mut on = engine.clone();
             let mut off = engine.clone();
             off.withdraw_external_partner_support();
-            for h in &horizons {
-                let target = withdrawal + *h;
+            let mut on_flow_previous = flow_t;
+            let mut off_flow_previous = flow_t;
+            for h in post_telemetry_offsets(max_horizon, &horizons) {
+                let target = withdrawal + h;
                 on.advance_until(target).map_err(|e| e.to_string())?;
                 off.advance_until(target).map_err(|e| e.to_string())?;
                 let assay_on = on.capability_assay(&outcome_baseline);
                 let assay_off = off.capability_assay(&outcome_baseline);
+                let state_on = state_at_withdrawal(&on, assay_on.clone());
+                let state_off = state_at_withdrawal(&off, assay_off.clone());
+                let flow_on = flow_snapshot(&on);
+                let flow_off = flow_snapshot(&off);
+                let interval_on = diff(on_flow_previous, flow_on);
+                let interval_off = diff(off_flow_previous, flow_off);
+                write_trajectory_row(
+                    &mut trajectory_out,
+                    &run_design.experiment_id,
+                    &run_design.design_version,
+                    &commit,
+                    cell,
+                    seed,
+                    withdrawal,
+                    target,
+                    "SUPPORT_ON",
+                    "WITHDRAWAL_BASELINE",
+                    &on,
+                    &assay_on,
+                    state_on,
+                    interval_on,
+                )?;
+                write_trajectory_row(
+                    &mut trajectory_out,
+                    &run_design.experiment_id,
+                    &run_design.design_version,
+                    &commit,
+                    cell,
+                    seed,
+                    withdrawal,
+                    target,
+                    "SUPPORT_OFF",
+                    "WITHDRAWAL_BASELINE",
+                    &off,
+                    &assay_off,
+                    state_off,
+                    interval_off,
+                )?;
+                on_flow_previous = flow_on;
+                off_flow_previous = flow_off;
+
+                if !horizons
+                    .iter()
+                    .any(|expected| (*expected - h).abs() < 1.0e-9)
+                {
+                    continue;
+                }
                 if cell.support_profile == "none" {
                     assert!(
                         (assay_on.composite_capability - assay_off.composite_capability).abs() < 1e-12,
                         "Negative control violation: none profile produced differing ON and OFF capability"
                     );
                 }
-                let post_on = diff(flow_t, flow_snapshot(&on));
-                let post_off = diff(flow_t, flow_snapshot(&off));
+                let post_on = diff(flow_t, flow_on);
+                let post_off = diff(flow_t, flow_off);
                 write_row(
                     &mut out,
                     &run_design.experiment_id,
@@ -1327,7 +1612,7 @@ fn main() -> Result<(), String> {
                     cell,
                     seed,
                     withdrawal,
-                    *h,
+                    h,
                     "SUPPORT_ON",
                     pre_state,
                     pre_window,
@@ -1342,7 +1627,7 @@ fn main() -> Result<(), String> {
                     cell,
                     seed,
                     withdrawal,
-                    *h,
+                    h,
                     "SUPPORT_OFF",
                     pre_state,
                     pre_window,
@@ -1359,6 +1644,11 @@ fn main() -> Result<(), String> {
         );
     }
     out.flush().map_err(|e| e.to_string())?;
+    trajectory_out.flush().map_err(|e| e.to_string())?;
     println!("Wrote raw paired branch data: {}", output.display());
+    println!(
+        "Wrote diagnostic trajectory data: {}",
+        trajectory_output.display()
+    );
     Ok(())
 }

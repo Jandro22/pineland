@@ -103,28 +103,32 @@ def check_runner_compilation_and_safety_gate() -> None:
         "Verified runner enforces freeze before execution",
     )
 
-    # Verify the actual Rust freeze parser accepts the current 23-artifact
+    # Verify the actual Rust freeze parser accepts the current frozen manifest.
     # manifest. seed-count=0 reaches the execution gates but instantiates no
     # SimulationEngine and therefore consumes no experimental compute.
     freeze_probe = OUTPUTS_DIR / ".freeze_probe.csv"
+    trajectory_probe = OUTPUTS_DIR / ".freeze_probe.trajectory.csv"
     freeze_probe.unlink(missing_ok=True)
+    trajectory_probe.unlink(missing_ok=True)
     cmd_freeze_success = [
         "cargo", "run", "--quiet", "--manifest-path", str(manifest_path), "-p", "pineland-model",
         "--example", "partner_force_autonomy_stage3", "--",
         "--seed-count", "0", "--allow-dirty", "--execute", "--output", str(freeze_probe),
+        "--trajectory-output", str(trajectory_probe),
     ]
     res_freeze_success = subprocess.run(
         cmd_freeze_success, cwd=REPO_ROOT, capture_output=True, text=True
     )
     freeze_success_ok = (
         res_freeze_success.returncode == 0
-        and "Preregistration freeze verified: 23 artifacts" in res_freeze_success.stdout
+        and "Preregistration freeze verified: 27 artifacts" in res_freeze_success.stdout
     )
     freeze_probe.unlink(missing_ok=True)
+    trajectory_probe.unlink(missing_ok=True)
     log_check(
         "Stage-3 current freeze accepted by Rust runner (zero-seed/no-engine probe)",
         freeze_success_ok,
-        res_freeze_success.stderr if not freeze_success_ok else "23/23 accepted",
+        res_freeze_success.stderr if not freeze_success_ok else "27/27 accepted",
     )
 
     # Config-only validation builds the exact SimulationConfig for every frozen
@@ -310,7 +314,7 @@ def check_preregistration_freeze() -> None:
             data = json.loads(freeze_path.read_text(encoding="utf-8"))
             artifacts = data.get("frozen_artifacts", {})
             count = len(artifacts)
-            all_matched = count == 23
+            all_matched = count == 27
             for name, entry in artifacts.items():
                 rel_path = entry["path"]
                 expected_sha = entry["sha256"]
@@ -327,7 +331,7 @@ def check_preregistration_freeze() -> None:
         except Exception as e:
             all_matched = False
             print(f"Freeze validation error: {e}")
-    log_check(f"Preregistration cryptographic freeze ({count}/23 artifacts match disk)", exists and all_matched)
+    log_check(f"Preregistration cryptographic freeze ({count}/27 artifacts match disk)", exists and all_matched)
 
 
 def check_holdout_contracts_and_scale_audit() -> None:
@@ -400,8 +404,75 @@ def check_holdout_contracts_and_scale_audit() -> None:
     log_check("Scale resolution convergence audit (multi-seed 1000 vs 2500 justified)", scale_ok)
 
 
+def check_trajectory_instrumentation() -> None:
+    print("\n--- 9. Diagnostic Trajectory Instrumentation ---")
+    schema_path = CONTRACTS_DIR / "partner_force_trajectory_schema_v1.json"
+    contract_path = CONTRACTS_DIR / "partner_force_trajectory_contract_v1.json"
+    audit_path = CONTRACTS_DIR / "partner_force_telemetry_noninterference_audit_v1.json"
+    analysis_path = ANALYSIS_DIR / "analyze_partner_force_trajectories.py"
+
+    schema_ok = False
+    if schema_path.exists():
+        try:
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+            jsonschema.Draft202012Validator.check_schema(schema)
+            schema_ok = schema.get("$id") == "pineland.partner_force_autonomy_trajectory.v1"
+        except Exception:
+            schema_ok = False
+    log_check("Trajectory schema v1 is valid Draft 2020-12", schema_ok)
+
+    contract_ok = False
+    if contract_path.exists():
+        try:
+            contract = json.loads(contract_path.read_text(encoding="utf-8"))
+            sampling = contract.get("sampling", {})
+            firewall = contract.get("confirmatory_firewall", {})
+            contract_ok = (
+                contract.get("status") == "FROZEN_BEFORE_STAGE3_DISCOVERY_COMPUTE"
+                and contract.get("scientific_role") == "DIAGNOSTIC_AND_EXPLORATORY_ONLY"
+                and sampling.get("expected_prewithdrawal_rows_per_world") == 10
+                and sampling.get("expected_postwithdrawal_rows_per_branch") == 28
+                and sampling.get("expected_rows_per_world") == 66
+                and firewall.get("primary_stage3_outcomes_unchanged") is True
+                and firewall.get("primary_model_selection_rule_unchanged") is True
+            )
+        except Exception:
+            contract_ok = False
+    log_check("Trajectory sampling contract (10 pre + 28 ON + 28 OFF = 66 rows/world)", contract_ok)
+
+    audit_ok = False
+    if audit_path.exists():
+        try:
+            audit = json.loads(audit_path.read_text(encoding="utf-8"))
+            before = audit["primary_output_before_telemetry"]
+            after = audit["primary_output_after_telemetry"]
+            audit_ok = (
+                audit.get("status") == "PASS"
+                and audit.get("verdict") == "BYTE_IDENTICAL_PRIMARY_OUTPUT"
+                and before.get("rows") == 8
+                and after.get("rows") == 8
+                and before.get("sha256") == after.get("sha256")
+                and audit.get("diagnostic_trajectory_output", {}).get("rows") == 66
+            )
+        except Exception:
+            audit_ok = False
+    log_check("Telemetry non-interference audit (primary output byte-identical)", audit_ok)
+
+    analysis_compile = subprocess.run(
+        [sys.executable, "-m", "py_compile", str(analysis_path)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    log_check(
+        "Diagnostic trajectory summarizer Python syntax",
+        analysis_path.exists() and analysis_compile.returncode == 0,
+        analysis_compile.stderr,
+    )
+
+
 def check_arc_execution_layer() -> None:
-    print("\n--- 9. ARC Array Execution & Shard Merge Layer ---")
+    print("\n--- 10. ARC Array Execution & Shard Merge Layer ---")
     sbatch_path = ARC_DIR / "partner_force_array.sbatch"
     merge_path = ARC_DIR / "merge_partner_force_shards.py"
     log_check("ARC array wrapper exists", sbatch_path.exists())
@@ -433,11 +504,17 @@ def check_arc_execution_layer() -> None:
             "PF_MODE",
             "PF_HOLDOUT_CONTRACT",
             "sha256sum",
+            "--trajectory-output",
+            "trajectory_sha256",
         )
     )
     log_check(
         "ARC wrapper deterministic cell x seed sharding and provenance hooks",
         wrapper_semantics_ok,
+    )
+    log_check(
+        "ARC shard merger can require and merge trajectory sidecars",
+        "--trajectory-output-csv" in merge_text and "validate_trajectory_shard" in merge_text,
     )
 
     # Bash syntax check is useful on developer machines that have bash, but ARC
@@ -456,13 +533,14 @@ def check_arc_execution_layer() -> None:
 
 
 def check_python_analysis_pipeline() -> None:
-    print("\n--- 10. Python Analysis Pipeline & Zero-Refit Dry-Runs ---")
+    print("\n--- 11. Python Analysis Pipeline & Zero-Refit Dry-Runs ---")
     sys.path.insert(0, str(ANALYSIS_DIR))
     try:
         import partner_force_metrics
         import partner_force_regenerative_coordinates
         import partner_force_autonomy_holdouts
         import evaluate_partner_force_autonomy
+        import analyze_partner_force_trajectories
         imports_ok = True
     except ImportError as e:
         imports_ok = False
@@ -491,7 +569,7 @@ def check_python_analysis_pipeline() -> None:
 
 
 def check_strict_cleanliness_and_compute_gate() -> None:
-    print("\n--- 11. Strict Cleanliness & Zero Experimental Compute Gate ---")
+    print("\n--- 12. Strict Cleanliness & Zero Experimental Compute Gate ---")
     prohibited_files = [
         CONTRACTS_DIR / "partner_force_autonomy_output_schema_v1.json",
         FIXTURES_DIR / "synthetic_pairing_fixture_v1.csv",
@@ -527,6 +605,7 @@ def main() -> None:
     check_schema_and_fixtures()
     check_preregistration_freeze()
     check_holdout_contracts_and_scale_audit()
+    check_trajectory_instrumentation()
     check_arc_execution_layer()
     check_python_analysis_pipeline()
     check_strict_cleanliness_and_compute_gate()
