@@ -24,6 +24,7 @@ pub mod recruitment;
 pub mod social;
 pub mod state_regeneration;
 pub mod treatment_gate;
+pub mod assays;
 
 use pineland_core::config::{ConfigError, SimulationConfig};
 use pineland_core::json::JsonValue;
@@ -110,6 +111,42 @@ impl CapabilityAssayResult {
             "composite_capability",
             JsonValue::number(self.composite_capability),
         );
+        o
+    }
+}
+
+/// Time-to-failure dynamic telemetry tracking post-withdrawal collapse trajectory.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct DynamicFailureMetrics {
+    pub time_to_capability_deficit_90: Option<f64>,
+    pub time_to_readiness_collapse: Option<f64>,
+    pub time_to_supply_exhaustion: Option<f64>,
+    pub time_to_first_formation_loss: Option<f64>,
+    pub recovery_time_days: Option<f64>,
+}
+
+impl DynamicFailureMetrics {
+    pub fn to_json(&self) -> JsonValue {
+        let mut o = JsonValue::object();
+        o.insert(
+            "schema_version",
+            JsonValue::string("pineland.partner_force_dynamic_failure.v1"),
+        );
+        if let Some(t) = self.time_to_capability_deficit_90 {
+            o.insert("time_to_capability_deficit_90", JsonValue::number(t));
+        }
+        if let Some(t) = self.time_to_readiness_collapse {
+            o.insert("time_to_readiness_collapse", JsonValue::number(t));
+        }
+        if let Some(t) = self.time_to_supply_exhaustion {
+            o.insert("time_to_supply_exhaustion", JsonValue::number(t));
+        }
+        if let Some(t) = self.time_to_first_formation_loss {
+            o.insert("time_to_first_formation_loss", JsonValue::number(t));
+        }
+        if let Some(t) = self.recovery_time_days {
+            o.insert("recovery_time_days", JsonValue::number(t));
+        }
         o
     }
 }
@@ -2757,6 +2794,50 @@ impl SimulationEngine {
             geographic_coverage_retention: coverage_retention,
             composite_capability,
         }
+    }
+
+    pub fn mean_military_readiness(&self) -> f64 {
+        let mut sum = 0.0;
+        let mut count = 0usize;
+        for i in 0..self.particle.formations.readiness.len() {
+            if self.particle.formations.organization[i] as usize == MILITARY
+                && self.particle.formations.active[i] != 0
+                && self.particle.formations.operational_status[i] != 0
+            {
+                sum += self.particle.formations.readiness[i];
+                count += 1;
+            }
+        }
+        if count > 0 { sum / count as f64 } else { 0.0 }
+    }
+
+    pub fn min_operational_military_supply_stock(&self) -> f64 {
+        let mut min_supply = f64::MAX;
+        let mut found = false;
+        for i in 0..self.particle.formations.supply_stock.len() {
+            if self.particle.formations.organization[i] as usize == MILITARY
+                && self.particle.formations.active[i] != 0
+                && self.particle.formations.operational_status[i] != 0
+            {
+                if self.particle.formations.supply_stock[i] < min_supply {
+                    min_supply = self.particle.formations.supply_stock[i];
+                }
+                found = true;
+            }
+        }
+        if found { min_supply } else { 0.0 }
+    }
+
+    pub fn active_operational_military_formations(&self) -> usize {
+        (0..self.particle.formations.organization.len())
+            .filter(|&i| {
+                self.particle.formations.organization[i] as usize == MILITARY
+                    && self.particle.formations.active[i] != 0
+                    && self.particle.formations.operational_status[i] != 0
+                    && self.particle.formations.outside_pineland[i] == 0
+                    && self.particle.formations.personnel[i] > 0.0
+            })
+            .count()
     }
 
     pub fn indigenous_state_flow_metrics(&self) -> JsonValue {
