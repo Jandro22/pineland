@@ -443,8 +443,8 @@ fn build_discovery_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
 
 fn build_h1_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
     // H1: Capital replenishment family - vary real endogenous/recurring capital inflow (extraction)
-    // Extraction multipliers: 0.25x, 0.5x, 1.0x, 2.0x, 4.0x
-    let extractions = [0.25, 0.5, 2.0, 4.0];
+    // Extraction multipliers: 0.5x (halved extraction) and 2.0x (doubled extraction)
+    let extractions = [0.5, 2.0];
     let rec_rates = [0.12, 0.18];
     let mut cases = Vec::new();
     for s in 0..seed_count {
@@ -472,8 +472,8 @@ fn build_h1_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
 
 fn build_h2_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
     // H2: External-resource family - vary external support to tested ledger
-    // Default external support is 10,000/yr -> test 0.0, 5,000.0, 20,000.0, 40,000.0
-    let ext_supports = [0.0, 5000.0, 20000.0, 40000.0];
+    // Default external support is 10,000/yr -> test 0.0 (zero subsidy) and 30,000.0 (3x baseline subsidy)
+    let ext_supports = [0.0, 30000.0];
     let rec_rates = [0.12, 0.18];
     let mut cases = Vec::new();
     for s in 0..seed_count {
@@ -500,20 +500,14 @@ fn build_h2_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
 }
 
 fn build_h3_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
-    // H3: Logistics-cost family - vary formation_supply_days / initial_supply_fraction
-    // formation_supply_days multipliers: 0.5x (15d), 1.5x (45d)
-    // initial_supply_fraction multipliers: 0.625x (0.5), 1.25x (1.0)
-    let variants = [
-        (0.5, 1.0), // 15 days, 0.8 fraction -> supply_per_fighter = 12 (vs 24 baseline)
-        (1.5, 1.0), // 45 days, 0.8 fraction -> supply_per_fighter = 36
-        (1.0, 0.625), // 30 days, 0.5 fraction -> supply_per_fighter = 15
-        (1.0, 1.25),  // 30 days, 1.0 fraction -> supply_per_fighter = 30
-    ];
+    // H3: Logistics-cost family - vary formation_supply_days
+    // formation_supply_days multipliers: 0.5x (15d -> 12 supply/fighter) vs 1.5x (45d -> 36 supply/fighter)
+    let supply_days = [0.5, 1.5];
     let rec_rates = [0.12, 0.18];
     let mut cases = Vec::new();
     for s in 0..seed_count {
         let seed = seed_base + s as u64;
-        for &(sd_mult, isf_mult) in &variants {
+        for &sd in &supply_days {
             for &r in &rec_rates {
                 cases.push(SimParams {
                     seed,
@@ -521,8 +515,8 @@ fn build_h3_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
                     rec_mult: r,
                     cap_mult: 1.0,
                     fighter_conv_mult: 1.0,
-                    supply_days_mult: sd_mult,
-                    init_supply_frac_mult: isf_mult,
+                    supply_days_mult: sd,
+                    init_supply_frac_mult: 1.0,
                     extraction_mult: 1.0,
                     external_support_val: None,
                     dynamic_foreign_affairs: false,
@@ -536,8 +530,8 @@ fn build_h3_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
 
 fn build_h4_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
     // H4: Force-structure/absorption family - vary fighter conversion fraction
-    // Multipliers: 0.5x (0.04), 1.5x (0.12), 2.0x (0.16)
-    let conv_mults = [0.5, 0.75, 1.5, 2.0];
+    // Multipliers: 0.5x (0.04 conversion) vs 1.5x (0.12 conversion)
+    let conv_mults = [0.5, 1.5];
     let rec_rates = [0.12, 0.18];
     let mut cases = Vec::new();
     for s in 0..seed_count {
@@ -564,8 +558,8 @@ fn build_h4_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
 }
 
 fn build_h5_params(seed_count: usize, seed_base: u64) -> Vec<SimParams> {
-    // H5: History/shock family - support cutoff at day 120, capital shock at day 150, recruitment surge at day 120
-    let shocks = ["cutoff_120", "capital_shock_150", "surge_120"];
+    // H5: History/shock family - support cutoff at day 120 vs capital shock at day 150
+    let shocks = ["cutoff_120", "capital_shock_150"];
     let rec_rates = [0.10, 0.14];
     let mut cases = Vec::new();
     for s in 0..seed_count {
