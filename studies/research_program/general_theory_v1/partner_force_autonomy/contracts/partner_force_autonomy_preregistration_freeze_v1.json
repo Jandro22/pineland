@@ -1,0 +1,52 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_preregistration_freeze.v1",
+  "status": "FROZEN_BEFORE_DISCOVERY_COMPUTE",
+  "historical_outcomes_used": false,
+  "description": "Cryptographic freeze manifest recording SHA-256 hashes of all preregistered design contracts, schemas, cell specifications, and blocked Stage-4 configurations.",
+  "frozen_artifacts": {
+    "raw_branch_schema": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_raw_branch_schema_v2.json",
+      "sha256": "fba6993a5d969bee701093f2e1a67fe7b0e62e165162dae1cdb6858860d61644"
+    },
+    "stage3_discovery_design": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage3_discovery_design_v1.json",
+      "sha256": "6292d96d3d1fa345063229f768823483c82fa6de7b9d16b9c1c4cac796c085e8"
+    },
+    "stage3_discovery_cells": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv",
+      "sha256": "5993daa6df81067699d15fa2850b5d9b259d423fca306aa81fa39aec884c1d86"
+    },
+    "program_contract": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy_program_contract_v1.json",
+      "sha256": "e59c5e3b852dfee2322b7b5c89d1596d90c73c49381c3467edb4301f63cc4bd5"
+    },
+    "capability_assay_contract": {
+      "path": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json",
+      "sha256": "90a29a59e18762a58a1dd1453d72469d3a125ee7225cffa0bb825f479eea8b18"
+    },
+    "exclusion_manifest": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy_exclusion_manifest_v1.json",
+      "sha256": "145931065decf0899bd0dec6afeaf72bea6e2f86e4d9311e5cd792ae32a9f4f1"
+    },
+    "complexity_levers_audit": {
+      "path": "studies/research_program/general_theory_v1/partner_force_complexity_levers_audit_v1.json",
+      "sha256": "7ab19f12c0d4078af010fbc7de0fa8d7ec9a03c74ed811e816262074f65c1c55"
+    },
+    "stage4_capacity_heavy_blocked": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capacity_heavy_v1.json",
+      "sha256": "3cf16ee1ab3dd958ddcc0354c6da1fbae80242ec3939f7e856514d8fc03c4c96"
+    },
+    "stage4_bottleneck_targeted_blocked": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/bottleneck_targeted_v1.json",
+      "sha256": "ecea08d93a1b12d5de5c5305d820753ce38969e5ba7b8dcbe5641bc26c302fcd"
+    },
+    "stage4_calendar_transition_blocked": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/calendar_transition_v1.json",
+      "sha256": "3346fdb19eaf0986686230224e99dce3e86312c746afab5388a84cbf544286d5"
+    },
+    "stage4_capability_conditioned_blocked": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capability_conditioned_v1.json",
+      "sha256": "fa2e8bf5c7b87d609fc90008f9bcfea4a53dea56677bc6f0ac2e400855bd77a6"
+    }
+  }
+}

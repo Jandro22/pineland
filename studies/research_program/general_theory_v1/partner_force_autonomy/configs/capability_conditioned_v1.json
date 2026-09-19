@@ -1,47 +1,16 @@
 {
-  "architecture_metadata": {
-    "architecture_id": "capability_conditioned",
-    "name": "Capability-Conditioned Transition",
-    "version": "v1",
-    "description": "Withdrawal gating conditioned strictly on indigenous forces satisfying pre-registered autonomous capability criteria (Omega_min >= 1.0, readiness >= 0.70). Prevents premature abandonment.",
-    "intended_hypotheses": ["PF-H1", "PF-H2", "PF-H3"],
-    "target_discounted_donor_cost": 500000.0,
-    "withdrawal_epochs_ticks": [60, 120, 180],
-    "gating_criteria": {
-      "min_omega_threshold": 1.0,
-      "mean_readiness_threshold": 0.70,
-      "formation_survival_threshold": 0.85
-    }
-  },
-  "partner_force_support": {
-    "schema_version": "pineland.partner_force_support.v1",
-    "enabled": true,
-    "air": {
-      "enabled": true,
-      "intensity": 0.35,
-      "firepower_bonus": 0.35,
-      "cost_per_assisted_contact": 900.0
-    },
-    "logistics": {
-      "enabled": true,
-      "mode": "depot_sustainment",
-      "daily_delivery_rate": 600.0,
-      "max_daily_capacity": 1000.0,
-      "cost_per_supply_delivered": 10.0
-    },
-    "command": {
-      "enabled": true,
-      "reliability_boost": 0.20,
-      "latency_reduction": 0.25,
-      "min_latency_floor_hours": 1.0,
-      "cost_per_formation_day": 120.0
-    },
-    "force_generation": {
-      "enabled": true,
-      "mode": "institution_building",
-      "training_rate_boost": 0.30,
-      "cost_per_incremental_trainee": 100.0,
-      "capacity_building_investment_rate": 1200.0
-    }
-  }
+  "schema_version": "pineland.partner_force_policy_placeholder.v1",
+  "execution_status": "BLOCKED_STAGE4_THRESHOLD_POLICY_NOT_FROZEN",
+  "architecture_id": "capability_conditioned",
+  "name": "Capability-Conditioned Transition",
+  "description": "Future policy family in which taper or withdrawal is triggered by frozen indigenous autonomy criteria.",
+  "blocked_reason": "Choosing thresholds before Stage-3 discovery/holdout validation would leak the answer into the policy rule. No thresholds are currently specified.",
+  "required_before_activation": [
+    "complete Stage-3 discovery and zero-refit holdout validation",
+    "freeze observable autonomy criteria",
+    "preregister threshold/taper rules",
+    "equalize donor budget against competing policies"
+  ],
+  "partner_force_support": {"enabled": false},
+  "prohibited_interpretation": "No numerical autonomy threshold is frozen in this placeholder."
 }

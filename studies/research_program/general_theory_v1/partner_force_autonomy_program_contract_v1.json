@@ -1,6 +1,6 @@
 {
   "schema_version": "pineland.partner_force_autonomy_program_contract.v1",
-  "status": "PREREGISTRATION_DRAFT_FROZEN_BEFORE_SUPPORT_OVERLAY",
+  "status": "STAGE3_DISCOVERY_DESIGN_FROZEN_READY_FOR_EXECUTION",
   "historical_outcomes_used": false,
   "central_question": "When does security-force assistance create autonomous military capability, and when does it create only externally supported performance?",
   "claim_boundary": "All primary tests are synthetic mechanism tests inside Pineland. Historical cases may be used only after the synthetic forms and analysis are frozen, and only as external consistency diagnostics rather than calibration targets.",
@@ -31,6 +31,7 @@
       "readiness restoration after losses"
     ],
     "freeze_before_discovery": true,
+    "frozen_contract": "partner_force_capability_assay_contract_v1.json",
     "warning": "Do not define C from training throughput, logistics autonomy, command reliability, or other variables that later appear as autonomy predictors."
   },
   "primary_hypotheses": [
@@ -138,14 +139,16 @@
     ]
   },
   "compute_gate": {
-    "current_phase": "audit_and_instrumentation",
-    "no_large_sweeps": true,
+    "current_phase": "stage3_discovery_ready_not_executed",
+    "no_large_sweeps_during_preparation": true,
     "required_before_simulation": [
       "support-overlay source design",
       "external-vs-indigenous flow counters",
       "capability assay freeze",
       "paired-branch/common-random-number equivalence test",
       "small smoke test proving support-off removes only designated external channels"
-    ]
+    ],
+    "gate_status": "SATISFIED_FOR_STAGE3_DISCOVERY",
+    "stage4_policy_gate": "BLOCKED_UNTIL_DISCOVERY_AND_ZERO_REFIT_HOLDOUTS_ARE_FROZEN"
   }
 }

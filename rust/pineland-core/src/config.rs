@@ -748,7 +748,9 @@ impl Default for LogisticsSupportChannelConfig {
 pub struct CommandSupportChannelConfig {
     pub enabled: bool,
     pub reliability_boost: f64,
-    pub latency_reduction: f64,
+    /// Fractional reduction in indigenous command latency, bounded to [0, 1].
+    /// A value of 0.25 means a 25% reduction, not 0.25 hours.
+    pub latency_reduction_fraction: f64,
     pub min_latency_floor_hours: f64,
     pub cost_per_formation_day: f64,
 }
@@ -758,7 +760,7 @@ impl Default for CommandSupportChannelConfig {
         Self {
             enabled: false,
             reliability_boost: 0.0,
-            latency_reduction: 0.0,
+            latency_reduction_fraction: 0.0,
             min_latency_floor_hours: 0.0,
             cost_per_formation_day: 0.0,
         }
@@ -1511,11 +1513,11 @@ impl SimulationConfig {
                     "partner_force_support.command.reliability_boost must be finite and in [0,1]".to_string(),
                 ));
             }
-            if !self.partner_force_support.command.latency_reduction.is_finite()
-                || !(0.0..=1.0).contains(&self.partner_force_support.command.latency_reduction)
+            if !self.partner_force_support.command.latency_reduction_fraction.is_finite()
+                || !(0.0..=1.0).contains(&self.partner_force_support.command.latency_reduction_fraction)
             {
                 return Err(ConfigError::Invalid(
-                    "partner_force_support.command.latency_reduction must be finite and in [0,1]".to_string(),
+                    "partner_force_support.command.latency_reduction_fraction must be finite and in [0,1]".to_string(),
                 ));
             }
             if !self.partner_force_support.command.cost_per_formation_day.is_finite()
@@ -1538,6 +1540,41 @@ impl SimulationConfig {
                 return Err(ConfigError::Invalid(
                     "partner_force_support.force_generation.cost_per_incremental_trainee must be finite and non-negative".to_string(),
                 ));
+            }
+            if self.partner_force_support.force_generation.enabled
+                && self.partner_force_support.force_generation.mode != "substitution"
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.force_generation.mode: only 'substitution' is implemented in partner_force_support.v1; persistent capacity-building and adaptive policy modes are Stage-4 blocked"
+                        .to_string(),
+                ));
+            }
+            if !self
+                .partner_force_support
+                .force_generation
+                .capacity_building_investment_rate
+                .is_finite()
+                || self
+                    .partner_force_support
+                    .force_generation
+                    .capacity_building_investment_rate
+                    != 0.0
+            {
+                return Err(ConfigError::Invalid(
+                    "partner_force_support.force_generation.capacity_building_investment_rate is reserved and must be exactly 0 in v1; no persistent capacity-building law is implemented"
+                        .to_string(),
+                ));
+            }
+            if self.partner_force_support.logistics.enabled
+                && !matches!(
+                    self.partner_force_support.logistics.mode.as_str(),
+                    "throughput_augmentation" | "depot_sustainment" | "direct_delivery" | "push"
+                )
+            {
+                return Err(ConfigError::Invalid(format!(
+                    "unsupported partner_force_support.logistics.mode '{}'; adaptive/policy modes are Stage-4 blocked",
+                    self.partner_force_support.logistics.mode
+                )));
             }
             if !self.partner_force_support.logistics.daily_delivery_rate.is_finite()
                 || self.partner_force_support.logistics.daily_delivery_rate < 0.0
@@ -1947,8 +1984,8 @@ impl PartnerForceSupportConfig {
             JsonValue::number(self.command.reliability_boost),
         );
         command.insert(
-            "latency_reduction",
-            JsonValue::number(self.command.latency_reduction),
+            "latency_reduction_fraction",
+            JsonValue::number(self.command.latency_reduction_fraction),
         );
         command.insert(
             "min_latency_floor_hours",
@@ -2523,8 +2560,12 @@ fn apply_partner_force_support(
         if let Some(val) = cmd_obj.get("reliability_boost") {
             t.command.reliability_boost = required_f64(val, "reliability_boost")?;
         }
-        if let Some(val) = cmd_obj.get("latency_reduction") {
-            t.command.latency_reduction = required_f64(val, "latency_reduction")?;
+        if let Some(val) = cmd_obj.get("latency_reduction_fraction") {
+            t.command.latency_reduction_fraction = required_f64(val, "latency_reduction_fraction")?;
+        } else if let Some(val) = cmd_obj.get("latency_reduction") {
+            // Backward-compatible parser alias for the short-lived preparation schema.
+            // Semantics are fractional in both cases.
+            t.command.latency_reduction_fraction = required_f64(val, "latency_reduction")?;
         }
         if let Some(val) = cmd_obj.get("min_latency_floor_hours") {
             t.command.min_latency_floor_hours = required_f64(val, "min_latency_floor_hours")?;
@@ -2717,7 +2758,7 @@ mod tests {
         config.partner_force_support.logistics.cost_per_supply_delivered = 2.5;
         config.partner_force_support.command.enabled = true;
         config.partner_force_support.command.reliability_boost = 0.4;
-        config.partner_force_support.command.latency_reduction = 0.5;
+        config.partner_force_support.command.latency_reduction_fraction = 0.5;
         config.partner_force_support.command.cost_per_formation_day = 10.0;
         config.partner_force_support.force_generation.enabled = true;
         config.partner_force_support.force_generation.training_rate_boost = 0.05;
@@ -2741,5 +2782,56 @@ mod tests {
         config.partner_force_support.air.intensity = 0.5;
         config.partner_force_support.command.reliability_boost = -0.1;
         assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn stage4_policy_modes_and_capacity_building_are_firewalled() {
+        let mut config = SimulationConfig::default();
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.force_generation.enabled = true;
+
+        // Non-substitution forcegen modes are blocked
+        config.partner_force_support.force_generation.mode = "institution_building".to_string();
+        assert!(config.validate().is_err());
+
+        config.partner_force_support.force_generation.mode = "bottleneck_relief".to_string();
+        assert!(config.validate().is_err());
+
+        // Capacity building investment rate must be exactly 0
+        config.partner_force_support.force_generation.mode = "substitution".to_string();
+        config.partner_force_support.force_generation.capacity_building_investment_rate = 50.0;
+        assert!(config.validate().is_err());
+
+        // Adaptive logistics modes are blocked
+        config.partner_force_support.force_generation.capacity_building_investment_rate = 0.0;
+        config.partner_force_support.logistics.enabled = true;
+        config.partner_force_support.logistics.mode = "adaptive_policy".to_string();
+        assert!(config.validate().is_err());
+
+        config.partner_force_support.logistics.mode = "bottleneck_directed".to_string();
+        assert!(config.validate().is_err());
+
+        // Standard logistics mode passes
+        config.partner_force_support.logistics.mode = "throughput_augmentation".to_string();
+        assert!(config.validate().is_ok());
+    }
+
+    #[test]
+    fn command_latency_reduction_parser_alias_works() {
+        let json_str = r#"{
+            "partner_force_support": {
+                "enabled": true,
+                "command": {
+                    "enabled": true,
+                    "reliability_boost": 0.25,
+                    "latency_reduction": 0.35,
+                    "min_latency_floor_hours": 1.0,
+                    "cost_per_formation_day": 10.0
+                }
+            }
+        }"#;
+        let parsed = parse(json_str).unwrap();
+        let config = SimulationConfig::from_json(&parsed).unwrap();
+        assert_eq!(config.partner_force_support.command.latency_reduction_fraction, 0.35);
     }
 }

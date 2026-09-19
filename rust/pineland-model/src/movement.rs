@@ -1628,10 +1628,11 @@ fn issue_movement_order(
         && !particle.partner_support.support_withdrawn
         && organization == crate::MILITARY
     {
-        let boosted = (reliability + partner_config.command.reliability_boost).clamp(0.0, 1.0);
-        let reduced = (latency_hours - partner_config.command.latency_reduction)
-            .max(partner_config.command.min_latency_floor_hours)
-            .max(0.0);
+        let (boosted, reduced) = calculate_command_advisory_overlay(
+            reliability,
+            latency_hours,
+            partner_config,
+        );
         particle.partner_support.command.assisted_events += 1;
         particle.partner_support.command.cumulative_reliability_boost += boosted - reliability;
         particle.partner_support.command.cumulative_latency_reduction_hours += latency_hours - reduced;
@@ -2012,4 +2013,57 @@ fn modal_zone(topology: &StaticTopology, locality: usize) -> usize {
         }
     }
     selected
+}
+
+pub(crate) fn calculate_command_advisory_overlay(
+    reliability: f64,
+    latency_hours: f64,
+    partner_config: &pineland_core::config::PartnerForceSupportConfig,
+) -> (f64, f64) {
+    // Independent bounded assistance: the adviser closes a fraction of the
+    // remaining reliability gap rather than adding raw reliability points:
+    // r_eff = 1 - (1 - r_i) * (1 - b_r)
+    let boost_fraction = partner_config.command.reliability_boost.clamp(0.0, 1.0);
+    let boosted = (1.0 - (1.0 - reliability.clamp(0.0, 1.0)) * (1.0 - boost_fraction))
+        .clamp(0.0, 1.0);
+    let reduced = (latency_hours
+        * (1.0 - partner_config.command.latency_reduction_fraction.clamp(0.0, 1.0)))
+        .max(partner_config.command.min_latency_floor_hours)
+        .max(0.0);
+    (boosted, reduced)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pineland_core::config::SimulationConfig;
+
+    #[test]
+    fn command_overlay_exact_numerical_cases() {
+        let mut config = SimulationConfig::default();
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.command.enabled = true;
+        config.partner_force_support.command.reliability_boost = 0.5; // b_r = 0.5
+        config.partner_force_support.command.latency_reduction_fraction = 0.25; // b_L = 0.25
+        config.partner_force_support.command.min_latency_floor_hours = 1.0;
+
+        // Case 1: r_i = 0.6, b = 0.5 -> r_eff = 1 - (1 - 0.6) * (1 - 0.5) = 1 - 0.2 = 0.8
+        // L_i = 8.0, b = 0.25 -> L_eff = 8.0 * (1 - 0.25) = 6.0 (>= floor 1.0)
+        let (r_eff, l_eff) = calculate_command_advisory_overlay(0.6, 8.0, &config.partner_force_support);
+        assert!((r_eff - 0.8).abs() < 1e-12, "expected 0.8, got {r_eff}");
+        assert!((l_eff - 6.0).abs() < 1e-12, "expected 6.0, got {l_eff}");
+
+        // Case 2: Subject to floor: L_i = 2.0, b = 0.75 -> 2.0 * 0.25 = 0.5 < floor 1.0 -> 1.0
+        config.partner_force_support.command.latency_reduction_fraction = 0.75;
+        let (_, l_eff_floored) = calculate_command_advisory_overlay(0.6, 2.0, &config.partner_force_support);
+        assert_eq!(l_eff_floored, 1.0);
+
+        // Case 3: Zero boost does not change reliability or latency
+        config.partner_force_support.command.reliability_boost = 0.0;
+        config.partner_force_support.command.latency_reduction_fraction = 0.0;
+        config.partner_force_support.command.min_latency_floor_hours = 0.0;
+        let (r_noop, l_noop) = calculate_command_advisory_overlay(0.6, 8.0, &config.partner_force_support);
+        assert_eq!(r_noop, 0.6);
+        assert_eq!(l_noop, 8.0);
+    }
 }

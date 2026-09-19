@@ -63,6 +63,15 @@ pub fn update(
         let produced = production.min(available_capacity);
         particle.logistics.source_stock[source] += produced;
         particle.logistics.cumulative_produced += produced;
+        if config.partner_force_support.enabled {
+            let org = particle.logistics.organization[source] as usize;
+            if org == crate::GOVERNMENT || org == crate::MILITARY {
+                particle
+                    .partner_support
+                    .logistics
+                    .indigenous_cumulative_produced += produced;
+            }
+        }
     }
     deliver_partner_logistics(particle, config, dt);
 
@@ -110,6 +119,14 @@ pub fn update(
                 );
             }
             particle.logistics.cumulative_delivered += accepted;
+            if config.partner_force_support.enabled
+                && particle.formations.organization[formation] as usize == crate::MILITARY
+            {
+                particle
+                    .partner_support
+                    .logistics
+                    .indigenous_cumulative_delivered += accepted;
+            }
             if overflow > 0.0 {
                 particle.logistics.cumulative_lost += overflow;
             }
@@ -143,6 +160,14 @@ pub fn update(
         particle.formations.supply_stock[formation] -= consumed;
         particle.formations.sustainment[formation] = supply_ratio(particle, formation);
         particle.logistics.cumulative_consumed += consumed;
+        if config.partner_force_support.enabled
+            && particle.formations.organization[formation] as usize == crate::MILITARY
+        {
+            particle
+                .partner_support
+                .logistics
+                .indigenous_cumulative_consumed += consumed;
+        }
         let fulfillment = if demand > 0.0 { consumed / demand } else { 1.0 };
         if shortfall > 0.0 {
             particle.formations.readiness[formation] = clamp01(

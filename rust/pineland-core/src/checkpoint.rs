@@ -22,7 +22,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 15;
+pub const CHECKPOINT_VERSION: u32 = 16;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -181,7 +181,8 @@ impl CheckpointStore {
         if reader.take(8)? != CHECKPOINT_MAGIC {
             return Err(CheckpointError::Invalid("bad magic".to_string()));
         }
-        if reader.u32()? != CHECKPOINT_VERSION {
+        let version = reader.u32()?;
+        if version != 15 && version != CHECKPOINT_VERSION {
             return Err(CheckpointError::Invalid(
                 "unsupported checkpoint version".to_string(),
             ));
@@ -270,7 +271,7 @@ impl CheckpointStore {
                 value: reader.f64()?,
             });
         }
-        decode_partner_support(&mut reader, &mut particle.partner_support)
+        decode_partner_support(&mut reader, &mut particle.partner_support, version)
             .map_err(|e| section_error("partner_support", e))?;
         if reader.remaining() != 0 {
             return Err(CheckpointError::Invalid(
@@ -2216,6 +2217,9 @@ fn encode_partner_support(b: &mut Vec<u8>, s: &PartnerSupportLedger) {
     put_f64(b, s.air.cumulative_firepower_bonus);
     put_f64(b, s.air.cumulative_donor_cost);
     // logistics
+    put_f64(b, s.logistics.indigenous_cumulative_produced);
+    put_f64(b, s.logistics.indigenous_cumulative_delivered);
+    put_f64(b, s.logistics.indigenous_cumulative_consumed);
     put_f64(b, s.logistics.cumulative_offered);
     put_f64(b, s.logistics.cumulative_delivered);
     put_f64(b, s.logistics.cumulative_rejected);
@@ -2251,6 +2255,7 @@ fn encode_partner_support(b: &mut Vec<u8>, s: &PartnerSupportLedger) {
 fn decode_partner_support(
     r: &mut ByteReader<'_>,
     s: &mut PartnerSupportLedger,
+    version: u32,
 ) -> Result<(), CheckpointError> {
     s.schema_version = r.string()?;
     s.support_withdrawn = r.u8()? != 0;
@@ -2263,6 +2268,15 @@ fn decode_partner_support(
     s.air.cumulative_firepower_bonus = r.f64()?;
     s.air.cumulative_donor_cost = r.f64()?;
     // logistics
+    if version >= 16 {
+        s.logistics.indigenous_cumulative_produced = r.f64()?;
+        s.logistics.indigenous_cumulative_delivered = r.f64()?;
+        s.logistics.indigenous_cumulative_consumed = r.f64()?;
+    } else {
+        s.logistics.indigenous_cumulative_produced = 0.0;
+        s.logistics.indigenous_cumulative_delivered = 0.0;
+        s.logistics.indigenous_cumulative_consumed = 0.0;
+    }
     s.logistics.cumulative_offered = r.f64()?;
     s.logistics.cumulative_delivered = r.f64()?;
     s.logistics.cumulative_rejected = r.f64()?;
@@ -2301,7 +2315,8 @@ fn decode_partner_support(
 
 #[cfg(test)]
 mod tests {
-    use super::CheckpointStore;
+    use super::*;
+    use crate::state::PartnerSupportLedger;
     use crate::ids::PatrolId;
     use crate::rng::RngStreams;
     use crate::scheduler::EventPayload;
@@ -2593,5 +2608,66 @@ mod tests {
         let restored = CheckpointStore::decode_particle(&bytes).unwrap();
         assert_eq!(particle, restored);
         assert_eq!(particle.state_hash(), restored.state_hash());
+    }
+
+    #[test]
+    fn v15_checkpoint_is_backward_compatible() {
+        let mut particle = representative_particle();
+        particle.partner_support.logistics.indigenous_cumulative_produced = 0.0;
+        particle.partner_support.logistics.indigenous_cumulative_delivered = 0.0;
+        particle.partner_support.logistics.indigenous_cumulative_consumed = 0.0;
+        particle.partner_support.logistics.cumulative_offered = 100.0;
+        particle.partner_support.logistics.cumulative_delivered = 90.0;
+
+        let bytes = CheckpointStore::encode_particle(&particle).unwrap();
+        // Modify version from 16 to 15 at byte offset 8..12
+        let mut v15_bytes = bytes.clone();
+        v15_bytes[8..12].copy_from_slice(&15u32.to_le_bytes());
+
+        // Locate where partner support logistics fields start in particle payload.
+        // Rather than hardcoding offsets, encode a dummy v15 buffer directly or test decode_partner_support:
+        let mut ledger = PartnerSupportLedger::default();
+        ledger.air.cumulative_intensity = 50.0;
+        ledger.logistics.cumulative_offered = 200.0;
+        ledger.logistics.cumulative_delivered = 180.0;
+
+        let mut buf = Vec::new();
+        put_string(&mut buf, &ledger.schema_version);
+        buf.push(0); // support_withdrawn = false
+        buf.push(0); // has_wt = false
+        // air
+        put_u64(&mut buf, ledger.air.opportunities);
+        put_u64(&mut buf, ledger.air.assisted_contacts);
+        put_f64(&mut buf, ledger.air.cumulative_intensity);
+        put_f64(&mut buf, ledger.air.cumulative_firepower_bonus);
+        put_f64(&mut buf, ledger.air.cumulative_donor_cost);
+        // logistics (v15: NO indigenous_cumulative_* fields)
+        put_f64(&mut buf, ledger.logistics.cumulative_offered);
+        put_f64(&mut buf, ledger.logistics.cumulative_delivered);
+        put_f64(&mut buf, ledger.logistics.cumulative_rejected);
+        put_f64(&mut buf, ledger.logistics.cumulative_lost);
+        put_f64(&mut buf, ledger.logistics.cumulative_donor_cost);
+        // command
+        put_u64(&mut buf, ledger.command.assisted_events);
+        put_f64(&mut buf, ledger.command.cumulative_reliability_boost);
+        put_f64(&mut buf, ledger.command.cumulative_latency_reduction_hours);
+        put_f64(&mut buf, ledger.command.cumulative_donor_cost);
+        // force_generation
+        put_f64(&mut buf, ledger.force_generation.indigenous_recruits);
+        put_f64(&mut buf, ledger.force_generation.external_recruits);
+        put_f64(&mut buf, ledger.force_generation.indigenous_graduates);
+        put_f64(&mut buf, ledger.force_generation.external_incremental_graduates);
+        put_f64(&mut buf, ledger.force_generation.cumulative_donor_cost);
+        // snapshots
+        put_u64(&mut buf, 0);
+
+        let mut decoded = PartnerSupportLedger::default();
+        let mut reader = ByteReader::new(&buf);
+        decode_partner_support(&mut reader, &mut decoded, 15).unwrap();
+        assert_eq!(decoded.logistics.indigenous_cumulative_produced, 0.0);
+        assert_eq!(decoded.logistics.indigenous_cumulative_delivered, 0.0);
+        assert_eq!(decoded.logistics.indigenous_cumulative_consumed, 0.0);
+        assert_eq!(decoded.logistics.cumulative_offered, 200.0);
+        assert_eq!(decoded.logistics.cumulative_delivered, 180.0);
     }
 }

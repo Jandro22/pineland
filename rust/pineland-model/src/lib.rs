@@ -35,6 +35,7 @@ use pineland_core::state::{
     CONTROL_DIMENSIONS,
 };
 use pineland_core::topology::StaticTopology;
+use std::collections::BTreeSet;
 use std::fmt;
 
 /// Cache parity/debug environment flags at their call site.
@@ -60,6 +61,57 @@ pub const INSURGENT: usize = 6;
 // Foreign expeditionary organizations are not part of the initial Pineland
 // organization table.  Keep a non-colliding tag for future extensions.
 pub const FOREIGN: usize = 7;
+
+/// Frozen baseline for the behavioral partner-force capability assay.
+///
+/// The assay intentionally excludes training throughput, logistics throughput,
+/// command reliability, and support ledgers because those variables are candidate
+/// predictors of autonomy rather than behavioral outcomes.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CapabilityAssayBaseline {
+    pub military_personnel: f64,
+    pub operational_formations: usize,
+    pub covered_localities: usize,
+}
+
+/// Behavioral capability assay used for paired SUPPORT_ON/SUPPORT_OFF outcomes.
+/// Version: pineland.partner_force_capability_assay.v1
+#[derive(Clone, Debug, PartialEq)]
+pub struct CapabilityAssayResult {
+    pub government_control: f64,
+    pub military_personnel_retention: f64,
+    pub operational_formation_survival: f64,
+    pub geographic_coverage_retention: f64,
+    pub composite_capability: f64,
+}
+
+impl CapabilityAssayResult {
+    pub fn to_json(&self) -> JsonValue {
+        let mut o = JsonValue::object();
+        o.insert(
+            "schema_version",
+            JsonValue::string("pineland.partner_force_capability_assay.v1"),
+        );
+        o.insert("government_control", JsonValue::number(self.government_control));
+        o.insert(
+            "military_personnel_retention",
+            JsonValue::number(self.military_personnel_retention),
+        );
+        o.insert(
+            "operational_formation_survival",
+            JsonValue::number(self.operational_formation_survival),
+        );
+        o.insert(
+            "geographic_coverage_retention",
+            JsonValue::number(self.geographic_coverage_retention),
+        );
+        o.insert(
+            "composite_capability",
+            JsonValue::number(self.composite_capability),
+        );
+        o
+    }
+}
 
 fn organization_name(index: usize) -> &'static str {
     match index {
@@ -2610,6 +2662,102 @@ impl SimulationEngine {
         self.particle.partner_support.withdrawal_time = Some(self.particle.time);
     }
 
+    /// Capture the denominators for the frozen behavioral capability assay at
+    /// withdrawal time T.  Both counterfactual branches must use the same copy.
+    pub fn capability_assay_baseline(&self) -> CapabilityAssayBaseline {
+        let mut military_personnel = 0.0;
+        let mut operational_formations = 0usize;
+        let mut covered_localities = BTreeSet::new();
+        for formation in 0..self.particle.formations.personnel.len() {
+            if self.particle.formations.organization[formation] as usize != MILITARY
+                || self.particle.formations.active[formation] == 0
+                || self.particle.formations.operational_status[formation] == 0
+                || self.particle.formations.outside_pineland[formation] != 0
+            {
+                continue;
+            }
+            let personnel = self.particle.formations.personnel[formation].max(0.0);
+            if personnel <= 0.0 {
+                continue;
+            }
+            military_personnel += personnel;
+            operational_formations += 1;
+            covered_localities.insert(self.particle.formations.locality[formation]);
+        }
+        CapabilityAssayBaseline {
+            military_personnel,
+            operational_formations,
+            covered_localities: covered_localities.len(),
+        }
+    }
+
+    /// Measure outcome-facing military capability without reusing autonomy
+    /// predictors.  Each component is bounded to [0,1]; the composite is their
+    /// geometric mean, so a near-zero behavioral dimension cannot be hidden by
+    /// arithmetic compensation in another dimension.
+    pub fn capability_assay(
+        &self,
+        baseline: &CapabilityAssayBaseline,
+    ) -> CapabilityAssayResult {
+        let locality_count = self.topology.locality_count().max(1);
+        let government_control = (0..locality_count)
+            .map(|l| self.particle.locality.effective_control(l, 0))
+            .sum::<f64>()
+            / locality_count as f64;
+
+        let mut military_personnel = 0.0;
+        let mut operational_formations = 0usize;
+        let mut covered_localities = BTreeSet::new();
+        for formation in 0..self.particle.formations.personnel.len() {
+            if self.particle.formations.organization[formation] as usize != MILITARY
+                || self.particle.formations.active[formation] == 0
+                || self.particle.formations.operational_status[formation] == 0
+                || self.particle.formations.outside_pineland[formation] != 0
+            {
+                continue;
+            }
+            let personnel = self.particle.formations.personnel[formation].max(0.0);
+            if personnel <= 0.0 {
+                continue;
+            }
+            military_personnel += personnel;
+            operational_formations += 1;
+            covered_localities.insert(self.particle.formations.locality[formation]);
+        }
+
+        let bounded_ratio = |value: f64, denominator: f64| -> f64 {
+            if denominator <= 1.0e-12 {
+                0.0
+            } else {
+                (value / denominator).clamp(0.0, 1.0)
+            }
+        };
+        let personnel_retention = bounded_ratio(military_personnel, baseline.military_personnel);
+        let formation_survival = bounded_ratio(
+            operational_formations as f64,
+            baseline.operational_formations as f64,
+        );
+        let coverage_retention = bounded_ratio(
+            covered_localities.len() as f64,
+            baseline.covered_localities as f64,
+        );
+        let components = [
+            government_control.clamp(0.0, 1.0),
+            personnel_retention,
+            formation_survival,
+            coverage_retention,
+        ];
+        let composite_capability = components.iter().product::<f64>().powf(0.25);
+
+        CapabilityAssayResult {
+            government_control: components[0],
+            military_personnel_retention: personnel_retention,
+            operational_formation_survival: formation_survival,
+            geographic_coverage_retention: coverage_retention,
+            composite_capability,
+        }
+    }
+
     pub fn indigenous_state_flow_metrics(&self) -> JsonValue {
         let mut obj = JsonValue::object();
         let total_air_intensity = self.config.combat.government_air_support_intensity;
@@ -2623,15 +2771,110 @@ impl SimulationEngine {
         obj.insert("partner_air_assisted_contacts", JsonValue::number(self.particle.partner_support.air.assisted_contacts as f64));
         obj.insert("partner_air_delivered_intensity", JsonValue::number(self.particle.partner_support.air.cumulative_intensity));
 
-        let indigenous_production = self.particle.logistics.cumulative_produced;
+        let indigenous_production = self
+            .particle
+            .partner_support
+            .logistics
+            .indigenous_cumulative_produced;
         let partner_logistics_delivered = self.particle.partner_support.logistics.cumulative_delivered;
         obj.insert("indigenous_logistics_cumulative_produced", JsonValue::number(indigenous_production));
+        obj.insert(
+            "indigenous_logistics_cumulative_delivered",
+            JsonValue::number(
+                self.particle.partner_support.logistics.indigenous_cumulative_delivered,
+            ),
+        );
+        obj.insert(
+            "indigenous_logistics_cumulative_consumed",
+            JsonValue::number(
+                self.particle.partner_support.logistics.indigenous_cumulative_consumed,
+            ),
+        );
         obj.insert("partner_logistics_cumulative_delivered", JsonValue::number(partner_logistics_delivered));
 
         let indigenous_graduates = self.particle.partner_support.force_generation.indigenous_graduates;
         let incremental_graduates = self.particle.partner_support.force_generation.external_incremental_graduates;
         obj.insert("indigenous_graduates", JsonValue::number(indigenous_graduates));
         obj.insert("external_incremental_graduates", JsonValue::number(incremental_graduates));
+
+        let recruit_pipeline: f64 = self
+            .particle
+            .locality
+            .government_security_recruit_pipeline
+            .iter()
+            .sum();
+        let trained_reserve: f64 = self
+            .particle
+            .locality
+            .government_security_reserve
+            .iter()
+            .sum();
+        obj.insert("recruit_pipeline_stock", JsonValue::number(recruit_pipeline));
+        obj.insert("trained_reserve_stock", JsonValue::number(trained_reserve));
+
+        let mut military_personnel = 0.0;
+        let mut readiness_weighted = 0.0;
+        let mut experience_weighted = 0.0;
+        let mut supply_stock = 0.0;
+        let mut supply_capacity = 0.0;
+        for formation in 0..self.particle.formations.personnel.len() {
+            if self.particle.formations.organization[formation] as usize != MILITARY {
+                continue;
+            }
+            let personnel = self.particle.formations.personnel[formation].max(0.0);
+            military_personnel += personnel;
+            readiness_weighted += personnel * self.particle.formations.readiness[formation];
+            experience_weighted += personnel * self.particle.formations.experience[formation];
+            supply_stock += self.particle.formations.supply_stock[formation].max(0.0);
+            supply_capacity += self.particle.formations.supply_capacity[formation].max(0.0);
+        }
+        obj.insert("military_personnel", JsonValue::number(military_personnel));
+        obj.insert(
+            "military_readiness_personnel_weighted",
+            JsonValue::number(if military_personnel > 1.0e-12 {
+                readiness_weighted / military_personnel
+            } else {
+                0.0
+            }),
+        );
+        obj.insert(
+            "military_experience_personnel_weighted",
+            JsonValue::number(if military_personnel > 1.0e-12 {
+                experience_weighted / military_personnel
+            } else {
+                0.0
+            }),
+        );
+        obj.insert("military_supply_stock", JsonValue::number(supply_stock));
+        obj.insert("military_supply_capacity", JsonValue::number(supply_capacity));
+
+        let mut command_edges = 0usize;
+        let mut command_reliability = 0.0;
+        let mut command_latency = 0.0;
+        for edge in 0..self.particle.command_edges.organization.len() {
+            if self.particle.command_edges.organization[edge] as usize != MILITARY {
+                continue;
+            }
+            command_edges += 1;
+            command_reliability += self.particle.command_edges.reliability[edge];
+            command_latency += self.particle.command_edges.latency_hours[edge];
+        }
+        obj.insert(
+            "indigenous_command_reliability_mean",
+            JsonValue::number(if command_edges > 0 {
+                command_reliability / command_edges as f64
+            } else {
+                0.0
+            }),
+        );
+        obj.insert(
+            "indigenous_command_latency_hours_mean",
+            JsonValue::number(if command_edges > 0 {
+                command_latency / command_edges as f64
+            } else {
+                0.0
+            }),
+        );
 
         let donor_total_cost = self.particle.partner_support.cumulative_donor_cost();
         obj.insert("cumulative_donor_cost", JsonValue::number(donor_total_cost));
@@ -3750,7 +3993,7 @@ fn event_locality(event: &ScheduledEvent) -> u32 {
 }
 #[cfg(test)]
 mod tests {
-    use super::SimulationEngine;
+    use super::{CapabilityAssayBaseline, SimulationEngine};
     use pineland_core::checkpoint::CheckpointStore;
     use pineland_core::config::SimulationConfig;
     use pineland_core::topology::StaticTopology;
@@ -4243,5 +4486,146 @@ mod tests {
             + ledger.logistics.cumulative_rejected
             + ledger.logistics.cumulative_lost;
         assert!((ledger.logistics.cumulative_offered - log_sum).abs() < 1.0e-9);
+    }
+
+    #[test]
+    fn post_withdrawal_indigenous_instrumentation_continues() {
+        let mut config = SimulationConfig {
+            locality_count: 3,
+            agent_count: 80,
+            burn_in_days: 0.0,
+            horizon_days: 25.0,
+            ..Default::default()
+        };
+        config.state_regeneration.enabled = true;
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.force_generation.enabled = true;
+        config.partner_force_support.force_generation.training_rate_boost = 0.05;
+        config.partner_force_support.force_generation.cost_per_incremental_trainee = 50.0;
+
+        let mut engine = SimulationEngine::new(config).unwrap();
+        engine.advance_until(10.0).unwrap();
+
+        let l_at_t = engine.particle.partner_support.clone();
+        engine.withdraw_external_partner_support();
+
+        engine.advance_until(25.0).unwrap();
+        let l_post = &engine.particle.partner_support;
+
+        // Indigenous instrumentation continues post-withdrawal
+        assert!(l_post.force_generation.indigenous_recruits >= l_at_t.force_generation.indigenous_recruits);
+        assert!(l_post.force_generation.indigenous_graduates >= l_at_t.force_generation.indigenous_graduates);
+
+        // External contributions and donor costs stop permanently
+        assert_eq!(
+            l_post.force_generation.external_incremental_graduates,
+            l_at_t.force_generation.external_incremental_graduates
+        );
+        assert_eq!(
+            l_post.cumulative_donor_cost(),
+            l_at_t.cumulative_donor_cost()
+        );
+    }
+
+    #[test]
+    fn indigenous_logistics_excludes_insurgents_and_conserves_external() {
+        let mut config = SimulationConfig {
+            locality_count: 4,
+            agent_count: 100,
+            burn_in_days: 0.0,
+            horizon_days: 20.0,
+            ..Default::default()
+        };
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.logistics.enabled = true;
+        config.partner_force_support.logistics.daily_delivery_rate = 60.0;
+        config.partner_force_support.logistics.cost_per_supply_delivered = 5.0;
+
+        let mut engine = SimulationEngine::new(config).unwrap();
+        engine.run().unwrap();
+
+        let l = &engine.particle.partner_support.logistics;
+        let global = &engine.particle.logistics;
+
+        // Indigenous logistics strictly subsets global logistics (excludes non-government/insurgent)
+        assert!(l.indigenous_cumulative_produced <= global.cumulative_produced + 1.0e-9);
+        assert!(l.indigenous_cumulative_delivered <= global.cumulative_delivered + 1.0e-9);
+        assert!(l.indigenous_cumulative_consumed <= global.cumulative_consumed + 1.0e-9);
+
+        // External conservation identity
+        let external_delivered_sum = l.cumulative_delivered + l.cumulative_rejected + l.cumulative_lost;
+        assert!((l.cumulative_offered - external_delivered_sum).abs() < 1.0e-9);
+    }
+
+    #[test]
+    fn degenerate_baseline_yields_zero_retention() {
+        let config = SimulationConfig {
+            locality_count: 3,
+            agent_count: 80,
+            ..Default::default()
+        };
+        let engine = SimulationEngine::new(config).unwrap();
+
+        // Baseline with 0 operational formations
+        let baseline_zero_formations = CapabilityAssayBaseline {
+            military_personnel: 100.0,
+            operational_formations: 0,
+            covered_localities: 2,
+        };
+        let assay = engine.capability_assay(&baseline_zero_formations);
+        assert_eq!(assay.operational_formation_survival, 0.0);
+        assert_eq!(assay.composite_capability, 0.0);
+
+        // Baseline with 0 military personnel
+        let baseline_zero_personnel = CapabilityAssayBaseline {
+            military_personnel: 0.0,
+            operational_formations: 2,
+            covered_localities: 2,
+        };
+        let assay_p = engine.capability_assay(&baseline_zero_personnel);
+        assert_eq!(assay_p.military_personnel_retention, 0.0);
+        assert_eq!(assay_p.composite_capability, 0.0);
+    }
+
+    #[test]
+    fn negative_control_no_support_cells_are_identical_across_branches() {
+        let mut config = SimulationConfig {
+            locality_count: 4,
+            agent_count: 100,
+            burn_in_days: 0.0,
+            horizon_days: 35.0,
+            ..Default::default()
+        };
+        // All assistance channels disabled (negative control cell)
+        config.partner_force_support.enabled = true;
+        config.partner_force_support.air.enabled = false;
+        config.partner_force_support.logistics.enabled = false;
+        config.partner_force_support.command.enabled = false;
+        config.partner_force_support.force_generation.enabled = false;
+
+        let mut engine = SimulationEngine::new(config).unwrap();
+        engine.advance_until(10.0).unwrap();
+
+        let baseline = engine.capability_assay_baseline();
+        let mut engine_on = engine.clone();
+        let mut engine_off = engine.clone();
+        engine_off.withdraw_external_partner_support();
+
+        // Advance to 7-day horizon (17d) and 20-day horizon (30d)
+        for target in [17.0, 30.0] {
+            engine_on.advance_until(target).unwrap();
+            engine_off.advance_until(target).unwrap();
+
+            // Indigenous arrays must remain bit-for-bit identical
+            assert_eq!(engine_on.particle.formations, engine_off.particle.formations);
+            assert_eq!(engine_on.particle.people, engine_off.particle.people);
+            assert_eq!(engine_on.particle.logistics, engine_off.particle.logistics);
+            assert_eq!(engine_on.particle.locality, engine_off.particle.locality);
+            assert_eq!(engine_on.particle.zones, engine_off.particle.zones);
+
+            let assay_on = engine_on.capability_assay(&baseline);
+            let assay_off = engine_off.capability_assay(&baseline);
+            assert_eq!(assay_on, assay_off);
+        }
     }
 }

@@ -1,146 +1,155 @@
+"""Candidate indigenous autonomy coordinates and prospective model comparisons.
+
+All coordinates use pre-withdrawal partner-owned state/flows only.  External
+support quantities are intentionally excluded from the autonomy aggregates and
+remain separate dependence covariates.
 """
-Partner-Force Regenerative Coordinates Module
-============================================
-Computes state-space trajectories in (M, F, G, C) coordinates:
-- Omega_M: Manpower / Force-Gen regenerative buffer
-- Omega_F: Firepower organic autonomy
-- Omega_G: Logistics sustainment buffer
-- Omega_C: Command transmission integrity
-
-Evaluates Bottleneck (Omega_min), Additive (Omega_mean), and Multiplicative (Omega_geo)
-architectures to test hypotheses PF-H2 and PF-H3.
-
-Version: pineland.partner_force_regenerative_coordinates.v1
-"""
-
 from __future__ import annotations
+
+from typing import Any, Dict, Sequence
 import math
-from typing import Dict, Any, Tuple
 import numpy as np
 import pandas as pd
-from scipy.stats import spearmanr, pearsonr
+from scipy.stats import spearmanr
 from sklearn.isotonic import IsotonicRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import GroupKFold
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 
-def calculate_regenerative_coordinates(
-    stock_manpower: float,
-    flow_recruits_graduation: float,
-    flow_personnel_losses: float,
-    stock_supply: float,
-    flow_supply_replenishment: float,
-    flow_supply_consumption: float,
-    organic_firepower: float,
-    external_firepower: float,
-    command_reliability: float,
-    command_latency_hours: float,
-    horizon_days: float,
-    epsilon: float = 1e-6
-) -> Dict[str, float]:
-    """
-    Computes audited regenerative coordinates Omega_j = tau_j / h for each subsystem.
-    """
-    h_hours = max(1.0, horizon_days * 24.0)
+def _bounded_coverage(stock_plus_flow: np.ndarray, burden: np.ndarray, epsilon: float = 1e-9) -> np.ndarray:
+    raw = stock_plus_flow / np.maximum(burden, epsilon)
+    raw = np.maximum(raw, 0.0)
+    return raw / (1.0 + raw)
 
-    # Manpower: buffer tau_M = (stock + flow_grad * h) / (losses * h + epsilon)
-    net_manpower_support = flow_recruits_graduation * horizon_days
-    net_manpower_loss = max(epsilon, flow_personnel_losses * horizon_days)
-    omega_m = (stock_manpower + net_manpower_support) / net_manpower_loss
 
-    # Logistics: buffer tau_G = (stock + flow_replenish * h) / (consumption * h + epsilon)
-    net_supply_flow = flow_supply_replenishment * horizon_days
-    net_supply_loss = max(epsilon, flow_supply_consumption * horizon_days)
-    omega_g = (stock_supply + net_supply_flow) / net_supply_loss
+def add_candidate_regenerative_coordinates(paired: pd.DataFrame) -> pd.DataFrame:
+    out = paired.copy()
+    manpower_cover = out["pre_trained_reserve"].to_numpy(float) + out["window_indigenous_graduates"].to_numpy(float)
+    manpower_burden = out["window_military_losses"].to_numpy(float)
+    out["omega_manpower"] = _bounded_coverage(manpower_cover, manpower_burden)
 
-    # Firepower: organic share vs total combat burden
-    total_firepower = organic_firepower + external_firepower
-    omega_f = organic_firepower / max(epsilon, total_firepower)
+    logistics_cover = out["pre_supply_stock"].to_numpy(float) + out["window_indigenous_logistics_produced"].to_numpy(float)
+    logistics_burden = out["window_indigenous_logistics_consumed"].to_numpy(float)
+    out["omega_logistics"] = _bounded_coverage(logistics_cover, logistics_burden)
 
-    # Command: transmission reliability penalized by latency relative to tactical reaction time
-    latency_penalty = math.exp(-command_latency_hours / 24.0)
-    omega_c = command_reliability * latency_penalty
+    rel = np.clip(out["pre_command_reliability"].to_numpy(float), 0.0, 1.0)
+    latency = np.maximum(out["pre_command_latency_hours"].to_numpy(float), 0.0)
+    out["omega_command"] = rel * np.exp(-latency / 24.0)
 
-    coords = [omega_m, omega_f, omega_g, omega_c]
-    om_min = float(min(coords))
-    om_mean = float(np.mean(coords))
-    # Geometric mean with positive clipping
-    om_geo = float(math.exp(np.mean([math.log(max(1e-4, x)) for x in coords])))
+    coords = out[["omega_manpower", "omega_logistics", "omega_command"]].to_numpy(float)
+    out["omega_min"] = np.min(coords, axis=1)
+    out["omega_mean"] = np.mean(coords, axis=1)
+    out["omega_geo"] = np.exp(np.mean(np.log(np.clip(coords, 1e-6, 1.0)), axis=1))
+    return out
 
+
+def _group_splits(groups: Sequence[Any], max_splits: int = 5):
+    unique = np.unique(np.asarray(groups))
+    if len(unique) < 2:
+        return None
+    return GroupKFold(n_splits=min(max_splits, len(unique)))
+
+
+def _cv_isotonic_rmse(x: np.ndarray, y: np.ndarray, groups: np.ndarray) -> float:
+    cv = _group_splits(groups)
+    if cv is None:
+        return float("nan")
+    pred = np.full(len(y), np.nan)
+    for train, test in cv.split(x.reshape(-1, 1), y, groups):
+        xt = x[train]
+        if len(np.unique(xt)) < 2:
+            pred[test] = float(np.mean(y[train]))
+        else:
+            model = IsotonicRegression(out_of_bounds="clip").fit(xt, y[train])
+            pred[test] = model.predict(x[test])
+    return float(np.sqrt(mean_squared_error(y, pred)))
+
+
+def _cv_ridge(X: np.ndarray, y: np.ndarray, groups: np.ndarray) -> Dict[str, float]:
+    cv = _group_splits(groups)
+    if cv is None:
+        return {"rmse": float("nan"), "r2": float("nan")}
+    pred = np.full(len(y), np.nan)
+    for train, test in cv.split(X, y, groups):
+        model = make_pipeline(StandardScaler(), Ridge(alpha=1.0))
+        model.fit(X[train], y[train])
+        pred[test] = model.predict(X[test])
     return {
-        "omega_manpower": float(omega_m),
-        "omega_firepower": float(omega_f),
-        "omega_logistics": float(omega_g),
-        "omega_command": float(omega_c),
-        "omega_min": om_min,
-        "omega_mean": om_mean,
-        "omega_geo": om_geo
+        "rmse": float(np.sqrt(mean_squared_error(y, pred))),
+        "r2": float(r2_score(y, pred)),
     }
 
 
-def evaluate_bottleneck_competitors(df: pd.DataFrame) -> Dict[str, Any]:
-    """
-    Tests PF-H2: Evaluates predictive power of Omega_min vs Omega_mean vs Omega_geo
-    against post-withdrawal autonomy ratio R_h.
-    """
-    target = df["autonomy_ratio"].to_numpy(dtype=float)
-    candidates = {
-        "Omega_min": df["omega_min"].to_numpy(dtype=float),
-        "Omega_mean": df["omega_mean"].to_numpy(dtype=float),
-        "Omega_geo": df["omega_geo"].to_numpy(dtype=float)
-    }
-
-    results: Dict[str, Any] = {}
-    
-    for name, x in candidates.items():
-        # Monotonic fit
-        iso = IsotonicRegression(out_of_bounds="clip").fit(x, target)
-        pred = iso.predict(x)
-        rmse = float(np.sqrt(mean_squared_error(target, pred)))
-        
-        # Correlations
-        pr, _ = pearsonr(x, target) if len(np.unique(x)) > 1 else (0.0, 1.0)
-        sr, _ = spearmanr(x, target) if len(np.unique(x)) > 1 else (0.0, 1.0)
-        
-        results[name] = {
-            "rmse": rmse,
-            "pearson_r": float(pr),
-            "spearman_rho": float(sr)
+def evaluate_bottleneck_competitors(paired: pd.DataFrame) -> Dict[str, Any]:
+    df = add_candidate_regenerative_coordinates(paired)
+    y = df["autonomy_ratio"].to_numpy(float)
+    groups = df["seed"].to_numpy()
+    metrics: Dict[str, Any] = {}
+    for col in ["omega_min", "omega_mean", "omega_geo"]:
+        x = df[col].to_numpy(float)
+        rho = spearmanr(x, y).statistic if len(np.unique(x)) > 1 else 0.0
+        metrics[col] = {
+            "grouped_cv_isotonic_rmse": _cv_isotonic_rmse(x, y, groups),
+            "spearman_rho_descriptive": float(rho),
         }
-
-    # Rank by lowest RMSE (best fit)
-    ranked = sorted(results.keys(), key=lambda k: results[k]["rmse"])
-    
-    verdict = {
-        "competitor_ranking": ranked,
-        "best_predictor": ranked[0],
-        "bottleneck_hypothesis_supported": (ranked[0] == "Omega_min" or results["Omega_min"]["spearman_rho"] >= results["Omega_mean"]["spearman_rho"]),
-        "metrics": results
-    }
-    return verdict
-
-
-def evaluate_regeneration_vs_stocks(df: pd.DataFrame, horizons: List[int] = [90, 180]) -> Dict[str, Any]:
-    """
-    Tests PF-H3: Evaluates whether long-horizon autonomy retention (90d, 180d) is predicted
-    more strongly by endogenous regeneration flows than by withdrawal-day stocks.
-    """
-    sub_df = df[df["horizon_days"].isin(horizons)]
-    if len(sub_df) == 0:
-        sub_df = df
-
-    target = sub_df["autonomy_ratio"].to_numpy(dtype=float)
-
-    # Stock group predictors
-    stock_pred = sub_df[["organic_personnel_reserve", "mean_formation_readiness"]].mean(axis=1).to_numpy(dtype=float)
-    # Flow group predictors
-    flow_pred = sub_df[["recruit_graduation_throughput", "indigenous_supply_delivered"]].mean(axis=1).to_numpy(dtype=float)
-
-    sr_stock, _ = spearmanr(stock_pred, target) if len(np.unique(stock_pred)) > 1 else (0.0, 1.0)
-    sr_flow, _ = spearmanr(flow_pred, target) if len(np.unique(flow_pred)) > 1 else (0.0, 1.0)
-
+    additive = _cv_ridge(
+        df[["omega_manpower", "omega_logistics", "omega_command"]].to_numpy(float),
+        y,
+        groups,
+    )
+    metrics["regularized_additive"] = additive
+    ranked = sorted(
+        metrics,
+        key=lambda k: metrics[k].get("grouped_cv_isotonic_rmse", metrics[k].get("rmse", float("inf"))),
+    )
     return {
-        "stock_spearman_rho": float(sr_stock),
-        "flow_spearman_rho": float(sr_flow),
-        "regeneration_dominates_stocks": bool(sr_flow >= sr_stock),
-        "horizons_evaluated": horizons
+        "status": "DISCOVERY_COMPARISON_ONLY",
+        "competitor_ranking_by_grouped_cv_rmse": ranked,
+        "metrics": metrics,
+        "warning": "Do not freeze a winner until discovery data are complete; transport claims require later zero-refit holdouts.",
+    }
+
+
+STOCK_COLUMNS = [
+    "pre_military_personnel", "pre_trained_reserve", "pre_recruit_pipeline",
+    "pre_readiness", "pre_experience", "pre_supply_stock", "pre_supply_capacity",
+    "pre_command_reliability", "pre_command_latency_hours",
+]
+FLOW_COLUMNS = [
+    "window_indigenous_recruits", "window_indigenous_graduates", "window_military_losses",
+    "window_indigenous_logistics_produced", "window_indigenous_logistics_delivered",
+    "window_indigenous_logistics_consumed",
+]
+
+
+def evaluate_regeneration_vs_stocks(paired: pd.DataFrame, horizons=(90, 180)) -> Dict[str, Any]:
+    df = paired[paired["horizon_days"].isin(horizons)].copy()
+    if df.empty:
+        raise ValueError(f"no rows at requested long horizons {horizons}")
+    y = df["autonomy_ratio"].to_numpy(float)
+    groups = df["seed"].to_numpy()
+    stock = _cv_ridge(df[STOCK_COLUMNS].to_numpy(float), y, groups)
+    flow = _cv_ridge(df[FLOW_COLUMNS].to_numpy(float), y, groups)
+    combined = _cv_ridge(df[STOCK_COLUMNS + FLOW_COLUMNS].to_numpy(float), y, groups)
+    return {
+        "status": "DISCOVERY_COMPARISON_ONLY",
+        "horizons": list(horizons),
+        "stock_only_grouped_cv": stock,
+        "flow_only_grouped_cv": flow,
+        "stock_plus_flow_grouped_cv": combined,
+    }
+
+
+def evaluate_supported_performance_vs_indigenous_state(paired: pd.DataFrame) -> Dict[str, Any]:
+    y = paired["autonomy_ratio"].to_numpy(float)
+    groups = paired["seed"].to_numpy()
+    supported = _cv_ridge(paired[["pre_supported_capability"]].to_numpy(float), y, groups)
+    indigenous = _cv_ridge(paired[STOCK_COLUMNS + FLOW_COLUMNS].to_numpy(float), y, groups)
+    return {
+        "status": "DISCOVERY_COMPARISON_ONLY",
+        "supported_performance_only_grouped_cv": supported,
+        "indigenous_state_flow_grouped_cv": indigenous,
     }

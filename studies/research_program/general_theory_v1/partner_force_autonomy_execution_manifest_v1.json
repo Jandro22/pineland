@@ -1,65 +1,41 @@
 {
   "schema_version": "pineland.partner_force_autonomy_execution_manifest.v1",
-  "status": "READY_FOR_EXECUTION_ZERO_COMPUTE_GATE_ENFORCED",
+  "status": "STAGE3_DISCOVERY_READY_STAGE4_BLOCKED",
   "historical_outcomes_used": false,
-  "description": "Execution protocol, battery plan, CLI launch instructions, and compute gate enforcement for the Partner-Force Autonomy Experiment.",
-  "preparation_phase_compute_enforcement": {
-    "compute_gate": "PASSED_ZERO_EXPERIMENTAL_COMPUTE",
-    "verification_actions_completed": [
-      "Rust workspace compilation and 46/46 unit tests passing",
-      "Immediate diff allowlist invariant verified",
-      "Paired counterfactual cloning and CRN determinism verified",
-      "Channel isolation and flow conservation accounting identities verified",
-      "Synthetic pairing fixtures and analysis pipelines verified without simulation runs"
-    ]
+  "stage3": {
+    "design_contract": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage3_discovery_design_v1.json",
+    "cell_manifest": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv",
+    "capability_assay_contract": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json",
+    "withdrawal_time_days": 120,
+    "observation_window_days": 60,
+    "horizons_days": [7, 30, 90, 180],
+    "design_cells": 60,
+    "default_seed_count": 12,
+    "prehistories": 720,
+    "counterfactual_pairs": 2880,
+    "raw_branch_rows": 5760,
+    "execution_note": "Each prehistory is simulated once to T. One ON and one OFF clone are then advanced sequentially through all four horizons, so 2880 measurement pairs do not imply 5760 independent full prehistory runs."
   },
-  "planned_experimental_battery": {
-    "design": "Paired counterfactual factorial across 5 assistance architectures",
-    "withdrawal_epochs_ticks": [60, 120, 180],
-    "measurement_horizons_days": [7, 30, 90, 180],
-    "seeds_per_cell": 16,
-    "total_counterfactual_pairs": 80,
-    "configurations": [
-      {
-        "name": "substitution_heavy",
-        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/substitution_heavy_v1.json",
-        "emphasis": "High external air & logistics delivery; minimal indigenous training/command investment"
-      },
-      {
-        "name": "capacity_heavy",
-        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capacity_heavy_v1.json",
-        "emphasis": "High force-generation throughput and institutional command advisory; moderate direct firepower"
-      },
-      {
-        "name": "bottleneck_targeted",
-        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/bottleneck_targeted_v1.json",
-        "emphasis": "Assistance directed dynamically to the binding indigenous constraint subsystem"
-      },
-      {
-        "name": "calendar_transition",
-        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/calendar_transition_v1.json",
-        "emphasis": "Fixed chronological phased step-down of external support channels"
-      },
-      {
-        "name": "capability_conditioned",
-        "file": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capability_conditioned_v1.json",
-        "emphasis": "Withdrawal triggered strictly upon indigenous forces reaching autonomous benchmark thresholds"
-      }
-    ]
+  "commands": {
+    "no_compute_design_check": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --design studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv",
+    "tiny_smoke_only": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --smoke --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/stage3_smoke.csv",
+    "full_stage3_discovery": "cargo run --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv",
+    "analyze_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --input-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v2.csv"
   },
-  "cost_control_protocol": {
-    "discount_rate_annual": 0.05,
-    "equal_donor_cost_normalization": true,
-    "target_discounted_donor_cost": 500000.0,
-    "tolerance_band": 0.05
+  "safety": {
+    "runner_requires_execute_flag": true,
+    "analysis_never_launches_simulation": true,
+    "analysis_requires_real_input_csv_unless_dry_run": true,
+    "dry_run_fixture_status": "PLUMBING_ONLY_NO_SCIENTIFIC_EVALUATION"
   },
-  "launch_instructions": {
-    "single_command_execution": "python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --config-dir studies/research_program/general_theory_v1/partner_force_autonomy/configs --output-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs",
-    "pre_launch_validator": "python studies/research_program/general_theory_v1/partner_force_autonomy/validate_partner_force_autonomy_environment.py"
+  "cost_interpretation": {
+    "stage3_equal_cost_policy_comparison": false,
+    "reason": "Stage 3 identifies dependence/autonomy relationships across support compositions. Donor costs are metered but no architecture is ranked for efficiency.",
+    "stage4_equal_cost_required": true
   },
-  "data_outputs_contract": {
-    "panel_dataset": "studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_panel_v1.csv",
-    "summary_metrics": "studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_metrics_v1.json",
-    "schema_file": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_output_schema_v1.json"
+  "stage4": {
+    "status": "BLOCKED",
+    "blocked_policy_families": ["capacity_heavy", "bottleneck_targeted", "calendar_transition", "capability_conditioned"],
+    "unblock_condition": "Complete Stage-3 discovery, freeze candidate predictors, run zero-refit held-out mechanism tests, then preregister persistent/adaptive policy mechanisms and equal-cost rules."
   }
 }
