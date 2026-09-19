@@ -303,6 +303,26 @@ fn replacement_weighted_experience(
     )
 }
 
+fn security_training_transition(
+    pipeline_after_recruitment: f64,
+    training_rate: f64,
+    elapsed_days: f64,
+) -> (f64, f64) {
+    let graduation_fraction = clamp01(1.0 - python_exp(-training_rate.max(0.0) * elapsed_days));
+    let graduated = pipeline_after_recruitment * graduation_fraction;
+    (pipeline_after_recruitment - graduated, graduated)
+}
+
+fn security_reserve_after_attrition(
+    reserve_before_graduation: f64,
+    graduated: f64,
+    reserve_attrition_rate: f64,
+    elapsed_days: f64,
+) -> f64 {
+    let reserve_survival = python_exp(-reserve_attrition_rate.max(0.0) * elapsed_days);
+    (reserve_before_graduation + graduated) * reserve_survival
+}
+
 fn deploy_military(
     particle: &mut ParticleState,
     config: &SimulationConfig,
@@ -565,18 +585,21 @@ pub fn update(
             summary.recruited += recruits;
         }
 
-        let graduation_fraction = clamp01(
-            1.0 - python_exp(-config.state_regeneration.security_training_rate * elapsed_days),
+        let (pipeline_after_graduation, graduated) = security_training_transition(
+            particle.locality.government_security_recruit_pipeline[locality],
+            config.state_regeneration.security_training_rate,
+            elapsed_days,
         );
-        let graduated =
-            particle.locality.government_security_recruit_pipeline[locality] * graduation_fraction;
-        particle.locality.government_security_recruit_pipeline[locality] -= graduated;
-        particle.locality.government_security_reserve[locality] += graduated;
+        particle.locality.government_security_recruit_pipeline[locality] =
+            pipeline_after_graduation;
         summary.graduated += graduated;
 
-        let reserve_survival =
-            python_exp(-config.state_regeneration.reserve_attrition_rate.max(0.0) * elapsed_days);
-        particle.locality.government_security_reserve[locality] *= reserve_survival;
+        particle.locality.government_security_reserve[locality] = security_reserve_after_attrition(
+            particle.locality.government_security_reserve[locality],
+            graduated,
+            config.state_regeneration.reserve_attrition_rate,
+            elapsed_days,
+        );
 
         let (police_current, police_target, military_current, military_target) =
             local_force_status(particle, config, locality);
@@ -869,6 +892,145 @@ mod tests {
         assert_eq!(cases, 1050);
         println!(
             "STRUCTURAL_SL7_MATH cases={cases} max_closed_form_residual={maximum_closed_form_residual:.17e}"
+        );
+    }
+
+    #[test]
+    fn structural_law_security_absorption_helpers_preserve_inline_arithmetic() {
+        let pipeline_values = [0.0, 1.0, 100.0, 10_000.0];
+        let recruit_values = [0.0, 1.0, 100.0, 10_000.0];
+        let training_rates = [0.0, 0.001, 1.0 / 90.0, 0.05, 1.0];
+        let reserve_values = [0.0, 10.0, 1_000.0];
+        let attrition_rates: [f64; 4] = [0.0, 0.0005, 0.01, 0.1];
+        let elapsed_values = [1.0, 7.0, 14.0, 30.0, 90.0];
+        let mut cases = 0usize;
+
+        for pipeline in pipeline_values {
+            for recruits in recruit_values {
+                let total_pipeline = pipeline + recruits;
+                for training_rate in training_rates {
+                    for reserve in reserve_values {
+                        for attrition_rate in attrition_rates {
+                            for elapsed in elapsed_values {
+                                let graduation_fraction =
+                                    clamp01(1.0 - python_exp(-training_rate * elapsed));
+                                let legacy_graduated = total_pipeline * graduation_fraction;
+                                let legacy_pipeline = total_pipeline - legacy_graduated;
+                                let mut legacy_reserve = reserve;
+                                legacy_reserve += legacy_graduated;
+                                let reserve_survival =
+                                    python_exp(-attrition_rate.max(0.0) * elapsed);
+                                legacy_reserve *= reserve_survival;
+
+                                let (helper_pipeline, helper_graduated) =
+                                    security_training_transition(
+                                        total_pipeline,
+                                        training_rate,
+                                        elapsed,
+                                    );
+                                let helper_reserve = security_reserve_after_attrition(
+                                    reserve,
+                                    helper_graduated,
+                                    attrition_rate,
+                                    elapsed,
+                                );
+                                assert_eq!(
+                                    helper_graduated.to_bits(),
+                                    legacy_graduated.to_bits(),
+                                    "graduation mismatch pipeline={pipeline} recruits={recruits} tau={training_rate} elapsed={elapsed}"
+                                );
+                                assert_eq!(
+                                    helper_pipeline.to_bits(),
+                                    legacy_pipeline.to_bits(),
+                                    "pipeline mismatch pipeline={pipeline} recruits={recruits} tau={training_rate} elapsed={elapsed}"
+                                );
+                                assert_eq!(
+                                    helper_reserve.to_bits(),
+                                    legacy_reserve.to_bits(),
+                                    "reserve mismatch reserve={reserve} graduated={legacy_graduated} mu={attrition_rate} elapsed={elapsed}"
+                                );
+                                cases += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 4_800);
+        println!("STRUCTURAL_SL10_INLINE_EQUIVALENCE cases={cases}");
+    }
+
+    #[test]
+    fn structural_law_security_absorption_matches_production_update() {
+        let mut config = small_config();
+        config.state_regeneration.enabled = true;
+        config.state_regeneration.security_recruitment_rate = 0.0;
+        config.state_regeneration.security_training_rate = 1.0 / 90.0;
+        config.state_regeneration.reserve_attrition_rate = 0.01;
+        config.state_regeneration.training_cost_per_person = 0.0;
+        config.state_regeneration.deployment_cost_per_person = 0.0;
+        config.state_regeneration.police_target_population_fraction = 0.0;
+        config.state_regeneration.military_target_multiplier = 0.0;
+        let mut engine = SimulationEngine::new(config.clone()).expect("engine");
+        let locality = 0usize;
+
+        // Ensure the locality has no deployable police deficit. The target is
+        // clamped to a minimum of 15, so overstaff the existing local post.
+        for post in 0..engine.particle.security_posts.personnel.len() {
+            if engine.particle.security_posts.organization[post] as usize == POLICE
+                && engine.particle.security_posts.locality[post] as usize == locality
+            {
+                engine.particle.security_posts.personnel[post] = 300.0;
+                engine.particle.security_posts.staffed[post] = 1;
+                engine.particle.security_posts.presence[post] = 1.0;
+            }
+        }
+
+        let pipeline_before = 100.0;
+        let reserve_before = 10.0;
+        engine
+            .particle
+            .locality
+            .government_security_recruit_pipeline[locality] = pipeline_before;
+        engine.particle.locality.government_security_reserve[locality] = reserve_before;
+        let elapsed = 14.0;
+        let (expected_pipeline, expected_graduated) = security_training_transition(
+            pipeline_before,
+            config.state_regeneration.security_training_rate,
+            elapsed,
+        );
+        let expected_reserve = security_reserve_after_attrition(
+            reserve_before,
+            expected_graduated,
+            config.state_regeneration.reserve_attrition_rate,
+            elapsed,
+        );
+
+        let summary = update(
+            &mut engine.particle,
+            &engine.topology,
+            &config,
+            elapsed,
+            elapsed,
+        );
+        assert_eq!(
+            engine
+                .particle
+                .locality
+                .government_security_recruit_pipeline[locality]
+                .to_bits(),
+            expected_pipeline.to_bits()
+        );
+        assert_eq!(
+            engine.particle.locality.government_security_reserve[locality].to_bits(),
+            expected_reserve.to_bits()
+        );
+        assert_eq!(summary.graduated.to_bits(), expected_graduated.to_bits());
+        assert_eq!(summary.recruited.to_bits(), 0.0f64.to_bits());
+        assert_eq!(summary.deployed_police.to_bits(), 0.0f64.to_bits());
+        assert_eq!(summary.deployed_military.to_bits(), 0.0f64.to_bits());
+        println!(
+            "STRUCTURAL_SL10_PRODUCTION pipeline_before={pipeline_before:.17} pipeline_after={expected_pipeline:.17} graduated={expected_graduated:.17} reserve_after={expected_reserve:.17}"
         );
     }
 
