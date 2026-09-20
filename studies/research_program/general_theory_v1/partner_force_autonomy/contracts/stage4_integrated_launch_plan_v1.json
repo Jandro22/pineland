@@ -1,0 +1,40 @@
+{
+  "schema_version": "pineland.partner_force_stage4_launch_plan.v1",
+  "status": "PLANNED_BEFORE_PRODUCTION",
+  "aggregate_initial_concurrency": 196,
+  "total_production_worlds": 2808,
+  "one_core_per_world": true,
+  "modules": [
+    {
+      "module": "A",
+      "experiment_id": "partner_force_stage4_autonomy_phase_map_v1",
+      "contract": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage4_autonomy_phase_map_v1.json",
+      "cells": 140,
+      "seeds": 12,
+      "tasks": 1680,
+      "initial_array_throttle": 96,
+      "output_directory": "/home/alejandrog/pineland-stage4-production/phase_map"
+    },
+    {
+      "module": "B",
+      "experiment_id": "partner_force_stage4_bottleneck_migration_v1",
+      "contract": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage4_bottleneck_migration_v1.json",
+      "cells": 52,
+      "seeds": 12,
+      "tasks": 624,
+      "initial_array_throttle": 52,
+      "output_directory": "/home/alejandrog/pineland-stage4-production/bottleneck_migration"
+    },
+    {
+      "module": "C",
+      "experiment_id": "partner_force_stage4_substitution_development_v1",
+      "contract": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage4_substitution_development_v1.json",
+      "cells": 42,
+      "seeds": 12,
+      "tasks": 504,
+      "initial_array_throttle": 48,
+      "output_directory": "/home/alejandrog/pineland-stage4-production/substitution_development"
+    }
+  ],
+  "scheduler_note": "Array throttles are operational choices only and may be lowered by fair-share conditions without changing the scientific design."
+}

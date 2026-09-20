@@ -1,0 +1,15 @@
+{
+  "schema_version": "pineland.partner_force_stage4_foundation_reference.v1",
+  "status": "STAGE3_V5_FOUNDATION_ACCEPTED_BEFORE_STAGE4",
+  "stage3_scientific_commit": "e536251c6d9faeb37e948d81179ada99a042d94a",
+  "stage3_ready_schema": "pineland.partner_force_autonomy_ready.v5",
+  "stage3_ready_status": "READY_FOR_STAGE4_EXPERIMENTS",
+  "stage3_all_720_tasks_verified": true,
+  "stage3_single_commit_verified": true,
+  "stage3_command_fix_verified": true,
+  "stage3_merged_primary_sha256": "72ad38a2f71c86fe81020cb665f832349061d793ba9d0d1b893c98524f8f137a",
+  "stage3_merged_trajectory_sha256": "bb91089e6f1ccc5375220f8b18810e5cc0e4d08920e66c0ebe1e713a99d826e8",
+  "stage3_frozen_predictor_sha256": "227b034b14349c87ab183c0a13880d2fcf620f8dd7d2da37def07fc4b047ec52",
+  "stage4_scientific_boundary": "Stage-4 extends the accepted Stage-3 v5 runtime with preregistered developmental-assistance dynamics. Stage-3 outputs are evidence for design calibration only and are not pooled with Stage-4 outcomes.",
+  "production_firewall": "Stage-4 production outcomes must not be inspected before the final Stage-4 contracts, analysis code, runtime, and freeze are committed. Engineering calibration uses a separate seed namespace."
+}

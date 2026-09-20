@@ -3791,6 +3791,13 @@
   "cells_count": 140,
   "default_seed_count": 12,
   "description": "Maps the sign and magnitude of continued-assistance effects across indigenous constraint severity and balanced support intensity.",
+  "engineering_calibration": {
+    "canonical_slurm_job_id": 886011,
+    "decision": "retain the originally specified developmental rate scale unchanged; do not tune to calibration effect direction or magnitude",
+    "excluded_from_production_inference": true,
+    "purpose": "correctness and treatment-relevance only",
+    "seed_namespace": "2026290000-series"
+  },
   "environment": {
     "agent_count": 1000,
     "development_cadence_days": 7.0,
@@ -3821,8 +3828,9 @@
     "autonomy_regime_class_360",
     "indigenous_response_to_demand_ratio"
   ],
+  "production_outcomes_used": false,
   "schema_version": "pineland.partner_force_stage4_contract.v1",
   "seed_base": 2026200000,
   "seed_namespace": "partner_force_stage4_autonomy_phase_map_v1-crn-v1",
-  "status": "PREREGISTERED_GENERATED_NOT_YET_FROZEN"
+  "status": "FROZEN_FOR_PRODUCTION_PENDING_CRYPTOGRAPHIC_FREEZE"
 }

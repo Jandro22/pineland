@@ -1,7 +1,7 @@
 {
   "analysis_rules": {
     "budget_rule": "Developmental cost anchors use Stage-3 mean daily donor costs for the corresponding heavy support profile: forcegen=1650, logistics=12284, command=2550. Hybrid uses half direct dose plus half developmental rate/budget.",
-    "calibration_firewall": "Before production, separate engineering pilot seeds may tune only the developmental growth-rate scale to obtain nondegenerate early effects. Production seeds and outcomes must remain unseen until the final rate is frozen.",
+    "calibration_firewall": "A separate 2026290000-series engineering calibration verified correctness and treatment relevance. The originally specified developmental growth-rate scale was retained unchanged. Calibration worlds are excluded from production inference; production seeds and outcomes remained unseen before freeze.",
     "early_effect_horizon_days": 30.0,
     "primary_horizon_days": 360.0
   },
@@ -1186,6 +1186,13 @@
   "cells_count": 42,
   "default_seed_count": 12,
   "description": "Separates direct external service substitution from persistent growth of indigenous production capacity under matched weak-channel structures.",
+  "engineering_calibration": {
+    "canonical_slurm_job_id": 886011,
+    "decision": "retain the originally specified developmental rate scale unchanged; do not tune to calibration effect direction or magnitude",
+    "excluded_from_production_inference": true,
+    "purpose": "correctness and treatment-relevance only",
+    "seed_namespace": "2026290000-series"
+  },
   "environment": {
     "agent_count": 1000,
     "development_cadence_days": 7.0,
@@ -1216,8 +1223,9 @@
     "cumulative_donor_cost_h",
     "capability_autonomy_frontier_position"
   ],
+  "production_outcomes_used": false,
   "schema_version": "pineland.partner_force_stage4_contract.v1",
   "seed_base": 2026220000,
   "seed_namespace": "partner_force_stage4_substitution_development_v1-crn-v1",
-  "status": "PREREGISTERED_GENERATED_NOT_YET_FROZEN"
+  "status": "FROZEN_FOR_PRODUCTION_PENDING_CRYPTOGRAPHIC_FREEZE"
 }

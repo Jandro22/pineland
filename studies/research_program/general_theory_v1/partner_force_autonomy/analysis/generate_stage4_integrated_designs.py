@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACTS = ROOT / "contracts"
 
@@ -123,8 +122,16 @@ def contract(
 ) -> dict:
     return {
         "schema_version": "pineland.partner_force_stage4_contract.v1",
-        "status": "PREREGISTERED_GENERATED_NOT_YET_FROZEN",
+        "status": "FROZEN_FOR_PRODUCTION_PENDING_CRYPTOGRAPHIC_FREEZE",
         "historical_outcomes_used": False,
+        "production_outcomes_used": False,
+        "engineering_calibration": {
+            "seed_namespace": "2026290000-series",
+            "canonical_slurm_job_id": 886011,
+            "purpose": "correctness and treatment-relevance only",
+            "decision": "retain the originally specified developmental rate scale unchanged; do not tune to calibration effect direction or magnitude",
+            "excluded_from_production_inference": True,
+        },
         "experiment_id": experiment_id,
         "name": name,
         "description": description,
@@ -369,7 +376,7 @@ def substitution_development() -> dict:
         ],
         {
             "budget_rule": "Developmental cost anchors use Stage-3 mean daily donor costs for the corresponding heavy support profile: forcegen=1650, logistics=12284, command=2550. Hybrid uses half direct dose plus half developmental rate/budget.",
-            "calibration_firewall": "Before production, separate engineering pilot seeds may tune only the developmental growth-rate scale to obtain nondegenerate early effects. Production seeds and outcomes must remain unseen until the final rate is frozen.",
+            "calibration_firewall": "A separate 2026290000-series engineering calibration verified correctness and treatment relevance. The originally specified developmental growth-rate scale was retained unchanged. Calibration worlds are excluded from production inference; production seeds and outcomes remained unseen before freeze.",
             "primary_horizon_days": 360.0,
             "early_effect_horizon_days": 30.0,
         },

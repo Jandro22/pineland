@@ -19,7 +19,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 COMMAND_REQUIREMENT_PER_ORDER = 0.5
 EPS = 1.0e-6
 CONFIRMATORY_HORIZONS = (7.0, 30.0, 90.0, 180.0, 360.0)
@@ -248,7 +247,7 @@ def grouped_summary(worlds: pd.DataFrame, factor_cols: list[str]) -> list[dict]:
         row = {k: v for k, v in zip(factor_cols, keys)}
         row.update(
             {
-                "n": int(len(g)),
+                "n": len(g),
                 "mean_delta_capability_h30": float(g["delta_composite_capability_h30"].mean()),
                 "mean_delta_capability_h360": float(g["delta_composite_capability_h360"].mean()),
                 "median_delta_q_feasible_h360": float(g["delta_q_feasible_h360"].median()),
@@ -297,8 +296,8 @@ def main() -> None:
         "source_trajectory_sha256": sha256(trajectory_path),
         "contract": str(contract_path),
         "contract_sha256": sha256(contract_path),
-        "worlds": int(len(worlds)),
-        "paired_horizon_rows": int(len(paired)),
+        "worlds": len(worlds),
+        "paired_horizon_rows": len(paired),
         "classification_rule": {
             "epsilon": EPS,
             "autonomy_primary": "delta(min(interval_formal_q_indigenous,1.0)) at 360d",

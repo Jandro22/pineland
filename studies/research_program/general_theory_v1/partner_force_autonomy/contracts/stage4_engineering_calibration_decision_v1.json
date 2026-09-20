@@ -1,0 +1,67 @@
+{
+  "schema_version": "pineland.partner_force_stage4_engineering_calibration_decision.v1",
+  "status": "FINAL_BEFORE_PRODUCTION",
+  "purpose": "Engineering correctness and treatment-relevance gate only; calibration outcomes are excluded from Stage-4 production inference.",
+  "canonical_calibration": {
+    "slurm_job_id": 886011,
+    "runtime_git_commit": "cfc402317674db9d077d93dde65fe5e9fa6f7c6a",
+    "seed_base": 2026290000,
+    "seed_count_per_selected_cell": 2,
+    "selected_zero_based_cell_indices": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34
+    ],
+    "worlds": 36,
+    "completed_worlds": 36,
+    "failed_worlds": 0,
+    "primary_files": 36,
+    "trajectory_files": 36,
+    "expected_primary_rows_per_world": 10,
+    "expected_trajectory_rows_per_world": 120,
+    "task_id_coverage": "0-35 complete",
+    "validation_errors": 0,
+    "combined_file_set_sha256": "09ef281ab97c9923d29b44240c143d2d947cce58581698cb76cff8e924afbacc",
+    "combined_file_bytes": 5436066,
+    "arc_output_directory": "/home/alejandrog/pineland-stage4-calibration-final"
+  },
+  "precanonical_pilot_provenance": {
+    "initial_job_id": 885968,
+    "repair_rerun_job_id": 886005,
+    "disposition": "engineering-only and superseded by canonical clean calibration job 886011",
+    "defect_found": "development-only command cells entered the direct command advisory overlay with zero direct advisory parameters, permitting an ulp-level negative recorded reliability boost",
+    "repair": "direct command advisory overlay now requires a nonzero direct advisory effect and the zero-effect overlay has a bit-exact no-op path",
+    "scientific_disposition": "no production world was launched before this defect was repaired and revalidated"
+  },
+  "parameter_decision": {
+    "development_rate_formula": "development_rate_per_30d = 0.08 * factor_intensity",
+    "low_intensity": 0.5,
+    "low_rate_per_30d": 0.04,
+    "high_intensity": 1.0,
+    "high_rate_per_30d": 0.08,
+    "decision": "RETAIN_ORIGINAL_SCALE_UNCHANGED",
+    "reason": "The canonical engineering battery completed without correctness failures and demonstrated nondegenerate persistent indigenous-capacity effects across the implemented development channels. No parameter was adjusted to improve agreement with a substantive Stage-4 hypothesis."
+  },
+  "production_firewall": {
+    "phase_map_seed_base": 2026200000,
+    "bottleneck_migration_seed_base": 2026210000,
+    "substitution_development_seed_base": 2026220000,
+    "production_worlds_examined_before_freeze": 0,
+    "calibration_worlds_included_in_production_analysis": 0
+  }
+}

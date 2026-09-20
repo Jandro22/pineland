@@ -6,8 +6,9 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
@@ -102,7 +103,7 @@ def validate_trajectory_shard(path: Path) -> pd.DataFrame:
         raise SystemExit(f"{path} has incorrect trajectory phase coverage")
     for phase, expected_offsets in phase_expected.items():
         actual = {
-            int(round(v))
+            round(v)
             for v in df.loc[df["phase"] == phase, "days_from_withdrawal"].to_numpy(float)
         }
         if actual != expected_offsets:
@@ -135,7 +136,7 @@ def enforce_ensemble_degeneracy_safeguard(merged: pd.DataFrame) -> dict:
     near_zero_fraction = float(near_zero.mean())
     variance = float(r180.var())
     report = {
-        "treated_worlds_h180": int(len(r180)),
+        "treated_worlds_h180": len(r180),
         "near_zero_worlds": int(near_zero.sum()),
         "near_zero_fraction": near_zero_fraction,
         "mean_r180": float(r180.mean()),
@@ -287,7 +288,7 @@ def main() -> None:
         trajectories.to_csv(trajectory_tmp, index=False)
         os.replace(trajectory_tmp, trajectory_output)
         trajectory_metadata = {
-            "trajectory_rows": int(len(trajectories)),
+            "trajectory_rows": len(trajectories),
             "trajectory_output_csv": str(trajectory_output),
             "trajectory_output_sha256": file_sha256(trajectory_output),
         }
@@ -297,14 +298,14 @@ def main() -> None:
         "input_directory": str(input_dir),
         "expected_tasks": expected_tasks,
         "expected_task_ids": sorted(expected_ids),
-        "merged_rows": int(len(merged)),
+        "merged_rows": len(merged),
         "unique_pairs": int(merged["pair_id"].nunique()),
         "experiment_ids": sorted(merged["experiment_id"].astype(str).unique().tolist()),
         "git_commits": sorted(merged["git_commit"].astype(str).unique().tolist()),
         "source_array_job_ids": sorted(
             {str(m.get("slurm_array_job_id")) for m in task_metadata}
         ),
-        "task_metadata_verified": int(len(task_metadata)),
+        "task_metadata_verified": len(task_metadata),
         "output_csv": str(output),
         "output_sha256": file_sha256(output),
         "degeneracy_safeguard": degeneracy_safeguard,
