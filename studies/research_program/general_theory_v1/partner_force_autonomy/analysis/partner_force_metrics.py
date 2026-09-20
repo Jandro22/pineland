@@ -72,8 +72,7 @@ BOUNDED_ZERO_ONE_COLUMNS = [
     "support_air_intensity", "support_command_reliability_boost",
     "support_command_latency_reduction_fraction", "c_government_control",
     "c_military_personnel_retention", "c_operational_formation_survival",
-    "c_geographic_coverage_retention", "c_operational_readiness_retention",
-    "composite_capability", "composite_capability_v1",
+    "c_geographic_coverage_retention", "composite_capability",
 ]
 
 NON_NEGATIVE_COLUMNS = [
@@ -137,6 +136,7 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
     bounded_cols = list(BOUNDED_ZERO_ONE_COLUMNS)
     if is_v4:
         bounded_cols.extend([
+            "c_operational_readiness_retention", "composite_capability_v1",
             "external_share_logistics", "external_share_forcegen",
             "external_share_command", "external_share_air", "formal_support_lift",
         ])
