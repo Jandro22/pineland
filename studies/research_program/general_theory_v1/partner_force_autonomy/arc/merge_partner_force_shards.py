@@ -25,6 +25,16 @@ def parse_args() -> argparse.Namespace:
         "--trajectory-output-csv",
         help="If supplied, require, validate, and merge one diagnostic trajectory shard per task",
     )
+    p.add_argument(
+        "--require-task-metadata",
+        action="store_true",
+        help="Require and cryptographically validate one ARC task metadata sidecar per shard",
+    )
+    p.add_argument(
+        "--enforce-degeneracy-safeguard",
+        action="store_true",
+        help="Apply the preregistered ensemble degeneracy gate to the complete merged panel",
+    )
     group = p.add_mutually_exclusive_group(required=True)
     group.add_argument("--expected-tasks", type=int)
     group.add_argument(
@@ -172,6 +182,7 @@ def main() -> None:
 
     task_ids = []
     frames = []
+    task_metadata = []
     trajectory_contract = json.loads(
         (CONTRACTS / "partner_force_trajectory_contract_v2.json").read_text(encoding="utf-8")
     )
@@ -185,6 +196,23 @@ def main() -> None:
     for shard in shards:
         task_id = task_id_from_name(shard)
         task_ids.append(task_id)
+        metadata = None
+        if ns.require_task_metadata:
+            metadata_path = shard.with_suffix(".json")
+            if not metadata_path.exists():
+                raise SystemExit(f"missing ARC task metadata for {shard}: {metadata_path}")
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            if metadata.get("schema_version") != "pineland.partner_force_arc_task.v1":
+                raise SystemExit(f"{metadata_path} has unexpected schema_version")
+            if int(metadata.get("slurm_array_task_id", -1)) != task_id:
+                raise SystemExit(f"{metadata_path} task id does not match shard filename")
+            if metadata.get("output_sha256") != file_sha256(shard):
+                raise SystemExit(f"{shard} SHA-256 does not match ARC task metadata")
+            trajectory_shard = shard.with_name(f"{shard.stem}.trajectory.csv")
+            if not trajectory_shard.exists():
+                raise SystemExit(f"missing trajectory shard paired with {shard}")
+            if metadata.get("trajectory_sha256") != file_sha256(trajectory_shard):
+                raise SystemExit(f"{trajectory_shard} SHA-256 does not match ARC task metadata")
         df = pd.read_csv(shard)
         if len(df) != expected_primary_rows:
             raise SystemExit(
@@ -198,6 +226,14 @@ def main() -> None:
             )
         if set(df["branch"].astype(str)) != {"SUPPORT_ON", "SUPPORT_OFF"}:
             raise SystemExit(f"{shard} does not contain exactly SUPPORT_ON/SUPPORT_OFF branches")
+        if metadata is not None:
+            commits = set(df["git_commit"].astype(str))
+            if commits != {str(metadata.get("git_commit"))}:
+                raise SystemExit(
+                    f"{shard} git_commit does not match its ARC task metadata: "
+                    f"csv={sorted(commits)} meta={metadata.get('git_commit')}"
+                )
+            task_metadata.append(metadata)
         frames.append(df)
 
     actual_ids = set(task_ids)
@@ -210,7 +246,11 @@ def main() -> None:
 
     merged = pd.concat(frames, ignore_index=True)
     validate_raw_branch_panel(merged)
-    degeneracy_safeguard = enforce_ensemble_degeneracy_safeguard(merged)
+    degeneracy_safeguard = (
+        enforce_ensemble_degeneracy_safeguard(merged)
+        if ns.enforce_degeneracy_safeguard
+        else {"status": "NOT_REQUESTED"}
+    )
     merged = merged.sort_values(
         ["cell_id", "seed", "horizon_days", "branch"], kind="mergesort"
     ).reset_index(drop=True)
@@ -258,6 +298,10 @@ def main() -> None:
         "unique_pairs": int(merged["pair_id"].nunique()),
         "experiment_ids": sorted(merged["experiment_id"].astype(str).unique().tolist()),
         "git_commits": sorted(merged["git_commit"].astype(str).unique().tolist()),
+        "source_array_job_ids": sorted(
+            {str(m.get("slurm_array_job_id")) for m in task_metadata}
+        ),
+        "task_metadata_verified": int(len(task_metadata)),
         "output_csv": str(output),
         "output_sha256": file_sha256(output),
         "degeneracy_safeguard": degeneracy_safeguard,

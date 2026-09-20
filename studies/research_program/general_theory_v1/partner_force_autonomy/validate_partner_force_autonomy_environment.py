@@ -40,6 +40,12 @@ ANALYSIS_DIR = BASE_DIR / "analysis"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 ARC_DIR = BASE_DIR / "arc"
 
+def active_freeze_path() -> Path:
+    amended = CONTRACTS_DIR / "partner_force_autonomy_preregistration_freeze_v4.json"
+    if amended.exists():
+        return amended
+    return CONTRACTS_DIR / "partner_force_autonomy_preregistration_freeze_v3.json"
+
 
 def log_check(name: str, passed: bool, detail: str = "") -> None:
     status = "[PASS]" if passed else "[FAIL]"
@@ -114,6 +120,7 @@ def check_runner_compilation_and_safety_gate() -> None:
     cmd_freeze_success = [
         "cargo", "run", "--quiet", "--manifest-path", str(manifest_path), "-p", "pineland-model",
         "--example", "partner_force_autonomy_stage3", "--",
+        "--freeze", str(active_freeze_path()),
         "--seed-count", "0", "--allow-dirty", "--execute", "--output", str(freeze_probe),
         "--trajectory-output", str(trajectory_probe),
     ]
@@ -129,7 +136,9 @@ def check_runner_compilation_and_safety_gate() -> None:
     log_check(
         "Stage-3 current freeze accepted by Rust runner (zero-seed/no-engine probe)",
         freeze_success_ok,
-        res_freeze_success.stderr if not freeze_success_ok else "current v3 freeze accepted",
+        res_freeze_success.stderr
+        if not freeze_success_ok
+        else f"{active_freeze_path().name} accepted",
     )
 
     # Config-only validation builds the exact SimulationConfig for every frozen
@@ -325,7 +334,7 @@ def check_schema_and_fixtures() -> None:
 
 def check_preregistration_freeze() -> None:
     print("\n--- 7. Preregistration Cryptographic Freeze ---")
-    freeze_path = CONTRACTS_DIR / "partner_force_autonomy_preregistration_freeze_v3.json"
+    freeze_path = active_freeze_path()
     exists = freeze_path.exists()
     all_matched = False
     count = 0

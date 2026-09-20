@@ -1,0 +1,74 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_runtime_amendment.v1",
+  "status": "FROZEN_BEFORE_RESUMED_PRODUCTION_COMPUTE",
+  "date": "2026-09-20",
+  "supersedes_runtime_only": "partner_force_autonomy_preregistration_freeze_v3",
+  "original_production": {
+    "source_commit": "d2b317a8846fa233f4afa1eccf86add4b906e1a1",
+    "slurm_array_job_id": "882437",
+    "completed_shards_preserved": 416,
+    "missing_shards_to_resume": 304
+  },
+  "reason": [
+    "Single-world ARC shards incorrectly applied an ensemble-level degeneracy fraction gate, so any treated world inside the near-zero band was interpreted as 100% degenerate and aborted.",
+    "Windowed command-service telemetry subtracts independently accumulated cumulative supported and indigenous totals. Floating-point cancellation could create a tiny negative external increment even though the mathematical quantity is nonnegative in the Lean Nat domain."
+  ],
+  "runtime_changes": {
+    "degeneracy_gate": {
+      "old_behavior": "The Rust runner enforced the >90% near-zero and variance alarms independently inside each one-world ARC shard.",
+      "new_behavior": "Single-world ARC shards emit diagnostics but defer enforcement. The unchanged >90% near-zero and variance thresholds are enforced by the shard merger after the complete 720-world ensemble is assembled.",
+      "scientific_threshold_changed": false
+    },
+    "formal_command_external_projection": {
+      "old_behavior": "external_command_service = supported_interval_service - indigenous_interval_service was passed directly to the strict formal adapter.",
+      "new_behavior": "A negative residual no larger than 1e-10 times max(|supported|, |indigenous|, 1) is projected to zero before entering the strict formal adapter. Material negative discrepancies remain negative and are rejected.",
+      "formal_domain_changed": false,
+      "model_dynamics_changed": false
+    },
+    "merge_provenance": {
+      "new_behavior": "The merger verifies every task metadata sidecar, primary and trajectory SHA-256, task id, discovery mode, and CSV git_commit before merging, and records source array job ids."
+    }
+  },
+  "scientific_invariants": {
+    "design_cells_changed": false,
+    "seeds_changed": false,
+    "rng_namespace_changed": false,
+    "simulation_dynamics_changed": false,
+    "treatments_changed": false,
+    "outcome_definition_changed": false,
+    "horizons_changed": false,
+    "trajectory_sampling_changed": false,
+    "hypotheses_or_thresholds_changed": false,
+    "analysis_model_changed": false
+  },
+  "completed_v3_shard_reuse": {
+    "status": "APPROVED_RUNTIME_EQUIVALENT",
+    "rationale": [
+      "Any original shard that encountered a negative formal external-service value failed before producing a completed metadata sidecar; therefore every preserved completed shard used a nonnegative value that the new projection returns unchanged.",
+      "The degeneracy change only suppresses an abort for single-world shards. A preserved completed shard necessarily did not trigger that abort under the original runner.",
+      "The merger change has no effect on simulation execution or shard contents."
+    ],
+    "required_provenance": [
+      "Preserved shards must retain source commit d2b317a8846fa233f4afa1eccf86add4b906e1a1 and source array job 882437 in task metadata.",
+      "Resumed shards must record their amended source commit and resumed Slurm array job in task metadata.",
+      "All 720 metadata sidecars and primary/trajectory SHA-256 values must validate before analysis."
+    ]
+  },
+  "regression_evidence": {
+    "formal_failure_world": {
+      "original_task_id": 122,
+      "cell_index": 10,
+      "seed": 2026120002,
+      "original_failure": "formal service external must be nonnegative (Lean domain is Nat)",
+      "amended_result": "PASS_10_PRIMARY_ROWS_120_TRAJECTORY_ROWS"
+    },
+    "degeneracy_failure_world": {
+      "original_task_id": 125,
+      "cell_index": 10,
+      "seed": 2026120005,
+      "original_failure": "single-world 100% near-zero degeneracy alarm",
+      "amended_result": "PASS_WITH_GATE_DEFERRED_TO_COMPLETE_MERGE"
+    }
+  },
+  "holdouts_and_stage4": "UNCHANGED_AND_BLOCKED_UNTIL_STAGE3_DISCOVERY_REVIEW"
+}

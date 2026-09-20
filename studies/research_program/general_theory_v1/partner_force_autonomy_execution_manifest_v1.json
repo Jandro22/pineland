@@ -1,11 +1,13 @@
 {
   "schema_version": "pineland.partner_force_autonomy_execution_manifest.v1",
-  "status": "STAGE3_V3_PREFLIGHT_PENDING_STAGE4_BLOCKED",
+  "status": "STAGE3_V4_RUNTIME_AMENDMENT_ACTIVE_STAGE4_BLOCKED",
   "historical_outcomes_used": false,
   "stage3": {
     "design_contract": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage3_discovery_design_v3.json",
     "cell_manifest": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v3.csv",
-    "capability_assay_contract": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json",
+    "capability_assay_contract": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v2.json",
+    "active_freeze": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v4.json",
+    "runtime_amendment": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_runtime_amendment_v4.json",
     "withdrawal_time_days": 120,
     "observation_window_days": 60,
     "horizons_days": [
@@ -25,6 +27,7 @@
     "array_unit": "one frozen design cell x one seed; the task internally runs both branches and all five horizons",
     "array_task_count": 720,
     "default_array_concurrency": 8,
+    "resumed_production_concurrency": 32,
     "production_memory_per_task": "1G",
     "production_walltime_per_task": "01:00:00",
     "rows_per_array_task": 10,
@@ -40,8 +43,8 @@
     "no_compute_config_validation": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --validate-configs",
     "tiny_smoke_only": "cargo run --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --smoke --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/stage3_smoke.csv",
     "arc_build_runner": "cargo build --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3",
-    "arc_submit_stage3": "sbatch --array=0-719%8 studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
-    "arc_merge_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py --input-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs/arc_stage3_v3_shards --expected-tasks 720 --output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v3.csv --trajectory-output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_trajectory_v2.csv",
+    "arc_submit_stage3": "sbatch --array=<missing-task-ids>%32 --export=ALL,PF_FREEZE=studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v4.json studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
+    "arc_merge_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py --input-dir studies/research_program/general_theory_v1/partner_force_autonomy/outputs/arc_stage3_v3_shards --expected-tasks 720 --require-task-metadata --enforce-degeneracy-safeguard --output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v3.csv --trajectory-output-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_trajectory_v2.csv",
     "local_monolithic_fallback": "cargo run --release --manifest-path rust/Cargo.toml -p pineland-model --example partner_force_autonomy_stage3 -- --execute --output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v3.csv --trajectory-output studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_trajectory_v2.csv",
     "analyze_and_freeze_stage3": "python studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py --input-csv studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_stage3_raw_v3.csv --freeze-predictor-json studies/research_program/general_theory_v1/partner_force_autonomy/outputs/partner_force_autonomy_frozen_predictor_v1.json",
     "arc_holdout_pattern": "sbatch --array=0-95%8 --export=ALL,PF_MODE=holdout,PF_HOLDOUT_CONTRACT=<frozen-contract>,PF_OUTPUT_DIR=<family-shard-dir> studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
@@ -58,7 +61,7 @@
     "holdout_evaluator_requires_complete_frozen_contract_coverage": true,
     "trajectory_sidecar_required_for_arc_task_success": true,
     "trajectory_analysis_is_diagnostic_only": true,
-    "telemetry_noninterference_byte_identity_audited": false
+    "telemetry_noninterference_byte_identity_audited": true
   },
   "cost_interpretation": {
     "stage3_equal_cost_policy_comparison": false,
