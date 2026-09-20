@@ -2784,7 +2784,31 @@ impl SimulationEngine {
             weighted_readiness_sum += personnel * deployable_readiness;
         }
         let operational_readiness = if military_personnel > 1.0e-12 {
-            weighted_readiness_sum / military_personnel
+            let op = weighted_readiness_sum / military_personnel;
+            if op <= 1.0e-12 {
+                eprintln!("DEBUG ZERO READINESS: military_personnel={military_personnel}, operational_formations={operational_formations}");
+                for f in 0..self.particle.formations.personnel.len() {
+                    if self.particle.formations.organization[f] as usize != MILITARY
+                        || self.particle.formations.active[f] == 0
+                        || self.particle.formations.operational_status[f] == 0
+                        || self.particle.formations.outside_pineland[f] != 0
+                    {
+                        continue;
+                    }
+                    eprintln!(
+                        "  formation {}: pers={}, avail={}, eff_read={}, read={}, fatigue={}, sup_frac={}, cmd={}",
+                        f,
+                        self.particle.formations.personnel[f],
+                        self.particle.formations.availability[f],
+                        self.particle.formations.effective_readiness(f),
+                        self.particle.formations.readiness[f],
+                        self.particle.formations.fatigue[f],
+                        self.particle.formations.supply_fraction(f),
+                        self.particle.formations.command[f],
+                    );
+                }
+            }
+            op
         } else {
             0.0
         };
