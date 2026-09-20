@@ -7,11 +7,11 @@
   "frozen_artifacts": {
     "raw_branch_schema": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_raw_branch_schema_v4.json",
-      "sha256": "b46950f863e10e4d2dace3f0ffe6f00718556b47cbd354b3e925e27e4990a38b"
+      "sha256": "87990b6ac1c58a1c30906cf3a3231d705ced3b0d09177c9934d34df47c3508d0"
     },
     "stage3_discovery_design": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage3_discovery_design_v3.json",
-      "sha256": "6424494d2f85de05fa0a97b5356d94271981d28f0cf870644b8aefbcb7801d52"
+      "sha256": "79f14af4568f086628fb52ff2c51d4614be971694f82fd60a7e43edd261f73b9"
     },
     "stage3_discovery_cells": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v3.csv",
@@ -23,7 +23,7 @@
     },
     "capability_assay_contract": {
       "path": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json",
-      "sha256": "555761cdb8ceecf4ada390444d87600b38c2244f471d632e178247538d116b88"
+      "sha256": "bcba767c314c6a921ed7e5f467553864713288c5fb3cbe292fc02d50034b460a"
     },
     "exclusion_manifest": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy_exclusion_manifest_v1.json",
@@ -71,7 +71,7 @@
     },
     "telemetry_noninterference_audit": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_telemetry_noninterference_audit_v2.json",
-      "sha256": "fe292c7225b58f1db5b10489c007d8c2ccb5ce326a570b967b5b9a87e9d52370"
+      "sha256": "ccb3f06eafe7ce56ab4699db2eda82a4f4b3a74f8df013589e897cbe7c624921"
     },
     "trajectory_contract": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_contract_v2.json",
@@ -79,11 +79,11 @@
     },
     "trajectory_schema": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_schema_v2.json",
-      "sha256": "1cadba9a54d356e9cdeac33610890bf13f6c3bdda7ff18f60af673b5a6551dd2"
+      "sha256": "249c1dc464044e63bbd1dc40f486733f9396e8ce12abcac151d9e8edf702bb9e"
     },
     "partner_force_metrics_code": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_metrics.py",
-      "sha256": "338a09ffe0ea4cea0ce14f6ed6d559e5c62d57831514a31b6f1fba85280d82f5"
+      "sha256": "cbe6b92b78c838c37de3aac2d4b00786a5fc58cd565e5d2c0cd917c5da17173a"
     },
     "partner_force_coordinates_code": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_regenerative_coordinates.py",
@@ -111,19 +111,19 @@
     },
     "stage3_runner_code": {
       "path": "rust/pineland-model/examples/partner_force_autonomy_stage3.rs",
-      "sha256": "fc804432e9fca9809e16fe1dbe9f51874094cd2e90bf389b5fb561c0dec0ceb4"
+      "sha256": "43f1c869675c3ed87f50394dfd1a1893ce361a894f70f25d4f3414542a8c6a10"
     },
     "formal_adapter_code": {
       "path": "rust/pineland-model/src/partner_force_formal.rs",
-      "sha256": "05d1549099de8b84c35b02dfdd5e1768700029fa54da827b5440e58ed89f60f7"
+      "sha256": "b7592c0aa50d6efddd53477448499ba088bb738316362339358eb328863805e6"
     },
     "engineering_assays_code": {
       "path": "rust/pineland-model/src/assays.rs",
-      "sha256": "1b49e16f7785d4a3f1889ce8a96bdb10dc52f6a6fa581903afd2cd560ab00969"
+      "sha256": "67adde766e878213aef9bb8c9b4f840aed6c7faa063b22bda22c0088c2855b44"
     },
     "pineland_model_module_wiring": {
       "path": "rust/pineland-model/src/lib.rs",
-      "sha256": "95dbfdc32ac56638130eda1591364211be42d79525c4bb48e4cd62c8963d276a"
+      "sha256": "de9c8e08f8f0750adb5d02287e1b4876c68278f70d96e90f701a6c16749d8cc2"
     },
     "lean_partner_force_theory": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/PinelandPartnerForceTheory/PartnerForce.lean",
@@ -131,7 +131,7 @@
     },
     "lean_axiom_audit": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/Audit.lean",
-      "sha256": "969ee9deb93ad2c0c3eb2d92c024ebc6ac9866b376a2e627e046e1854ec8d683"
+      "sha256": "1b66b86ccac9a42fe80de3d12607605b15e42436f9ff3e72aef773e8860575a2"
     },
     "lean_concrete_regression": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/ConcreteTest.lean",
@@ -139,7 +139,7 @@
     },
     "lean_project_config": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/lakefile.toml",
-      "sha256": "222691765cad4bec2f0d9f583765d62f941603768a55c11e7c5aca312fa14193"
+      "sha256": "65b9c7de659fe1e8d0e366b86c45a261d380d7c2896e7ca6b920d3016aa66974"
     },
     "lean_dependency_lock": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/lake-manifest.json",

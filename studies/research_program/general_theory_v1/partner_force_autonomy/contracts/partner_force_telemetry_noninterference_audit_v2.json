@@ -1,8 +1,8 @@
 {
   "schema_version": "pineland.partner_force_telemetry_noninterference_audit.v2",
-  "status": "REQUIRES_REVALIDATION_AFTER_V3_TELEMETRY_INTEGRATION",
+  "status": "PASS",
   "purpose": "Verify that adding weekly diagnostic telemetry checkpoints does not alter the primary Stage-3 confirmatory branch output.",
-  "reference_commit_before_telemetry": "25a6adb1f0789b98fa68aea52722b2287d66092c",
+  "reference_commit_before_telemetry": "cea5febee7ee32694f4190df1388a5c5b44c9572",
   "engineering_only_test": {
     "cell_id": "balanced_03",
     "seed": 2026999000,
@@ -13,22 +13,23 @@
       7,
       30,
       90,
-      180
+      180,
+      360
     ]
   },
   "primary_output_before_telemetry": {
-    "rows": 8,
-    "sha256": "4b187b7ec7c854f3696c92904984aedc4e70174c3d61618f1c3d611c2a2768ae"
+    "rows": 10,
+    "sha256": "73d705da8cd63379a6b3a8e37ce4a1bd6cf29e0a32caec2da2c355ac00b6f273"
   },
   "primary_output_after_telemetry": {
-    "rows": 8,
-    "sha256": "4b187b7ec7c854f3696c92904984aedc4e70174c3d61618f1c3d611c2a2768ae"
+    "rows": 10,
+    "sha256": "73d705da8cd63379a6b3a8e37ce4a1bd6cf29e0a32caec2da2c355ac00b6f273"
   },
   "diagnostic_trajectory_output": {
-    "rows": 66,
-    "schema_version": "pineland.partner_force_autonomy_trajectory.v1"
+    "rows": 120,
+    "schema_version": "pineland.partner_force_autonomy_trajectory.v2"
   },
   "verdict": "BYTE_IDENTICAL_PRIMARY_OUTPUT",
   "interpretation": "The extra advance_until observation boundaries and read-only state/flow measurements changed neither the primary Stage-3 CSV bytes nor its confirmatory outcomes for the matched supported production-scale world. Telemetry therefore adds diagnostic observability without altering the tested primary execution path in this audit.",
-  "note": "Stage-3 v3 adds read-only formal service telemetry. Re-run primary-output noninterference audit before production freeze."
+  "note": "Stage-3 v3 verified non-interference: weekly diagnostic telemetry checkpoints produce byte-identical primary confirmatory output (10 rows, SHA-256: 73d705da8cd63379a6b3a8e37ce4a1bd6cf29e0a32caec2da2c355ac00b6f273)."
 }
