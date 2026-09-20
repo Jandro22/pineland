@@ -36,6 +36,7 @@ python3 studies/research_program/general_theory_v1/partner_force_autonomy/arc/me
   --output-csv "$PRIMARY" \
   --trajectory-output-csv "$TRAJECTORY" \
   --require-task-metadata \
+  --enforce-degeneracy-safeguard \
   --expected-tasks "$EXPECTED_TASKS" \
   --metadata-json "$MERGE_META"
 

@@ -28,6 +28,13 @@ exposed the serialization defect without touching production outputs.
 The analysis now normalizes NumPy scalar group keys to native Python values
 before JSON serialization and maps missing floating group keys to JSON `null`.
 
+A second orchestration omission was found during the same pre-completion audit:
+single-world ARC shards deliberately defer the preregistered ensemble
+degeneracy safeguard to complete-shard merge, but the Stage-4 postprocess
+wrapper had not passed `--enforce-degeneracy-safeguard` to the merger.  The
+wrapper now enforces that gate before any module analysis or READY artifact can
+be produced.
+
 Module READY artifacts also record both:
 
 - `production_git_commit`: the single commit reported by all production shard
