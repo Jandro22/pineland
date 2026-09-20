@@ -55,12 +55,12 @@ def log_check(name: str, passed: bool, detail: str = "") -> None:
 def check_rust_test_suite() -> None:
     print("\n--- 1. Rust Engine Implementation & Unit Tests ---")
     manifest_path = REPO_ROOT / "rust" / "Cargo.toml"
-    cmd = ["cargo", "test", "--manifest-path", str(manifest_path)]
+    cmd = ["cargo", "test", "--release", "--manifest-path", str(manifest_path)]
     res = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
     passed = res.returncode == 0
     test_lines = [line.strip() for line in res.stdout.splitlines() if "test result: ok." in line]
     log_check(
-        "Rust workspace unit tests (cargo test)",
+        "Rust workspace unit tests (cargo test --release)",
         passed,
         "; ".join(test_lines) if passed else res.stderr,
     )

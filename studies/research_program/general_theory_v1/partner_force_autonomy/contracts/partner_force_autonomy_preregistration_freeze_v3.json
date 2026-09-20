@@ -83,7 +83,7 @@
     },
     "partner_force_metrics_code": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_metrics.py",
-      "sha256": "cbe6b92b78c838c37de3aac2d4b00786a5fc58cd565e5d2c0cd917c5da17173a"
+      "sha256": "e1bd8e39fd789d16a34a03302f425d8e1ac68c9ec4722ede189285155935633c"
     },
     "partner_force_coordinates_code": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_regenerative_coordinates.py",
