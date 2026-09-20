@@ -1932,6 +1932,9 @@ pub fn advance_movement_orders(
                 continue;
             }
             let cost = particle.formations.movement_supply_cost[formation];
+            if particle.formations.organization[formation] as usize == crate::MILITARY {
+                particle.partner_support.logistics.military_cumulative_demanded += cost.max(0.0);
+            }
             if particle.formations.supply_stock[formation] + 1.0e-12 < cost {
                 particle.formations.movement_status[formation] = MOVE_BLOCKED_SUPPLY;
                 continue;
@@ -1949,6 +1952,12 @@ pub fn advance_movement_orders(
                 );
             }
             particle.formations.supply_stock[formation] -= consumed;
+            if particle.formations.organization[formation] as usize == crate::MILITARY {
+                particle
+                    .partner_support
+                    .logistics
+                    .indigenous_cumulative_consumed += consumed;
+            }
             if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE") && formation == 7 {
                 eprintln!(
                     "MOVEMENT_SUPPLY_CONSUMED time={:.17} formation=7 after={:.17} bits={}",

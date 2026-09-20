@@ -2222,6 +2222,7 @@ fn encode_partner_support(b: &mut Vec<u8>, s: &PartnerSupportLedger) {
     put_f64(b, s.logistics.indigenous_cumulative_produced);
     put_f64(b, s.logistics.indigenous_cumulative_delivered);
     put_f64(b, s.logistics.indigenous_cumulative_consumed);
+    put_f64(b, s.logistics.military_cumulative_demanded);
     put_f64(b, s.logistics.cumulative_offered);
     put_f64(b, s.logistics.cumulative_delivered);
     put_f64(b, s.logistics.cumulative_rejected);
@@ -2281,6 +2282,11 @@ fn decode_partner_support(
         s.logistics.indigenous_cumulative_produced = 0.0;
         s.logistics.indigenous_cumulative_delivered = 0.0;
         s.logistics.indigenous_cumulative_consumed = 0.0;
+    }
+    if version >= 17 {
+        s.logistics.military_cumulative_demanded = r.f64()?;
+    } else {
+        s.logistics.military_cumulative_demanded = 0.0;
     }
     s.logistics.cumulative_offered = r.f64()?;
     s.logistics.cumulative_delivered = r.f64()?;
@@ -2604,6 +2610,7 @@ mod tests {
         particle.partner_support.air.cumulative_intensity = 150.0;
         particle.partner_support.air.cumulative_firepower_bonus = 35.0;
         particle.partner_support.air.cumulative_donor_cost = 50_000.0;
+        particle.partner_support.logistics.military_cumulative_demanded = 275.0;
         particle.partner_support.logistics.cumulative_offered = 200.0;
         particle.partner_support.logistics.cumulative_delivered = 180.0;
         particle.partner_support.logistics.cumulative_rejected = 20.0;

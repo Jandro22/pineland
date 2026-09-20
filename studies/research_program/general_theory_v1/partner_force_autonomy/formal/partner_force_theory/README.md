@@ -162,7 +162,7 @@ reference-mission mapping is frozen before Stage-3 v3 discovery:
 | Service | Demand d_i | Indigenous service s_i^- | External service e_i |
 | --- | --- | --- | --- |
 | Force generation | military personnel losses requiring replacement | indigenous training graduates | external incremental graduates |
-| Logistics | military logistics consumption | indigenous logistics delivered | external logistics delivered |
+| Logistics | total military supply requirement presented, including unmet demand | indigenous logistics delivered | external logistics delivered |
 | Command | military movement-order opportunities x 0.5 timely-success equivalents | sum of r exp(-latency_hours/24) before partner overlay | supported command service minus indigenous command service |
 
 The command reference requirement of **0.5 service-equivalents per military
