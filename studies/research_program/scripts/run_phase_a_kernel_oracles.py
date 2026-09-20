@@ -84,7 +84,7 @@ def physical_and_action_oracle() -> dict[str, Any]:
                         error = abs(float(observed) - float(expected))
                     response_errors.append(error)
                     comparisons += 1
-        for organization_id, organization in world.organizations.items():
+        for organization_id in world.organizations:
             if not hot.organization_action_eligible[hot._oo(0, hot.organization_index[organization_id])]:
                 continue
             oi = hot.organization_index[organization_id]

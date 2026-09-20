@@ -7,7 +7,6 @@ import pytest
 
 from pineland_sim import (
     AssimilationObservation,
-    Particle,
     SequentialParticleFilter,
     Simulation,
     SimulationConfig,

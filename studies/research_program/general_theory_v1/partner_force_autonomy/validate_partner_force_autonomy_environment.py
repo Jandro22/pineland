@@ -25,6 +25,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import jsonschema
@@ -333,7 +334,7 @@ def check_preregistration_freeze() -> None:
             artifacts = data.get("frozen_artifacts", {})
             count = len(artifacts)
             all_matched = count >= 27
-            for name, entry in artifacts.items():
+            for entry in artifacts.values():
                 rel_path = entry["path"]
                 expected_sha = entry["sha256"]
                 actual_file = REPO_ROOT / rel_path

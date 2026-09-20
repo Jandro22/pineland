@@ -1,6 +1,4 @@
 from array import array
-
-from array import array
 from math import exp
 
 import pytest

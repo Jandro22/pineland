@@ -493,9 +493,7 @@ def run_task(
     for index, value in enumerate(task["argv"]):
         if value == "{output}":
             argv.append(str(output))
-        elif index == 0:
-            argv.append(str(_resolve_repo_path(repo_root, value)))
-        elif value == task["config_path"]:
+        elif index == 0 or value == task["config_path"]:
             argv.append(str(_resolve_repo_path(repo_root, value)))
         else:
             argv.append(str(value))

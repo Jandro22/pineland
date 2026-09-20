@@ -118,7 +118,9 @@ def analyze(diagnostics_csv: str, closure_json: str, out_path: str) -> None:
     all_outcomes = sorted({o for values in pair_outcomes.values() for o in values})
     outcome_rankings = {}
     for outcome in all_outcomes:
-        mask = pairs.non_equivalent_outcomes.apply(lambda xs: outcome in xs)
+        mask = pairs.non_equivalent_outcomes.apply(
+            lambda xs, outcome=outcome: outcome in xs
+        )
         outcome_rankings[outcome] = rank_subset(pairs, mask)
 
     # Retain the previous low-stratum summary for continuity with the first

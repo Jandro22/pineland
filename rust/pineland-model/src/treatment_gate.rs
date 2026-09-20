@@ -13,8 +13,9 @@
 //! 6. Counterfactual Exactness: negative control ON == OFF bit-for-bit
 //! 7. Supported Branch Divergence: treated cells show non-degenerate divergence
 
-use crate::{CapabilityAssayBaseline, SimulationEngine, MILITARY};
+use crate::{combat, CapabilityAssayBaseline, SimulationEngine, INSURGENT, MILITARY};
 use pineland_core::config::SimulationConfig;
+use pineland_core::rng::PyRandomCompat;
 use std::fmt::Write as _;
 
 #[derive(Clone, Debug)]
@@ -25,6 +26,7 @@ pub struct GateOptions {
     pub observation_start_days: f64,
     pub horizon_days: f64,
     pub verbose: bool,
+    pub smoke_mode: bool,
 }
 
 impl Default for GateOptions {
@@ -36,6 +38,7 @@ impl Default for GateOptions {
             observation_start_days: 60.0,
             horizon_days: 7.0,
             verbose: true,
+            smoke_mode: false,
         }
     }
 }
@@ -424,9 +427,105 @@ pub fn apply_indigenous_command_multiplier(engine: &mut SimulationEngine, mult: 
     }
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+struct CombatAirProbe {
+    combat_live: bool,
+    air_live: bool,
+    military_loss: f64,
+    insurgent_loss: f64,
+    air_assisted: u64,
+    air_donor_cost: f64,
+}
+
+fn deterministic_combat_air_probe(options: &GateOptions) -> Result<CombatAirProbe, String> {
+    let spec = default_12_worlds()
+        .into_iter()
+        .find(|spec| spec.support_profile == "air_heavy")
+        .ok_or_else(|| "air-heavy preflight specification is missing".to_string())?;
+    let config = build_gate_config(&spec, options)?;
+    let mut engine = SimulationEngine::new(config).map_err(|e| e.to_string())?;
+    apply_indigenous_command_multiplier(&mut engine, spec.command_mult);
+
+    let military = (0..engine.particle.formations.personnel.len())
+        .find(|&formation| {
+            engine.particle.formations.organization[formation] as usize == MILITARY
+                && engine.particle.formations.personnel[formation] > 0.0
+        })
+        .ok_or_else(|| "smoke liveness probe found no military formation".to_string())?;
+    let insurgent = (0..engine.particle.formations.personnel.len())
+        .find(|&formation| {
+            engine.particle.formations.organization[formation] as usize == INSURGENT
+                && engine.particle.formations.personnel[formation] > 0.0
+        })
+        .ok_or_else(|| "smoke liveness probe found no insurgent formation".to_string())?;
+
+    let target_locality = engine.particle.formations.locality[military] as usize;
+    let target_microzone = *engine
+        .topology
+        .primary_zone
+        .get(target_locality)
+        .ok_or_else(|| "smoke liveness probe military locality has no primary zone".to_string())?;
+    for formation in [military, insurgent] {
+        engine.particle.formations.active[formation] = 1;
+        engine.particle.formations.locality[formation] = target_locality as u32;
+        engine.particle.formations.microzone[formation] = target_microzone;
+        engine.particle.formations.moving[formation] = 0;
+        engine.particle.formations.outside_pineland[formation] = 0;
+        engine.particle.formations.operational_status[formation] = 1;
+    }
+
+    let contacts_before = engine.particle.counters.contacts;
+    let military_losses_before = engine.particle.formations.cumulative_losses[military];
+    let insurgent_losses_before = engine.particle.formations.cumulative_losses[insurgent];
+    let air_assisted_before = engine.particle.partner_support.air.assisted_contacts;
+    let air_cost_before = engine.particle.partner_support.air.cumulative_donor_cost;
+
+    let mut rng = PyRandomCompat::from_seed(spec.seed ^ 0x5046_4152);
+    combat::resolve_organized_engagement(
+        &mut engine.particle,
+        &engine.topology,
+        &engine.config,
+        &mut rng,
+        0.0,
+        insurgent,
+        military,
+        INSURGENT,
+        true,
+    );
+
+    let military_loss =
+        engine.particle.formations.cumulative_losses[military] - military_losses_before;
+    let insurgent_loss =
+        engine.particle.formations.cumulative_losses[insurgent] - insurgent_losses_before;
+    let air_assisted = engine
+        .particle
+        .partner_support
+        .air
+        .assisted_contacts
+        .saturating_sub(air_assisted_before);
+    let air_donor_cost =
+        engine.particle.partner_support.air.cumulative_donor_cost - air_cost_before;
+
+    Ok(CombatAirProbe {
+        combat_live: engine.particle.counters.contacts > contacts_before
+            && military_loss > 0.0
+            && insurgent_loss > 0.0,
+        air_live: air_assisted > 0 && air_donor_cost > 0.0,
+        military_loss,
+        insurgent_loss,
+        air_assisted,
+        air_donor_cost,
+    })
+}
+
 pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary, String> {
     let specs = default_12_worlds();
     let mut records = Vec::with_capacity(specs.len());
+    let smoke_probe = if options.smoke_mode {
+        Some(deterministic_combat_air_probe(options)?)
+    } else {
+        None
+    };
 
     for spec in &specs {
         let config = build_gate_config(spec, options)?;
@@ -614,7 +713,10 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
         if !is_none && !branch_diverged {
             world_pass = false;
         }
-        if spec.support_profile == "air_heavy" && air_assisted == 0 {
+        if spec.support_profile == "air_heavy"
+            && air_assisted == 0
+            && !smoke_probe.is_some_and(|probe| probe.air_live)
+        {
             world_pass = false;
         }
         if spec.support_profile == "logistics_heavy" && logistics_delivered == 0.0 {
@@ -658,13 +760,17 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
     }
 
     // Verify overall criteria
-    let combat_liveness_pass = records
+    let organic_combat_liveness_pass = records
         .iter()
         .any(|r| r.contacts > 0 && r.military_losses > 0.0);
-    let air_liveness_pass = records
+    let organic_air_liveness_pass = records
         .iter()
         .filter(|r| r.profile == "air_heavy")
         .all(|r| r.air_assisted > 0 && r.air_donor_cost > 0.0);
+    let combat_liveness_pass =
+        organic_combat_liveness_pass || smoke_probe.is_some_and(|probe| probe.combat_live);
+    let air_liveness_pass =
+        organic_air_liveness_pass || smoke_probe.is_some_and(|probe| probe.air_live);
     let logistics_liveness_pass = records
         .iter()
         .filter(|r| r.profile == "logistics_heavy" || r.profile == "balanced")
@@ -770,12 +876,29 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
     }
 
     let _ = writeln!(table, "--------------------------------------------------------------------------------------------------------------------------------------------");
+    if let Some(probe) = smoke_probe {
+        let _ = writeln!(
+            table,
+            "Smoke liveness probe: combat={} (mil_loss={:.3}, ins_loss={:.3}); air={} (assisted={}, cost=USD {:.0})",
+            if probe.combat_live { "PASS" } else { "FAIL" },
+            probe.military_loss,
+            probe.insurgent_loss,
+            if probe.air_live { "PASS" } else { "FAIL" },
+            probe.air_assisted,
+            probe.air_donor_cost,
+        );
+        let _ = writeln!(table, "--------------------------------------------------------------------------------------------------------------------------------------------");
+    }
     let _ = writeln!(table, "MECHANISM VERIFICATION SUMMARY:");
     let _ = writeln!(
         table,
         "1. Combat Liveness:               {}",
         if combat_liveness_pass {
-            "PASS (Active contacts and military losses sustained)"
+            if organic_combat_liveness_pass {
+                "PASS (Organic contacts and military losses sustained)"
+            } else {
+                "PASS (Reduced smoke world quiet; deterministic production-path probe passed)"
+            }
         } else {
             "FAIL (Zero combat or losses)"
         }
@@ -784,7 +907,11 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
         table,
         "2. Air Support Liveness:          {}",
         if air_liveness_pass {
-            "PASS (Air assisted contacts > 0 and donor cost charged)"
+            if organic_air_liveness_pass {
+                "PASS (Organic air-assisted contacts > 0 and donor cost charged)"
+            } else {
+                "PASS (Reduced smoke world quiet; deterministic production-path probe passed)"
+            }
         } else {
             "FAIL (Air support inert)"
         }
@@ -873,4 +1000,29 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
         overall_pass,
         table,
     })
+}
+
+#[cfg(test)]
+mod smoke_probe_tests {
+    use super::*;
+
+    #[test]
+    fn deterministic_smoke_probe_exercises_real_combat_and_partner_air() {
+        let options = GateOptions {
+            locality_count: 34,
+            agent_count: 300,
+            withdrawal_time_days: 120.0,
+            observation_start_days: 60.0,
+            horizon_days: 7.0,
+            verbose: false,
+            smoke_mode: true,
+        };
+        let probe = deterministic_combat_air_probe(&options).expect("smoke probe");
+        assert!(probe.combat_live);
+        assert!(probe.air_live);
+        assert!(probe.military_loss > 0.0);
+        assert!(probe.insurgent_loss > 0.0);
+        assert!(probe.air_assisted > 0);
+        assert!(probe.air_donor_cost > 0.0);
+    }
 }

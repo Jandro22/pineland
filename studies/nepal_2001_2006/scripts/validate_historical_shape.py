@@ -138,7 +138,7 @@ def main():
         valid=set(zip(hist.district_id,hist.week_index))
         template=hist[["district_id","week_index"]]
         for events in runs:
-            def model_frame(column):
+            def model_frame(column, events=events, valid=valid, template=template):
                 counts=Counter((r.district_id,r.week_index) for r in events.itertuples()
                                if getattr(r,column) and (r.district_id,r.week_index) in valid)
                 f=template.copy(); f["events"]=[counts[(d,w)] for d,w in zip(f.district_id,f.week_index)]

@@ -47,7 +47,7 @@ def compute_spatial_weights(locality_count: int = 34, seed: int = 42) -> np.ndar
         adj_matrix = np.zeros((n, n), dtype=float)
         for u_name, neighbors in w.adjacency.items():
             u = loc_to_idx[u_name]
-            for v_name, dist in neighbors.items():
+            for v_name in neighbors:
                 v = loc_to_idx[v_name]
                 adj_matrix[u, v] = 1.0
         row_sums = adj_matrix.sum(axis=1, keepdims=True)
@@ -285,8 +285,8 @@ def run_closure_assay(csv_path: str, out_path: str, min_state_out_path: str):
     for pair in [('minimal_4', 'minimal_5_spatial'), ('operational_7', 'operational_8_spatial'), ('competitive_9', 'competitive_10_spatial')]:
         base_name, spat_name = pair
         deltas = []
-        for h_str in results:
-            for tgt, t_res in results[h_str].items():
+        for horizon_result in results.values():
+            for t_res in horizon_result.values():
                 bin_flag = t_res['binary']
                 metric = 'logloss' if bin_flag else 'nrmse'
                 base_val = t_res['scores'][base_name][metric]

@@ -158,8 +158,8 @@ def build_all(output_dir: Path = PROGRAM / "data/processed/comparative_control_p
         "iraq_2003_2011": build_iraq(sources["iraq_2003_2011"], outputs["iraq_2003_2011"]),
         "vietnam_1955_1975": build_vietnam(sources["vietnam_1955_1975"], outputs["vietnam_1955_1975"]),
     }
-    for case_id in details:
-        details[case_id].update({
+    for case_id, detail in details.items():
+        detail.update({
             "source": artifact_path(sources[case_id]),
             "source_sha256": sha256(sources[case_id]),
             "output": artifact_path(outputs[case_id]),

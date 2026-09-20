@@ -244,8 +244,7 @@ def main() -> None:
     def connect(a: str, b: str) -> None:
         if b not in adjacency[a]: adjacency[a].append(b)
         if a not in adjacency[b]: adjacency[b].append(a)
-    lookup = {row["locality_id"]: row for row in rows}
-    for district_id, localities in by_district.items():
+    for localities in by_district.values():
         hq = next(row for row in localities if row["administrative_role"] == "district_headquarters")
         secondary = [row for row in localities if row is not hq]
         for row in localities:
