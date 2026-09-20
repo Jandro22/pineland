@@ -22,8 +22,12 @@
       "sha256": "4fa9ba6a44fa7d0f09fdc46e5b22a1bfe45f8f2f02ad2863974f21b170b3e77b"
     },
     "capability_assay_contract": {
-      "path": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json",
+      "path": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v2.json",
       "sha256": "bcba767c314c6a921ed7e5f467553864713288c5fb3cbe292fc02d50034b460a"
+    },
+    "capability_assay_contract_v1_historical": {
+      "path": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json",
+      "sha256": "90a29a59e18762a58a1dd1453d72469d3a125ee7225cffa0bb825f479eea8b18"
     },
     "exclusion_manifest": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy_exclusion_manifest_v1.json",
@@ -150,5 +154,5 @@
       "sha256": "8733782dc070a99b312039cda424f601b80f3be6f6f512627da5ba25adc27632"
     }
   },
-  "required_artifact_count": 36
+  "required_artifact_count": 37
 }

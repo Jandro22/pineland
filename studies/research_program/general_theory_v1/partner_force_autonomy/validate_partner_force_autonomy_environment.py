@@ -191,6 +191,7 @@ def check_audit_artifacts() -> None:
         "partner_force_autonomy_methodology_bridge_v1.json",
         "partner_force_autonomy_program_contract_v1.json",
         "partner_force_capability_assay_contract_v1.json",
+        "partner_force_capability_assay_contract_v2.json",
     ]
     for filename in expected_audits:
         filepath = AUDIT_DIR / filename
@@ -333,7 +334,8 @@ def check_preregistration_freeze() -> None:
             data = json.loads(freeze_path.read_text(encoding="utf-8"))
             artifacts = data.get("frozen_artifacts", {})
             count = len(artifacts)
-            all_matched = count >= 27
+            required_count = int(data.get("required_artifact_count", count))
+            all_matched = count >= 27 and count == required_count
             for entry in artifacts.values():
                 rel_path = entry["path"]
                 expected_sha = entry["sha256"]
@@ -350,7 +352,13 @@ def check_preregistration_freeze() -> None:
         except Exception as e:
             all_matched = False
             print(f"Freeze validation error: {e}")
-    log_check(f"Preregistration cryptographic freeze ({count}/27 artifacts match disk)", exists and all_matched)
+            required_count = 0
+    else:
+        required_count = 0
+    log_check(
+        f"Preregistration cryptographic freeze ({count}/{required_count} artifacts match disk)",
+        exists and all_matched,
+    )
 
 
 def check_holdout_contracts_and_scale_audit() -> None:
