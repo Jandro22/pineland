@@ -1,11 +1,11 @@
-﻿# Pineland General-Theory Research Log â€” 2026-09-11
+# Pineland General-Theory Research Log — 2026-09-11
 
 This log is chronological and conservative. It records positive results,
 falsifications, assay corrections, and pending experiments. Historical outcomes
 remain outside the theory-discovery loop unless explicitly authorized by a
 future transport contract.
 
-## 13:00â€“15:45 â€” Closure, transport, reproduction, state/resource structure
+## 13:00–15:45 — Closure, transport, reproduction, state/resource structure
 
 - Fresh 30-day v2 closure confirmation falsified the strategic 11-variable
   state and the 14-variable version that added police professionalism and both
@@ -42,22 +42,22 @@ future transport contract.
   affordability/decay restrictions. This structurally disfavors one universal
   state-regeneration time constant.
 
-## 17:10â€“17:22 â€” Veterancy causal identification
+## 17:10–17:22 — Veterancy causal identification
 
 - Preregistered controlled veterancy assay completed: 10,240 fresh cases,
   `E={.1,.3,.5,.7,.9}`, common random numbers, all other combat state fixed.
 - Experience enters immediate combat capability as `g(E)=0.75+0.50E`.
   With other capability terms fixed, uncapped attrition obeys approximately
-  `L_own âˆ g(E)^(-0.45)` and `L_enemy âˆ g(E)^(+0.45)`.
+  `L_own ∝ g(E)^(-0.45)` and `L_enemy ∝ g(E)^(+0.45)`.
 - Moving E=.1 -> .9 therefore predicts 16.68% lower own loss and 20.02% higher
   opponent loss; Monte Carlo reproduced this closely.
 - Single-engagement tactical-win probability increased ~23.5 percentage points
-  (about 35â€“37% -> 59â€“61%, depending on seed block).
+  (about 35–37% -> 59–61%, depending on seed block).
 - A preregistered 60-engagement survival stress removed the original 12-contact
   ceiling effect. E=.1 -> .9 increased combat-effective survival by +3.42 pp
   for government formations (paired 95% CI ~+2.24 to +4.60 pp) and +4.20 pp
   for insurgent formations (~+2.97 to +5.43 pp). Final personnel improved
-  ~3.1â€“3.2 pp and loss-exchange performance improved ~29â€“31% relatively.
+  ~3.1–3.2 pp and loss-exchange performance improved ~29–31% relatively.
 - Naturalistic 60->180d panel: 880 formations across 32 worlds. Government
   experience had collapsed to a ~0.0103-wide support near .55; insurgent
   operational survival was nearly universal. Survival effects are therefore
@@ -67,7 +67,7 @@ future transport contract.
   modest but causal survival modifier under sustained synthetic combat. It is
   not presently licensed as a strategic macrostate coordinate.
 
-## 17:22â€“17:36 â€” State absorptive capacity / capital
+## 17:22–17:36 — State absorptive capacity / capital
 
 - Fresh active-v2 low-capital transition grid completed: 256 trajectories,
   capital multipliers .05,.10,.15,.20,.25,.35,.50,1.00.
@@ -85,11 +85,11 @@ future transport contract.
   with a distinction between fiscal and institutional absorptive capacity, but
   real-world Afghanistan remains a conceptual comparator, not validation.
 
-## 17:24â€“18:00 â€” Human-capital absorption and membership-state development
+## 17:24–18:00 — Human-capital absorption and membership-state development
 
 - Preregistered military human-capital absorption assay completed: 16 seeds,
   360d, 50% personnel shock from pre-shock E=.90, varying recruitment/training
-  throughput .5xâ€“4x with abundant capital and no insurgent interference.
+  throughput .5x–4x with abundant capital and no insurgent interference.
 - Primary endpoint `headcount recovery - aggregate capability recovery` is a
   MEASUREMENT-DESIGN FALSIFICATION: it is negative because production combat
   power is sublinear in personnel (`P^0.72`), so aggregate capability fraction
@@ -109,7 +109,7 @@ future transport contract.
     failures), but raw practically-large discrepancies remain 91.7% and match
     distances are loose. This selects a hypothesis; it does not confirm closure.
 
-## 18:01 onward â€” Fresh membership/transport closure confirmation
+## 18:01 onward — Fresh membership/transport closure confirmation
 
 - Discovered and corrected a closure-assay hole before fresh outcomes: transport
   could be a state coordinate without its future value being tested. New v3
@@ -128,7 +128,7 @@ future transport contract.
   >.20 or max >.50 is explicitly `PROVISIONAL_MATCHING_LIMITED`.
 - Probe changes compiled after `cargo fmt`; 6/6 native-probe tests pass.
 
-### 18:45 â€” First untouched closure result
+### 18:45 — First untouched closure result
 
 - `rootedstock_social12v3` completed on the frozen fresh confirmation block and
   **FAILED** the preregistered distributional-closure gate despite acceptable
@@ -150,13 +150,13 @@ future transport contract.
 - `(M,F,E,C)` remains predictive compression only, not certified minimal Markov
   state; later closure work supersedes the original promotion language.
 - Gamma is not licensed as a universal territorial-control order parameter.
-- The old 15-parameter â€œ95% fidelityâ€ language remains withdrawn.
+- The old 15-parameter "95% fidelity" language remains withdrawn.
 - Police professionalism and formation veterancy are real causal microstates,
   but current omitted-state stress does not require them in the 30-day strategic
   macrostate.
 - Historical transport remains unauthorized; negative findings remain permanent.
 
-## 18:08â€“18:20 â€” Additional frozen follow-ons while closure confirmation runs
+## 18:08–18:20 — Additional frozen follow-ons while closure confirmation runs
 
 - Issued `falsification_ledger_v3.json` (SHA-256
   `4269BFA6B34F879A7C5CF740B5EE4842F72DD66E6AD7A8C3B1344A50B20C9527`).
@@ -198,7 +198,7 @@ future transport contract.
   spending/service/control remains active in every cell. Code and analyzer are
   staged but the run is deferred until the closure battery frees CPU.
 
-## 18:20 onward â€” Foreign state-building absorptive-capacity audit
+## 18:20 onward — Foreign state-building absorptive-capacity audit
 
 - Source audit found two distinct government-capacity transfer paths in
   `foreign.rs` that are not coupled to the domestic absorptive-capacity loop.
@@ -246,7 +246,7 @@ future transport contract.
   and administrative capacity. The training system is therefore partially,
   not wholly, endogenous.
 
-## 18:25 onward â€” Durable versus memory-dependent military capability
+## 18:25 onward — Durable versus memory-dependent military capability
 
 - Formalized an exact implemented identity in
   `veterancy_quality_dynamic_equivalence_v1.json` (SHA-256
@@ -276,7 +276,7 @@ future transport contract.
   tested 30d support despite strong micro-causal effects. Working principle:
   `micro-causal != macrostate-essential`; this is finite-horizon scale
   separation, not proof of exact conditional independence.
-## 19:00â€“19:45 â€” Strategic closure characterization, confirmation assays completion, and synthetic theory stabilization
+## 19:00–19:45 — Strategic closure characterization, confirmation assays completion, and synthetic theory stabilization
 
 - Completed analysis of the frozen 48-seed fresh confirmation closure battery:
   - `rootedstock_social12v3`: FAILED primary gate (25.0% sig & large pairs overall; low 0.0%, mid 37.5%, high 37.5%).
@@ -308,13 +308,13 @@ future transport contract.
 - Formulated and froze `reduced_theory_specification_v2.json`: 10-dimensional stabilized state representation $(M^*, F, E, C, \Phi_{\text{net}}, A, K_o, P_G, V_G, V_I)$ with characterized residual uncertainty bounds and closed stock-flow identities. State variable churn is permanently frozen.
 - Issued `theory_status_v6.json` and General Theory Monograph v1.0 (`GENERAL_THEORY_v1.0.md`). Synthetic Mechanism Layer is certified **COMPLETE**.
 
-## 2026-09-12 09:00 onward â€” Policy-support calibration and new mechanism breakthroughs
+## 2026-09-12 09:00 onward — Policy-support calibration and new mechanism breakthroughs
 
 - Began the policy/operating-concept layer with a strict rule: government strategy is evaluated as a Pareto problem over durable insurgent suppression, government capital, government losses, civilian harm/displacement, and state legitimacy/capacity. A policy that only suppresses activity during the intervention but rebounds afterward is not treated as equivalent to durable defeat.
 - The first default-world government strategy frontier was diagnosed as support-limited rather than promoted: half of the seed block had already lost the rooted reproductive layer at the day-60 intervention anchor, and all baseline worlds lost it by day 360. Strategy ranking on that support therefore cannot identify a general COIN optimum.
-- A baseline-only challenge screen varying initial insurgent share (0.0005â€“0.004) and initial/external resource multiplier (0.5â€“9x) failed to create a persistent reproductive insurgency. `insurgency_challenge_support_calibration_results_v1.json` was corrected to fail closed with status `FROZEN_GRID_FAILED_TO_SPAN_PERSISTENCE_REGIMES`; no fake weak/moderate/strong cells are selected.
+- A baseline-only challenge screen varying initial insurgent share (0.0005–0.004) and initial/external resource multiplier (0.5–9x) failed to create a persistent reproductive insurgency. `insurgency_challenge_support_calibration_results_v1.json` was corrected to fail closed with status `FROZEN_GRID_FAILED_TO_SPAN_PERSISTENCE_REGIMES`; no fake weak/moderate/strong cells are selected.
 - Derived exact development credibility thresholds from the implemented political-order equations. A 12-seed day-60 diagnostic found ~99.3% of locality states structurally capable of positive government-legitimacy production, but only ~1% crossed that threshold at the default equal-locality allocation. Median nominal public allocation required was ~18.4x the default locality allocation. This is a synthetic calibration result, not an empirical aid threshold.
-- Logged `development_marginal_return_identity_v1.json` (SHA-256 `08B1EFCC8802EEA788A8BEF1E5AD3D6DF79A1EE2B2499F27E3A6448E7BEE6C1B`). In the unsaturated low-dose regime, population cancels from the national population-weighted marginal return; immediate return is driven mainly by capacity Ã— reach Ã— complianceÂ² Ã— service-conversion quality. This creates a model-level needâ€“absorption tension.
+- Logged `development_marginal_return_identity_v1.json` (SHA-256 `08B1EFCC8802EEA788A8BEF1E5AD3D6DF79A1EE2B2499F27E3A6448E7BEE6C1B`). In the unsaturated low-dose regime, population cancels from the national population-weighted marginal return; immediate return is driven mainly by capacity × reach × compliance² × service-conversion quality. This creates a model-level need–absorption tension.
 - Completed fresh 8-seed development dose-response assay (`development_dose_response_results_v1.json`):
   - Equal-locality 5x versus 1x: government legitimacy +0.0161, political access +0.0169, local institution capacity +0.0080, while government control changes -0.00289.
   - 10x and 20x produce smaller legitimacy/capacity gains than 5x; 40x and 80x are behaviorally identical to 20x because the government capital stock is already binding.
@@ -331,7 +331,7 @@ future transport contract.
   - Collapse fraction: 0.125 at 0.25x recruitment and 1.0 at every tested rate >=0.5x.
   - Median collapse time falls monotonically as recruitment accelerates: 126d at 0.5x, 91d at 0.75x, 63d at 1x, 49d at 1.5x, 42d at 2x, 28d at 4x (Spearman recruitment multiplier vs median collapse time = -1.0 on collapsing cells).
   - At collapse, recruitment-linked burn exhausts the available capital runway. Faster mobilization also shortens the period available for economic inflow, reinforcing the burn-through loop. Working synthetic principle: organizational growth rate is not organizational fitness; mobilization above resource-metabolic throughput is self-liquidating.
-- Preregistered a fresh 360d low-tempo sweep (`insurgent_mobilization_interior_optimum_contract_v1.json`, SHA-256 `A15B4B688FE24242D25876DA3272F477228BF00E7217496C9BA904C09F6D6710`) over recruitment multipliers 0â€“0.5 to test whether extremely slow recruitment also underperforms, which would establish an interior mobilization optimum rather than merely a low-tempo advantage. Run still in progress at this log update.
+- Preregistered a fresh 360d low-tempo sweep (`insurgent_mobilization_interior_optimum_contract_v1.json`, SHA-256 `A15B4B688FE24242D25876DA3272F477228BF00E7217496C9BA904C09F6D6710`) over recruitment multipliers 0–0.5 to test whether extremely slow recruitment also underperforms, which would establish an interior mobilization optimum rather than merely a low-tempo advantage. Run still in progress at this log update.
 - Derived and logged `veterancy_exchange_identity_v1.json` (SHA-256 `D400F0AF898CC8997E77CBC0FBCA910C27C5DA2FEFFA13AE8A0DD8B418844FBD`). Implemented combat uses `V(E)=0.75+0.50E`; capability scales with `N^0.72*V(E)` holding other terms fixed. E=0.9 versus E=0.1 therefore implies ~1.756x novice personnel equivalence, ~16.7% lower own fractional losses, ~20.0% higher opponent fractional losses, and ~1.44x expected exchange ratio before caps/noise. Because survivors learn while inexperienced replacements enter at E=.10, veterancy creates a positive survival-hysteresis loop and replacement turnover can create a dilution spiral.
 - Found and corrected a first policy-layer fielded-force measurement problem: several new policy/example runners counted retained historical formation slots without requiring `operational_status==1`. Core closure code already checked operational status. Logged `policy_fielded_force_measurement_correction_v1.json` (SHA-256 `F85B03DAE3A184D4116CD150B81E0BB16184F131BFA534C0D5E8932B17E64D13`). Old capability-smoke fielded-force rankings are not licensed and must be regenerated.
 - A deeper semantic audit then found that logistics can reactivate a collapsed formation's `operational_status`, while physical-presence logic excludes formations whose owning organization is inactive. Thus `operational_status==1` alone is not necessarily equivalent to effective coercive participation. This may affect the existing closure definition of F, which checks formation operational status but not owning-organization activity.

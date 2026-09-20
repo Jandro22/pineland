@@ -2,13 +2,13 @@ name: Pineland CI
 
 on:
   push:
-    branches: [research-v1]
+    branches: [main, research-v1]
   pull_request:
-    branches: [research-v1]
+    branches: [main, research-v1]
   workflow_dispatch:
 
 concurrency:
-  group: research-v1-${{ github.ref }}
+  group: pineland-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

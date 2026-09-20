@@ -3,7 +3,7 @@ name = "pineland-core"
 version = "1.0.0"
 edition = "2021"
 description = "Deterministic dense state, scheduler, RNG, topology, and checkpoint primitives for Pineland Native"
-license = "MIT"
+license = "Apache-2.0"
 
 [lib]
 path = "src/lib.rs"
