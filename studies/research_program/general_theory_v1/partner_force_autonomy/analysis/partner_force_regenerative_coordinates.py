@@ -43,7 +43,74 @@ def add_candidate_regenerative_coordinates(paired: pd.DataFrame) -> pd.DataFrame
     out["omega_min"] = np.min(coords, axis=1)
     out["omega_mean"] = np.mean(coords, axis=1)
     out["omega_geo"] = np.exp(np.mean(np.log(np.clip(coords, 1e-6, 1.0)), axis=1))
+    out["regime"] = classify_scenario_regime(out)
     return out
+
+
+def classify_scenario_regime(df: pd.DataFrame, tolerance: float = 0.05) -> pd.Series:
+    """Classify scenario-space regimes for partner-force worlds.
+
+    Regimes:
+    - "Quiet": Contacts == 0 or military_losses == 0.
+    - "Manpower-Constrained": omega_manpower is the bottleneck channel.
+    - "Logistics-Constrained": omega_logistics is the bottleneck channel.
+    - "Command-Constrained": omega_command is the bottleneck channel.
+    - "Mixed-Binding": Multiple coordinates are tied or within tolerance of the minimum.
+    """
+    if "omega_manpower" not in df.columns or "omega_logistics" not in df.columns or "omega_command" not in df.columns:
+        coords_df = add_candidate_regenerative_coordinates(df)
+    else:
+        coords_df = df
+
+    # Check for quiet / non-binding regime
+    if "window_military_losses" in coords_df.columns:
+        losses = coords_df["window_military_losses"].to_numpy(float)
+    elif "post_military_losses" in coords_df.columns:
+        losses = coords_df["post_military_losses"].to_numpy(float)
+    elif "off_post_military_losses" in coords_df.columns:
+        losses = coords_df["off_post_military_losses"].to_numpy(float)
+    else:
+        losses = np.ones(len(coords_df))
+
+    if "contacts" in coords_df.columns:
+        contacts = coords_df["contacts"].to_numpy(float)
+    elif "pre_recent_actions" in coords_df.columns:
+        contacts = coords_df["pre_recent_actions"].to_numpy(float)
+    else:
+        contacts = np.ones(len(coords_df))
+
+    is_quiet = (contacts <= 0) | (losses <= 0)
+
+    om = coords_df["omega_manpower"].to_numpy(float)
+    ol = coords_df["omega_logistics"].to_numpy(float)
+    oc = coords_df["omega_command"].to_numpy(float)
+    coords = np.column_stack([om, ol, oc])
+    min_val = np.min(coords, axis=1)
+
+    regimes = []
+    for i in range(len(coords_df)):
+        if is_quiet[i]:
+            regimes.append("Quiet")
+            continue
+
+        m_diff = om[i] - min_val[i]
+        l_diff = ol[i] - min_val[i]
+        c_diff = oc[i] - min_val[i]
+
+        near_min_count = sum(d <= tolerance for d in [m_diff, l_diff, c_diff])
+        if near_min_count > 1:
+            regimes.append("Mixed-Binding")
+        elif m_diff <= tolerance:
+            regimes.append("Manpower-Constrained")
+        elif l_diff <= tolerance:
+            regimes.append("Logistics-Constrained")
+        elif c_diff <= tolerance:
+            regimes.append("Command-Constrained")
+        else:
+            regimes.append("Mixed-Binding")
+
+    return pd.Series(regimes, index=df.index, name="regime")
+
 
 
 def _group_splits(groups: Sequence[Any], max_splits: int = 5):
