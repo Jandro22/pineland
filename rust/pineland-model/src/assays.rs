@@ -1144,47 +1144,6 @@ pub fn run_horizon_sufficiency_assay(
 
     let div_180 = (assay_180d_on.composite_capability - assay_180d_off.composite_capability).abs();
     let div_360 = (assay_360d_on.composite_capability - assay_360d_off.composite_capability).abs();
-    eprintln!("BASELINE READINESS: {:.6}", baseline.operational_readiness);
-    for f in 0..on.particle.formations.personnel.len() {
-        if on.particle.formations.organization[f] as usize == crate::MILITARY {
-            eprintln!(
-                "  F{} 360d ON: pers={:.1}, sup={:.1}, read={:.4}, avail={:.4}, fat={:.4} | OFF: pers={:.1}, sup={:.1}, read={:.4}, avail={:.4}, fat={:.4}",
-                f,
-                on.particle.formations.personnel[f],
-                on.particle.formations.supply_stock[f],
-                on.particle.formations.readiness[f],
-                on.particle.formations.availability[f],
-                on.particle.formations.fatigue[f],
-                off.particle.formations.personnel[f],
-                off.particle.formations.supply_stock[f],
-                off.particle.formations.readiness[f],
-                off.particle.formations.availability[f],
-                off.particle.formations.fatigue[f],
-            );
-        }
-    }
-    eprintln!(
-        "HORIZON DIAGNOSTIC 180d: ON C={:.6} (ctrl={:.4}, pers={:.4}, form={:.4}, cov={:.4}, read={:.4}) | OFF C={:.6} (ctrl={:.4}, pers={:.4}, form={:.4}, cov={:.4}, read={:.4})",
-        assay_180d_on.composite_capability,
-        assay_180d_on.government_control,
-        assay_180d_on.military_personnel_retention,
-        assay_180d_on.operational_formation_survival,
-        assay_180d_on.geographic_coverage_retention,
-        assay_180d_on.operational_readiness_retention,
-        assay_180d_off.composite_capability,
-        assay_180d_off.government_control,
-        assay_180d_off.military_personnel_retention,
-        assay_180d_off.operational_formation_survival,
-        assay_180d_off.geographic_coverage_retention,
-        assay_180d_off.operational_readiness_retention
-    );
-    eprintln!(
-        "HORIZON DIAGNOSTIC 360d: ON C={:.6} (read={:.4}) | OFF C={:.6} (read={:.4})",
-        assay_360d_on.composite_capability,
-        assay_360d_on.operational_readiness_retention,
-        assay_360d_off.composite_capability,
-        assay_360d_off.operational_readiness_retention
-    );
     // Primary Stage-3 capability is exported with f9 precision.  Treat one
     // published precision unit as the minimum non-degenerate signal rather
     // than imposing an unregistered substantive-effect cutoff.  The frozen

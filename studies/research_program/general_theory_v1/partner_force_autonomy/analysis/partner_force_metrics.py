@@ -72,7 +72,8 @@ BOUNDED_ZERO_ONE_COLUMNS = [
     "support_air_intensity", "support_command_reliability_boost",
     "support_command_latency_reduction_fraction", "c_government_control",
     "c_military_personnel_retention", "c_operational_formation_survival",
-    "c_geographic_coverage_retention", "composite_capability",
+    "c_geographic_coverage_retention", "c_operational_readiness_retention",
+    "composite_capability", "composite_capability_v1",
 ]
 
 NON_NEGATIVE_COLUMNS = [
@@ -119,6 +120,8 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
         "post_donor_cost_forcegen", "post_donor_cost",
         *active_invariants,
     ]
+    if is_v4:
+        required.extend(["c_operational_readiness_retention", "composite_capability_v1"])
     if is_v3 or is_v4:
         required.extend(["t_c_deficit_90", "t_readiness_collapse", "t_supply_exhaustion", "t_first_formation_loss"])
 
@@ -249,6 +252,11 @@ def pair_counterfactual_rows(df: pd.DataFrame, epsilon: float = 1e-9) -> pd.Data
             "off_formation_survival": float(off["c_operational_formation_survival"]),
             "on_coverage_retention": float(on["c_geographic_coverage_retention"]),
             "off_coverage_retention": float(off["c_geographic_coverage_retention"]),
+            "on_readiness_retention": float(on["c_operational_readiness_retention"]) if "c_operational_readiness_retention" in on else 1.0,
+            "off_readiness_retention": float(off["c_operational_readiness_retention"]) if "c_operational_readiness_retention" in off else 1.0,
+            "c_v1_on": float(on["composite_capability_v1"]) if "composite_capability_v1" in on else c_on,
+            "c_v1_off": float(off["composite_capability_v1"]) if "composite_capability_v1" in off else c_off,
+            "autonomy_ratio_v1": (float(off["composite_capability_v1"]) if "composite_capability_v1" in off else c_off) / max(float(on["composite_capability_v1"]) if "composite_capability_v1" in on else c_on, epsilon),
             "on_post_indigenous_recruits": float(on["post_indigenous_recruits"]),
             "off_post_indigenous_recruits": float(off["post_indigenous_recruits"]),
             "on_post_indigenous_graduates": float(on["post_indigenous_graduates"]),

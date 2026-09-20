@@ -67,7 +67,9 @@
     "c_military_personnel_retention",
     "c_operational_formation_survival",
     "c_geographic_coverage_retention",
+    "c_operational_readiness_retention",
     "composite_capability",
+    "composite_capability_v1",
     "post_indigenous_recruits",
     "post_indigenous_graduates",
     "post_military_losses",
@@ -390,7 +392,17 @@
       "minimum": 0,
       "maximum": 1
     },
+    "c_operational_readiness_retention": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
     "composite_capability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "composite_capability_v1": {
       "type": "number",
       "minimum": 0,
       "maximum": 1
