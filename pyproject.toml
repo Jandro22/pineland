@@ -8,7 +8,7 @@ version = "0.13.0"
 description = "A multiscale, partially observed agent-based simulation of insurgency and counterinsurgency"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = "Apache-2.0"
 authors = [{name = "Pineland COIN-SIM contributors"}]
 dependencies = []
 

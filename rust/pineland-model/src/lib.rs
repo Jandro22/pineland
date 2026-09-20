@@ -1897,7 +1897,7 @@ impl SimulationEngine {
             // Foothold membership is a deterministic projection of four
             // mutable inputs only: person organization, person residence,
             // person armed fraction, and locality population.  Recomputing
-            // the full organization Ã— locality Ã— person surface after every
+            // the full organization × locality × person surface after every
             // scheduler event is therefore redundant for the overwhelming
             // majority of events.  Keep the Python-compatible projection at
             // every boundary that can mutate one of those inputs (directly or

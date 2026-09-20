@@ -2,6 +2,7 @@
 name = "pineland-io"
 version = "1.0.0"
 edition = "2021"
+license = "Apache-2.0"
 
 [features]
 default = []

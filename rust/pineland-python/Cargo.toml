@@ -2,6 +2,7 @@
 name = "pineland-python"
 version = "1.0.0"
 edition = "2021"
+license = "Apache-2.0"
 
 [dependencies]
 pineland-core = { path = "../pineland-core" }
