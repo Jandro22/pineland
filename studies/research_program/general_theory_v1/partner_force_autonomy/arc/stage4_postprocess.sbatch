@@ -61,6 +61,7 @@ python3 studies/research_program/general_theory_v1/partner_force_autonomy/analys
 python3 - "$OUTDIR" "$EXPERIMENT_ID" "$EXPECTED_TASKS" "$MERGE_META" <<'PY'
 import hashlib, json, sys
 from pathlib import Path
+import subprocess
 out=Path(sys.argv[1]); experiment=sys.argv[2]; n=int(sys.argv[3]); merge_meta=Path(sys.argv[4])
 def h(p): return hashlib.sha256(p.read_bytes()).hexdigest()
 primary=out/'raw_branch_panel.csv'; traj=out/'trajectory_panel.csv'
@@ -69,12 +70,14 @@ merge=json.loads(merge_meta.read_text(encoding='utf-8'))
 commits=merge['git_commits']
 if len(commits) != 1:
     raise SystemExit(f'expected one production commit, got {commits}')
+analysis_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
 payload={
   'schema_version':'pineland.partner_force_stage4_module_ready.v1',
   'status':'MODULE_ANALYSIS_COMPLETE',
   'experiment_id':experiment,
   'expected_worlds':n,
   'production_git_commit':commits[0],
+  'analysis_git_commit':analysis_commit,
   'source_array_job_ids':merge.get('source_array_job_ids', []),
   'primary_sha256':h(primary),
   'trajectory_sha256':h(traj),

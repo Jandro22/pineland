@@ -24,6 +24,17 @@ EPS = 1.0e-6
 CONFIRMATORY_HORIZONS = (7.0, 30.0, 90.0, 180.0, 360.0)
 
 
+def json_scalar(value: object) -> object:
+    """Convert pandas/numpy group keys into strict JSON-compatible scalars."""
+    if isinstance(value, np.generic):
+        value = value.item()
+    if value is pd.NA:
+        return None
+    if isinstance(value, float) and math.isnan(value):
+        return None
+    return value
+
+
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -244,7 +255,7 @@ def grouped_summary(worlds: pd.DataFrame, factor_cols: list[str]) -> list[dict]:
     for keys, g in worlds.groupby(factor_cols, dropna=False, sort=True):
         if not isinstance(keys, tuple):
             keys = (keys,)
-        row = {k: v for k, v in zip(factor_cols, keys)}
+        row = {k: json_scalar(v) for k, v in zip(factor_cols, keys)}
         row.update(
             {
                 "n": len(g),

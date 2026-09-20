@@ -37,6 +37,9 @@ for experiment in experiments:
 commits={r['production_git_commit'] for _,r in records}
 if len(commits) != 1:
     raise SystemExit(f'Stage-4 modules do not share one production commit: {sorted(commits)}')
+analysis_commits={r['analysis_git_commit'] for _,r in records}
+if len(analysis_commits) != 1:
+    raise SystemExit(f'Stage-4 modules do not share one analysis commit: {sorted(analysis_commits)}')
 total=sum(int(r['expected_worlds']) for _,r in records)
 if total != 2808:
     raise SystemExit(f'expected 2808 production worlds, module READY total is {total}')
@@ -46,6 +49,7 @@ payload={
   'schema_version':'pineland.partner_force_stage4_program_ready.v1',
   'status':'STAGE4_INTEGRATED_PROGRAM_COMPLETE',
   'production_git_commit':next(iter(commits)),
+  'analysis_git_commit':next(iter(analysis_commits)),
   'production_worlds':total,
   'modules':[
     {
