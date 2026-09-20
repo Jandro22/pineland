@@ -152,6 +152,10 @@ flag is supplied.
 The complete evidence/retention policy is in
 [docs/repository-layout.md](docs/repository-layout.md).
 
+Historical source redistribution status is summarized in
+[docs/third-party-data-status.md](docs/third-party-data-status.md); a source is
+not assumed publishable merely because its provenance is documented.
+
 For a compact view of which subsystems are currently research-load-bearing,
 implemented but secondary, or still under active validation, see
 [docs/subsystem-status.md](docs/subsystem-status.md).

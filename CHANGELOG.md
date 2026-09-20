@@ -14,12 +14,16 @@ contracts, manifests, and study-specific ledgers.
 - Explicit redistribution/license dispositions for the historical case source manifests.
 - Windows/Python 3.14 pytest temp-root hardening and cross-platform CI coverage.
 - Rust workspace and full-history secret scanning in GitHub CI.
+- Clean-clone/publication guards for missing Rust modules, restricted source
+  artifacts, and historical generated/raw-data blobs.
 
 ### Changed
 
 - The default development branch is now `main`.
 - The public README is organized around the current research program rather
   than a chronological list of implementation phases.
+- Python package metadata identifies the project repository and primary author
+  consistently with `CITATION.cff`.
 
 ## 0.13.0 - development line
 

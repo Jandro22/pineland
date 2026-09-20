@@ -29,6 +29,29 @@ state was created on Windows using Python 3.14.
 
   Result: **50 passed**.
 
+- clean-clone portable regression suite matching the public CI exclusions:
+
+      python -m pytest -q +        --ignore=tests/test_afghanistan_acled_mapping.py +        --ignore=tests/test_afghanistan_case.py +        --ignore=tests/test_afghanistan_filtered_state_estimation.py +        --ignore=tests/test_afghanistan_historical_inputs.py +        --ignore=tests/test_case_readiness.py +        --ignore=tests/test_historical_database_v2.py +        --ignore=tests/test_mechanism_evidence.py +        --ignore=tests/test_predictive_competition_gate.py +        --ignore=tests/test_research_program.py
+
+  Result: **681 passed, 2 skipped** in 320.45 seconds on the clean Windows
+  checkout with numerical libraries limited to one thread.
+
+- `python -m pip check`: **no broken requirements found**.
+
+- standard Python wheel build:
+
+      python -m pip wheel . --no-deps
+
+  Result: `pineland_coinsim-0.13.0-py3-none-any.whl` built successfully.
+  Wheel metadata reports Alejandro Grenier as author, MIT as the current
+  software license, and the canonical GitHub repository/issue URLs.
+
+- literal Python README quick start:
+
+      pineland-sim run --agents 1000 --days 30 --output outputs/readme-smoke
+
+  Result: exit 0 from the clean checkout and a complete forensic run product.
+
 - Paper-1 software/reproduction smoke:
 
       python pineland.py reproduce paper1 --profile smoke
@@ -93,6 +116,13 @@ source artifacts whose redistribution rights are not established.
 
 ## Other deliberate blockers / unfinished release work
 
+- Reachable private Git history still contains generated/debug/build and raw-data
+  blobs that are absent from the current tree. The 2026-09-19 history audit
+  found 3,871 reachable blobs, including 8 blobs at least 10 MiB and 983 paths
+  under publication-sensitive generated/data locations. The largest are
+  generated debug JSONs around 74 MiB and a generated checkpoint around 50 MiB.
+  A private archival copy plus a deliberate sanitized publication history is
+  required before visibility changes.
 - `v0.13.0` has not been cut as an immutable software tag or GitHub Release.
 - The first-paper scientific analysis/freeze tag does not yet exist.
 - The final public software license remains a deliberate choice; the repository

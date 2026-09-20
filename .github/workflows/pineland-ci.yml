@@ -26,6 +26,8 @@ jobs:
           python-version: "3.11"
       - name: Public-release metadata audit
         run: python scripts/public_release_audit.py
+      - name: Historical publication-surface audit
+        run: python scripts/audit_git_history_blobs.py
       - name: Full-history secret scan
         uses: gitleaks/gitleaks-action@v3
         env:

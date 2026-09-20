@@ -9,8 +9,20 @@ description = "A multiscale, partially observed agent-based simulation of insurg
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
-authors = [{name = "Pineland COIN-SIM contributors"}]
+authors = [{name = "Alejandro Grenier"}]
+keywords = [
+    "agent-based modeling",
+    "insurgency",
+    "counterinsurgency",
+    "state estimation",
+    "political violence",
+    "simulation",
+]
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/Jandro22/pineland"
+Issues = "https://github.com/Jandro22/pineland/issues"
 
 [project.optional-dependencies]
 research = [

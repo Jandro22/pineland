@@ -103,3 +103,52 @@ def test_restricted_source_artifacts_tracked_allows_manifest_only(
     )
 
     assert findings == []
+
+
+def test_invalid_source_manifest_rights_rejects_unknown_state(
+    tmp_path: Path,
+) -> None:
+    audit = load_audit_module()
+    audit.ROOT = tmp_path
+    manifest = tmp_path / "studies" / "case_a" / "data" / "manifests" / "sources.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(
+        """{
+  "sources": [{
+    "dataset": "ambiguous example",
+    "license": "CC BY 4.0",
+    "redistribution": "probably okay"
+  }]
+}
+""",
+        encoding="utf-8",
+    )
+
+    findings = audit.invalid_source_manifest_rights()
+
+    assert len(findings) == 1
+    assert "invalid redistribution state" in findings[0]
+
+
+def test_invalid_source_manifest_rights_requires_basis_for_permitted(
+    tmp_path: Path,
+) -> None:
+    audit = load_audit_module()
+    audit.ROOT = tmp_path
+    manifest = tmp_path / "studies" / "case_a" / "data" / "manifests" / "sources.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(
+        """{
+  "sources": [{
+    "dataset": "unlicensed example",
+    "redistribution": "permitted"
+  }]
+}
+""",
+        encoding="utf-8",
+    )
+
+    findings = audit.invalid_source_manifest_rights()
+
+    assert len(findings) == 1
+    assert "without a recorded license/license_url" in findings[0]

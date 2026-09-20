@@ -29,11 +29,14 @@ REQUIRED_FILES = (
     "docs/release-policy.md",
     "docs/archive-policy.md",
     "docs/data-redistribution.md",
+    "docs/third-party-data-status.md",
     "docs/public-release-checklist.md",
     "docs/subsystem-status.md",
     "docs/subsystem-evidence-index.md",
     ".gitleaks.toml",
     "scripts/scan_git_history_secrets.py",
+    "scripts/audit_git_history_blobs.py",
+    "docs/git-history-publication-review.md",
 )
 
 SECRET_PATTERNS = {
@@ -60,6 +63,14 @@ GENERATED_TRACKED = re.compile(
 RUST_EXTERNAL_MODULE = re.compile(
     r"^\s*(?:pub\s+)?mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;"
 )
+
+ALLOWED_REDISTRIBUTION_STATES = {
+    "permitted",
+    "metadata_only",
+    "permission_required",
+    "review_required",
+    "prohibited",
+}
 
 
 def git(*args: str, check: bool = True) -> str:
@@ -127,6 +138,37 @@ def source_manifest_warnings() -> list[str]:
                 "sources remain review_required"
             )
     return warnings
+
+
+def invalid_source_manifest_rights() -> list[str]:
+    findings: list[str] = []
+    for manifest in sorted(ROOT.glob("studies/*/data/manifests/sources.json")):
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except Exception as exc:
+            findings.append(f"{manifest.relative_to(ROOT)}: unreadable JSON ({exc})")
+            continue
+        for index, source in enumerate(data.get("sources", [])):
+            source_id = (
+                source.get("source_id")
+                or source.get("dataset")
+                or source.get("provider")
+                or f"source[{index}]"
+            )
+            state = source.get("redistribution")
+            if state not in ALLOWED_REDISTRIBUTION_STATES:
+                findings.append(
+                    f"{manifest.relative_to(ROOT)}: {source_id!r} has invalid "
+                    f"redistribution state {state!r}"
+                )
+            if state == "permitted" and not (
+                source.get("license") or source.get("license_url")
+            ):
+                findings.append(
+                    f"{manifest.relative_to(ROOT)}: {source_id!r} is marked "
+                    "permitted without a recorded license/license_url"
+                )
+    return findings
 
 
 def restricted_source_artifacts_tracked(tracked: set[str]) -> list[str]:
@@ -336,6 +378,12 @@ def main() -> int:
         warnings.append(f"software tag {tag} does not exist yet")
 
     warnings.extend(source_manifest_warnings())
+
+    invalid_rights = invalid_source_manifest_rights()
+    if invalid_rights:
+        failures.extend(f"invalid source rights metadata: {item}" for item in invalid_rights)
+    else:
+        passes.append("historical source redistribution states use the controlled vocabulary")
 
     status = git("status", "--porcelain").splitlines()
     if status:

@@ -15,12 +15,16 @@ repository into a public research artifact. It is intentionally stricter than
 
 ## Clean-clone reproducibility
 
-- [ ] Fresh clone installs on a documented supported Python version.
+- [x] Fresh clone installs on a documented supported Python version
+      (Python 3.14 clean-clone verification on 2026-09-19).
 - [ ] Rust workspace builds from the checked-in lockfile/toolchain.
 - [ ] Public CI passes from a clean clone.
 - [ ] Linux Python, Windows Python, and Rust CI jobs pass on the release candidate.
 - [ ] README quick-start commands are tested literally.
-- [ ] Small reproduction/smoke profile completes without private files.
+      The Python quick-start command has passed from a clean clone; the native
+      Rust quick start remains blocked by the missing committed `assays`
+      module described in the dated readiness snapshot.
+- [x] Small reproduction/smoke profile completes without private files.
 - [ ] Paper reproduction either completes publicly or documents required archived inputs.
 - [ ] Required random seeds, schemas, and environment information are recorded.
 
@@ -38,10 +42,13 @@ repository into a public research artifact. It is intentionally stricter than
 
 - [ ] Full Git history is scanned for secrets, credentials, tokens, private identifiers,
       and accidentally committed configuration.
-- [ ] Current tree is scanned separately from history.
+- [ ] Reachable Git history is reviewed for raw third-party data and obsolete
+      generated/debug/build blobs, not just credentials.
+- [x] Current tree is scanned separately from history.
 - [ ] No CUI, export-controlled, restricted, or otherwise non-public material is present.
 - [ ] Every redistributed third-party dataset has compatible licensing/terms.
-- [ ] Historical manifests identify sources without redistributing prohibited files.
+- [x] Historical manifests identify sources without tracking source artifacts
+      whose recorded redistribution state is restricted or unresolved.
 - [ ] Personal contact information is intentional.
 
 Historical-source decisions should follow
@@ -54,12 +61,19 @@ The full-history credential scan is:
 It uses the repository's narrow `.gitleaks.toml` checksum allowlists and
 redacts detected values from reports.
 
+The historical-blob/publication-surface audit is:
+
+    python scripts/audit_git_history_blobs.py
+
+See [`docs/git-history-publication-review.md`](git-history-publication-review.md)
+for the current findings and the recommended pre-public sanitization strategy.
+
 ## Licensing and attribution
 
 - [ ] Final software license is explicitly chosen (currently MIT; Apache-2.0 remains
       an option before outside contributions).
-- [ ] `LICENSE`, package metadata, and README agree.
-- [ ] `CITATION.cff` identifies the release version and authorship correctly.
+- [x] `LICENSE`, package metadata, and README agree on the current MIT license.
+- [x] `CITATION.cff` identifies the current package version and authorship consistently.
 - [ ] Third-party code/assets retain required notices.
 - [ ] Contribution terms are clear before accepting outside contributions.
 
