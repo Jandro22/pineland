@@ -1,0 +1,11 @@
+import PinelandPartnerForceTheory.PartnerForce
+
+#print axioms PartnerForce.regime_exhaustive
+#print axioms PartnerForce.supported_feasible_iff_external_covers_deficit
+#print axioms PartnerForce.bottleneck_exists
+#print axioms PartnerForce.fullMissionFeasible_iff_bottleneck_covers
+#print axioms PartnerForce.one_le_missionScale_iff_requirementFeasible
+#print axioms PartnerForce.feasibleScale_iff_ratio_le_missionScale
+#print axioms PartnerForce.missionScale_rescale_invariant
+#print axioms PartnerForce.structuralSupportLift_pos_of_dependent
+#print axioms PartnerForce.horizonAutonomous_iff_all_scales_ge_one
