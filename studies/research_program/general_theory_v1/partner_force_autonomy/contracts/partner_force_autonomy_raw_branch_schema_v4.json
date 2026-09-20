@@ -1,0 +1,608 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PartnerForceAutonomyRawBranchV4",
+  "description": "Raw single-branch output contract v4. Adds formally grounded structural-autonomy telemetry (q-, q+, support lift, bottleneck, deficits/useful external service), renames prior dependence_* exposure shares to external_share_*, records air/command opportunities, and retains burden/time-to-failure diagnostics. Counterfactual R_h and Delta_h remain derived after pairing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "design_version",
+    "git_commit",
+    "world_id",
+    "pair_id",
+    "run_id",
+    "cell_id",
+    "support_profile",
+    "seed",
+    "withdrawal_time_days",
+    "horizon_days",
+    "branch",
+    "indigenous_forcegen_multiplier",
+    "indigenous_logistics_multiplier",
+    "indigenous_command_multiplier",
+    "pre_insurgent_personnel",
+    "pre_insurgent_active_formations",
+    "pre_insurgent_territorial_control",
+    "pre_recent_actions",
+    "pre_contested_localities",
+    "pre_supported_capability",
+    "pre_government_control",
+    "pre_military_personnel",
+    "pre_trained_reserve",
+    "pre_recruit_pipeline",
+    "pre_readiness",
+    "pre_experience",
+    "pre_supply_stock",
+    "pre_supply_capacity",
+    "pre_command_reliability",
+    "pre_command_latency_hours",
+    "window_indigenous_recruits",
+    "window_indigenous_graduates",
+    "window_military_losses",
+    "window_indigenous_logistics_produced",
+    "window_indigenous_logistics_delivered",
+    "window_indigenous_logistics_consumed",
+    "window_external_air_intensity",
+    "window_external_logistics_offered",
+    "window_external_logistics_delivered",
+    "window_external_logistics_rejected",
+    "window_external_logistics_lost",
+    "window_external_command_events",
+    "window_command_latency_hours_saved",
+    "window_external_forcegen_graduates",
+    "window_donor_cost_air",
+    "window_donor_cost_logistics",
+    "window_donor_cost_command",
+    "window_donor_cost_forcegen",
+    "window_donor_cost",
+    "support_air_intensity",
+    "support_air_bonus",
+    "support_logistics_rate",
+    "support_command_reliability_boost",
+    "support_command_latency_reduction_fraction",
+    "support_forcegen_training_rate_boost",
+    "c_government_control",
+    "c_military_personnel_retention",
+    "c_operational_formation_survival",
+    "c_geographic_coverage_retention",
+    "composite_capability",
+    "post_indigenous_recruits",
+    "post_indigenous_graduates",
+    "post_military_losses",
+    "post_indigenous_logistics_produced",
+    "post_indigenous_logistics_consumed",
+    "post_donor_cost_air",
+    "post_donor_cost_logistics",
+    "post_donor_cost_command",
+    "post_donor_cost_forcegen",
+    "post_donor_cost",
+    "manpower_burden",
+    "logistics_burden",
+    "omega_flow",
+    "t_c_deficit_90",
+    "t_readiness_collapse",
+    "t_supply_exhaustion",
+    "t_first_formation_loss",
+    "window_external_air_opportunities",
+    "window_external_air_assisted_contacts",
+    "window_command_opportunities",
+    "window_command_indigenous_service",
+    "window_command_supported_service",
+    "external_share_logistics",
+    "external_share_forcegen",
+    "external_share_command",
+    "external_share_air",
+    "formal_q_indigenous",
+    "formal_q_supported",
+    "formal_support_lift",
+    "formal_regime",
+    "formal_bottleneck",
+    "formal_forcegen_ratio_indigenous",
+    "formal_logistics_ratio_indigenous",
+    "formal_command_ratio_indigenous",
+    "formal_forcegen_demand",
+    "formal_forcegen_indigenous_service",
+    "formal_forcegen_external_service",
+    "formal_forcegen_deficit",
+    "formal_forcegen_useful_external",
+    "formal_logistics_demand",
+    "formal_logistics_indigenous_service",
+    "formal_logistics_external_service",
+    "formal_logistics_deficit",
+    "formal_logistics_useful_external",
+    "formal_command_demand",
+    "formal_command_indigenous_service",
+    "formal_command_external_service",
+    "formal_command_deficit",
+    "formal_command_useful_external",
+    "command_service_requirement_per_order"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "pineland.partner_force_autonomy_raw_branch.v4"
+    },
+    "experiment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "design_version": {
+      "type": "string",
+      "enum": [
+        "pineland.partner_force_autonomy_stage3_discovery_design.v1",
+        "pineland.partner_force_autonomy_stage3_discovery_design.v2",
+        "pineland.partner_force_holdout_contract.v1",
+        "pineland.partner_force_autonomy_stage3_discovery_design.v3"
+      ]
+    },
+    "git_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "world_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pair_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cell_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "support_profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "withdrawal_time_days": {
+      "type": "number",
+      "minimum": 0
+    },
+    "horizon_days": {
+      "type": "number",
+      "enum": [
+        7,
+        30,
+        90,
+        180
+      ]
+    },
+    "branch": {
+      "type": "string",
+      "enum": [
+        "SUPPORT_ON",
+        "SUPPORT_OFF"
+      ]
+    },
+    "indigenous_forcegen_multiplier": {
+      "type": "number",
+      "minimum": 0
+    },
+    "indigenous_logistics_multiplier": {
+      "type": "number",
+      "minimum": 0
+    },
+    "indigenous_command_multiplier": {
+      "type": "number",
+      "minimum": 0
+    },
+    "pre_insurgent_personnel": {
+      "type": "number",
+      "minimum": 0
+    },
+    "pre_insurgent_active_formations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pre_insurgent_territorial_control": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "pre_recent_actions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pre_contested_localities": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pre_supported_capability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "pre_government_control": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "pre_military_personnel": {
+      "type": "number",
+      "minimum": 0
+    },
+    "pre_trained_reserve": {
+      "type": "number",
+      "minimum": 0
+    },
+    "pre_recruit_pipeline": {
+      "type": "number",
+      "minimum": 0
+    },
+    "pre_readiness": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "pre_experience": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "pre_supply_stock": {
+      "type": "number",
+      "minimum": 0
+    },
+    "pre_supply_capacity": {
+      "type": "number",
+      "minimum": 0
+    },
+    "pre_command_reliability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "pre_command_latency_hours": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_indigenous_recruits": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_indigenous_graduates": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_military_losses": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_indigenous_logistics_produced": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_indigenous_logistics_delivered": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_indigenous_logistics_consumed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_external_air_intensity": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_external_logistics_offered": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_external_logistics_delivered": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_external_logistics_rejected": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_external_logistics_lost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_external_command_events": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "window_command_latency_hours_saved": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_external_forcegen_graduates": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_donor_cost_air": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_donor_cost_logistics": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_donor_cost_command": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_donor_cost_forcegen": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_donor_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "support_air_intensity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "support_air_bonus": {
+      "type": "number",
+      "minimum": 0
+    },
+    "support_logistics_rate": {
+      "type": "number",
+      "minimum": 0
+    },
+    "support_command_reliability_boost": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "support_command_latency_reduction_fraction": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "support_forcegen_training_rate_boost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "c_government_control": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "c_military_personnel_retention": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "c_operational_formation_survival": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "c_geographic_coverage_retention": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "composite_capability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "post_indigenous_recruits": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_indigenous_graduates": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_military_losses": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_indigenous_logistics_produced": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_indigenous_logistics_consumed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_donor_cost_air": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_donor_cost_logistics": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_donor_cost_command": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_donor_cost_forcegen": {
+      "type": "number",
+      "minimum": 0
+    },
+    "post_donor_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "manpower_burden": {
+      "type": "number",
+      "minimum": 0
+    },
+    "logistics_burden": {
+      "type": "number",
+      "minimum": 0
+    },
+    "omega_flow": {
+      "type": "number",
+      "minimum": 0
+    },
+    "t_c_deficit_90": {
+      "type": "number"
+    },
+    "t_readiness_collapse": {
+      "type": "number"
+    },
+    "t_supply_exhaustion": {
+      "type": "number"
+    },
+    "t_first_formation_loss": {
+      "type": "number"
+    },
+    "window_external_air_opportunities": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "window_external_air_assisted_contacts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "window_command_opportunities": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "window_command_indigenous_service": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_command_supported_service": {
+      "type": "number",
+      "minimum": 0
+    },
+    "external_share_logistics": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "external_share_forcegen": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "external_share_command": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "external_share_air": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "formal_support_lift": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "formal_q_indigenous": {
+      "type": "number",
+      "minimum": -1
+    },
+    "formal_q_supported": {
+      "type": "number",
+      "minimum": -1
+    },
+    "formal_regime": {
+      "type": "string",
+      "enum": [
+        "AUTONOMOUS",
+        "DEPENDENT",
+        "OVERMATCHED",
+        "NO_ACTIVE_DEMAND"
+      ]
+    },
+    "formal_bottleneck": {
+      "type": "string",
+      "enum": [
+        "forcegen",
+        "logistics",
+        "command",
+        "none"
+      ]
+    },
+    "formal_forcegen_ratio_indigenous": {
+      "type": "number",
+      "minimum": -1
+    },
+    "formal_logistics_ratio_indigenous": {
+      "type": "number",
+      "minimum": -1
+    },
+    "formal_command_ratio_indigenous": {
+      "type": "number",
+      "minimum": -1
+    },
+    "formal_forcegen_demand": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_forcegen_indigenous_service": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_forcegen_external_service": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_forcegen_deficit": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_forcegen_useful_external": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_logistics_demand": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_logistics_indigenous_service": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_logistics_external_service": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_logistics_deficit": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_logistics_useful_external": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_command_demand": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_command_indigenous_service": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_command_external_service": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_command_deficit": {
+      "type": "number",
+      "minimum": 0
+    },
+    "formal_command_useful_external": {
+      "type": "number",
+      "minimum": 0
+    },
+    "command_service_requirement_per_order": {
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}

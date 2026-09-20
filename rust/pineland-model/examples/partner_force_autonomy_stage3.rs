@@ -1,6 +1,7 @@
 use pineland_core::config::SimulationConfig;
 use pineland_core::json::{parse as parse_json, JsonValue};
 use pineland_model::{
+    partner_force_formal::{ServiceChannel, StructuralAutonomyMetrics, StructuralServiceWindow},
     CapabilityAssayBaseline, CapabilityAssayResult, SimulationEngine, INSURGENT, MILITARY,
 };
 use std::collections::BTreeSet;
@@ -10,10 +11,13 @@ use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_raw_branch.v3";
-const DISCOVERY_DESIGN_VERSION: &str = "pineland.partner_force_autonomy_stage3_discovery_design.v2";
-const TRAJECTORY_SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_trajectory.v1";
+const SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_raw_branch.v4";
+const DISCOVERY_DESIGN_VERSION: &str = "pineland.partner_force_autonomy_stage3_discovery_design.v3";
+const TRAJECTORY_SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_trajectory.v2";
 const TELEMETRY_STEP_DAYS: f64 = 7.0;
+/// Reference-mission command requirement per military order. Indigenous and
+/// supported command service are reliability * exp(-latency_hours / 24).
+const COMMAND_SERVICE_REQUIREMENT_PER_ORDER: f64 = 0.5;
 
 #[derive(Clone, Debug, Default)]
 struct HoldoutOverrides {
@@ -82,6 +86,9 @@ struct FlowSnapshot {
     external_logistics_delivered: f64,
     external_logistics_rejected: f64,
     external_logistics_lost: f64,
+    command_opportunities: u64,
+    command_indigenous_service: f64,
+    command_supported_service: f64,
     external_command_events: u64,
     command_latency_hours_saved: f64,
     external_forcegen_graduates: f64,
@@ -93,6 +100,7 @@ struct FlowSnapshot {
     contacts: u64,
     organized_actions: u64,
     security_deployments: f64,
+    external_air_opportunities: u64,
     external_air_assisted_contacts: u64,
     external_air_firepower_bonus: f64,
     command_reliability_boost: f64,
@@ -131,7 +139,7 @@ fn load_cells(path: &Path) -> Result<Vec<Cell>, String> {
     let header = lines.next().ok_or("empty stage3 cell manifest")?;
     let expected = "cell_id,support_profile,forcegen_mult,logistics_mult,command_mult,air_intensity,air_bonus,air_cost_per_contact,logistics_rate,logistics_capacity,logistics_cost_per_unit,command_reliability_boost,command_latency_reduction_fraction,command_floor_hours,command_cost_per_formation_day,forcegen_training_rate_boost,forcegen_cost_per_incremental_trainee";
     if header.trim() != expected {
-        return Err("stage3 cell manifest header does not match frozen v1 contract".to_string());
+        return Err("stage3 cell manifest header does not match frozen v3 contract".to_string());
     }
     let mut cells = Vec::new();
     for (line_no, line) in lines.enumerate() {
@@ -735,7 +743,7 @@ fn build_config(
     config.logistics.source_daily_production_fraction *= cell.logistics_mult;
 
     let p = &mut config.partner_force_support;
-    p.enabled = true;
+    p.enabled = false;
     p.air.enabled = cell.air_intensity > 0.0;
     p.air.intensity = cell.air_intensity;
     p.air.firepower_bonus = cell.air_bonus;
@@ -756,6 +764,8 @@ fn build_config(
     p.force_generation.training_rate_boost = cell.forcegen_training_rate_boost;
     p.force_generation.cost_per_incremental_trainee = cell.forcegen_cost_per_incremental_trainee;
     p.force_generation.capacity_building_investment_rate = 0.0;
+    p.enabled =
+        p.air.enabled || p.logistics.enabled || p.command.enabled || p.force_generation.enabled;
 
     config.validate().map_err(|e| e.to_string())?;
     Ok(config)
@@ -808,6 +818,9 @@ fn flow_snapshot(engine: &SimulationEngine) -> FlowSnapshot {
         external_logistics_delivered: l.logistics.cumulative_delivered,
         external_logistics_rejected: l.logistics.cumulative_rejected,
         external_logistics_lost: l.logistics.cumulative_lost,
+        command_opportunities: l.command.opportunities,
+        command_indigenous_service: l.command.cumulative_indigenous_service,
+        command_supported_service: l.command.cumulative_supported_service,
         external_command_events: l.command.assisted_events,
         command_latency_hours_saved: l.command.cumulative_latency_reduction_hours,
         external_forcegen_graduates: l.force_generation.external_incremental_graduates,
@@ -824,6 +837,7 @@ fn flow_snapshot(engine: &SimulationEngine) -> FlowSnapshot {
             .government_cumulative_security_deployments
             .iter()
             .sum(),
+        external_air_opportunities: l.air.opportunities,
         external_air_assisted_contacts: l.air.assisted_contacts,
         external_air_firepower_bonus: l.air.cumulative_firepower_bonus,
         command_reliability_boost: l.command.cumulative_reliability_boost,
@@ -855,6 +869,13 @@ fn diff(a: FlowSnapshot, b: FlowSnapshot) -> FlowSnapshot {
             - a.external_logistics_rejected)
             .max(0.0),
         external_logistics_lost: (b.external_logistics_lost - a.external_logistics_lost).max(0.0),
+        command_opportunities: b
+            .command_opportunities
+            .saturating_sub(a.command_opportunities),
+        command_indigenous_service: (b.command_indigenous_service - a.command_indigenous_service)
+            .max(0.0),
+        command_supported_service: (b.command_supported_service - a.command_supported_service)
+            .max(0.0),
         external_command_events: b
             .external_command_events
             .saturating_sub(a.external_command_events),
@@ -872,6 +893,9 @@ fn diff(a: FlowSnapshot, b: FlowSnapshot) -> FlowSnapshot {
         contacts: b.contacts.saturating_sub(a.contacts),
         organized_actions: b.organized_actions.saturating_sub(a.organized_actions),
         security_deployments: (b.security_deployments - a.security_deployments).max(0.0),
+        external_air_opportunities: b
+            .external_air_opportunities
+            .saturating_sub(a.external_air_opportunities),
         external_air_assisted_contacts: b
             .external_air_assisted_contacts
             .saturating_sub(a.external_air_assisted_contacts),
@@ -997,8 +1021,41 @@ fn state_at_withdrawal(
     }
 }
 
+fn structural_service_window(window: FlowSnapshot) -> StructuralServiceWindow {
+    StructuralServiceWindow {
+        forcegen: ServiceChannel::new(
+            window.military_losses,
+            window.indigenous_graduates,
+            window.external_forcegen_graduates,
+        ),
+        logistics: ServiceChannel::new(
+            window.indigenous_logistics_consumed,
+            window.indigenous_logistics_delivered,
+            window.external_logistics_delivered,
+        ),
+        command: ServiceChannel::new(
+            window.command_opportunities as f64 * COMMAND_SERVICE_REQUIREMENT_PER_ORDER,
+            window.command_indigenous_service,
+            (window.command_supported_service - window.command_indigenous_service).max(0.0),
+        ),
+    }
+}
+
+fn ratio_or_sentinel(value: Option<f64>) -> f64 {
+    value.unwrap_or(-1.0)
+}
+
+fn external_air_share(window: FlowSnapshot) -> f64 {
+    if window.external_air_opportunities > 0 {
+        (window.external_air_assisted_contacts as f64 / window.external_air_opportunities as f64)
+            .clamp(0.0, 1.0)
+    } else {
+        0.0
+    }
+}
+
 fn csv_header() -> &'static str {
-    "schema_version,experiment_id,design_version,git_commit,world_id,pair_id,run_id,cell_id,support_profile,seed,withdrawal_time_days,horizon_days,branch,indigenous_forcegen_multiplier,indigenous_logistics_multiplier,indigenous_command_multiplier,pre_insurgent_personnel,pre_insurgent_active_formations,pre_insurgent_territorial_control,pre_recent_actions,pre_contested_localities,pre_supported_capability,pre_government_control,pre_military_personnel,pre_trained_reserve,pre_recruit_pipeline,pre_readiness,pre_experience,pre_supply_stock,pre_supply_capacity,pre_command_reliability,pre_command_latency_hours,window_indigenous_recruits,window_indigenous_graduates,window_military_losses,window_indigenous_logistics_produced,window_indigenous_logistics_delivered,window_indigenous_logistics_consumed,window_external_air_intensity,window_external_logistics_offered,window_external_logistics_delivered,window_external_logistics_rejected,window_external_logistics_lost,window_external_command_events,window_command_latency_hours_saved,window_external_forcegen_graduates,window_donor_cost_air,window_donor_cost_logistics,window_donor_cost_command,window_donor_cost_forcegen,window_donor_cost,support_air_intensity,support_air_bonus,support_logistics_rate,support_command_reliability_boost,support_command_latency_reduction_fraction,support_forcegen_training_rate_boost,c_government_control,c_military_personnel_retention,c_operational_formation_survival,c_geographic_coverage_retention,composite_capability,post_indigenous_recruits,post_indigenous_graduates,post_military_losses,post_indigenous_logistics_produced,post_indigenous_logistics_consumed,post_donor_cost_air,post_donor_cost_logistics,post_donor_cost_command,post_donor_cost_forcegen,post_donor_cost,dependence_logistics,dependence_forcegen,dependence_command,dependence_air,manpower_burden,logistics_burden,omega_flow,t_c_deficit_90,t_readiness_collapse,t_supply_exhaustion,t_first_formation_loss"
+    "schema_version,experiment_id,design_version,git_commit,world_id,pair_id,run_id,cell_id,support_profile,seed,withdrawal_time_days,horizon_days,branch,indigenous_forcegen_multiplier,indigenous_logistics_multiplier,indigenous_command_multiplier,pre_insurgent_personnel,pre_insurgent_active_formations,pre_insurgent_territorial_control,pre_recent_actions,pre_contested_localities,pre_supported_capability,pre_government_control,pre_military_personnel,pre_trained_reserve,pre_recruit_pipeline,pre_readiness,pre_experience,pre_supply_stock,pre_supply_capacity,pre_command_reliability,pre_command_latency_hours,window_indigenous_recruits,window_indigenous_graduates,window_military_losses,window_indigenous_logistics_produced,window_indigenous_logistics_delivered,window_indigenous_logistics_consumed,window_external_air_opportunities,window_external_air_assisted_contacts,window_external_air_intensity,window_external_logistics_offered,window_external_logistics_delivered,window_external_logistics_rejected,window_external_logistics_lost,window_command_opportunities,window_command_indigenous_service,window_command_supported_service,window_external_command_events,window_command_latency_hours_saved,window_external_forcegen_graduates,window_donor_cost_air,window_donor_cost_logistics,window_donor_cost_command,window_donor_cost_forcegen,window_donor_cost,support_air_intensity,support_air_bonus,support_logistics_rate,support_command_reliability_boost,support_command_latency_reduction_fraction,support_forcegen_training_rate_boost,c_government_control,c_military_personnel_retention,c_operational_formation_survival,c_geographic_coverage_retention,composite_capability,post_indigenous_recruits,post_indigenous_graduates,post_military_losses,post_indigenous_logistics_produced,post_indigenous_logistics_consumed,post_donor_cost_air,post_donor_cost_logistics,post_donor_cost_command,post_donor_cost_forcegen,post_donor_cost,external_share_logistics,external_share_forcegen,external_share_command,external_share_air,formal_q_indigenous,formal_q_supported,formal_support_lift,formal_regime,formal_bottleneck,formal_forcegen_ratio_indigenous,formal_logistics_ratio_indigenous,formal_command_ratio_indigenous,formal_forcegen_demand,formal_forcegen_indigenous_service,formal_forcegen_external_service,formal_forcegen_deficit,formal_forcegen_useful_external,formal_logistics_demand,formal_logistics_indigenous_service,formal_logistics_external_service,formal_logistics_deficit,formal_logistics_useful_external,formal_command_demand,formal_command_indigenous_service,formal_command_external_service,formal_command_deficit,formal_command_useful_external,command_service_requirement_per_order,manpower_burden,logistics_burden,omega_flow,t_c_deficit_90,t_readiness_collapse,t_supply_exhaustion,t_first_formation_loss"
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1016,10 +1073,12 @@ fn write_row(
     pre_window: FlowSnapshot,
     assay: &CapabilityAssayResult,
     post: FlowSnapshot,
-    dep_logistics: f64,
-    dep_forcegen: f64,
-    dep_command: f64,
-    dep_air: f64,
+    external_share_logistics: f64,
+    external_share_forcegen: f64,
+    external_share_command: f64,
+    external_share_air: f64,
+    structural_window: StructuralServiceWindow,
+    structural: StructuralAutonomyMetrics,
     manpower_burden: f64,
     logistics_burden: f64,
     omega_flow: f64,
@@ -1031,98 +1090,128 @@ fn write_row(
     let world_id = format!("{}_s{}", cell.cell_id, seed);
     let pair_id = format!("{}_T{}_h{}", world_id, withdrawal as u64, horizon as u64);
     let run_id = format!("{}_{}", pair_id, branch);
-    writeln!(
-        out,
-        "{},{},{},{},{},{},{},{},{},{},{:.0},{:.0},{},{:.6},{:.6},{:.6},{:.9},{},{:.9},{},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.6},{:.6},{:.6},{:.6},{:.6},{:.6},{:.6},{:.1},{:.1},{:.1},{:.1}",
-        SCHEMA_VERSION,
-        experiment_id,
-        design_version,
-        commit,
+    let f9 = |x: f64| format!("{x:.9}");
+    let f6 = |x: f64| format!("{x:.6}");
+    let f1 = |x: f64| format!("{x:.1}");
+    let row = vec![
+        SCHEMA_VERSION.to_string(),
+        experiment_id.to_string(),
+        design_version.to_string(),
+        commit.to_string(),
         world_id,
         pair_id,
         run_id,
-        cell.cell_id,
-        cell.support_profile,
-        seed,
-        withdrawal,
-        horizon,
-        branch,
-        cell.forcegen_mult,
-        cell.logistics_mult,
-        cell.command_mult,
-        pre.pre_insurgent_personnel,
-        pre.pre_insurgent_active_formations,
-        pre.pre_insurgent_territorial_control,
-        pre_window.organized_actions,
-        pre.pre_contested_localities,
-        pre.pre_supported_capability,
-        pre.pre_government_control,
-        pre.military_personnel,
-        pre.trained_reserve,
-        pre.recruit_pipeline,
-        pre.readiness,
-        pre.experience,
-        pre.supply_stock,
-        pre.supply_capacity,
-        pre.command_reliability,
-        pre.command_latency_hours,
-        pre_window.indigenous_recruits,
-        pre_window.indigenous_graduates,
-        pre_window.military_losses,
-        pre_window.indigenous_logistics_produced,
-        pre_window.indigenous_logistics_delivered,
-        pre_window.indigenous_logistics_consumed,
-        pre_window.external_air_intensity,
-        pre_window.external_logistics_offered,
-        pre_window.external_logistics_delivered,
-        pre_window.external_logistics_rejected,
-        pre_window.external_logistics_lost,
-        pre_window.external_command_events,
-        pre_window.command_latency_hours_saved,
-        pre_window.external_forcegen_graduates,
-        pre_window.donor_cost_air,
-        pre_window.donor_cost_logistics,
-        pre_window.donor_cost_command,
-        pre_window.donor_cost_forcegen,
-        pre_window.donor_cost,
-        cell.air_intensity,
-        cell.air_bonus,
-        cell.logistics_rate,
-        cell.command_reliability_boost,
-        cell.command_latency_reduction_fraction,
-        cell.forcegen_training_rate_boost,
-        assay.government_control,
-        assay.military_personnel_retention,
-        assay.operational_formation_survival,
-        assay.geographic_coverage_retention,
-        assay.composite_capability,
-        post.indigenous_recruits,
-        post.indigenous_graduates,
-        post.military_losses,
-        post.indigenous_logistics_produced,
-        post.indigenous_logistics_consumed,
-        post.donor_cost_air,
-        post.donor_cost_logistics,
-        post.donor_cost_command,
-        post.donor_cost_forcegen,
-        post.donor_cost,
-        dep_logistics,
-        dep_forcegen,
-        dep_command,
-        dep_air,
-        manpower_burden,
-        logistics_burden,
-        omega_flow,
-        t_c_deficit_90,
-        t_readiness_collapse,
-        t_supply_exhaustion,
-        t_first_formation_loss,
-    )
-    .map_err(|e| e.to_string())
+        cell.cell_id.clone(),
+        cell.support_profile.clone(),
+        seed.to_string(),
+        format!("{withdrawal:.0}"),
+        format!("{horizon:.0}"),
+        branch.to_string(),
+        f6(cell.forcegen_mult),
+        f6(cell.logistics_mult),
+        f6(cell.command_mult),
+        f9(pre.pre_insurgent_personnel),
+        pre.pre_insurgent_active_formations.to_string(),
+        f9(pre.pre_insurgent_territorial_control),
+        pre_window.organized_actions.to_string(),
+        pre.pre_contested_localities.to_string(),
+        f9(pre.pre_supported_capability),
+        f9(pre.pre_government_control),
+        f9(pre.military_personnel),
+        f9(pre.trained_reserve),
+        f9(pre.recruit_pipeline),
+        f9(pre.readiness),
+        f9(pre.experience),
+        f9(pre.supply_stock),
+        f9(pre.supply_capacity),
+        f9(pre.command_reliability),
+        f9(pre.command_latency_hours),
+        f9(pre_window.indigenous_recruits),
+        f9(pre_window.indigenous_graduates),
+        f9(pre_window.military_losses),
+        f9(pre_window.indigenous_logistics_produced),
+        f9(pre_window.indigenous_logistics_delivered),
+        f9(pre_window.indigenous_logistics_consumed),
+        pre_window.external_air_opportunities.to_string(),
+        pre_window.external_air_assisted_contacts.to_string(),
+        f9(pre_window.external_air_intensity),
+        f9(pre_window.external_logistics_offered),
+        f9(pre_window.external_logistics_delivered),
+        f9(pre_window.external_logistics_rejected),
+        f9(pre_window.external_logistics_lost),
+        pre_window.command_opportunities.to_string(),
+        f9(pre_window.command_indigenous_service),
+        f9(pre_window.command_supported_service),
+        pre_window.external_command_events.to_string(),
+        f9(pre_window.command_latency_hours_saved),
+        f9(pre_window.external_forcegen_graduates),
+        f9(pre_window.donor_cost_air),
+        f9(pre_window.donor_cost_logistics),
+        f9(pre_window.donor_cost_command),
+        f9(pre_window.donor_cost_forcegen),
+        f9(pre_window.donor_cost),
+        f9(cell.air_intensity),
+        f9(cell.air_bonus),
+        f9(cell.logistics_rate),
+        f9(cell.command_reliability_boost),
+        f9(cell.command_latency_reduction_fraction),
+        f9(cell.forcegen_training_rate_boost),
+        f9(assay.government_control),
+        f9(assay.military_personnel_retention),
+        f9(assay.operational_formation_survival),
+        f9(assay.geographic_coverage_retention),
+        f9(assay.composite_capability),
+        f9(post.indigenous_recruits),
+        f9(post.indigenous_graduates),
+        f9(post.military_losses),
+        f9(post.indigenous_logistics_produced),
+        f9(post.indigenous_logistics_consumed),
+        f9(post.donor_cost_air),
+        f9(post.donor_cost_logistics),
+        f9(post.donor_cost_command),
+        f9(post.donor_cost_forcegen),
+        f9(post.donor_cost),
+        f6(external_share_logistics),
+        f6(external_share_forcegen),
+        f6(external_share_command),
+        f6(external_share_air),
+        f9(structural.q_indigenous),
+        f9(structural.q_supported),
+        f9(structural.support_lift),
+        structural.regime.as_str().to_string(),
+        structural.bottleneck.as_str().to_string(),
+        f9(ratio_or_sentinel(structural.forcegen_ratio_indigenous)),
+        f9(ratio_or_sentinel(structural.logistics_ratio_indigenous)),
+        f9(ratio_or_sentinel(structural.command_ratio_indigenous)),
+        f9(structural_window.forcegen.demand),
+        f9(structural_window.forcegen.indigenous),
+        f9(structural_window.forcegen.external),
+        f9(structural_window.forcegen.deficit()),
+        f9(structural_window.forcegen.useful_external()),
+        f9(structural_window.logistics.demand),
+        f9(structural_window.logistics.indigenous),
+        f9(structural_window.logistics.external),
+        f9(structural_window.logistics.deficit()),
+        f9(structural_window.logistics.useful_external()),
+        f9(structural_window.command.demand),
+        f9(structural_window.command.indigenous),
+        f9(structural_window.command.external),
+        f9(structural_window.command.deficit()),
+        f9(structural_window.command.useful_external()),
+        f9(COMMAND_SERVICE_REQUIREMENT_PER_ORDER),
+        f6(manpower_burden),
+        f6(logistics_burden),
+        f6(omega_flow),
+        f1(t_c_deficit_90),
+        f1(t_readiness_collapse),
+        f1(t_supply_exhaustion),
+        f1(t_first_formation_loss),
+    ];
+    writeln!(out, "{}", row.join(",")).map_err(|e| e.to_string())
 }
 
 fn trajectory_csv_header() -> &'static str {
-    "schema_version,experiment_id,design_version,git_commit,world_id,cell_id,support_profile,seed,withdrawal_time_days,time_days,days_from_withdrawal,phase,capability_reference,state_hash,decision_hash,government_control,military_personnel_retention,operational_formation_survival,geographic_coverage_retention,composite_capability,military_personnel,operational_formations,covered_localities,trained_reserve,recruit_pipeline,readiness,experience,supply_stock,supply_capacity,command_reliability,command_latency_hours,insurgent_personnel,insurgent_active_formations,insurgent_territorial_control,contested_localities,interval_indigenous_recruits,interval_indigenous_graduates,interval_security_deployments,interval_military_losses,interval_indigenous_logistics_produced,interval_indigenous_logistics_delivered,interval_indigenous_logistics_consumed,interval_logistics_system_lost,interval_contacts,interval_organized_actions,interval_external_air_assisted_contacts,interval_external_air_intensity,interval_external_air_firepower_bonus,interval_external_logistics_offered,interval_external_logistics_delivered,interval_external_logistics_rejected,interval_external_logistics_lost,interval_external_command_events,interval_command_reliability_boost,interval_command_latency_hours_saved,interval_external_forcegen_graduates,interval_donor_cost_air,interval_donor_cost_logistics,interval_donor_cost_command,interval_donor_cost_forcegen,interval_donor_cost"
+    "schema_version,experiment_id,design_version,git_commit,world_id,cell_id,support_profile,seed,withdrawal_time_days,time_days,days_from_withdrawal,phase,capability_reference,state_hash,decision_hash,government_control,military_personnel_retention,operational_formation_survival,geographic_coverage_retention,composite_capability,military_personnel,operational_formations,covered_localities,trained_reserve,recruit_pipeline,readiness,experience,supply_stock,supply_capacity,command_reliability,command_latency_hours,insurgent_personnel,insurgent_active_formations,insurgent_territorial_control,contested_localities,interval_indigenous_recruits,interval_indigenous_graduates,interval_security_deployments,interval_military_losses,interval_indigenous_logistics_produced,interval_indigenous_logistics_delivered,interval_indigenous_logistics_consumed,interval_logistics_system_lost,interval_contacts,interval_organized_actions,interval_external_air_opportunities,interval_external_air_assisted_contacts,interval_external_air_intensity,interval_external_air_firepower_bonus,interval_external_logistics_offered,interval_external_logistics_delivered,interval_external_logistics_rejected,interval_external_logistics_lost,interval_command_opportunities,interval_command_indigenous_service,interval_command_supported_service,interval_external_command_events,interval_command_reliability_boost,interval_command_latency_hours_saved,interval_external_forcegen_graduates,interval_donor_cost_air,interval_donor_cost_logistics,interval_donor_cost_command,interval_donor_cost_forcegen,interval_donor_cost,interval_formal_active_services,interval_formal_q_indigenous,interval_formal_q_supported,interval_formal_support_lift,interval_formal_regime,interval_formal_bottleneck"
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1143,72 +1232,107 @@ fn write_trajectory_row(
     interval: FlowSnapshot,
 ) -> Result<(), String> {
     let world_id = format!("{}_s{}", cell.cell_id, seed);
-    writeln!(
-        out,
-        "{},{},{},{},{},{},{},{},{:.0},{:.9},{:.9},{},{},{},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{:.9},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9},{:.9}",
-        TRAJECTORY_SCHEMA_VERSION,
-        experiment_id,
-        design_version,
-        commit,
+    let structural_window = structural_service_window(interval);
+    let active_services = [
+        structural_window.forcegen.active(),
+        structural_window.logistics.active(),
+        structural_window.command.active(),
+    ]
+    .into_iter()
+    .filter(|x| *x)
+    .count();
+    let (q_indigenous, q_supported, support_lift, regime, bottleneck) =
+        match structural_window.metrics() {
+            Ok(m) => (
+                m.q_indigenous,
+                m.q_supported,
+                m.support_lift,
+                m.regime.as_str().to_string(),
+                m.bottleneck.as_str().to_string(),
+            ),
+            Err(_) => (
+                -1.0,
+                -1.0,
+                0.0,
+                "NO_ACTIVE_DEMAND".to_string(),
+                "none".to_string(),
+            ),
+        };
+    let f9 = |x: f64| format!("{x:.9}");
+    let row = vec![
+        TRAJECTORY_SCHEMA_VERSION.to_string(),
+        experiment_id.to_string(),
+        design_version.to_string(),
+        commit.to_string(),
         world_id,
-        cell.cell_id,
-        cell.support_profile,
-        seed,
-        withdrawal,
-        time_days,
-        time_days - withdrawal,
-        phase,
-        capability_reference,
+        cell.cell_id.clone(),
+        cell.support_profile.clone(),
+        seed.to_string(),
+        format!("{withdrawal:.0}"),
+        f9(time_days),
+        f9(time_days - withdrawal),
+        phase.to_string(),
+        capability_reference.to_string(),
         engine.state_hash(),
         engine.decision_hash(),
-        assay.government_control,
-        assay.military_personnel_retention,
-        assay.operational_formation_survival,
-        assay.geographic_coverage_retention,
-        assay.composite_capability,
-        state.military_personnel,
-        state.operational_formations,
-        state.covered_localities,
-        state.trained_reserve,
-        state.recruit_pipeline,
-        state.readiness,
-        state.experience,
-        state.supply_stock,
-        state.supply_capacity,
-        state.command_reliability,
-        state.command_latency_hours,
-        state.pre_insurgent_personnel,
-        state.pre_insurgent_active_formations,
-        state.pre_insurgent_territorial_control,
-        state.pre_contested_localities,
-        interval.indigenous_recruits,
-        interval.indigenous_graduates,
-        interval.security_deployments,
-        interval.military_losses,
-        interval.indigenous_logistics_produced,
-        interval.indigenous_logistics_delivered,
-        interval.indigenous_logistics_consumed,
-        interval.logistics_system_lost,
-        interval.contacts,
-        interval.organized_actions,
-        interval.external_air_assisted_contacts,
-        interval.external_air_intensity,
-        interval.external_air_firepower_bonus,
-        interval.external_logistics_offered,
-        interval.external_logistics_delivered,
-        interval.external_logistics_rejected,
-        interval.external_logistics_lost,
-        interval.external_command_events,
-        interval.command_reliability_boost,
-        interval.command_latency_hours_saved,
-        interval.external_forcegen_graduates,
-        interval.donor_cost_air,
-        interval.donor_cost_logistics,
-        interval.donor_cost_command,
-        interval.donor_cost_forcegen,
-        interval.donor_cost,
-    )
-    .map_err(|e| e.to_string())
+        f9(assay.government_control),
+        f9(assay.military_personnel_retention),
+        f9(assay.operational_formation_survival),
+        f9(assay.geographic_coverage_retention),
+        f9(assay.composite_capability),
+        f9(state.military_personnel),
+        state.operational_formations.to_string(),
+        state.covered_localities.to_string(),
+        f9(state.trained_reserve),
+        f9(state.recruit_pipeline),
+        f9(state.readiness),
+        f9(state.experience),
+        f9(state.supply_stock),
+        f9(state.supply_capacity),
+        f9(state.command_reliability),
+        f9(state.command_latency_hours),
+        f9(state.pre_insurgent_personnel),
+        state.pre_insurgent_active_formations.to_string(),
+        f9(state.pre_insurgent_territorial_control),
+        state.pre_contested_localities.to_string(),
+        f9(interval.indigenous_recruits),
+        f9(interval.indigenous_graduates),
+        f9(interval.security_deployments),
+        f9(interval.military_losses),
+        f9(interval.indigenous_logistics_produced),
+        f9(interval.indigenous_logistics_delivered),
+        f9(interval.indigenous_logistics_consumed),
+        f9(interval.logistics_system_lost),
+        interval.contacts.to_string(),
+        interval.organized_actions.to_string(),
+        interval.external_air_opportunities.to_string(),
+        interval.external_air_assisted_contacts.to_string(),
+        f9(interval.external_air_intensity),
+        f9(interval.external_air_firepower_bonus),
+        f9(interval.external_logistics_offered),
+        f9(interval.external_logistics_delivered),
+        f9(interval.external_logistics_rejected),
+        f9(interval.external_logistics_lost),
+        interval.command_opportunities.to_string(),
+        f9(interval.command_indigenous_service),
+        f9(interval.command_supported_service),
+        interval.external_command_events.to_string(),
+        f9(interval.command_reliability_boost),
+        f9(interval.command_latency_hours_saved),
+        f9(interval.external_forcegen_graduates),
+        f9(interval.donor_cost_air),
+        f9(interval.donor_cost_logistics),
+        f9(interval.donor_cost_command),
+        f9(interval.donor_cost_forcegen),
+        f9(interval.donor_cost),
+        active_services.to_string(),
+        f9(q_indigenous),
+        f9(q_supported),
+        f9(support_lift),
+        regime,
+        bottleneck,
+    ];
+    writeln!(out, "{}", row.join(",")).map_err(|e| e.to_string())
 }
 
 fn sorted_unique_times(mut values: Vec<f64>) -> Vec<f64> {
@@ -1259,7 +1383,7 @@ struct DegeneracyWorldSummary {
 }
 
 fn usage() {
-    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--preflight-gate] [--run-assays] [--pilot] [--design PATH | --holdout-contract PATH] [--freeze PATH] [--output PATH] [--trajectory-output PATH] [--seed-count N] [--seed-base N | --seed N] [--cell-id ID | --cell-index N] [--max-cells N] [--agent-count N] [--locality-count N] [--validate-configs] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
+    eprintln!("Usage: cargo run -p pineland-model --example partner_force_autonomy_stage3 -- [--preflight-gate] [--run-assays] [--pilot] [--design PATH | --holdout-contract PATH] [--freeze PATH] [--output PATH] [--trajectory-output PATH] [--seed-count N] [--seed-base N | --seed N] [--cell-id ID | --cell-index N] [--max-cells N] [--agent-count N] [--locality-count N] [--validate-configs] [--disable-diagnostic-telemetry] [--allow-dirty] [--allow-unfrozen] [--smoke] --execute");
     eprintln!("Without --execute, --preflight-gate, or --run-assays the runner performs NO simulation and only prints the frozen design summary.");
     eprintln!(
         "--cell-index is zero-based and, with --seed, is intended for ARC/Slurm array sharding."
@@ -1285,19 +1409,57 @@ fn main() -> Result<(), String> {
         };
         println!("=== Running Pineland Stage 3 v2 Safeguards & Assays Suite ===");
         let s1 = pineland_model::assays::run_outcome_sensitivity_assay(&options)?;
-        println!("[Assay 1: Outcome Sensitivity] pass={}; {}", s1.pass, s1.detail);
+        println!(
+            "[Assay 1: Outcome Sensitivity] pass={}; {}",
+            s1.pass, s1.detail
+        );
         let s2 = pineland_model::assays::run_channel_isolation_assay(&options)?;
-        println!("[Assay 2: Channel Isolation] pass={}; {} channels verified", s2.pass, s2.results.len());
+        println!(
+            "[Assay 2: Channel Isolation] pass={}; {} channels verified",
+            s2.pass,
+            s2.results.len()
+        );
         let s3 = pineland_model::assays::run_binding_constraint_assay(&options)?;
-        println!("[Assay 3: Binding Constraints] pass={}; {} channels bound under stress", s3.pass, s3.results.len());
+        println!(
+            "[Assay 3: Binding Constraints] pass={}; {} channels bound under stress",
+            s3.pass,
+            s3.results.len()
+        );
         let s4 = pineland_model::assays::run_dose_sanity_assay(&options)?;
-        println!("[Assay 4: Dose Sanity Curves] pass={}; {} channels monotonic", s4.pass, s4.results.len());
+        println!(
+            "[Assay 4: Dose Sanity Curves] pass={}; {} channels monotonic",
+            s4.pass,
+            s4.results.len()
+        );
         let s5 = pineland_model::assays::run_withdrawal_shock_assay(&options)?;
-        println!("[Assay 5: Withdrawal Shock] pass={}; immediate cessation confirmed", s5.immediate_severing_verified);
+        println!(
+            "[Assay 5: Withdrawal Shock] pass={}; immediate cessation confirmed",
+            s5.immediate_severing_verified
+        );
         let s6 = pineland_model::assays::run_horizon_sufficiency_assay(&options)?;
-        println!("[Assay 6: Horizon Sufficiency] 180d_div={:.4}, 360d_div={:.4}", s6.divergence_180d, s6.divergence_360d);
+        println!(
+            "[Assay 6: Horizon Sufficiency] pass={}; 180d_div={:.4}, 360d_div={:.4}, post180_change={:.1}%",
+            s6.horizon_180d_sufficient,
+            s6.divergence_180d,
+            s6.divergence_360d,
+            100.0 * s6.relative_change_after_180
+        );
         let s7 = pineland_model::assays::run_end_to_end_causal_trace(&options)?;
-        println!("[Assay 7: End-to-End Causal Trace] pass={}; final_C={:.4}", s7.chain_verified, s7.final_composite_capability);
+        println!(
+            "[Assay 7: End-to-End Causal Trace] pass={}; final_C={:.4}",
+            s7.chain_verified, s7.final_composite_capability
+        );
+        let all_pass = s1.pass
+            && s2.pass
+            && s3.pass
+            && s4.pass
+            && s5.support_withdrawn_at_t
+            && s5.immediate_severing_verified
+            && s6.horizon_180d_sufficient
+            && s7.chain_verified;
+        if !all_pass {
+            return Err("One or more Stage 3 v3 safeguards/assays failed; refusing scientific campaign launch.".to_string());
+        }
         println!("All 7 experimental safeguards and assays passed successfully.");
         return Ok(());
     }
@@ -1317,13 +1479,15 @@ fn main() -> Result<(), String> {
             println!("Preflight Treatment-Relevance Gate passed successfully.");
             return Ok(());
         } else {
-            return Err("Preflight Treatment-Relevance Gate failed. Halting campaign launch.".to_string());
+            return Err(
+                "Preflight Treatment-Relevance Gate failed. Halting campaign launch.".to_string(),
+            );
         }
     }
-    let mut design = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v2.csv");
+    let mut design = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v3.csv");
     let mut design_explicit = false;
     let mut holdout_contract: Option<PathBuf> = None;
-    let mut freeze = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v2.json");
+    let mut freeze = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v3.json");
     let mut output: Option<PathBuf> = None;
     let mut trajectory_output: Option<PathBuf> = None;
     let mut seed_count_override: Option<usize> = None;
@@ -1340,6 +1504,9 @@ fn main() -> Result<(), String> {
     let pilot = args.iter().any(|x| x == "--pilot");
     let allow_dirty = args.iter().any(|x| x == "--allow-dirty");
     let allow_unfrozen = args.iter().any(|x| x == "--allow-unfrozen");
+    // Engineering audit only: bypass weekly diagnostic observation boundaries.
+    // Scientific production must leave this false.
+    let disable_diagnostic_telemetry = args.iter().any(|x| x == "--disable-diagnostic-telemetry");
 
     let mut i = 0usize;
     while i < args.len() {
@@ -1402,8 +1569,15 @@ fn main() -> Result<(), String> {
                 }
                 i += 2;
             }
-            "--execute" | "--validate-configs" | "--smoke" | "--pilot" | "--allow-dirty"
-            | "--allow-unfrozen" | "--preflight-gate" | "--run-assays" => i += 1,
+            "--execute"
+            | "--validate-configs"
+            | "--smoke"
+            | "--pilot"
+            | "--allow-dirty"
+            | "--allow-unfrozen"
+            | "--preflight-gate"
+            | "--run-assays"
+            | "--disable-diagnostic-telemetry" => i += 1,
             other => return Err(format!("unknown argument '{other}'")),
         }
     }
@@ -1422,7 +1596,7 @@ fn main() -> Result<(), String> {
         load_holdout_contract(contract_path)?
     } else {
         RunDesign {
-            experiment_id: "partner_force_autonomy_stage3_discovery_v2".to_string(),
+            experiment_id: "partner_force_autonomy_stage3_discovery_v3".to_string(),
             design_version: DISCOVERY_DESIGN_VERSION.to_string(),
             rng_namespace: "partner-force-autonomy-stage3-v2".to_string(),
             seed_base: 2_026_120_000,
@@ -1438,14 +1612,22 @@ fn main() -> Result<(), String> {
 
     if pilot {
         let pilot_cell_ids = [
-            "none_01", "none_02",
-            "balanced_01", "balanced_02",
-            "air_01", "air_02",
-            "log_01", "log_02",
-            "cmd_01", "cmd_02",
-            "fg_01", "fg_02",
+            "none_01",
+            "none_02",
+            "balanced_01",
+            "balanced_02",
+            "air_01",
+            "air_02",
+            "log_01",
+            "log_02",
+            "cmd_01",
+            "cmd_02",
+            "fg_01",
+            "fg_02",
         ];
-        run_design.cells.retain(|c| pilot_cell_ids.contains(&c.cell_id.as_str()));
+        run_design
+            .cells
+            .retain(|c| pilot_cell_ids.contains(&c.cell_id.as_str()));
         run_design.seed_count = 3;
         run_design.seed_base = 2_026_120_000;
         if output.is_none() {
@@ -1541,6 +1723,9 @@ fn main() -> Result<(), String> {
         return Ok(());
     }
 
+    if disable_diagnostic_telemetry && !allow_unfrozen {
+        return Err("--disable-diagnostic-telemetry is engineering-audit-only and requires --allow-unfrozen".to_string());
+    }
     if !smoke && !allow_unfrozen {
         verify_preregistration_freeze(&freeze)?;
         verify_selected_artifact_frozen(&freeze, selected_artifact)?;
@@ -1588,32 +1773,7 @@ fn main() -> Result<(), String> {
             let flow_start = flow_snapshot(&engine);
             let assay_start = engine.capability_assay(&obs_baseline);
             let state_start = state_at_withdrawal(&engine, assay_start.clone());
-            write_trajectory_row(
-                &mut trajectory_out,
-                &run_design.experiment_id,
-                &run_design.design_version,
-                &commit,
-                cell,
-                seed,
-                withdrawal,
-                observation_start,
-                "PRE_SUPPORTED",
-                "DAY60_BASELINE",
-                &engine,
-                &assay_start,
-                state_start,
-                FlowSnapshot::default(),
-            )?;
-            let mut pre_flow_previous = flow_start;
-            for target in pre_telemetry_times(observation_start, withdrawal)
-                .into_iter()
-                .skip(1)
-            {
-                engine.advance_until(target).map_err(|e| e.to_string())?;
-                let assay = engine.capability_assay(&obs_baseline);
-                let state = state_at_withdrawal(&engine, assay.clone());
-                let flow_now = flow_snapshot(&engine);
-                let interval = diff(pre_flow_previous, flow_now);
+            if !disable_diagnostic_telemetry {
                 write_trajectory_row(
                     &mut trajectory_out,
                     &run_design.experiment_id,
@@ -1622,14 +1782,48 @@ fn main() -> Result<(), String> {
                     cell,
                     seed,
                     withdrawal,
-                    target,
+                    observation_start,
                     "PRE_SUPPORTED",
                     "DAY60_BASELINE",
                     &engine,
-                    &assay,
-                    state,
-                    interval,
+                    &assay_start,
+                    state_start,
+                    FlowSnapshot::default(),
                 )?;
+            }
+            let mut pre_flow_previous = flow_start;
+            let pre_targets: Vec<f64> = if disable_diagnostic_telemetry {
+                vec![withdrawal]
+            } else {
+                pre_telemetry_times(observation_start, withdrawal)
+                    .into_iter()
+                    .skip(1)
+                    .collect()
+            };
+            for target in pre_targets {
+                engine.advance_until(target).map_err(|e| e.to_string())?;
+                let assay = engine.capability_assay(&obs_baseline);
+                let state = state_at_withdrawal(&engine, assay.clone());
+                let flow_now = flow_snapshot(&engine);
+                let interval = diff(pre_flow_previous, flow_now);
+                if !disable_diagnostic_telemetry {
+                    write_trajectory_row(
+                        &mut trajectory_out,
+                        &run_design.experiment_id,
+                        &run_design.design_version,
+                        &commit,
+                        cell,
+                        seed,
+                        withdrawal,
+                        target,
+                        "PRE_SUPPORTED",
+                        "DAY60_BASELINE",
+                        &engine,
+                        &assay,
+                        state,
+                        interval,
+                    )?;
+                }
                 pre_flow_previous = flow_now;
             }
             let pre_assay = engine.capability_assay(&obs_baseline);
@@ -1638,10 +1832,12 @@ fn main() -> Result<(), String> {
             let pre_window = diff(flow_start, flow_t);
             let outcome_baseline = engine.capability_assay_baseline();
 
-            let dep_logistics = engine.particle.partner_support.dependence_logistics();
-            let dep_forcegen = engine.particle.partner_support.dependence_forcegen();
-            let dep_command = engine.particle.partner_support.dependence_command(pre_window.external_command_events);
-            let dep_air = engine.particle.partner_support.dependence_air(pre_window.contacts);
+            let structural_window = structural_service_window(pre_window);
+            let structural = structural_window.metrics()?;
+            let external_share_logistics = structural_window.logistics.external_share();
+            let external_share_forcegen = structural_window.forcegen.external_share();
+            let external_share_command = structural_window.command.external_share();
+            let external_share_air = external_air_share(pre_window);
 
             let manpower_burden = pineland_core::state::PartnerSupportLedger::manpower_burden(
                 pre_window.military_losses,
@@ -1670,7 +1866,12 @@ fn main() -> Result<(), String> {
             off.withdraw_external_partner_support();
             let mut on_flow_previous = flow_t;
             let mut off_flow_previous = flow_t;
-            for h in post_telemetry_offsets(max_horizon, &horizons) {
+            let post_offsets = if disable_diagnostic_telemetry {
+                horizons.clone()
+            } else {
+                post_telemetry_offsets(max_horizon, &horizons)
+            };
+            for h in post_offsets {
                 let target = withdrawal + h;
                 on.advance_until(target).map_err(|e| e.to_string())?;
                 off.advance_until(target).map_err(|e| e.to_string())?;
@@ -1682,61 +1883,76 @@ fn main() -> Result<(), String> {
                 let flow_off = flow_snapshot(&off);
                 let interval_on = diff(on_flow_previous, flow_on);
                 let interval_off = diff(off_flow_previous, flow_off);
-                write_trajectory_row(
-                    &mut trajectory_out,
-                    &run_design.experiment_id,
-                    &run_design.design_version,
-                    &commit,
-                    cell,
-                    seed,
-                    withdrawal,
-                    target,
-                    "SUPPORT_ON",
-                    "WITHDRAWAL_BASELINE",
-                    &on,
-                    &assay_on,
-                    state_on,
-                    interval_on,
-                )?;
-                write_trajectory_row(
-                    &mut trajectory_out,
-                    &run_design.experiment_id,
-                    &run_design.design_version,
-                    &commit,
-                    cell,
-                    seed,
-                    withdrawal,
-                    target,
-                    "SUPPORT_OFF",
-                    "WITHDRAWAL_BASELINE",
-                    &off,
-                    &assay_off,
-                    state_off,
-                    interval_off,
-                )?;
+                if !disable_diagnostic_telemetry {
+                    write_trajectory_row(
+                        &mut trajectory_out,
+                        &run_design.experiment_id,
+                        &run_design.design_version,
+                        &commit,
+                        cell,
+                        seed,
+                        withdrawal,
+                        target,
+                        "SUPPORT_ON",
+                        "WITHDRAWAL_BASELINE",
+                        &on,
+                        &assay_on,
+                        state_on,
+                        interval_on,
+                    )?;
+                    write_trajectory_row(
+                        &mut trajectory_out,
+                        &run_design.experiment_id,
+                        &run_design.design_version,
+                        &commit,
+                        cell,
+                        seed,
+                        withdrawal,
+                        target,
+                        "SUPPORT_OFF",
+                        "WITHDRAWAL_BASELINE",
+                        &off,
+                        &assay_off,
+                        state_off,
+                        interval_off,
+                    )?;
+                }
+
                 on_flow_previous = flow_on;
                 off_flow_previous = flow_off;
 
-                if t_c_deficit_90_off < 0.0 && assay_off.composite_capability < 0.9 * assay_on.composite_capability {
+                if t_c_deficit_90_off < 0.0
+                    && assay_off.composite_capability < 0.9 * assay_on.composite_capability
+                {
                     t_c_deficit_90_off = h;
                 }
                 if t_readiness_collapse_off < 0.0 && off.mean_military_readiness() < 0.5 {
                     t_readiness_collapse_off = h;
                 }
-                if t_supply_exhaustion_off < 0.0 && off.min_operational_military_supply_stock() <= 1e-6 {
+                if t_supply_exhaustion_off < 0.0
+                    && off.min_operational_military_supply_stock() <= 1e-6
+                {
                     t_supply_exhaustion_off = h;
                 }
-                if t_first_formation_loss_off < 0.0 && off.active_operational_military_formations() < outcome_baseline.operational_formations {
+                if t_first_formation_loss_off < 0.0
+                    && off.active_operational_military_formations()
+                        < outcome_baseline.operational_formations
+                {
                     t_first_formation_loss_off = h;
                 }
 
                 if t_readiness_collapse_on < 0.0 && on.mean_military_readiness() < 0.5 {
                     t_readiness_collapse_on = h;
                 }
-                if t_supply_exhaustion_on < 0.0 && on.min_operational_military_supply_stock() <= 1e-6 {
+                if t_supply_exhaustion_on < 0.0
+                    && on.min_operational_military_supply_stock() <= 1e-6
+                {
                     t_supply_exhaustion_on = h;
                 }
-                if t_first_formation_loss_on < 0.0 && on.active_operational_military_formations() < outcome_baseline.operational_formations {
+                if t_first_formation_loss_on < 0.0
+                    && on.active_operational_military_formations()
+                        < outcome_baseline.operational_formations
+                {
                     t_first_formation_loss_on = h;
                 }
 
@@ -1747,14 +1963,18 @@ fn main() -> Result<(), String> {
                     continue;
                 }
                 if (h - 180.0).abs() < 1e-6 {
-                    let r_180 = assay_off.composite_capability / assay_on.composite_capability.max(1e-9);
+                    let r_180 =
+                        assay_off.composite_capability / assay_on.composite_capability.max(1e-9);
                     degeneracy_summaries.push(DegeneracyWorldSummary {
                         cell_id: cell.cell_id.clone(),
                         profile: cell.support_profile.clone(),
                         seed,
                         r_180,
                         pre_contacts: pre_window.contacts,
-                        pre_external_delivered: pre_window.external_logistics_delivered + pre_window.external_forcegen_graduates + pre_window.external_command_events as f64 + pre_window.external_air_assisted_contacts as f64,
+                        pre_external_delivered: pre_window.external_logistics_delivered
+                            + pre_window.external_forcegen_graduates
+                            + pre_window.external_command_events as f64
+                            + pre_window.external_air_assisted_contacts as f64,
                     });
                 }
                 if cell.support_profile == "none" {
@@ -1779,10 +1999,12 @@ fn main() -> Result<(), String> {
                     pre_window,
                     &assay_on,
                     post_on,
-                    dep_logistics,
-                    dep_forcegen,
-                    dep_command,
-                    dep_air,
+                    external_share_logistics,
+                    external_share_forcegen,
+                    external_share_command,
+                    external_share_air,
+                    structural_window,
+                    structural,
                     manpower_burden,
                     logistics_burden,
                     omega_flow,
@@ -1805,10 +2027,12 @@ fn main() -> Result<(), String> {
                     pre_window,
                     &assay_off,
                     post_off,
-                    dep_logistics,
-                    dep_forcegen,
-                    dep_command,
-                    dep_air,
+                    external_share_logistics,
+                    external_share_forcegen,
+                    external_share_command,
+                    external_share_air,
+                    structural_window,
+                    structural,
                     manpower_burden,
                     logistics_burden,
                     omega_flow,
@@ -1828,22 +2052,54 @@ fn main() -> Result<(), String> {
     }
 
     // Degeneracy Safeguard Alarm Verification
-    let treated_180: Vec<&DegeneracyWorldSummary> = degeneracy_summaries.iter().filter(|w| w.profile != "none").collect();
+    let treated_180: Vec<&DegeneracyWorldSummary> = degeneracy_summaries
+        .iter()
+        .filter(|w| w.profile != "none")
+        .collect();
     if !treated_180.is_empty() {
-        let near_zero_count = treated_180.iter().filter(|w| w.r_180 >= 0.995 && w.r_180 <= 1.005).count();
+        let near_zero_count = treated_180
+            .iter()
+            .filter(|w| w.r_180 >= 0.995 && w.r_180 <= 1.005)
+            .count();
         let near_zero_fraction = near_zero_count as f64 / treated_180.len() as f64;
         let zero_opportunity_count = treated_180.iter().filter(|w| w.pre_contacts == 0).count();
-        let zero_delivery_count = treated_180.iter().filter(|w| w.pre_external_delivered == 0.0).count();
+        let zero_delivery_count = treated_180
+            .iter()
+            .filter(|w| w.pre_external_delivered == 0.0)
+            .count();
 
-        let mean_r: f64 = treated_180.iter().map(|w| w.r_180).sum::<f64>() / treated_180.len() as f64;
-        let var_r: f64 = treated_180.iter().map(|w| (w.r_180 - mean_r).powi(2)).sum::<f64>() / treated_180.len() as f64;
+        let mean_r: f64 =
+            treated_180.iter().map(|w| w.r_180).sum::<f64>() / treated_180.len() as f64;
+        let var_r: f64 = treated_180
+            .iter()
+            .map(|w| (w.r_180 - mean_r).powi(2))
+            .sum::<f64>()
+            / treated_180.len() as f64;
 
         println!("=== Degeneracy Safeguard Diagnostics ===");
         println!("Treated worlds evaluated at 180d: {}", treated_180.len());
-        println!("Near-zero effect (|R_180 - 1.0| <= 0.005): {}/{} ({:.1}%)", near_zero_count, treated_180.len(), near_zero_fraction * 100.0);
-        println!("Zero combat opportunity worlds: {}/{}", zero_opportunity_count, treated_180.len());
-        println!("Zero external delivery worlds: {}/{}", zero_delivery_count, treated_180.len());
-        println!("Mean R_180: {:.4}, Variance: {:.6} (std={:.4})", mean_r, var_r, var_r.sqrt());
+        println!(
+            "Near-zero effect (|R_180 - 1.0| <= 0.005): {}/{} ({:.1}%)",
+            near_zero_count,
+            treated_180.len(),
+            near_zero_fraction * 100.0
+        );
+        println!(
+            "Zero combat opportunity worlds: {}/{}",
+            zero_opportunity_count,
+            treated_180.len()
+        );
+        println!(
+            "Zero external delivery worlds: {}/{}",
+            zero_delivery_count,
+            treated_180.len()
+        );
+        println!(
+            "Mean R_180: {:.4}, Variance: {:.6} (std={:.4})",
+            mean_r,
+            var_r,
+            var_r.sqrt()
+        );
 
         if near_zero_fraction > 0.90 && !smoke {
             return Err(format!(

@@ -1,0 +1,34 @@
+{
+  "schema_version": "pineland.partner_force_telemetry_noninterference_audit.v2",
+  "status": "REQUIRES_REVALIDATION_AFTER_V3_TELEMETRY_INTEGRATION",
+  "purpose": "Verify that adding weekly diagnostic telemetry checkpoints does not alter the primary Stage-3 confirmatory branch output.",
+  "reference_commit_before_telemetry": "25a6adb1f0789b98fa68aea52722b2287d66092c",
+  "engineering_only_test": {
+    "cell_id": "balanced_03",
+    "seed": 2026999000,
+    "agent_count": 1000,
+    "locality_count": 72,
+    "withdrawal_time_days": 120,
+    "horizons_days": [
+      7,
+      30,
+      90,
+      180
+    ]
+  },
+  "primary_output_before_telemetry": {
+    "rows": 8,
+    "sha256": "4b187b7ec7c854f3696c92904984aedc4e70174c3d61618f1c3d611c2a2768ae"
+  },
+  "primary_output_after_telemetry": {
+    "rows": 8,
+    "sha256": "4b187b7ec7c854f3696c92904984aedc4e70174c3d61618f1c3d611c2a2768ae"
+  },
+  "diagnostic_trajectory_output": {
+    "rows": 66,
+    "schema_version": "pineland.partner_force_autonomy_trajectory.v1"
+  },
+  "verdict": "BYTE_IDENTICAL_PRIMARY_OUTPUT",
+  "interpretation": "The extra advance_until observation boundaries and read-only state/flow measurements changed neither the primary Stage-3 CSV bytes nor its confirmatory outcomes for the matched supported production-scale world. Telemetry therefore adds diagnostic observability without altering the tested primary execution path in this audit.",
+  "note": "Stage-3 v3 adds read-only formal service telemetry. Re-run primary-output noninterference audit before production freeze."
+}

@@ -33,7 +33,7 @@ def _sha256_file(path: Path) -> str:
 
 
 def verify_contract_is_frozen(contract_path: Path) -> None:
-    freeze_path = BASE / "contracts" / "partner_force_autonomy_preregistration_freeze_v1.json"
+    freeze_path = BASE / "contracts" / "partner_force_autonomy_preregistration_freeze_v3.json"
     freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
     target = contract_path.resolve()
     for entry in freeze.get("frozen_artifacts", {}).values():
@@ -150,6 +150,8 @@ def predict_zero_refit(
         if coord not in df.columns:
             raise ValueError(f"Required coordinate '{coord}' not found in holdout DataFrame")
         x = df[coord].to_numpy(float)
+        if coord == "formal_q_indigenous" and np.any(x < 0.0):
+            raise ValueError("NO_ACTIVE_DEMAND/q=-1 rows are outside the formal q predictive estimand")
         knots_x = np.array(sub_model["knots_x"], dtype=float)
         knots_y = np.array(sub_model["knots_y"], dtype=float)
         return np.interp(x, knots_x, knots_y, left=knots_y[0], right=knots_y[-1])
@@ -191,6 +193,17 @@ def evaluate_zero_refit(
 ) -> Dict[str, Any]:
     """Execute zero-refit holdout evaluation against frozen model and acceptance criteria."""
     df = add_candidate_regenerative_coordinates(holdout_paired)
+    total_pairs = len(df)
+    winning = frozen_model.get("predictor_specification", {}).get("winning_coordinate")
+    n_no_active = 0
+    if winning == "formal_q_indigenous":
+        active_mask = np.isfinite(df["formal_q_indigenous"].to_numpy(float)) & (
+            df["formal_q_indigenous"].to_numpy(float) >= 0.0
+        )
+        n_no_active = int((~active_mask).sum())
+        df = df.loc[active_mask].copy()
+        if df.empty:
+            raise ValueError("holdout contains no active-demand rows in the formal q estimand")
     y_true = df["autonomy_ratio"].to_numpy(float)
     y_pred = predict_zero_refit(frozen_model, df, horizon=None)
 
@@ -225,6 +238,8 @@ def evaluate_zero_refit(
         "frozen_functional_form": frozen_model.get("predictor_specification", {}).get("functional_form"),
         "discovery_provenance": frozen_model.get("discovery_provenance", {}),
         "n_holdout_pairs": int(len(df)),
+        "n_holdout_pairs_total": int(total_pairs),
+        "n_no_active_demand_excluded": n_no_active,
         "overall_spearman_rho": spearman,
         "overall_mae_zero_refit": mae,
         "overall_rmse_zero_refit": rmse,
@@ -357,7 +372,7 @@ def main() -> None:
         raise SystemExit("discovery model is not a partner-force frozen predictor v1 artifact")
     if frozen_model.get("status") != "FROZEN_PREDICTOR_READY_FOR_ZERO_REFIT_HOLDOUTS":
         raise SystemExit("discovery model is not marked ready for zero-refit holdouts")
-    freeze_path = BASE / "contracts" / "partner_force_autonomy_preregistration_freeze_v1.json"
+    freeze_path = BASE / "contracts" / "partner_force_autonomy_preregistration_freeze_v3.json"
     current_freeze_sha = _sha256_file(freeze_path)
     recorded_freeze_sha = frozen_model.get("discovery_provenance", {}).get("preregistration_freeze_sha256")
     if recorded_freeze_sha != current_freeze_sha:

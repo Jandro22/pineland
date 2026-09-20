@@ -22,7 +22,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 16;
+pub const CHECKPOINT_VERSION: u32 = 17;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -182,7 +182,7 @@ impl CheckpointStore {
             return Err(CheckpointError::Invalid("bad magic".to_string()));
         }
         let version = reader.u32()?;
-        if version != 15 && version != CHECKPOINT_VERSION {
+        if version != 15 && version != 16 && version != CHECKPOINT_VERSION {
             return Err(CheckpointError::Invalid(
                 "unsupported checkpoint version".to_string(),
             ));
@@ -568,7 +568,9 @@ impl CheckpointStore {
                 .and_then(|v| v.as_u64())
                 .unwrap_or(0),
         };
-        if !manifest.complete || manifest.schema_version != CHECKPOINT_VERSION {
+        if !manifest.complete
+            || (manifest.schema_version != CHECKPOINT_VERSION && manifest.schema_version != 16)
+        {
             return Err(CheckpointError::Invalid(
                 "manifest is incomplete or unsupported".to_string(),
             ));
@@ -2226,7 +2228,10 @@ fn encode_partner_support(b: &mut Vec<u8>, s: &PartnerSupportLedger) {
     put_f64(b, s.logistics.cumulative_lost);
     put_f64(b, s.logistics.cumulative_donor_cost);
     // command
+    put_u64(b, s.command.opportunities);
     put_u64(b, s.command.assisted_events);
+    put_f64(b, s.command.cumulative_indigenous_service);
+    put_f64(b, s.command.cumulative_supported_service);
     put_f64(b, s.command.cumulative_reliability_boost);
     put_f64(b, s.command.cumulative_latency_reduction_hours);
     put_f64(b, s.command.cumulative_donor_cost);
@@ -2283,7 +2288,19 @@ fn decode_partner_support(
     s.logistics.cumulative_lost = r.f64()?;
     s.logistics.cumulative_donor_cost = r.f64()?;
     // command
+    if version >= 17 {
+        s.command.opportunities = r.u64()?;
+    } else {
+        s.command.opportunities = 0;
+    }
     s.command.assisted_events = r.u64()?;
+    if version >= 17 {
+        s.command.cumulative_indigenous_service = r.f64()?;
+        s.command.cumulative_supported_service = r.f64()?;
+    } else {
+        s.command.cumulative_indigenous_service = 0.0;
+        s.command.cumulative_supported_service = 0.0;
+    }
     s.command.cumulative_reliability_boost = r.f64()?;
     s.command.cumulative_latency_reduction_hours = r.f64()?;
     s.command.cumulative_donor_cost = r.f64()?;
@@ -2316,10 +2333,10 @@ fn decode_partner_support(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::PartnerSupportLedger;
     use crate::ids::PatrolId;
     use crate::rng::RngStreams;
     use crate::scheduler::EventPayload;
+    use crate::state::PartnerSupportLedger;
     use crate::state::{
         BeliefKey, CommunityState, EventRecord, ForeignSystemState, HouseholdState,
         ObservationRecord, OrganizationRelationState, ParticleState, PersonState, SocialEdgeState,
@@ -2592,15 +2609,42 @@ mod tests {
         particle.partner_support.logistics.cumulative_rejected = 20.0;
         particle.partner_support.logistics.cumulative_lost = 5.0;
         particle.partner_support.logistics.cumulative_donor_cost = 25_000.0;
+        particle.partner_support.command.opportunities = 20;
         particle.partner_support.command.assisted_events = 14;
-        particle.partner_support.command.cumulative_reliability_boost = 0.75;
-        particle.partner_support.command.cumulative_latency_reduction_hours = 12.0;
+        particle
+            .partner_support
+            .command
+            .cumulative_indigenous_service = 9.5;
+        particle
+            .partner_support
+            .command
+            .cumulative_supported_service = 12.25;
+        particle
+            .partner_support
+            .command
+            .cumulative_reliability_boost = 0.75;
+        particle
+            .partner_support
+            .command
+            .cumulative_latency_reduction_hours = 12.0;
         particle.partner_support.command.cumulative_donor_cost = 15_000.0;
-        particle.partner_support.force_generation.indigenous_recruits = 50.0;
+        particle
+            .partner_support
+            .force_generation
+            .indigenous_recruits = 50.0;
         particle.partner_support.force_generation.external_recruits = 30.0;
-        particle.partner_support.force_generation.indigenous_graduates = 45.0;
-        particle.partner_support.force_generation.external_incremental_graduates = 25.0;
-        particle.partner_support.force_generation.cumulative_donor_cost = 10_000.0;
+        particle
+            .partner_support
+            .force_generation
+            .indigenous_graduates = 45.0;
+        particle
+            .partner_support
+            .force_generation
+            .external_incremental_graduates = 25.0;
+        particle
+            .partner_support
+            .force_generation
+            .cumulative_donor_cost = 10_000.0;
         particle.partner_support.take_snapshot(30.0);
         particle.partner_support.take_snapshot(45.5);
 
@@ -2613,9 +2657,18 @@ mod tests {
     #[test]
     fn v15_checkpoint_is_backward_compatible() {
         let mut particle = representative_particle();
-        particle.partner_support.logistics.indigenous_cumulative_produced = 0.0;
-        particle.partner_support.logistics.indigenous_cumulative_delivered = 0.0;
-        particle.partner_support.logistics.indigenous_cumulative_consumed = 0.0;
+        particle
+            .partner_support
+            .logistics
+            .indigenous_cumulative_produced = 0.0;
+        particle
+            .partner_support
+            .logistics
+            .indigenous_cumulative_delivered = 0.0;
+        particle
+            .partner_support
+            .logistics
+            .indigenous_cumulative_consumed = 0.0;
         particle.partner_support.logistics.cumulative_offered = 100.0;
         particle.partner_support.logistics.cumulative_delivered = 90.0;
 
@@ -2635,7 +2688,7 @@ mod tests {
         put_string(&mut buf, &ledger.schema_version);
         buf.push(0); // support_withdrawn = false
         buf.push(0); // has_wt = false
-        // air
+                     // air
         put_u64(&mut buf, ledger.air.opportunities);
         put_u64(&mut buf, ledger.air.assisted_contacts);
         put_f64(&mut buf, ledger.air.cumulative_intensity);
@@ -2656,7 +2709,10 @@ mod tests {
         put_f64(&mut buf, ledger.force_generation.indigenous_recruits);
         put_f64(&mut buf, ledger.force_generation.external_recruits);
         put_f64(&mut buf, ledger.force_generation.indigenous_graduates);
-        put_f64(&mut buf, ledger.force_generation.external_incremental_graduates);
+        put_f64(
+            &mut buf,
+            ledger.force_generation.external_incremental_graduates,
+        );
         put_f64(&mut buf, ledger.force_generation.cumulative_donor_cost);
         // snapshots
         put_u64(&mut buf, 0);

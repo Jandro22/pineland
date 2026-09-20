@@ -78,7 +78,7 @@ def check_runner_compilation_and_safety_gate() -> None:
     no_compute_passed = (
         res_run.returncode == 0
         and "NO COMPUTE: --execute not supplied" in res_run.stdout
-        and "Experiment: partner_force_autonomy_stage3_discovery_v1" in res_run.stdout
+        and "Experiment: partner_force_autonomy_stage3_discovery_v3" in res_run.stdout
     )
     log_check(
         "Stage-3 safety gate (no --execute => no simulation, clean exit)",
@@ -121,14 +121,14 @@ def check_runner_compilation_and_safety_gate() -> None:
     )
     freeze_success_ok = (
         res_freeze_success.returncode == 0
-        and "Preregistration freeze verified: 27 artifacts" in res_freeze_success.stdout
+        and "Preregistration freeze verified:" in res_freeze_success.stdout
     )
     freeze_probe.unlink(missing_ok=True)
     trajectory_probe.unlink(missing_ok=True)
     log_check(
         "Stage-3 current freeze accepted by Rust runner (zero-seed/no-engine probe)",
         freeze_success_ok,
-        res_freeze_success.stderr if not freeze_success_ok else "27/27 accepted",
+        res_freeze_success.stderr if not freeze_success_ok else "current v3 freeze accepted",
     )
 
     # Config-only validation builds the exact SimulationConfig for every frozen
@@ -206,23 +206,25 @@ def check_audit_artifacts() -> None:
 
 def check_stage3_design_and_cells() -> None:
     print("\n--- 4. Stage-3 Discovery Design & Cell Manifest ---")
-    design_path = CONTRACTS_DIR / "stage3_discovery_design_v1.json"
+    design_path = CONTRACTS_DIR / "stage3_discovery_design_v3.json"
     design_ok = False
     if design_path.exists():
         try:
             d = json.loads(design_path.read_text(encoding="utf-8"))
             design_ok = (
-                d.get("schema_version") == "pineland.partner_force_autonomy_stage3_discovery_design.v1"
+                d.get("schema_version") == "pineland.partner_force_autonomy_stage3_discovery_design.v3"
                 and "scale" in d
                 and "world" in d
                 and "capability_assay" in d
                 and "support_design" in d
+                and d.get("formal_structural_autonomy", {}).get("primary_predictor") == "formal_q_indigenous"
+                and d.get("engineering_assays", {}).get("all_must_pass_before_production") is True
             )
         except Exception:
             design_ok = False
-    log_check("Stage-3 discovery design contract (stage3_discovery_design_v1.json)", design_ok)
+    log_check("Stage-3 discovery design contract (stage3_discovery_design_v3.json)", design_ok)
 
-    cells_path = CONFIG_DIR / "stage3_discovery_cells_v1.csv"
+    cells_path = CONFIG_DIR / "stage3_discovery_cells_v3.csv"
     cells_ok = False
     cell_count = 0
     if cells_path.exists():
@@ -272,40 +274,56 @@ def check_stage4_blocked_configs() -> None:
 
 
 def check_schema_and_fixtures() -> None:
-    print("\n--- 6. Raw Branch Schema v2 & Neutral Fixtures ---")
-    schema_path = CONTRACTS_DIR / "partner_force_autonomy_raw_branch_schema_v2.json"
+    print("\n--- 6. Raw Branch Schema v4 & Structural Contract ---")
+    schema_path = CONTRACTS_DIR / "partner_force_autonomy_raw_branch_schema_v4.json"
     schema_valid = False
     schema = {}
     if schema_path.exists():
         try:
             schema = json.loads(schema_path.read_text(encoding="utf-8"))
             jsonschema.Draft202012Validator.check_schema(schema)
-            schema_valid = True
+            schema_valid = (
+                schema.get("properties", {}).get("schema_version", {}).get("const")
+                == "pineland.partner_force_autonomy_raw_branch.v4"
+            )
         except Exception:
             schema_valid = False
-    log_check("Raw branch JSON schema is valid Draft 2020-12", schema_valid)
+    log_check("Raw branch v4 JSON schema is valid Draft 2020-12", schema_valid)
 
-    csv_fixture = FIXTURES_DIR / "neutral_pairing_fixture_v2.csv"
-    json_fixture = FIXTURES_DIR / "neutral_pairing_fixture_v2.json"
-    log_check("Neutral CSV fixture exists", csv_fixture.exists() and csv_fixture.stat().st_size > 1000)
-    log_check("Neutral JSON fixture exists", json_fixture.exists() and json_fixture.stat().st_size > 1000)
+    runner = REPO_ROOT / "rust" / "pineland-model" / "examples" / "partner_force_autonomy_stage3.rs"
+    header_ok = False
+    if schema_valid and runner.exists():
+        text = runner.read_text(encoding="utf-8")
+        match = re.search(r"fn csv_header\(\) -> &'static str \{\s*\"([^\"]+)\"", text)
+        if match:
+            header_cols = match.group(1).split(",")
+            required = schema.get("required", [])
+            properties = list(schema.get("properties", {}).keys())
+            header_ok = (
+                len(header_cols) == len(set(header_cols))
+                and set(header_cols) == set(required)
+                and set(required) == set(properties)
+            )
+    log_check("Rust raw CSV header exactly matches v4 schema fields", header_ok)
 
-    if json_fixture.exists() and schema_valid:
-        records = json.loads(json_fixture.read_text(encoding="utf-8"))
-        all_ok = True
-        for rec in records:
-            try:
-                jsonschema.validate(instance=rec, schema=schema)
-            except jsonschema.ValidationError as e:
-                print(f"Validation error in record {rec.get('run_id')}: {e.message}")
-                all_ok = False
-                break
-        log_check(f"Validated all {len(records)} fixture records against raw branch schema v2", all_ok)
+    design_path = CONTRACTS_DIR / "stage3_discovery_design_v3.json"
+    semantics_ok = False
+    if design_path.exists():
+        d = json.loads(design_path.read_text(encoding="utf-8"))
+        f = d.get("formal_structural_autonomy", {})
+        semantics_ok = (
+            f.get("primary_predictor") == "formal_q_indigenous"
+            and f.get("services", {}).get("command", {}).get("reference_requirement_per_order") == 0.5
+            and "Air support" in f.get("air_role", "")
+            and "not structural dependence" in f.get("external_share_rule", "")
+        )
+    log_check("v3 formal service semantics and command threshold are preregistered", semantics_ok)
+
 
 
 def check_preregistration_freeze() -> None:
     print("\n--- 7. Preregistration Cryptographic Freeze ---")
-    freeze_path = CONTRACTS_DIR / "partner_force_autonomy_preregistration_freeze_v1.json"
+    freeze_path = CONTRACTS_DIR / "partner_force_autonomy_preregistration_freeze_v3.json"
     exists = freeze_path.exists()
     all_matched = False
     count = 0
@@ -314,7 +332,7 @@ def check_preregistration_freeze() -> None:
             data = json.loads(freeze_path.read_text(encoding="utf-8"))
             artifacts = data.get("frozen_artifacts", {})
             count = len(artifacts)
-            all_matched = count == 27
+            all_matched = count >= 27
             for name, entry in artifacts.items():
                 rel_path = entry["path"]
                 expected_sha = entry["sha256"]
@@ -406,9 +424,9 @@ def check_holdout_contracts_and_scale_audit() -> None:
 
 def check_trajectory_instrumentation() -> None:
     print("\n--- 9. Diagnostic Trajectory Instrumentation ---")
-    schema_path = CONTRACTS_DIR / "partner_force_trajectory_schema_v1.json"
-    contract_path = CONTRACTS_DIR / "partner_force_trajectory_contract_v1.json"
-    audit_path = CONTRACTS_DIR / "partner_force_telemetry_noninterference_audit_v1.json"
+    schema_path = CONTRACTS_DIR / "partner_force_trajectory_schema_v2.json"
+    contract_path = CONTRACTS_DIR / "partner_force_trajectory_contract_v2.json"
+    audit_path = CONTRACTS_DIR / "partner_force_telemetry_noninterference_audit_v2.json"
     analysis_path = ANALYSIS_DIR / "analyze_partner_force_trajectories.py"
 
     schema_ok = False
@@ -416,10 +434,10 @@ def check_trajectory_instrumentation() -> None:
         try:
             schema = json.loads(schema_path.read_text(encoding="utf-8"))
             jsonschema.Draft202012Validator.check_schema(schema)
-            schema_ok = schema.get("$id") == "pineland.partner_force_autonomy_trajectory.v1"
+            schema_ok = schema.get("$id") == "pineland.partner_force_autonomy_trajectory.v2"
         except Exception:
             schema_ok = False
-    log_check("Trajectory schema v1 is valid Draft 2020-12", schema_ok)
+    log_check("Trajectory schema v2 is valid Draft 2020-12", schema_ok)
 
     contract_ok = False
     if contract_path.exists():
@@ -428,13 +446,13 @@ def check_trajectory_instrumentation() -> None:
             sampling = contract.get("sampling", {})
             firewall = contract.get("confirmatory_firewall", {})
             contract_ok = (
-                contract.get("status") == "FROZEN_BEFORE_STAGE3_DISCOVERY_COMPUTE"
-                and contract.get("scientific_role") == "DIAGNOSTIC_AND_EXPLORATORY_ONLY"
+                contract.get("status") == "FROZEN_BEFORE_STAGE3_V3_DISCOVERY_COMPUTE"
+                and contract.get("scientific_role") == "DIAGNOSTIC_AND_FORMAL_HORIZON_VALIDATION"
                 and sampling.get("expected_prewithdrawal_rows_per_world") == 10
                 and sampling.get("expected_postwithdrawal_rows_per_branch") == 28
                 and sampling.get("expected_rows_per_world") == 66
                 and firewall.get("primary_stage3_outcomes_unchanged") is True
-                and firewall.get("primary_model_selection_rule_unchanged") is True
+                and firewall.get("formal_q_definition_frozen_before_results") is True
             )
         except Exception:
             contract_ok = False

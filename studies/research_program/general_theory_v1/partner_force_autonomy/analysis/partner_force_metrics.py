@@ -14,7 +14,8 @@ import pandas as pd
 
 RAW_SCHEMA_VERSION = "pineland.partner_force_autonomy_raw_branch.v2"
 RAW_SCHEMA_VERSION_V3 = "pineland.partner_force_autonomy_raw_branch.v3"
-ALLOWED_SCHEMA_VERSIONS = {RAW_SCHEMA_VERSION, RAW_SCHEMA_VERSION_V3}
+RAW_SCHEMA_VERSION_V4 = "pineland.partner_force_autonomy_raw_branch.v4"
+ALLOWED_SCHEMA_VERSIONS = {RAW_SCHEMA_VERSION, RAW_SCHEMA_VERSION_V3, RAW_SCHEMA_VERSION_V4}
 
 PAIR_INVARIANT_COLUMNS = [
     "experiment_id", "design_version", "git_commit", "world_id", "cell_id",
@@ -43,6 +44,26 @@ PAIR_INVARIANT_COLUMNS = [
 V3_PAIR_INVARIANT_COLUMNS = [
     "dependence_logistics", "dependence_forcegen", "dependence_command", "dependence_air",
     "manpower_burden", "logistics_burden", "omega_flow",
+]
+
+V4_PAIR_INVARIANT_COLUMNS = [
+    "window_external_air_opportunities", "window_external_air_assisted_contacts",
+    "window_command_opportunities", "window_command_indigenous_service",
+    "window_command_supported_service",
+    "external_share_logistics", "external_share_forcegen", "external_share_command",
+    "external_share_air", "formal_q_indigenous", "formal_q_supported",
+    "formal_support_lift", "formal_regime", "formal_bottleneck",
+    "formal_forcegen_ratio_indigenous", "formal_logistics_ratio_indigenous",
+    "formal_command_ratio_indigenous", "formal_forcegen_demand",
+    "formal_forcegen_indigenous_service", "formal_forcegen_external_service",
+    "formal_forcegen_deficit", "formal_forcegen_useful_external",
+    "formal_logistics_demand", "formal_logistics_indigenous_service",
+    "formal_logistics_external_service", "formal_logistics_deficit",
+    "formal_logistics_useful_external", "formal_command_demand",
+    "formal_command_indigenous_service", "formal_command_external_service",
+    "formal_command_deficit", "formal_command_useful_external",
+    "command_service_requirement_per_order", "manpower_burden", "logistics_burden",
+    "omega_flow",
 ]
 
 BOUNDED_ZERO_ONE_COLUMNS = [
@@ -80,9 +101,12 @@ def _require_columns(df: pd.DataFrame, columns: Iterable[str]) -> None:
 
 
 def validate_raw_branch_panel(df: pd.DataFrame) -> None:
-    is_v3 = "dependence_logistics" in df.columns
+    is_v4 = "formal_q_indigenous" in df.columns
+    is_v3 = (not is_v4) and "dependence_logistics" in df.columns
     active_invariants = list(PAIR_INVARIANT_COLUMNS)
-    if is_v3:
+    if is_v4:
+        active_invariants.extend(V4_PAIR_INVARIANT_COLUMNS)
+    elif is_v3:
         active_invariants.extend(V3_PAIR_INVARIANT_COLUMNS)
 
     required = [
@@ -95,7 +119,7 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
         "post_donor_cost_forcegen", "post_donor_cost",
         *active_invariants,
     ]
-    if is_v3:
+    if is_v3 or is_v4:
         required.extend(["t_c_deficit_90", "t_readiness_collapse", "t_supply_exhaustion", "t_first_formation_loss"])
 
     _require_columns(df, required)
@@ -108,7 +132,12 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
 
     # Check finite and ranges
     bounded_cols = list(BOUNDED_ZERO_ONE_COLUMNS)
-    if is_v3:
+    if is_v4:
+        bounded_cols.extend([
+            "external_share_logistics", "external_share_forcegen",
+            "external_share_command", "external_share_air", "formal_support_lift",
+        ])
+    elif is_v3:
         bounded_cols.extend(["dependence_logistics", "dependence_forcegen", "dependence_command", "dependence_air"])
     for col in bounded_cols:
         vals = df[col].to_numpy(float)
@@ -118,7 +147,22 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
             raise ValueError(f"column {col} has values outside [0, 1]: min={vals.min()}, max={vals.max()}")
 
     non_neg_cols = list(NON_NEGATIVE_COLUMNS)
-    if is_v3:
+    if is_v4:
+        non_neg_cols.extend([
+            "window_external_air_opportunities", "window_external_air_assisted_contacts",
+            "window_command_opportunities", "window_command_indigenous_service",
+            "window_command_supported_service",
+            "formal_forcegen_demand", "formal_forcegen_indigenous_service",
+            "formal_forcegen_external_service", "formal_forcegen_deficit",
+            "formal_forcegen_useful_external", "formal_logistics_demand",
+            "formal_logistics_indigenous_service", "formal_logistics_external_service",
+            "formal_logistics_deficit", "formal_logistics_useful_external",
+            "formal_command_demand", "formal_command_indigenous_service",
+            "formal_command_external_service", "formal_command_deficit",
+            "formal_command_useful_external", "command_service_requirement_per_order",
+            "manpower_burden", "logistics_burden", "omega_flow",
+        ])
+    elif is_v3:
         non_neg_cols.extend(["manpower_burden", "logistics_burden", "omega_flow"])
     for col in non_neg_cols:
         vals = df[col].to_numpy(float)
@@ -126,6 +170,34 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
             raise ValueError(f"column {col} contains non-finite values (NaN or Inf)")
         if np.any(vals < -1e-6):
             raise ValueError(f"column {col} has negative values: min={vals.min()}")
+
+    if is_v4:
+        allowed_regimes = {"AUTONOMOUS", "DEPENDENT", "OVERMATCHED", "NO_ACTIVE_DEMAND"}
+        if not set(df["formal_regime"].astype(str)).issubset(allowed_regimes):
+            raise ValueError("formal_regime contains unknown values")
+        allowed_bottlenecks = {"forcegen", "logistics", "command", "none"}
+        if not set(df["formal_bottleneck"].astype(str)).issubset(allowed_bottlenecks):
+            raise ValueError("formal_bottleneck contains unknown values")
+        qi = df["formal_q_indigenous"].to_numpy(float)
+        qs = df["formal_q_supported"].to_numpy(float)
+        if not np.all(np.isfinite(qi)) or not np.all(np.isfinite(qs)):
+            raise ValueError("formal q contains non-finite values")
+        if np.any(qi < -1.0 - 1e-9) or np.any(qs < -1.0 - 1e-9):
+            raise ValueError("formal q sentinel must be -1 or a non-negative value")
+        sentinel_mismatch = (qi < 0) != (qs < 0)
+        if np.any(sentinel_mismatch):
+            raise ValueError("formal q- and q+ sentinel states must match")
+        active = qi >= 0
+        if np.any(qs[active] + 1e-9 < qi[active]):
+            raise ValueError("formal q+ must be >= q- on active-demand rows")
+        no_active = ~active
+        if np.any(df.loc[no_active, "formal_regime"].astype(str).to_numpy() != "NO_ACTIVE_DEMAND"):
+            raise ValueError("negative q sentinel requires NO_ACTIVE_DEMAND regime")
+        if np.any(df.loc[no_active, "formal_bottleneck"].astype(str).to_numpy() != "none"):
+            raise ValueError("negative q sentinel requires bottleneck=none")
+        if np.any(df["window_external_air_assisted_contacts"].to_numpy(float)
+                  > df["window_external_air_opportunities"].to_numpy(float) + 1e-9):
+            raise ValueError("air assisted contacts exceed air opportunities")
 
     for pair_id, g in df.groupby("pair_id", sort=False):
         if len(g) != 2:
@@ -148,9 +220,12 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
 
 def pair_counterfactual_rows(df: pd.DataFrame, epsilon: float = 1e-9) -> pd.DataFrame:
     validate_raw_branch_panel(df)
-    is_v3 = "dependence_logistics" in df.columns
+    is_v4 = "formal_q_indigenous" in df.columns
+    is_v3 = (not is_v4) and "dependence_logistics" in df.columns
     active_invariants = list(PAIR_INVARIANT_COLUMNS)
-    if is_v3:
+    if is_v4:
+        active_invariants.extend(V4_PAIR_INVARIANT_COLUMNS)
+    elif is_v3:
         active_invariants.extend(V3_PAIR_INVARIANT_COLUMNS)
 
     rows = []
@@ -195,7 +270,7 @@ def pair_counterfactual_rows(df: pd.DataFrame, epsilon: float = 1e-9) -> pd.Data
             "on_post_donor_cost": float(on["post_donor_cost"]),
             "off_post_donor_cost": float(off["post_donor_cost"]),
         })
-        if is_v3:
+        if is_v3 or is_v4:
             row.update({
                 "off_t_c_deficit_90": float(off["t_c_deficit_90"]),
                 "off_t_readiness_collapse": float(off["t_readiness_collapse"]),

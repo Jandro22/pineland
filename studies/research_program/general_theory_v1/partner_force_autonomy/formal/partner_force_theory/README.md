@@ -152,6 +152,39 @@ Before connecting this theory to production simulations, the adapter must satisf
 7. **Structural/behavioral separation.** `q`, deficits, and support lift are predictors/diagnostics. Outcome trajectories remain independently measured ABM results.
 8. **Exact withdrawal pairing.** ON/OFF branches must begin from the identical state and only differ in the designated post-withdrawal external-support intervention.
 
+### Frozen Stage-3 v3 adapter mapping
+
+The production floating-point adapter is
+rust/pineland-model/src/partner_force_formal.rs. It implements the same
+minimum-ratio/deficit accounting for pre-withdrawal flow windows. The current
+reference-mission mapping is frozen before Stage-3 v3 discovery:
+
+| Service | Demand d_i | Indigenous service s_i^- | External service e_i |
+| --- | --- | --- | --- |
+| Force generation | military personnel losses requiring replacement | indigenous training graduates | external incremental graduates |
+| Logistics | military logistics consumption | indigenous logistics delivered | external logistics delivered |
+| Command | military movement-order opportunities x 0.5 timely-success equivalents | sum of r exp(-latency_hours/24) before partner overlay | supported command service minus indigenous command service |
+
+The command reference requirement of **0.5 service-equivalents per military
+order** is a preregistered reference-mission threshold, not an outcome-fitted
+coefficient. It represents a more-likely-than-not, latency-discounted command
+standard.
+
+Air support is **not** inserted into q in Stage-3 v3. Pineland records air
+opportunities, detected deliveries, firepower effect, and cost, but there is
+not yet a defensible like-unit indigenous air-service denominator. Air therefore
+remains a separate combat-augmentation mechanism.
+
+Variables named external_share_* are exposure fractions only. They must not be
+interpreted as structural dependence. Structural dependence is determined by
+the proved deficit/mission-feasibility relationship.
+
+When all three formal service demands are zero, q is mathematically undefined
+rather than low. Production telemetry encodes q=-1, NO_ACTIVE_DEMAND, and
+bottleneck=none. Those observations remain in the raw scientific record but
+are excluded, by preregistered rule, from formal-q isotonic fitting, rank
+correlations, and MAE calculations.
+
 ## Files
 
 - `PinelandPartnerForceTheory/PartnerForce.lean` — formal definitions and proofs.

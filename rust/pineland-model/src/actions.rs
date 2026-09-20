@@ -760,9 +760,7 @@ fn consume_local_supply(
         let take = particle.formations.supply_stock[formation]
             .max(0.0)
             .min(remaining);
-        if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
-            && formation == 7
-        {
+        if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE") && formation == 7 {
             eprintln!(
                 "ACTION_SUPPLY_CONSUME time=unknown formation=7 demand={:.17} remaining={:.17} take={:.17} before={:.17} bits={}",
                 demanded,
@@ -773,9 +771,7 @@ fn consume_local_supply(
             );
         }
         particle.formations.supply_stock[formation] -= take;
-        if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
-            && formation == 7
-        {
+        if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE") && formation == 7 {
             eprintln!(
                 "ACTION_SUPPLY_CONSUMED formation=7 after={:.17} bits={}",
                 particle.formations.supply_stock[formation],
@@ -1112,13 +1108,19 @@ pub fn opportunities(
         for actor in own.iter().copied() {
             let actor_microzone = crate::combat::formation_microzone(particle, topology, actor);
             for opponent in opponents.iter().copied() {
-                let opponent_microzone = crate::combat::formation_microzone(particle, topology, opponent);
+                let opponent_microzone =
+                    crate::combat::formation_microzone(particle, topology, opponent);
                 if actor_microzone == opponent_microzone {
                     pairs.push((actor, opponent));
                 }
             }
         }
-        if pairs.is_empty() {
+        if pairs.is_empty() && !own.is_empty() && !opponents.is_empty() {
+            *particle
+                .counters
+                .event_counts
+                .entry("armed_contact_fallbacks".to_string())
+                .or_insert(0) += 1;
             for actor in own.iter().copied() {
                 for opponent in opponents.iter().copied() {
                     pairs.push((actor, opponent));
@@ -1128,7 +1130,11 @@ pub fn opportunities(
         if trace {
             eprintln!(
                 "ACTION armed_confrontation org={} loc={} own={} opponents={} matched_pairs={}",
-                organization, locality, own.len(), opponents.len(), pairs.len()
+                organization,
+                locality,
+                own.len(),
+                opponents.len(),
+                pairs.len()
             );
         }
         if pairs.is_empty() {

@@ -236,13 +236,12 @@ fn government_air_support_level(
     detected_opponent: bool,
 ) -> f64 {
     if config.combat.government_air_support_intensity <= 0.0
+        || !detected_opponent
         || particle.formations.organization[formation] as usize != crate::MILITARY
     {
         return 0.0;
     }
-    let detection_factor = if detected_opponent { 1.0 } else { 0.75 };
     config.combat.government_air_support_intensity
-        * detection_factor
         * (0.5 + 0.5 * particle.formations.information[formation].clamp(0.0, 1.0))
 }
 
@@ -261,9 +260,10 @@ fn partner_air_support_level(
         return (0.0, 0.0);
     }
     particle.partner_support.air.opportunities += 1;
-    let detection_factor = if detected_opponent { 1.0 } else { 0.75 };
+    if !detected_opponent {
+        return (0.0, 0.0);
+    }
     let intensity = partner_config.air.intensity
-        * detection_factor
         * (0.5 + 0.5 * particle.formations.information[formation].clamp(0.0, 1.0));
     let firepower_bonus = intensity * partner_config.air.firepower_bonus;
     let cost = partner_config.air.cost_per_assisted_contact;
@@ -649,13 +649,21 @@ fn resolve_engagement(
 ) {
     if first >= particle.formations.personnel.len() {
         if crate::trace_env!("PINELAND_COMBAT_TRACE") {
-            eprintln!("COMBAT_REJECT: first formation index {} out of bounds (len {})", first, particle.formations.personnel.len());
+            eprintln!(
+                "COMBAT_REJECT: first formation index {} out of bounds (len {})",
+                first,
+                particle.formations.personnel.len()
+            );
         }
         return;
     }
     if second >= particle.formations.personnel.len() {
         if crate::trace_env!("PINELAND_COMBAT_TRACE") {
-            eprintln!("COMBAT_REJECT: second formation index {} out of bounds (len {})", second, particle.formations.personnel.len());
+            eprintln!(
+                "COMBAT_REJECT: second formation index {} out of bounds (len {})",
+                second,
+                particle.formations.personnel.len()
+            );
         }
         return;
     }
@@ -687,7 +695,9 @@ fn resolve_engagement(
         }
         return;
     }
-    if particle.formations.operational_status[first] != 1 || particle.formations.operational_status[second] != 1 {
+    if particle.formations.operational_status[first] != 1
+        || particle.formations.operational_status[second] != 1
+    {
         if crate::trace_env!("PINELAND_COMBAT_TRACE") {
             eprintln!(
                 "COMBAT_REJECT: operational_status ineligible first={first}(status {}) second={second}(status {})",
@@ -714,11 +724,14 @@ fn resolve_engagement(
         }
         return;
     }
-    if particle.formations.outside_pineland[first] != 0 || particle.formations.outside_pineland[second] != 0 {
+    if particle.formations.outside_pineland[first] != 0
+        || particle.formations.outside_pineland[second] != 0
+    {
         if crate::trace_env!("PINELAND_COMBAT_TRACE") {
             eprintln!(
                 "COMBAT_REJECT: outside pineland first={first}({}) second={second}({})",
-                particle.formations.outside_pineland[first], particle.formations.outside_pineland[second]
+                particle.formations.outside_pineland[first],
+                particle.formations.outside_pineland[second]
             );
         }
         return;
@@ -886,10 +899,8 @@ fn resolve_engagement(
     if config.state_regeneration.enabled {
         for formation in [first, second] {
             let current = particle.formations.experience[formation].clamp(0.0, 1.0);
-            let learning = config.combat.momentum_learning_rate
-                * 0.025
-                * exposure
-                * (1.0 - current);
+            let learning =
+                config.combat.momentum_learning_rate * 0.025 * exposure * (1.0 - current);
             particle.formations.experience[formation] = clamp01(current + learning);
         }
     }
@@ -902,13 +913,12 @@ fn resolve_engagement(
     .into_iter()
     .enumerate()
     {
-        let equipment_supply_burden = if particle.formations.organization[formation] as usize
-            == crate::MILITARY
-        {
-            config.combat.government_supply_burden_multiplier
-        } else {
-            1.0
-        };
+        let equipment_supply_burden =
+            if particle.formations.organization[formation] as usize == crate::MILITARY {
+                config.combat.government_supply_burden_multiplier
+            } else {
+                1.0
+            };
         let demand = particle.formations.personnel[formation].max(0.0)
             * particle.formations.availability[formation].clamp(0.0, 1.0)
             * config.combat.interval_hours
@@ -962,7 +972,10 @@ fn resolve_engagement(
     particle.locality.violence[locality] =
         clamp01(particle.locality.violence[locality] * 0.85 + 0.25 * intensity.min(1.0));
     let air_harm_factor = 1.0
-        + air_first.max(air_second) * config.combat.government_air_support_civilian_harm_multiplier;
+        + air_first.max(air_second)
+            * config
+                .combat
+                .government_air_support_civilian_harm_multiplier;
     let civilian_harm = particle.locality.population[locality]
         * particle
             .zones
