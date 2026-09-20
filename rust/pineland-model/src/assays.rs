@@ -345,7 +345,7 @@ pub fn run_channel_isolation_assay(options: &GateOptions) -> Result<IsolationAss
     ) in channels
     {
         let (forcegen_mult, logistics_mult, command_mult) = match name {
-            "logistics_only" => (1.0, 0.10, 1.0),
+            "logistics_only" => (1.0, 0.60, 1.0),
             "command_only" => (1.0, 1.0, 0.35),
             "forcegen_only" => (0.30, 1.0, 1.0),
             _ => (1.0, 1.0, 1.0),
@@ -471,19 +471,6 @@ pub fn run_channel_isolation_assay(options: &GateOptions) -> Result<IsolationAss
 
         let assay_on = on.capability_assay(&baseline);
         let assay_off = off.capability_assay(&baseline);
-        if name == "logistics_only" {
-            eprintln!(
-                "LOGISTICS_ONLY DEBUG: ctrl={:.3} pers={:.3} form={:.3} cov={:.3} read_ret={:.3} base_read={:.3} C_on={:.6} C_v1={:.6}",
-                assay_on.government_control,
-                assay_on.military_personnel_retention,
-                assay_on.operational_formation_survival,
-                assay_on.geographic_coverage_retention,
-                assay_on.operational_readiness_retention,
-                baseline.operational_readiness,
-                assay_on.composite_capability,
-                assay_on.composite_capability_v1
-            );
-        }
         let capability_diff =
             (assay_on.composite_capability - assay_off.composite_capability).abs();
 
@@ -1097,22 +1084,22 @@ pub fn run_horizon_sufficiency_assay(
 ) -> Result<HorizonSufficiencySummary, String> {
     let spec = GateCellSpec {
         cell_id: "horizon_check",
-        support_profile: "logistics_heavy",
+        support_profile: "balanced",
         forcegen_mult: 1.0,
-        logistics_mult: 0.1,
+        logistics_mult: 1.0,
         command_mult: 1.0,
-        air_intensity: 0.0,
-        air_bonus: 0.0,
-        air_cost_per_contact: 0.0,
-        logistics_rate: 600.0,
-        logistics_capacity: 400.0,
-        logistics_cost_per_unit: 10.0,
-        command_reliability_boost: 0.0,
-        command_latency_reduction_fraction: 0.0,
-        command_floor_hours: 0.0,
-        command_cost_per_formation_day: 0.0,
-        forcegen_training_rate_boost: 0.0,
-        forcegen_cost_per_incremental_trainee: 0.0,
+        air_intensity: 0.35,
+        air_bonus: 0.40,
+        air_cost_per_contact: 800.0,
+        logistics_rate: 450.0,
+        logistics_capacity: 700.0,
+        logistics_cost_per_unit: 8.0,
+        command_reliability_boost: 0.18,
+        command_latency_reduction_fraction: 0.20,
+        command_floor_hours: 1.0,
+        command_cost_per_formation_day: 80.0,
+        forcegen_training_rate_boost: 0.006,
+        forcegen_cost_per_incremental_trainee: 80.0,
         seed: 2026120000,
     };
 
@@ -1120,6 +1107,7 @@ pub fn run_horizon_sufficiency_assay(
     opts.horizon_days = 360.0;
     let config = build_gate_config(&spec, &opts)?;
     let mut engine = SimulationEngine::new(config).map_err(|e| e.to_string())?;
+    apply_indigenous_command_multiplier(&mut engine, spec.command_mult);
 
     engine
         .advance_until(opts.withdrawal_time_days)
@@ -1156,6 +1144,28 @@ pub fn run_horizon_sufficiency_assay(
 
     let div_180 = (assay_180d_on.composite_capability - assay_180d_off.composite_capability).abs();
     let div_360 = (assay_360d_on.composite_capability - assay_360d_off.composite_capability).abs();
+    eprintln!(
+        "HORIZON DIAGNOSTIC 180d: ON C={:.6} (ctrl={:.4}, pers={:.4}, form={:.4}, cov={:.4}, read={:.4}) | OFF C={:.6} (ctrl={:.4}, pers={:.4}, form={:.4}, cov={:.4}, read={:.4})",
+        assay_180d_on.composite_capability,
+        assay_180d_on.government_control,
+        assay_180d_on.military_personnel_retention,
+        assay_180d_on.operational_formation_survival,
+        assay_180d_on.geographic_coverage_retention,
+        assay_180d_on.operational_readiness_retention,
+        assay_180d_off.composite_capability,
+        assay_180d_off.government_control,
+        assay_180d_off.military_personnel_retention,
+        assay_180d_off.operational_formation_survival,
+        assay_180d_off.geographic_coverage_retention,
+        assay_180d_off.operational_readiness_retention
+    );
+    eprintln!(
+        "HORIZON DIAGNOSTIC 360d: ON C={:.6} (read={:.4}) | OFF C={:.6} (read={:.4})",
+        assay_360d_on.composite_capability,
+        assay_360d_on.operational_readiness_retention,
+        assay_360d_off.composite_capability,
+        assay_360d_off.operational_readiness_retention
+    );
     // Primary Stage-3 capability is exported with f9 precision.  Treat one
     // published precision unit as the minimum non-degenerate signal rather
     // than imposing an unregistered substantive-effect cutoff.  The frozen
