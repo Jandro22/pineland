@@ -1,0 +1,65 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_runtime_amendment.v1",
+  "status": "FROZEN_BEFORE_FULL_V5_PRODUCTION_RERUN",
+  "date": "2026-09-20",
+  "supersedes_runtime_only": "partner_force_autonomy_preregistration_freeze_v4",
+  "reason": [
+    "The command advisory overlay enforced its minimum assisted-latency floor with max(floor, reduced_latency). If an indigenous formation already had latency below that donor floor, applying command support could increase its latency and therefore reduce supported command service below the indigenous baseline.",
+    "Stage-3 task 444 (cell log_08, seed 2026120000) exposed the defect by correctly tripping the strict formal-domain invariant: formal service external must be nonnegative.",
+    "The v4 freeze did not hash rust/pineland-model/src/movement.rs even though that file implements command-support dynamics. The v5 freeze closes that provenance gap."
+  ],
+  "runtime_changes": {
+    "command_latency_monotonicity": {
+      "old_behavior": "assisted_latency = max(indigenous_latency * (1 - reduction_fraction), donor_floor), which could be larger than indigenous_latency when the indigenous path was already faster than the donor floor.",
+      "new_behavior": "assisted_latency = min(indigenous_latency, max(indigenous_latency * (1 - reduction_fraction), donor_floor)), after nonnegative clamping. Assistance may improve latency or leave it unchanged but may never directly worsen the indigenous baseline.",
+      "scientific_intent_changed": false,
+      "model_dynamics_changed": true
+    },
+    "freeze_coverage": {
+      "new_behavior": "rust/pineland-model/src/movement.rs is a required cryptographically hashed artifact in the v5 production freeze."
+    }
+  },
+  "scientific_invariants": {
+    "design_cells_changed": false,
+    "seeds_changed": false,
+    "rng_namespace_changed": false,
+    "treatments_changed": false,
+    "outcome_definition_changed": false,
+    "horizons_changed": false,
+    "trajectory_sampling_changed": false,
+    "hypotheses_or_thresholds_changed": false,
+    "analysis_model_changed": false,
+    "simulation_dynamics_changed": true,
+    "simulation_dynamics_change_scope": "bug fix restoring the preregistered monotonic interpretation of external command assistance"
+  },
+  "prior_shard_reuse": {
+    "status": "PROHIBITED_FOR_FINAL_V5_ANALYSIS",
+    "rationale": [
+      "Unlike the v4 runtime-only telemetry/safeguard changes, this correction can alter simulated movement-order timing and downstream state trajectories.",
+      "The triggering condition occurs at the individual formation/order level and cannot be proven absent from a completed shard using the aggregate telemetry alone.",
+      "Therefore no v3/v4 shard is reused in the final v5 scientific dataset; all 720 discovery worlds must be rerun under one v5 commit and freeze."
+    ]
+  },
+  "regression_evidence": {
+    "unit_test": {
+      "name": "movement::tests::command_overlay_exact_numerical_cases",
+      "result": "PASS",
+      "added_case": "indigenous latency 0.5h with donor floor 1.0h remains 0.5h under support"
+    },
+    "formal_adapter_tests": {
+      "result": "PASS_10_OF_10"
+    },
+    "stage3_task_444": {
+      "cell_id": "log_08",
+      "cell_index": 37,
+      "seed": 2026120000,
+      "v4_result": "FAILED_FORMAL_NONNEGATIVE_EXTERNAL_SERVICE",
+      "v5_regression_result": "PASS_FULL_PRIMARY_AND_TRAJECTORY_OUTPUT",
+      "slurm_job_id": "884515_444",
+      "elapsed": "00:02:31",
+      "exit_code": "0:0"
+    }
+  },
+  "production_requirement": "FULL_720_WORLD_RERUN_REQUIRED",
+  "holdouts_and_stage4": "UNCHANGED_AND_BLOCKED_UNTIL_STAGE3_V5_DISCOVERY_REVIEW"
+}
