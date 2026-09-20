@@ -2057,14 +2057,17 @@ pub(crate) fn calculate_command_advisory_overlay(
     let boost_fraction = partner_config.command.reliability_boost.clamp(0.0, 1.0);
     let boosted =
         (1.0 - (1.0 - reliability.clamp(0.0, 1.0)) * (1.0 - boost_fraction)).clamp(0.0, 1.0);
-    let reduced = (latency_hours
+    let baseline_latency = latency_hours.max(0.0);
+    let assisted_target = (baseline_latency
         * (1.0
             - partner_config
                 .command
                 .latency_reduction_fraction
                 .clamp(0.0, 1.0)))
-    .max(partner_config.command.min_latency_floor_hours)
-    .max(0.0);
+    .max(partner_config.command.min_latency_floor_hours.max(0.0));
+    // The donor floor limits how far assistance may reduce latency; it must
+    // never make an already-better indigenous command path slower.
+    let reduced = assisted_target.min(baseline_latency);
     (boosted, reduced)
 }
 
@@ -2100,6 +2103,12 @@ mod tests {
         let (_, l_eff_floored) =
             calculate_command_advisory_overlay(0.6, 2.0, &config.partner_force_support);
         assert_eq!(l_eff_floored, 1.0);
+
+        // Case 2b: an indigenous path already below the donor's minimum
+        // assisted-latency floor must not be degraded by applying support.
+        let (_, l_eff_already_better) =
+            calculate_command_advisory_overlay(0.6, 0.5, &config.partner_force_support);
+        assert_eq!(l_eff_already_better, 0.5);
 
         // Case 3: Zero boost does not change reliability or latency
         config.partner_force_support.command.reliability_boost = 0.0;
