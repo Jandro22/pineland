@@ -13,6 +13,18 @@
       "seeds": 12,
       "tasks": 1680,
       "initial_array_throttle": 96,
+      "array_chunks": [
+        {
+          "task_ids": "0-839",
+          "task_count": 840,
+          "throttle": 48
+        },
+        {
+          "task_ids": "840-1679",
+          "task_count": 840,
+          "throttle": 48
+        }
+      ],
       "output_directory": "/home/alejandrog/pineland-stage4-production/phase_map"
     },
     {
@@ -36,5 +48,5 @@
       "output_directory": "/home/alejandrog/pineland-stage4-production/substitution_development"
     }
   ],
-  "scheduler_note": "Array throttles are operational choices only and may be lowered by fair-share conditions without changing the scientific design."
+  "scheduler_note": "Owl MaxArraySize is 1001, so the 1680-world Phase Map is submitted as two disjoint 840-task arrays at 48 concurrent tasks each. Array packaging and throttles are operational choices only and do not change the scientific design."
 }

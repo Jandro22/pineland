@@ -176,15 +176,15 @@
     },
     "stage4_integrated_launch_plan": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage4_integrated_launch_plan_v1.json",
-      "sha256": "5cbc19e5398f54673790c2de4549192600f0146fab19168f9a90f5e1cdcfcec9"
+      "sha256": "8593421a5abbf619728781f60e5c4067d563d49d6e395ff65e25d1978eabbd00"
     },
     "stage4_integrated_launcher": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/launch_stage4_integrated.sh",
-      "sha256": "ce4a8e153ce447a3f44320cec7097ad6dc1113a8f48db6df24b0885a808d87b9"
+      "sha256": "95aaa44986aed2d7825128c18e5799a4ffaca3c7cfb996d5789cb00af952443f"
     },
     "stage4_integrated_protocol": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_INTEGRATED_PROTOCOL_v1.md",
-      "sha256": "c518fd193f1d3224fd1f25b75cdb8aae71479aad37cef3cd7f1bd13bbb5898fd"
+      "sha256": "5f004ed6f88e9097f4cd3b28ee2d2869aaad61351d15c44419e9150db8961f13"
     },
     "stage4_merge_code": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py",

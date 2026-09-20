@@ -45,10 +45,10 @@ LOGROOT="/home/alejandrog/pineland-stage4-production/logs"
 mkdir -p "$LOGROOT"
 
 submit_array() {
-  local name=$1 range=$2 throttle=$3 contract=$4 out=$5
+  local name=$1 array_spec=$2 contract=$3 out=$4
   sbatch --parsable "${COMMON[@]}" \
     --job-name="$name" \
-    --array="0-${range}%${throttle}" \
+    --array="$array_spec" \
     --output="$LOGROOT/${name}_%A_%a.out" \
     --error="$LOGROOT/${name}_%A_%a.err" \
     --export="ALL,PINELAND_REPO_ROOT=$REPO_ROOT,PF_BINARY=$BINARY,PF_STAGE4_CONTRACT=$contract,PF_FREEZE=$FREEZE,PF_OUTPUT_DIR=$out,PF_ALLOW_UNFROZEN=0" \
@@ -66,11 +66,12 @@ submit_post() {
     "$POST_WRAPPER"
 }
 
-JOB_A=$(submit_array pf-s4-phase 1679 96 "$CONTRACT_A" "$OUT_A")
-JOB_B=$(submit_array pf-s4-migrate 623 52 "$CONTRACT_B" "$OUT_B")
-JOB_C=$(submit_array pf-s4-mechanism 503 48 "$CONTRACT_C" "$OUT_C")
+JOB_A1=$(submit_array pf-s4-phase-a 0-839%48 "$CONTRACT_A" "$OUT_A")
+JOB_A2=$(submit_array pf-s4-phase-b 840-1679%48 "$CONTRACT_A" "$OUT_A")
+JOB_B=$(submit_array pf-s4-migrate 0-623%52 "$CONTRACT_B" "$OUT_B")
+JOB_C=$(submit_array pf-s4-mechanism 0-503%48 "$CONTRACT_C" "$OUT_C")
 
-POST_A=$(submit_post pf-s4-phase-post "$JOB_A" "$CONTRACT_A" "$OUT_A")
+POST_A=$(submit_post pf-s4-phase-post "${JOB_A1}:${JOB_A2}" "$CONTRACT_A" "$OUT_A")
 POST_B=$(submit_post pf-s4-migrate-post "$JOB_B" "$CONTRACT_B" "$OUT_B")
 POST_C=$(submit_post pf-s4-mechanism-post "$JOB_C" "$CONTRACT_C" "$OUT_C")
 
@@ -82,12 +83,12 @@ FINAL=$(sbatch --parsable "${COMMON[@]}" \
   --export="ALL,PINELAND_REPO_ROOT=$REPO_ROOT" \
   "$FINAL_WRAPPER")
 
-python3 - "$COMMIT" "$JOB_A" "$JOB_B" "$JOB_C" "$POST_A" "$POST_B" "$POST_C" "$FINAL" <<'PY'
+python3 - "$COMMIT" "$JOB_A1" "$JOB_A2" "$JOB_B" "$JOB_C" "$POST_A" "$POST_B" "$POST_C" "$FINAL" <<'PY'
 import json, sys
-commit, a, b, c, pa, pb, pc, final=sys.argv[1:]
+commit, a1, a2, b, c, pa, pb, pc, final=sys.argv[1:]
 print(json.dumps({
   'production_git_commit':commit,
-  'phase_map_array_job_id':a,
+  'phase_map_array_job_ids':[a1,a2],
   'bottleneck_migration_array_job_id':b,
   'substitution_development_array_job_id':c,
   'phase_map_postprocess_job_id':pa,
