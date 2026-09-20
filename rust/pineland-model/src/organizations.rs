@@ -412,7 +412,7 @@ fn consume_proto_formation_draws(
                 &mobilized
                     .iter()
                     .map(|person| {
-                        let person = *person as usize;
+                        let person = *person;
                         particle.people.represented_population[person]
                             * (1.0 - particle.people.expected_control[person * 2])
                     })
@@ -582,20 +582,24 @@ fn materialize_proto_birth(
     particle.organizations.member_population.push(python_sum(
         &members
             .iter()
-            .map(|person| {
-                particle.people.represented_population[*person as usize] * founder_scale
-            })
+            .map(|person| particle.people.represented_population[*person as usize] * founder_scale)
             .collect::<Vec<_>>(),
     ));
     particle.organizations.founded_at.push(time);
     particle.organizations.succession_count.push(0);
     particle.organizations.capital_social.push(social_capital);
-    particle.organizations.capital_political.push(political_capital);
+    particle
+        .organizations
+        .capital_political
+        .push(political_capital);
     particle
         .organizations
         .capital_organizational
         .push(organizational_capital);
-    particle.organizations.capital_material.push(material_capital);
+    particle
+        .organizations
+        .capital_material
+        .push(material_capital);
 
     // The phenotype dictionary insertion order is part of the Python RNG
     // contract, so keep these four draws ahead of leader construction.
@@ -613,13 +617,10 @@ fn materialize_proto_birth(
         social_capital,
         0.1,
     ]);
-    particle
-        .organizations
-        .ideology
-        .extend_from_slice(&[
-            particle.protos.ideology_reform[proto],
-            particle.protos.ideology_separatism[proto],
-        ]);
+    particle.organizations.ideology.extend_from_slice(&[
+        particle.protos.ideology_reform[proto],
+        particle.protos.ideology_separatism[proto],
+    ]);
     particle.organizations.external_sanctuary.push(0.0);
     particle
         .organizations
@@ -651,14 +652,12 @@ fn materialize_proto_birth(
             .copy_from_slice(&[0.0, 0.005, 0.0, 0.005, 0.005, 0.015, 0.03]);
     }
     for other in 0..organization {
-        let (status, hostility, cooperation) = if matches!(
-            particle.organizations.kind[other],
-            0 | 1 | 2
-        ) {
-            (4, 1.0, 0.0)
-        } else {
-            (2, 0.0, 0.0)
-        };
+        let (status, hostility, cooperation) =
+            if matches!(particle.organizations.kind[other], 0..=2) {
+                (4, 1.0, 0.0)
+            } else {
+                (2, 0.0, 0.0)
+            };
         crate::foreign::append_relation(
             particle,
             organization,
@@ -780,7 +779,10 @@ fn materialize_proto_birth(
     particle.patrols.presence_accounted_at.push(-1.0e300);
     particle.patrols.detections.push(0);
 
-    particle.command_edges.organization.push(organization as u32);
+    particle
+        .command_edges
+        .organization
+        .push(organization as u32);
     particle.command_edges.formation.push(formation as u32);
     particle.command_edges.reliability.push(0.45);
     particle.command_edges.latency_hours.push(8.0);
@@ -1141,9 +1143,7 @@ pub fn update(
             let represented = particle.people.represented_population[person]
                 * particle.people.armed_fraction[person];
             represented_values.push(represented);
-            identity_weighted_values.push(
-                represented * particle.people.identities[person * 3 + 2],
-            );
+            identity_weighted_values.push(represented * particle.people.identities[person * 3 + 2]);
         }
         let represented_weight = python_sum(&represented_values);
         let identity_weighted = python_sum(&identity_weighted_values);

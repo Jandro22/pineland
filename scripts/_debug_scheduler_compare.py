@@ -31,7 +31,9 @@ for limit in (1280, 1290):
     simulation = Simulation(world)
     original_reschedule = Simulation._reschedule
 
-    def traced_reschedule(self, event_type, payload, current_time):
+    def traced_reschedule(
+        self, event_type, payload, current_time, original_reschedule=original_reschedule
+    ):
         if event_type == "patrol" and 18.0 <= current_time <= 20.0:
             patrol = self.world.patrols.get(payload.get("patrol_id"))
             formation = self.world.formations.get(patrol.formation_id) if patrol else None

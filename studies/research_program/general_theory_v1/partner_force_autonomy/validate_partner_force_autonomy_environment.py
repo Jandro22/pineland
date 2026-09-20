@@ -449,14 +449,14 @@ def check_trajectory_instrumentation() -> None:
                 contract.get("status") == "FROZEN_BEFORE_STAGE3_V3_DISCOVERY_COMPUTE"
                 and contract.get("scientific_role") == "DIAGNOSTIC_AND_FORMAL_HORIZON_VALIDATION"
                 and sampling.get("expected_prewithdrawal_rows_per_world") == 10
-                and sampling.get("expected_postwithdrawal_rows_per_branch") == 28
-                and sampling.get("expected_rows_per_world") == 66
+                and sampling.get("expected_postwithdrawal_rows_per_branch") == 55
+                and sampling.get("expected_rows_per_world") == 120
                 and firewall.get("primary_stage3_outcomes_unchanged") is True
                 and firewall.get("formal_q_definition_frozen_before_results") is True
             )
         except Exception:
             contract_ok = False
-    log_check("Trajectory sampling contract (10 pre + 28 ON + 28 OFF = 66 rows/world)", contract_ok)
+    log_check("Trajectory sampling contract (10 pre + 55 ON + 55 OFF = 120 rows/world)", contract_ok)
 
     audit_ok = False
     if audit_path.exists():
@@ -467,10 +467,10 @@ def check_trajectory_instrumentation() -> None:
             audit_ok = (
                 audit.get("status") == "PASS"
                 and audit.get("verdict") == "BYTE_IDENTICAL_PRIMARY_OUTPUT"
-                and before.get("rows") == 8
-                and after.get("rows") == 8
+                and before.get("rows") == 10
+                and after.get("rows") == 10
                 and before.get("sha256") == after.get("sha256")
-                and audit.get("diagnostic_trajectory_output", {}).get("rows") == 66
+                and audit.get("diagnostic_trajectory_output", {}).get("rows") == 120
             )
         except Exception:
             audit_ok = False

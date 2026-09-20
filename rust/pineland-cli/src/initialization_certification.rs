@@ -1633,11 +1633,28 @@ fn components(engine: &SimulationEngine) -> JsonValue {
         JsonValue::string(f64_digest(&particle.command_edges.latency_hours)),
     );
     let mut manpower_indices: Vec<usize> = (0..particle.manpower.organization.len()).collect();
-    manpower_indices.sort_by_key(|&i| (particle.manpower.organization[i], particle.manpower.locality[i]));
-    let manpower_organization: Vec<u32> = manpower_indices.iter().map(|&i| particle.manpower.organization[i]).collect();
-    let manpower_locality: Vec<u32> = manpower_indices.iter().map(|&i| particle.manpower.locality[i]).collect();
-    let manpower_pool: Vec<f64> = manpower_indices.iter().map(|&i| particle.manpower.pool[i]).collect();
-    let manpower_supply_reserve: Vec<f64> = manpower_indices.iter().map(|&i| particle.manpower.supply_reserve[i]).collect();
+    manpower_indices.sort_by_key(|&i| {
+        (
+            particle.manpower.organization[i],
+            particle.manpower.locality[i],
+        )
+    });
+    let manpower_organization: Vec<u32> = manpower_indices
+        .iter()
+        .map(|&i| particle.manpower.organization[i])
+        .collect();
+    let manpower_locality: Vec<u32> = manpower_indices
+        .iter()
+        .map(|&i| particle.manpower.locality[i])
+        .collect();
+    let manpower_pool: Vec<f64> = manpower_indices
+        .iter()
+        .map(|&i| particle.manpower.pool[i])
+        .collect();
+    let manpower_supply_reserve: Vec<f64> = manpower_indices
+        .iter()
+        .map(|&i| particle.manpower.supply_reserve[i])
+        .collect();
     value.insert(
         "manpower_organization",
         JsonValue::string(u32_digest(&manpower_organization)),

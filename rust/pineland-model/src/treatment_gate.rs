@@ -358,13 +358,15 @@ pub fn build_gate_config(
     spec: &GateCellSpec,
     options: &GateOptions,
 ) -> Result<SimulationConfig, String> {
-    let mut config = SimulationConfig::default();
-    config.seed = spec.seed;
-    config.random_stream_namespace = "partner-force-autonomy-gate-v2".to_string();
-    config.agent_count = options.agent_count;
-    config.locality_count = options.locality_count;
-    config.horizon_days = options.withdrawal_time_days + options.horizon_days;
-    config.burn_in_days = 0.0;
+    let mut config = SimulationConfig {
+        seed: spec.seed,
+        random_stream_namespace: "partner-force-autonomy-gate-v2".to_string(),
+        agent_count: options.agent_count,
+        locality_count: options.locality_count,
+        horizon_days: options.withdrawal_time_days + options.horizon_days,
+        burn_in_days: 0.0,
+        ..SimulationConfig::default()
+    };
     config.state_regeneration.enabled = true;
     config.foreign_affairs.enabled = false;
 

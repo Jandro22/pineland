@@ -317,7 +317,7 @@ def resolve_engagement(world, event_id: str, a: ArmedFormation, b: ArmedFormatio
     locality.violence = clamp(locality.violence * .85 + .25 * intensity)
     civilian_harm = (locality.population * zone.population_share * cfg.civilian_exposure_rate *
                      intensity * exposure * rng.expovariate(1.0))
-    harm = apply_direct_civilian_harm(
+    apply_direct_civilian_harm(
         world,
         event_id,
         locality.locality_id,

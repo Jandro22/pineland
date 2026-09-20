@@ -52,7 +52,6 @@ OUTPUT_ONLY_WORLD_FIELDS = frozenset({
     "organization_onset_log", "observation_index",
     "information_detections", "information_detection_by_source",
     "civilian_harm_events", "resource_flows",
-    "information_detections", "information_detection_by_source",
     "stock_ledger_deltas", "stock_ledger_by_class",
     "stock_ledger_by_boundary", "stock_ledger_by_flow_kind",
     "stock_ledger_event_ids", "stock_ledger_transaction_count",

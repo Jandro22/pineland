@@ -219,7 +219,7 @@ FLOW_COLUMNS = [
 ]
 
 
-def evaluate_regeneration_vs_stocks(paired: pd.DataFrame, horizons=(90, 180)) -> Dict[str, Any]:
+def evaluate_regeneration_vs_stocks(paired: pd.DataFrame, horizons=(90, 180, 360)) -> Dict[str, Any]:
     df = paired[paired["horizon_days"].isin(horizons)].copy()
     if df.empty:
         raise ValueError(f"no rows at requested long horizons {horizons}")

@@ -151,13 +151,13 @@ def build_world_summary(df: pd.DataFrame, paired: pd.DataFrame) -> pd.DataFrame:
             "cell_id": str(g["cell_id"].iloc[0]),
             "support_profile": str(g["support_profile"].iloc[0]),
             "seed": int(g["seed"].iloc[0]),
-            "integrated_capability_gap_0_180": float(np.trapezoid(np.maximum(gap, 0.0), x)),
+            "integrated_capability_gap_0_360": float(np.trapezoid(np.maximum(gap, 0.0), x)),
             "max_capability_gap": float(gap[max_gap_idx]),
             "day_of_max_capability_gap": float(x[max_gap_idx]),
             "minimum_autonomy_ratio": float(ratio[min_ratio_idx]),
             "day_of_minimum_autonomy_ratio": float(x[min_ratio_idx]),
         }
-        for horizon in (7, 30, 90, 180):
+        for horizon in (7, 30, 90, 180, 360):
             hg = g[np.isclose(g["days_from_withdrawal"].to_numpy(float), horizon)]
             if len(hg) != 1:
                 raise ValueError(f"{world_id} missing unique h={horizon} trajectory row")
@@ -194,11 +194,12 @@ def build_world_summary(df: pd.DataFrame, paired: pd.DataFrame) -> pd.DataFrame:
 
 def quantile_summary(worlds: pd.DataFrame) -> dict:
     metrics = [
-        "integrated_capability_gap_0_180",
+        "integrated_capability_gap_0_360",
         "max_capability_gap",
         "minimum_autonomy_ratio",
         "autonomy_ratio_h90",
         "autonomy_ratio_h180",
+        "autonomy_ratio_h360",
     ]
 
     def summarize(group: pd.DataFrame) -> dict:

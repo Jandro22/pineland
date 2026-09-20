@@ -1,4 +1,4 @@
-﻿{
+{
   "schema_version": "pineland.human_capital_turnover_learning_threshold.v1",
   "historical_outcomes_used": false,
   "continuous_mixing_equation": "dE/dt = ell*(1-E) + (I/F)*(E_r-E)",

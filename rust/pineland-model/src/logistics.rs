@@ -133,19 +133,18 @@ pub fn update(
             }
         }
     }
-    for formation in 0..particle.formations.personnel.len() {
+    for (formation, has_active_shipment) in active_shipment_formations.iter().copied().enumerate() {
         if particle.formations.active[formation] == 0 || particle.formations.moving[formation] != 0
         {
             continue;
         }
         let personnel = particle.formations.personnel[formation].max(0.0);
-        let equipment_supply_burden = if particle.formations.organization[formation] as usize
-            == crate::MILITARY
-        {
-            config.combat.government_supply_burden_multiplier
-        } else {
-            1.0
-        };
+        let equipment_supply_burden =
+            if particle.formations.organization[formation] as usize == crate::MILITARY {
+                config.combat.government_supply_burden_multiplier
+            } else {
+                1.0
+            };
         let demand = personnel
             * particle.formations.availability[formation]
             * config.logistics.presence_consumption_per_person_day
@@ -157,7 +156,10 @@ pub fn update(
         particle.formations.sustainment[formation] = supply_ratio(particle, formation);
         particle.logistics.cumulative_consumed += consumed;
         if particle.formations.organization[formation] as usize == crate::MILITARY {
-            particle.partner_support.logistics.military_cumulative_demanded += demand;
+            particle
+                .partner_support
+                .logistics
+                .military_cumulative_demanded += demand;
             particle
                 .partner_support
                 .logistics
@@ -218,7 +220,7 @@ pub fn update(
 
         if particle.formations.supply_fraction(formation)
             >= config.logistics.resupply_trigger_fraction
-            || active_shipment_formations[formation]
+            || has_active_shipment
         {
             continue;
         }
@@ -530,8 +532,7 @@ fn reconcile_source_production(
                 personnel
                     * config.logistics.presence_consumption_per_person_day
                     * equipment_supply_burden,
-            )
-                * config.logistics.organization_sustainment_coverage,
+            ) * config.logistics.organization_sustainment_coverage,
         );
         let territorial = particle
             .organizations
@@ -666,11 +667,7 @@ pub fn supply_ratio(particle: &ParticleState, formation: usize) -> f64 {
     }
 }
 
-fn deliver_partner_logistics(
-    particle: &mut ParticleState,
-    config: &SimulationConfig,
-    dt: f64,
-) {
+fn deliver_partner_logistics(particle: &mut ParticleState, config: &SimulationConfig, dt: f64) {
     let partner_config = &config.partner_force_support;
     if !partner_config.enabled
         || !partner_config.logistics.enabled
@@ -687,7 +684,8 @@ fn deliver_partner_logistics(
     }
 
     let mut accepted = 0.0;
-    if partner_config.logistics.mode == "direct_delivery" || partner_config.logistics.mode == "push" {
+    if partner_config.logistics.mode == "direct_delivery" || partner_config.logistics.mode == "push"
+    {
         let mut deficits = Vec::new();
         let mut total_deficit = 0.0;
         for formation in 0..particle.formations.personnel.len() {

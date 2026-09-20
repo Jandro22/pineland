@@ -190,7 +190,7 @@ def generate_pineland(config: SimulationConfig | None = None,
                 break
 
     for row in DISTRICT_REGISTRY:
-        district_id, name, population, terrain, urban, _, _, connectivity = row
+        district_id, name, population, _terrain, urban, _, _, connectivity = row
         count = 1 + extra_by_district[district_id]
         weights = [max(.1, rng.lognormvariate(0, .8)) for _ in range(count)]
         weights[0] *= 2.5 if urban > .55 else 1.4

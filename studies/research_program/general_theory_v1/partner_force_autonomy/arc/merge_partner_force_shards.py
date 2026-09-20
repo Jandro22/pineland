@@ -73,11 +73,16 @@ def validate_trajectory_shard(path: Path) -> pd.DataFrame:
     if df.duplicated(["world_id", "phase", "time_days"]).any():
         raise SystemExit(f"{path} contains duplicate trajectory checkpoints")
 
-    pre_expected = {-60, -53, -46, -39, -32, -25, -18, -11, -4, 0}
-    post_expected = {
-        7, 14, 21, 28, 30, 35, 42, 49, 56, 63, 70, 77, 84, 90,
-        91, 98, 105, 112, 119, 126, 133, 140, 147, 154, 161, 168, 175, 180,
+    sampling = contract["sampling"]
+    pre_window = int(sampling["prewithdrawal_window_days"])
+    pre_step = int(sampling["prewithdrawal_step_days"])
+    post_step = int(sampling["postwithdrawal_step_days"])
+    post_max = int(sampling["postwithdrawal_max_day"])
+    confirmatory_horizons = {
+        int(x) for x in sampling["postwithdrawal_also_includes_confirmatory_horizons_days"]
     }
+    pre_expected = set(range(-pre_window, 0, pre_step)) | {0}
+    post_expected = set(range(post_step, post_max, post_step)) | confirmatory_horizons | {post_max}
     phase_expected = {
         "PRE_SUPPORTED": pre_expected,
         "SUPPORT_ON": post_expected,
@@ -125,12 +130,32 @@ def main() -> None:
 
     task_ids = []
     frames = []
+    trajectory_contract = json.loads(
+        (CONTRACTS / "partner_force_trajectory_contract_v2.json").read_text(encoding="utf-8")
+    )
+    expected_horizons = {
+        int(x)
+        for x in trajectory_contract["sampling"][
+            "postwithdrawal_also_includes_confirmatory_horizons_days"
+        ]
+    }
+    expected_primary_rows = 2 * len(expected_horizons)
     for shard in shards:
         task_id = task_id_from_name(shard)
         task_ids.append(task_id)
         df = pd.read_csv(shard)
-        if len(df) != 8:
-            raise SystemExit(f"{shard} has {len(df)} rows; expected 8 (4 horizons x ON/OFF)")
+        if len(df) != expected_primary_rows:
+            raise SystemExit(
+                f"{shard} has {len(df)} rows; expected {expected_primary_rows} "
+                f"({len(expected_horizons)} horizons x ON/OFF)"
+            )
+        if {int(x) for x in df["horizon_days"].unique()} != expected_horizons:
+            raise SystemExit(
+                f"{shard} horizon coverage mismatch; expected={sorted(expected_horizons)} "
+                f"got={sorted(int(x) for x in df['horizon_days'].unique())}"
+            )
+        if set(df["branch"].astype(str)) != {"SUPPORT_ON", "SUPPORT_OFF"}:
+            raise SystemExit(f"{shard} does not contain exactly SUPPORT_ON/SUPPORT_OFF branches")
         frames.append(df)
 
     actual_ids = set(task_ids)

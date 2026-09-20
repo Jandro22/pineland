@@ -227,7 +227,10 @@ fn consume_formation_supply(
     particle.formations.sustainment[formation] = particle.formations.supply_fraction(formation);
     particle.logistics.cumulative_consumed += consumed;
     if particle.formations.organization[formation] as usize == crate::MILITARY {
-        particle.partner_support.logistics.military_cumulative_demanded += demanded;
+        particle
+            .partner_support
+            .logistics
+            .military_cumulative_demanded += demanded;
         particle
             .partner_support
             .logistics

@@ -146,8 +146,10 @@ def fit_and_export_frozen_predictor(
     source_path: Path,
     output_json_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    # Preregistered target horizons: long-horizon resilience (90d and 180d)
-    long_horizons = [90, 180]
+    # Preregistered target horizons: long-horizon resilience. 360d was added
+    # before discovery execution after the engineering horizon diagnostic
+    # showed material divergence was still developing after day 180.
+    long_horizons = [90, 180, 360]
     target_df = paired[paired["horizon_days"].isin(long_horizons)]
     selection_target_horizons = long_horizons if not target_df.empty else sorted([int(h) for h in paired["horizon_days"].unique()])
     selection_df = target_df if not target_df.empty else paired

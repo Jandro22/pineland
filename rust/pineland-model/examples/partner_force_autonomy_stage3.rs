@@ -683,14 +683,16 @@ fn build_config(
     locality_count: usize,
     rng_namespace: &str,
 ) -> Result<SimulationConfig, String> {
-    let mut config = SimulationConfig::default();
-    config.seed = seed;
-    config.initialization_seed = Some(seed);
-    config.random_stream_namespace = rng_namespace.to_string();
-    config.agent_count = agent_count;
-    config.locality_count = locality_count;
-    config.horizon_days = horizon;
-    config.burn_in_days = 0.0;
+    let mut config = SimulationConfig {
+        seed,
+        initialization_seed: Some(seed),
+        random_stream_namespace: rng_namespace.to_string(),
+        agent_count,
+        locality_count,
+        horizon_days: horizon,
+        burn_in_days: 0.0,
+        ..SimulationConfig::default()
+    };
     config.state_regeneration.enabled = true;
     config.foreign_affairs.enabled = false;
 
@@ -1041,7 +1043,7 @@ fn structural_service_window(window: FlowSnapshot) -> StructuralServiceWindow {
         command: ServiceChannel::new(
             window.command_opportunities as f64 * COMMAND_SERVICE_REQUIREMENT_PER_ORDER,
             window.command_indigenous_service,
-            (window.command_supported_service - window.command_indigenous_service).max(0.0),
+            window.command_supported_service - window.command_indigenous_service,
         ),
     }
 }
@@ -1247,23 +1249,14 @@ fn write_trajectory_row(
     .into_iter()
     .filter(|x| *x)
     .count();
-    let (q_indigenous, q_supported, support_lift, regime, bottleneck) =
-        match structural_window.metrics() {
-            Ok(m) => (
-                m.q_indigenous,
-                m.q_supported,
-                m.support_lift,
-                m.regime.as_str().to_string(),
-                m.bottleneck.as_str().to_string(),
-            ),
-            Err(_) => (
-                -1.0,
-                -1.0,
-                0.0,
-                "NO_ACTIVE_DEMAND".to_string(),
-                "none".to_string(),
-            ),
-        };
+    let formal = structural_window.metrics()?;
+    let (q_indigenous, q_supported, support_lift, regime, bottleneck) = (
+        formal.q_indigenous,
+        formal.q_supported,
+        formal.support_lift,
+        formal.regime.as_str().to_string(),
+        formal.bottleneck.as_str().to_string(),
+    );
     let f9 = |x: f64| format!("{x:.9}");
     let row = vec![
         TRAJECTORY_SCHEMA_VERSION.to_string(),
@@ -1381,9 +1374,7 @@ fn default_trajectory_output(output: &Path) -> PathBuf {
 
 #[derive(Clone, Debug)]
 struct DegeneracyWorldSummary {
-    cell_id: String,
     profile: String,
-    seed: u64,
     r_180: f64,
     pre_contacts: u64,
     pre_external_delivered: f64,
@@ -1444,7 +1435,10 @@ fn main() -> Result<(), String> {
             s3.results.len()
         );
         for r in &s3.results {
-            println!("  {:<18} pass={} {}", r.channel, r.binding_verified, r.description);
+            println!(
+                "  {:<18} pass={} {}",
+                r.channel, r.binding_verified, r.description
+            );
         }
         let s4 = pineland_model::assays::run_dose_sanity_assay(&options)?;
         println!(
@@ -1459,8 +1453,10 @@ fn main() -> Result<(), String> {
         );
         let s6 = pineland_model::assays::run_horizon_sufficiency_assay(&options)?;
         println!(
-            "[Assay 6: Horizon Sufficiency] pass={}; 180d_div={:.4}, 360d_div={:.4}, post180_change={:.1}%",
+            "[Assay 6: Horizon Diagnostic] pass={}; 180d_sufficient={}; recommended_terminal={:.0}d; 180d_div={:.4}, 360d_div={:.4}, post180_change={:.1}%",
+            s6.horizon_design_pass,
             s6.horizon_180d_sufficient,
+            s6.recommended_terminal_horizon_days,
             s6.divergence_180d,
             s6.divergence_360d,
             100.0 * s6.relative_change_after_180
@@ -1476,7 +1472,7 @@ fn main() -> Result<(), String> {
             && s4.pass
             && s5.support_withdrawn_at_t
             && s5.immediate_severing_verified
-            && s6.horizon_180d_sufficient
+            && s6.horizon_design_pass
             && s7.chain_verified;
         if !all_pass {
             return Err("One or more Stage 3 v3 safeguards/assays failed; refusing scientific campaign launch.".to_string());
@@ -1624,7 +1620,7 @@ fn main() -> Result<(), String> {
             seed_count: 12,
             withdrawal_time_days: 120.0,
             observation_start_days: 60.0,
-            horizons_days: vec![7.0, 30.0, 90.0, 180.0],
+            horizons_days: vec![7.0, 30.0, 90.0, 180.0, 360.0],
             agent_count: 1000,
             locality_count: 72,
             cells: load_cells(&design)?,
@@ -1987,9 +1983,7 @@ fn main() -> Result<(), String> {
                     let r_180 =
                         assay_off.composite_capability / assay_on.composite_capability.max(1e-9);
                     degeneracy_summaries.push(DegeneracyWorldSummary {
-                        cell_id: cell.cell_id.clone(),
                         profile: cell.support_profile.clone(),
-                        seed,
                         r_180,
                         pre_contacts: pre_window.contacts,
                         pre_external_delivered: pre_window.external_logistics_delivered

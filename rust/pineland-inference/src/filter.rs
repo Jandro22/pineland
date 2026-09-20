@@ -298,9 +298,10 @@ impl NativeParticleFilter {
                 let rng = source_engine.particle.rng.fork(&format!(
                     "filter-boundary-{target_boundary}:child-{child}:parent-{parent}"
                 ));
-                let mut child_particle = source_engine
-                    .particle
-                    .clone_for_child_with_rng(child as u64, lineage, rng);
+                let mut child_particle =
+                    source_engine
+                        .particle
+                        .clone_for_child_with_rng(child as u64, lineage, rng);
                 child_particle.weights_log = -(old_len as f64).ln();
                 child_particle.filter_boundary = target_boundary;
                 let engine = SimulationEngine {

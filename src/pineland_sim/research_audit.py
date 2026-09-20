@@ -873,7 +873,7 @@ def language_factorial(config: SimulationConfig, horizon_days: float | None = No
         results[mode] = aggregate
     factors = {"topology": "topology", "detection": "detection", "fusion": "fusion"}
     factor_effects = {}
-    for factor, _ in factors.items():
+    for factor in factors:
         on = [mode for mode in modes if factor in mode or mode == "all"]
         off = [mode for mode in modes if mode == "none" or factor not in mode]
         factor_effects[factor] = {

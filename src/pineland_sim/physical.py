@@ -396,7 +396,6 @@ def response_times(world: WorldState, locality_id: str, actor: str, time: float,
     # on every call.
     source_delays: dict[str, float] = {}
     for post in posts_in_locality(world, locality_id):
-        organization = world.organizations[post.organization_id]
         available_fraction = post.available_fraction
         if post.formation_id:
             formation = world.formations[post.formation_id]

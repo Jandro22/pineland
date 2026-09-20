@@ -1,4 +1,4 @@
-﻿{
+{
     "schema_version":  "pineland.state_regeneration_capital_transition_analysis_spec.v1",
     "registered_before_fresh_outcomes":  true,
     "source_contract":  "state_regeneration_capital_transition_contract_v1.json",

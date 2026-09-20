@@ -780,15 +780,15 @@ fn local_armed_footholds(
         .organization_ecology
         .minimum_proto_represented_population
         .max(1.0e-9);
-    for locality in 0..represented.len() {
-        represented[locality] = clamp01(represented[locality] / scale);
+    for (locality, represented_value) in represented.iter_mut().enumerate() {
+        *represented_value = clamp01(*represented_value / scale);
         let index = organization * topology.locality_count() + locality;
         // Python's persistent local-foothold channel is insurgent-only.
         // State-side actions can still mark a security organization's dense
         // foothold row active for diagnostics, but that row must not become a
         // refuge signal for military or police movement.
         if organization == INSURGENT && index < particle.footholds.strength.len() {
-            represented[locality] = represented[locality].max(particle.footholds.strength[index]);
+            *represented_value = (*represented_value).max(particle.footholds.strength[index]);
         }
     }
     represented
@@ -925,19 +925,18 @@ fn destination_score(
             .copied()
             .unwrap_or(0.0);
         let stronghold = own_control;
-        let base = if posture.is_none() || posture == Some(POSTURE_PORTFOLIO) {
-            config.logistics.insurgent_frontier_weight * frontier
-                + config.logistics.insurgent_foothold_weight * foothold
-                + config.logistics.insurgent_stronghold_weight * stronghold
-                + config.logistics.reallocation_exploration_weight * uncertainty
-        } else {
-            match posture.unwrap() {
-                POSTURE_FRONTIER => frontier,
-                POSTURE_FOOTHOLD => foothold,
-                POSTURE_STRONGHOLD => stronghold,
-                POSTURE_EXPLORATION => uncertainty,
-                _ => 0.0,
+        let base = match posture {
+            None | Some(POSTURE_PORTFOLIO) => {
+                config.logistics.insurgent_frontier_weight * frontier
+                    + config.logistics.insurgent_foothold_weight * foothold
+                    + config.logistics.insurgent_stronghold_weight * stronghold
+                    + config.logistics.reallocation_exploration_weight * uncertainty
             }
+            Some(POSTURE_FRONTIER) => frontier,
+            Some(POSTURE_FOOTHOLD) => foothold,
+            Some(POSTURE_STRONGHOLD) => stronghold,
+            Some(POSTURE_EXPLORATION) => uncertainty,
+            Some(_) => 0.0,
         };
         let sanctuary = sanctuary_access(
             particle,
@@ -1933,7 +1932,10 @@ pub fn advance_movement_orders(
             }
             let cost = particle.formations.movement_supply_cost[formation];
             if particle.formations.organization[formation] as usize == crate::MILITARY {
-                particle.partner_support.logistics.military_cumulative_demanded += cost.max(0.0);
+                particle
+                    .partner_support
+                    .logistics
+                    .military_cumulative_demanded += cost.max(0.0);
             }
             if particle.formations.supply_stock[formation] + 1.0e-12 < cost {
                 particle.formations.movement_status[formation] = MOVE_BLOCKED_SUPPLY;

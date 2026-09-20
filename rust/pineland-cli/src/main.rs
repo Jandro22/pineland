@@ -967,9 +967,8 @@ fn benchmark(arguments: &Arguments) -> Result<(), String> {
         let initialization_seconds = init_start.elapsed().as_secs_f64();
 
         let propagation_start = Instant::now();
-        let mut rng = pineland_core::rng::PyRandomCompat::from_seed(
-            config.seed.wrapping_add(17_003),
-        );
+        let mut rng =
+            pineland_core::rng::PyRandomCompat::from_seed(config.seed.wrapping_add(17_003));
 
         for week in 0..weeks {
             let target_time = (week + 1) as f64 * 7.0;
@@ -1023,7 +1022,8 @@ fn benchmark(arguments: &Arguments) -> Result<(), String> {
                         "nested-boundary-{week}:child-{child}:parent-{parent}"
                     ));
                     let child_p =
-                        src.particle.clone_for_child_with_rng(child as u64, lineage, fork_rng);
+                        src.particle
+                            .clone_for_child_with_rng(child as u64, lineage, fork_rng);
                     let mut eng = src.clone();
                     eng.particle = child_p;
                     next.push(eng);
@@ -1051,10 +1051,7 @@ fn benchmark(arguments: &Arguments) -> Result<(), String> {
             "propagation_seconds",
             JsonValue::number(propagation_seconds),
         );
-        result.insert(
-            "end_to_end_seconds",
-            JsonValue::number(end_to_end_seconds),
-        );
+        result.insert("end_to_end_seconds", JsonValue::number(end_to_end_seconds));
         result.insert("wall_seconds", JsonValue::number(propagation_seconds));
         result.insert(
             "pwb_per_second",
@@ -1116,10 +1113,7 @@ fn benchmark(arguments: &Arguments) -> Result<(), String> {
         "propagation_seconds",
         JsonValue::number(propagation_seconds),
     );
-    result.insert(
-        "end_to_end_seconds",
-        JsonValue::number(end_to_end_seconds),
-    );
+    result.insert("end_to_end_seconds", JsonValue::number(end_to_end_seconds));
     result.insert("wall_seconds", JsonValue::number(propagation_seconds));
     result.insert(
         "pwb_per_second",

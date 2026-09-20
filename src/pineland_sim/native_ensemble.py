@@ -662,7 +662,6 @@ class PackedHotState:
         formation_count = len(self.formation_ids)
         fo = int(lane) * formation_count + int(formation)
         value_base = fo * self.F_STRIDE
-        flag_base = fo * self.FF_STRIDE
         if not self.formation_present[fo]:
             return 0.0
         stock = self.formation_values[value_base + self.F_SUPPLY_STOCK]
@@ -1321,7 +1320,6 @@ class PackedHotState:
         if not self.patrol_present[base]:
             return None
         ibase = base * self.PATROL_INDEX_STRIDE
-        vbase = base * self.PATROL_STRIDE
         formation_index = int(
             self.patrol_indices[ibase + self.PATROL_FORMATION]
         )
@@ -1454,8 +1452,8 @@ class PackedHotState:
             )
 
         patrol_count = len(self.patrol_ids)
-        for patrol_id, pi in self.patrol_index.items():
-            patrol = world.patrols.get(patrol_id)
+        for current_patrol_id, pi in self.patrol_index.items():
+            patrol = world.patrols.get(current_patrol_id)
             if patrol is None:
                 continue
             base = lane * patrol_count + pi
@@ -1578,8 +1576,8 @@ class PackedHotState:
             )
 
         patrol_count = len(self.patrol_ids)
-        for patrol_id, pi in self.patrol_index.items():
-            patrol = world.patrols.get(patrol_id)
+        for current_patrol_id, pi in self.patrol_index.items():
+            patrol = world.patrols.get(current_patrol_id)
             if patrol is None:
                 continue
             base = lane * patrol_count + pi

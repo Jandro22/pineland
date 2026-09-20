@@ -79,7 +79,7 @@ def operational_reach_candidates(
     organization = world.organizations[organization_id]
     rows = [(source_locality_id, 1.0)]
     for destination_id in sorted(world.adjacency.get(source_locality_id, {})):
-        route, _, travel_hours = shortest_locality_path(
+        _, _, travel_hours = shortest_locality_path(
             world,
             source_locality_id,
             destination_id,

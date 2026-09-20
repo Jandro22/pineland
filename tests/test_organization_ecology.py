@@ -649,7 +649,7 @@ class OrganizationEcologyTests(unittest.TestCase):
     def test_local_access_scales_with_represented_foothold(self):
         decisions = {1.0: [], 1_000.0: []}
         for agents in (120, 240, 480):
-            for represented_foothold in decisions:
+            for represented_foothold, foothold_decisions in decisions.items():
                 world = generate_pineland(SimulationConfig(
                     agent_count=agents, locality_count=17, horizon_days=1,
                     seed=20260904,
@@ -690,7 +690,7 @@ class OrganizationEcologyTests(unittest.TestCase):
                 cfg.minimum_proto_represented_population = 1_000.0
                 cfg.recruitment_subcohorts = 20
                 recruit_and_retain(world, 0, ConstantRng(.01))
-                decisions[represented_foothold].append(
+                foothold_decisions.append(
                     candidate.organization_id == organization.organization_id
                 )
 

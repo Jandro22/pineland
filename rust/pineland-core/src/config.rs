@@ -1413,8 +1413,7 @@ impl SimulationConfig {
             || !(0.0..=1.0).contains(&self.combat.government_air_support_intensity)
         {
             return Err(ConfigError::Invalid(
-                "combat.government_air_support_intensity must be finite and in [0,1]"
-                    .to_string(),
+                "combat.government_air_support_intensity must be finite and in [0,1]".to_string(),
             ));
         }
         for (name, value) in [
@@ -1483,12 +1482,13 @@ impl SimulationConfig {
             + self.state_regeneration.intelligence_administration_weight;
         for (name, sum) in [
             ("state_regeneration rebuild weights", rebuild_weight_sum),
-            ("state_regeneration intelligence weights", intelligence_weight_sum),
+            (
+                "state_regeneration intelligence weights",
+                intelligence_weight_sum,
+            ),
         ] {
             if !sum.is_finite() || (sum - 1.0).abs() > 1.0e-9 {
-                return Err(ConfigError::Invalid(format!(
-                    "{name} must sum to 1.0"
-                )));
+                return Err(ConfigError::Invalid(format!("{name} must sum to 1.0")));
             }
         }
         if self.partner_force_support.enabled {
@@ -1499,43 +1499,81 @@ impl SimulationConfig {
                     "partner_force_support.air.intensity must be finite and in [0,1]".to_string(),
                 ));
             }
-            if !self.partner_force_support.air.cost_per_assisted_contact.is_finite()
+            if !self
+                .partner_force_support
+                .air
+                .cost_per_assisted_contact
+                .is_finite()
                 || self.partner_force_support.air.cost_per_assisted_contact < 0.0
             {
                 return Err(ConfigError::Invalid(
                     "partner_force_support.air.cost_per_assisted_contact must be finite and non-negative".to_string(),
                 ));
             }
-            if !self.partner_force_support.command.reliability_boost.is_finite()
+            if !self
+                .partner_force_support
+                .command
+                .reliability_boost
+                .is_finite()
                 || !(0.0..=1.0).contains(&self.partner_force_support.command.reliability_boost)
             {
                 return Err(ConfigError::Invalid(
-                    "partner_force_support.command.reliability_boost must be finite and in [0,1]".to_string(),
+                    "partner_force_support.command.reliability_boost must be finite and in [0,1]"
+                        .to_string(),
                 ));
             }
-            if !self.partner_force_support.command.latency_reduction_fraction.is_finite()
-                || !(0.0..=1.0).contains(&self.partner_force_support.command.latency_reduction_fraction)
+            if !self
+                .partner_force_support
+                .command
+                .latency_reduction_fraction
+                .is_finite()
+                || !(0.0..=1.0).contains(
+                    &self
+                        .partner_force_support
+                        .command
+                        .latency_reduction_fraction,
+                )
             {
                 return Err(ConfigError::Invalid(
                     "partner_force_support.command.latency_reduction_fraction must be finite and in [0,1]".to_string(),
                 ));
             }
-            if !self.partner_force_support.command.cost_per_formation_day.is_finite()
+            if !self
+                .partner_force_support
+                .command
+                .cost_per_formation_day
+                .is_finite()
                 || self.partner_force_support.command.cost_per_formation_day < 0.0
             {
                 return Err(ConfigError::Invalid(
                     "partner_force_support.command.cost_per_formation_day must be finite and non-negative".to_string(),
                 ));
             }
-            if !self.partner_force_support.force_generation.training_rate_boost.is_finite()
-                || self.partner_force_support.force_generation.training_rate_boost < 0.0
+            if !self
+                .partner_force_support
+                .force_generation
+                .training_rate_boost
+                .is_finite()
+                || self
+                    .partner_force_support
+                    .force_generation
+                    .training_rate_boost
+                    < 0.0
             {
                 return Err(ConfigError::Invalid(
                     "partner_force_support.force_generation.training_rate_boost must be finite and non-negative".to_string(),
                 ));
             }
-            if !self.partner_force_support.force_generation.cost_per_incremental_trainee.is_finite()
-                || self.partner_force_support.force_generation.cost_per_incremental_trainee < 0.0
+            if !self
+                .partner_force_support
+                .force_generation
+                .cost_per_incremental_trainee
+                .is_finite()
+                || self
+                    .partner_force_support
+                    .force_generation
+                    .cost_per_incremental_trainee
+                    < 0.0
             {
                 return Err(ConfigError::Invalid(
                     "partner_force_support.force_generation.cost_per_incremental_trainee must be finite and non-negative".to_string(),
@@ -1576,15 +1614,27 @@ impl SimulationConfig {
                     self.partner_force_support.logistics.mode
                 )));
             }
-            if !self.partner_force_support.logistics.daily_delivery_rate.is_finite()
+            if !self
+                .partner_force_support
+                .logistics
+                .daily_delivery_rate
+                .is_finite()
                 || self.partner_force_support.logistics.daily_delivery_rate < 0.0
             {
                 return Err(ConfigError::Invalid(
                     "partner_force_support.logistics.daily_delivery_rate must be finite and non-negative".to_string(),
                 ));
             }
-            if !self.partner_force_support.logistics.cost_per_supply_delivered.is_finite()
-                || self.partner_force_support.logistics.cost_per_supply_delivered < 0.0
+            if !self
+                .partner_force_support
+                .logistics
+                .cost_per_supply_delivered
+                .is_finite()
+                || self
+                    .partner_force_support
+                    .logistics
+                    .cost_per_supply_delivered
+                    < 0.0
             {
                 return Err(ConfigError::Invalid(
                     "partner_force_support.logistics.cost_per_supply_delivered must be finite and non-negative".to_string(),
@@ -1665,7 +1715,10 @@ impl SimulationConfig {
             root.insert("state_regeneration", self.state_regeneration.to_json());
         }
         if self.partner_force_support != PartnerForceSupportConfig::default() {
-            root.insert("partner_force_support", self.partner_force_support.to_json());
+            root.insert(
+                "partner_force_support",
+                self.partner_force_support.to_json(),
+            );
         }
         root.insert("foreign_affairs", self.foreign_affairs.to_json());
         root.insert("peace_process", self.peace_process.to_json());
@@ -1953,7 +2006,10 @@ impl PartnerForceSupportConfig {
         let mut air = JsonValue::object();
         air.insert("enabled", JsonValue::Bool(self.air.enabled));
         air.insert("intensity", JsonValue::number(self.air.intensity));
-        air.insert("firepower_bonus", JsonValue::number(self.air.firepower_bonus));
+        air.insert(
+            "firepower_bonus",
+            JsonValue::number(self.air.firepower_bonus),
+        );
         air.insert(
             "cost_per_assisted_contact",
             JsonValue::number(self.air.cost_per_assisted_contact),
@@ -2443,17 +2499,26 @@ fn apply_state_regeneration(
     }
     for (k, f) in [
         ("interval_days", &mut t.interval_days),
-        ("security_recruitment_rate", &mut t.security_recruitment_rate),
+        (
+            "security_recruitment_rate",
+            &mut t.security_recruitment_rate,
+        ),
         ("security_training_rate", &mut t.security_training_rate),
         ("reserve_attrition_rate", &mut t.reserve_attrition_rate),
         ("training_cost_per_person", &mut t.training_cost_per_person),
-        ("deployment_cost_per_person", &mut t.deployment_cost_per_person),
+        (
+            "deployment_cost_per_person",
+            &mut t.deployment_cost_per_person,
+        ),
         ("police_allocation_share", &mut t.police_allocation_share),
         (
             "police_target_population_fraction",
             &mut t.police_target_population_fraction,
         ),
-        ("military_target_multiplier", &mut t.military_target_multiplier),
+        (
+            "military_target_multiplier",
+            &mut t.military_target_multiplier,
+        ),
         (
             "administrative_rebuild_rate",
             &mut t.administrative_rebuild_rate,
@@ -2466,14 +2531,8 @@ fn apply_state_regeneration(
             "administrative_rebuild_cost",
             &mut t.administrative_rebuild_cost,
         ),
-        (
-            "rebuild_security_weight",
-            &mut t.rebuild_security_weight,
-        ),
-        (
-            "rebuild_integrity_weight",
-            &mut t.rebuild_integrity_weight,
-        ),
+        ("rebuild_security_weight", &mut t.rebuild_security_weight),
+        ("rebuild_integrity_weight", &mut t.rebuild_integrity_weight),
         (
             "rebuild_legitimacy_weight",
             &mut t.rebuild_legitimacy_weight,
@@ -2586,10 +2645,12 @@ fn apply_partner_force_support(
             t.force_generation.training_rate_boost = required_f64(val, "training_rate_boost")?;
         }
         if let Some(val) = fg_obj.get("cost_per_incremental_trainee") {
-            t.force_generation.cost_per_incremental_trainee = required_f64(val, "cost_per_incremental_trainee")?;
+            t.force_generation.cost_per_incremental_trainee =
+                required_f64(val, "cost_per_incremental_trainee")?;
         }
         if let Some(val) = fg_obj.get("capacity_building_investment_rate") {
-            t.force_generation.capacity_building_investment_rate = required_f64(val, "capacity_building_investment_rate")?;
+            t.force_generation.capacity_building_investment_rate =
+                required_f64(val, "capacity_building_investment_rate")?;
         }
     }
     Ok(())
@@ -2717,7 +2778,10 @@ mod tests {
     #[test]
     fn default_state_regeneration_does_not_change_legacy_canonical_json() {
         let config = SimulationConfig::default();
-        assert_eq!(config.state_regeneration, StateRegenerationConfig::default());
+        assert_eq!(
+            config.state_regeneration,
+            StateRegenerationConfig::default()
+        );
         assert!(config.to_json().get("state_regeneration").is_none());
     }
 
@@ -2755,14 +2819,26 @@ mod tests {
         config.partner_force_support.air.cost_per_assisted_contact = 15.0;
         config.partner_force_support.logistics.enabled = true;
         config.partner_force_support.logistics.daily_delivery_rate = 45.0;
-        config.partner_force_support.logistics.cost_per_supply_delivered = 2.5;
+        config
+            .partner_force_support
+            .logistics
+            .cost_per_supply_delivered = 2.5;
         config.partner_force_support.command.enabled = true;
         config.partner_force_support.command.reliability_boost = 0.4;
-        config.partner_force_support.command.latency_reduction_fraction = 0.5;
+        config
+            .partner_force_support
+            .command
+            .latency_reduction_fraction = 0.5;
         config.partner_force_support.command.cost_per_formation_day = 10.0;
         config.partner_force_support.force_generation.enabled = true;
-        config.partner_force_support.force_generation.training_rate_boost = 0.05;
-        config.partner_force_support.force_generation.cost_per_incremental_trainee = 25.0;
+        config
+            .partner_force_support
+            .force_generation
+            .training_rate_boost = 0.05;
+        config
+            .partner_force_support
+            .force_generation
+            .cost_per_incremental_trainee = 25.0;
 
         let encoded = config.to_json().to_compact();
         assert!(encoded.contains("partner_force_support"));
@@ -2799,11 +2875,17 @@ mod tests {
 
         // Capacity building investment rate must be exactly 0
         config.partner_force_support.force_generation.mode = "substitution".to_string();
-        config.partner_force_support.force_generation.capacity_building_investment_rate = 50.0;
+        config
+            .partner_force_support
+            .force_generation
+            .capacity_building_investment_rate = 50.0;
         assert!(config.validate().is_err());
 
         // Adaptive logistics modes are blocked
-        config.partner_force_support.force_generation.capacity_building_investment_rate = 0.0;
+        config
+            .partner_force_support
+            .force_generation
+            .capacity_building_investment_rate = 0.0;
         config.partner_force_support.logistics.enabled = true;
         config.partner_force_support.logistics.mode = "adaptive_policy".to_string();
         assert!(config.validate().is_err());
@@ -2832,6 +2914,12 @@ mod tests {
         }"#;
         let parsed = parse(json_str).unwrap();
         let config = SimulationConfig::from_json(&parsed).unwrap();
-        assert_eq!(config.partner_force_support.command.latency_reduction_fraction, 0.35);
+        assert_eq!(
+            config
+                .partner_force_support
+                .command
+                .latency_reduction_fraction,
+            0.35
+        );
     }
 }

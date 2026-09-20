@@ -24,7 +24,9 @@ for limit in (1879, 1880):
     original_score = logistics.reallocation_destination_score
     original_withdrawal = combat.choose_withdrawal_order
 
-    def traced_score(world_arg, formation_arg, locality_id, **kwargs):
+    def traced_score(
+        world_arg, formation_arg, locality_id, original_score=original_score, **kwargs
+    ):
         result = original_score(world_arg, formation_arg, locality_id, **kwargs)
         if (formation_arg.formation_id == "FDF-06"
                 and abs(world_arg.time - 27.0) < 1.0e-12):
@@ -39,7 +41,9 @@ for limit in (1879, 1880):
 
     logistics.reallocation_destination_score = traced_score
 
-    def traced_withdrawal(world_arg, formation_id, time, rng):
+    def traced_withdrawal(
+        world_arg, formation_id, time, rng, original_withdrawal=original_withdrawal
+    ):
         if formation_id == "FDF-06" and abs(time - 28.0) < 1.0e-12:
             formation = world_arg.formations[formation_id]
             route_metrics = logistics._shortest_locality_route_metrics(

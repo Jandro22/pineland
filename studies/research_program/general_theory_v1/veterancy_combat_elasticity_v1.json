@@ -1,4 +1,4 @@
-﻿{
+{
     "schema_version":  "pineland.veterancy_combat_elasticity.v1",
     "historical_outcomes_used":  false,
     "experience_multiplier":  "g(E)=0.75+0.50E",

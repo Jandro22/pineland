@@ -177,7 +177,7 @@ def _shortest_locality_route_metrics(
                 heapq.heappush(queue, (candidate, neighbor_id))
 
     cached_routes: dict[str, tuple[tuple[str, ...], float, float]] = {}
-    for destination_id in travel_times:
+    for destination_id, travel_hours in travel_times.items():
         if destination_id == origin_id:
             route = [origin_id]
         else:
@@ -187,7 +187,7 @@ def _shortest_locality_route_metrics(
             route.reverse()
         route_tuple = tuple(route)
         cached_routes[destination_id] = (
-            route_tuple, distances_km[destination_id], travel_times[destination_id]
+            route_tuple, distances_km[destination_id], travel_hours
         )
         if destination_id != origin_id:
             world.locality_path_cache[

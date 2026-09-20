@@ -554,7 +554,10 @@ pub fn update(
             // Organic flow instrumentation must continue after support withdrawal.
             // The master partner-force switch controls instrumentation; channel
             // activity controls only the external increment.
-            particle.partner_support.force_generation.indigenous_recruits += recruits;
+            particle
+                .partner_support
+                .force_generation
+                .indigenous_recruits += recruits;
         }
 
         let base_rate = config.state_regeneration.security_training_rate;
@@ -573,9 +576,10 @@ pub fn update(
                 let indig_grad = cur_pipeline * indig_frac;
                 let total_grad = cur_pipeline * total_frac;
                 let inc_grad = (total_grad - indig_grad).max(0.0);
-                let cost = inc_grad
-                    * partner_config.force_generation.cost_per_incremental_trainee
-                    + (partner_config.force_generation.capacity_building_investment_rate
+                let cost = inc_grad * partner_config.force_generation.cost_per_incremental_trainee
+                    + (partner_config
+                        .force_generation
+                        .capacity_building_investment_rate
                         * elapsed_days
                         / locality_count as f64);
                 (total_frac, indig_grad, inc_grad, cost)
@@ -585,15 +589,23 @@ pub fn update(
                 (frac, cur_pipeline * frac, 0.0, 0.0)
             };
 
-        particle.partner_support.force_generation.indigenous_graduates += indig_graduated;
+        particle
+            .partner_support
+            .force_generation
+            .indigenous_graduates += indig_graduated;
         if partner_fg_active {
-            particle.partner_support.force_generation.external_incremental_graduates +=
-                incremental_graduated;
-            particle.partner_support.force_generation.cumulative_donor_cost += fg_cost;
+            particle
+                .partner_support
+                .force_generation
+                .external_incremental_graduates += incremental_graduated;
+            particle
+                .partner_support
+                .force_generation
+                .cumulative_donor_cost += fg_cost;
         }
 
-        let graduated =
-            particle.locality.government_security_recruit_pipeline[locality] * total_graduation_fraction;
+        let graduated = particle.locality.government_security_recruit_pipeline[locality]
+            * total_graduation_fraction;
         particle.locality.government_security_recruit_pipeline[locality] -= graduated;
         particle.locality.government_security_reserve[locality] += graduated;
         summary.graduated += graduated;
@@ -785,14 +797,15 @@ mod tests {
     use pineland_core::rng::PyRandomCompat;
 
     fn small_config() -> SimulationConfig {
-        let mut config = SimulationConfig::default();
-        config.seed = 2026091019;
-        config.initialization_seed = Some(2026091019);
-        config.agent_count = 300;
-        config.locality_count = 17;
-        config.horizon_days = 60.0;
-        config.output_mode = "ensemble".to_string();
-        config
+        SimulationConfig {
+            seed: 2026091019,
+            initialization_seed: Some(2026091019),
+            agent_count: 300,
+            locality_count: 17,
+            horizon_days: 60.0,
+            output_mode: "ensemble".to_string(),
+            ..SimulationConfig::default()
+        }
     }
 
     #[test]
