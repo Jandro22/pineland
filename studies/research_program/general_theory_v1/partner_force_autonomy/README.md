@@ -9,6 +9,12 @@ General Theory v1. It is designed to separate **supported performance** from
 **partner-owned regenerative capacity** using paired counterfactual branches,
 common random numbers, removable assistance overlays, and held-out tests.
 
+For the current scientific synthesis, literature-adjusted experiment priorities,
+the Stage-3 command-support repair gate, exploratory pre-repair findings, and
+the planned integrated post-repair ARC paper program, see
+**`RESEARCH_PROGRAM_MEMO_2026-09-20.md`**. That memo explicitly separates
+pre-repair diagnostics from results that may be claimed after a clean rerun.
+
 **Current status:** Stage 3 mechanistic discovery is active. Stage 4
 policy-comparison configurations remain blocked until the Stage-3 coordinates,
 holdouts, and resolution checks are frozen and passed.
