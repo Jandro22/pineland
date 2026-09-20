@@ -73,6 +73,19 @@ struct Cell {
     command_cost_per_formation_day: f64,
     forcegen_training_rate_boost: f64,
     forcegen_cost_per_incremental_trainee: f64,
+    /// Stage-4 only: proportional growth in the partner-owned force-generation
+    /// production rates per 30 days while developmental assistance remains active.
+    development_forcegen_rate_per_30d: f64,
+    /// Stage-4 only: proportional growth in indigenous logistics production
+    /// coverage per 30 days while developmental assistance remains active.
+    development_logistics_rate_per_30d: f64,
+    /// Stage-4 only: proportional improvement in indigenous command capacity
+    /// per 30 days while developmental assistance remains active.
+    development_command_rate_per_30d: f64,
+    /// Stage-4 only: total donor cost per day for developmental assistance.
+    /// When more than one developmental channel is active the cost is split
+    /// evenly across the active channel ledgers.
+    development_cost_per_day: f64,
     overrides: HoldoutOverrides,
 }
 
@@ -182,6 +195,10 @@ fn load_cells(path: &Path) -> Result<Vec<Cell>, String> {
                 p[16],
                 "forcegen_cost_per_incremental_trainee",
             )?,
+            development_forcegen_rate_per_30d: 0.0,
+            development_logistics_rate_per_30d: 0.0,
+            development_command_rate_per_30d: 0.0,
+            development_cost_per_day: 0.0,
             overrides: HoldoutOverrides::default(),
         });
     }
@@ -372,6 +389,10 @@ fn load_holdout_contract(path: &Path) -> Result<RunDesign, String> {
                 profile_defaults,
                 4,
             )?,
+            development_forcegen_rate_per_30d: 0.0,
+            development_logistics_rate_per_30d: 0.0,
+            development_command_rate_per_30d: 0.0,
+            development_cost_per_day: 0.0,
             overrides: HoldoutOverrides {
                 convoy_speed_factor: json_optional_f64(cell, "convoy_speed_factor")?,
                 shipment_loss_per_travel_hour: json_optional_f64(
@@ -409,6 +430,189 @@ fn load_holdout_contract(path: &Path) -> Result<RunDesign, String> {
 
     Ok(RunDesign {
         experiment_id: format!("partner_force_autonomy_holdout_{family_id}_v1"),
+        design_version: schema_version.to_string(),
+        rng_namespace,
+        seed_base,
+        seed_count,
+        withdrawal_time_days,
+        observation_start_days,
+        horizons_days,
+        agent_count,
+        locality_count,
+        cells,
+    })
+}
+
+fn load_stage4_contract(path: &Path) -> Result<RunDesign, String> {
+    let text = fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
+    let root = parse_json(&text).map_err(|e| format!("{}: {e}", path.display()))?;
+    let schema_version = json_required_str(&root, "schema_version")?;
+    if schema_version != "pineland.partner_force_stage4_contract.v1" {
+        return Err(format!(
+            "{} is not a partner-force Stage-4 v1 contract",
+            path.display()
+        ));
+    }
+    let experiment_id = json_required_str(&root, "experiment_id")?.to_string();
+    let rng_namespace = json_required_str(&root, "seed_namespace")?.to_string();
+    let seed_base = root
+        .get("seed_base")
+        .and_then(JsonValue::as_u64)
+        .ok_or_else(|| "missing or invalid Stage-4 seed_base".to_string())?;
+    let seed_count = root
+        .get("default_seed_count")
+        .and_then(JsonValue::as_usize)
+        .ok_or_else(|| "missing or invalid Stage-4 default_seed_count".to_string())?;
+    let horizons_days = root
+        .get("horizons_days")
+        .and_then(JsonValue::as_array)
+        .ok_or_else(|| "missing or invalid Stage-4 horizons_days".to_string())?
+        .iter()
+        .map(|v| {
+            v.as_f64()
+                .ok_or_else(|| "Stage-4 horizons_days must be numeric".to_string())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if horizons_days.is_empty() {
+        return Err("Stage-4 horizons_days cannot be empty".to_string());
+    }
+
+    let environment = root.get("environment");
+    let env_num = |key: &str, default: f64| -> Result<f64, String> {
+        match environment.and_then(|e| e.get(key)) {
+            None => Ok(default),
+            Some(v) => v
+                .as_f64()
+                .ok_or_else(|| format!("invalid Stage-4 environment.{key}")),
+        }
+    };
+    let env_usize = |key: &str, default: usize| -> Result<usize, String> {
+        match environment.and_then(|e| e.get(key)) {
+            None => Ok(default),
+            Some(v) => v
+                .as_usize()
+                .ok_or_else(|| format!("invalid Stage-4 environment.{key}")),
+        }
+    };
+    let agent_count = env_usize("agent_count", 1000)?;
+    let locality_count = env_usize("locality_count", 72)?;
+    let withdrawal_time_days = env_num("withdrawal_time_days", 120.0)?;
+    let observation_start_days = env_num("observation_start_days", 60.0)?;
+
+    let cell_values = root
+        .get("cells")
+        .and_then(JsonValue::as_array)
+        .ok_or_else(|| "Stage-4 contract missing cells array".to_string())?;
+    let mut cells = Vec::with_capacity(cell_values.len());
+    for cell in cell_values {
+        let support_profile = json_required_str(cell, "support_profile")?.to_string();
+        let profile_defaults = support_cost_defaults(&support_profile);
+        let dev_forcegen =
+            json_optional_f64(cell, "development_forcegen_rate_per_30d")?.unwrap_or(0.0);
+        let dev_logistics =
+            json_optional_f64(cell, "development_logistics_rate_per_30d")?.unwrap_or(0.0);
+        let dev_command =
+            json_optional_f64(cell, "development_command_rate_per_30d")?.unwrap_or(0.0);
+        let dev_cost = json_optional_f64(cell, "development_cost_per_day")?.unwrap_or(0.0);
+        for (name, value) in [
+            ("development_forcegen_rate_per_30d", dev_forcegen),
+            ("development_logistics_rate_per_30d", dev_logistics),
+            ("development_command_rate_per_30d", dev_command),
+            ("development_cost_per_day", dev_cost),
+        ] {
+            if !value.is_finite() || value < 0.0 {
+                return Err(format!(
+                    "Stage-4 cell '{}' has invalid {name}={value}; expected finite non-negative value",
+                    cell.get("cell_id").and_then(JsonValue::as_str).unwrap_or("<unknown>")
+                ));
+            }
+        }
+        cells.push(Cell {
+            cell_id: json_required_str(cell, "cell_id")?.to_string(),
+            support_profile,
+            forcegen_mult: json_required_f64(cell, "forcegen_mult")?,
+            logistics_mult: json_required_f64(cell, "logistics_mult")?,
+            command_mult: json_required_f64(cell, "command_mult")?,
+            air_intensity: json_required_f64(cell, "air_intensity")?,
+            air_bonus: json_required_f64(cell, "air_bonus")?,
+            air_cost_per_contact: resolved_holdout_cost(
+                cell,
+                "air_cost_per_contact",
+                profile_defaults,
+                0,
+            )?,
+            logistics_rate: json_required_f64(cell, "logistics_rate")?,
+            logistics_capacity: json_required_f64(cell, "logistics_capacity")?,
+            logistics_cost_per_unit: resolved_holdout_cost(
+                cell,
+                "logistics_cost_per_unit",
+                profile_defaults,
+                1,
+            )?,
+            command_reliability_boost: json_required_f64(cell, "command_reliability_boost")?,
+            command_latency_reduction_fraction: json_required_f64(
+                cell,
+                "command_latency_reduction_fraction",
+            )?,
+            command_floor_hours: resolved_holdout_cost(
+                cell,
+                "command_floor_hours",
+                profile_defaults,
+                2,
+            )?,
+            command_cost_per_formation_day: resolved_holdout_cost(
+                cell,
+                "command_cost_per_formation_day",
+                profile_defaults,
+                3,
+            )?,
+            forcegen_training_rate_boost: json_required_f64(cell, "forcegen_training_rate_boost")?,
+            forcegen_cost_per_incremental_trainee: resolved_holdout_cost(
+                cell,
+                "forcegen_cost_per_incremental_trainee",
+                profile_defaults,
+                4,
+            )?,
+            development_forcegen_rate_per_30d: dev_forcegen,
+            development_logistics_rate_per_30d: dev_logistics,
+            development_command_rate_per_30d: dev_command,
+            development_cost_per_day: dev_cost,
+            overrides: HoldoutOverrides {
+                convoy_speed_factor: json_optional_f64(cell, "convoy_speed_factor")?,
+                shipment_loss_per_travel_hour: json_optional_f64(
+                    cell,
+                    "shipment_loss_per_travel_hour",
+                )?,
+                route_interdiction_enabled: json_optional_bool(cell, "route_interdiction_enabled")?,
+                route_interdiction_rate: json_optional_f64(cell, "route_interdiction_rate")?,
+                combat_interval_hours: json_optional_f64(cell, "combat_interval_hours")?,
+                combat_base_attrition_rate: json_optional_f64(cell, "combat_base_attrition_rate")?,
+                security_recruitment_rate: json_optional_f64(cell, "security_recruitment_rate")?,
+                security_training_rate: json_optional_f64(cell, "security_training_rate")?,
+                reserve_attrition_rate: json_optional_f64(cell, "reserve_attrition_rate")?,
+                police_allocation_share: json_optional_f64(cell, "police_allocation_share")?,
+                insurgent_target_personnel: json_optional_f64(cell, "insurgent_target_personnel")?,
+                surprise_initiative: json_optional_f64(cell, "surprise_initiative")?,
+                accidental_contact_fraction: json_optional_f64(
+                    cell,
+                    "accidental_contact_fraction",
+                )?,
+            },
+        });
+    }
+    if cells.is_empty() {
+        return Err("Stage-4 contract contains no cells".to_string());
+    }
+    if let Some(expected) = root.get("cells_count").and_then(JsonValue::as_usize) {
+        if expected != cells.len() {
+            return Err(format!(
+                "Stage-4 cells_count={expected} but parsed {} cells",
+                cells.len()
+            ));
+        }
+    }
+    Ok(RunDesign {
+        experiment_id,
         design_version: schema_version.to_string(),
         rng_namespace,
         seed_base,
@@ -699,6 +903,97 @@ fn apply_indigenous_command_multiplier(engine: &mut SimulationEngine, multiplier
     }
 }
 
+fn has_stage4_development(cell: &Cell) -> bool {
+    cell.development_forcegen_rate_per_30d > 0.0
+        || cell.development_logistics_rate_per_30d > 0.0
+        || cell.development_command_rate_per_30d > 0.0
+}
+
+fn development_factor(rate_per_30d: f64, elapsed_days: f64) -> f64 {
+    1.0 + rate_per_30d.max(0.0) * elapsed_days.max(0.0) / 30.0
+}
+
+/// Apply one fixed-cadence tranche of Stage-4 developmental assistance.
+///
+/// These effects alter partner-owned production/state rather than adding a
+/// contemporaneous external service. Accrued changes therefore persist after
+/// withdrawal, while future donor-driven growth stops once the support ledger
+/// is marked withdrawn. Zero development rates are an exact no-op and preserve
+/// the Stage-3 execution path.
+fn apply_stage4_development(engine: &mut SimulationEngine, cell: &Cell, elapsed_days: f64) {
+    if elapsed_days <= 0.0
+        || !has_stage4_development(cell)
+        || engine.particle.partner_support.support_withdrawn
+    {
+        return;
+    }
+
+    let mut active_channels = 0usize;
+    if cell.development_forcegen_rate_per_30d > 0.0 {
+        active_channels += 1;
+    }
+    if cell.development_logistics_rate_per_30d > 0.0 {
+        active_channels += 1;
+    }
+    if cell.development_command_rate_per_30d > 0.0 {
+        active_channels += 1;
+    }
+    let channel_cost = if active_channels > 0 {
+        cell.development_cost_per_day * elapsed_days / active_channels as f64
+    } else {
+        0.0
+    };
+
+    if cell.development_forcegen_rate_per_30d > 0.0 {
+        let factor = development_factor(cell.development_forcegen_rate_per_30d, elapsed_days);
+        engine.config.state_regeneration.security_recruitment_rate *= factor;
+        engine.config.state_regeneration.security_training_rate *= factor;
+        engine
+            .particle
+            .partner_support
+            .force_generation
+            .cumulative_donor_cost += channel_cost;
+    }
+    if cell.development_logistics_rate_per_30d > 0.0 {
+        let factor = development_factor(cell.development_logistics_rate_per_30d, elapsed_days);
+        engine.config.logistics.organization_sustainment_coverage *= factor;
+        engine
+            .particle
+            .partner_support
+            .logistics
+            .cumulative_donor_cost += channel_cost;
+    }
+    if cell.development_command_rate_per_30d > 0.0 {
+        let factor = development_factor(cell.development_command_rate_per_30d, elapsed_days);
+        apply_indigenous_command_multiplier(engine, factor);
+        engine
+            .particle
+            .partner_support
+            .command
+            .cumulative_donor_cost += channel_cost;
+    }
+}
+
+/// Advance with a preregistered weekly institutional-investment cadence for
+/// Stage-4 developmental cells. The cadence is independent of diagnostic
+/// telemetry so observation does not determine the treatment dose.
+fn advance_with_stage4_development(
+    engine: &mut SimulationEngine,
+    cell: &Cell,
+    target: f64,
+) -> Result<(), String> {
+    if !has_stage4_development(cell) || engine.particle.partner_support.support_withdrawn {
+        return engine.advance_until(target).map_err(|e| e.to_string());
+    }
+    while engine.particle.time + 1.0e-12 < target {
+        let next = (engine.particle.time + TELEMETRY_STEP_DAYS).min(target);
+        let elapsed = next - engine.particle.time;
+        apply_stage4_development(engine, cell, elapsed);
+        engine.advance_until(next).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 fn build_config(
     cell: &Cell,
     seed: u64,
@@ -775,18 +1070,21 @@ fn build_config(
     p.air.intensity = cell.air_intensity;
     p.air.firepower_bonus = cell.air_bonus;
     p.air.cost_per_assisted_contact = cell.air_cost_per_contact;
-    p.logistics.enabled = cell.logistics_rate > 0.0;
+    p.logistics.enabled =
+        cell.logistics_rate > 0.0 || cell.development_logistics_rate_per_30d > 0.0;
     p.logistics.mode = "direct_delivery".to_string();
     p.logistics.daily_delivery_rate = cell.logistics_rate;
     p.logistics.max_daily_capacity = cell.logistics_capacity.max(cell.logistics_rate);
     p.logistics.cost_per_supply_delivered = cell.logistics_cost_per_unit;
-    p.command.enabled =
-        cell.command_reliability_boost > 0.0 || cell.command_latency_reduction_fraction > 0.0;
+    p.command.enabled = cell.command_reliability_boost > 0.0
+        || cell.command_latency_reduction_fraction > 0.0
+        || cell.development_command_rate_per_30d > 0.0;
     p.command.reliability_boost = cell.command_reliability_boost;
     p.command.latency_reduction_fraction = cell.command_latency_reduction_fraction;
     p.command.min_latency_floor_hours = cell.command_floor_hours;
     p.command.cost_per_formation_day = cell.command_cost_per_formation_day;
-    p.force_generation.enabled = cell.forcegen_training_rate_boost > 0.0;
+    p.force_generation.enabled =
+        cell.forcegen_training_rate_boost > 0.0 || cell.development_forcegen_rate_per_30d > 0.0;
     p.force_generation.mode = "substitution".to_string();
     p.force_generation.training_rate_boost = cell.forcegen_training_rate_boost;
     p.force_generation.cost_per_incremental_trainee = cell.forcegen_cost_per_incremental_trainee;
@@ -1537,6 +1835,7 @@ fn main() -> Result<(), String> {
     let mut design = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v3.csv");
     let mut design_explicit = false;
     let mut holdout_contract: Option<PathBuf> = None;
+    let mut stage4_contract: Option<PathBuf> = None;
     let mut freeze = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v3.json");
     let mut output: Option<PathBuf> = None;
     let mut trajectory_output: Option<PathBuf> = None;
@@ -1563,6 +1862,7 @@ fn main() -> Result<(), String> {
         match args[i].as_str() {
             "--design"
             | "--holdout-contract"
+            | "--stage4-contract"
             | "--freeze"
             | "--output"
             | "--trajectory-output"
@@ -1583,6 +1883,7 @@ fn main() -> Result<(), String> {
                         design_explicit = true;
                     }
                     "--holdout-contract" => holdout_contract = Some(PathBuf::from(&args[i + 1])),
+                    "--stage4-contract" => stage4_contract = Some(PathBuf::from(&args[i + 1])),
                     "--freeze" => freeze = PathBuf::from(&args[i + 1]),
                     "--output" => output = Some(PathBuf::from(&args[i + 1])),
                     "--trajectory-output" => trajectory_output = Some(PathBuf::from(&args[i + 1])),
@@ -1632,8 +1933,14 @@ fn main() -> Result<(), String> {
         }
     }
 
-    if design_explicit && holdout_contract.is_some() {
-        return Err("--design and --holdout-contract are mutually exclusive".to_string());
+    let selected_design_sources = usize::from(design_explicit)
+        + usize::from(holdout_contract.is_some())
+        + usize::from(stage4_contract.is_some());
+    if selected_design_sources > 1 {
+        return Err(
+            "--design, --holdout-contract, and --stage4-contract are mutually exclusive"
+                .to_string(),
+        );
     }
     if seed_base_override.is_some() && single_seed.is_some() {
         return Err("--seed-base and --seed are mutually exclusive".to_string());
@@ -1647,7 +1954,9 @@ fn main() -> Result<(), String> {
     let sharded_single_world_execution =
         single_seed.is_some() && (cell_id.is_some() || cell_index.is_some());
 
-    let mut run_design = if let Some(ref contract_path) = holdout_contract {
+    let mut run_design = if let Some(ref contract_path) = stage4_contract {
+        load_stage4_contract(contract_path)?
+    } else if let Some(ref contract_path) = holdout_contract {
         load_holdout_contract(contract_path)?
     } else {
         RunDesign {
@@ -1730,9 +2039,12 @@ fn main() -> Result<(), String> {
     }
     let agent_count = custom_agent_count.unwrap_or(run_design.agent_count);
     let locality_count = custom_locality_count.unwrap_or(run_design.locality_count);
-    let selected_artifact = holdout_contract.as_ref().unwrap_or(&design);
+    let selected_artifact = stage4_contract
+        .as_ref()
+        .or(holdout_contract.as_ref())
+        .unwrap_or(&design);
     let output = output.unwrap_or_else(|| {
-        let file_name = if holdout_contract.is_some() {
+        let file_name = if holdout_contract.is_some() || stage4_contract.is_some() {
             format!("{}_raw_v2.csv", run_design.experiment_id)
         } else {
             "partner_force_autonomy_stage3_raw_v2.csv".to_string()
@@ -1821,9 +2133,7 @@ fn main() -> Result<(), String> {
                 locality_count,
                 &run_design.rng_namespace,
             )?;
-            engine
-                .advance_until(observation_start)
-                .map_err(|e| e.to_string())?;
+            advance_with_stage4_development(&mut engine, cell, observation_start)?;
             let obs_baseline: CapabilityAssayBaseline = engine.capability_assay_baseline();
             let flow_start = flow_snapshot(&engine);
             let assay_start = engine.capability_assay(&obs_baseline);
@@ -1856,7 +2166,7 @@ fn main() -> Result<(), String> {
                     .collect()
             };
             for target in pre_targets {
-                engine.advance_until(target).map_err(|e| e.to_string())?;
+                advance_with_stage4_development(&mut engine, cell, target)?;
                 let assay = engine.capability_assay(&obs_baseline);
                 let state = state_at_withdrawal(&engine, assay.clone());
                 let flow_now = flow_snapshot(&engine);
@@ -1928,8 +2238,8 @@ fn main() -> Result<(), String> {
             };
             for h in post_offsets {
                 let target = withdrawal + h;
-                on.advance_until(target).map_err(|e| e.to_string())?;
-                off.advance_until(target).map_err(|e| e.to_string())?;
+                advance_with_stage4_development(&mut on, cell, target)?;
+                advance_with_stage4_development(&mut off, cell, target)?;
                 let assay_on = on.capability_assay(&outcome_baseline);
                 let assay_off = off.capability_assay(&outcome_baseline);
                 let state_on = state_at_withdrawal(&on, assay_on.clone());
@@ -2177,4 +2487,106 @@ fn main() -> Result<(), String> {
         trajectory_output.display()
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod stage4_tests {
+    use super::*;
+
+    fn test_cell() -> Cell {
+        Cell {
+            cell_id: "stage4_test".to_string(),
+            support_profile: "stage4_test".to_string(),
+            forcegen_mult: 1.0,
+            logistics_mult: 1.0,
+            command_mult: 1.0,
+            air_intensity: 0.0,
+            air_bonus: 0.0,
+            air_cost_per_contact: 0.0,
+            logistics_rate: 0.0,
+            logistics_capacity: 0.0,
+            logistics_cost_per_unit: 0.0,
+            command_reliability_boost: 0.0,
+            command_latency_reduction_fraction: 0.0,
+            command_floor_hours: 0.0,
+            command_cost_per_formation_day: 0.0,
+            forcegen_training_rate_boost: 0.0,
+            forcegen_cost_per_incremental_trainee: 0.0,
+            development_forcegen_rate_per_30d: 0.0,
+            development_logistics_rate_per_30d: 0.0,
+            development_command_rate_per_30d: 0.0,
+            development_cost_per_day: 0.0,
+            overrides: HoldoutOverrides::default(),
+        }
+    }
+
+    #[test]
+    fn zero_development_preserves_direct_advance_exactly() {
+        let cell = test_cell();
+        let mut direct = make_engine(&cell, 2026990001, 30.0, 300, 34, "stage4-zero").unwrap();
+        let mut wrapped = direct.clone();
+        direct.advance_until(14.0).unwrap();
+        advance_with_stage4_development(&mut wrapped, &cell, 14.0).unwrap();
+        assert_eq!(direct.state_hash(), wrapped.state_hash());
+        assert_eq!(direct.decision_hash(), wrapped.decision_hash());
+        assert_eq!(direct.config, wrapped.config);
+    }
+
+    #[test]
+    fn development_builds_persistent_capacity_and_stops_after_withdrawal() {
+        let mut cell = test_cell();
+        cell.development_forcegen_rate_per_30d = 0.06;
+        cell.development_logistics_rate_per_30d = 0.06;
+        cell.development_command_rate_per_30d = 0.06;
+        cell.development_cost_per_day = 90.0;
+
+        let mut engine = make_engine(&cell, 2026990002, 90.0, 300, 34, "stage4-dev").unwrap();
+        let base_training = engine.config.state_regeneration.security_training_rate;
+        let base_logistics = engine.config.logistics.organization_sustainment_coverage;
+        let base_command_reliability = engine.particle.command_edges.reliability[0];
+        let base_command_latency = engine.particle.command_edges.latency_hours[0];
+
+        advance_with_stage4_development(&mut engine, &cell, 30.0).unwrap();
+        assert!(engine.config.state_regeneration.security_training_rate > base_training);
+        assert!(engine.config.logistics.organization_sustainment_coverage > base_logistics);
+        assert!(engine.particle.command_edges.reliability[0] >= base_command_reliability);
+        assert!(engine.particle.command_edges.latency_hours[0] <= base_command_latency);
+
+        let mut continued = engine.clone();
+        let mut withdrawn = engine.clone();
+        withdrawn.withdraw_external_partner_support();
+        let withdrawn_training_at_split =
+            withdrawn.config.state_regeneration.security_training_rate;
+        let withdrawn_logistics_at_split =
+            withdrawn.config.logistics.organization_sustainment_coverage;
+        let withdrawn_cost_at_split = withdrawn.particle.partner_support.cumulative_donor_cost();
+
+        advance_with_stage4_development(&mut continued, &cell, 60.0).unwrap();
+        advance_with_stage4_development(&mut withdrawn, &cell, 60.0).unwrap();
+
+        assert!(
+            continued.config.state_regeneration.security_training_rate
+                > withdrawn.config.state_regeneration.security_training_rate
+        );
+        assert!(
+            continued.config.logistics.organization_sustainment_coverage
+                > withdrawn.config.logistics.organization_sustainment_coverage
+        );
+        assert_eq!(
+            withdrawn.config.state_regeneration.security_training_rate,
+            withdrawn_training_at_split
+        );
+        assert_eq!(
+            withdrawn.config.logistics.organization_sustainment_coverage,
+            withdrawn_logistics_at_split
+        );
+        assert_eq!(
+            withdrawn.particle.partner_support.cumulative_donor_cost(),
+            withdrawn_cost_at_split
+        );
+        assert!(
+            continued.particle.partner_support.cumulative_donor_cost()
+                > withdrawn.particle.partner_support.cumulative_donor_cost()
+        );
+    }
 }
