@@ -116,10 +116,7 @@ fn aggregate_insurgent_control(
     // locality vector is also the legacy aggregate row.  The oracle therefore
     // exposes the same row directly rather than taking a complement over a
     // second actor-specific entry.
-    if active_insurgents
-        .iter()
-        .any(|organization| *organization == crate::INSURGENT)
-    {
+    if active_insurgents.contains(&crate::INSURGENT) {
         let organization_offset = pineland_core::state::LocalityState::organization_control_offset(
             locality,
             crate::INSURGENT,
@@ -231,10 +228,7 @@ pub fn update(
     // aggregate row as the organization row.  Earlier social/physical/action
     // handlers can update that aggregate between governance events, so mirror
     // its current complete vector before applying the capacity transition.
-    if active_insurgents
-        .iter()
-        .any(|organization| *organization == crate::INSURGENT)
-    {
+    if active_insurgents.contains(&crate::INSURGENT) {
         for locality in 0..locality_count {
             let aggregate_offset = locality * CONTROL_DIMENSIONS;
             let organization_offset =

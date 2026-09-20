@@ -308,11 +308,11 @@ impl PersonState {
         let people_count = self.locality.len();
         let expected = people_count.saturating_mul(organization_count);
         if self.insurgent_affinity.len() != expected {
-            let old_count = if people_count == 0 {
-                0
-            } else {
-                self.insurgent_affinity.len() / people_count
-            };
+            let old_count = self
+                .insurgent_affinity
+                .len()
+                .checked_div(people_count)
+                .unwrap_or(0);
             let copied = old_count.min(organization_count);
             let mut replacement = vec![0.0; expected];
             for person in 0..people_count {
@@ -324,11 +324,11 @@ impl PersonState {
             self.insurgent_affinity = replacement;
         }
         if self.social_exposure.len() != expected {
-            let old_count = if people_count == 0 {
-                0
-            } else {
-                self.social_exposure.len() / people_count
-            };
+            let old_count = self
+                .social_exposure
+                .len()
+                .checked_div(people_count)
+                .unwrap_or(0);
             let copied = old_count.min(organization_count);
             let mut replacement = vec![0.0; expected];
             for person in 0..people_count {
@@ -474,6 +474,7 @@ impl ProtoState {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn push(
         &mut self,
         community: u32,
@@ -754,6 +755,7 @@ impl ForeignInterventionState {
         self.foreign_state.len()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn push(
         &mut self,
         foreign_state: u32,
@@ -1217,6 +1219,7 @@ impl PresenceState {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn fuse(
         &mut self,
         index: usize,

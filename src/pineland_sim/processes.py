@@ -666,7 +666,7 @@ class ProcessEngine:
             observations = ()
         else:
             observations = observe_patrol(self.world, patrol.patrol_id, self.world.time, self.rng)
-        belief = ensure_zone_belief(
+        ensure_zone_belief(
             self.world, formation.organization_id,
             current_zone.microzone_id, self.world.time,
         )
@@ -827,7 +827,7 @@ class ProcessEngine:
             for actor, aggregate in aggregates.items():
                 before = self.world.localities[locality_id].control.setdefault(
                     actor, ControlVector()).physical
-                def matches_actor(formation) -> bool:
+                def matches_actor(formation, actor=actor) -> bool:
                     organization = self.world.organizations[formation.organization_id]
                     if actor == "government":
                         return organization.kind is not OrganizationKind.INSURGENT
@@ -1270,7 +1270,7 @@ class ProcessEngine:
                     "relays_dropped": 0}
         noise = self.world.config.observation_noise
         perceived_actors = ["government"]
-        active_insurgent_ids = sorted(
+        active_insurgent_organization_ids = sorted(
             organization.organization_id
             for organization in self.world.organizations.values()
             if (
@@ -1278,11 +1278,11 @@ class ProcessEngine:
                 and organization.status == "active"
             )
         )
-        if active_insurgent_ids:
+        if active_insurgent_organization_ids:
             perceived_actors.append("insurgent")
             perceived_actors.extend(
                 organization_id
-                for organization_id in active_insurgent_ids
+                for organization_id in active_insurgent_organization_ids
                 if organization_id != "insurgent"
             )
         locality_signals = {}
@@ -1290,7 +1290,7 @@ class ProcessEngine:
             aggregate = locality_social_aggregation(self.world, locality_id)
             franchise_profile = locality_franchise_support_profile(
                 self.world, locality_id
-            ) if active_insurgent_ids else {
+            ) if active_insurgent_organization_ids else {
                 "represented_franchise_support": {}
             }
             for actor in perceived_actors:
@@ -1798,7 +1798,6 @@ class ProcessEngine:
         g, i = sorted(selected, key=lambda pair: (pair[0].formation_id, pair[1].formation_id))[0]
         trace["selected_government_formation_id"] = g.formation_id
         trace["selected_insurgent_formation_id"] = i.formation_id
-        locality = self.world.localities[locality_id]
         trace["gate_counts"]["true_target_presence_cases"] = 2
         forced_detection = event.payload.get("force_detection")
         legacy_contact = self.world.config.combat.contact_opportunity_model == "legacy_symmetric"

@@ -22,12 +22,13 @@
       7,
       30,
       90,
-      180
+      180,
+      360
     ],
-    "postwithdrawal_max_day": 180,
+    "postwithdrawal_max_day": 360,
     "expected_prewithdrawal_rows_per_world": 10,
-    "expected_postwithdrawal_rows_per_branch": 28,
-    "expected_rows_per_world": 66
+    "expected_postwithdrawal_rows_per_branch": 55,
+    "expected_rows_per_world": 120
   },
   "phases": [
     "PRE_SUPPORTED",

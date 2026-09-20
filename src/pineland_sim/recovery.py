@@ -13,7 +13,7 @@ model.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 import hashlib
 from math import erf, exp, isfinite, log, pi, sqrt
 import random

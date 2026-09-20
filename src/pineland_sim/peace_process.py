@@ -216,7 +216,6 @@ def initiate_negotiation(world, time: float, insurgents=None) -> Negotiation:
 
 
 def sign_agreement(world, negotiation: Negotiation, time: float, rng: random.Random) -> PeaceAgreement:
-    cfg = world.config.peace_process
     accepted, rejected = [], []
     for oid in negotiation.insurgent_ids:
         org = world.organizations[oid]
@@ -540,7 +539,7 @@ def run_fragmentation_comparison(world, replications: int = 100, years: int = 12
                     # Common opportunity: positive mutual surplus and equal credibility.
                     negotiation.credibility = .62
                     negotiation.bargaining_surplus = {k: .16 for k in negotiation.bargaining_surplus}
-                result = process_peace(trial, time, f"CMP-{replication}-{month}", rng)
+                process_peace(trial, time, f"CMP-{replication}-{month}", rng)
                 if signed_at is None and trial.peace_agreements:
                     signed_at = min(a.signed_at for a in trial.peace_agreements.values())
                 completed = [a.completed_at for a in trial.peace_agreements.values() if a.completed_at is not None]
@@ -559,7 +558,6 @@ def run_fragmentation_comparison(world, replications: int = 100, years: int = 12
                              "peace_duration_days": None if signed_at is None else
                                  ((recurrence_at or years*365)-signed_at)})
         n = len(outcomes)
-        agreed = [x for x in outcomes if x["agreement"]]
         peace = [x["peace_duration_days"] for x in outcomes if x["peace_duration_days"] is not None]
         times = [x["time_to_agreement_days"] for x in outcomes if x["time_to_agreement_days"] is not None]
         results[label] = {

@@ -22,7 +22,7 @@ from collections import deque
 from dataclasses import dataclass, field
 import hashlib
 from math import exp, inf, isfinite, log
-from typing import Any, Iterable, Sequence
+from typing import Any, Callable, Iterable, Sequence
 
 from .compact_information_state import (
     CONTROL_STATE_STRIDE,
@@ -3528,7 +3528,6 @@ class ParticleBatchState:
         if self.hot_state is not None:
             self.hot_state.gather(parents)
         old_times = self.times
-        old_weights = self.weights
         old_lineages = self.lineage_ids
         self.times = array("d", (old_times[index] for index in parents))
         # A resampled ensemble has equal posterior mass. Keeping the selected

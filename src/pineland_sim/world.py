@@ -1319,10 +1319,7 @@ class WorldState:
             elif event_type == "governance":
                 flow_kind = "consumption" if delta < 0 else "production"
                 boundary = "internal"
-            elif event_type == "foreign_affairs":
-                flow_kind = "external_inflow" if delta > 0 else "external_outflow"
-                boundary = "boundary"
-            elif event_type == "policy_treatment":
+            elif event_type in {"foreign_affairs", "policy_treatment"}:
                 flow_kind = "external_inflow" if delta > 0 else "external_outflow"
                 boundary = "boundary"
             elif event_type == "political_order" and stock_name == "private_diversion" and delta > 0:
@@ -2316,12 +2313,7 @@ class WorldState:
                     )
                     for key, belief in value.items()
                 }
-            elif item.name == "zone_beliefs":
-                value = {
-                    key: copy.copy(belief)
-                    for key, belief in value.items()
-                }
-            elif item.name in {"presence_beliefs", "node_presence_beliefs"}:
+            elif item.name in {"zone_beliefs", "presence_beliefs", "node_presence_beliefs"}:
                 value = {
                     key: copy.copy(belief)
                     for key, belief in value.items()

@@ -4,6 +4,8 @@
 //! receive a completed boundary/result; no Python object or per-event callback
 //! is required.
 
+#![allow(clippy::too_many_arguments)]
+
 pub mod access;
 pub mod actions;
 pub mod assays;
@@ -225,12 +227,8 @@ pub fn organization_index_for_particle(
     particle: &pineland_core::state::ParticleState,
     name: &str,
 ) -> Option<usize> {
-    for i in 0..particle.organizations.kind.len() {
-        if organization_name_for_particle(particle, i) == name {
-            return Some(i);
-        }
-    }
-    None
+    (0..particle.organizations.kind.len())
+        .find(|&i| organization_name_for_particle(particle, i) == name)
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1813,7 +1811,7 @@ impl SimulationEngine {
             .scheduler
             .peek()
             .is_some_and(|event| event.time <= until)
-            && max_events.map_or(true, |limit| processed < limit)
+            && max_events.is_none_or(|limit| processed < limit)
         {
             let event = self.particle.scheduler.pop_next().expect("peeked event");
             self.particle.time = event.time;
@@ -2000,7 +1998,7 @@ impl SimulationEngine {
             self.reschedule_recurring(&event)?;
             processed += 1;
         }
-        let stopped_at_limit = max_events.map_or(false, |limit| {
+        let stopped_at_limit = max_events.is_some_and(|limit| {
             processed >= limit
                 && self
                     .particle
@@ -4915,7 +4913,7 @@ mod tests {
 
         // Place both formations in the same locality and primary microzone
         let target_loc = 0;
-        let target_zone = engine.topology.primary_zone[target_loc] as u32;
+        let target_zone = engine.topology.primary_zone[target_loc];
         engine.particle.formations.locality[mil] = target_loc as u32;
         engine.particle.formations.locality[ins] = target_loc as u32;
         engine.particle.formations.microzone[mil] = target_zone;
@@ -4989,12 +4987,12 @@ mod tests {
 
         // Start them in separated localities with ample movement logistics
         engine.particle.formations.locality[mil] = 0;
-        engine.particle.formations.microzone[mil] = engine.topology.primary_zone[0] as u32;
+        engine.particle.formations.microzone[mil] = engine.topology.primary_zone[0];
         engine.particle.formations.supply_capacity[mil] = 1000.0;
         engine.particle.formations.supply_stock[mil] = 1000.0;
 
         engine.particle.formations.locality[ins] = 1;
-        engine.particle.formations.microzone[ins] = engine.topology.primary_zone[1] as u32;
+        engine.particle.formations.microzone[ins] = engine.topology.primary_zone[1];
         engine.particle.formations.home_locality[ins] = 1;
         engine.particle.formations.supply_capacity[ins] = 1000.0;
         engine.particle.formations.supply_stock[ins] = 1000.0;

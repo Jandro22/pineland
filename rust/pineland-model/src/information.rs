@@ -677,15 +677,12 @@ fn command_node_name(particle: &ParticleState, topology: &StaticTopology, node: 
     let index = node as usize - command_start;
     let mut commands = command_node_ids(particle);
     commands.sort();
-    commands
-        .get(index)
-        .cloned()
-        .unwrap_or_else(|| {
-            format!(
-                "CMD:{}",
-                crate::organization_name_for_particle(particle, crate::GOVERNMENT)
-            )
-        })
+    commands.get(index).cloned().unwrap_or_else(|| {
+        format!(
+            "CMD:{}",
+            crate::organization_name_for_particle(particle, crate::GOVERNMENT)
+        )
+    })
 }
 
 fn observation_source_name(
@@ -927,18 +924,19 @@ fn fuse_recorded_observation(
             weight,
         );
     }
-    let (observer_code, kind) =
-        if recipient < 7 && recipient_name == crate::organization_name_for_particle(particle, recipient) {
-            let own_target = if particle.organizations.kind.get(recipient).copied() == Some(3) {
-                crate::INSURGENT
-            } else {
-                crate::GOVERNMENT
-            };
-            let kind = if target == own_target { 1 } else { 2 };
-            (recipient as u32, kind)
+    let (observer_code, kind) = if recipient < 7
+        && recipient_name == crate::organization_name_for_particle(particle, recipient)
+    {
+        let own_target = if particle.organizations.kind.get(recipient).copied() == Some(3) {
+            crate::INSURGENT
         } else {
-            (dynamic_observer_code(particle, topology, recipient_name), 3)
+            crate::GOVERNMENT
         };
+        let kind = if target == own_target { 1 } else { 2 };
+        (recipient as u32, kind)
+    } else {
+        (dynamic_observer_code(particle, topology, recipient_name), 3)
+    };
     let key = BeliefKey {
         observer: observer_code,
         target: target as u32,
@@ -1032,7 +1030,12 @@ fn fuse_recorded_observation(
 
 pub(crate) fn command_node_ids(particle: &ParticleState) -> Vec<String> {
     let mut values = (0..particle.organizations.kind.len())
-        .map(|organization| format!("CMD:{}", crate::organization_name_for_particle(particle, organization)))
+        .map(|organization| {
+            format!(
+                "CMD:{}",
+                crate::organization_name_for_particle(particle, organization)
+            )
+        })
         .collect::<Vec<_>>();
     values.sort();
     values
@@ -1467,7 +1470,10 @@ fn queue_information_relay(
     time: f64,
     source_type: SourceType,
 ) {
-    let destination_name = format!("CMD:{}", crate::organization_name_for_particle(particle, observer));
+    let destination_name = format!(
+        "CMD:{}",
+        crate::organization_name_for_particle(particle, observer)
+    );
     let Some(destination_node) = command_node_code(particle, topology, &destination_name) else {
         return;
     };
@@ -1897,8 +1903,7 @@ fn observe_control(
     if (crate::trace_env!("PINELAND_INFO_TRACE")
         && (time - 61.5).abs() < 1.0e-9
         && target == crate::INSURGENT)
-        || (crate::trace_env!("PINELAND_CONTROL_TRACE")
-            && (time - 30.5).abs() < 1.0e-9)
+        || (crate::trace_env!("PINELAND_CONTROL_TRACE") && (time - 30.5).abs() < 1.0e-9)
     {
         eprintln!(
             "NATIVE_LOCAL_CONTROL_TRACE time={:.17} observer={} node={} source={} type={} target={} locality={} quality={:.17} trust={:.17} language={:.17} confidence={:.17} identity={} corr={:.17} weight={:.17}",
@@ -1969,9 +1974,7 @@ fn observe_control(
             particle.beliefs.contradiction[index],
         );
     }
-    if crate::trace_env!("PINELAND_INFO_TRACE")
-        && observer_node == "FOREIGN-NEIGHBOR-1-01"
-    {
+    if crate::trace_env!("PINELAND_INFO_TRACE") && observer_node == "FOREIGN-NEIGHBOR-1-01" {
         eprintln!(
             "FOREIGN_CONTROL_PRE values_phys={:.17} source={} type={} observer={} node={} target={} locality={} quality={:.17} trust={:.17} language={:.17} confidence={:.17} corr={:.17} weight={:.17} observed={:?} prior_conf={:.17} prior_updated={:.17} prior_contra={:.17}",
             values[1],
@@ -2153,7 +2156,7 @@ fn target_actors(particle: &ParticleState, observer: usize) -> Vec<usize> {
         let has_state_security = (0..particle.organizations.kind.len()).any(|organization| {
             organization != observer
                 && particle.organizations.active.get(organization).copied() == Some(1)
-                && matches!(particle.organizations.kind[organization], 0 | 1 | 2)
+                && matches!(particle.organizations.kind[organization], 0..=2)
         });
         if has_state_security {
             return vec![crate::GOVERNMENT];
@@ -2219,7 +2222,7 @@ fn formation_matches_target(particle: &ParticleState, formation: usize, target: 
     } else if target == crate::GOVERNMENT {
         if matches!(
             particle.organizations.kind.get(organization).copied(),
-            Some(0 | 1 | 2)
+            Some(0..=2)
         ) {
             return true;
         }
@@ -2763,7 +2766,8 @@ fn formation_index(particle: &ParticleState, identifier: &str) -> Option<usize> 
 
 pub(crate) fn formation_name(particle: &ParticleState, formation: usize) -> String {
     let organization = particle.formations.organization[formation] as usize;
-    if particle.organizations.kind.get(organization).copied() == Some(crate::foreign::FOREIGN_KIND) {
+    if particle.organizations.kind.get(organization).copied() == Some(crate::foreign::FOREIGN_KIND)
+    {
         let org_name = crate::organization_name_for_particle(particle, organization);
         return format!("{}-01", org_name.to_ascii_uppercase());
     }
@@ -2824,7 +2828,10 @@ fn dynamic_observer_code(particle: &ParticleState, topology: &StaticTopology, no
 }
 
 #[allow(dead_code)]
-pub(crate) fn auxiliary_node_ids(particle: &ParticleState, topology: &StaticTopology) -> Vec<String> {
+pub(crate) fn auxiliary_node_ids(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+) -> Vec<String> {
     let mut values = Vec::new();
     for community in 0..particle.communities.locality.len() {
         values.push(community_name(community));
@@ -2976,8 +2983,14 @@ mod tests {
             );
         }
 
-        assert_eq!(auxiliary_node_position(particle, topology, "NON_EXISTENT"), None);
-        assert_eq!(auxiliary_node_position(particle, topology, "ADMIN:INVALID"), None);
+        assert_eq!(
+            auxiliary_node_position(particle, topology, "NON_EXISTENT"),
+            None
+        );
+        assert_eq!(
+            auxiliary_node_position(particle, topology, "ADMIN:INVALID"),
+            None
+        );
         assert_eq!(auxiliary_node_position(particle, topology, "C999999"), None);
         assert_eq!(post_position(particle, topology, "NON_EXISTENT"), None);
         assert_eq!(post_position(particle, topology, "POST-INVALID"), None);

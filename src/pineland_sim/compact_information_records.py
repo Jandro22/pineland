@@ -636,9 +636,7 @@ class CompactObservationStore(MutableMapping[str, CompactObservationView]):
                 value = value.clone()
             elif name == "id_to_index":
                 value = dict(value)
-            elif name in {"ids", "provenance"}:
-                value = list(value)
-            elif name == "estimated_value_cache":
+            elif name in {"ids", "provenance", "estimated_value_cache"}:
                 value = list(value)
             elif name == "live_values":
                 value = {key: shallow_copy(item) for key, item in value.items()}

@@ -693,8 +693,8 @@ def initialize_organization_ecology(world) -> None:
             target_total = sum(by_locality.values())
             remaining_total = max(0.0, target_total - represented_armed_membership(world, organization))
             if remaining_total > 1e-9:
-                formation_points = [world.localities[key] for key in formation_localities]
-                def distance_to_force(person):
+                formation_points = tuple(world.localities[key] for key in formation_localities)
+                def distance_to_force(person, formation_points=formation_points):
                     locality = world.localities[person.residence_locality_id]
                     return min(hypot(locality.x_km - target.x_km, locality.y_km - target.y_km)
                                for target in formation_points)
@@ -880,7 +880,6 @@ def form_proto_organizations(world, time: float, rng: random.Random,
         minimum_proto_weight = cfg.minimum_proto_represented_population
         if mobilized_weight < minimum_proto_weight:
             continue
-        locality = world.localities[community.locality_id]
         expected_repression = _expected_repression(world, mobilized)
         experienced_repression = _experienced_repression(world, community)
         # Founders act on expected repression.  Experienced repression remains

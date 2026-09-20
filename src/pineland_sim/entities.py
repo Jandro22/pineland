@@ -16,7 +16,7 @@ def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     # calls in one of the simulator's hottest scalar helpers.
     if low >= high:
         return high
-    if value != value:  # preserve max(low, nan) -> low semantics
+    if value != value:  # noqa: PLR0124 - intentional fast NaN check
         return low
     if value < low:
         return low

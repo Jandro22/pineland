@@ -125,8 +125,8 @@ fn language_compatibility(
     let Some(profile) = profile else { return 1.0 };
     let offset = person * 4;
     let mut result: f64 = 0.0;
-    for language in 0..4 {
-        result = result.max(particle.people.languages[offset + language].min(profile[language]));
+    for (language, profile_value) in profile.iter().copied().enumerate() {
+        result = result.max(particle.people.languages[offset + language].min(profile_value));
     }
     clamp01(result)
 }
@@ -204,8 +204,8 @@ fn local_profile(
             particle.people.represented_population[person] * particle.people.armed_fraction[person];
         mass += represented;
         let offset = person * 4;
-        for language in 0..4 {
-            totals[language] += represented * particle.people.languages[offset + language];
+        for (language, total) in totals.iter_mut().enumerate() {
+            *total += represented * particle.people.languages[offset + language];
         }
     }
     if mass <= 1.0e-12 {
@@ -365,11 +365,7 @@ pub(crate) fn shift_dynamic_observer_codes_after_command_insertion(
     let split = command_start.saturating_add(insert_position as u32);
     let old_end = command_start.saturating_add(old_command_count as u32);
     let shift = |value: &mut u32| {
-        if *value != u32::MAX
-            && *value >= split
-            && *value < old_end
-            && *value < 0x2000_0000
-        {
+        if *value != u32::MAX && *value >= split && *value < old_end && *value < 0x2000_0000 {
             *value = value.saturating_add(1);
         }
     };
@@ -878,14 +874,12 @@ fn recruitment_hazard_and_access_sensitivity_by_locality(
             continue;
         }
 
-        let exposure = particle.people.social_exposure[person * organization_count + target]
-            .clamp(0.0, 1.0);
-        let formation_access =
-            (formation_personnel[locality] / minimum_formation).clamp(0.0, 1.0);
+        let exposure =
+            particle.people.social_exposure[person * organization_count + target].clamp(0.0, 1.0);
+        let formation_access = (formation_personnel[locality] / minimum_formation).clamp(0.0, 1.0);
         let member_access = (member_weight[locality] / minimum_proto).clamp(0.0, 1.0);
         let formation_language = access_language_factor(particle, person, global_profile);
-        let member_language =
-            access_language_factor(particle, person, local_profiles[locality]);
+        let member_language = access_language_factor(particle, person, local_profiles[locality]);
         let foothold_index = target * locality_count + locality;
         let foothold_access = if foothold_index < particle.footholds.strength.len()
             && particle.footholds.renewal_count[foothold_index] > 0
@@ -951,10 +945,8 @@ fn recruitment_hazard_and_access_sensitivity_by_locality(
             * config.political_order.peaceful_channel_strength.max(0.0)
             * base_intensity
             * (1.0 - base_intensity);
-        result[locality] += represented
-            * eligible_fraction
-            * config.recruitment_rate.max(0.0)
-            * intensity.max(0.0);
+        result[locality] +=
+            represented * eligible_fraction * config.recruitment_rate.max(0.0) * intensity.max(0.0);
     }
     (result, access_sensitivity)
 }

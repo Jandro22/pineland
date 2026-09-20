@@ -2610,7 +2610,10 @@ mod tests {
         particle.partner_support.air.cumulative_intensity = 150.0;
         particle.partner_support.air.cumulative_firepower_bonus = 35.0;
         particle.partner_support.air.cumulative_donor_cost = 50_000.0;
-        particle.partner_support.logistics.military_cumulative_demanded = 275.0;
+        particle
+            .partner_support
+            .logistics
+            .military_cumulative_demanded = 275.0;
         particle.partner_support.logistics.cumulative_offered = 200.0;
         particle.partner_support.logistics.cumulative_delivered = 180.0;
         particle.partner_support.logistics.cumulative_rejected = 20.0;

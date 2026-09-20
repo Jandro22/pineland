@@ -199,10 +199,7 @@ fn response_distances(
     if crate::trace_env!("PINELAND_PHYS_TRACE") && locality == 0 {
         eprintln!(
             "PHYS_SOURCES time={:.17} locality={} actor={} sources={:?}",
-            time,
-            topology.locality_names[locality],
-            actor,
-            source_delays,
+            time, topology.locality_names[locality], actor, source_delays,
         );
     }
 

@@ -236,9 +236,9 @@ pub fn update(
             insurgent_signal_by_org[active_insurgents[0]] = insurgent_signal;
         }
 
-        for organization in 0..organization_count {
+        for (organization, signal) in insurgent_signal_by_org.iter().copied().enumerate() {
             particle.people.social_exposure[person * organization_count + organization] =
-                clamp01(insurgent_signal_by_org[organization]);
+                clamp01(signal);
         }
 
         if crate::trace_env!("PINELAND_SOCIAL_TRACE")

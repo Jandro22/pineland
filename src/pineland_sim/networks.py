@@ -418,7 +418,6 @@ def network_diagnostics(world: WorldState, clustering_sample: int = 1_000) -> di
         possible = len(neighbors) * (len(neighbors) - 1) / 2
         if possible <= 0:
             continue
-        neighbor_set = set(neighbors)
         closed = sum(1 for index, first in enumerate(neighbors)
                      for second in neighbors[index + 1:] if second in world.social_neighbors[first])
         coefficients.append(closed / possible)

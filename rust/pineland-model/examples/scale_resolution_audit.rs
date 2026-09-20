@@ -22,15 +22,22 @@ struct ScaleResult {
     contested_localities_fraction: f64,
 }
 
-fn run_scale(agent_count: usize, locality_count: usize, days: f64, seed: u64) -> Result<ScaleResult, String> {
-    let mut config = SimulationConfig::default();
-    config.seed = seed;
-    config.initialization_seed = Some(seed);
-    config.random_stream_namespace = "scale-resolution-audit-v1".to_string();
-    config.agent_count = agent_count;
-    config.locality_count = locality_count;
-    config.horizon_days = days;
-    config.burn_in_days = 0.0;
+fn run_scale(
+    agent_count: usize,
+    locality_count: usize,
+    days: f64,
+    seed: u64,
+) -> Result<ScaleResult, String> {
+    let mut config = SimulationConfig {
+        seed,
+        initialization_seed: Some(seed),
+        random_stream_namespace: "scale-resolution-audit-v1".to_string(),
+        agent_count,
+        locality_count,
+        horizon_days: days,
+        burn_in_days: 0.0,
+        ..SimulationConfig::default()
+    };
     config.state_regeneration.enabled = true;
     config.foreign_affairs.enabled = false;
     config.partner_force_support.enabled = false;
@@ -75,7 +82,11 @@ fn run_scale(agent_count: usize, locality_count: usize, days: f64, seed: u64) ->
         seed,
         initial_military_personnel: initial_military,
         final_military_personnel: final_military,
-        military_personnel_retention: if initial_military > 0.0 { final_military / initial_military } else { 0.0 },
+        military_personnel_retention: if initial_military > 0.0 {
+            final_military / initial_military
+        } else {
+            0.0
+        },
         contacts_total: contacts,
         contacts_per_agent: contacts as f64 / agent_count as f64,
         organized_actions_total: actions,
@@ -89,7 +100,7 @@ fn run_scale(agent_count: usize, locality_count: usize, days: f64, seed: u64) ->
 fn median(mut vals: Vec<f64>) -> f64 {
     vals.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let mid = vals.len() / 2;
-    if vals.len() % 2 == 0 {
+    if vals.len().is_multiple_of(2) {
         (vals[mid - 1] + vals[mid]) / 2.0
     } else {
         vals[mid]
@@ -111,23 +122,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut res1000 = Vec::new();
     for &s in &seeds {
         let r = run_scale(1000, 72, 30.0, s)?;
-        eprintln!("Scale 1000 seed {} -> retention: {:.6}, gov_ctrl: {:.6}, contacts/agent: {:.6}", s, r.military_personnel_retention, r.mean_government_control, r.contacts_per_agent);
+        eprintln!(
+            "Scale 1000 seed {} -> retention: {:.6}, gov_ctrl: {:.6}, contacts/agent: {:.6}",
+            s, r.military_personnel_retention, r.mean_government_control, r.contacts_per_agent
+        );
         res1000.push(r);
     }
 
     let mut res2500 = Vec::new();
     for &s in &seeds {
         let r = run_scale(2500, 72, 30.0, s)?;
-        eprintln!("Scale 2500 seed {} -> retention: {:.6}, gov_ctrl: {:.6}, contacts/agent: {:.6}", s, r.military_personnel_retention, r.mean_government_control, r.contacts_per_agent);
+        eprintln!(
+            "Scale 2500 seed {} -> retention: {:.6}, gov_ctrl: {:.6}, contacts/agent: {:.6}",
+            s, r.military_personnel_retention, r.mean_government_control, r.contacts_per_agent
+        );
         res2500.push(r);
     }
 
-    let ret1000: Vec<f64> = res1000.iter().map(|r| r.military_personnel_retention).collect();
-    let ret2500: Vec<f64> = res2500.iter().map(|r| r.military_personnel_retention).collect();
+    let ret1000: Vec<f64> = res1000
+        .iter()
+        .map(|r| r.military_personnel_retention)
+        .collect();
+    let ret2500: Vec<f64> = res2500
+        .iter()
+        .map(|r| r.military_personnel_retention)
+        .collect();
     let gov1000: Vec<f64> = res1000.iter().map(|r| r.mean_government_control).collect();
     let gov2500: Vec<f64> = res2500.iter().map(|r| r.mean_government_control).collect();
-    let cont1000: Vec<f64> = res1000.iter().map(|r| r.contested_localities_fraction).collect();
-    let cont2500: Vec<f64> = res2500.iter().map(|r| r.contested_localities_fraction).collect();
+    let cont1000: Vec<f64> = res1000
+        .iter()
+        .map(|r| r.contested_localities_fraction)
+        .collect();
+    let cont2500: Vec<f64> = res2500
+        .iter()
+        .map(|r| r.contested_localities_fraction)
+        .collect();
     let cpa1000: Vec<f64> = res1000.iter().map(|r| r.contacts_per_agent).collect();
     let cpa2500: Vec<f64> = res2500.iter().map(|r| r.contacts_per_agent).collect();
 
@@ -185,15 +214,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   }}
 }}
 "#,
-        med_ret1000, min_val(&ret1000), max_val(&ret1000),
-        med_gov1000, min_val(&gov1000), max_val(&gov1000),
-        med_cont1000, min_val(&cont1000), max_val(&cont1000),
-        med_cpa1000, min_val(&cpa1000), max_val(&cpa1000),
-        med_ret2500, min_val(&ret2500), max_val(&ret2500),
-        med_gov2500, min_val(&gov2500), max_val(&gov2500),
-        med_cont2500, min_val(&cont2500), max_val(&cont2500),
-        med_cpa2500, min_val(&cpa2500), max_val(&cpa2500),
-        diff_ret, diff_gov, diff_cont, diff_cpa,
+        med_ret1000,
+        min_val(&ret1000),
+        max_val(&ret1000),
+        med_gov1000,
+        min_val(&gov1000),
+        max_val(&gov1000),
+        med_cont1000,
+        min_val(&cont1000),
+        max_val(&cont1000),
+        med_cpa1000,
+        min_val(&cpa1000),
+        max_val(&cpa1000),
+        med_ret2500,
+        min_val(&ret2500),
+        max_val(&ret2500),
+        med_gov2500,
+        min_val(&gov2500),
+        max_val(&gov2500),
+        med_cont2500,
+        min_val(&cont2500),
+        max_val(&cont2500),
+        med_cpa2500,
+        min_val(&cpa2500),
+        max_val(&cpa2500),
+        diff_ret,
+        diff_gov,
+        diff_cont,
+        diff_cpa,
         is_converged
     );
 
@@ -201,7 +249,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut file = File::create(output_path)?;
     file.write_all(json.as_bytes())?;
     eprintln!("Wrote updated scale resolution audit: {}", output_path);
-    println!("SCALE AUDIT COMPLETE: retention diff = {:.4}%, gov ctrl diff = {:.4}%", diff_ret * 100.0, diff_gov * 100.0);
+    println!(
+        "SCALE AUDIT COMPLETE: retention diff = {:.4}%, gov ctrl diff = {:.4}%",
+        diff_ret * 100.0,
+        diff_gov * 100.0
+    );
 
     Ok(())
 }

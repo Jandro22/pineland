@@ -191,8 +191,6 @@ pub(crate) fn shift_dynamic_observer_codes_after_foreign_intervention(
                 *code += 1;
             } else if *code < aux_start {
                 *code += 2;
-            } else if *code < command_start {
-                *code += 3;
             } else if *code < cmd_split_code {
                 *code += 3;
             } else {
@@ -925,8 +923,10 @@ pub fn update(
                     // resource account above; these additional channels alter
                     // local execution and sponsor dependence without creating
                     // personnel.
-                    particle.organizations.external_sanctuary[recipient] =
-                        clamp01(particle.organizations.external_sanctuary[recipient] + sanctuary / denominator);
+                    particle.organizations.external_sanctuary[recipient] = clamp01(
+                        particle.organizations.external_sanctuary[recipient]
+                            + sanctuary / denominator,
+                    );
                     let phenotype = recipient * 8 + 7;
                     if phenotype < particle.organizations.phenotype.len() {
                         particle.organizations.phenotype[phenotype] =

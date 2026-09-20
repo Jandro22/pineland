@@ -12,7 +12,8 @@
     7,
     30,
     90,
-    180
+    180,
+    360
   ],
   "cells_count": 8,
   "pass_fail_criteria": {
@@ -21,10 +22,11 @@
     "maximum_prediction_mae": 0.25,
     "evaluation_horizons": [
       90,
-      180
+      180,
+      360
     ],
     "refit_permitted": false,
-    "decision_rule": "Dual-pass: The frozen discovery predictor must achieve Spearman rho >= 0.60 and MAE <= 0.25 independently at horizon 90d and horizon 180d, AND on pooled 90d+180d observations, without parameter recalibration."
+    "decision_rule": "Dual-pass: The frozen discovery predictor must achieve Spearman rho >= 0.60 and MAE <= 0.25 independently at horizons 90d, 180d, and 360d, AND on pooled 90d+180d+360d observations, without parameter recalibration."
   },
   "cells": [
     {

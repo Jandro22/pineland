@@ -114,9 +114,9 @@ class ExplicitRoleCapacityResolutionTests(unittest.TestCase):
             for border_id, border in self.fine.border_segments.items()
         }
         self.assertEqual(set(coarse_capacities), set(fine_capacities))
-        for border_id in coarse_capacities:
+        for border_id, coarse_capacity in coarse_capacities.items():
             self.assertAlmostEqual(
-                coarse_capacities[border_id], fine_capacities[border_id], places=12
+                coarse_capacity, fine_capacities[border_id], places=12
             )
 
         coarse_occupied = {

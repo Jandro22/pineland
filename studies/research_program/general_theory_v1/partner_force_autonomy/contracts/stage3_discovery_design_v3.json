@@ -19,7 +19,8 @@
         7,
         30,
         90,
-        180
+        180,
+        360
       ],
       "seeds": 12
     }
@@ -37,7 +38,8 @@
       7,
       30,
       90,
-      180
+      180,
+      360
     ],
     "default_seed_count": 12,
     "seed_base": 2026120000
@@ -95,7 +97,8 @@
   "model_selection_protocol": {
     "target_horizons_days": [
       90,
-      180
+      180,
+      360
     ],
     "primary_coordinate": "formal_q_indigenous",
     "primary_coordinate_selection": "PREREGISTERED_NO_POSTHOC_SELECTION",
@@ -107,7 +110,7 @@
       "regularized_additive"
     ],
     "comparator_role": "descriptive/exploratory model comparison; comparator performance cannot replace the formal primary predictor after discovery results are seen",
-    "rationale": "The formal q coordinate is derived from a proof-backed service-feasibility model fixed before outcomes; 90d/180d target long-horizon withdrawal resilience."
+    "rationale": "The formal q coordinate is derived from a proof-backed service-feasibility model fixed before outcomes; 90d/180d/360d target long-horizon withdrawal resilience. The 360d horizon was added before discovery execution because the preregistered engineering diagnostic showed material supported-vs-withdrawn divergence was still developing between days 180 and 360."
   },
   "raw_branch_schema": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_raw_branch_schema_v4.json",
   "trajectory_schema": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_schema_v2.json",
@@ -161,7 +164,7 @@
       "formal deficit-closure binding for forcegen/logistics/command plus air augmentation",
       "0x/0.5x/1x/2x dose-exposure monotonicity for all four support channels",
       "withdrawal shock immediate severing",
-      "180-vs-360 horizon sufficiency (<=10% relative divergence change after day 180)",
+      "180-vs-360 horizon diagnostic: <=10% relative divergence change permits 180d sufficiency; otherwise 360d is mandatory and must retain a non-degenerate supported-vs-withdrawn signal",
       "end-to-end combat/support/loss/replacement/capability causal trace"
     ]
   },

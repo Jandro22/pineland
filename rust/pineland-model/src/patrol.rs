@@ -119,9 +119,7 @@ pub fn advance(
     let consumed = demand
         .max(0.0)
         .min(particle.formations.supply_stock[formation]);
-    if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
-        && formation == 7
-    {
+    if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE") && formation == 7 {
         eprintln!(
             "PATROL_SUPPLY_CONSUME time={:.17} formation=7 demand={:.17} before={:.17} bits={}",
             time,
@@ -132,9 +130,7 @@ pub fn advance(
     }
     let shortfall = (demand.max(0.0) - consumed).max(0.0);
     particle.formations.supply_stock[formation] -= consumed;
-    if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
-        && formation == 7
-    {
+    if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE") && formation == 7 {
         eprintln!(
             "PATROL_SUPPLY_CONSUMED time={:.17} formation=7 after={:.17} bits={}",
             time,
@@ -159,8 +155,7 @@ pub fn advance(
             * 0.01
             * operational_days
             * (1.0 - current_experience);
-        particle.formations.experience[formation] =
-            clamp01(current_experience + learning);
+        particle.formations.experience[formation] = clamp01(current_experience + learning);
     }
 }
 
