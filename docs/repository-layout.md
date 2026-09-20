@@ -9,7 +9,7 @@ Long-term movement of superseded material is governed separately by
 
 ## Canonical tracked material
 
-- Root project metadata — `README.md`, `LICENSE`, `CITATION.cff`,
+- Root project metadata — `README.md`, `LICENSE`, `NOTICE`, `CITATION.cff`,
   `CONTRIBUTING.md`, package metadata, lockfiles, and VCS configuration.
 - `src/` — Python model and analysis-facing API.
 - `rust/` — native workspace source. Cargo `target*` directories are rebuildable

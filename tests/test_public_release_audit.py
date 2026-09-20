@@ -152,3 +152,14 @@ def test_invalid_source_manifest_rights_requires_basis_for_permitted(
 
     assert len(findings) == 1
     assert "without a recorded license/license_url" in findings[0]
+
+
+def test_citation_license_reads_spdx_identifier(tmp_path: Path) -> None:
+    audit = load_audit_module()
+    audit.ROOT = tmp_path
+    (tmp_path / "CITATION.cff").write_text(
+        'cff-version: 1.2.0\nlicense: "Apache-2.0"\n',
+        encoding="utf-8",
+    )
+
+    assert audit.citation_license() == "Apache-2.0"

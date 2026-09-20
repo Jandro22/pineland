@@ -8,7 +8,7 @@ authors:
 repository-code: "https://github.com/Jandro22/pineland"
 url: "https://github.com/Jandro22/pineland"
 version: "0.13.0"
-license: "MIT"
+license: "Apache-2.0"
 keywords:
   - agent-based modeling
   - insurgency

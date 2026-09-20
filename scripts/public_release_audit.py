@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = (
     "README.md",
     "LICENSE",
+    "NOTICE",
     "CITATION.cff",
     "CONTRIBUTING.md",
     "SECURITY.md",
@@ -90,6 +91,16 @@ def citation_version() -> str | None:
         return None
     for line in path.read_text(encoding="utf-8").splitlines():
         if line.startswith("version:"):
+            return line.split(":", 1)[1].strip().strip("'\"")
+    return None
+
+
+def citation_license() -> str | None:
+    path = ROOT / "CITATION.cff"
+    if not path.exists():
+        return None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("license:"):
             return line.split(":", 1)[1].strip().strip("'\"")
     return None
 
@@ -312,7 +323,30 @@ def main() -> int:
             f"version mismatch: pyproject={package_version!r}, CITATION.cff={cff_version!r}"
         )
 
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    package_license = pyproject["project"].get("license")
+    if isinstance(package_license, dict):
+        package_license = package_license.get("text")
+    package_license = str(package_license) if package_license is not None else None
+    cff_license = citation_license()
+    license_text = (ROOT / "LICENSE").read_text(encoding="utf-8-sig")
+    readme_text = (ROOT / "README.md").read_text(encoding="utf-8")
+    notice_text = (ROOT / "NOTICE").read_text(encoding="utf-8")
+    if (
+        package_license == "Apache-2.0"
+        and cff_license == "Apache-2.0"
+        and "Apache License" in license_text
+        and "Version 2.0, January 2004" in license_text
+        and "Apache License 2.0" in readme_text
+        and "Pineland COIN-SIM" in notice_text
+    ):
+        passes.append("software license metadata agrees on Apache-2.0")
+    else:
+        failures.append(
+            "software license mismatch: expected Apache-2.0 consistently across "
+            "pyproject.toml, CITATION.cff, LICENSE, README, and NOTICE"
+        )
+
+    readme = readme_text
     if (
         "actions/workflows/pineland-ci.yml" in readme
         and "badge.svg?branch=main" in readme

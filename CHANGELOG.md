@@ -24,6 +24,8 @@ contracts, manifests, and study-specific ledgers.
   than a chronological list of implementation phases.
 - Python package metadata identifies the project repository and primary author
   consistently with `CITATION.cff`.
+- The public software license is finalized as Apache License 2.0, with a root
+  `NOTICE` file for project attribution.
 
 ## 0.13.0 - development line
 

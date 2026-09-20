@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Jandro22/pineland/actions/workflows/pineland-ci.yml"><img src="https://github.com/Jandro22/pineland/actions/workflows/pineland-ci.yml/badge.svg?branch=main" alt="Pineland CI"></a>
-  &nbsp; Python 3.11+ &nbsp;&middot;&nbsp; Rust &nbsp;&middot;&nbsp; MIT
+  &nbsp; Python 3.11+ &nbsp;&middot;&nbsp; Rust &nbsp;&middot;&nbsp; Apache-2.0
 </p>
 
 Pineland COIN-SIM is a research-oriented simulation platform for studying how
@@ -208,7 +208,8 @@ between exploratory and confirmatory work.
 ## Citation and license
 
 Citation metadata is provided in [CITATION.cff](CITATION.cff). Pineland is
-released under the [MIT License](LICENSE).
+released under the [Apache License 2.0](LICENSE). Project attribution notices
+are recorded in [NOTICE](NOTICE).
 
 Release conventions are documented in
 [docs/release-policy.md](docs/release-policy.md). The public-release gate is in

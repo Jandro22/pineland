@@ -43,7 +43,7 @@ state was created on Windows using Python 3.14.
       python -m pip wheel . --no-deps
 
   Result: `pineland_coinsim-0.13.0-py3-none-any.whl` built successfully.
-  Wheel metadata reports Alejandro Grenier as author, MIT as the current
+  Wheel metadata reports Alejandro Grenier as author, Apache-2.0 as the
   software license, and the canonical GitHub repository/issue URLs.
 
 - literal Python README quick start:
@@ -125,9 +125,9 @@ source artifacts whose redistribution rights are not established.
   required before visibility changes.
 - `v0.13.0` has not been cut as an immutable software tag or GitHub Release.
 - The first-paper scientific analysis/freeze tag does not yet exist.
-- The final public software license remains a deliberate choice; the repository
-  currently says MIT, while Apache-2.0 remains a plausible pre-public-release
-  alternative.
+- The public software license is finalized as Apache License 2.0; the root
+  `LICENSE`, `NOTICE`, package metadata, README, and citation metadata should
+  remain synchronized through release.
 - Full public CI has not yet passed on the eventual release commit.
 - The configured Gitleaks scan should pass on the release candidate before
   visibility changes.

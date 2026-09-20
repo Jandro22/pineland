@@ -70,12 +70,12 @@ for the current findings and the recommended pre-public sanitization strategy.
 
 ## Licensing and attribution
 
-- [ ] Final software license is explicitly chosen (currently MIT; Apache-2.0 remains
-      an option before outside contributions).
-- [x] `LICENSE`, package metadata, and README agree on the current MIT license.
+- [x] Final software license is explicitly chosen: Apache License 2.0.
+- [x] `LICENSE`, `NOTICE`, package metadata, README, and `CITATION.cff`
+      agree on Apache-2.0.
 - [x] `CITATION.cff` identifies the current package version and authorship consistently.
 - [ ] Third-party code/assets retain required notices.
-- [ ] Contribution terms are clear before accepting outside contributions.
+- [x] Contribution terms are clear before accepting outside contributions.
 
 ## Public-facing scientific communication
 
