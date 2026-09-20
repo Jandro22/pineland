@@ -29,6 +29,11 @@ from statistics import mean, median
 
 
 EPS = 1.0e-6
+PROFILE_TARGET = {
+    "forcegen_heavy": "forcegen",
+    "logistics_heavy": "logistics",
+    "command_heavy": "command",
+}
 
 
 def _f(row: dict[str, str], key: str) -> float:
@@ -123,6 +128,12 @@ def load_world(primary_path: Path, expected_commit: str | None) -> dict | None:
         "external_share_logistics": _f(on_primary, "external_share_logistics"),
         "external_share_forcegen": _f(on_primary, "external_share_forcegen"),
         "external_share_command": _f(on_primary, "external_share_command"),
+        "bottleneck_target_match": (
+            PROFILE_TARGET.get(on_primary.get("support_profile", ""))
+            == on_primary.get("formal_bottleneck")
+            if on_primary.get("support_profile") in PROFILE_TARGET
+            else None
+        ),
     }
 
 
@@ -138,6 +149,21 @@ def summarize(worlds: list[dict]) -> dict:
         by_bottleneck[bottleneck] = dict(
             Counter(w["classification"] for w in effective if w["formal_bottleneck"] == bottleneck)
         )
+
+    targeting: dict[str, dict] = {}
+    for match_value, label in ((True, "matched"), (False, "mismatched")):
+        group = [w for w in treated if w["bottleneck_target_match"] is match_value]
+        effective_group = [w for w in group if w["initially_effective"]]
+        if group:
+            targeting[label] = {
+                "n": len(group),
+                "initially_effective_fraction": len(effective_group) / len(group),
+                "mean_capability_delta_30": mean(w["capability_delta_30"] for w in group),
+                "mean_autonomy_delta_360": mean(w["autonomy_delta_360"] for w in group),
+                "effective_classification_counts": dict(
+                    Counter(w["classification"] for w in effective_group)
+                ),
+            }
 
     negative_controls = [w for w in worlds if w["support_profile"] == "none"]
     negative_control_violations = [
@@ -161,6 +187,7 @@ def summarize(worlds: list[dict]) -> dict:
         },
         "by_profile": by_profile,
         "by_bottleneck": by_bottleneck,
+        "bottleneck_targeting": targeting,
     }
     for label in ("productive_autonomy", "dependency_gain", "contraction_autonomy", "double_harm"):
         group = [w for w in effective if w["classification"] == label]
