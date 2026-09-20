@@ -13,6 +13,8 @@ import pandas as pd
 
 
 RAW_SCHEMA_VERSION = "pineland.partner_force_autonomy_raw_branch.v2"
+RAW_SCHEMA_VERSION_V3 = "pineland.partner_force_autonomy_raw_branch.v3"
+ALLOWED_SCHEMA_VERSIONS = {RAW_SCHEMA_VERSION, RAW_SCHEMA_VERSION_V3}
 
 PAIR_INVARIANT_COLUMNS = [
     "experiment_id", "design_version", "git_commit", "world_id", "cell_id",
@@ -36,6 +38,11 @@ PAIR_INVARIANT_COLUMNS = [
     "window_donor_cost_forcegen", "window_donor_cost", "support_air_intensity",
     "support_air_bonus", "support_logistics_rate", "support_command_reliability_boost",
     "support_command_latency_reduction_fraction", "support_forcegen_training_rate_boost",
+]
+
+V3_PAIR_INVARIANT_COLUMNS = [
+    "dependence_logistics", "dependence_forcegen", "dependence_command", "dependence_air",
+    "manpower_burden", "logistics_burden", "omega_flow",
 ]
 
 BOUNDED_ZERO_ONE_COLUMNS = [
@@ -73,6 +80,11 @@ def _require_columns(df: pd.DataFrame, columns: Iterable[str]) -> None:
 
 
 def validate_raw_branch_panel(df: pd.DataFrame) -> None:
+    is_v3 = "dependence_logistics" in df.columns
+    active_invariants = list(PAIR_INVARIANT_COLUMNS)
+    if is_v3:
+        active_invariants.extend(V3_PAIR_INVARIANT_COLUMNS)
+
     required = [
         "schema_version", "pair_id", "run_id", "branch", "composite_capability",
         "c_government_control", "c_military_personnel_retention",
@@ -81,25 +93,34 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
         "post_indigenous_logistics_produced", "post_indigenous_logistics_consumed",
         "post_donor_cost_air", "post_donor_cost_logistics", "post_donor_cost_command",
         "post_donor_cost_forcegen", "post_donor_cost",
-        *PAIR_INVARIANT_COLUMNS,
+        *active_invariants,
     ]
+    if is_v3:
+        required.extend(["t_c_deficit_90", "t_readiness_collapse", "t_supply_exhaustion", "t_first_formation_loss"])
+
     _require_columns(df, required)
     versions = set(df["schema_version"].astype(str))
-    if versions != {RAW_SCHEMA_VERSION}:
-        raise ValueError(f"expected only schema {RAW_SCHEMA_VERSION}, found {sorted(versions)}")
+    if not versions.issubset(ALLOWED_SCHEMA_VERSIONS):
+        raise ValueError(f"expected only schemas {ALLOWED_SCHEMA_VERSIONS}, found {sorted(versions)}")
     if df["run_id"].duplicated().any():
         dup = df.loc[df["run_id"].duplicated(), "run_id"].iloc[0]
         raise ValueError(f"duplicate run_id: {dup}")
 
     # Check finite and ranges
-    for col in BOUNDED_ZERO_ONE_COLUMNS:
+    bounded_cols = list(BOUNDED_ZERO_ONE_COLUMNS)
+    if is_v3:
+        bounded_cols.extend(["dependence_logistics", "dependence_forcegen", "dependence_command", "dependence_air"])
+    for col in bounded_cols:
         vals = df[col].to_numpy(float)
         if not np.all(np.isfinite(vals)):
             raise ValueError(f"column {col} contains non-finite values (NaN or Inf)")
         if np.any((vals < -1e-6) | (vals > 1.0 + 1e-6)):
             raise ValueError(f"column {col} has values outside [0, 1]: min={vals.min()}, max={vals.max()}")
 
-    for col in NON_NEGATIVE_COLUMNS:
+    non_neg_cols = list(NON_NEGATIVE_COLUMNS)
+    if is_v3:
+        non_neg_cols.extend(["manpower_burden", "logistics_burden", "omega_flow"])
+    for col in non_neg_cols:
         vals = df[col].to_numpy(float)
         if not np.all(np.isfinite(vals)):
             raise ValueError(f"column {col} contains non-finite values (NaN or Inf)")
@@ -114,7 +135,7 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
             raise ValueError(f"pair {pair_id} branches are {sorted(branches)}")
         on = g[g["branch"] == "SUPPORT_ON"].iloc[0]
         off = g[g["branch"] == "SUPPORT_OFF"].iloc[0]
-        for col in PAIR_INVARIANT_COLUMNS:
+        for col in active_invariants:
             a, b = on[col], off[col]
             if pd.isna(a) and pd.isna(b):
                 continue
@@ -127,13 +148,18 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
 
 def pair_counterfactual_rows(df: pd.DataFrame, epsilon: float = 1e-9) -> pd.DataFrame:
     validate_raw_branch_panel(df)
+    is_v3 = "dependence_logistics" in df.columns
+    active_invariants = list(PAIR_INVARIANT_COLUMNS)
+    if is_v3:
+        active_invariants.extend(V3_PAIR_INVARIANT_COLUMNS)
+
     rows = []
     for pair_id, g in df.groupby("pair_id", sort=False):
         on = g[g["branch"] == "SUPPORT_ON"].iloc[0]
         off = g[g["branch"] == "SUPPORT_OFF"].iloc[0]
         c_on = float(on["composite_capability"])
         c_off = float(off["composite_capability"])
-        row = {col: on[col] for col in PAIR_INVARIANT_COLUMNS}
+        row = {col: on[col] for col in active_invariants}
         row.update({
             "pair_id": pair_id,
             "c_on": c_on,
@@ -169,6 +195,13 @@ def pair_counterfactual_rows(df: pd.DataFrame, epsilon: float = 1e-9) -> pd.Data
             "on_post_donor_cost": float(on["post_donor_cost"]),
             "off_post_donor_cost": float(off["post_donor_cost"]),
         })
+        if is_v3:
+            row.update({
+                "off_t_c_deficit_90": float(off["t_c_deficit_90"]),
+                "off_t_readiness_collapse": float(off["t_readiness_collapse"]),
+                "off_t_supply_exhaustion": float(off["t_supply_exhaustion"]),
+                "off_t_first_formation_loss": float(off["t_first_formation_loss"]),
+            })
         rows.append(row)
     paired = pd.DataFrame(rows)
     if paired.empty:
