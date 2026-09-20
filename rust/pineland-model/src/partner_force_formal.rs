@@ -12,6 +12,29 @@ pub struct ServiceChannel {
     pub external: f64,
 }
 
+/// Recover the external increment from cumulative supported and indigenous
+/// service totals without admitting a materially negative service quantity.
+///
+/// These totals are accumulated independently and ARC output windows subtract
+/// cumulative snapshots. When support is absent after withdrawal, mathematically
+/// equal interval increments can differ by a few ulps after cancellation. Lean's
+/// service domain is Nat, so only that floating-point residue may be projected
+/// back to zero; a material supported < indigenous discrepancy remains negative
+/// and is rejected by StructuralServiceWindow::metrics.
+pub fn external_service_from_supported_total(indigenous: f64, supported: f64) -> f64 {
+    let raw = supported - indigenous;
+    if !raw.is_finite() {
+        return raw;
+    }
+    let scale = indigenous.abs().max(supported.abs()).max(1.0);
+    let roundoff_tolerance = 1.0e-10 * scale;
+    if raw < 0.0 && raw >= -roundoff_tolerance {
+        0.0
+    } else {
+        raw
+    }
+}
+
 impl ServiceChannel {
     pub fn new(demand: f64, indigenous: f64, external: f64) -> Self {
         Self {
@@ -314,6 +337,21 @@ mod tests {
             command: ServiceChannel::new(0.0, 0.0, 0.0),
         };
         assert!(nonfinite.metrics().is_err());
+    }
+
+    #[test]
+    fn external_service_projection_clamps_only_roundoff_residue() {
+        let projected = external_service_from_supported_total(10_000.0, 10_000.0 - 5.0e-7);
+        assert_eq!(projected, 0.0);
+
+        let material = external_service_from_supported_total(10_000.0, 9_999.0);
+        assert!(material < 0.0);
+        let window = StructuralServiceWindow {
+            forcegen: ServiceChannel::new(0.0, 0.0, 0.0),
+            logistics: ServiceChannel::new(0.0, 0.0, 0.0),
+            command: ServiceChannel::new(1.0, 10_000.0, material),
+        };
+        assert!(window.metrics().is_err());
     }
 
     #[test]

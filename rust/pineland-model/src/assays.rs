@@ -9,7 +9,7 @@
 //! 6. Horizon-Sufficiency: runs stressed worlds to 360d to evaluate long-horizon divergence.
 //! 7. End-to-End Causal Trace: inspectable ledger trace of the full causal graph.
 
-use crate::partner_force_formal::ServiceChannel;
+use crate::partner_force_formal::{external_service_from_supported_total, ServiceChannel};
 use crate::treatment_gate::{
     apply_indigenous_command_multiplier, build_gate_config, GateCellSpec, GateOptions,
 };
@@ -742,7 +742,10 @@ pub fn run_binding_constraint_assay(options: &GateOptions) -> Result<BindingAssa
         let c = ServiceChannel::new(
             cmd.opportunities as f64 * COMMAND_SERVICE_REQUIREMENT_PER_ORDER,
             cmd.cumulative_indigenous_service,
-            cmd.cumulative_supported_service - cmd.cumulative_indigenous_service,
+            external_service_from_supported_total(
+                cmd.cumulative_indigenous_service,
+                cmd.cumulative_supported_service,
+            ),
         );
         let binding = channel_is_formally_binding(c);
         results.push(BindingConstraintResult {

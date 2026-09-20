@@ -103,6 +103,48 @@ def validate_trajectory_shard(path: Path) -> pd.DataFrame:
     return df
 
 
+def enforce_ensemble_degeneracy_safeguard(merged: pd.DataFrame) -> dict:
+    """Apply the production degeneracy gate once the full ARC ensemble exists."""
+    h180 = merged[
+        (merged["support_profile"].astype(str) != "none")
+        & (merged["horizon_days"].astype(float) == 180.0)
+    ].copy()
+    if h180.empty:
+        raise SystemExit("degeneracy safeguard found no treated h=180 rows")
+    pivot = h180.pivot(index="world_id", columns="branch", values="composite_capability")
+    required = {"SUPPORT_ON", "SUPPORT_OFF"}
+    if not required.issubset(set(pivot.columns)):
+        raise SystemExit(
+            "degeneracy safeguard requires paired SUPPORT_ON/SUPPORT_OFF h=180 rows"
+        )
+    r180 = (
+        pivot["SUPPORT_OFF"].to_numpy(float)
+        / pivot["SUPPORT_ON"].to_numpy(float).clip(1e-9, None)
+    )
+    near_zero = (r180 >= 0.995) & (r180 <= 1.005)
+    near_zero_fraction = float(near_zero.mean())
+    variance = float(r180.var())
+    report = {
+        "treated_worlds_h180": int(len(r180)),
+        "near_zero_worlds": int(near_zero.sum()),
+        "near_zero_fraction": near_zero_fraction,
+        "mean_r180": float(r180.mean()),
+        "variance_r180": variance,
+        "status": "PASS",
+    }
+    if near_zero_fraction > 0.90:
+        raise SystemExit(
+            "Degeneracy Alarm: "
+            f"{near_zero_fraction * 100.0:.1f}% of treated worlds exhibit near-zero response "
+            "(|R_180 - 1.0| <= 0.005), exceeding 90% threshold"
+        )
+    if len(r180) > 1 and variance < 1e-6:
+        raise SystemExit(
+            "Degeneracy Alarm: R_180 variance is essentially zero (< 1e-6) across treated worlds"
+        )
+    return report
+
+
 def main() -> None:
     ns = parse_args()
     if ns.expected_task_ids:
@@ -168,6 +210,7 @@ def main() -> None:
 
     merged = pd.concat(frames, ignore_index=True)
     validate_raw_branch_panel(merged)
+    degeneracy_safeguard = enforce_ensemble_degeneracy_safeguard(merged)
     merged = merged.sort_values(
         ["cell_id", "seed", "horizon_days", "branch"], kind="mergesort"
     ).reset_index(drop=True)
@@ -217,6 +260,7 @@ def main() -> None:
         "git_commits": sorted(merged["git_commit"].astype(str).unique().tolist()),
         "output_csv": str(output),
         "output_sha256": file_sha256(output),
+        "degeneracy_safeguard": degeneracy_safeguard,
         **trajectory_metadata,
     }
     metadata_path = Path(ns.metadata_json) if ns.metadata_json else output.with_suffix(".merge.json")

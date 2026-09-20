@@ -1,7 +1,10 @@
 use pineland_core::config::SimulationConfig;
 use pineland_core::json::{parse as parse_json, JsonValue};
 use pineland_model::{
-    partner_force_formal::{ServiceChannel, StructuralAutonomyMetrics, StructuralServiceWindow},
+    partner_force_formal::{
+        external_service_from_supported_total, ServiceChannel, StructuralAutonomyMetrics,
+        StructuralServiceWindow,
+    },
     CapabilityAssayBaseline, CapabilityAssayResult, SimulationEngine, INSURGENT, MILITARY,
 };
 use std::collections::BTreeSet;
@@ -1064,7 +1067,10 @@ fn structural_service_window(window: FlowSnapshot) -> StructuralServiceWindow {
         command: ServiceChannel::new(
             window.command_opportunities as f64 * COMMAND_SERVICE_REQUIREMENT_PER_ORDER,
             window.command_indigenous_service,
-            window.command_supported_service - window.command_indigenous_service,
+            external_service_from_supported_total(
+                window.command_indigenous_service,
+                window.command_supported_service,
+            ),
         ),
     }
 }
@@ -1635,6 +1641,11 @@ fn main() -> Result<(), String> {
     if cell_id.is_some() && cell_index.is_some() {
         return Err("--cell-id and --cell-index are mutually exclusive".to_string());
     }
+    // ARC production shards intentionally contain one (cell, seed) world.
+    // Ensemble-level degeneracy alarms are statistically undefined on such a
+    // shard and are enforced after the complete shard set is merged instead.
+    let sharded_single_world_execution =
+        single_seed.is_some() && (cell_id.is_some() || cell_index.is_some());
 
     let mut run_design = if let Some(ref contract_path) = holdout_contract {
         load_holdout_contract(contract_path)?
@@ -2143,13 +2154,17 @@ fn main() -> Result<(), String> {
             var_r.sqrt()
         );
 
-        if near_zero_fraction > 0.90 && !smoke {
+        if sharded_single_world_execution {
+            println!(
+                "Degeneracy safeguard enforcement deferred to complete-shard merge (single-world ARC shard)."
+            );
+        } else if near_zero_fraction > 0.90 && !smoke {
             return Err(format!(
                 "Degeneracy Alarm: {:.1}% of treated worlds exhibit near-zero response (|R_180 - 1.0| <= 0.005), exceeding 90% threshold!",
                 near_zero_fraction * 100.0
             ));
         }
-        if var_r < 1e-6 && treated_180.len() > 1 && !smoke {
+        if !sharded_single_world_execution && var_r < 1e-6 && treated_180.len() > 1 && !smoke {
             return Err("Degeneracy Alarm: R_180 variance is essentially zero (< 1e-6) across treated worlds!".to_string());
         }
     }
