@@ -90,8 +90,8 @@ def main() -> int:
     }
     direct_origins = {}
     displacement_origins = {}
-    for case in manual_direct_families:
-        origins = {origin_map.get(x, x) for x in manual_direct_families[case]}
+    for case, direct_families in manual_direct_families.items():
+        origins = {origin_map.get(x, x) for x in direct_families}
         if case in ucdp_cases:
             origins.add("UCDP_GED")
         direct_origins[case] = sorted(origins)

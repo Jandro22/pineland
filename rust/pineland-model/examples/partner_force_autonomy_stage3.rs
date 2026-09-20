@@ -1404,6 +1404,7 @@ fn main() -> Result<(), String> {
             observation_start_days: 60.0,
             horizon_days: 7.0,
             verbose: true,
+            smoke_mode: smoke,
         };
         println!("=== Running Pineland Stage 3 v3 Safeguards & Assays Suite ===");
         let s1 = pineland_model::assays::run_outcome_sensitivity_assay(&options)?;
@@ -1490,6 +1491,7 @@ fn main() -> Result<(), String> {
             observation_start_days: 60.0,
             horizon_days: 7.0,
             verbose: true,
+            smoke_mode: smoke,
         };
         let summary = pineland_model::treatment_gate::run_preflight_treatment_gate(&options)?;
         if summary.overall_pass {

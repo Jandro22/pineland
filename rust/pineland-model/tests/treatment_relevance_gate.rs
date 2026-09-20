@@ -9,6 +9,7 @@ fn treatment_relevance_gate_12_worlds() {
         observation_start_days: 60.0,
         horizon_days: 7.0,
         verbose: true,
+        smoke_mode: false,
     };
 
     let summary = run_preflight_treatment_gate(&options)

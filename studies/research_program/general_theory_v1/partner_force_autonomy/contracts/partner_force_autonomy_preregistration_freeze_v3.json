@@ -1,0 +1,154 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_preregistration_freeze.v3",
+  "status": "FROZEN_BEFORE_PRODUCTION_DISCOVERY_COMPUTE",
+  "historical_outcomes_used": false,
+  "acceptance_pilot_note": "A pre-fix engineering acceptance pilot existed before this v3 freeze. Its outputs are non-authoritative, are excluded from scientific analysis, and must not be merged into the v3 production discovery dataset.",
+  "description": "Cryptographic freeze of the v3 structural-autonomy design, schemas, analysis, ARC launch/merge code, corrected Rust formal adapter and assays, and the Lean theorem source/audit/regression used to define formal_q semantics.",
+  "frozen_artifacts": {
+    "raw_branch_schema": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_raw_branch_schema_v4.json",
+      "sha256": "b46950f863e10e4d2dace3f0ffe6f00718556b47cbd354b3e925e27e4990a38b"
+    },
+    "stage3_discovery_design": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage3_discovery_design_v3.json",
+      "sha256": "6424494d2f85de05fa0a97b5356d94271981d28f0cf870644b8aefbcb7801d52"
+    },
+    "stage3_discovery_cells": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v3.csv",
+      "sha256": "5993daa6df81067699d15fa2850b5d9b259d423fca306aa81fa39aec884c1d86"
+    },
+    "program_contract": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy_program_contract_v1.json",
+      "sha256": "4fa9ba6a44fa7d0f09fdc46e5b22a1bfe45f8f2f02ad2863974f21b170b3e77b"
+    },
+    "capability_assay_contract": {
+      "path": "studies/research_program/general_theory_v1/partner_force_capability_assay_contract_v1.json",
+      "sha256": "555761cdb8ceecf4ada390444d87600b38c2244f471d632e178247538d116b88"
+    },
+    "exclusion_manifest": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy_exclusion_manifest_v1.json",
+      "sha256": "145931065decf0899bd0dec6afeaf72bea6e2f86e4d9311e5cd792ae32a9f4f1"
+    },
+    "complexity_levers_audit": {
+      "path": "studies/research_program/general_theory_v1/partner_force_complexity_levers_audit_v1.json",
+      "sha256": "7ab19f12c0d4078af010fbc7de0fa8d7ec9a03c74ed811e816262074f65c1c55"
+    },
+    "stage4_capacity_heavy_blocked": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capacity_heavy_v1.json",
+      "sha256": "07a967d27757c5a5d6868bec4097cdbc19baa6004a2053e7b9ecb5b6c99111db"
+    },
+    "stage4_bottleneck_targeted_blocked": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/bottleneck_targeted_v1.json",
+      "sha256": "1b39ae86f1dfd7322bc454032c201410a5bad6c7cd871729ed5ed4a5d967e653"
+    },
+    "stage4_calendar_transition_blocked": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/calendar_transition_v1.json",
+      "sha256": "ac8472b503df07e354400eafeabd1f9cea44a11e71e3460ffca73a49d123b3dd"
+    },
+    "stage4_capability_conditioned_blocked": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/capability_conditioned_v1.json",
+      "sha256": "4f103c59814d7e06be6b551bb36d2ed29c5948d237c8d88593fccd9f60777081"
+    },
+    "holdout_complexity": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_complexity_v1.json",
+      "sha256": "c215645d3620b1170690c235b35b99cafae9480ad4bb066d151aafb438eb9c72"
+    },
+    "holdout_forcegen_regime": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_forcegen_regime_v1.json",
+      "sha256": "3dd19d47b1ca63e0bb4aa730b3b7a72e357e6f58585564458791e1d3838049b7"
+    },
+    "holdout_threat_pressure": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_threat_pressure_v1.json",
+      "sha256": "7bd46cb3df597d23429b8321be3a98df1a1eac6298445a0c1421f3209e270d62"
+    },
+    "holdout_support_composition": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_holdout_support_composition_v1.json",
+      "sha256": "a726d1eb12c838e08f059542e81164652df75ed3ed53f5299fe13a841820267a"
+    },
+    "scale_resolution_audit": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_scale_resolution_audit_v1.json",
+      "sha256": "7b66dc7b1dd9e3e5e5b8b19b0688a8d7f9a2a3ef981da61bc1998c9615666c4d"
+    },
+    "telemetry_noninterference_audit": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_telemetry_noninterference_audit_v2.json",
+      "sha256": "fe292c7225b58f1db5b10489c007d8c2ccb5ce326a570b967b5b9a87e9d52370"
+    },
+    "trajectory_contract": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_contract_v2.json",
+      "sha256": "11220b5d50daf16afd3ed70ebb5d46d50338c5c35872350782e6ab82c190f923"
+    },
+    "trajectory_schema": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_schema_v2.json",
+      "sha256": "1cadba9a54d356e9cdeac33610890bf13f6c3bdda7ff18f60af673b5a6551dd2"
+    },
+    "partner_force_metrics_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_metrics.py",
+      "sha256": "338a09ffe0ea4cea0ce14f6ed6d559e5c62d57831514a31b6f1fba85280d82f5"
+    },
+    "partner_force_coordinates_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_regenerative_coordinates.py",
+      "sha256": "4d462a1c503e1d5e4bf27bf9ff03e81c44934b0645a59a32e593cd7955a848c2"
+    },
+    "evaluate_partner_force_autonomy_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/evaluate_partner_force_autonomy.py",
+      "sha256": "4fb38610557c95a87bb502f24845640ce9ce2edc885c04fcde6045b05a2abc3b"
+    },
+    "partner_force_holdouts_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/partner_force_autonomy_holdouts.py",
+      "sha256": "e220e05b85cd80548292db9480e627b88b8967711634d8964ba5219ad0e490eb"
+    },
+    "trajectory_analysis_code": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/analyze_partner_force_trajectories.py",
+      "sha256": "f443dd8ee1811c5f9e4530e178867969eb87e4720cbcd30c9e1f39a71fd424b8"
+    },
+    "arc_array_wrapper": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
+      "sha256": "09184720dc230479bf29bc04598788aa32f3198d30f2fbfd97fb7f73945d543d"
+    },
+    "arc_shard_merger": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py",
+      "sha256": "639bbbc717a53bfb342e9e61a58355569b89c2ff937da65b82298f9dc3354eb7"
+    },
+    "stage3_runner_code": {
+      "path": "rust/pineland-model/examples/partner_force_autonomy_stage3.rs",
+      "sha256": "fc804432e9fca9809e16fe1dbe9f51874094cd2e90bf389b5fb561c0dec0ceb4"
+    },
+    "formal_adapter_code": {
+      "path": "rust/pineland-model/src/partner_force_formal.rs",
+      "sha256": "05d1549099de8b84c35b02dfdd5e1768700029fa54da827b5440e58ed89f60f7"
+    },
+    "engineering_assays_code": {
+      "path": "rust/pineland-model/src/assays.rs",
+      "sha256": "1b49e16f7785d4a3f1889ce8a96bdb10dc52f6a6fa581903afd2cd560ab00969"
+    },
+    "pineland_model_module_wiring": {
+      "path": "rust/pineland-model/src/lib.rs",
+      "sha256": "95dbfdc32ac56638130eda1591364211be42d79525c4bb48e4cd62c8963d276a"
+    },
+    "lean_partner_force_theory": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/PinelandPartnerForceTheory/PartnerForce.lean",
+      "sha256": "852378804ba8c588a6dfc7392f4d471fd3fc32c611c26627752f21f952d74d1b"
+    },
+    "lean_axiom_audit": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/Audit.lean",
+      "sha256": "969ee9deb93ad2c0c3eb2d92c024ebc6ac9866b376a2e627e046e1854ec8d683"
+    },
+    "lean_concrete_regression": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/ConcreteTest.lean",
+      "sha256": "bcbf0559df5536f0f6977cf60eab3b265ddd465bd8397b15e4ee90deb655fb8d"
+    },
+    "lean_project_config": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/lakefile.toml",
+      "sha256": "222691765cad4bec2f0d9f583765d62f941603768a55c11e7c5aca312fa14193"
+    },
+    "lean_dependency_lock": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/lake-manifest.json",
+      "sha256": "cc88b5296a606e6f3f205635fc488074e023c982756cb6d6595649d30e1f2d6e"
+    },
+    "lean_toolchain": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/lean-toolchain",
+      "sha256": "8733782dc070a99b312039cda424f601b80f3be6f6f512627da5ba25adc27632"
+    }
+  },
+  "required_artifact_count": 36
+}

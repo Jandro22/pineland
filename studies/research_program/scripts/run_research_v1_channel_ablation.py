@@ -204,7 +204,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         for name, active in conditions
     }
     full_rmse = results["full"]["metrics"]["rmse"]
-    for name, result in results.items():
+    for result in results.values():
         result["relative_to_full"] = {
             "rmse_ratio": result["metrics"]["rmse"] / full_rmse,
             "coverage_90_delta": (

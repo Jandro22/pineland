@@ -284,7 +284,11 @@ def _hawkes_excitation_features(frame: pd.DataFrame, spec: PanelSpec,
         time_key = int(time_key)
         cache: dict[str, float] = {}
 
-        def at_time(unit: str) -> float:
+        def at_time(
+            unit: str,
+            cache: dict[str, float] = cache,
+            time_key: int = time_key,
+        ) -> float:
             if unit not in cache:
                 cache[unit] = decayed(unit, time_key)
             return cache[unit]

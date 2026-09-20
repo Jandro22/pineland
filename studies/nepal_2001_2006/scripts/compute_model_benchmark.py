@@ -149,7 +149,15 @@ def main() -> None:
                 # trajectory and invalidate uncertainty intervals.
                 panel.loc[mask, "events"] += 1
         for split in ("training", "temporal_validation", "geographic_validation", "strict_joint_holdout"):
-            split_panel = panel[panel.apply(lambda row: split_for(row.district_id, row.window_start, eastern) == split, axis=1)]
+            split_panel = panel[
+                panel.apply(
+                    lambda row, split=split: split_for(
+                        row.district_id, row.window_start, eastern
+                    )
+                    == split,
+                    axis=1,
+                )
+            ]
             split_events = events[events.split == split] if not events.empty else events
             result = summarize_panel(split_panel, split_events, population.loc[split_panel.district_id.unique()], adjacency)
             result.update({"seed": payload["seed"], "split": split,
