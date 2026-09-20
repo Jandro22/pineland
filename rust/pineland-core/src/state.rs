@@ -1673,6 +1673,8 @@ pub struct LogisticsSupportLedger {
     pub indigenous_cumulative_produced: f64,
     pub indigenous_cumulative_delivered: f64,
     pub indigenous_cumulative_consumed: f64,
+    /// Total military supply requirement presented to the logistics system, including unmet demand.
+    pub military_cumulative_demanded: f64,
     pub cumulative_offered: f64,
     pub cumulative_delivered: f64,
     pub cumulative_rejected: f64,
@@ -1686,6 +1688,7 @@ impl Default for LogisticsSupportLedger {
             indigenous_cumulative_produced: 0.0,
             indigenous_cumulative_delivered: 0.0,
             indigenous_cumulative_consumed: 0.0,
+            military_cumulative_demanded: 0.0,
             cumulative_offered: 0.0,
             cumulative_delivered: 0.0,
             cumulative_rejected: 0.0,
@@ -1893,9 +1896,10 @@ impl PartnerSupportLedger {
         window_losses / (window_graduates + 1e-6)
     }
 
-    /// Operational logistics burden ratio: operational consumption / organic logistics generation.
-    pub fn logistics_burden(window_consumed: f64, window_produced: f64) -> f64 {
-        window_consumed / (window_produced + 1e-6)
+    /// Operational logistics burden ratio: presented military requirement /
+    /// endogenous logistics service delivered to military formations.
+    pub fn logistics_burden(window_demanded: f64, window_indigenous_delivered: f64) -> f64 {
+        window_demanded / (window_indigenous_delivered + 1e-6)
     }
 
     /// Flow-based regenerative coordinate: 1 / (burden + epsilon).
@@ -1947,6 +1951,10 @@ impl PartnerSupportLedger {
         logistics.insert(
             "indigenous_cumulative_consumed",
             JsonValue::number(self.logistics.indigenous_cumulative_consumed),
+        );
+        logistics.insert(
+            "military_cumulative_demanded",
+            JsonValue::number(self.logistics.military_cumulative_demanded),
         );
         logistics.insert(
             "cumulative_offered",
@@ -2752,6 +2760,7 @@ impl ParticleState {
                     self.partner_support
                         .logistics
                         .indigenous_cumulative_consumed,
+                    self.partner_support.logistics.military_cumulative_demanded,
                     self.partner_support.logistics.cumulative_donor_cost,
                     self.partner_support.command.cumulative_reliability_boost,
                     self.partner_support.command.cumulative_indigenous_service,
@@ -5377,6 +5386,10 @@ impl ParticleState {
                     .logistics
                     .indigenous_cumulative_consumed,
                 "partner indigenous logistics consumed",
+            ),
+            (
+                self.partner_support.logistics.military_cumulative_demanded,
+                "military logistics demanded",
             ),
             (
                 self.partner_support.command.cumulative_reliability_boost,

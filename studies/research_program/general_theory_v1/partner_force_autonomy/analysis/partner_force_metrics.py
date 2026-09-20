@@ -49,7 +49,7 @@ V3_PAIR_INVARIANT_COLUMNS = [
 V4_PAIR_INVARIANT_COLUMNS = [
     "window_external_air_opportunities", "window_external_air_assisted_contacts",
     "window_command_opportunities", "window_command_indigenous_service",
-    "window_command_supported_service",
+    "window_command_supported_service", "window_military_logistics_demanded",
     "external_share_logistics", "external_share_forcegen", "external_share_command",
     "external_share_air", "formal_q_indigenous", "formal_q_supported",
     "formal_support_lift", "formal_regime", "formal_bottleneck",
@@ -151,7 +151,7 @@ def validate_raw_branch_panel(df: pd.DataFrame) -> None:
         non_neg_cols.extend([
             "window_external_air_opportunities", "window_external_air_assisted_contacts",
             "window_command_opportunities", "window_command_indigenous_service",
-            "window_command_supported_service",
+            "window_command_supported_service", "window_military_logistics_demanded",
             "formal_forcegen_demand", "formal_forcegen_indigenous_service",
             "formal_forcegen_external_service", "formal_forcegen_deficit",
             "formal_forcegen_useful_external", "formal_logistics_demand",

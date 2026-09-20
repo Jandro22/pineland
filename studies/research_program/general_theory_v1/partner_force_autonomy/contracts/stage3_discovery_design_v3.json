@@ -129,9 +129,9 @@
         "external_service": "external incremental graduates in same window"
       },
       "logistics": {
-        "demand": "indigenous military logistics consumption in same window (supply units)",
-        "indigenous_service": "indigenous logistics delivered in same window",
-        "external_service": "external partner logistics delivered in same window",
+        "demand": "total military supply requirement presented during the pre-T observation window, including unmet presence/combat demand and supply-blocked movement demand",
+        "indigenous_service": "endogenous logistics delivered to military formations during the same window",
+        "external_service": "external partner logistics delivered to military formations during the same window",
         "buffer_rule": "supply stock is a buffer diagnostic and is not added to q flow service"
       },
       "command": {

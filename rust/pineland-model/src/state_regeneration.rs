@@ -551,13 +551,10 @@ pub fn update(
             particle.locality.government_security_recruit_pipeline[locality] += recruits;
             particle.locality.government_cumulative_security_recruits[locality] += recruits;
             summary.recruited += recruits;
-            let partner_config = &config.partner_force_support;
             // Organic flow instrumentation must continue after support withdrawal.
             // The master partner-force switch controls instrumentation; channel
             // activity controls only the external increment.
-            if partner_config.enabled {
-                particle.partner_support.force_generation.indigenous_recruits += recruits;
-            }
+            particle.partner_support.force_generation.indigenous_recruits += recruits;
         }
 
         let base_rate = config.state_regeneration.security_training_rate;
@@ -588,9 +585,7 @@ pub fn update(
                 (frac, cur_pipeline * frac, 0.0, 0.0)
             };
 
-        if partner_config.enabled {
-            particle.partner_support.force_generation.indigenous_graduates += indig_graduated;
-        }
+        particle.partner_support.force_generation.indigenous_graduates += indig_graduated;
         if partner_fg_active {
             particle.partner_support.force_generation.external_incremental_graduates +=
                 incremental_graduated;

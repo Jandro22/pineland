@@ -81,6 +81,7 @@ struct FlowSnapshot {
     indigenous_logistics_produced: f64,
     indigenous_logistics_delivered: f64,
     indigenous_logistics_consumed: f64,
+    military_logistics_demanded: f64,
     external_air_intensity: f64,
     external_logistics_offered: f64,
     external_logistics_delivered: f64,
@@ -813,6 +814,7 @@ fn flow_snapshot(engine: &SimulationEngine) -> FlowSnapshot {
         indigenous_logistics_produced: l.logistics.indigenous_cumulative_produced,
         indigenous_logistics_delivered: l.logistics.indigenous_cumulative_delivered,
         indigenous_logistics_consumed: l.logistics.indigenous_cumulative_consumed,
+        military_logistics_demanded: l.logistics.military_cumulative_demanded,
         external_air_intensity: l.air.cumulative_intensity,
         external_logistics_offered: l.logistics.cumulative_offered,
         external_logistics_delivered: l.logistics.cumulative_delivered,
@@ -858,6 +860,9 @@ fn diff(a: FlowSnapshot, b: FlowSnapshot) -> FlowSnapshot {
             .max(0.0),
         indigenous_logistics_consumed: (b.indigenous_logistics_consumed
             - a.indigenous_logistics_consumed)
+            .max(0.0),
+        military_logistics_demanded: (b.military_logistics_demanded
+            - a.military_logistics_demanded)
             .max(0.0),
         external_air_intensity: (b.external_air_intensity - a.external_air_intensity).max(0.0),
         external_logistics_offered: (b.external_logistics_offered - a.external_logistics_offered)
@@ -1029,7 +1034,7 @@ fn structural_service_window(window: FlowSnapshot) -> StructuralServiceWindow {
             window.external_forcegen_graduates,
         ),
         logistics: ServiceChannel::new(
-            window.indigenous_logistics_consumed,
+            window.military_logistics_demanded,
             window.indigenous_logistics_delivered,
             window.external_logistics_delivered,
         ),
@@ -1055,7 +1060,7 @@ fn external_air_share(window: FlowSnapshot) -> f64 {
 }
 
 fn csv_header() -> &'static str {
-    "schema_version,experiment_id,design_version,git_commit,world_id,pair_id,run_id,cell_id,support_profile,seed,withdrawal_time_days,horizon_days,branch,indigenous_forcegen_multiplier,indigenous_logistics_multiplier,indigenous_command_multiplier,pre_insurgent_personnel,pre_insurgent_active_formations,pre_insurgent_territorial_control,pre_recent_actions,pre_contested_localities,pre_supported_capability,pre_government_control,pre_military_personnel,pre_trained_reserve,pre_recruit_pipeline,pre_readiness,pre_experience,pre_supply_stock,pre_supply_capacity,pre_command_reliability,pre_command_latency_hours,window_indigenous_recruits,window_indigenous_graduates,window_military_losses,window_indigenous_logistics_produced,window_indigenous_logistics_delivered,window_indigenous_logistics_consumed,window_external_air_opportunities,window_external_air_assisted_contacts,window_external_air_intensity,window_external_logistics_offered,window_external_logistics_delivered,window_external_logistics_rejected,window_external_logistics_lost,window_command_opportunities,window_command_indigenous_service,window_command_supported_service,window_external_command_events,window_command_latency_hours_saved,window_external_forcegen_graduates,window_donor_cost_air,window_donor_cost_logistics,window_donor_cost_command,window_donor_cost_forcegen,window_donor_cost,support_air_intensity,support_air_bonus,support_logistics_rate,support_command_reliability_boost,support_command_latency_reduction_fraction,support_forcegen_training_rate_boost,c_government_control,c_military_personnel_retention,c_operational_formation_survival,c_geographic_coverage_retention,composite_capability,post_indigenous_recruits,post_indigenous_graduates,post_military_losses,post_indigenous_logistics_produced,post_indigenous_logistics_consumed,post_donor_cost_air,post_donor_cost_logistics,post_donor_cost_command,post_donor_cost_forcegen,post_donor_cost,external_share_logistics,external_share_forcegen,external_share_command,external_share_air,formal_q_indigenous,formal_q_supported,formal_support_lift,formal_regime,formal_bottleneck,formal_forcegen_ratio_indigenous,formal_logistics_ratio_indigenous,formal_command_ratio_indigenous,formal_forcegen_demand,formal_forcegen_indigenous_service,formal_forcegen_external_service,formal_forcegen_deficit,formal_forcegen_useful_external,formal_logistics_demand,formal_logistics_indigenous_service,formal_logistics_external_service,formal_logistics_deficit,formal_logistics_useful_external,formal_command_demand,formal_command_indigenous_service,formal_command_external_service,formal_command_deficit,formal_command_useful_external,command_service_requirement_per_order,manpower_burden,logistics_burden,omega_flow,t_c_deficit_90,t_readiness_collapse,t_supply_exhaustion,t_first_formation_loss"
+    "schema_version,experiment_id,design_version,git_commit,world_id,pair_id,run_id,cell_id,support_profile,seed,withdrawal_time_days,horizon_days,branch,indigenous_forcegen_multiplier,indigenous_logistics_multiplier,indigenous_command_multiplier,pre_insurgent_personnel,pre_insurgent_active_formations,pre_insurgent_territorial_control,pre_recent_actions,pre_contested_localities,pre_supported_capability,pre_government_control,pre_military_personnel,pre_trained_reserve,pre_recruit_pipeline,pre_readiness,pre_experience,pre_supply_stock,pre_supply_capacity,pre_command_reliability,pre_command_latency_hours,window_indigenous_recruits,window_indigenous_graduates,window_military_losses,window_indigenous_logistics_produced,window_indigenous_logistics_delivered,window_indigenous_logistics_consumed,window_military_logistics_demanded,window_external_air_opportunities,window_external_air_assisted_contacts,window_external_air_intensity,window_external_logistics_offered,window_external_logistics_delivered,window_external_logistics_rejected,window_external_logistics_lost,window_command_opportunities,window_command_indigenous_service,window_command_supported_service,window_external_command_events,window_command_latency_hours_saved,window_external_forcegen_graduates,window_donor_cost_air,window_donor_cost_logistics,window_donor_cost_command,window_donor_cost_forcegen,window_donor_cost,support_air_intensity,support_air_bonus,support_logistics_rate,support_command_reliability_boost,support_command_latency_reduction_fraction,support_forcegen_training_rate_boost,c_government_control,c_military_personnel_retention,c_operational_formation_survival,c_geographic_coverage_retention,composite_capability,post_indigenous_recruits,post_indigenous_graduates,post_military_losses,post_indigenous_logistics_produced,post_indigenous_logistics_consumed,post_donor_cost_air,post_donor_cost_logistics,post_donor_cost_command,post_donor_cost_forcegen,post_donor_cost,external_share_logistics,external_share_forcegen,external_share_command,external_share_air,formal_q_indigenous,formal_q_supported,formal_support_lift,formal_regime,formal_bottleneck,formal_forcegen_ratio_indigenous,formal_logistics_ratio_indigenous,formal_command_ratio_indigenous,formal_forcegen_demand,formal_forcegen_indigenous_service,formal_forcegen_external_service,formal_forcegen_deficit,formal_forcegen_useful_external,formal_logistics_demand,formal_logistics_indigenous_service,formal_logistics_external_service,formal_logistics_deficit,formal_logistics_useful_external,formal_command_demand,formal_command_indigenous_service,formal_command_external_service,formal_command_deficit,formal_command_useful_external,command_service_requirement_per_order,manpower_burden,logistics_burden,omega_flow,t_c_deficit_90,t_readiness_collapse,t_supply_exhaustion,t_first_formation_loss"
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1132,6 +1137,7 @@ fn write_row(
         f9(pre_window.indigenous_logistics_produced),
         f9(pre_window.indigenous_logistics_delivered),
         f9(pre_window.indigenous_logistics_consumed),
+        f9(pre_window.military_logistics_demanded),
         pre_window.external_air_opportunities.to_string(),
         pre_window.external_air_assisted_contacts.to_string(),
         f9(pre_window.external_air_intensity),
@@ -1211,7 +1217,7 @@ fn write_row(
 }
 
 fn trajectory_csv_header() -> &'static str {
-    "schema_version,experiment_id,design_version,git_commit,world_id,cell_id,support_profile,seed,withdrawal_time_days,time_days,days_from_withdrawal,phase,capability_reference,state_hash,decision_hash,government_control,military_personnel_retention,operational_formation_survival,geographic_coverage_retention,composite_capability,military_personnel,operational_formations,covered_localities,trained_reserve,recruit_pipeline,readiness,experience,supply_stock,supply_capacity,command_reliability,command_latency_hours,insurgent_personnel,insurgent_active_formations,insurgent_territorial_control,contested_localities,interval_indigenous_recruits,interval_indigenous_graduates,interval_security_deployments,interval_military_losses,interval_indigenous_logistics_produced,interval_indigenous_logistics_delivered,interval_indigenous_logistics_consumed,interval_logistics_system_lost,interval_contacts,interval_organized_actions,interval_external_air_opportunities,interval_external_air_assisted_contacts,interval_external_air_intensity,interval_external_air_firepower_bonus,interval_external_logistics_offered,interval_external_logistics_delivered,interval_external_logistics_rejected,interval_external_logistics_lost,interval_command_opportunities,interval_command_indigenous_service,interval_command_supported_service,interval_external_command_events,interval_command_reliability_boost,interval_command_latency_hours_saved,interval_external_forcegen_graduates,interval_donor_cost_air,interval_donor_cost_logistics,interval_donor_cost_command,interval_donor_cost_forcegen,interval_donor_cost,interval_formal_active_services,interval_formal_q_indigenous,interval_formal_q_supported,interval_formal_support_lift,interval_formal_regime,interval_formal_bottleneck"
+    "schema_version,experiment_id,design_version,git_commit,world_id,cell_id,support_profile,seed,withdrawal_time_days,time_days,days_from_withdrawal,phase,capability_reference,state_hash,decision_hash,government_control,military_personnel_retention,operational_formation_survival,geographic_coverage_retention,composite_capability,military_personnel,operational_formations,covered_localities,trained_reserve,recruit_pipeline,readiness,experience,supply_stock,supply_capacity,command_reliability,command_latency_hours,insurgent_personnel,insurgent_active_formations,insurgent_territorial_control,contested_localities,interval_indigenous_recruits,interval_indigenous_graduates,interval_security_deployments,interval_military_losses,interval_indigenous_logistics_produced,interval_indigenous_logistics_delivered,interval_indigenous_logistics_consumed,interval_military_logistics_demanded,interval_logistics_system_lost,interval_contacts,interval_organized_actions,interval_external_air_opportunities,interval_external_air_assisted_contacts,interval_external_air_intensity,interval_external_air_firepower_bonus,interval_external_logistics_offered,interval_external_logistics_delivered,interval_external_logistics_rejected,interval_external_logistics_lost,interval_command_opportunities,interval_command_indigenous_service,interval_command_supported_service,interval_external_command_events,interval_command_reliability_boost,interval_command_latency_hours_saved,interval_external_forcegen_graduates,interval_donor_cost_air,interval_donor_cost_logistics,interval_donor_cost_command,interval_donor_cost_forcegen,interval_donor_cost,interval_formal_active_services,interval_formal_q_indigenous,interval_formal_q_supported,interval_formal_support_lift,interval_formal_regime,interval_formal_bottleneck"
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1302,6 +1308,7 @@ fn write_trajectory_row(
         f9(interval.indigenous_logistics_produced),
         f9(interval.indigenous_logistics_delivered),
         f9(interval.indigenous_logistics_consumed),
+        f9(interval.military_logistics_demanded),
         f9(interval.logistics_system_lost),
         interval.contacts.to_string(),
         interval.organized_actions.to_string(),
@@ -1407,7 +1414,7 @@ fn main() -> Result<(), String> {
             horizon_days: 7.0,
             verbose: true,
         };
-        println!("=== Running Pineland Stage 3 v2 Safeguards & Assays Suite ===");
+        println!("=== Running Pineland Stage 3 v3 Safeguards & Assays Suite ===");
         let s1 = pineland_model::assays::run_outcome_sensitivity_assay(&options)?;
         println!(
             "[Assay 1: Outcome Sensitivity] pass={}; {}",
@@ -1415,16 +1422,30 @@ fn main() -> Result<(), String> {
         );
         let s2 = pineland_model::assays::run_channel_isolation_assay(&options)?;
         println!(
-            "[Assay 2: Channel Isolation] pass={}; {} channels verified",
+            "[Assay 2: Channel Isolation] pass={}; {} channels checked",
             s2.pass,
             s2.results.len()
         );
+        for r in &s2.results {
+            println!(
+                "  {:<14} pass={} input={:.3} mechanism={:.6} downstream={:.6} donor_cost={:.2}",
+                r.channel,
+                r.pass,
+                r.input_delivered,
+                r.mechanism_state_diff,
+                r.downstream_effect,
+                r.donor_cost
+            );
+        }
         let s3 = pineland_model::assays::run_binding_constraint_assay(&options)?;
         println!(
-            "[Assay 3: Binding Constraints] pass={}; {} channels bound under stress",
+            "[Assay 3: Binding Constraints] pass={}; {} channels checked",
             s3.pass,
             s3.results.len()
         );
+        for r in &s3.results {
+            println!("  {:<18} pass={} {}", r.channel, r.binding_verified, r.description);
+        }
         let s4 = pineland_model::assays::run_dose_sanity_assay(&options)?;
         println!(
             "[Assay 4: Dose Sanity Curves] pass={}; {} channels monotonic",
@@ -1844,8 +1865,8 @@ fn main() -> Result<(), String> {
                 pre_window.indigenous_graduates,
             );
             let logistics_burden = pineland_core::state::PartnerSupportLedger::logistics_burden(
-                pre_window.indigenous_logistics_consumed,
-                pre_window.indigenous_logistics_produced,
+                pre_window.military_logistics_demanded,
+                pre_window.indigenous_logistics_delivered,
             );
             let omega_flow = pineland_core::state::PartnerSupportLedger::omega_flow(
                 manpower_burden.max(logistics_burden),

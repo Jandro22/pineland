@@ -215,7 +215,7 @@ STOCK_COLUMNS = [
 FLOW_COLUMNS = [
     "window_indigenous_recruits", "window_indigenous_graduates", "window_military_losses",
     "window_indigenous_logistics_produced", "window_indigenous_logistics_delivered",
-    "window_indigenous_logistics_consumed",
+    "window_indigenous_logistics_consumed", "window_military_logistics_demanded",
 ]
 
 

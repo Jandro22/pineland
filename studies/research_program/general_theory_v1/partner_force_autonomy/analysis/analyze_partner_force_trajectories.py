@@ -45,6 +45,7 @@ FLOW_COLUMNS = [
     "interval_indigenous_logistics_produced",
     "interval_indigenous_logistics_delivered",
     "interval_indigenous_logistics_consumed",
+    "interval_military_logistics_demanded",
     "interval_logistics_system_lost",
     "interval_contacts",
     "interval_organized_actions",

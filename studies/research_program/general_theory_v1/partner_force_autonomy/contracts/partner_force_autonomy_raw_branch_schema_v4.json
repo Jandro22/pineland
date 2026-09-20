@@ -43,6 +43,7 @@
     "window_indigenous_logistics_produced",
     "window_indigenous_logistics_delivered",
     "window_indigenous_logistics_consumed",
+    "window_military_logistics_demanded",
     "window_external_air_intensity",
     "window_external_logistics_offered",
     "window_external_logistics_delivered",
@@ -601,6 +602,10 @@
       "minimum": 0
     },
     "command_service_requirement_per_order": {
+      "type": "number",
+      "minimum": 0
+    },
+    "window_military_logistics_demanded": {
       "type": "number",
       "minimum": 0
     }
