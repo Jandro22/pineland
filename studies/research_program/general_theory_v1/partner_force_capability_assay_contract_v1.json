@@ -1,23 +1,25 @@
 {
-  "schema_version": "pineland.partner_force_capability_assay_contract.v1",
+  "schema_version": "pineland.partner_force_capability_assay_contract.v2",
   "status": "FROZEN_BEFORE_STAGE3_DISCOVERY",
   "historical_outcomes_used": false,
   "outcome_symbol": "C",
   "purpose": "Define a behavioral partner-force capability outcome independently of the indigenous autonomy predictors.",
-  "baseline": "At withdrawal time T, both ON and OFF branches receive the exact same CapabilityAssayBaseline containing military fielded personnel, operational formation count, and geographic coverage. A separate baseline at T-60 is used only to measure pre-withdrawal supported performance.",
+  "baseline": "At withdrawal time T, both ON and OFF branches receive the exact same CapabilityAssayBaseline containing military fielded personnel, operational formation count, geographic coverage, and personnel-weighted deployable operational readiness. A separate baseline at T-60 is used only to measure pre-withdrawal supported performance.",
   "components": {
     "territorial_control": "mean government effective control across localities, bounded [0,1]",
     "personnel_retention": "fielded operational military personnel / shared T baseline personnel, clipped [0,1]",
     "formation_survival": "operational military formation count / shared T baseline formation count, clipped [0,1]",
-    "coverage_retention": "distinct localities covered by operational military formations / shared T baseline coverage, clipped [0,1]"
+    "coverage_retention": "distinct localities covered by operational military formations / shared T baseline coverage, clipped [0,1]",
+    "operational_readiness_retention": "personnel-weighted deployable operational readiness / shared T baseline readiness, clipped [0,1]"
   },
-  "composite": "C = (control * personnel_retention * formation_survival * coverage_retention)^(1/4)",
+  "composite": "C = (control * personnel_retention * formation_survival * coverage_retention * operational_readiness_retention)^(1/5)",
+  "secondary_descriptive": "C_v1 = (control * personnel_retention * formation_survival * coverage_retention)^(1/4)",
   "predictor_firewall": [
     "training/recruitment throughput is not a component of C",
     "logistics production/delivery is not a component of C",
     "command reliability/latency is not a component of C",
     "external support quantities and donor cost are not components of C",
-    "readiness and experience are measured as candidate predictors but are not components of C"
+    "formal autonomy metrics (q-, q+, support lift, bottleneck) are candidate predictors, not components of C"
   ],
-  "interpretation": "C is a synthetic behavioral assay for Pineland, not a validated real-world military-effectiveness index."
+  "interpretation": "C is a synthetic behavioral assay for Pineland incorporating territorial control, force retention, formation survival, geographic presence, and deployable operational readiness, not a validated real-world military-effectiveness index."
 }
