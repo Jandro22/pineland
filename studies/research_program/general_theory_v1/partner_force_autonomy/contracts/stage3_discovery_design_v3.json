@@ -45,15 +45,18 @@
     "seed_base": 2026120000
   },
   "capability_assay": {
-    "schema_version": "pineland.partner_force_capability_assay.v1",
+    "schema_version": "pineland.partner_force_capability_assay.v2",
+    "primary_composite": "unweighted geometric mean of the five bounded [0,1] behavioral components: territorial control, personnel retention, formation survival, geographic coverage retention, and deployable operational readiness retention",
+    "secondary_composite_v1": "unweighted geometric mean of the four non-readiness behavioral components",
     "components": [
       "mean government effective territorial control",
       "fielded military personnel retention relative to the shared T baseline",
       "operational military formation survival relative to the shared T baseline",
-      "military geographic coverage retention relative to the shared T baseline"
+      "military geographic coverage retention relative to the shared T baseline",
+      "personnel-weighted deployable operational readiness retention relative to the shared T baseline"
     ],
-    "composite": "unweighted geometric mean of the four bounded [0,1] behavioral components",
-    "predictor_firewall": "Training throughput, logistics throughput, command reliability, readiness, experience, and external-support ledgers are excluded from the composite capability outcome."
+    "composite": "C = (control * personnel_retention * formation_survival * coverage_retention * readiness_retention)^(1/5)",
+    "predictor_firewall": "Training throughput, logistics production/delivery, command latency/reliability boosts, formal autonomy metrics (q-, q+, support lift, bottleneck), and external-support ledgers are excluded from the composite capability outcome."
   },
   "indigenous_design": {
     "force_generation_multiplier": "multiplies security recruitment and training rates",
