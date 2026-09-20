@@ -103,7 +103,7 @@
     },
     "arc_array_wrapper": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/partner_force_array.sbatch",
-      "sha256": "09184720dc230479bf29bc04598788aa32f3198d30f2fbfd97fb7f73945d543d"
+      "sha256": "7d1af0d0dec4331abdaff4690749f2c374a0ce8cd67319535814a128235930dc"
     },
     "arc_shard_merger": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/merge_partner_force_shards.py",
