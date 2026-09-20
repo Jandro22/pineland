@@ -41,6 +41,9 @@ OUTPUTS_DIR = BASE_DIR / "outputs"
 ARC_DIR = BASE_DIR / "arc"
 
 def active_freeze_path() -> Path:
+    amended_v5 = CONTRACTS_DIR / "partner_force_autonomy_preregistration_freeze_v5.json"
+    if amended_v5.exists():
+        return amended_v5
     amended = CONTRACTS_DIR / "partner_force_autonomy_preregistration_freeze_v4.json"
     if amended.exists():
         return amended
