@@ -35,6 +35,13 @@ wrapper had not passed `--enforce-degeneracy-safeguard` to the merger.  The
 wrapper now enforces that gate before any module analysis or READY artifact can
 be produced.
 
+After the complete Migration production array finished, its first postprocess
+attempt encountered Linux/NFS `ESTALE` while reopening the already-written
+merged trajectory panel for SHA-256 calculation.  This is a shared-filesystem
+I/O condition, not a simulation or analysis failure.  The merger now retries
+only `errno.ESTALE` with a short bounded exponential backoff; every other I/O
+error remains fatal and hashes are still recomputed from the full file bytes.
+
 Module READY artifacts also record both:
 
 - `production_git_commit`: the single commit reported by all production shard

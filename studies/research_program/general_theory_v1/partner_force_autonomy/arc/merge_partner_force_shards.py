@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -46,12 +48,26 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def file_sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for block in iter(lambda: f.read(1024 * 1024), b""):
-            h.update(block)
-    return h.hexdigest()
+def file_sha256(path: Path, *, attempts: int = 5) -> str:
+    """Hash a file, retrying transient NFS stale-handle errors.
+
+    ARC output lives on a shared filesystem.  A completed file can occasionally
+    return ESTALE during immediate reopen/read even though its contents are
+    intact.  Retrying ESTALE changes no scientific data; all other I/O errors
+    remain fatal.
+    """
+    for attempt in range(attempts):
+        try:
+            h = hashlib.sha256()
+            with path.open("rb") as f:
+                for block in iter(lambda: f.read(1024 * 1024), b""):
+                    h.update(block)
+            return h.hexdigest()
+        except OSError as exc:
+            if exc.errno != errno.ESTALE or attempt + 1 >= attempts:
+                raise
+            time.sleep(0.25 * (2**attempt))
+    raise AssertionError("unreachable")
 
 
 def task_id_from_name(path: Path) -> int:
