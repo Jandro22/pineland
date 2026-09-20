@@ -1637,8 +1637,11 @@ fn issue_movement_order(
             .cumulative_indigenous_service += indigenous_command_service;
     }
     let partner_config = &config.partner_force_support;
+    let direct_command_advisory_active = partner_config.command.reliability_boost > 0.0
+        || partner_config.command.latency_reduction_fraction > 0.0;
     if partner_config.enabled
         && partner_config.command.enabled
+        && direct_command_advisory_active
         && !particle.partner_support.support_withdrawn
         && organization == crate::MILITARY
     {
@@ -2051,13 +2054,21 @@ pub(crate) fn calculate_command_advisory_overlay(
     latency_hours: f64,
     partner_config: &pineland_core::config::PartnerForceSupportConfig,
 ) -> (f64, f64) {
+    let baseline_reliability = reliability.clamp(0.0, 1.0);
+    let baseline_latency = latency_hours.max(0.0);
+    if partner_config.command.reliability_boost == 0.0
+        && partner_config.command.latency_reduction_fraction == 0.0
+    {
+        // Preserve a bit-exact no-op for development-only Stage-4 command
+        // support. Recomputing `1 - (1-r)` can differ from `r` by an ulp and
+        // would incorrectly appear as a negative external reliability boost.
+        return (baseline_reliability, baseline_latency);
+    }
     // Independent bounded assistance: the adviser closes a fraction of the
     // remaining reliability gap rather than adding raw reliability points:
     // r_eff = 1 - (1 - r_i) * (1 - b_r)
     let boost_fraction = partner_config.command.reliability_boost.clamp(0.0, 1.0);
-    let boosted =
-        (1.0 - (1.0 - reliability.clamp(0.0, 1.0)) * (1.0 - boost_fraction)).clamp(0.0, 1.0);
-    let baseline_latency = latency_hours.max(0.0);
+    let boosted = (1.0 - (1.0 - baseline_reliability) * (1.0 - boost_fraction)).clamp(0.0, 1.0);
     let assisted_target = (baseline_latency
         * (1.0
             - partner_config

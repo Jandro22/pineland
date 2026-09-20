@@ -202,7 +202,10 @@ def main() -> None:
             if not metadata_path.exists():
                 raise SystemExit(f"missing ARC task metadata for {shard}: {metadata_path}")
             metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-            if metadata.get("schema_version") != "pineland.partner_force_arc_task.v1":
+            if metadata.get("schema_version") not in {
+                "pineland.partner_force_arc_task.v1",
+                "pineland.partner_force_arc_task.stage4.v1",
+            }:
                 raise SystemExit(f"{metadata_path} has unexpected schema_version")
             if int(metadata.get("slurm_array_task_id", -1)) != task_id:
                 raise SystemExit(f"{metadata_path} task id does not match shard filename")

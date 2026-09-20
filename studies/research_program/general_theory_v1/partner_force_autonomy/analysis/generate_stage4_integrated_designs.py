@@ -224,13 +224,11 @@ def bottleneck_migration() -> dict:
     for structure, mults in structures.items():
         expected = structure.split("_")[0] if structure != "near_tie_low" else "mixed"
         for target in targets:
-            for intensity in intensities:
-                # A no-support cell does not need three duplicate intensities;
-                # keep them intentionally because common-random-number matching
-                # across the complete rectangular design simplifies contrasts.
+            target_intensities = [0.0] if target == "none" else intensities
+            for intensity in target_intensities:
                 n += 1
                 cell = base_cell(f"migration_{n:03d}", "none", mults)
-                apply_targeted_substitution(cell, target, 0.0 if target == "none" else intensity)
+                apply_targeted_substitution(cell, target, intensity)
                 cell.update(
                     {
                         "factor_starting_structure": structure,
@@ -240,7 +238,7 @@ def bottleneck_migration() -> dict:
                     }
                 )
                 cells.append(cell)
-    assert len(cells) == 60
+    assert len(cells) == 52
     return contract(
         "partner_force_stage4_bottleneck_migration_v1",
         "Stage 4B: Bottleneck Migration",
