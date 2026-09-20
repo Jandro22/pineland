@@ -115,7 +115,7 @@ Production remains immutable.  Downstream analysis is isolated in:
 - branch: `stage4/postprocess-fix-v1`
 - ARC worktree: `/home/alejandrog/pineland-stage4-postprocess-fix`
 - final postprocessing repair commit:
-  `dfd90826b8c5c9cb40b064e467e16fda7319c426`
+  `7697e6eac83248c7bc03830e58d94a2d878c6635`
 
 Two pre-completion smoke tests found postprocessing defects before the module
 jobs ran:
@@ -127,6 +127,15 @@ jobs ran:
 The fixes are strictly postprocessing-only.  Module READY files now record both
 `production_git_commit` and `analysis_git_commit`; the finalizer requires all
 modules to agree on both.
+
+After all 2,808 production worlds completed, the first complete Migration
+postprocess encountered transient NFS `ESTALE` while reopening the merged
+trajectory file for hashing.  Commit `7697e6e...` added a bounded retry for
+`ESTALE` only.  Phase, Migration, and Mechanism were then reprocessed under the
+same commit, and the integrated finalizer completed successfully.
+
+Final integrated READY status: `STAGE4_INTEGRATED_PROGRAM_COMPLETE`, with 2,808
+worlds, production commit `e369c107...`, and analysis commit `7697e6e...`.
 
 The original downstream jobs `886151`–`886154` and intermediate repaired jobs
 `886884`–`886887` were cancelled before execution.  They produced no accepted

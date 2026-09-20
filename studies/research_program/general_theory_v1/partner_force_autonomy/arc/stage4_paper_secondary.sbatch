@@ -11,7 +11,7 @@ REPO_ROOT="${PINELAND_REPO_ROOT:-/home/alejandrog/pineland-stage4-paper-analysis
 POST_ROOT="${PF_POSTPROCESS_ROOT:-/home/alejandrog/pineland-stage4-postprocess-fix/studies/research_program/general_theory_v1/partner_force_autonomy/outputs/stage4}"
 OUTPUT_DIR="${PF_PAPER_OUTPUT_DIR:-/home/alejandrog/pineland-stage4-paper-results}"
 EXPECTED_PRODUCTION_COMMIT="e369c107f4465ce8cd385a366cafca8c28c04b65"
-EXPECTED_POSTPROCESS_COMMIT="dfd90826b8c5c9cb40b064e467e16fda7319c426"
+EXPECTED_POSTPROCESS_COMMIT="7697e6eac83248c7bc03830e58d94a2d878c6635"
 
 cd "$REPO_ROOT"
 PAPER_COMMIT=$(git rev-parse HEAD)
@@ -76,7 +76,7 @@ payload={
  'schema_version':'pineland.partner_force_stage4_paper_ready.v1',
  'status':'STAGE4_PAPER_SECONDARY_COMPLETE',
  'production_git_commit':'e369c107f4465ce8cd385a366cafca8c28c04b65',
- 'postprocess_git_commit':'dfd90826b8c5c9cb40b064e467e16fda7319c426',
+ 'postprocess_git_commit':'7697e6eac83248c7bc03830e58d94a2d878c6635',
  'paper_analysis_git_commit':paper_commit,
  'integrated_ready_sha256':sha(integrated),
  'summary_sha256':sha(summary),
