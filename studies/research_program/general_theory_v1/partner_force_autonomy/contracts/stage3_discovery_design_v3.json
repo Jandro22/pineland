@@ -1,0 +1,171 @@
+{
+  "schema_version": "pineland.partner_force_autonomy_stage3_discovery_design.v3",
+  "status": "FROZEN_BEFORE_DISCOVERY_EXECUTION_PENDING_FINAL_FREEZE",
+  "historical_outcomes_used": false,
+  "purpose": "Prospective Stage-3 v3 identification design for partner-force structural autonomy and post-withdrawal resilience. It combines mechanistically live combat/support dynamics with a Lean-proved service-feasibility framework, exact paired support-on/support-off branching at T, and a formal primary predictor fixed before discovery outcomes.",
+  "scale": {
+    "smoke": {
+      "agent_count": 300,
+      "locality_count": 34,
+      "horizons_days": [
+        7
+      ],
+      "seeds": 1
+    },
+    "discovery": {
+      "agent_count": 1000,
+      "locality_count": 72,
+      "horizons_days": [
+        7,
+        30,
+        90,
+        180
+      ],
+      "seeds": 12
+    }
+  },
+  "world": {
+    "agent_count": 1000,
+    "locality_count": 72,
+    "agent_count_smoke": 300,
+    "locality_count_smoke": 34,
+    "state_regeneration_enabled": true,
+    "foreign_affairs_enabled": false,
+    "withdrawal_time_days": 120,
+    "prewithdrawal_observation_window_days": 60,
+    "measurement_horizons_days": [
+      7,
+      30,
+      90,
+      180
+    ],
+    "default_seed_count": 12,
+    "seed_base": 2026120000
+  },
+  "capability_assay": {
+    "schema_version": "pineland.partner_force_capability_assay.v1",
+    "components": [
+      "mean government effective territorial control",
+      "fielded military personnel retention relative to the shared T baseline",
+      "operational military formation survival relative to the shared T baseline",
+      "military geographic coverage retention relative to the shared T baseline"
+    ],
+    "composite": "unweighted geometric mean of the four bounded [0,1] behavioral components",
+    "predictor_firewall": "Training throughput, logistics throughput, command reliability, readiness, experience, and external-support ledgers are excluded from the composite capability outcome."
+  },
+  "indigenous_design": {
+    "force_generation_multiplier": "multiplies security recruitment and training rates",
+    "logistics_multiplier": "multiplies indigenous logistics source daily production fraction",
+    "command_multiplier": "applied at initialization to indigenous formation command and command-edge reliability, with inverse scaling of indigenous latency",
+    "prospective_profiles_count": 10,
+    "levels_are_synthetic": true
+  },
+  "support_design": {
+    "type": "removable substitution only",
+    "profiles": [
+      "none",
+      "balanced",
+      "air_heavy",
+      "logistics_heavy",
+      "command_heavy",
+      "forcegen_heavy"
+    ],
+    "equal_cost_policy_comparison": false,
+    "non_saturation_justification": {
+      "air_intensity": "Levels 0.08, 0.35, 0.90 cover light to decisive fire support without trivializing insurgent survival or causing floor/ceiling saturation in combat.",
+      "logistics_throughput": "Levels 100, 450, 1200 supply units/day span austerity, replacement, and high surge without exceeding formation storage buffers.",
+      "command_advisory": "Boosts 0.05, 0.18, 0.55 and latency reductions 0.05, 0.20, 0.55 ensure effective reliability r_eff remains below 1.0 and latency stays above the physical minimum floor.",
+      "force_generation": "Training boosts 0.0015, 0.006, 0.035 day^-1 accelerate training throughput without depleting the recruit pipeline to zero."
+    },
+    "warning": "Stage 3 identifies autonomy and dependence. It must not be interpreted as a comparison of optimal assistance policies."
+  },
+  "cell_manifest": "studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v3.csv",
+  "preflight_gate": {
+    "mechanism_verification": "12 representative worlds must pass combat liveness, detected air delivery, logistics, force generation, command, exact none-support counterfactuals, downstream operational ON/OFF divergence, and encounter realism.",
+    "world_count": 12,
+    "cli_option": "--preflight-gate",
+    "encounter_realism": {
+      "aggregate_forced_same_locality_microzone_fallback_fraction_max": 0.25,
+      "per_contacted_world_fallback_fraction_max": 0.5
+    },
+    "branch_divergence_rule": "Donor ledgers and pre-T donor cost do not count. Divergence requires decision-state, capability, readiness, supply-stock, or active-formation divergence."
+  },
+  "execution_gate": "The Rust runner requires --execute and passes --preflight-gate. Without --execute, it prints the design and exits before creating a SimulationEngine.",
+  "model_selection_protocol": {
+    "target_horizons_days": [
+      90,
+      180
+    ],
+    "primary_coordinate": "formal_q_indigenous",
+    "primary_coordinate_selection": "PREREGISTERED_NO_POSTHOC_SELECTION",
+    "primary_mapping": "horizon-specific monotone isotonic mapping from q_indigenous to autonomy_ratio, fit on discovery and then frozen for zero-refit transport holdouts",
+    "comparators": [
+      "omega_min",
+      "omega_geo",
+      "omega_mean",
+      "regularized_additive"
+    ],
+    "comparator_role": "descriptive/exploratory model comparison; comparator performance cannot replace the formal primary predictor after discovery results are seen",
+    "rationale": "The formal q coordinate is derived from a proof-backed service-feasibility model fixed before outcomes; 90d/180d target long-horizon withdrawal resilience."
+  },
+  "raw_branch_schema": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_raw_branch_schema_v4.json",
+  "trajectory_schema": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_trajectory_schema_v2.json",
+  "formal_structural_autonomy": {
+    "proof_source": "studies/research_program/general_theory_v1/partner_force_autonomy/formal/partner_force_theory/PinelandPartnerForceTheory/PartnerForce.lean",
+    "definition": "q = min_i s_i/d_i over positive-demand regenerative service channels",
+    "primary_predictor": "formal_q_indigenous",
+    "supported_coordinate": "formal_q_supported",
+    "support_lift": "min(q_supported,1)-min(q_indigenous,1)",
+    "regimes": {
+      "AUTONOMOUS": "q_indigenous >= 1",
+      "DEPENDENT": "q_indigenous < 1 <= q_supported",
+      "OVERMATCHED": "q_supported < 1"
+    },
+    "zero_demand_rule": "Zero-demand channels are excluded from the bottleneck. If every formal service has zero demand in a trajectory interval, q is undefined and encoded -1 with NO_ACTIVE_DEMAND.",
+    "services": {
+      "force_generation": {
+        "demand": "military losses in observation window (replacement demand, personnel equivalents)",
+        "indigenous_service": "indigenous security training graduates in same window",
+        "external_service": "external incremental graduates in same window"
+      },
+      "logistics": {
+        "demand": "indigenous military logistics consumption in same window (supply units)",
+        "indigenous_service": "indigenous logistics delivered in same window",
+        "external_service": "external partner logistics delivered in same window",
+        "buffer_rule": "supply stock is a buffer diagnostic and is not added to q flow service"
+      },
+      "command": {
+        "demand": "military movement-order opportunities * 0.5 timely-success service equivalents",
+        "indigenous_service": "sum over military order opportunities of reliability * exp(-latency_hours/24) before partner overlay",
+        "external_service": "supported command service minus indigenous command service",
+        "reference_requirement_per_order": 0.5,
+        "threshold_status": "preregistered reference-mission adequacy threshold; not fitted to outcomes"
+      }
+    },
+    "air_role": "Air support is modeled and measured as combat augmentation with opportunity/detection/delivery telemetry. It is excluded from q until a defensible like-unit indigenous air-service denominator exists.",
+    "external_share_rule": "external_share_* variables are exposure covariates, not structural dependence labels",
+    "immutability": "Service definitions, command threshold, q formula, and regime boundaries may not be changed after discovery outcomes are observed.",
+    "estimand_scope": {
+      "primary_predictive_estimand": "world-horizon observations with at least one positive formal service demand at T",
+      "no_active_demand_rule": "NO_ACTIVE_DEMAND/q=-1 observations remain in raw/trajectory reporting but are excluded from formal-q isotonic fitting, rank correlation, and MAE because q is mathematically undefined rather than low.",
+      "exclusion_timing": "fixed before discovery outcomes; based only on pre-T service demand."
+    }
+  },
+  "engineering_assays": {
+    "cli_option": "--run-assays",
+    "all_must_pass_before_production": true,
+    "assays": [
+      "outcome sensitivity",
+      "post-T channel isolation with downstream consequence",
+      "formal deficit-closure binding for forcegen/logistics/command plus air augmentation",
+      "0x/0.5x/1x/2x dose-exposure monotonicity for all four support channels",
+      "withdrawal shock immediate severing",
+      "180-vs-360 horizon sufficiency (<=10% relative divergence change after day 180)",
+      "end-to-end combat/support/loss/replacement/capability causal trace"
+    ]
+  },
+  "historical_firewall": {
+    "historical_outcomes_used": false,
+    "rule": "No Afghanistan or other historical outcome calibration may alter v3 formulas, service semantics, thresholds, cells, or acceptance gates before the synthetic discovery/holdout program is complete."
+  }
+}

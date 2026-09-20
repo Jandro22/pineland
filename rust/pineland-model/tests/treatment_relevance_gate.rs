@@ -43,6 +43,10 @@ fn treatment_relevance_gate_12_worlds() {
         "Supported Branch Divergence check failed: active treated cells exhibited degenerate identical ON and OFF branches"
     );
     assert!(
+        summary.encounter_realism_pass,
+        "Encounter realism failed: too much combat depended on forced same-locality microzone fallback"
+    );
+    assert!(
         summary.overall_pass,
         "Preflight Treatment-Relevance Gate failed overall verification"
     );

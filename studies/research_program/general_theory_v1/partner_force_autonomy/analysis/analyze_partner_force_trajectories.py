@@ -20,7 +20,7 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 BASE = HERE.parent
 CONTRACTS = BASE / "contracts"
-CELLS = BASE / "configs" / "stage3_discovery_cells_v1.csv"
+CELLS = BASE / "configs" / "stage3_discovery_cells_v3.csv"
 
 
 STATE_TREND_COLUMNS = [
@@ -48,6 +48,7 @@ FLOW_COLUMNS = [
     "interval_logistics_system_lost",
     "interval_contacts",
     "interval_organized_actions",
+    "interval_external_air_opportunities",
     "interval_external_air_assisted_contacts",
     "interval_external_air_intensity",
     "interval_external_air_firepower_bonus",
@@ -55,6 +56,9 @@ FLOW_COLUMNS = [
     "interval_external_logistics_delivered",
     "interval_external_logistics_rejected",
     "interval_external_logistics_lost",
+    "interval_command_opportunities",
+    "interval_command_indigenous_service",
+    "interval_command_supported_service",
     "interval_external_command_events",
     "interval_command_reliability_boost",
     "interval_command_latency_hours_saved",
@@ -77,10 +81,10 @@ def _slope(x: Iterable[float], y: Iterable[float]) -> float:
 
 def validate_trajectory_panel(df: pd.DataFrame) -> None:
     schema = json.loads(
-        (CONTRACTS / "partner_force_trajectory_schema_v1.json").read_text(encoding="utf-8")
+        (CONTRACTS / "partner_force_trajectory_schema_v2.json").read_text(encoding="utf-8")
     )
     contract = json.loads(
-        (CONTRACTS / "partner_force_trajectory_contract_v1.json").read_text(encoding="utf-8")
+        (CONTRACTS / "partner_force_trajectory_contract_v2.json").read_text(encoding="utf-8")
     )
     expected_columns = set(schema["properties"])
     if set(df.columns) != expected_columns:
@@ -114,6 +118,9 @@ def build_pair_trajectory(df: pd.DataFrame) -> pd.DataFrame:
         "supply_stock",
         "command_reliability",
         "command_latency_hours",
+        "interval_formal_q_indigenous",
+        "interval_formal_q_supported",
+        "interval_formal_support_lift",
         "insurgent_personnel",
         "insurgent_territorial_control",
     ]

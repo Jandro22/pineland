@@ -13,8 +13,8 @@
 //! 6. Counterfactual Exactness: negative control ON == OFF bit-for-bit
 //! 7. Supported Branch Divergence: treated cells show non-degenerate divergence
 
-use pineland_core::config::SimulationConfig;
 use crate::{CapabilityAssayBaseline, SimulationEngine, MILITARY};
+use pineland_core::config::SimulationConfig;
 use std::fmt::Write as _;
 
 #[derive(Clone, Debug)]
@@ -68,6 +68,8 @@ pub struct GateWorldRecord {
     pub profile: String,
     pub seed: u64,
     pub contacts: u64,
+    pub forced_contact_fallbacks: u64,
+    pub fallback_fraction: f64,
     pub military_losses: f64,
     pub air_assisted: u64,
     pub air_donor_cost: f64,
@@ -96,6 +98,7 @@ pub struct GateSummary {
     pub command_liveness_pass: bool,
     pub counterfactual_exactness_pass: bool,
     pub branch_divergence_pass: bool,
+    pub encounter_realism_pass: bool,
     pub overall_pass: bool,
     pub table: String,
 }
@@ -351,7 +354,10 @@ pub fn default_12_worlds() -> Vec<GateCellSpec> {
     ]
 }
 
-pub fn build_gate_config(spec: &GateCellSpec, options: &GateOptions) -> Result<SimulationConfig, String> {
+pub fn build_gate_config(
+    spec: &GateCellSpec,
+    options: &GateOptions,
+) -> Result<SimulationConfig, String> {
     let mut config = SimulationConfig::default();
     config.seed = spec.seed;
     config.random_stream_namespace = "partner-force-autonomy-gate-v2".to_string();
@@ -367,7 +373,7 @@ pub fn build_gate_config(spec: &GateCellSpec, options: &GateOptions) -> Result<S
     config.logistics.source_daily_production_fraction *= spec.logistics_mult;
 
     let p = &mut config.partner_force_support;
-    p.enabled = true;
+    p.enabled = false;
     p.air.enabled = spec.air_intensity > 0.0;
     p.air.intensity = spec.air_intensity;
     p.air.firepower_bonus = spec.air_bonus;
@@ -377,7 +383,8 @@ pub fn build_gate_config(spec: &GateCellSpec, options: &GateOptions) -> Result<S
     p.logistics.daily_delivery_rate = spec.logistics_rate;
     p.logistics.max_daily_capacity = spec.logistics_capacity.max(spec.logistics_rate);
     p.logistics.cost_per_supply_delivered = spec.logistics_cost_per_unit;
-    p.command.enabled = spec.command_reliability_boost > 0.0 || spec.command_latency_reduction_fraction > 0.0;
+    p.command.enabled =
+        spec.command_reliability_boost > 0.0 || spec.command_latency_reduction_fraction > 0.0;
     p.command.reliability_boost = spec.command_reliability_boost;
     p.command.latency_reduction_fraction = spec.command_latency_reduction_fraction;
     p.command.min_latency_floor_hours = spec.command_floor_hours;
@@ -387,6 +394,8 @@ pub fn build_gate_config(spec: &GateCellSpec, options: &GateOptions) -> Result<S
     p.force_generation.training_rate_boost = spec.forcegen_training_rate_boost;
     p.force_generation.cost_per_incremental_trainee = spec.forcegen_cost_per_incremental_trainee;
     p.force_generation.capacity_building_investment_rate = 0.0;
+    p.enabled =
+        p.air.enabled || p.logistics.enabled || p.command.enabled || p.force_generation.enabled;
 
     config.validate().map_err(|e| e.to_string())?;
     Ok(config)
@@ -399,7 +408,8 @@ pub fn apply_indigenous_command_multiplier(engine: &mut SimulationEngine, mult: 
     let p = &mut engine.particle;
     for formation in 0..p.formations.personnel.len() {
         if p.formations.organization[formation] as usize == MILITARY {
-            p.formations.command[formation] = (p.formations.command[formation] * mult).clamp(0.05, 1.0);
+            p.formations.command[formation] =
+                (p.formations.command[formation] * mult).clamp(0.05, 1.0);
         }
     }
     for edge in 0..p.command_edges.organization.len() {
@@ -422,39 +432,137 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
         apply_indigenous_command_multiplier(&mut engine, spec.command_mult);
 
         // Advance to observation start
-        engine.advance_until(options.observation_start_days).map_err(|e| e.to_string())?;
+        engine
+            .advance_until(options.observation_start_days)
+            .map_err(|e| e.to_string())?;
         let _obs_baseline: CapabilityAssayBaseline = engine.capability_assay_baseline();
+        let contacts_start = engine.particle.counters.contacts;
+        let fallback_start = engine
+            .particle
+            .counters
+            .event_counts
+            .get("armed_contact_fallbacks")
+            .copied()
+            .unwrap_or(0);
         let air_contacts_start = engine.particle.partner_support.air.assisted_contacts;
         let air_cost_start = engine.particle.partner_support.air.cumulative_donor_cost;
-        let log_deliv_start = engine.particle.partner_support.logistics.cumulative_delivered;
-        let log_cost_start = engine.particle.partner_support.logistics.cumulative_donor_cost;
+        let log_deliv_start = engine
+            .particle
+            .partner_support
+            .logistics
+            .cumulative_delivered;
+        let log_cost_start = engine
+            .particle
+            .partner_support
+            .logistics
+            .cumulative_donor_cost;
         let cmd_events_start = engine.particle.partner_support.command.assisted_events;
-        let cmd_latency_start = engine.particle.partner_support.command.cumulative_latency_reduction_hours;
-        let cmd_cost_start = engine.particle.partner_support.command.cumulative_donor_cost;
-        let fg_grads_start = engine.particle.partner_support.force_generation.external_incremental_graduates;
-        let fg_cost_start = engine.particle.partner_support.force_generation.cumulative_donor_cost;
-        let military_losses_start: f64 = engine.particle.formations.cumulative_losses.iter().enumerate()
+        let cmd_latency_start = engine
+            .particle
+            .partner_support
+            .command
+            .cumulative_latency_reduction_hours;
+        let cmd_cost_start = engine
+            .particle
+            .partner_support
+            .command
+            .cumulative_donor_cost;
+        let fg_grads_start = engine
+            .particle
+            .partner_support
+            .force_generation
+            .external_incremental_graduates;
+        let fg_cost_start = engine
+            .particle
+            .partner_support
+            .force_generation
+            .cumulative_donor_cost;
+        let military_losses_start: f64 = engine
+            .particle
+            .formations
+            .cumulative_losses
+            .iter()
+            .enumerate()
             .filter(|(i, _)| engine.particle.formations.organization[*i] as usize == MILITARY)
             .map(|(_, l)| *l)
             .sum();
 
         // Advance through pre-withdrawal support window to T=120
-        engine.advance_until(options.withdrawal_time_days).map_err(|e| e.to_string())?;
-        let air_assisted = engine.particle.partner_support.air.assisted_contacts - air_contacts_start;
-        let air_donor_cost = engine.particle.partner_support.air.cumulative_donor_cost - air_cost_start;
-        let logistics_delivered = engine.particle.partner_support.logistics.cumulative_delivered - log_deliv_start;
-        let logistics_donor_cost = engine.particle.partner_support.logistics.cumulative_donor_cost - log_cost_start;
-        let command_events = engine.particle.partner_support.command.assisted_events - cmd_events_start;
-        let command_latency_saved = engine.particle.partner_support.command.cumulative_latency_reduction_hours - cmd_latency_start;
-        let command_donor_cost = engine.particle.partner_support.command.cumulative_donor_cost - cmd_cost_start;
-        let forcegen_graduates = engine.particle.partner_support.force_generation.external_incremental_graduates - fg_grads_start;
-        let forcegen_donor_cost = engine.particle.partner_support.force_generation.cumulative_donor_cost - fg_cost_start;
-        let military_losses: f64 = engine.particle.formations.cumulative_losses.iter().enumerate()
+        engine
+            .advance_until(options.withdrawal_time_days)
+            .map_err(|e| e.to_string())?;
+        let air_assisted =
+            engine.particle.partner_support.air.assisted_contacts - air_contacts_start;
+        let air_donor_cost =
+            engine.particle.partner_support.air.cumulative_donor_cost - air_cost_start;
+        let logistics_delivered = engine
+            .particle
+            .partner_support
+            .logistics
+            .cumulative_delivered
+            - log_deliv_start;
+        let logistics_donor_cost = engine
+            .particle
+            .partner_support
+            .logistics
+            .cumulative_donor_cost
+            - log_cost_start;
+        let command_events =
+            engine.particle.partner_support.command.assisted_events - cmd_events_start;
+        let command_latency_saved = engine
+            .particle
+            .partner_support
+            .command
+            .cumulative_latency_reduction_hours
+            - cmd_latency_start;
+        let command_donor_cost = engine
+            .particle
+            .partner_support
+            .command
+            .cumulative_donor_cost
+            - cmd_cost_start;
+        let forcegen_graduates = engine
+            .particle
+            .partner_support
+            .force_generation
+            .external_incremental_graduates
+            - fg_grads_start;
+        let forcegen_donor_cost = engine
+            .particle
+            .partner_support
+            .force_generation
+            .cumulative_donor_cost
+            - fg_cost_start;
+        let military_losses: f64 = engine
+            .particle
+            .formations
+            .cumulative_losses
+            .iter()
+            .enumerate()
             .filter(|(i, _)| engine.particle.formations.organization[*i] as usize == MILITARY)
             .map(|(_, l)| *l)
-            .sum::<f64>() - military_losses_start;
-        let contacts = engine.particle.counters.contacts;
-        let total_donor_cost = air_donor_cost + logistics_donor_cost + command_donor_cost + forcegen_donor_cost;
+            .sum::<f64>()
+            - military_losses_start;
+        let contacts = engine
+            .particle
+            .counters
+            .contacts
+            .saturating_sub(contacts_start);
+        let forced_contact_fallbacks = engine
+            .particle
+            .counters
+            .event_counts
+            .get("armed_contact_fallbacks")
+            .copied()
+            .unwrap_or(0)
+            .saturating_sub(fallback_start);
+        let fallback_fraction = if contacts > 0 {
+            forced_contact_fallbacks as f64 / contacts as f64
+        } else {
+            0.0
+        };
+        let total_donor_cost =
+            air_donor_cost + logistics_donor_cost + command_donor_cost + forcegen_donor_cost;
 
         let outcome_baseline = engine.capability_assay_baseline();
 
@@ -472,19 +580,26 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
 
         let is_none = spec.support_profile == "none";
         let counterfactual_exact = if is_none {
-            on.decision_hash() == off.decision_hash()
+            on.state_hash() == off.state_hash()
+                && on.decision_hash() == off.decision_hash()
                 && (assay_on.composite_capability - assay_off.composite_capability).abs() < 1e-12
                 && total_donor_cost.abs() < 1e-12
         } else {
             true
         };
 
+        // Operational divergence must be downstream of the intervention.
+        // Donor-ledger differences and pre-T accumulated cost do not count.
         let branch_diverged = if !is_none {
-            // Active cells must show divergence in state, decisions, capability, or post-donor cost
-            on.state_hash() != off.state_hash()
-                || on.decision_hash() != off.decision_hash()
+            on.decision_hash() != off.decision_hash()
                 || (assay_on.composite_capability - assay_off.composite_capability).abs() > 1e-9
-                || on.particle.partner_support.cumulative_donor_cost() > 0.0
+                || (on.mean_military_readiness() - off.mean_military_readiness()).abs() > 1e-9
+                || (on.min_operational_military_supply_stock()
+                    - off.min_operational_military_supply_stock())
+                .abs()
+                    > 1e-6
+                || on.active_operational_military_formations()
+                    != off.active_operational_military_formations()
         } else {
             false
         };
@@ -515,6 +630,8 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
             profile: spec.support_profile.to_string(),
             seed: spec.seed,
             contacts,
+            forced_contact_fallbacks,
+            fallback_fraction,
             military_losses,
             air_assisted,
             air_donor_cost,
@@ -530,30 +647,53 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
             branch_diverged,
             composite_on: assay_on.composite_capability,
             composite_off: assay_off.composite_capability,
-            status: if world_pass { "PASS".to_string() } else { "FAIL".to_string() },
+            status: if world_pass {
+                "PASS".to_string()
+            } else {
+                "FAIL".to_string()
+            },
         });
     }
 
     // Verify overall criteria
-    let combat_liveness_pass = records.iter().any(|r| r.contacts > 0 && r.military_losses > 0.0);
-    let air_liveness_pass = records.iter()
+    let combat_liveness_pass = records
+        .iter()
+        .any(|r| r.contacts > 0 && r.military_losses > 0.0);
+    let air_liveness_pass = records
+        .iter()
         .filter(|r| r.profile == "air_heavy")
         .all(|r| r.air_assisted > 0 && r.air_donor_cost > 0.0);
-    let logistics_liveness_pass = records.iter()
+    let logistics_liveness_pass = records
+        .iter()
         .filter(|r| r.profile == "logistics_heavy" || r.profile == "balanced")
         .all(|r| r.logistics_delivered > 0.0 && r.logistics_donor_cost > 0.0);
-    let forcegen_liveness_pass = records.iter()
+    let forcegen_liveness_pass = records
+        .iter()
         .filter(|r| r.profile == "forcegen_heavy" || r.profile == "balanced")
         .all(|r| r.forcegen_graduates > 0.0 && r.forcegen_donor_cost > 0.0);
-    let command_liveness_pass = records.iter()
+    let command_liveness_pass = records
+        .iter()
         .filter(|r| r.profile == "command_heavy" || r.profile == "balanced")
         .all(|r| r.command_events > 0 && r.command_donor_cost > 0.0);
-    let counterfactual_exactness_pass = records.iter()
+    let counterfactual_exactness_pass = records
+        .iter()
         .filter(|r| r.profile == "none")
         .all(|r| r.counterfactual_exact);
-    let branch_divergence_pass = records.iter()
+    let branch_divergence_pass = records
+        .iter()
         .filter(|r| r.profile != "none")
         .all(|r| r.branch_diverged);
+    let total_contacts: u64 = records.iter().map(|r| r.contacts).sum();
+    let total_fallbacks: u64 = records.iter().map(|r| r.forced_contact_fallbacks).sum();
+    let aggregate_fallback_fraction = if total_contacts > 0 {
+        total_fallbacks as f64 / total_contacts as f64
+    } else {
+        0.0
+    };
+    let encounter_realism_pass = aggregate_fallback_fraction <= 0.25
+        && records
+            .iter()
+            .all(|r| r.contacts == 0 || r.fallback_fraction <= 0.50);
 
     let overall_pass = combat_liveness_pass
         && air_liveness_pass
@@ -561,26 +701,50 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
         && forcegen_liveness_pass
         && command_liveness_pass
         && counterfactual_exactness_pass
-        && branch_divergence_pass;
+        && branch_divergence_pass
+        && encounter_realism_pass;
 
     let mut table = String::new();
     let _ = writeln!(table, "\n============================================================================================================================================");
-    let _ = writeln!(table, "PREFLIGHT TREATMENT-RELEVANCE GATE (12-WORLD VALIDATION BATTERY)");
+    let _ = writeln!(
+        table,
+        "PREFLIGHT TREATMENT-RELEVANCE GATE (12-WORLD VALIDATION BATTERY)"
+    );
     let _ = writeln!(table, "============================================================================================================================================");
     let _ = writeln!(
         table,
         "{:<12} {:<15} {:<10} {:>8} {:>8} {:>14} {:>18} {:>14} {:>16} {:>10} {:>6}",
-        "Cell ID", "Profile", "Seed", "Contacts", "Losses", "Air Ast/Cost", "Log Deliv/Cost", "Cmd Evt/Cost", "FG Grad/Cost", "Diff", "Status"
+        "Cell ID",
+        "Profile",
+        "Seed",
+        "Contacts",
+        "Losses",
+        "Air Ast/Cost",
+        "Log Deliv/Cost",
+        "Cmd Evt/Cost",
+        "FG Grad/Cost",
+        "Diff",
+        "Status"
     );
     let _ = writeln!(table, "--------------------------------------------------------------------------------------------------------------------------------------------");
 
     for r in &records {
         let air_str = format!("{} / ${:.0}", r.air_assisted, r.air_donor_cost);
-        let log_str = format!("{:.0} / ${:.0}", r.logistics_delivered, r.logistics_donor_cost);
+        let log_str = format!(
+            "{:.0} / ${:.0}",
+            r.logistics_delivered, r.logistics_donor_cost
+        );
         let cmd_str = format!("{} / ${:.0}", r.command_events, r.command_donor_cost);
-        let fg_str = format!("{:.1} / ${:.0}", r.forcegen_graduates, r.forcegen_donor_cost);
+        let fg_str = format!(
+            "{:.1} / ${:.0}",
+            r.forcegen_graduates, r.forcegen_donor_cost
+        );
         let diff_str = if r.profile == "none" {
-            if r.counterfactual_exact { "EXACT" } else { "MISMATCH" }
+            if r.counterfactual_exact {
+                "EXACT"
+            } else {
+                "MISMATCH"
+            }
         } else if r.branch_diverged {
             "DIVERGES"
         } else {
@@ -589,21 +753,105 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
         let _ = writeln!(
             table,
             "{:<12} {:<15} {:<10} {:>8} {:>8.1} {:>14} {:>18} {:>14} {:>16} {:>10} {:>6}",
-            r.cell_id, r.profile, r.seed, r.contacts, r.military_losses, air_str, log_str, cmd_str, fg_str, diff_str, r.status
+            r.cell_id,
+            r.profile,
+            r.seed,
+            r.contacts,
+            r.military_losses,
+            air_str,
+            log_str,
+            cmd_str,
+            fg_str,
+            diff_str,
+            r.status
         );
     }
 
     let _ = writeln!(table, "--------------------------------------------------------------------------------------------------------------------------------------------");
     let _ = writeln!(table, "MECHANISM VERIFICATION SUMMARY:");
-    let _ = writeln!(table, "1. Combat Liveness:               {}", if combat_liveness_pass { "PASS (Active contacts and military losses sustained)" } else { "FAIL (Zero combat or losses)" });
-    let _ = writeln!(table, "2. Air Support Liveness:          {}", if air_liveness_pass { "PASS (Air assisted contacts > 0 and donor cost charged)" } else { "FAIL (Air support inert)" });
-    let _ = writeln!(table, "3. Logistics Support Liveness:    {}", if logistics_liveness_pass { "PASS (External supply delivered and donor cost charged)" } else { "FAIL (Logistics inert)" });
-    let _ = writeln!(table, "4. Force Generation Liveness:     {}", if forcegen_liveness_pass { "PASS (External graduates deployed and donor cost charged)" } else { "FAIL (ForceGen inert)" });
-    let _ = writeln!(table, "5. Command Support Liveness:      {}", if command_liveness_pass { "PASS (Command events assisted and donor cost charged)" } else { "FAIL (Command inert)" });
-    let _ = writeln!(table, "6. Counterfactual Exactness:      {}", if counterfactual_exactness_pass { "PASS (None profile ON == OFF bit-for-bit exact)" } else { "FAIL (Non-zero drift in negative control)" });
-    let _ = writeln!(table, "7. Supported Branch Divergence:   {}", if branch_divergence_pass { "PASS (Treated cells produce non-degenerate divergence)" } else { "FAIL (Treated branches degenerate)" });
+    let _ = writeln!(
+        table,
+        "1. Combat Liveness:               {}",
+        if combat_liveness_pass {
+            "PASS (Active contacts and military losses sustained)"
+        } else {
+            "FAIL (Zero combat or losses)"
+        }
+    );
+    let _ = writeln!(
+        table,
+        "2. Air Support Liveness:          {}",
+        if air_liveness_pass {
+            "PASS (Air assisted contacts > 0 and donor cost charged)"
+        } else {
+            "FAIL (Air support inert)"
+        }
+    );
+    let _ = writeln!(
+        table,
+        "3. Logistics Support Liveness:    {}",
+        if logistics_liveness_pass {
+            "PASS (External supply delivered and donor cost charged)"
+        } else {
+            "FAIL (Logistics inert)"
+        }
+    );
+    let _ = writeln!(
+        table,
+        "4. Force Generation Liveness:     {}",
+        if forcegen_liveness_pass {
+            "PASS (External graduates deployed and donor cost charged)"
+        } else {
+            "FAIL (ForceGen inert)"
+        }
+    );
+    let _ = writeln!(
+        table,
+        "5. Command Support Liveness:      {}",
+        if command_liveness_pass {
+            "PASS (Command events assisted and donor cost charged)"
+        } else {
+            "FAIL (Command inert)"
+        }
+    );
+    let _ = writeln!(
+        table,
+        "6. Counterfactual Exactness:      {}",
+        if counterfactual_exactness_pass {
+            "PASS (None profile ON == OFF bit-for-bit exact)"
+        } else {
+            "FAIL (Non-zero drift in negative control)"
+        }
+    );
+    let _ = writeln!(
+        table,
+        "7. Supported Branch Divergence:   {}",
+        if branch_divergence_pass {
+            "PASS (Treated cells produce downstream operational divergence)"
+        } else {
+            "FAIL (Treated branches operationally degenerate)"
+        }
+    );
+    let _ = writeln!(
+        table,
+        "8. Encounter Realism:             {} (forced fallback share {:.1}%)",
+        if encounter_realism_pass {
+            "PASS"
+        } else {
+            "FAIL"
+        },
+        aggregate_fallback_fraction * 100.0
+    );
     let _ = writeln!(table, "============================================================================================================================================");
-    let _ = writeln!(table, "OVERALL GATE RESULT: {}", if overall_pass { "PASSED (All 12 representative worlds verified)" } else { "FAILED (One or more essential mechanisms inert)" });
+    let _ = writeln!(
+        table,
+        "OVERALL GATE RESULT: {}",
+        if overall_pass {
+            "PASSED (All 12 representative worlds verified)"
+        } else {
+            "FAILED (One or more essential mechanisms inert)"
+        }
+    );
     let _ = writeln!(table, "============================================================================================================================================\n");
 
     if options.verbose {
@@ -619,6 +867,7 @@ pub fn run_preflight_treatment_gate(options: &GateOptions) -> Result<GateSummary
         command_liveness_pass,
         counterfactual_exactness_pass,
         branch_divergence_pass,
+        encounter_realism_pass,
         overall_pass,
         table,
     })

@@ -75,8 +75,16 @@ def _fit_single_model(
     winner: str,
     df_sub: pd.DataFrame,
 ) -> Dict[str, Any]:
+    original_n = len(df_sub)
+    if winner == "formal_q_indigenous":
+        df_sub = df_sub[
+            np.isfinite(df_sub["formal_q_indigenous"].to_numpy(float))
+            & (df_sub["formal_q_indigenous"].to_numpy(float) >= 0.0)
+        ].copy()
+        if df_sub.empty:
+            raise ValueError("formal q estimand has no active-demand observations to fit")
     y = df_sub["autonomy_ratio"].to_numpy(float)
-    if winner in ("omega_min", "omega_mean", "omega_geo"):
+    if winner in ("formal_q_indigenous", "omega_min", "omega_mean", "omega_geo"):
         x = df_sub[winner].to_numpy(float)
         if len(np.unique(x)) >= 2:
             iso = IsotonicRegression(out_of_bounds="clip", increasing=True).fit(x, y)
@@ -98,6 +106,7 @@ def _fit_single_model(
             "functional_form": "isotonic_regression",
             "coordinate": winner,
             "n_obs": int(len(x)),
+            "n_no_active_demand_excluded": int(original_n - len(df_sub)),
             "knots_x": knots_x,
             "knots_y": knots_y,
             "in_sample_spearman_rho": 0.0 if np.isnan(rho) else rho,
@@ -151,23 +160,30 @@ def fit_and_export_frozen_predictor(
     pooled_res = evaluate_bottleneck_competitors(paired)
     pooled_metrics = pooled_res["metrics"]
 
-    # Preregistered tie-break rule: on diff < 1e-4, priority order
-    priority = ["omega_min", "omega_geo", "omega_mean", "regularized_additive"]
-    best_rmse = float("inf")
-    for cand in ranking:
-        m = target_metrics.get(cand, {})
-        rmse = m.get("grouped_cv_isotonic_rmse", m.get("rmse", float("inf")))
-        if not np.isnan(rmse) and rmse < best_rmse:
-            best_rmse = rmse
-
-    close_candidates = []
-    for cand in ranking:
-        m = target_metrics.get(cand, {})
-        rmse = m.get("grouped_cv_isotonic_rmse", m.get("rmse", float("inf")))
-        if not np.isnan(rmse) and (rmse - best_rmse) <= 1e-4:
-            close_candidates.append(cand)
-
-    winner = min(close_candidates, key=lambda c: priority.index(c)) if close_candidates else ranking[0]
+    # Stage 3 v3 preregisters the Lean-derived q- coordinate as the primary
+    # theory. Legacy Omega coordinates remain explicit discovery comparators and
+    # can outperform q without replacing the confirmatory specification.
+    if "formal_q_indigenous" in selection_df.columns:
+        priority = ["formal_q_indigenous", "omega_min", "omega_geo", "omega_mean", "regularized_additive"]
+        winner = "formal_q_indigenous"
+        selection_mode = "PREREGISTERED_FORMAL_PRIMARY_NO_POSTHOC_SELECTION"
+    else:
+        # Historical v1/v2 compatibility: retain the original discovery tie rule.
+        priority = ["omega_min", "omega_geo", "omega_mean", "regularized_additive"]
+        best_rmse = float("inf")
+        for cand in ranking:
+            m = target_metrics.get(cand, {})
+            rmse = m.get("grouped_cv_isotonic_rmse", m.get("rmse", float("inf")))
+            if not np.isnan(rmse) and rmse < best_rmse:
+                best_rmse = rmse
+        close_candidates = []
+        for cand in ranking:
+            m = target_metrics.get(cand, {})
+            rmse = m.get("grouped_cv_isotonic_rmse", m.get("rmse", float("inf")))
+            if not np.isnan(rmse) and (rmse - best_rmse) <= 1e-4:
+                close_candidates.append(cand)
+        winner = min(close_candidates, key=lambda c: priority.index(c)) if close_candidates else ranking[0]
+        selection_mode = "HISTORICAL_DISCOVERY_SELECTION"
 
     # Fit horizon-specific models for all horizons present in paired
     horizons = sorted(paired["horizon_days"].unique())
@@ -179,7 +195,7 @@ def fit_and_export_frozen_predictor(
     # Fit overall model
     overall_model = _fit_single_model(winner, paired)
 
-    freeze_manifest_path = BASE / "contracts" / "partner_force_autonomy_preregistration_freeze_v1.json"
+    freeze_manifest_path = BASE / "contracts" / "partner_force_autonomy_preregistration_freeze_v3.json"
     bundle = {
         "schema_version": "pineland.partner_force_autonomy_frozen_predictor.v1",
         "status": "FROZEN_PREDICTOR_READY_FOR_ZERO_REFIT_HOLDOUTS",
@@ -191,7 +207,8 @@ def fit_and_export_frozen_predictor(
             "preregistration_freeze_sha256": get_file_sha256(freeze_manifest_path),
         },
         "selection_protocol": {
-            "criterion": "grouped_cv_isotonic_rmse_by_seed_on_target_horizons",
+            "criterion": "preregistered_formal_q_primary; grouped_cv_metrics_are_comparative_diagnostics",
+            "selection_mode": selection_mode,
             "target_horizons_days": selection_target_horizons,
             "target_metrics_summary": target_metrics,
             "pooled_all_horizons_metrics_summary": pooled_metrics,
@@ -203,12 +220,19 @@ def fit_and_export_frozen_predictor(
         "predictor_specification": {
             "winning_coordinate": winner,
             "functional_form": "isotonic_regression" if winner != "regularized_additive" else "standard_scaler_ridge",
+            "formal_primary_coordinate": "formal_q_indigenous" if "formal_q_indigenous" in paired.columns else None,
+            "legacy_comparator_coordinates": ["omega_min", "omega_geo", "omega_mean", "regularized_additive"],
             "subsystem_coordinates": ["omega_manpower", "omega_logistics", "omega_command"],
             "horizons_days": [int(h) for h in horizons],
             "horizon_models": horizon_models,
             "overall_model": overall_model,
         },
         "zero_refit_rule": "Holdout mechanism families MUST apply this predictor forward without adjusting parameters, weights, or knots.",
+        "formal_estimand_scope": {
+            "rule": "formal_q_indigenous predictive fitting/evaluation includes only observations with q >= 0 (at least one positive service demand)",
+            "no_active_demand": "Rows encoded NO_ACTIVE_DEMAND/q=-1 are reported separately and never treated as numeric low-q observations.",
+            "discovery_excluded_rows": int((paired["formal_q_indigenous"] < 0).sum()) if "formal_q_indigenous" in paired.columns else 0,
+        },
     }
 
     if output_json_path is not None:
@@ -231,7 +255,7 @@ def main() -> None:
         # Verify export plumbing without writing to disk
         bundle = fit_and_export_frozen_predictor(paired, source, output_json_path=None)
         assert bundle["status"] == "FROZEN_PREDICTOR_READY_FOR_ZERO_REFIT_HOLDOUTS"
-        assert bundle["predictor_specification"]["winning_coordinate"] in ["omega_min", "omega_geo", "omega_mean", "regularized_additive"]
+        assert bundle["predictor_specification"]["winning_coordinate"] in ["formal_q_indigenous", "omega_min", "omega_geo", "omega_mean", "regularized_additive"]
         print("PLUMBING_ONLY_PASS: neutral fixture paired correctly; R_h/Delta_h, candidate coordinates, and frozen predictor export derive from raw branches.")
         print("NO_SCIENTIFIC_EVALUATION: dry-run generated no findings and wrote no output files.")
         return

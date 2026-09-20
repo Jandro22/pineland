@@ -6,6 +6,7 @@
 
 pub mod access;
 pub mod actions;
+pub mod assays;
 pub mod beliefs;
 pub mod combat;
 pub mod economy;
@@ -15,6 +16,7 @@ pub mod information;
 pub mod logistics;
 pub mod movement;
 pub mod organizations;
+pub mod partner_force_formal;
 pub mod patrol;
 pub mod peace;
 pub mod physical;
@@ -24,7 +26,6 @@ pub mod recruitment;
 pub mod social;
 pub mod state_regeneration;
 pub mod treatment_gate;
-pub mod assays;
 
 use pineland_core::config::{ConfigError, SimulationConfig};
 use pineland_core::json::JsonValue;
@@ -94,7 +95,10 @@ impl CapabilityAssayResult {
             "schema_version",
             JsonValue::string("pineland.partner_force_capability_assay.v1"),
         );
-        o.insert("government_control", JsonValue::number(self.government_control));
+        o.insert(
+            "government_control",
+            JsonValue::number(self.government_control),
+        );
         o.insert(
             "military_personnel_retention",
             JsonValue::number(self.military_personnel_retention),
@@ -164,7 +168,10 @@ fn organization_name(index: usize) -> &'static str {
     }
 }
 
-pub fn organization_name_for_particle(particle: &pineland_core::state::ParticleState, index: usize) -> String {
+pub fn organization_name_for_particle(
+    particle: &pineland_core::state::ParticleState,
+    index: usize,
+) -> String {
     match index {
         GOVERNMENT => "government".to_string(),
         MILITARY => "fdf".to_string(),
@@ -174,15 +181,8 @@ pub fn organization_name_for_particle(particle: &pineland_core::state::ParticleS
         PARTY_3 => "party-3".to_string(),
         INSURGENT => "insurgent".to_string(),
         _ => {
-            if particle
-                .organizations
-                .kind
-                .get(index)
-                .copied()
-                == Some(3)
-            {
-                let dynamic_number = particle.organizations.kind
-                    [INSURGENT + 1..index]
+            if particle.organizations.kind.get(index).copied() == Some(3) {
+                let dynamic_number = particle.organizations.kind[INSURGENT + 1..index]
                     .iter()
                     .filter(|kind| **kind == 3)
                     .count()
@@ -205,7 +205,11 @@ pub fn organization_name_for_particle(particle: &pineland_core::state::ParticleS
                 .iter()
                 .enumerate()
             {
-                if let Some(org) = particle.formations.organization.get(*force_formation as usize) {
+                if let Some(org) = particle
+                    .formations
+                    .organization
+                    .get(*force_formation as usize)
+                {
                     if *org as usize == index {
                         let state = particle.foreign_interventions.foreign_state[intervention_idx];
                         return format!("foreign-neighbor-{}", state + 1);
@@ -1895,7 +1899,7 @@ impl SimulationEngine {
             // Foothold membership is a deterministic projection of four
             // mutable inputs only: person organization, person residence,
             // person armed fraction, and locality population.  Recomputing
-            // the full organization × locality × person surface after every
+            // the full organization Ã— locality Ã— person surface after every
             // scheduler event is therefore redundant for the overwhelming
             // majority of events.  Keep the Python-compatible projection at
             // every boundary that can mutate one of those inputs (directly or
@@ -2596,7 +2600,9 @@ impl SimulationEngine {
             }
             o.insert(
                 "state_security_recruit_pipeline_mean",
-                JsonValue::number(mean(&self.particle.locality.government_security_recruit_pipeline)),
+                JsonValue::number(mean(
+                    &self.particle.locality.government_security_recruit_pipeline,
+                )),
             );
             o.insert(
                 "state_security_reserve_mean",
@@ -2604,7 +2610,9 @@ impl SimulationEngine {
             );
             o.insert(
                 "state_intelligence_penetration_mean",
-                JsonValue::number(mean(&self.particle.locality.government_intelligence_penetration)),
+                JsonValue::number(mean(
+                    &self.particle.locality.government_intelligence_penetration,
+                )),
             );
             o.insert(
                 "police_professionalism_mean",
@@ -2624,19 +2632,43 @@ impl SimulationEngine {
             );
             o.insert(
                 "state_cumulative_security_recruits",
-                JsonValue::number(self.particle.locality.government_cumulative_security_recruits.iter().sum::<f64>()),
+                JsonValue::number(
+                    self.particle
+                        .locality
+                        .government_cumulative_security_recruits
+                        .iter()
+                        .sum::<f64>(),
+                ),
             );
             o.insert(
                 "state_cumulative_security_deployments",
-                JsonValue::number(self.particle.locality.government_cumulative_security_deployments.iter().sum::<f64>()),
+                JsonValue::number(
+                    self.particle
+                        .locality
+                        .government_cumulative_security_deployments
+                        .iter()
+                        .sum::<f64>(),
+                ),
             );
             o.insert(
                 "state_cumulative_admin_rebuild",
-                JsonValue::number(self.particle.locality.government_cumulative_admin_rebuild.iter().sum::<f64>()),
+                JsonValue::number(
+                    self.particle
+                        .locality
+                        .government_cumulative_admin_rebuild
+                        .iter()
+                        .sum::<f64>(),
+                ),
             );
             o.insert(
                 "state_cumulative_underground_disruption",
-                JsonValue::number(self.particle.locality.government_cumulative_underground_disruption.iter().sum::<f64>()),
+                JsonValue::number(
+                    self.particle
+                        .locality
+                        .government_cumulative_underground_disruption
+                        .iter()
+                        .sum::<f64>(),
+                ),
             );
         }
         o.insert(
@@ -2679,9 +2711,13 @@ impl SimulationEngine {
         }
         o.insert("event_counts", counts);
         if self.config.partner_force_support.enabled
-            || self.particle.partner_support != pineland_core::state::PartnerSupportLedger::default()
+            || self.particle.partner_support
+                != pineland_core::state::PartnerSupportLedger::default()
         {
-            o.insert("partner_support_ledger", self.particle.partner_support.to_json());
+            o.insert(
+                "partner_support_ledger",
+                self.particle.partner_support.to_json(),
+            );
             o.insert("indigenous_metrics", self.indigenous_state_flow_metrics());
         }
         o
@@ -2695,7 +2731,18 @@ impl SimulationEngine {
     }
 
     pub fn withdraw_external_partner_support(&mut self) {
-        self.particle.partner_support.take_snapshot(self.particle.time);
+        let p = &self.config.partner_force_support;
+        if !p.enabled
+            || !(p.air.enabled
+                || p.logistics.enabled
+                || p.command.enabled
+                || p.force_generation.enabled)
+        {
+            return;
+        }
+        self.particle
+            .partner_support
+            .take_snapshot(self.particle.time);
         self.particle.partner_support.support_withdrawn = true;
         self.particle.partner_support.withdrawal_time = Some(self.particle.time);
     }
@@ -2733,10 +2780,7 @@ impl SimulationEngine {
     /// predictors.  Each component is bounded to [0,1]; the composite is their
     /// geometric mean, so a near-zero behavioral dimension cannot be hidden by
     /// arithmetic compensation in another dimension.
-    pub fn capability_assay(
-        &self,
-        baseline: &CapabilityAssayBaseline,
-    ) -> CapabilityAssayResult {
+    pub fn capability_assay(&self, baseline: &CapabilityAssayBaseline) -> CapabilityAssayResult {
         let locality_count = self.topology.locality_count().max(1);
         let government_control = (0..locality_count)
             .map(|l| self.particle.locality.effective_control(l, 0))
@@ -2808,7 +2852,11 @@ impl SimulationEngine {
                 count += 1;
             }
         }
-        if count > 0 { sum / count as f64 } else { 0.0 }
+        if count > 0 {
+            sum / count as f64
+        } else {
+            0.0
+        }
     }
 
     pub fn min_operational_military_supply_stock(&self) -> f64 {
@@ -2825,7 +2873,11 @@ impl SimulationEngine {
                 found = true;
             }
         }
-        if found { min_supply } else { 0.0 }
+        if found {
+            min_supply
+        } else {
+            0.0
+        }
     }
 
     pub fn active_operational_military_formations(&self) -> usize {
@@ -2843,41 +2895,82 @@ impl SimulationEngine {
     pub fn indigenous_state_flow_metrics(&self) -> JsonValue {
         let mut obj = JsonValue::object();
         let total_air_intensity = self.config.combat.government_air_support_intensity;
-        let partner_air_intensity = if self.config.partner_force_support.enabled && self.config.partner_force_support.air.enabled {
+        let partner_air_intensity = if self.config.partner_force_support.enabled
+            && self.config.partner_force_support.air.enabled
+        {
             self.config.partner_force_support.air.intensity
         } else {
             0.0
         };
-        obj.insert("indigenous_air_intensity_baseline", JsonValue::number(total_air_intensity));
-        obj.insert("partner_air_intensity_overlay", JsonValue::number(partner_air_intensity));
-        obj.insert("partner_air_assisted_contacts", JsonValue::number(self.particle.partner_support.air.assisted_contacts as f64));
-        obj.insert("partner_air_delivered_intensity", JsonValue::number(self.particle.partner_support.air.cumulative_intensity));
+        obj.insert(
+            "indigenous_air_intensity_baseline",
+            JsonValue::number(total_air_intensity),
+        );
+        obj.insert(
+            "partner_air_intensity_overlay",
+            JsonValue::number(partner_air_intensity),
+        );
+        obj.insert(
+            "partner_air_assisted_contacts",
+            JsonValue::number(self.particle.partner_support.air.assisted_contacts as f64),
+        );
+        obj.insert(
+            "partner_air_delivered_intensity",
+            JsonValue::number(self.particle.partner_support.air.cumulative_intensity),
+        );
 
         let indigenous_production = self
             .particle
             .partner_support
             .logistics
             .indigenous_cumulative_produced;
-        let partner_logistics_delivered = self.particle.partner_support.logistics.cumulative_delivered;
-        obj.insert("indigenous_logistics_cumulative_produced", JsonValue::number(indigenous_production));
+        let partner_logistics_delivered =
+            self.particle.partner_support.logistics.cumulative_delivered;
+        obj.insert(
+            "indigenous_logistics_cumulative_produced",
+            JsonValue::number(indigenous_production),
+        );
         obj.insert(
             "indigenous_logistics_cumulative_delivered",
             JsonValue::number(
-                self.particle.partner_support.logistics.indigenous_cumulative_delivered,
+                self.particle
+                    .partner_support
+                    .logistics
+                    .indigenous_cumulative_delivered,
             ),
         );
         obj.insert(
             "indigenous_logistics_cumulative_consumed",
             JsonValue::number(
-                self.particle.partner_support.logistics.indigenous_cumulative_consumed,
+                self.particle
+                    .partner_support
+                    .logistics
+                    .indigenous_cumulative_consumed,
             ),
         );
-        obj.insert("partner_logistics_cumulative_delivered", JsonValue::number(partner_logistics_delivered));
+        obj.insert(
+            "partner_logistics_cumulative_delivered",
+            JsonValue::number(partner_logistics_delivered),
+        );
 
-        let indigenous_graduates = self.particle.partner_support.force_generation.indigenous_graduates;
-        let incremental_graduates = self.particle.partner_support.force_generation.external_incremental_graduates;
-        obj.insert("indigenous_graduates", JsonValue::number(indigenous_graduates));
-        obj.insert("external_incremental_graduates", JsonValue::number(incremental_graduates));
+        let indigenous_graduates = self
+            .particle
+            .partner_support
+            .force_generation
+            .indigenous_graduates;
+        let incremental_graduates = self
+            .particle
+            .partner_support
+            .force_generation
+            .external_incremental_graduates;
+        obj.insert(
+            "indigenous_graduates",
+            JsonValue::number(indigenous_graduates),
+        );
+        obj.insert(
+            "external_incremental_graduates",
+            JsonValue::number(incremental_graduates),
+        );
 
         let recruit_pipeline: f64 = self
             .particle
@@ -2891,7 +2984,10 @@ impl SimulationEngine {
             .government_security_reserve
             .iter()
             .sum();
-        obj.insert("recruit_pipeline_stock", JsonValue::number(recruit_pipeline));
+        obj.insert(
+            "recruit_pipeline_stock",
+            JsonValue::number(recruit_pipeline),
+        );
         obj.insert("trained_reserve_stock", JsonValue::number(trained_reserve));
 
         let mut military_personnel = 0.0;
@@ -2928,7 +3024,10 @@ impl SimulationEngine {
             }),
         );
         obj.insert("military_supply_stock", JsonValue::number(supply_stock));
-        obj.insert("military_supply_capacity", JsonValue::number(supply_capacity));
+        obj.insert(
+            "military_supply_capacity",
+            JsonValue::number(supply_capacity),
+        );
 
         let mut command_edges = 0usize;
         let mut command_reliability = 0.0;
@@ -2960,7 +3059,10 @@ impl SimulationEngine {
 
         let donor_total_cost = self.particle.partner_support.cumulative_donor_cost();
         obj.insert("cumulative_donor_cost", JsonValue::number(donor_total_cost));
-        obj.insert("support_withdrawn", JsonValue::Bool(self.particle.partner_support.support_withdrawn));
+        obj.insert(
+            "support_withdrawn",
+            JsonValue::Bool(self.particle.partner_support.support_withdrawn),
+        );
         if let Some(wt) = self.particle.partner_support.withdrawal_time {
             obj.insert("withdrawal_time", JsonValue::number(wt));
         }
@@ -4142,7 +4244,10 @@ mod tests {
             "government_military_experience_mean",
             "insurgent_formation_experience_mean",
         ] {
-            assert!(summary.get(key).is_some(), "missing theory-v2 summary key {key}");
+            assert!(
+                summary.get(key).is_some(),
+                "missing theory-v2 summary key {key}"
+            );
         }
     }
 
@@ -4215,12 +4320,9 @@ mod tests {
         );
 
         let topology = continuous.topology.clone();
-        let mut split = SimulationEngine::from_particle(
-            config.clone(),
-            topology.clone(),
-            starting_particle,
-        )
-        .unwrap();
+        let mut split =
+            SimulationEngine::from_particle(config.clone(), topology.clone(), starting_particle)
+                .unwrap();
         split.advance_until(15.0).unwrap();
         let bytes = CheckpointStore::encode_particle(&split.particle).unwrap();
         let restored_particle = CheckpointStore::decode_particle(&bytes).unwrap();
@@ -4317,7 +4419,10 @@ mod tests {
         config_air.partner_force_support.air.enabled = true;
         config_air.partner_force_support.air.intensity = 0.8;
         config_air.partner_force_support.air.firepower_bonus = 0.5;
-        config_air.partner_force_support.air.cost_per_assisted_contact = 500.0;
+        config_air
+            .partner_force_support
+            .air
+            .cost_per_assisted_contact = 500.0;
 
         let mut engine_air = SimulationEngine::new(config_air).unwrap();
         engine_air.run().unwrap();
@@ -4355,11 +4460,7 @@ mod tests {
             0.0
         );
         assert_eq!(
-            engine_air
-                .particle
-                .partner_support
-                .command
-                .assisted_events,
+            engine_air.particle.partner_support.command.assisted_events,
             0
         );
         assert_eq!(
@@ -4389,7 +4490,10 @@ mod tests {
         config.partner_force_support.command.enabled = true;
         config.partner_force_support.command.reliability_boost = 0.2;
         config.partner_force_support.force_generation.enabled = true;
-        config.partner_force_support.force_generation.training_rate_boost = 0.05;
+        config
+            .partner_force_support
+            .force_generation
+            .training_rate_boost = 0.05;
 
         let mut engine = SimulationEngine::new(config).unwrap();
         engine.advance_until(15.0).unwrap();
@@ -4433,10 +4537,7 @@ mod tests {
             engine.particle.command_edges,
             withdrawn_engine.particle.command_edges
         );
-        assert_eq!(
-            engine.particle.manpower,
-            withdrawn_engine.particle.manpower
-        );
+        assert_eq!(engine.particle.manpower, withdrawn_engine.particle.manpower);
         assert_eq!(
             engine.particle.political,
             withdrawn_engine.particle.political
@@ -4458,15 +4559,9 @@ mod tests {
             engine.particle.footholds,
             withdrawn_engine.particle.footholds
         );
-        assert_eq!(
-            engine.particle.locality,
-            withdrawn_engine.particle.locality
-        );
+        assert_eq!(engine.particle.locality, withdrawn_engine.particle.locality);
         assert_eq!(engine.particle.zones, withdrawn_engine.particle.zones);
-        assert_eq!(
-            engine.particle.counters,
-            withdrawn_engine.particle.counters
-        );
+        assert_eq!(engine.particle.counters, withdrawn_engine.particle.counters);
         assert_eq!(engine.particle.rng, withdrawn_engine.particle.rng);
     }
 
@@ -4484,7 +4579,10 @@ mod tests {
         config.partner_force_support.air.intensity = 0.8;
         config.partner_force_support.logistics.enabled = true;
         config.partner_force_support.logistics.daily_delivery_rate = 100.0;
-        config.partner_force_support.logistics.cost_per_supply_delivered = 10.0;
+        config
+            .partner_force_support
+            .logistics
+            .cost_per_supply_delivered = 10.0;
         config.partner_force_support.command.enabled = true;
         config.partner_force_support.command.cost_per_formation_day = 50.0;
 
@@ -4503,10 +4601,7 @@ mod tests {
         engine_off_2.advance_until(20.0).unwrap();
 
         assert_eq!(engine_off_1.state_hash(), engine_off_2.state_hash());
-        assert_eq!(
-            engine_off_1.decision_hash(),
-            engine_off_2.decision_hash()
-        );
+        assert_eq!(engine_off_1.decision_hash(), engine_off_2.decision_hash());
         assert_eq!(engine_off_1.summary(), engine_off_2.summary());
 
         assert_ne!(engine_on.state_hash(), engine_off_1.state_hash());
@@ -4546,13 +4641,22 @@ mod tests {
         config.partner_force_support.air.cost_per_assisted_contact = 100.0;
         config.partner_force_support.logistics.enabled = true;
         config.partner_force_support.logistics.daily_delivery_rate = 50.0;
-        config.partner_force_support.logistics.cost_per_supply_delivered = 5.0;
+        config
+            .partner_force_support
+            .logistics
+            .cost_per_supply_delivered = 5.0;
         config.partner_force_support.command.enabled = true;
         config.partner_force_support.command.cost_per_formation_day = 20.0;
         config.state_regeneration.enabled = true;
         config.partner_force_support.force_generation.enabled = true;
-        config.partner_force_support.force_generation.training_rate_boost = 0.04;
-        config.partner_force_support.force_generation.cost_per_incremental_trainee = 25.0;
+        config
+            .partner_force_support
+            .force_generation
+            .training_rate_boost = 0.04;
+        config
+            .partner_force_support
+            .force_generation
+            .cost_per_incremental_trainee = 25.0;
 
         let mut engine = SimulationEngine::new(config).unwrap();
         engine.run().unwrap();
@@ -4582,8 +4686,14 @@ mod tests {
         config.state_regeneration.enabled = true;
         config.partner_force_support.enabled = true;
         config.partner_force_support.force_generation.enabled = true;
-        config.partner_force_support.force_generation.training_rate_boost = 0.05;
-        config.partner_force_support.force_generation.cost_per_incremental_trainee = 50.0;
+        config
+            .partner_force_support
+            .force_generation
+            .training_rate_boost = 0.05;
+        config
+            .partner_force_support
+            .force_generation
+            .cost_per_incremental_trainee = 50.0;
 
         let mut engine = SimulationEngine::new(config).unwrap();
         engine.advance_until(10.0).unwrap();
@@ -4595,8 +4705,14 @@ mod tests {
         let l_post = &engine.particle.partner_support;
 
         // Indigenous instrumentation continues post-withdrawal
-        assert!(l_post.force_generation.indigenous_recruits >= l_at_t.force_generation.indigenous_recruits);
-        assert!(l_post.force_generation.indigenous_graduates >= l_at_t.force_generation.indigenous_graduates);
+        assert!(
+            l_post.force_generation.indigenous_recruits
+                >= l_at_t.force_generation.indigenous_recruits
+        );
+        assert!(
+            l_post.force_generation.indigenous_graduates
+                >= l_at_t.force_generation.indigenous_graduates
+        );
 
         // External contributions and donor costs stop permanently
         assert_eq!(
@@ -4621,7 +4737,10 @@ mod tests {
         config.partner_force_support.enabled = true;
         config.partner_force_support.logistics.enabled = true;
         config.partner_force_support.logistics.daily_delivery_rate = 60.0;
-        config.partner_force_support.logistics.cost_per_supply_delivered = 5.0;
+        config
+            .partner_force_support
+            .logistics
+            .cost_per_supply_delivered = 5.0;
 
         let mut engine = SimulationEngine::new(config).unwrap();
         engine.run().unwrap();
@@ -4635,7 +4754,8 @@ mod tests {
         assert!(l.indigenous_cumulative_consumed <= global.cumulative_consumed + 1.0e-9);
 
         // External conservation identity
-        let external_delivered_sum = l.cumulative_delivered + l.cumulative_rejected + l.cumulative_lost;
+        let external_delivered_sum =
+            l.cumulative_delivered + l.cumulative_rejected + l.cumulative_lost;
         assert!((l.cumulative_offered - external_delivered_sum).abs() < 1.0e-9);
     }
 
@@ -4691,7 +4811,11 @@ mod tests {
         let baseline = engine.capability_assay_baseline();
         let mut engine_on = engine.clone();
         let mut engine_off = engine.clone();
+        let hash_at_t = engine_off.state_hash();
         engine_off.withdraw_external_partner_support();
+        assert_eq!(engine_off.state_hash(), hash_at_t);
+        assert!(!engine_off.particle.partner_support.support_withdrawn);
+        assert_eq!(engine_off.particle.partner_support.withdrawal_time, None);
 
         // Advance to 7-day horizon (17d) and 20-day horizon (30d)
         for target in [17.0, 30.0] {
@@ -4699,7 +4823,10 @@ mod tests {
             engine_off.advance_until(target).unwrap();
 
             // Indigenous arrays must remain bit-for-bit identical
-            assert_eq!(engine_on.particle.formations, engine_off.particle.formations);
+            assert_eq!(
+                engine_on.particle.formations,
+                engine_off.particle.formations
+            );
             assert_eq!(engine_on.particle.people, engine_off.particle.people);
             assert_eq!(engine_on.particle.logistics, engine_off.particle.logistics);
             assert_eq!(engine_on.particle.locality, engine_off.particle.locality);
@@ -4721,13 +4848,41 @@ mod tests {
         };
         let engine = SimulationEngine::new(config).unwrap();
         let particle = &engine.particle;
-        assert!(crate::combat::organizations_hostile(particle, crate::MILITARY, crate::INSURGENT));
-        assert!(crate::combat::organizations_hostile(particle, crate::INSURGENT, crate::MILITARY));
-        assert!(crate::combat::organizations_hostile(particle, crate::POLICE, crate::INSURGENT));
-        assert!(crate::combat::organizations_hostile(particle, crate::INSURGENT, crate::POLICE));
-        assert!(!crate::combat::organizations_hostile(particle, crate::MILITARY, crate::POLICE));
-        assert!(!crate::combat::organizations_hostile(particle, crate::MILITARY, crate::GOVERNMENT));
-        assert!(!crate::combat::organizations_hostile(particle, crate::INSURGENT, crate::INSURGENT));
+        assert!(crate::combat::organizations_hostile(
+            particle,
+            crate::MILITARY,
+            crate::INSURGENT
+        ));
+        assert!(crate::combat::organizations_hostile(
+            particle,
+            crate::INSURGENT,
+            crate::MILITARY
+        ));
+        assert!(crate::combat::organizations_hostile(
+            particle,
+            crate::POLICE,
+            crate::INSURGENT
+        ));
+        assert!(crate::combat::organizations_hostile(
+            particle,
+            crate::INSURGENT,
+            crate::POLICE
+        ));
+        assert!(!crate::combat::organizations_hostile(
+            particle,
+            crate::MILITARY,
+            crate::POLICE
+        ));
+        assert!(!crate::combat::organizations_hostile(
+            particle,
+            crate::MILITARY,
+            crate::GOVERNMENT
+        ));
+        assert!(!crate::combat::organizations_hostile(
+            particle,
+            crate::INSURGENT,
+            crate::INSURGENT
+        ));
     }
 
     #[test]
@@ -4800,7 +4955,14 @@ mod tests {
 
         // Assert partner air support was invoked for the military formation
         assert_eq!(engine.particle.partner_support.air.assisted_contacts, 1);
-        assert!(engine.particle.partner_support.air.cumulative_firepower_bonus > 0.0);
+        assert!(
+            engine
+                .particle
+                .partner_support
+                .air
+                .cumulative_firepower_bonus
+                > 0.0
+        );
         assert!(engine.particle.partner_support.air.cumulative_donor_cost > 0.0);
     }
 
@@ -4842,6 +5004,9 @@ mod tests {
         let final_mil_loc = engine.particle.formations.locality[mil];
         let final_ins_loc = engine.particle.formations.locality[ins];
         let moved = final_mil_loc != 0 || final_ins_loc != 1;
-        assert!(moved, "operational reallocation must move forces from static garrison");
+        assert!(
+            moved,
+            "operational reallocation must move forces from static garrison"
+        );
     }
 }

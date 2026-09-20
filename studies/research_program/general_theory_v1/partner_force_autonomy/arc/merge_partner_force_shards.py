@@ -52,10 +52,10 @@ def task_id_from_name(path: Path) -> int:
 
 def validate_trajectory_shard(path: Path) -> pd.DataFrame:
     schema = json.loads(
-        (CONTRACTS / "partner_force_trajectory_schema_v1.json").read_text(encoding="utf-8")
+        (CONTRACTS / "partner_force_trajectory_schema_v2.json").read_text(encoding="utf-8")
     )
     contract = json.loads(
-        (CONTRACTS / "partner_force_trajectory_contract_v1.json").read_text(encoding="utf-8")
+        (CONTRACTS / "partner_force_trajectory_contract_v2.json").read_text(encoding="utf-8")
     )
     expected_columns = set(schema["properties"])
     df = pd.read_csv(path)

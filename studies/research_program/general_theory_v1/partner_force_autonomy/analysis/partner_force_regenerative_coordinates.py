@@ -155,18 +155,38 @@ def evaluate_bottleneck_competitors(paired: pd.DataFrame) -> Dict[str, Any]:
     y = df["autonomy_ratio"].to_numpy(float)
     groups = df["seed"].to_numpy()
     metrics: Dict[str, Any] = {}
-    for col in ["omega_min", "omega_mean", "omega_geo"]:
-        x = df[col].to_numpy(float)
+    scalar_candidates = ["omega_min", "omega_mean", "omega_geo"]
+    if "formal_q_indigenous" in df.columns:
+        scalar_candidates.insert(0, "formal_q_indigenous")
+    for col in scalar_candidates:
+        x_all = df[col].to_numpy(float)
+        if col == "formal_q_indigenous":
+            valid = np.isfinite(x_all) & (x_all >= 0.0)
+        else:
+            valid = np.isfinite(x_all)
+        x = x_all[valid]
+        yy = y[valid]
+        gg = groups[valid]
+        if len(x) == 0:
+            metrics[col] = {
+                "grouped_cv_isotonic_rmse": float("nan"),
+                "spearman_rho_descriptive": 0.0,
+                "n_obs": 0,
+                "excluded_no_active_demand": int((~valid).sum()),
+            }
+            continue
         rho = (
-            spearmanr(x, y).statistic
-            if len(np.unique(x)) > 1 and len(np.unique(y)) > 1
+            spearmanr(x, yy).statistic
+            if len(np.unique(x)) > 1 and len(np.unique(yy)) > 1
             else 0.0
         )
         if np.isnan(rho):
             rho = 0.0
         metrics[col] = {
-            "grouped_cv_isotonic_rmse": _cv_isotonic_rmse(x, y, groups),
+            "grouped_cv_isotonic_rmse": _cv_isotonic_rmse(x, yy, gg),
             "spearman_rho_descriptive": float(rho),
+            "n_obs": int(len(x)),
+            "excluded_no_active_demand": int((~valid).sum()) if col == "formal_q_indigenous" else 0,
         }
     additive = _cv_ridge(
         df[["omega_manpower", "omega_logistics", "omega_command"]].to_numpy(float),
@@ -180,6 +200,7 @@ def evaluate_bottleneck_competitors(paired: pd.DataFrame) -> Dict[str, Any]:
     )
     return {
         "status": "DISCOVERY_COMPARISON_ONLY",
+        "primary_formal_coordinate": "formal_q_indigenous" if "formal_q_indigenous" in df.columns else None,
         "competitor_ranking_by_grouped_cv_rmse": ranked,
         "metrics": metrics,
         "warning": "Do not freeze a winner until discovery data are complete; transport claims require later zero-refit holdouts.",

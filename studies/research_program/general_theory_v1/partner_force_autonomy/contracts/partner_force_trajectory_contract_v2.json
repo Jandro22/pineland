@@ -1,0 +1,104 @@
+{
+  "schema_version": "pineland.partner_force_trajectory_contract.v2",
+  "status": "FROZEN_BEFORE_STAGE3_V3_DISCOVERY_COMPUTE",
+  "purpose": "Preserve longitudinal state, mechanism-flow, and formal structural-autonomy telemetry for every Stage-3 v3 world so dynamic bottleneck transitions and withdrawal resilience can be diagnosed without rerunning simulation.",
+  "scientific_role": "DIAGNOSTIC_AND_FORMAL_HORIZON_VALIDATION",
+  "confirmatory_firewall": {
+    "primary_stage3_outcomes_unchanged": true,
+    "primary_stage3_cell_manifest_unchanged": true,
+    "primary_stage3_seed_count_unchanged": true,
+    "primary_model_selection_rule_unchanged": true,
+    "trajectory_data_may_not_be_used_to_redefine_H1_H2_H3_after_results_are_seen": true,
+    "trajectory_data_may_be_used_to_explain_failure_modes_and_generate_future_preregistered_hypotheses": true,
+    "formal_q_definition_frozen_before_results": true,
+    "trajectory_q_may_test_horizon_viability_but_not_redefine_service_semantics_after_results": true
+  },
+  "sampling": {
+    "prewithdrawal_window_days": 60,
+    "prewithdrawal_step_days": 7,
+    "prewithdrawal_includes_withdrawal_time": true,
+    "postwithdrawal_step_days": 7,
+    "postwithdrawal_also_includes_confirmatory_horizons_days": [
+      7,
+      30,
+      90,
+      180
+    ],
+    "postwithdrawal_max_day": 180,
+    "expected_prewithdrawal_rows_per_world": 10,
+    "expected_postwithdrawal_rows_per_branch": 28,
+    "expected_rows_per_world": 66
+  },
+  "phases": [
+    "PRE_SUPPORTED",
+    "SUPPORT_ON",
+    "SUPPORT_OFF"
+  ],
+  "state_domains": [
+    "behavioral_capability_components",
+    "military_personnel",
+    "operational_formations",
+    "geographic_coverage",
+    "trained_reserve",
+    "recruit_pipeline",
+    "readiness",
+    "experience",
+    "supply_stock_and_capacity",
+    "command_reliability_and_latency",
+    "insurgent_personnel_and_active_formations",
+    "insurgent_territorial_control",
+    "contested_localities"
+  ],
+  "interval_flow_domains": [
+    "indigenous_recruitment",
+    "indigenous_training_graduation",
+    "security_deployment",
+    "military_losses",
+    "indigenous_logistics_production_delivery_consumption",
+    "system_logistics_losses",
+    "combat_contacts",
+    "organized_actions",
+    "external_air_contacts_intensity_and_firepower",
+    "external_logistics_offered_delivered_rejected_lost",
+    "external_command_assistance_and_latency_reduction",
+    "external_force_generation_graduates",
+    "donor_cost_by_channel_and_total",
+    "air_support_opportunities_before_detection_gate",
+    "command_opportunities_and_indigenous_supported_service_equivalents",
+    "formal_active_service_count_q_minus_q_plus_support_lift_regime_bottleneck"
+  ],
+  "provenance": [
+    "git_commit",
+    "world_id",
+    "cell_id",
+    "seed",
+    "state_hash",
+    "decision_hash"
+  ],
+  "analysis_commitment": {
+    "always_report_if_primary_hypothesis_fails": [
+      "horizon-specific performance rather than a single pooled verdict",
+      "support-profile and indigenous-capacity heterogeneity",
+      "trajectory timing of ON/OFF divergence",
+      "mechanism-flow sequence around divergence",
+      "whether failure reflects no signal, temporal instability, nonlinear interaction, support-specific transport, or threat/context dependence"
+    ],
+    "exploratory_methods_permitted_after_confirmatory_analysis": [
+      "trajectory clustering",
+      "change-point analysis",
+      "tree-based interaction discovery",
+      "residual heterogeneity analysis"
+    ],
+    "exploratory_results_must_be_labeled_exploratory": true
+  },
+  "formal_horizon_contract": {
+    "source": "formal/partner_force_theory/PinelandPartnerForceTheory/PartnerForce.lean",
+    "statement": "For intervals with positive service demand, q_t^- >= 1 means the declared regenerative reference mission is structurally covered at that checkpoint. NO_ACTIVE_DEMAND windows are vacuously feasible and q is intentionally encoded as -1 rather than assigned an arbitrary finite value.",
+    "services": [
+      "force_generation",
+      "logistics",
+      "command"
+    ],
+    "air_role": "separate combat augmentation; not inserted into q without a like-unit indigenous denominator"
+  }
+}

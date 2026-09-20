@@ -15,9 +15,9 @@ REPO_ROOT="${PINELAND_REPO_ROOT:-${SLURM_SUBMIT_DIR:-$(pwd)}}"
 cd "$REPO_ROOT"
 
 BINARY="${PF_BINARY:-rust/target/release/examples/partner_force_autonomy_stage3}"
-FREEZE="${PF_FREEZE:-studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v1.json}"
+FREEZE="${PF_FREEZE:-studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v3.json}"
 MODE="${PF_MODE:-discovery}"
-OUTPUT_DIR="${PF_OUTPUT_DIR:-studies/research_program/general_theory_v1/partner_force_autonomy/outputs/arc_stage3_shards}"
+OUTPUT_DIR="${PF_OUTPUT_DIR:-studies/research_program/general_theory_v1/partner_force_autonomy/outputs/arc_stage3_v3_shards}"
 
 if [[ ! -x "$BINARY" ]]; then
   echo "Missing executable $BINARY" >&2
@@ -26,7 +26,7 @@ if [[ ! -x "$BINARY" ]]; then
 fi
 
 if [[ "$MODE" == "discovery" ]]; then
-  DESIGN="${PF_DESIGN:-studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v1.csv}"
+  DESIGN="${PF_DESIGN:-studies/research_program/general_theory_v1/partner_force_autonomy/configs/stage3_discovery_cells_v3.csv}"
   CELL_COUNT="${PF_CELL_COUNT:-60}"
   SEED_COUNT="${PF_SEED_COUNT:-12}"
   SEED_BASE="${PF_SEED_BASE:-2026120000}"

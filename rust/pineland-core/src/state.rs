@@ -1698,7 +1698,13 @@ impl Default for LogisticsSupportLedger {
 /// External partner command/advisory support ledger.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CommandSupportLedger {
+    /// Military movement-order opportunities, whether or not assistance is enabled.
+    pub opportunities: u64,
     pub assisted_events: u64,
+    /// Organic timely-success service: reliability * exp(-latency_hours / 24).
+    pub cumulative_indigenous_service: f64,
+    /// Same command service after any partner advisory overlay.
+    pub cumulative_supported_service: f64,
     pub cumulative_reliability_boost: f64,
     pub cumulative_latency_reduction_hours: f64,
     pub cumulative_donor_cost: f64,
@@ -1707,7 +1713,10 @@ pub struct CommandSupportLedger {
 impl Default for CommandSupportLedger {
     fn default() -> Self {
         Self {
+            opportunities: 0,
             assisted_events: 0,
+            cumulative_indigenous_service: 0.0,
+            cumulative_supported_service: 0.0,
             cumulative_reliability_boost: 0.0,
             cumulative_latency_reduction_hours: 0.0,
             cumulative_donor_cost: 0.0,
@@ -1821,15 +1830,21 @@ impl PartnerSupportLedger {
         }
         let remaining = (self.cumulative_donor_cost() - prev_cost).max(0.0);
         if remaining > 0.0 {
-            let last_time = self.window_snapshots.last().map(|s| s.time_days).unwrap_or(0.0);
+            let last_time = self
+                .window_snapshots
+                .last()
+                .map(|s| s.time_days)
+                .unwrap_or(0.0);
             discounted += remaining * (-daily_discount * last_time).exp();
         }
         discounted
     }
 
-    /// Pre-T external logistics dependence fraction: external / (indigenous + external).
-    pub fn dependence_logistics(&self) -> f64 {
-        let total = self.logistics.indigenous_cumulative_delivered + self.logistics.cumulative_delivered;
+    /// External logistics share: external / (indigenous + external).
+    /// This is exposure, not structural dependence.
+    pub fn external_share_logistics(&self) -> f64 {
+        let total =
+            self.logistics.indigenous_cumulative_delivered + self.logistics.cumulative_delivered;
         if total > 1e-9 {
             (self.logistics.cumulative_delivered / total).clamp(0.0, 1.0)
         } else {
@@ -1837,9 +1852,11 @@ impl PartnerSupportLedger {
         }
     }
 
-    /// Pre-T external force generation dependence fraction: external / (indigenous + external).
-    pub fn dependence_forcegen(&self) -> f64 {
-        let total = self.force_generation.indigenous_graduates + self.force_generation.external_incremental_graduates;
+    /// External force-generation share: external / (indigenous + external).
+    /// This is exposure, not structural dependence.
+    pub fn external_share_forcegen(&self) -> f64 {
+        let total = self.force_generation.indigenous_graduates
+            + self.force_generation.external_incremental_graduates;
         if total > 1e-9 {
             (self.force_generation.external_incremental_graduates / total).clamp(0.0, 1.0)
         } else {
@@ -1847,18 +1864,22 @@ impl PartnerSupportLedger {
         }
     }
 
-    /// Pre-T external command dependence fraction: assisted / total command events.
-    pub fn dependence_command(&self, total_command_events: u64) -> f64 {
-        let total = total_command_events.max(self.command.assisted_events);
-        if total > 0 {
-            (self.command.assisted_events as f64 / total as f64).clamp(0.0, 1.0)
+    /// External share of command-service equivalents. This is exposure, not
+    /// structural dependence; dependence additionally requires service demand.
+    pub fn external_share_command(&self) -> f64 {
+        let external = (self.command.cumulative_supported_service
+            - self.command.cumulative_indigenous_service)
+            .max(0.0);
+        if self.command.cumulative_supported_service > 1e-9 {
+            (external / self.command.cumulative_supported_service).clamp(0.0, 1.0)
         } else {
             0.0
         }
     }
 
-    /// Pre-T external air support dependence fraction: assisted contacts / total military contacts.
-    pub fn dependence_air(&self, total_military_contacts: u64) -> f64 {
+    /// External air-assistance share among military contact opportunities.
+    /// This is exposure, not structural dependence.
+    pub fn external_share_air(&self, total_military_contacts: u64) -> f64 {
         let total = total_military_contacts.max(self.air.assisted_contacts);
         if total > 0 {
             (self.air.assisted_contacts as f64 / total as f64).clamp(0.0, 1.0)
@@ -1892,11 +1913,26 @@ impl PartnerSupportLedger {
         }
 
         let mut air = JsonValue::object();
-        air.insert("opportunities", JsonValue::number(self.air.opportunities as f64));
-        air.insert("assisted_contacts", JsonValue::number(self.air.assisted_contacts as f64));
-        air.insert("cumulative_intensity", JsonValue::number(self.air.cumulative_intensity));
-        air.insert("cumulative_firepower_bonus", JsonValue::number(self.air.cumulative_firepower_bonus));
-        air.insert("cumulative_donor_cost", JsonValue::number(self.air.cumulative_donor_cost));
+        air.insert(
+            "opportunities",
+            JsonValue::number(self.air.opportunities as f64),
+        );
+        air.insert(
+            "assisted_contacts",
+            JsonValue::number(self.air.assisted_contacts as f64),
+        );
+        air.insert(
+            "cumulative_intensity",
+            JsonValue::number(self.air.cumulative_intensity),
+        );
+        air.insert(
+            "cumulative_firepower_bonus",
+            JsonValue::number(self.air.cumulative_firepower_bonus),
+        );
+        air.insert(
+            "cumulative_donor_cost",
+            JsonValue::number(self.air.cumulative_donor_cost),
+        );
         root.insert("air", air);
 
         let mut logistics = JsonValue::object();
@@ -1912,29 +1948,86 @@ impl PartnerSupportLedger {
             "indigenous_cumulative_consumed",
             JsonValue::number(self.logistics.indigenous_cumulative_consumed),
         );
-        logistics.insert("cumulative_offered", JsonValue::number(self.logistics.cumulative_offered));
-        logistics.insert("cumulative_delivered", JsonValue::number(self.logistics.cumulative_delivered));
-        logistics.insert("cumulative_rejected", JsonValue::number(self.logistics.cumulative_rejected));
-        logistics.insert("cumulative_lost", JsonValue::number(self.logistics.cumulative_lost));
-        logistics.insert("cumulative_donor_cost", JsonValue::number(self.logistics.cumulative_donor_cost));
+        logistics.insert(
+            "cumulative_offered",
+            JsonValue::number(self.logistics.cumulative_offered),
+        );
+        logistics.insert(
+            "cumulative_delivered",
+            JsonValue::number(self.logistics.cumulative_delivered),
+        );
+        logistics.insert(
+            "cumulative_rejected",
+            JsonValue::number(self.logistics.cumulative_rejected),
+        );
+        logistics.insert(
+            "cumulative_lost",
+            JsonValue::number(self.logistics.cumulative_lost),
+        );
+        logistics.insert(
+            "cumulative_donor_cost",
+            JsonValue::number(self.logistics.cumulative_donor_cost),
+        );
         root.insert("logistics", logistics);
 
         let mut command = JsonValue::object();
-        command.insert("assisted_events", JsonValue::number(self.command.assisted_events as f64));
-        command.insert("cumulative_reliability_boost", JsonValue::number(self.command.cumulative_reliability_boost));
-        command.insert("cumulative_latency_reduction_hours", JsonValue::number(self.command.cumulative_latency_reduction_hours));
-        command.insert("cumulative_donor_cost", JsonValue::number(self.command.cumulative_donor_cost));
+        command.insert(
+            "opportunities",
+            JsonValue::number(self.command.opportunities as f64),
+        );
+        command.insert(
+            "assisted_events",
+            JsonValue::number(self.command.assisted_events as f64),
+        );
+        command.insert(
+            "cumulative_indigenous_service",
+            JsonValue::number(self.command.cumulative_indigenous_service),
+        );
+        command.insert(
+            "cumulative_supported_service",
+            JsonValue::number(self.command.cumulative_supported_service),
+        );
+        command.insert(
+            "cumulative_reliability_boost",
+            JsonValue::number(self.command.cumulative_reliability_boost),
+        );
+        command.insert(
+            "cumulative_latency_reduction_hours",
+            JsonValue::number(self.command.cumulative_latency_reduction_hours),
+        );
+        command.insert(
+            "cumulative_donor_cost",
+            JsonValue::number(self.command.cumulative_donor_cost),
+        );
         root.insert("command", command);
 
         let mut forcegen = JsonValue::object();
-        forcegen.insert("indigenous_recruits", JsonValue::number(self.force_generation.indigenous_recruits));
-        forcegen.insert("external_recruits", JsonValue::number(self.force_generation.external_recruits));
-        forcegen.insert("indigenous_graduates", JsonValue::number(self.force_generation.indigenous_graduates));
-        forcegen.insert("external_incremental_graduates", JsonValue::number(self.force_generation.external_incremental_graduates));
-        forcegen.insert("cumulative_donor_cost", JsonValue::number(self.force_generation.cumulative_donor_cost));
+        forcegen.insert(
+            "indigenous_recruits",
+            JsonValue::number(self.force_generation.indigenous_recruits),
+        );
+        forcegen.insert(
+            "external_recruits",
+            JsonValue::number(self.force_generation.external_recruits),
+        );
+        forcegen.insert(
+            "indigenous_graduates",
+            JsonValue::number(self.force_generation.indigenous_graduates),
+        );
+        forcegen.insert(
+            "external_incremental_graduates",
+            JsonValue::number(self.force_generation.external_incremental_graduates),
+        );
+        forcegen.insert(
+            "cumulative_donor_cost",
+            JsonValue::number(self.force_generation.cumulative_donor_cost),
+        );
         root.insert("force_generation", forcegen);
 
-        root.insert("cumulative_donor_cost", JsonValue::number(self.cumulative_donor_cost()));
+        root.insert(
+            "cumulative_donor_cost",
+            JsonValue::number(self.cumulative_donor_cost()),
+        );
         root
     }
 }
@@ -2189,10 +2282,7 @@ impl ParticleState {
             &self.locality.government_security_recruit_pipeline,
         );
         append_f64s(material, &self.locality.government_security_reserve);
-        append_f64s(
-            material,
-            &self.locality.government_intelligence_penetration,
-        );
+        append_f64s(material, &self.locality.government_intelligence_penetration);
         append_f64s(
             material,
             &self.locality.government_cumulative_security_recruits,
@@ -2201,10 +2291,7 @@ impl ParticleState {
             material,
             &self.locality.government_cumulative_security_deployments,
         );
-        append_f64s(
-            material,
-            &self.locality.government_cumulative_admin_rebuild,
-        );
+        append_f64s(material, &self.locality.government_cumulative_admin_rebuild);
         append_f64s(
             material,
             &self.locality.government_cumulative_underground_disruption,
@@ -2645,23 +2732,37 @@ impl ParticleState {
         material.extend_from_slice(&self.counters.checkpoints.to_le_bytes());
         if self.partner_support != PartnerSupportLedger::default() {
             append_u8s(material, &[1]);
-            material.extend_from_slice(&(self.partner_support.support_withdrawn as u8).to_le_bytes());
+            material
+                .extend_from_slice(&(self.partner_support.support_withdrawn as u8).to_le_bytes());
             if let Some(wt) = self.partner_support.withdrawal_time {
                 material.extend_from_slice(&wt.to_bits().to_le_bytes());
             }
-            append_f64s(material, &[
-                self.partner_support.air.cumulative_intensity,
-                self.partner_support.air.cumulative_donor_cost,
-                self.partner_support.logistics.cumulative_delivered,
-                self.partner_support.logistics.indigenous_cumulative_produced,
-                self.partner_support.logistics.indigenous_cumulative_delivered,
-                self.partner_support.logistics.indigenous_cumulative_consumed,
-                self.partner_support.logistics.cumulative_donor_cost,
-                self.partner_support.command.cumulative_reliability_boost,
-                self.partner_support.command.cumulative_donor_cost,
-                self.partner_support.force_generation.external_incremental_graduates,
-                self.partner_support.force_generation.cumulative_donor_cost,
-            ]);
+            append_f64s(
+                material,
+                &[
+                    self.partner_support.air.cumulative_intensity,
+                    self.partner_support.air.cumulative_donor_cost,
+                    self.partner_support.logistics.cumulative_delivered,
+                    self.partner_support
+                        .logistics
+                        .indigenous_cumulative_produced,
+                    self.partner_support
+                        .logistics
+                        .indigenous_cumulative_delivered,
+                    self.partner_support
+                        .logistics
+                        .indigenous_cumulative_consumed,
+                    self.partner_support.logistics.cumulative_donor_cost,
+                    self.partner_support.command.cumulative_reliability_boost,
+                    self.partner_support.command.cumulative_indigenous_service,
+                    self.partner_support.command.cumulative_supported_service,
+                    self.partner_support.command.cumulative_donor_cost,
+                    self.partner_support
+                        .force_generation
+                        .external_incremental_graduates,
+                    self.partner_support.force_generation.cumulative_donor_cost,
+                ],
+            );
         }
     }
 
@@ -2716,7 +2817,9 @@ impl ParticleState {
                 "government cumulative security recruits",
             ),
             (
-                self.locality.government_cumulative_security_deployments.len(),
+                self.locality
+                    .government_cumulative_security_deployments
+                    .len(),
                 "government cumulative security deployments",
             ),
             (
@@ -4372,9 +4475,7 @@ impl ParticleState {
             let sentinel_allowed = value == u32::MAX
                 && matches!(
                     name,
-                    "formation home locality"
-                        | "formation external state"
-                        | "formation microzone"
+                    "formation home locality" | "formation external state" | "formation microzone"
                 );
             if value as usize >= bound && !sentinel_allowed {
                 return Err(StateError::Corrupt(format!(
@@ -5243,17 +5344,58 @@ impl ParticleState {
             (self.counters.recruitment, "recruitment counter"),
             (self.counters.civilian_harm, "civilian harm counter"),
             (self.counters.deaths, "deaths counter"),
-            (self.partner_support.air.cumulative_intensity, "partner air intensity"),
-            (self.partner_support.air.cumulative_donor_cost, "partner air donor cost"),
-            (self.partner_support.logistics.cumulative_delivered, "partner logistics delivered"),
-            (self.partner_support.logistics.cumulative_donor_cost, "partner logistics donor cost"),
-            (self.partner_support.logistics.indigenous_cumulative_produced, "partner indigenous logistics produced"),
-            (self.partner_support.logistics.indigenous_cumulative_delivered, "partner indigenous logistics delivered"),
-            (self.partner_support.logistics.indigenous_cumulative_consumed, "partner indigenous logistics consumed"),
-            (self.partner_support.command.cumulative_reliability_boost, "partner command reliability boost"),
-            (self.partner_support.command.cumulative_donor_cost, "partner command donor cost"),
-            (self.partner_support.force_generation.external_incremental_graduates, "partner forcegen graduates"),
-            (self.partner_support.force_generation.cumulative_donor_cost, "partner forcegen donor cost"),
+            (
+                self.partner_support.air.cumulative_intensity,
+                "partner air intensity",
+            ),
+            (
+                self.partner_support.air.cumulative_donor_cost,
+                "partner air donor cost",
+            ),
+            (
+                self.partner_support.logistics.cumulative_delivered,
+                "partner logistics delivered",
+            ),
+            (
+                self.partner_support.logistics.cumulative_donor_cost,
+                "partner logistics donor cost",
+            ),
+            (
+                self.partner_support
+                    .logistics
+                    .indigenous_cumulative_produced,
+                "partner indigenous logistics produced",
+            ),
+            (
+                self.partner_support
+                    .logistics
+                    .indigenous_cumulative_delivered,
+                "partner indigenous logistics delivered",
+            ),
+            (
+                self.partner_support
+                    .logistics
+                    .indigenous_cumulative_consumed,
+                "partner indigenous logistics consumed",
+            ),
+            (
+                self.partner_support.command.cumulative_reliability_boost,
+                "partner command reliability boost",
+            ),
+            (
+                self.partner_support.command.cumulative_donor_cost,
+                "partner command donor cost",
+            ),
+            (
+                self.partner_support
+                    .force_generation
+                    .external_incremental_graduates,
+                "partner forcegen graduates",
+            ),
+            (
+                self.partner_support.force_generation.cumulative_donor_cost,
+                "partner forcegen donor cost",
+            ),
         ] {
             if !value.is_finite() {
                 return Err(StateError::NonFinite(name));
