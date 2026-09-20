@@ -55,13 +55,14 @@
   },
   "indigenous_design": {
     "force_generation_multiplier": "multiplies security recruitment and training rates",
-    "logistics_multiplier": "multiplies indigenous logistics source daily production fraction",
+    "logistics_multiplier": "multiplies indigenous logistics organization sustainment coverage, thereby scaling source production, source capacity, and opening source stock together",
     "command_multiplier": "applied at initialization to indigenous formation command and command-edge reliability, with inverse scaling of indigenous latency",
     "prospective_profiles_count": 10,
     "levels_are_synthetic": true
   },
   "support_design": {
     "type": "removable substitution only",
+    "logistics_provenance_rule": "External logistics uses direct_delivery to military formations. It must not enter indigenous source stocks, because later indigenous shipments would otherwise lose provenance and contaminate s^-.",
     "profiles": [
       "none",
       "balanced",

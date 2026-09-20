@@ -741,7 +741,7 @@ fn build_config(
 
     config.state_regeneration.security_recruitment_rate *= cell.forcegen_mult;
     config.state_regeneration.security_training_rate *= cell.forcegen_mult;
-    config.logistics.source_daily_production_fraction *= cell.logistics_mult;
+    config.logistics.organization_sustainment_coverage *= cell.logistics_mult;
 
     let p = &mut config.partner_force_support;
     p.enabled = false;
@@ -750,7 +750,7 @@ fn build_config(
     p.air.firepower_bonus = cell.air_bonus;
     p.air.cost_per_assisted_contact = cell.air_cost_per_contact;
     p.logistics.enabled = cell.logistics_rate > 0.0;
-    p.logistics.mode = "throughput_augmentation".to_string();
+    p.logistics.mode = "direct_delivery".to_string();
     p.logistics.daily_delivery_rate = cell.logistics_rate;
     p.logistics.max_daily_capacity = cell.logistics_capacity.max(cell.logistics_rate);
     p.logistics.cost_per_supply_delivered = cell.logistics_cost_per_unit;

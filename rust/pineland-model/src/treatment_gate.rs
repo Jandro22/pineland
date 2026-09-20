@@ -370,7 +370,7 @@ pub fn build_gate_config(
 
     config.state_regeneration.security_recruitment_rate *= spec.forcegen_mult;
     config.state_regeneration.security_training_rate *= spec.forcegen_mult;
-    config.logistics.source_daily_production_fraction *= spec.logistics_mult;
+    config.logistics.organization_sustainment_coverage *= spec.logistics_mult;
 
     let p = &mut config.partner_force_support;
     p.enabled = false;
@@ -379,7 +379,7 @@ pub fn build_gate_config(
     p.air.firepower_bonus = spec.air_bonus;
     p.air.cost_per_assisted_contact = spec.air_cost_per_contact;
     p.logistics.enabled = spec.logistics_rate > 0.0;
-    p.logistics.mode = "throughput_augmentation".to_string();
+    p.logistics.mode = "direct_delivery".to_string();
     p.logistics.daily_delivery_rate = spec.logistics_rate;
     p.logistics.max_daily_capacity = spec.logistics_capacity.max(spec.logistics_rate);
     p.logistics.cost_per_supply_delivered = spec.logistics_cost_per_unit;
