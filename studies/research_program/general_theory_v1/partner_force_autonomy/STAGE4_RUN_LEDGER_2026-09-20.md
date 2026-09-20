@@ -172,7 +172,7 @@ To avoid outcome-driven threshold selection, paper-level secondary analysis was
 specified before production completion in a third branch:
 
 - branch: `stage4/paper-analysis-plan-v1`
-- commit: `8f00818a0a2ed675cfd84bb6bea2088834abd85c`
+- initial precommit: `8f00818a0a2ed675cfd84bb6bea2088834abd85c`
 - plan: `STAGE4_PAPER_SECONDARY_ANALYSIS_PLAN_2026-09-20.md`
 - script: `analysis/analyze_stage4_paper_secondary.py`
 

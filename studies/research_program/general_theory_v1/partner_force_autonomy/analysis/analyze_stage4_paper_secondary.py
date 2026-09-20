@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import math
+import subprocess
 from collections.abc import Iterable
 from itertools import pairwise
 from pathlib import Path
@@ -95,6 +96,29 @@ def sign_eps(value: float) -> int:
     if not math.isfinite(value) or abs(value) <= EPS:
         return 0
     return 1 if value > 0.0 else -1
+
+
+def strict_bool_series(values: pd.Series) -> pd.Series:
+    """Parse bool-like CSV values without treating the string 'False' as true."""
+    if pd.api.types.is_bool_dtype(values.dtype):
+        return values.fillna(False).astype(bool)
+    mapping = {
+        "true": True,
+        "false": False,
+        "1": True,
+        "0": False,
+        "yes": True,
+        "no": False,
+    }
+    out = values.map(
+        lambda value: False
+        if pd.isna(value)
+        else mapping.get(str(value).strip().lower(), None)
+    )
+    if out.isna().any():
+        bad = sorted({str(v) for v in values[out.isna()].tolist()})
+        raise ValueError(f"unrecognized boolean values: {bad}")
+    return out.astype(bool)
 
 
 def phase_cell_summary(
@@ -397,7 +421,7 @@ def migration_summary(worlds: pd.DataFrame, paired: pd.DataFrame) -> pd.DataFram
     ]
     rows: list[dict] = []
     for group_key, g in w.groupby(keys, dropna=False, sort=True):
-        migrated = g["ever_persistently_migrated"].fillna(False).astype(bool)
+        migrated = strict_bool_series(g["ever_persistently_migrated"])
         nmig = int(migrated.sum())
         n = len(g)
         ci = wilson_interval(nmig, n)
@@ -488,6 +512,10 @@ def main() -> None:
         "status": "PRECOMMITTED_PAPER_SECONDARY_ANALYSIS",
         "bootstrap_seed": ns.bootstrap_seed,
         "bootstrap_resamples": ns.bootstrap_resamples,
+        "paper_analysis_git_commit": subprocess.check_output(
+            ["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "HEAD"],
+            text=True,
+        ).strip(),
         "epsilon": EPS,
         "primary_estimands": {
             "early_operational_effect": "delta composite_capability at +30d",
