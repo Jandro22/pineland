@@ -208,7 +208,18 @@ def main() -> None:
                 "pineland.partner_force_arc_task.stage4.v1",
             }:
                 raise SystemExit(f"{metadata_path} has unexpected schema_version")
-            if int(metadata.get("slurm_array_task_id", -1)) != task_id:
+            if metadata.get("schema_version") == "pineland.partner_force_arc_task.stage4.v1":
+                if int(metadata.get("logical_task_id", -1)) != task_id:
+                    raise SystemExit(
+                        f"{metadata_path} logical task id does not match shard filename"
+                    )
+                slurm_task_id = int(metadata.get("slurm_array_task_id", -1))
+                task_offset = int(metadata.get("task_offset", -1))
+                if slurm_task_id < 0 or task_offset < 0 or slurm_task_id + task_offset != task_id:
+                    raise SystemExit(
+                        f"{metadata_path} Slurm task id + offset does not reconstruct logical task id"
+                    )
+            elif int(metadata.get("slurm_array_task_id", -1)) != task_id:
                 raise SystemExit(f"{metadata_path} task id does not match shard filename")
             if metadata.get("output_sha256") != file_sha256(shard):
                 raise SystemExit(f"{shard} SHA-256 does not match ARC task metadata")

@@ -15,12 +15,16 @@
       "initial_array_throttle": 96,
       "array_chunks": [
         {
-          "task_ids": "0-839",
+          "slurm_task_ids": "0-839",
+          "logical_task_ids": "0-839",
+          "task_offset": 0,
           "task_count": 840,
           "throttle": 48
         },
         {
-          "task_ids": "840-1679",
+          "slurm_task_ids": "0-839",
+          "logical_task_ids": "840-1679",
+          "task_offset": 840,
           "task_count": 840,
           "throttle": 48
         }
@@ -48,5 +52,5 @@
       "output_directory": "/home/alejandrog/pineland-stage4-production/substitution_development"
     }
   ],
-  "scheduler_note": "Owl MaxArraySize is 1001, so the 1680-world Phase Map is submitted as two disjoint 840-task arrays at 48 concurrent tasks each. Array packaging and throttles are operational choices only and do not change the scientific design."
+  "scheduler_note": "Owl MaxArraySize is 1001 and therefore also bounds Slurm array indices. The 1680-world Phase Map is submitted as two 0-839 Slurm arrays at 48 concurrent tasks each; the second array uses PF_TASK_OFFSET=840 so its logical task IDs are 840-1679. Array packaging and throttles do not change the scientific design."
 }

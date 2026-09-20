@@ -45,13 +45,13 @@ LOGROOT="/home/alejandrog/pineland-stage4-production/logs"
 mkdir -p "$LOGROOT"
 
 submit_array() {
-  local name=$1 array_spec=$2 contract=$3 out=$4
+  local name=$1 array_spec=$2 offset=$3 contract=$4 out=$5
   sbatch --parsable "${COMMON[@]}" \
     --job-name="$name" \
     --array="$array_spec" \
     --output="$LOGROOT/${name}_%A_%a.out" \
     --error="$LOGROOT/${name}_%A_%a.err" \
-    --export="ALL,PINELAND_REPO_ROOT=$REPO_ROOT,PF_BINARY=$BINARY,PF_STAGE4_CONTRACT=$contract,PF_FREEZE=$FREEZE,PF_OUTPUT_DIR=$out,PF_ALLOW_UNFROZEN=0" \
+    --export="ALL,PINELAND_REPO_ROOT=$REPO_ROOT,PF_BINARY=$BINARY,PF_STAGE4_CONTRACT=$contract,PF_FREEZE=$FREEZE,PF_OUTPUT_DIR=$out,PF_ALLOW_UNFROZEN=0,PF_TASK_OFFSET=$offset" \
     "$ARRAY_WRAPPER"
 }
 
@@ -66,10 +66,10 @@ submit_post() {
     "$POST_WRAPPER"
 }
 
-JOB_A1=$(submit_array pf-s4-phase-a 0-839%48 "$CONTRACT_A" "$OUT_A")
-JOB_A2=$(submit_array pf-s4-phase-b 840-1679%48 "$CONTRACT_A" "$OUT_A")
-JOB_B=$(submit_array pf-s4-migrate 0-623%52 "$CONTRACT_B" "$OUT_B")
-JOB_C=$(submit_array pf-s4-mechanism 0-503%48 "$CONTRACT_C" "$OUT_C")
+JOB_A1=$(submit_array pf-s4-phase-a 0-839%48 0 "$CONTRACT_A" "$OUT_A")
+JOB_A2=$(submit_array pf-s4-phase-b 0-839%48 840 "$CONTRACT_A" "$OUT_A")
+JOB_B=$(submit_array pf-s4-migrate 0-623%52 0 "$CONTRACT_B" "$OUT_B")
+JOB_C=$(submit_array pf-s4-mechanism 0-503%48 0 "$CONTRACT_C" "$OUT_C")
 
 POST_A=$(submit_post pf-s4-phase-post "${JOB_A1}:${JOB_A2}" "$CONTRACT_A" "$OUT_A")
 POST_B=$(submit_post pf-s4-migrate-post "$JOB_B" "$CONTRACT_B" "$OUT_B")

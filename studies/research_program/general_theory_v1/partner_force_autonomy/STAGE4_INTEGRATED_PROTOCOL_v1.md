@@ -196,9 +196,13 @@ launch is:
 Each world remains a one-core Slurm task.  The aggregate 196-core throttle is
 well below the ARC/QOS CPU limit observed before launch and can be reduced by
 the scheduler/fair-share environment without changing the scientific design.
-Because Owl's `MaxArraySize` is 1001, Module A is packaged as two disjoint
-840-task arrays (`0-839` and `840-1679`) at 48 concurrent tasks each; together
-they preserve Module A's planned 96-task concurrency and exact task-ID mapping.
+Because Owl's `MaxArraySize` is 1001, Module A is packaged as two 840-task
+Slurm arrays whose local indices are both `0-839`, at 48 concurrent tasks each.
+The second array has the frozen offset `PF_TASK_OFFSET=840`, mapping its Slurm
+indices to logical experiment task IDs `840-1679`.  The sidecar records both
+IDs plus the offset, and merge validation requires `slurm_id + offset =
+logical_id`.  This preserves Module A's planned 96-task concurrency and exact
+scientific task mapping while obeying Owl's scheduler limit.
 
 ## Production integrity
 

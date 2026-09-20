@@ -35,7 +35,13 @@ print(d['experiment_id'], int(d['cells_count']), int(d['default_seed_count']), i
 PY
 )
 
-TASK_ID="${SLURM_ARRAY_TASK_ID:?This script must run as a Slurm array task}"
+SLURM_TASK_ID="${SLURM_ARRAY_TASK_ID:?This script must run as a Slurm array task}"
+TASK_OFFSET="${PF_TASK_OFFSET:-0}"
+if ! [[ "$TASK_OFFSET" =~ ^[0-9]+$ ]]; then
+  echo "PF_TASK_OFFSET must be a non-negative integer, got: $TASK_OFFSET" >&2
+  exit 2
+fi
+TASK_ID=$((SLURM_TASK_ID + TASK_OFFSET))
 TOTAL_TASKS=$((CELL_COUNT * SEED_COUNT))
 if (( TASK_ID < 0 || TASK_ID >= TOTAL_TASKS )); then
   echo "SLURM_ARRAY_TASK_ID=$TASK_ID outside valid range 0..$((TOTAL_TASKS-1))" >&2
@@ -80,10 +86,10 @@ CONTRACT_SHA256=$(sha256sum "$CONTRACT" | awk '{print $1}')
 FREEZE_SHA256=$(sha256sum "$FREEZE" | awk '{print $1}')
 GIT_COMMIT=$(git rev-parse HEAD)
 HOST=$(hostname)
-python3 - "$META" "$EXPERIMENT_ID" "$TASK_ID" "$CELL_INDEX" "$SEED" "$SHARD" "$SHA256" "$TRAJECTORY_SHARD" "$TRAJECTORY_SHA256" "$GIT_COMMIT" "$HOST" "$START_EPOCH" "$END_EPOCH" "$CONTRACT" "$CONTRACT_SHA256" "$FREEZE" "$FREEZE_SHA256" <<'PY'
+python3 - "$META" "$EXPERIMENT_ID" "$TASK_ID" "$SLURM_TASK_ID" "$TASK_OFFSET" "$CELL_INDEX" "$SEED" "$SHARD" "$SHA256" "$TRAJECTORY_SHARD" "$TRAJECTORY_SHA256" "$GIT_COMMIT" "$HOST" "$START_EPOCH" "$END_EPOCH" "$CONTRACT" "$CONTRACT_SHA256" "$FREEZE" "$FREEZE_SHA256" <<'PY'
 import json, os, sys
 (
-    meta, experiment_id, task_id, cell_index, seed, shard, sha256,
+    meta, experiment_id, logical_task_id, slurm_task_id, task_offset, cell_index, seed, shard, sha256,
     trajectory_shard, trajectory_sha256, git_commit, host, start_epoch, end_epoch,
     contract, contract_sha256, freeze, freeze_sha256,
 ) = sys.argv[1:]
@@ -92,7 +98,9 @@ payload = {
     'experiment_id': experiment_id,
     'slurm_job_id': os.environ.get('SLURM_JOB_ID'),
     'slurm_array_job_id': os.environ.get('SLURM_ARRAY_JOB_ID'),
-    'slurm_array_task_id': int(task_id),
+    'slurm_array_task_id': int(slurm_task_id),
+    'logical_task_id': int(logical_task_id),
+    'task_offset': int(task_offset),
     'cell_index': int(cell_index),
     'seed': int(seed),
     'git_commit': git_commit,
@@ -112,4 +120,4 @@ with open(meta, 'w', encoding='utf-8') as f:
     f.write('\n')
 PY
 
-echo "Completed experiment=$EXPERIMENT_ID task=$TASK_ID cell=$CELL_INDEX seed=$SEED"
+echo "Completed experiment=$EXPERIMENT_ID logical_task=$TASK_ID slurm_task=$SLURM_TASK_ID offset=$TASK_OFFSET cell=$CELL_INDEX seed=$SEED"
