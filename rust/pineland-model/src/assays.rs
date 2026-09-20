@@ -471,6 +471,19 @@ pub fn run_channel_isolation_assay(options: &GateOptions) -> Result<IsolationAss
 
         let assay_on = on.capability_assay(&baseline);
         let assay_off = off.capability_assay(&baseline);
+        if name == "logistics_only" {
+            eprintln!(
+                "LOGISTICS_ONLY DEBUG: ctrl={:.3} pers={:.3} form={:.3} cov={:.3} read_ret={:.3} base_read={:.3} C_on={:.6} C_v1={:.6}",
+                assay_on.government_control,
+                assay_on.military_personnel_retention,
+                assay_on.operational_formation_survival,
+                assay_on.geographic_coverage_retention,
+                assay_on.operational_readiness_retention,
+                baseline.operational_readiness,
+                assay_on.composite_capability,
+                assay_on.composite_capability_v1
+            );
+        }
         let capability_diff =
             (assay_on.composite_capability - assay_off.composite_capability).abs();
 

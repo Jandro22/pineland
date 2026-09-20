@@ -77,17 +77,20 @@ pub struct CapabilityAssayBaseline {
     pub military_personnel: f64,
     pub operational_formations: usize,
     pub covered_localities: usize,
+    pub operational_readiness: f64,
 }
 
 /// Behavioral capability assay used for paired SUPPORT_ON/SUPPORT_OFF outcomes.
-/// Version: pineland.partner_force_capability_assay.v1
+/// Version: pineland.partner_force_capability_assay.v2
 #[derive(Clone, Debug, PartialEq)]
 pub struct CapabilityAssayResult {
     pub government_control: f64,
     pub military_personnel_retention: f64,
     pub operational_formation_survival: f64,
     pub geographic_coverage_retention: f64,
+    pub operational_readiness_retention: f64,
     pub composite_capability: f64,
+    pub composite_capability_v1: f64,
 }
 
 impl CapabilityAssayResult {
@@ -95,7 +98,7 @@ impl CapabilityAssayResult {
         let mut o = JsonValue::object();
         o.insert(
             "schema_version",
-            JsonValue::string("pineland.partner_force_capability_assay.v1"),
+            JsonValue::string("pineland.partner_force_capability_assay.v2"),
         );
         o.insert(
             "government_control",
@@ -114,8 +117,16 @@ impl CapabilityAssayResult {
             JsonValue::number(self.geographic_coverage_retention),
         );
         o.insert(
+            "operational_readiness_retention",
+            JsonValue::number(self.operational_readiness_retention),
+        );
+        o.insert(
             "composite_capability",
             JsonValue::number(self.composite_capability),
+        );
+        o.insert(
+            "composite_capability_v1",
+            JsonValue::number(self.composite_capability_v1),
         );
         o
     }
@@ -2751,6 +2762,7 @@ impl SimulationEngine {
         let mut military_personnel = 0.0;
         let mut operational_formations = 0usize;
         let mut covered_localities = BTreeSet::new();
+        let mut weighted_readiness_sum = 0.0;
         for formation in 0..self.particle.formations.personnel.len() {
             if self.particle.formations.organization[formation] as usize != MILITARY
                 || self.particle.formations.active[formation] == 0
@@ -2766,11 +2778,21 @@ impl SimulationEngine {
             military_personnel += personnel;
             operational_formations += 1;
             covered_localities.insert(self.particle.formations.locality[formation]);
+            let deployable_readiness = (pineland_core::state::clamp01(self.particle.formations.availability[formation])
+                * self.particle.formations.effective_readiness(formation))
+                .clamp(0.0, 1.0);
+            weighted_readiness_sum += personnel * deployable_readiness;
         }
+        let operational_readiness = if military_personnel > 1.0e-12 {
+            weighted_readiness_sum / military_personnel
+        } else {
+            0.0
+        };
         CapabilityAssayBaseline {
             military_personnel,
             operational_formations,
             covered_localities: covered_localities.len(),
+            operational_readiness,
         }
     }
 
@@ -2788,6 +2810,7 @@ impl SimulationEngine {
         let mut military_personnel = 0.0;
         let mut operational_formations = 0usize;
         let mut covered_localities = BTreeSet::new();
+        let mut weighted_readiness_sum = 0.0;
         for formation in 0..self.particle.formations.personnel.len() {
             if self.particle.formations.organization[formation] as usize != MILITARY
                 || self.particle.formations.active[formation] == 0
@@ -2803,6 +2826,10 @@ impl SimulationEngine {
             military_personnel += personnel;
             operational_formations += 1;
             covered_localities.insert(self.particle.formations.locality[formation]);
+            let deployable_readiness = (pineland_core::state::clamp01(self.particle.formations.availability[formation])
+                * self.particle.formations.effective_readiness(formation))
+                .clamp(0.0, 1.0);
+            weighted_readiness_sum += personnel * deployable_readiness;
         }
 
         let bounded_ratio = |value: f64, denominator: f64| -> f64 {
@@ -2821,20 +2848,38 @@ impl SimulationEngine {
             covered_localities.len() as f64,
             baseline.covered_localities as f64,
         );
-        let components = [
+        let current_readiness = if military_personnel > 1.0e-12 {
+            weighted_readiness_sum / military_personnel
+        } else {
+            0.0
+        };
+        let readiness_retention = bounded_ratio(current_readiness, baseline.operational_readiness);
+
+        let components_v1 = [
             government_control.clamp(0.0, 1.0),
             personnel_retention,
             formation_survival,
             coverage_retention,
         ];
-        let composite_capability = components.iter().product::<f64>().powf(0.25);
+        let composite_capability_v1 = components_v1.iter().product::<f64>().powf(0.25);
+
+        let components_v2 = [
+            government_control.clamp(0.0, 1.0),
+            personnel_retention,
+            formation_survival,
+            coverage_retention,
+            readiness_retention,
+        ];
+        let composite_capability = components_v2.iter().product::<f64>().powf(0.2);
 
         CapabilityAssayResult {
-            government_control: components[0],
+            government_control: components_v2[0],
             military_personnel_retention: personnel_retention,
             operational_formation_survival: formation_survival,
             geographic_coverage_retention: coverage_retention,
+            operational_readiness_retention: readiness_retention,
             composite_capability,
+            composite_capability_v1,
         }
     }
 
@@ -4771,20 +4816,24 @@ mod tests {
             military_personnel: 100.0,
             operational_formations: 0,
             covered_localities: 2,
+            operational_readiness: 0.8,
         };
         let assay = engine.capability_assay(&baseline_zero_formations);
         assert_eq!(assay.operational_formation_survival, 0.0);
         assert_eq!(assay.composite_capability, 0.0);
+        assert_eq!(assay.composite_capability_v1, 0.0);
 
         // Baseline with 0 military personnel
         let baseline_zero_personnel = CapabilityAssayBaseline {
             military_personnel: 0.0,
             operational_formations: 2,
             covered_localities: 2,
+            operational_readiness: 0.8,
         };
         let assay_p = engine.capability_assay(&baseline_zero_personnel);
         assert_eq!(assay_p.military_personnel_retention, 0.0);
         assert_eq!(assay_p.composite_capability, 0.0);
+        assert_eq!(assay_p.composite_capability_v1, 0.0);
     }
 
     #[test]
