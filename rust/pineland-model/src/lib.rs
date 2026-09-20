@@ -2778,8 +2778,9 @@ impl SimulationEngine {
             military_personnel += personnel;
             operational_formations += 1;
             covered_localities.insert(self.particle.formations.locality[formation]);
-            let deployable_readiness = (pineland_core::state::clamp01(self.particle.formations.availability[formation])
-                * self.particle.formations.effective_readiness(formation))
+            let deployable_readiness =
+                (pineland_core::state::clamp01(self.particle.formations.availability[formation])
+                    * self.particle.formations.effective_readiness(formation))
                 .clamp(0.0, 1.0);
             weighted_readiness_sum += personnel * deployable_readiness;
         }
@@ -2826,8 +2827,9 @@ impl SimulationEngine {
             military_personnel += personnel;
             operational_formations += 1;
             covered_localities.insert(self.particle.formations.locality[formation]);
-            let deployable_readiness = (pineland_core::state::clamp01(self.particle.formations.availability[formation])
-                * self.particle.formations.effective_readiness(formation))
+            let deployable_readiness =
+                (pineland_core::state::clamp01(self.particle.formations.availability[formation])
+                    * self.particle.formations.effective_readiness(formation))
                 .clamp(0.0, 1.0);
             weighted_readiness_sum += personnel * deployable_readiness;
         }

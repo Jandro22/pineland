@@ -335,7 +335,12 @@ def check_preregistration_freeze() -> None:
             artifacts = data.get("frozen_artifacts", {})
             count = len(artifacts)
             required_count = int(data.get("required_artifact_count", count))
-            all_matched = count >= 27 and count == required_count
+            canonicalization = data.get("hash_canonicalization")
+            all_matched = (
+                count >= 27
+                and count == required_count
+                and canonicalization == "crlf_to_lf_v1"
+            )
             for entry in artifacts.values():
                 rel_path = entry["path"]
                 expected_sha = entry["sha256"]
@@ -344,7 +349,8 @@ def check_preregistration_freeze() -> None:
                     all_matched = False
                     print(f"Missing frozen artifact: {rel_path}")
                     break
-                actual_sha = hashlib.sha256(actual_file.read_bytes()).hexdigest()
+                canonical_bytes = actual_file.read_bytes().replace(b"\r\n", b"\n")
+                actual_sha = hashlib.sha256(canonical_bytes).hexdigest()
                 if actual_sha != expected_sha:
                     all_matched = False
                     print(f"Hash mismatch in {rel_path}: expected {expected_sha}, got {actual_sha}")
