@@ -562,6 +562,16 @@ fn verify_preregistration_freeze(freeze_path: &Path) -> Result<(), String> {
             freeze_path.display()
         )
     })?;
+    let root = parse_json(&content).map_err(|e| format!("invalid freeze-manifest JSON: {e}"))?;
+    let canonicalization = root
+        .get("hash_canonicalization")
+        .and_then(JsonValue::as_str)
+        .ok_or_else(|| "freeze manifest missing hash_canonicalization".to_string())?;
+    if canonicalization != "crlf_to_lf_v1" {
+        return Err(format!(
+            "unsupported freeze hash canonicalization '{canonicalization}'"
+        ));
+    }
     let entries = parse_freeze_manifest(&content)?;
     if entries.len() < 27 {
         return Err(format!(
@@ -573,7 +583,18 @@ fn verify_preregistration_freeze(freeze_path: &Path) -> Result<(), String> {
         let file_path = Path::new(rel_path);
         let bytes = fs::read(file_path)
             .map_err(|e| format!("Frozen artifact not found or unreadable at {rel_path}: {e}"))?;
-        let actual_hash = sha256(&bytes);
+        let mut canonical_bytes = Vec::with_capacity(bytes.len());
+        let mut i = 0usize;
+        while i < bytes.len() {
+            if i + 1 < bytes.len() && bytes[i] == b'\r' && bytes[i + 1] == b'\n' {
+                canonical_bytes.push(b'\n');
+                i += 2;
+            } else {
+                canonical_bytes.push(bytes[i]);
+                i += 1;
+            }
+        }
+        let actual_hash = sha256(&canonical_bytes);
         if actual_hash != *expected_hash {
             return Err(format!(
                 "Preregistration freeze hash mismatch for {rel_path}!\nExpected: {expected_hash}\nActual:   {actual_hash}\nRefusing execution with modified contracts. Use --allow-unfrozen to override."
