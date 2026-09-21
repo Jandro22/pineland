@@ -10,6 +10,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[5]
 BASE = REPO / "studies/research_program/general_theory_v1/partner_force_autonomy"
+PREVIOUS = BASE / "contracts/partner_force_stage4_integrated_freeze_v1.json"
 OUT = BASE / "contracts/partner_force_mechanism_ablation_freeze_v1.json"
 
 
@@ -26,6 +27,12 @@ def rel(path: Path) -> str:
 
 
 def main() -> None:
+    previous = json.loads(PREVIOUS.read_text(encoding="utf-8"))
+    artifacts: dict[str, dict[str, str]] = {}
+    for artifact_id, entry in previous["frozen_artifacts"].items():
+        path = REPO / entry["path"]
+        artifacts[f"inherited_{artifact_id}"] = {"path": rel(path), "sha256": digest(path)}
+
     paths = {
         "protocol": BASE / "MECHANISM_ABLATION_PROTOCOL_v1.md",
         "contract": BASE / "contracts/mechanism_ablation_v1.json",
@@ -40,6 +47,8 @@ def main() -> None:
     for path in paths.values():
         if not path.exists():
             raise SystemExit(f"missing freeze artifact: {path}")
+    for name, path in paths.items():
+        artifacts[f"ablation_{name}"] = {"path": rel(path), "sha256": digest(path)}
     payload = {
         "schema_version": "pineland.partner_force_mechanism_ablation_freeze.v1",
         "status": "FROZEN_BEFORE_MECHANISM_ABLATION_PRODUCTION",
@@ -50,10 +59,8 @@ def main() -> None:
         "engineering_calibration_seed": 2026999902,
         "engineering_calibration_outcomes_used_for_science": False,
         "production_outcomes_used_before_freeze": False,
-        "frozen_artifacts": {
-            name: {"path": rel(path), "sha256": digest(path)} for name, path in paths.items()
-        },
-        "required_artifact_count": len(paths),
+        "frozen_artifacts": artifacts,
+        "required_artifact_count": len(artifacts),
     }
     OUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"wrote {rel(OUT)} with {len(paths)} frozen artifacts")

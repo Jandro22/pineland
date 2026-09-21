@@ -1,6 +1,6 @@
 # Mechanism ablation protocol v1
 
-Status: **PROSPECTIVE POST-REVIEW SIDECAR, TO BE FROZEN BEFORE PRODUCTION OUTCOMES**
+Status: **PROSPECTIVE POST-REVIEW SIDECAR, FROZEN BEFORE PRODUCTION OUTCOMES**
 
 Date: 2026-09-21
 
@@ -42,6 +42,12 @@ restored before the next interval.
   or clamp-calibration seeds.
 - No production outcome may be inspected before the contract and freeze are
   committed.
+- An initial ARC submission was rejected by the runner's freeze validator
+  before simulation because the first mechanism-ablation manifest contained
+  only the 9 new sidecar artifacts rather than the inherited Stage-4 scientific
+  foundation. That submission produced 0 primary shards and 0 task metadata.
+  The freeze was amended to inherit the full Stage-4 artifact set before any
+  mechanism-ablation production outcome existed.
 
 ## Production design
 
