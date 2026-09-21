@@ -1,6 +1,6 @@
 ﻿# Draft status
 
-## Final review manuscript
+## Final review and submission package
 
 The paper has been substantively rebuilt after external review. It now centers on the relief-yield-retention framework rather than a migration-mediated autonomy-trap claim.
 
@@ -20,4 +20,19 @@ Completed work:
 
 The final scientific interpretation is bounded deliberately. Constraint displacement is directly demonstrated as a mechanism for relief without yield. Requirement expansion remains theoretically plausible and descriptively consistent with the Stage-4 telemetry, but the prospective clamp does not identify it as the cause of the retention gap because its fresh-seed normal arms reproduce no coverage penalty to mediate.
 
-The manuscript is ready for final rendering, visual inspection, and review feedback.
+The canonical manuscript is scientifically closed for this revision and passes
+the repository evidence validator. The five main figures have been regenerated
+from tracked evidence, and `prepare_submission.py` creates a reproducible review
+package containing an anonymized manuscript, separate title page, bibliography,
+model/reproducibility appendix, main figures, and SHA-256 manifest.
+`render_submission.py` converts those review sources to editable DOCX files and
+matching Word-exported PDFs while stripping author metadata from the anonymous
+manuscript. `qa_submission.py` then checks every rendered page for document size,
+blank pages, footer numbering, text/image bounds, unresolved citations,
+minimum readable prose text, missing figure/table captions, and blind-review
+identity leaks.
+
+The rendered anonymous manuscript is 59 US-letter pages and passes submission
+QA. Remaining work is limited to venue-specific formatting changes requested at
+upload time and any changes requested by reviewers or coauthors, not unresolved
+Stage-4/Stage-5 analysis.

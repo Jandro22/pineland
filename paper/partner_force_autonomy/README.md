@@ -21,6 +21,10 @@ This directory contains the revised manuscript and replication controls for the 
 - `claim_evidence_matrix.md`: current claim/evidence/status map.
 - `figure_plan.md`: five-figure/five-table article plan.
 - `generate_figures.py`: deterministic grayscale main-figure generator.
+- `prepare_submission.py`: builds the anonymized review package from the canonical manuscript.
+- `render_submission.py`: resolves citations/figures into DOCX and exports matching PDFs through Microsoft Word.
+- `qa_submission.py`: checks every rendered page for page size, blank pages, footer numbering, image/text bounds, minimum text size, unresolved citations, and blind-review leaks.
+- `submission/`: generated review manuscript, title page, bibliography, appendix, figures, and SHA-256 manifest.
 - `historical_validation_protocol.md` and `historical_cases/`: source-audited external-validation materials.
 
 ## Evidence-status vocabulary

@@ -2,8 +2,8 @@
 
 Current primary target: **Security Studies**
 
-Status: working target for Draft 0.5. This is not a submission decision that
-prevents later retargeting.
+Status: working target for the final review manuscript. This is not a submission
+decision that prevents later retargeting.
 
 ## Why the current manuscript fits
 
@@ -21,13 +21,11 @@ That is the architecture Draft 0.5 is being built to satisfy.
 
 ## Length target
 
-Security Studies normally caps research articles at 13,000 words excluding
-online-only supplementary information, while allowing review of manuscripts up
-to 15,000 words for rich qualitative research. Draft 0.5 deliberately carries
-some material that can move to the online supplement. After Stage-5 results are
-inserted, the main-text compression pass should remove duplicated methods,
-robustness, and historical detail while preserving the full novelty boundary and
-headline evidence.
+The current canonical manuscript is 12,999 whitespace-delimited source words.
+Stage 5, the post-review mechanism test, the literature intervention, and the
+main-text compression pass are complete. Venue-specific word-count conventions
+may differ after citation and document rendering, so the upload portal's count
+should be treated as authoritative at submission time.
 
 ## Main-text material to preserve
 

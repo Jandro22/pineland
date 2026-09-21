@@ -1,0 +1,21 @@
+# SHA-256 manifest
+
+`b1c9093bb4259c3f592a75ac07b66fedaf20862116b0e783664a0b38cea70531`  `appendix_model_reproducibility.md`
+`cf0635e6c5e583c10a3e4a69e32006c8fe39e6a9135aacae3fbe413128977b8c`  `figures/figure1_conceptual.pdf`
+`b051dd7af15c3e97ebe5183909e9bed2bb1dd32d7cc144595c626c32519255ba`  `figures/figure1_conceptual.png`
+`bdf0c3a5f00da517cdc828ee910fdc9b59da0fcc88109396788d29e3e3699169`  `figures/figure2_supported_retained.pdf`
+`88dc4514087ca7f253fb190252c5398f50238351997f7ef7530d53c9ec8e0ddb`  `figures/figure2_supported_retained.png`
+`7d0965dbb5447a482b76806185ba967dd4e5f88d819a7325a495d2e0307d0b2e`  `figures/figure3_requirement_expansion.pdf`
+`15c486c1910bcc4c72243d782d60f3c04e5b55ce9c1a6d3e0b60b9cd44795e8e`  `figures/figure3_requirement_expansion.png`
+`0e27a021905a1709e3525fda65c5ef307f07b1edfc431831d7ab531f98331aad`  `figures/figure4_capability_trajectories.pdf`
+`bd640845750774505159e8018ab57777aeeab6cb2136fdf98399933864fd512a`  `figures/figure4_capability_trajectories.png`
+`25e1b52a827272779d5f90cab0720bca7011949e8562881f8f2b59c749913009`  `figures/figure5_assistance_frontier.pdf`
+`8bac2c6d234b67fce7e6087eb7531a895ef0766dd42012c20319da8a41a05698`  `figures/figure5_assistance_frontier.png`
+`5556c13ab64a6ae2a15bc58838e913882655617ca5d8b4a3d37f61bb1a337f73`  `manuscript_anonymized.docx`
+`956d9aceb6ab2b444290936e85e4194b6389b239e0c4cd5f4557124739cb4735`  `manuscript_anonymized.md`
+`9b2e67bd7ea0fa9cf18d9df86367bb7dc9250f54e23dc3599defc953d8ec8852`  `manuscript_anonymized.pdf`
+`53f3ea2406e166a8cbe5e3ebba4691a8a5dab075cc4ba380fad91811e7addafe`  `README.md`
+`744f51708a1cd2ed41389f331eb7aa9982cd8b309f665aac4e1416acc0a9be63`  `references.bib`
+`f505822f91c0386f9e4b0a0cbf5b04b6ae9a9004fef429e21f472fe6691fb7d3`  `title_page.docx`
+`da6b3326ad2f04f784a40fb69ba565673f13ef1e89359c95a49b0410886be590`  `title_page.md`
+`0ae519bdb365886f4a91b774f047f05163c13c7c173fe912047b2f1e4f82ee60`  `title_page.pdf`
