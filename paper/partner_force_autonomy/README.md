@@ -1,6 +1,6 @@
 # Partner-Force Autonomy paper
 
-Working title: **The Moving Bottleneck: Security Assistance, Indigenous Capacity, and the Autonomy Trap**
+Working title: **Suffering from Success: Security Assistance, Constraint Migration, and Partner-Force Autonomy**
 
 This directory contains the manuscript for the integrated Partner-Force Autonomy
 paper. It begins from the completed Stage-4 research state on Git commit
@@ -14,6 +14,7 @@ paper. It begins from the completed Stage-4 research state on Git commit
 - Compact evidence: tracked under
   `studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/`.
 - Historical validation: not yet complete and must remain separate from the synthetic causal claims.
+- Stage-5 coordinated-development follow-up: prospectively designed after Stage 4 and frozen separately before production. It tests whether multi-channel indigenous development can move the whole production frontier rather than merely shift the binding constraint.
 
 ## Files
 

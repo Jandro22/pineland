@@ -6,7 +6,7 @@ The manuscript package now contains:
 
 - working title and abstract;
 - introduction and literature-positioning argument;
-- formal moving-bottleneck theory;
+- formal constraint-migration theory;
 - five testable propositions;
 - complete Stage-4 research design and inference description;
 - first-pass Results section using the frozen paper-level estimates;
@@ -26,15 +26,20 @@ The manuscript package now contains:
 - a manuscript-ready smooth-aggregator robustness table for the Migration module;
 - repository-wide branch consolidation, including the final command-floor theorem
   and preserved exact-performance provenance.
+- a separately preregistered Stage-5 coordinated-development follow-up testing
+  whether simultaneous growth in complementary indigenous capacities can lift
+  whole-system autonomy rather than only move the binding constraint.
 
 ## Highest-priority work before Draft 0.4
 
-1. Conduct structured process tracing for Afghanistan, Iraq, Mali, and Colombia
+1. Complete and analyze the frozen Stage-5 coordinated-development experiment.
+2. Conduct structured process tracing for Afghanistan, Iraq, Mali, and Colombia
    under the frozen protocol.
-2. Generate the conceptual Figure 1 and refine Figures 2-6 for journal layout.
-3. Decide the target journal and adapt word count, citation style, headings, and
+3. Refine Figures 1-6 for journal layout and add the Stage-5 complementarity
+   figure only after the prospective results are complete.
+4. Decide the target journal and adapt word count, citation style, headings, and
    disclosure/reproducibility statements to that journal.
-4. Tighten the external-validity and theory sections after the historical evidence is coded, without
+5. Tighten the external-validity and theory sections after the historical evidence is coded, without
    changing the synthetic estimands or retrofitting the Stage-4 hypotheses.
 
 ## Claims that remain prohibited
@@ -44,3 +49,4 @@ The manuscript package now contains:
 - claiming the model proves an optimal assistance policy;
 - presenting a historical case as validation before the case protocol is frozen;
 - describing post-completion exploratory synthesis as preregistered.
+- describing Stage 5 as part of the original Stage-4 preregistration.

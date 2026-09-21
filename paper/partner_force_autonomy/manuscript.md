@@ -1,9 +1,9 @@
 ---
-title: "The Moving Bottleneck: Security Assistance, Indigenous Capacity, and the Autonomy Trap"
+title: "Suffering from Success: Security Assistance, Constraint Migration, and Partner-Force Autonomy"
 author: "Alejandro Grenier"
 affiliation: "Virginia Tech"
 bibliography: references.bib
-status: "Working manuscript, Draft 0.2"
+status: "Working manuscript, Draft 0.3"
 date: "2026-09-21"
 keywords: "security assistance; military effectiveness; partner forces; autonomy; logistics; agent-based modeling"
 ---
@@ -119,7 +119,7 @@ sustaining the whole force independently.
 The argument is not that politics ceases to matter once military production is
 modeled. Recipient incentives, donor leverage, organizational design, and
 political institutions determine whether reforms occur and how assistance is
-used. The moving-bottleneck mechanism is conditional on changes in military
+used. The constraint-migration mechanism is conditional on changes in military
 service production actually taking place. It therefore complements rather than
 displaces agency and influence theories of security assistance.
 
@@ -336,7 +336,7 @@ increases indigenous production at a service that remains system-binding.
 large indigenous gains in a targeted subsystem without increasing whole-system
 autonomy when successful development causes another service to become binding.
 
-![Figure 1. The moving-bottleneck mechanism. Assistance relieves a current
+![Figure 1. The constraint-migration mechanism. Assistance relieves a current
 constraint, changes the supported operating envelope, and can alter which
 service ultimately limits indigenous autonomy.](figures/figure1_conceptual.png)
 
@@ -669,7 +669,7 @@ autonomy.
 values are synthetic-model effects. The table does not convert them into
 historical treatment-effect estimates.
 
-The moving-bottleneck result is also highly insensitive to replacing the hard
+The constraint-migration result is also highly insensitive to replacing the hard
 minimum autonomy coordinate with smooth service aggregators in the Migration
 module. Across the 169 worlds in which the assistance target matched the
 observed pre-withdrawal bottleneck, the sign of the +360-day autonomy effect
@@ -830,7 +830,7 @@ Nor is it enough to distinguish external substitution from indigenous capacity
 building in the abstract. The relevant question is whether indigenous
 production keeps pace with demand at the service that binds the adapted force.
 
-The resulting theory is a moving-bottleneck theory of partner-force autonomy.
+The resulting theory is a constraint-migration theory of partner-force autonomy.
 Assistance changes the force it supports, successful development changes what
 the force lacks, and autonomy depends on whether indigenous production can
 follow that moving constraint.

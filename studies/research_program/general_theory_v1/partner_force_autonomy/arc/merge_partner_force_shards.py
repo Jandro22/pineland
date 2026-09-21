@@ -222,9 +222,13 @@ def main() -> None:
             if metadata.get("schema_version") not in {
                 "pineland.partner_force_arc_task.v1",
                 "pineland.partner_force_arc_task.stage4.v1",
+                "pineland.partner_force_arc_task.stage5.v1",
             }:
                 raise SystemExit(f"{metadata_path} has unexpected schema_version")
-            if metadata.get("schema_version") == "pineland.partner_force_arc_task.stage4.v1":
+            if metadata.get("schema_version") in {
+                "pineland.partner_force_arc_task.stage4.v1",
+                "pineland.partner_force_arc_task.stage5.v1",
+            }:
                 if int(metadata.get("logical_task_id", -1)) != task_id:
                     raise SystemExit(
                         f"{metadata_path} logical task id does not match shard filename"

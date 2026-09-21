@@ -20,7 +20,7 @@ evidence.
 | Hard-minimum and arithmetic/geometric/harmonic terminal-autonomy signs agree in 167/169 observed-matched Migration worlds | `migration_target_match_summary_v1.csv`; precommitted paper-secondary analysis | Precommitted robustness output | Results robustness table |
 | Command development often shifts the bottleneck to logistics | Module-C world summaries; Stage-4 interpretation memo | Post-completion interpretation of frozen trajectories | Label as post-completion synthesis |
 | Logistics behaves as a terminal or sink constraint in the tested architecture | Modules B and C jointly | Post-completion synthesis, model-specific | Discussion, not universal law |
-| The general theoretical contribution is moving bottleneck dependence | Joint interpretation of Modules A-C | Theory induced from completed program | Main theoretical synthesis, explicitly model-derived |
+| The general theoretical contribution is constraint migration under complementary military production | Joint interpretation of Modules A-C | Theory induced from completed program | Main theoretical synthesis, explicitly model-derived |
 | SFA dependency, interest misalignment, weak sustainment, and recipient political distortions are already established concerns | Biddle et al. 2018; Metz 2023; Matisek 2018; Harkness 2022; Sandnes 2024; GAO 2023; Rolandsen et al. 2026 | External literature | Novelty boundary |
 | Numerical Stage-4 thresholds apply directly to Afghanistan, Iraq, Mali, or another historical force | No current evidence | Unsupported | Do not claim |
 | The model identifies an optimal real-world donor policy | No current evidence | Unsupported | Do not claim |

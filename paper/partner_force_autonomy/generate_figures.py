@@ -83,7 +83,7 @@ def figure1_conceptual() -> None:
         xycoords=ax.transAxes,
         arrowprops={"arrowstyle": "->", "lw": 1.0},
     )
-    ax.set_title("Moving-bottleneck mechanism", fontsize=14, pad=10)
+    ax.set_title("How successful assistance exposes the next constraint", fontsize=14, pad=10)
     save(fig, "figure1_conceptual")
 
 
