@@ -1,0 +1,21 @@
+{
+  "clamp_error_max": 0.020451304494873465,
+  "clamp_error_mean": 0.005084749178041887,
+  "clamp_error_median": 0.004609667710807261,
+  "clamp_error_p95": 0.012972591642605209,
+  "clamp_fraction_within_5pct": 1.0,
+  "clamp_interval_count": 2640,
+  "contract_sha256": "40ef96453a43a44ea4aa663ee33de1e5ba917bbf7f2bcf891695946ede846281",
+  "freeze_sha256": "9cb7d65e8be8889a4a24206fbf944cc7c03b5441b6233bc62241eb4a73568031",
+  "interpretation_rule": "Positive paired attenuation after a passing manipulation check supports endogenous logistics requirement expansion as one causal component of the terminal coverage gap.",
+  "manipulation_check_pass": true,
+  "paired_worlds": 48,
+  "pooled_attenuation_fraction_of_abs_normal_mean": NaN,
+  "pooled_mean_attenuation_q_h360": 0.0,
+  "pooled_mean_delta_q_h360_clamp": 0.0,
+  "pooled_mean_delta_q_h360_normal": 0.0,
+  "production_git_commit": "a24b48117c0c548c24474a758c20431f1535494f",
+  "schema_version": "pineland.partner_force_mechanism_ablation_result.v1",
+  "status": "ANALYSIS_COMPLETE",
+  "worlds": 96
+}

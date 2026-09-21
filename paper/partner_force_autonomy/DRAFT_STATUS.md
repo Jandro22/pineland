@@ -1,18 +1,23 @@
-# Draft status
+﻿# Draft status
 
-## Review draft complete
+## Final review manuscript
 
-The main manuscript is complete for outside review at 12,970 words. It includes the adversarial novelty review, completed Stage-4 results, post-completion headroom reconstruction, prospectively frozen Stage-5 results, source-audited historical validation, and the frozen structural terminal-constraint falsification sidecar.
+The paper has been substantively rebuilt after external review. It now centers on the relief-yield-retention framework rather than a migration-mediated autonomy-trap claim.
 
-All seven figures are generated from tracked evidence. The manuscript validator reproduces the headline Stage-4, Stage-5, headroom, and structural-falsification claims. Six design/evidence tests pass. No em dashes remain in paper prose.
+Completed work:
 
-The remaining work is reviewer-driven revision, journal-specific formatting/anonymization, and eventual public-repository history sanitization before replication release. No additional scientific experiment is required for the current review draft.
+- Stage 4, 2,808 worlds;
+- Stage 5, 1,472 worlds;
+- matched no-aid control analysis and five-horizon trajectories;
+- indigenous-service versus service-demand decomposition;
+- prospectively frozen 96-world demand-clamp experiment;
+- explicit reporting of the demand clamp's successful manipulation and failed fresh-seed coverage replication;
+- revised theory, model description, Results, Discussion, Limitations, and Conclusion;
+- four-case source-audited historical validation with rival explanations;
+- five-figure grayscale article set;
+- model/reproducibility appendix;
+- closed bibliography and manuscript evidence validator.
 
-## Claims that remain prohibited
+The final scientific interpretation is bounded deliberately. Constraint displacement is directly demonstrated as a mechanism for relief without yield. Requirement expansion remains theoretically plausible and descriptively consistent with the Stage-4 telemetry, but the prospective clamp does not identify it as the cause of the retention gap because its fresh-seed normal arms reproduce no coverage penalty to mediate.
 
-- treating Pineland numerical thresholds as empirical real-world estimates;
-- claiming logistics is universally the terminal military bottleneck;
-- claiming Stage 5 proves broad fixed-budget development is efficient;
-- claiming the structural sidecar proves realistic migration paths will reverse;
-- claiming an optimal real-world donor allocation rule;
-- presenting historical process evidence as a population causal estimate.
+The manuscript is ready for final rendering, visual inspection, and review feedback.
