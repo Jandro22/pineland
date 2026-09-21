@@ -1,0 +1,18 @@
+{
+  "cell_index": 0,
+  "contract": "/home/alejandrog/pineland-structural-falsification/studies/research_program/general_theory_v1/partner_force_autonomy/contracts/structural_falsification_v1.json",
+  "contract_sha256": "22ec47a8451e09cc7449031f2bb4f07e18a781c095c6db4e7eeeaaddf7c51344",
+  "experiment_id": "partner_force_structural_falsification_v1",
+  "freeze": "/home/alejandrog/pineland-structural-falsification/studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_structural_falsification_freeze_v1.json",
+  "freeze_sha256": "ec4feb56b19b3cf1a909e9aeacd4e7fd415c2362bda5f8ea24ef10886f01da51",
+  "git_commit": "4ffe67de2b4a55919e22048467527e01e76934df",
+  "hostname": "owl004",
+  "logical_task_id": 0,
+  "output_csv": "/home/alejandrog/pineland-structural-production/shards/task_0_cell_0_seed_2026235000.csv",
+  "output_sha256": "601ca1eeacfff4be14a86ffe7fc6904e7012938adf719720268891223b53fe25",
+  "schema_version": "pineland.partner_force_arc_task.structural.v1",
+  "seed": 2026235000,
+  "slurm_array_task_id": 0,
+  "trajectory_csv": "/home/alejandrog/pineland-structural-production/shards/task_0_cell_0_seed_2026235000.trajectory.csv",
+  "trajectory_sha256": "0d0fe30d5110386d10705f9a8a023a7b2f4b7ea197bffd8bec117485bb53f75a"
+}

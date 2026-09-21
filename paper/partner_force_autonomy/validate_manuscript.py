@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Validate manuscript mechanics and headline evidence against tracked Stage-4 outputs."""
 
 from __future__ import annotations
@@ -20,6 +20,8 @@ EVIDENCE = (
     / "evidence"
     / "stage4"
 )
+STAGE5 = EVIDENCE.parent / "stage5"
+STRUCTURAL = EVIDENCE.parent / "structural_falsification"
 
 
 def main() -> None:
@@ -98,9 +100,66 @@ def main() -> None:
     assert (logistics["delta_q_feasible_h360_boot95_lo"] > 0).all()
     assert (logistics["delta_q_feasible_h360_boot95_hi"] > 0).all()
 
+    stage5_ready = json.loads((STAGE5 / "READY.json").read_text(encoding="utf-8"))
+    assert stage5_ready["status"] == "STAGE5_ANALYSIS_COMPLETE"
+    assert stage5_ready["expected_worlds"] == 1472
+    assert stage5_ready["production_git_commit"] == "8d342c982e385699e76c766ec06ae991bc451876"
+    assert stage5_ready["analysis_git_commit"] == stage5_ready["production_git_commit"]
+
+    breadth = pd.read_csv(STAGE5 / "stage5_fixed_effort_breadth_premiums_v1.csv")
+    assert len(breadth) == 32
+    assert int((breadth["boot95_lo"] > 0).sum()) == 0
+    assert int((breadth["boot95_hi"] < 0).sum()) == 21
+    breadth_means = breadth.groupby("factor_starting_structure")["mean_breadth_premium_q"].mean()
+    expected_breadth_means = {
+        "command_constrained": -0.045882,
+        "forcegen_constrained": -0.125743,
+        "logistics_constrained": -0.043190,
+        "near_tie_low": -0.076039,
+    }
+    for key, expected in expected_breadth_means.items():
+        assert abs(float(breadth_means[key]) - expected) < 5e-7
+
+    interactions = pd.read_csv(STAGE5 / "stage5_factorial_interactions_v1.csv")
+    assert len(interactions) == 32
+    sig_pos = interactions[interactions["boot95_lo"] > 0]
+    sig_neg = interactions[interactions["boot95_hi"] < 0]
+    assert len(sig_pos) == 2
+    assert len(sig_neg) == 1
+    nt_hi = interactions[
+        interactions["factor_starting_structure"].eq("near_tie_low")
+        & interactions["factor_intensity"].eq(1.0)
+    ].set_index("interaction")
+    assert abs(float(nt_hi.loc["forcegen+logistics", "mean_interaction_q"]) - 0.02473019) < 1e-8
+    assert abs(float(nt_hi.loc["logistics+command", "mean_interaction_q"]) - 0.1717280) < 1e-7
+    assert abs(float(nt_hi.loc["forcegen+logistics+command", "mean_interaction_q"]) + 0.05612863) < 1e-8
+
+    paths = pd.read_csv(STAGE5 / "stage5_bottleneck_paths_v1.csv")
+    split_counts = pd.crosstab(paths["factor_starting_structure"], paths["initial_postsplit_bottleneck"])
+    assert int(split_counts.loc["forcegen_constrained", "logistics"]) == 368
+    assert int(split_counts.loc["logistics_constrained", "logistics"]) == 368
+    assert int(split_counts.loc["near_tie_low", "logistics"]) == 365
+    assert int(split_counts.loc["near_tie_low", "command"]) == 3
+    assert int(split_counts.loc["command_constrained", "command"]) == 100
+    assert int(split_counts.loc["command_constrained", "logistics"]) == 268
+
+    structural = json.loads((STRUCTURAL / "structural_result_v1.json").read_text(encoding="utf-8"))
+    assert structural["worlds"] == 32
+    assert structural["target_matched_worlds"] == 24
+    assert structural["matched_command_terminal_worlds"] == 8
+    assert structural["matched_forcegen_terminal_worlds"] == 8
+    assert structural["matched_logistics_terminal_worlds"] == 8
+    assert structural["unique_logistics_hard_code_rejected"] is True
+
+    headroom = json.loads((EVIDENCE / "stage4_headroom_global_v1.json").read_text(encoding="utf-8"))
+    assert headroom["observed_matched_treated_worlds"] == 169
+    assert headroom["headroom_defined_worlds"] == 126
+    assert abs(headroom["pearson_headroom_vs_delta_capability_h30"] + 0.08267959790872006) < 1e-8
+    assert abs(headroom["spearman_headroom_vs_delta_capability_h30"] - 0.18738249198817408) < 1e-8
+
     print(
         "PASS manuscript validation: no em dashes; citations complete; "
-        "Stage-4 provenance, headline results, and relief-yield synthesis "
+        "Stage-4, Stage-5, headroom, and structural-falsification claims "
         "match tracked evidence"
     )
 

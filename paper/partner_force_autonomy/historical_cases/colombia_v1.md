@@ -1,6 +1,6 @@
 # Colombia historical-validation memo v1
 
-Status: **PRELIMINARY CODING UNDER FROZEN PROTOCOL**
+Status: **SOURCE-AUDITED CODING UNDER FROZEN PROTOCOL**
 
 Case: Colombian Army aviation under Plan Colombia, with primary attention to
 the growth of helicopter capability, early dependence on U.S.-funded pilots,
@@ -217,4 +217,8 @@ Success*. Successful assistance does not have to end in an autonomy trap. If
 indigenous production and financial responsibility are deliberately expanded
 and given time to catch up with the supported operating requirement, substantial
 capability can survive a reduction in external provision.
+
+Source-audit status: **retained as the strongest positive indigenous-replacement
+and retention case, with uneven nationalization preserved as adverse evidence**.
+See `source_audit_v1.md`.
 

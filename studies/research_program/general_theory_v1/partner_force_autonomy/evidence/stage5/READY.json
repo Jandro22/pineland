@@ -1,0 +1,16 @@
+{
+  "analysis_git_commit": "8d342c982e385699e76c766ec06ae991bc451876",
+  "analysis_summary_sha256": "ab605f2d475344acd9fe744b6c0d98a8d2d1f7b5527457ede8cd4399b1a28b72",
+  "expected_worlds": 1472,
+  "experiment_id": "partner_force_stage5_rising_tide_v1",
+  "merge_metadata_sha256": "8fe24261b5546e662206c94e68c99239fadd8398e59faa34fc4e9e2aa38a8415",
+  "primary_sha256": "383ca4f31f74b6cf8cd1d6f6e0d1bb13ebff9494f33d30a0a3e58f97a0d8a175",
+  "production_git_commit": "8d342c982e385699e76c766ec06ae991bc451876",
+  "schema_version": "pineland.partner_force_stage5_ready.v1",
+  "source_array_job_ids": [
+    "897829",
+    "897830"
+  ],
+  "status": "STAGE5_ANALYSIS_COMPLETE",
+  "trajectory_sha256": "2fc4e8ea152c53b44b7c00403f1e43526fb55cec32146e5b68ba2692037f9d2d"
+}

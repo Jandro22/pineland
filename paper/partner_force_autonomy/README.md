@@ -3,7 +3,7 @@
 Working title: **Suffering from Success: Security Assistance, Constraint Migration, and Partner-Force Autonomy**
 
 This directory contains the manuscript for the integrated Partner-Force Autonomy
-paper. Draft 0.5 reframes the completed Stage-4 program around constraint
+paper. The review draft reframes the completed Stage-4 program around constraint
 relief, system yield, retention, headroom, and constraint migration while
 preserving the original Stage-4 evidentiary boundary. The September 21
 adversarial novelty review further narrows the theoretical claim: bottleneck
@@ -19,10 +19,9 @@ selective external substitution.
 - Paper-level secondary analysis: precommitted before production completion and complete.
 - Compact evidence: tracked under
   `studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/`.
-- Historical validation: preliminary coding is complete for all four frozen
-  cases; final source audit remains pending and historical claims remain
-  separate from the synthetic causal claims.
-- Stage-5 coordinated-development follow-up: prospectively designed after Stage 4 and frozen separately before production at commit `8d342c982e385699e76c766ec06ae991bc451876`. It tests whether multi-channel indigenous development can move the whole production frontier rather than merely shift the binding constraint.
+- Historical validation: source audit and coding are complete for all four frozen cases; historical claims remain separate from synthetic causal claims.
+- Stage-5 coordinated-development follow-up: complete, 1,472/1,472 worlds, frozen before production at commit `8d342c982e385699e76c766ec06ae991bc451876`. Results show selective pairwise complementarity but no general fixed-budget breadth advantage.
+- Structural terminal-constraint sidecar: complete, 32/32 worlds, frozen before outcomes at commit `4ffe67de2b4a55919e22048467527e01e76934df`; rejects logistics as the uniquely hard-coded terminal constraint.
 
 ## Files
 

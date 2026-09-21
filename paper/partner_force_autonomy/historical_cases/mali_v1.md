@@ -1,6 +1,6 @@
 # Mali historical-validation memo v1
 
-Status: **PRELIMINARY CODING UNDER FROZEN PROTOCOL**
+Status: **SOURCE-AUDITED CODING UNDER FROZEN PROTOCOL**
 
 Case: Malian Armed Forces, with primary attention to EUTM Mali's early GTIA
 training effort, logistics and sustainment, and command and control between 2013
@@ -195,4 +195,7 @@ weaker evidence that assistance itself caused the binding constraint to migrate,
 because the later constraints were already visible. In the final paper, this
 case should function as a scope-condition and disconfirmation check rather than
 as another affirmative migration example.
+
+Source-audit status: **retained as mixed/adverse evidence for clean migration**.
+See `source_audit_v1.md`.
 

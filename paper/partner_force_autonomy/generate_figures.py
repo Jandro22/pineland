@@ -21,6 +21,15 @@ EVIDENCE = (
     / "evidence"
     / "stage4"
 )
+STAGE5_EVIDENCE = (
+    ROOT
+    / "studies"
+    / "research_program"
+    / "general_theory_v1"
+    / "partner_force_autonomy"
+    / "evidence"
+    / "stage5"
+)
 
 STRUCTURE_LABELS = {
     "balanced_capacity": "Balanced",
@@ -68,7 +77,7 @@ def figure1_conceptual() -> None:
     ax.text(
         0.435,
         0.39,
-        "Headroom to the next constraint\ndetermines immediate return",
+        "Static headroom describes spacing;\nrealized yield also depends on adaptation",
         ha="center",
         va="center",
         fontsize=9.5,
@@ -300,6 +309,51 @@ def figure6_local_system_divergence(contrasts: pd.DataFrame) -> None:
     save(fig, "figure6_local_system_divergence")
 
 
+def figure7_stage5_complementarity() -> None:
+    breadth = pd.read_csv(STAGE5_EVIDENCE / "stage5_fixed_effort_breadth_premiums_v1.csv")
+    interactions = pd.read_csv(STAGE5_EVIDENCE / "stage5_factorial_interactions_v1.csv")
+
+    order = ["command_constrained", "forcegen_constrained", "logistics_constrained", "near_tie_low"]
+    labels = ["Command", "Force generation", "Logistics", "Nominal near tie"]
+    b = (
+        breadth.groupby("factor_starting_structure", as_index=False)
+        .agg(mean_premium=("mean_breadth_premium_q", "mean"))
+        .set_index("factor_starting_structure")
+        .loc[order]
+        .reset_index()
+    )
+
+    nt = interactions[
+        interactions["factor_starting_structure"].eq("near_tie_low")
+        & np.isclose(interactions["factor_intensity"].astype(float), 1.0)
+    ].copy()
+    nt_order = ["forcegen+logistics", "forcegen+command", "logistics+command", "forcegen+logistics+command"]
+    nt = nt.set_index("interaction").loc[nt_order].reset_index()
+    nt_labels = ["FG + logistics", "FG + command", "Logistics + command", "Three-way"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.8), constrained_layout=True)
+
+    ax = axes[0]
+    ax.axhline(0, linewidth=0.8, color="black")
+    ax.bar(labels, b["mean_premium"])
+    ax.set_ylabel("Mean fixed-effort breadth premium in terminal autonomy")
+    ax.set_title("Spreading a fixed budget does not improve retention")
+    ax.tick_params(axis="x", rotation=18)
+
+    ax = axes[1]
+    ax.axhline(0, linewidth=0.8, color="black")
+    means = nt["mean_interaction_q"].to_numpy(float)
+    lo = nt["boot95_lo"].to_numpy(float)
+    hi = nt["boot95_hi"].to_numpy(float)
+    ax.errorbar(np.arange(len(nt)), means, yerr=np.vstack([means-lo, hi-means]), fmt="o", capsize=3)
+    ax.set_xticks(np.arange(len(nt)), nt_labels, rotation=18)
+    ax.set_ylabel("Factorial interaction in terminal autonomy")
+    ax.set_title("High-intensity nominal near-tie interactions")
+
+    fig.suptitle("Stage 5: selective complementarity without a general rising tide", fontsize=14)
+    save(fig, "figure7_stage5_complementarity")
+
+
 def main() -> None:
     phase = pd.read_csv(EVIDENCE / "phase_cell_summary_v1.csv")
     migration = pd.read_csv(EVIDENCE / "migration_target_match_summary_v1.csv")
@@ -311,6 +365,7 @@ def main() -> None:
     figure4_migration(migration)
     figure5_mode_contrasts(contrasts)
     figure6_local_system_divergence(contrasts)
+    figure7_stage5_complementarity()
     print(f"wrote figures to {FIGURES.relative_to(ROOT)}")
 
 

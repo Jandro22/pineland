@@ -1,6 +1,6 @@
 # Historical cross-case matrix v1
 
-Status: **PRELIMINARY SYNTHESIS UNDER FROZEN HISTORICAL-VALIDATION PROTOCOL**
+Status: **SOURCE-AUDITED SYNTHESIS UNDER FROZEN HISTORICAL-VALIDATION PROTOCOL**
 
 This matrix summarizes the four case memos using the coding fields frozen on
 2026-09-21. It does not replace the underlying case memos or their source

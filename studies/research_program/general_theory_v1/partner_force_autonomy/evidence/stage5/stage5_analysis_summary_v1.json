@@ -1,0 +1,17 @@
+{
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260921,
+  "expected_worlds": 1472,
+  "experiment_id": "partner_force_stage5_rising_tide_v1",
+  "observed_primary_endpoints": 1472,
+  "output_files": [
+    "stage5_seed_level_retained_gains_v1.csv",
+    "stage5_retained_gain_summary_v1.csv",
+    "stage5_factorial_interactions_v1.csv",
+    "stage5_fixed_effort_breadth_premiums_v1.csv",
+    "stage5_bottleneck_paths_v1.csv"
+  ],
+  "primary_branch": "SUPPORT_OFF",
+  "primary_horizon_days": 360.0,
+  "schema_version": "pineland.partner_force_stage5_rising_tide_analysis.v1"
+}

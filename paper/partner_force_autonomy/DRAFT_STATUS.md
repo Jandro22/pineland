@@ -1,83 +1,18 @@
 # Draft status
 
-## Draft 0.5 prepared pending Stage-5 results and final historical source audit
+## Review draft complete
 
-The manuscript package now contains:
+The main manuscript is complete for outside review at 12,970 words. It includes the adversarial novelty review, completed Stage-4 results, post-completion headroom reconstruction, prospectively frozen Stage-5 results, source-audited historical validation, and the frozen structural terminal-constraint falsification sidecar.
 
-- working title and abstract;
-- introduction and literature-positioning argument;
-- formal constraint-migration theory plus the relief-yield-retention framework;
-- an explicit static-headroom diagnostic separating bottleneck migration from
-  material system gain;
-- five testable propositions;
-- complete Stage-4 research design and inference description;
-- revised Results section using the frozen paper-level estimates, including a
-  labeled post-completion relief/yield synthesis;
-- discussion, limitations, and conclusion;
-- bibliography with verified core security-assistance literature;
-- figure and table plan;
-- claim-to-evidence matrix;
-- automated manuscript/evidence validation.
-- a verified literature audit and explicit novelty boundary;
-- a frozen historical-validation protocol for Afghanistan, Iraq, Mali, and Colombia;
-- five initial empirical figures generated directly from tracked Stage-4 evidence;
-- data/code/reproducibility and disclosure sections.
-- an exact formal statement of the capacity-growth versus demand-growth condition,
-  synchronized with the Lean theory layer;
-- an explicit proposition-to-test correspondence section;
-- a manuscript-ready integrated headline-results table;
-- a manuscript-ready smooth-aggregator robustness table for the Migration module;
-- repository-wide branch consolidation, including the final command-floor theorem
-  and preserved exact-performance provenance.
-- a separately preregistered Stage-5 coordinated-development follow-up testing
-  whether simultaneous growth in complementary indigenous capacities can lift
-  whole-system autonomy rather than only move the binding constraint.
-- a complete Stage-5 methods section that preserves its prospective status and
-  intentionally omits results until the frozen campaign completes;
-- an expanded historical-validation section specifying case roles, source
-  hierarchy, rival explanations, and disconfirmation logic;
-- preliminary protocol-consistent memos for all four historical cases, plus a
-  cross-case matrix that retains mixed and adverse evidence;
-- adjacent state-capacity and organizational-complementarity literature bridges.
-- an adversarial novelty review extending into Theory of Constraints,
-  unbalanced growth, aid project proliferation, recurrent costs, aid
-  dependence, absorptive capacity, military effectiveness, and logistics;
-- an explicitly narrowed novelty claim centered on the conjunction of selective
-  external substitution, successful military constraint relief, induced
-  operating demand, cross-service constraint migration, and divergence between
-  supported and independently reproducible capability;
-- simultaneous supported-capability and independently reproducible-capability
-  production frontiers in the theory section;
-- a constraint-aware five-question evaluation framework separating local
-  program output, whole-system yield, post-intervention constraint identity,
-  and indigenous replacement;
-- a rival-mechanism comparison specifying observable differences from
-  principal-agent failure, low absorptive capacity, institutional dependence,
-  and inappropriate force design;
-- a hostile-review matrix and explicit theory falsifiers;
-- a submission architecture sized for *Security Studies* as the current primary
-  target, while retaining straightforward retargeting to a broader IR journal.
+All seven figures are generated from tracked evidence. The manuscript validator reproduces the headline Stage-4, Stage-5, headroom, and structural-falsification claims. Six design/evidence tests pass. No em dashes remain in paper prose.
 
-## Highest-priority work before Draft 0.6
-
-1. Complete and analyze the frozen Stage-5 coordinated-development experiment.
-2. Complete the source audit and final coding for the four preliminary
-   historical case memos.
-3. Insert the Stage-5 results without changing its frozen hypotheses or analysis
-   rules, and add the coordinated-development complementarity figure.
-4. Trim the main text after Stage-5 insertion so the final article preserves the
-   literature concessions and core historical evidence without duplicating the
-   supplement.
-5. Adapt final citation style, anonymization, word count, and disclosure package
-   to the chosen journal.
-6. Refine Figures 1-7 for final journal layout and complete the historical source
-   table after audit.
+The remaining work is reviewer-driven revision, journal-specific formatting/anonymization, and eventual public-repository history sanitization before replication release. No additional scientific experiment is required for the current review draft.
 
 ## Claims that remain prohibited
 
-- treating Pineland's numerical thresholds as real-world estimates;
+- treating Pineland numerical thresholds as empirical real-world estimates;
 - claiming logistics is universally the terminal military bottleneck;
-- claiming the model proves an optimal assistance policy;
-- presenting a historical case as validation before the case protocol is frozen;
-- describing post-completion exploratory synthesis as preregistered.
-- describing Stage 5 as part of the original Stage-4 preregistration.
+- claiming Stage 5 proves broad fixed-budget development is efficient;
+- claiming the structural sidecar proves realistic migration paths will reverse;
+- claiming an optimal real-world donor allocation rule;
+- presenting historical process evidence as a population causal estimate.
