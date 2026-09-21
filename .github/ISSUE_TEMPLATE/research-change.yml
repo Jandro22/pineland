@@ -1,0 +1,30 @@
+name: Research or mechanism proposal
+description: Propose a mechanism, estimator, validation test, or research extension
+title: "[research] "
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Research question
+      description: What scientific question would this change make answerable?
+    validations:
+      required: true
+  - type: textarea
+    id: mechanism
+    attributes:
+      label: Proposed mechanism or method
+      description: Describe the smallest change needed, including candidate observables or latent states.
+    validations:
+      required: true
+  - type: textarea
+    id: falsification
+    attributes:
+      label: Falsification or validation plan
+      description: What result would count against the proposal?
+    validations:
+      required: true
+  - type: textarea
+    id: freeze
+    attributes:
+      label: Freeze and historical-data boundary
+      description: Does this touch a frozen study, held-out test, or historical calibration boundary?

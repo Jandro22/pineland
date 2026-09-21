@@ -1,0 +1,16 @@
+{
+  "analysis_git_commit": "7697e6eac83248c7bc03830e58d94a2d878c6635",
+  "analysis_summary_sha256": "4228e8255944d3b236791c5ea0af8e10be2173af8b1b395238770e8e5e171d15",
+  "expected_worlds": 1680,
+  "experiment_id": "partner_force_stage4_autonomy_phase_map_v1",
+  "merge_metadata_sha256": "1564be70d6b3488fdc02358c25e0f7636c5f227b7300d714d7f3751f4a63f8d1",
+  "primary_sha256": "1c00a20def45205bc7b911f56a1ab976a4e18ddb79052ff9961dc9363c7f9b3d",
+  "production_git_commit": "e369c107f4465ce8cd385a366cafca8c28c04b65",
+  "schema_version": "pineland.partner_force_stage4_module_ready.v1",
+  "source_array_job_ids": [
+    "886147",
+    "886148"
+  ],
+  "status": "MODULE_ANALYSIS_COMPLETE",
+  "trajectory_sha256": "fd195197606f902d60811a09ec740e1864d8ebfdc38b319b768b750e2d5226e2"
+}

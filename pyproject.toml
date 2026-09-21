@@ -8,9 +8,21 @@ version = "0.13.0"
 description = "A multiscale, partially observed agent-based simulation of insurgency and counterinsurgency"
 readme = "README.md"
 requires-python = ">=3.11"
-license = "Apache-2.0"
-authors = [{name = "Pineland COIN-SIM contributors"}]
+license = {text = "Apache-2.0"}
+authors = [{name = "Alejandro Grenier"}]
+keywords = [
+    "agent-based modeling",
+    "insurgency",
+    "counterinsurgency",
+    "state estimation",
+    "political violence",
+    "simulation",
+]
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/Jandro22/pineland"
+Issues = "https://github.com/Jandro22/pineland/issues"
 
 [project.optional-dependencies]
 research = [
@@ -37,3 +49,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+# Keep pytest's temporary tree inside the checkout. This avoids Windows
+# reparse-point/ACL failures in the shared system pytest temp root.
+addopts = "--basetemp=.pytest-tmp"
+tmp_path_retention_count = "0"

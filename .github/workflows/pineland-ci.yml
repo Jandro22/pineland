@@ -1,0 +1,119 @@
+name: Pineland CI
+
+on:
+  push:
+    branches: [main, research-v1]
+  pull_request:
+    branches: [main, research-v1]
+  workflow_dispatch:
+
+concurrency:
+  group: pineland-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repo-hygiene:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Public-release metadata audit
+        run: python scripts/public_release_audit.py
+      - name: Stage-4 compact evidence integrity
+        run: python -m pytest tests/test_stage4_compact_evidence.py -q
+      - name: Historical publication-surface audit
+        run: python scripts/audit_git_history_blobs.py
+      - name: Full-history secret scan
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_ENABLE_COMMENTS: "false"
+
+  core-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[research,dev]"
+      - name: Research-v1 focused tests
+        run: >-
+          python -m pytest
+          tests/test_recovery.py
+          tests/test_research_v1_runner.py
+          tests/test_state_estimation.py
+          tests/test_empirical.py
+          -q
+      - name: Emit paper contract
+        run: python pineland.py paper-spec --output outputs/ci-paper-spec.json
+
+  portable-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[research,dev]"
+      - name: Portable regression suite
+        run: >-
+          python -m pytest -q
+          --ignore=tests/test_afghanistan_acled_mapping.py
+          --ignore=tests/test_afghanistan_case.py
+          --ignore=tests/test_afghanistan_filtered_state_estimation.py
+          --ignore=tests/test_afghanistan_historical_inputs.py
+          --ignore=tests/test_case_readiness.py
+          --ignore=tests/test_historical_database_v2.py
+          --ignore=tests/test_mechanism_evidence.py
+          --ignore=tests/test_predictive_competition_gate.py
+          --ignore=tests/test_research_program.py
+
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[research,dev]"
+      - name: Focused Windows tests
+        run: >-
+          python -m pytest
+          tests/test_recovery.py
+          tests/test_research_v1_runner.py
+          tests/test_state_estimation.py
+          tests/test_empirical.py
+          -q
+
+  rust-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Show pinned Rust toolchain
+        working-directory: rust
+        run: rustup show active-toolchain
+      - name: Rust workspace tests
+        working-directory: rust
+        env:
+          CARGO_BUILD_JOBS: "2"
+        run: cargo test --workspace --locked --quiet

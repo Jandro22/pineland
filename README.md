@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Jandro22/pineland/actions/workflows/research-v1-ci.yml"><img src="https://github.com/Jandro22/pineland/actions/workflows/research-v1-ci.yml/badge.svg?branch=main" alt="Pineland CI"></a>
+  <a href="https://github.com/Jandro22/pineland/actions/workflows/pineland-ci.yml"><img src="https://github.com/Jandro22/pineland/actions/workflows/pineland-ci.yml/badge.svg?branch=main" alt="Pineland CI"></a>
   &nbsp; Python 3.11+ &nbsp;&middot;&nbsp; Rust &nbsp;&middot;&nbsp; Apache-2.0
 </p>
 
@@ -43,19 +43,35 @@ competitive local reproduction without losing the dynamics that matter. The
 program uses prospective contracts, rival reduced-form architectures, closure
 tests, holdouts, and falsification ledgers before historical transport.
 
-### 2. Partner-Force Autonomy
+### 2. Partner-Force Autonomy — integrated Stage 4 complete
 
 [Partner-Force Autonomy](studies/research_program/general_theory_v1/partner_force_autonomy/)
-is the current Stage-3 mechanistic program on a narrower question:
+is the completed integrated Stage-4 mechanistic program on a narrower question:
 
 > When does external security assistance create autonomous partner capability,
 > and when does it create performance that disappears with the assistance?
 
 The design uses paired ON/OFF counterfactual branches, common random numbers,
-removable assistance channels, preregistered holdouts, and explicit separation
-of supported performance from organic regenerative capacity. Policy-comparison
-experiments remain blocked until the discovery coordinates and holdout gates
-are frozen.
+removable assistance channels, formal indigenous-service accounting, and
+explicit separation of supported performance from organic regenerative
+capacity. The integrated campaign completed **2,808/2,808 production worlds**
+across an autonomy phase map, bottleneck-migration experiment, and
+substitution-versus-development experiment. The final production dataset was
+independently re-hashed with zero task-coverage, provenance, row-count, or
+content-hash errors.
+
+The headline synthetic finding is a moving-constraint result: among 106 treated
+phase-map cells where direct service assistance improved capability at +30d,
+**96 (90.6%)** had lower indigenous autonomy at +360d; **53** met the robust
+autonomy-trap rule and **0** met the robust autonomy-building rule. At the same
+time, developmental logistics assistance sharply reduced the autonomy penalty
+relative to substitution, while command and force-generation development often
+shifted the binding constraint to logistics rather than improving whole-system
+autonomy.
+
+See the [post-completion interpretation](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_RESULTS_INTERPRETATION_2026-09-20.md),
+the [precommitted paper-analysis plan](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_PAPER_SECONDARY_ANALYSIS_PLAN_2026-09-20.md),
+and the tracked [compact Stage-4 evidence](studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/).
 
 ### 3. State estimation and historical confrontation
 
@@ -132,6 +148,12 @@ This is a software/reproduction smoke, **not** a confirmatory paper run.
 The Rust example exits without scientific compute unless an explicit execution
 flag is supplied.
 
+The complete Stage-4 production protocol, Virginia Tech Advanced Research
+Computing (ARC) scheduler layout, and postprocessing chain are documented in
+[STAGE4_INTEGRATED_PROTOCOL_v1.md](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_INTEGRATED_PROTOCOL_v1.md)
+and
+[STAGE4_RUN_LEDGER_2026-09-20.md](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_RUN_LEDGER_2026-09-20.md).
+
 ## Repository map
 
 | Path | Purpose |
@@ -146,6 +168,14 @@ flag is supplied.
 
 The complete evidence/retention policy is in
 [docs/repository-layout.md](docs/repository-layout.md).
+
+Historical source redistribution status is summarized in
+[docs/third-party-data-status.md](docs/third-party-data-status.md); a source is
+not assumed publishable merely because its provenance is documented.
+
+For a compact view of which subsystems are currently research-load-bearing,
+implemented but secondary, or still under active validation, see
+[docs/subsystem-status.md](docs/subsystem-status.md).
 
 ## Reproducibility and evidence policy
 
@@ -195,4 +225,9 @@ between exploratory and confirmatory work.
 ## Citation and license
 
 Citation metadata is provided in [CITATION.cff](CITATION.cff). Pineland is
-released under the [Apache License 2.0](LICENSE).
+released under the [Apache License 2.0](LICENSE). Project attribution notices
+are recorded in [NOTICE](NOTICE).
+
+Release conventions are documented in
+[docs/release-policy.md](docs/release-policy.md). The public-release gate is in
+[docs/public-release-checklist.md](docs/public-release-checklist.md).

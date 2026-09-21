@@ -4,6 +4,14 @@ Pineland is both a software project and an active research program. Changes
 therefore need to preserve more than code correctness: they must preserve the
 scientific meaning of experiments, outputs, and provenance.
 
+## Contribution license
+
+Pineland is licensed under the Apache License 2.0. Unless you explicitly state
+otherwise when submitting a contribution, any contribution intentionally
+submitted for inclusion in Pineland is provided under Apache-2.0, consistent
+with Section 5 of the project license. Do not submit code, data, or other
+material that you do not have the right to contribute under those terms.
+
 ## Before changing the model
 
 1. Read [docs/repository-layout.md](docs/repository-layout.md) for the

@@ -159,21 +159,39 @@ The canary completed analysis and emitted a READY artifact carrying production
 commit `e369c107...` and analysis commit `dfd90826...`.  Canary READY/output
 artifacts were removed from the repair worktree before final jobs were queued.
 
-### Final dependency chain
+### Final postprocessing chain and completion
 
-Final postprocessing jobs are queued from the clean `dfd90826...` worktree and
-remain dependency-blocked until their production arrays succeed:
+All four production arrays completed successfully:
 
-- Phase Map postprocess: `887341`, after `886147` + `886148`;
-- Migration postprocess: `887342`, after `886149`;
-- Mechanism postprocess: `887343`, after `886150`;
-- integrated finalizer: `887344`, after all three postprocessors.
+- Phase Map A: `886147`;
+- Phase Map B: `886148`;
+- Bottleneck Migration: `886149`;
+- Substitution/Development: `886150`.
 
-The module postprocessors require exact task coverage, cryptographic shard
-verification, one production commit, the ensemble degeneracy gate, complete
-analysis, and an independently hashed READY artifact.  The finalizer requires
-2,808 expected worlds and one shared production commit plus one shared analysis
-commit across all three modules.
+After the transient NFS `ESTALE` repair was frozen in `7697e6e...`, all three
+modules were reprocessed under that same analysis commit. The accepted final
+postprocessing chain was:
+
+- Phase Map postprocess: `890147`;
+- Migration postprocess: `890167`;
+- Mechanism postprocess: `890168`;
+- integrated finalizer: `890169`.
+
+All four completed with exit `0:0`. The integrated finalizer wrote
+`READY_STAGE4_INTEGRATED.json` with status
+`STAGE4_INTEGRATED_PROGRAM_COMPLETE`, expected world count **2,808**, production
+commit `e369c107...`, and analysis commit `7697e6e...`.
+
+The module postprocessors enforced exact task coverage, cryptographic shard
+verification, a single production commit, the ensemble degeneracy gate,
+complete analysis, and independently hashed READY artifacts. The finalizer
+confirmed one shared production commit and one shared analysis commit across all
+three modules.
+
+An independent post-completion sweep then re-hashed every primary and
+trajectory shard for all **2,808/2,808 worlds** and rechecked logical task-ID
+coverage, row counts, filenames, source commit, freeze hash, and contract hash.
+It found **zero integrity errors and zero duplicate/missing logical task IDs**.
 
 ## Precommitted paper-analysis layer
 
@@ -191,4 +209,9 @@ bootstrap/Wilson uncertainty rules, substitution-development matched-seed
 contrasts, cumulative indigenous-coverage mechanism metrics, and bottleneck
 migration robustness checks.  The implementation passed synthetic Stage-4-shaped
 tests before any complete production surface was inspected.
+
+The final precommitted paper-level analysis ran on Owl as job `890199` against
+the completed integrated READY and finished successfully. Its READY status is
+`STAGE4_PAPER_SECONDARY_COMPLETE`; compact outputs and hashes are retained under
+`evidence/stage4/`.
 

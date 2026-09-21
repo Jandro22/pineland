@@ -4,9 +4,12 @@ Pineland mixes executable model code with a large empirical research program.
 The repository should keep the two easy to distinguish so that cleaning a
 working tree never destroys scientific evidence.
 
+Long-term movement of superseded material is governed separately by
+[`docs/archive-policy.md`](archive-policy.md).
+
 ## Canonical tracked material
 
-- Root project metadata — `README.md`, `LICENSE`, `CITATION.cff`,
+- Root project metadata — `README.md`, `LICENSE`, `NOTICE`, `CITATION.cff`,
   `CONTRIBUTING.md`, package metadata, lockfiles, and VCS configuration.
 - `src/` — Python model and analysis-facing API.
 - `rust/` — native workspace source. Cargo `target*` directories are rebuildable

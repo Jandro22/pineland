@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a reproducible software or documentation defect
+title: "[bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not include credentials, private datasets, or restricted material.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Include the smallest command or config needed to reproduce the problem.
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Pineland version or commit
+      placeholder: v0.x.y or git SHA
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python/Rust versions, and CPU/HPC context if relevant.
+  - type: textarea
+    id: scientific
+    attributes:
+      label: Scientific impact
+      description: If known, could this change deterministic output, an inference result, or a published/reported result?

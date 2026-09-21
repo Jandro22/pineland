@@ -1,0 +1,40 @@
+title = "Pineland Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "Explicit SHA-256 fields are checksums, not credentials."
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''studies/research_program/(civilian_harm_second_coder_packet_manifest_v1|nepal_second_coder_agreement_v1)\.json''',
+]
+regexes = [
+  '''^\s*"blind_key_sha256"\s*:\s*"[0-9a-fA-F]{64}"''',
+]
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "The blind_key member is inside artifact_hashes and stores the SHA-256 of the blinded key artifact."
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''studies/research_program/civilian_harm_second_coder_lock_v1\.json''',
+]
+regexes = [
+  '''^\s*"blind_key"\s*:\s*"[0-9a-fA-F]{64}"''',
+]
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "Source-mapping audit maps tracked Rust paths to SHA-256 checksums."
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''studies/research_program/general_theory_v1/source_mapping_audit_v1\.json''',
+]
+regexes = [
+  '''^\s*"rust/[^"]+"\s*:\s*"[0-9a-fA-F]{64}"''',
+]

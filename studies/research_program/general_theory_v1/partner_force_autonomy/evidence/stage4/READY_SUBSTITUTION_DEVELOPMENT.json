@@ -1,0 +1,15 @@
+{
+  "analysis_git_commit": "7697e6eac83248c7bc03830e58d94a2d878c6635",
+  "analysis_summary_sha256": "8193b1d2305fd84931aa58bb7a24e8c61d0ac6e45dae421d8debce9da2f412fe",
+  "expected_worlds": 504,
+  "experiment_id": "partner_force_stage4_substitution_development_v1",
+  "merge_metadata_sha256": "c44931f05625869a958b2ce2be7428bef0591bfaefbddc6b6fbea9f2d12deeaf",
+  "primary_sha256": "3645c53e7a08a9d2aa98a31811d2648cc8ec52d04f51d69d73fde5edfa8da416",
+  "production_git_commit": "e369c107f4465ce8cd385a366cafca8c28c04b65",
+  "schema_version": "pineland.partner_force_stage4_module_ready.v1",
+  "source_array_job_ids": [
+    "886150"
+  ],
+  "status": "MODULE_ANALYSIS_COMPLETE",
+  "trajectory_sha256": "11ae59b80519fd45e136c84a1e24c25befdaf62af830a17f0c01844bbbc0edcf"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "pineland.partner_force_stage4_compact_evidence_manifest.v1",
+  "status": "COMPLETE",
+  "production_worlds": 2808,
+  "production_git_commit": "e369c107f4465ce8cd385a366cafca8c28c04b65",
+  "postprocess_git_commit": "7697e6eac83248c7bc03830e58d94a2d878c6635",
+  "paper_analysis_git_commit": "9b0e975c7e4073f2f5abd94e72cd125beb75f20d",
+  "final_integrity_errors": 0,
+  "files": {
+    "READY_STAGE4_INTEGRATED.json": "06ddd6e6a3ceed00428316f63753dcba746323468b62d90b418a852b28b134a0",
+    "READY_PHASE_MAP.json": "81e437ae44cbffec23634a776c0b426828e4f994fbf0c92a6dfa60df74bce94e",
+    "READY_BOTTLENECK_MIGRATION.json": "b0782c3b971a9f1a066d244372c9f7c9aa0e61cc9051c4c01058b6dbf13c3324",
+    "READY_SUBSTITUTION_DEVELOPMENT.json": "04987ca5d67d3593a05e12026e0c5fced15cf05b03387b8a68546e47edd43546",
+    "READY_STAGE4_PAPER_SECONDARY.json": "2c2731b79d1ccee719f437e7dd3a634555ed62c87b511f6848fb8d4a23ebf12d",
+    "stage4_paper_secondary_summary_v1.json": "e90794842311e5dc1f3b1bf20104cb40d8f87d5e03a22e6ae4de1148a79308f9",
+    "phase_cell_summary_v1.csv": "a70ad1951f64e9ba0f3e8d3a2c66ee3b951313f03e513d5f8a90f4f1d512adfe",
+    "phase_support_transition_intervals_v1.csv": "09d668008c12e53721dc3100ddf8ebb7519c751b67c51b54086e9491823973ed",
+    "phase_capacity_transition_intervals_v1.csv": "210934f2f8ffbf8bafc57b10590a9714f3667db0e9703f0c114226b3a8dbe702",
+    "mechanism_cell_summary_v1.csv": "8cd269d4484ae327b7612b9cc02fe0a533f2a42a247bf937f64f6c3d59a7894e",
+    "mechanism_mode_contrasts_v1.csv": "4ec98761aa8e1c184b8a990d2f3d21739c06e3dbf72c2a8d65ff2125ae2c0df1",
+    "migration_target_match_summary_v1.csv": "5dbbdb468e01d0212c632f761d3bc1424d97f7ce77ca0d3dd8918a38f1c3cd6e"
+  }
+}

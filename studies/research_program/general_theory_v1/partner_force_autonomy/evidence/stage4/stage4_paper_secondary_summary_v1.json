@@ -1,0 +1,30 @@
+{
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20260920,
+  "epsilon": 1e-06,
+  "input_sha256": {
+    "mechanism_paired": "9b6ea401dfa2916f1fded1fa92b150339f161c748aca76a0179bfe499a42b0da",
+    "mechanism_world": "e71459be66fdfd2e34351e6c2823ad45ec6588add9cd1f0e419745cd9362e91b",
+    "migration_paired": "324852dd5498e26511f862f827b712d448145ea971aecc8aa59e8076708ec5a0",
+    "migration_world": "564c76dddd68e7793b93eb02cf6bdc48d2c8e974be79de96f2e0d948c4d879c5",
+    "phase_paired": "27c3ced86423f56dc77c74c6ddb816984d8278c40a9213d07229358303dcaf0a",
+    "phase_world": "d4a7cfea065cec70fa40b7e6a62366b8d2eebac21b1e71870a2c0db7e0d32539"
+  },
+  "outputs": {
+    "mechanism_cell_summary_v1.csv": "8cd269d4484ae327b7612b9cc02fe0a533f2a42a247bf937f64f6c3d59a7894e",
+    "mechanism_mode_contrasts_v1.csv": "4ec98761aa8e1c184b8a990d2f3d21739c06e3dbf72c2a8d65ff2125ae2c0df1",
+    "migration_target_match_summary_v1.csv": "5dbbdb468e01d0212c632f761d3bc1424d97f7ce77ca0d3dd8918a38f1c3cd6e",
+    "phase_capacity_transition_intervals_v1.csv": "210934f2f8ffbf8bafc57b10590a9714f3667db0e9703f0c114226b3a8dbe702",
+    "phase_cell_summary_v1.csv": "a70ad1951f64e9ba0f3e8d3a2c66ee3b951313f03e513d5f8a90f4f1d512adfe",
+    "phase_support_transition_intervals_v1.csv": "09d668008c12e53721dc3100ddf8ebb7519c751b67c51b54086e9491823973ed"
+  },
+  "paper_analysis_git_commit": "9b0e975c7e4073f2f5abd94e72cd125beb75f20d",
+  "primary_estimands": {
+    "early_operational_effect": "delta composite_capability at +30d",
+    "effective_autonomy_building": "early effect > epsilon and terminal autonomy > epsilon",
+    "effective_autonomy_trap": "early effect > epsilon and terminal autonomy < -epsilon",
+    "terminal_autonomy_effect": "delta min(q_indigenous, 1.0) at +360d"
+  },
+  "schema_version": "pineland.partner_force_stage4_paper_secondary.v1",
+  "status": "PRECOMMITTED_PAPER_SECONDARY_ANALYSIS"
+}

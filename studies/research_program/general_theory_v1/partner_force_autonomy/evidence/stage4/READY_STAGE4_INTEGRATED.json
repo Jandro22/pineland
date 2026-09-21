@@ -1,0 +1,36 @@
+{
+  "analysis_git_commit": "7697e6eac83248c7bc03830e58d94a2d878c6635",
+  "modules": [
+    {
+      "analysis_summary_sha256": "4228e8255944d3b236791c5ea0af8e10be2173af8b1b395238770e8e5e171d15",
+      "expected_worlds": 1680,
+      "experiment_id": "partner_force_stage4_autonomy_phase_map_v1",
+      "primary_sha256": "1c00a20def45205bc7b911f56a1ab976a4e18ddb79052ff9961dc9363c7f9b3d",
+      "ready_file": "studies/research_program/general_theory_v1/partner_force_autonomy/outputs/stage4/partner_force_stage4_autonomy_phase_map_v1/READY.json",
+      "ready_sha256": "81e437ae44cbffec23634a776c0b426828e4f994fbf0c92a6dfa60df74bce94e",
+      "trajectory_sha256": "fd195197606f902d60811a09ec740e1864d8ebfdc38b319b768b750e2d5226e2"
+    },
+    {
+      "analysis_summary_sha256": "2cbf66de0efa8f268df1c689ee890095e67f9cb2827b031dbdbff1a9d17b258f",
+      "expected_worlds": 624,
+      "experiment_id": "partner_force_stage4_bottleneck_migration_v1",
+      "primary_sha256": "54d3aa35498113e683d9381e7d691ffbb1f14378a1b407c3cb71468cdafaaf94",
+      "ready_file": "studies/research_program/general_theory_v1/partner_force_autonomy/outputs/stage4/partner_force_stage4_bottleneck_migration_v1/READY.json",
+      "ready_sha256": "b0782c3b971a9f1a066d244372c9f7c9aa0e61cc9051c4c01058b6dbf13c3324",
+      "trajectory_sha256": "16143b746d807d2649da69f32f649506453bd4736d535d40dd47cdefa319370e"
+    },
+    {
+      "analysis_summary_sha256": "8193b1d2305fd84931aa58bb7a24e8c61d0ac6e45dae421d8debce9da2f412fe",
+      "expected_worlds": 504,
+      "experiment_id": "partner_force_stage4_substitution_development_v1",
+      "primary_sha256": "3645c53e7a08a9d2aa98a31811d2648cc8ec52d04f51d69d73fde5edfa8da416",
+      "ready_file": "studies/research_program/general_theory_v1/partner_force_autonomy/outputs/stage4/partner_force_stage4_substitution_development_v1/READY.json",
+      "ready_sha256": "04987ca5d67d3593a05e12026e0c5fced15cf05b03387b8a68546e47edd43546",
+      "trajectory_sha256": "11ae59b80519fd45e136c84a1e24c25befdaf62af830a17f0c01844bbbc0edcf"
+    }
+  ],
+  "production_git_commit": "e369c107f4465ce8cd385a366cafca8c28c04b65",
+  "production_worlds": 2808,
+  "schema_version": "pineland.partner_force_stage4_program_ready.v1",
+  "status": "STAGE4_INTEGRATED_PROGRAM_COMPLETE"
+}
