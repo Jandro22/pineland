@@ -1,0 +1,13 @@
+unit,capability_h30_sign,coverage_h360_sign,count
+world,positive,positive,142
+world,positive,negative,835
+world,positive,neutral,87
+world,nonpositive,positive,13
+world,nonpositive,negative,354
+world,nonpositive,neutral,9
+cell,positive,positive,10
+cell,positive,negative,96
+cell,positive,neutral,0
+cell,nonpositive,positive,2
+cell,nonpositive,negative,12
+cell,nonpositive,neutral,0
