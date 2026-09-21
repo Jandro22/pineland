@@ -157,6 +157,66 @@ def world_diagnostics(input_dir: Path, contract_path: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def control_matched_capability(input_dir: Path, contract_path: Path) -> pd.DataFrame:
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    factors = pd.DataFrame(contract["cells"])[
+        ["cell_id", "factor_structure", "factor_capacity_level", "factor_support_intensity"]
+    ]
+    primary_files = sorted(
+        p for p in input_dir.glob("*.csv") if not p.name.endswith(".trajectory.csv")
+    )
+    expected = int(contract["cells_count"]) * int(contract["default_seed_count"])
+    # Each world contributes both SUPPORT_ON and SUPPORT_OFF rows at each
+    # registered horizon; therefore count distinct cell/seed worlds after load.
+    primary = pd.concat((pd.read_csv(p) for p in primary_files), ignore_index=True)
+    worlds = primary[["cell_id", "seed"]].drop_duplicates()
+    if len(worlds) != expected:
+        raise SystemExit(f"expected {expected} primary worlds, found {len(worlds)}")
+    primary = primary.merge(factors, on="cell_id", validate="many_to_one")
+
+    controls = primary[
+        (primary["factor_support_intensity"].astype(float) == 0.0)
+        & (primary["branch"] == "SUPPORT_OFF")
+    ][
+        [
+            "factor_structure",
+            "factor_capacity_level",
+            "seed",
+            "horizon_days",
+            "composite_capability",
+        ]
+    ].rename(columns={"composite_capability": "control_capability"})
+
+    treated = primary[primary["factor_support_intensity"].astype(float) > 0.0].merge(
+        controls,
+        on=["factor_structure", "factor_capacity_level", "seed", "horizon_days"],
+        validate="many_to_one",
+    )
+    wide = treated.pivot(
+        index=[
+            "cell_id",
+            "factor_structure",
+            "factor_capacity_level",
+            "factor_support_intensity",
+            "seed",
+            "horizon_days",
+            "control_capability",
+        ],
+        columns="branch",
+        values="composite_capability",
+    ).reset_index()
+    wide.columns.name = None
+    wide["supported_vs_control"] = wide["SUPPORT_ON"] - wide["control_capability"]
+    wide["retained_vs_control"] = wide["SUPPORT_OFF"] - wide["control_capability"]
+    wide["dependency_gap"] = wide["SUPPORT_ON"] - wide["SUPPORT_OFF"]
+    return wide.rename(
+        columns={
+            "SUPPORT_ON": "supported_capability",
+            "SUPPORT_OFF": "withdrawn_capability",
+        }
+    )
+
+
 def main() -> None:
     ns = args()
     ns.output_dir.mkdir(parents=True, exist_ok=True)
@@ -314,6 +374,54 @@ def main() -> None:
         standard_rows.append(row)
     pd.DataFrame(standard_rows).to_csv(
         ns.output_dir / "stage4_demand_standardization_summary_v1.csv", index=False
+    )
+
+    control = control_matched_capability(ns.input_dir, ns.contract)
+    control.to_csv(ns.output_dir / "stage4_control_matched_capability_v1.csv", index=False)
+    control_rows = []
+    for horizon, g in control.groupby("horizon_days", sort=True):
+        cell = (
+            g.groupby(
+                [
+                    "cell_id",
+                    "factor_structure",
+                    "factor_capacity_level",
+                    "factor_support_intensity",
+                ],
+                as_index=False,
+            )
+            .agg(
+                supported_vs_control=("supported_vs_control", "mean"),
+                retained_vs_control=("retained_vs_control", "mean"),
+                dependency_gap=("dependency_gap", "mean"),
+            )
+        )
+        for unit, frame in [("world", g), ("cell", cell)]:
+            supported = frame["supported_vs_control"]
+            retained = frame["retained_vs_control"]
+            control_rows.append(
+                {
+                    "horizon_days": horizon,
+                    "unit": unit,
+                    "n": len(frame),
+                    "mean_supported_vs_control": supported.mean(),
+                    "mean_retained_vs_control": retained.mean(),
+                    "mean_dependency_gap": frame["dependency_gap"].mean(),
+                    "supported_positive_fraction": (supported > EPS).mean(),
+                    "retained_positive_fraction": (retained > EPS).mean(),
+                    "strong_trap_fraction": (
+                        (supported > EPS) & (retained < -EPS)
+                    ).mean(),
+                    "both_positive_fraction": (
+                        (supported > EPS) & (retained > EPS)
+                    ).mean(),
+                    "both_negative_fraction": (
+                        (supported < -EPS) & (retained < -EPS)
+                    ).mean(),
+                }
+            )
+    pd.DataFrame(control_rows).to_csv(
+        ns.output_dir / "stage4_control_matched_summary_v1.csv", index=False
     )
 
     print(f"PASS review diagnostics: {len(d)} worlds; {len(treated)} treated")
