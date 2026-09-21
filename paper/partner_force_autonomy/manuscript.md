@@ -140,8 +140,9 @@ constraints and tracks whether the limiting constraint changes. Third, a
 Substitution versus Development experiment compares direct external service
 provision with assistance that expands partner-owned production.
 
-Figure 1 summarizes the mechanism conceptually. Figures 2 through 7 are
-generated directly from the tracked Stage-4 compact evidence package.
+Figure 1 summarizes the mechanism conceptually. Figures 2 through 6 are
+generated directly from the tracked Stage-4 evidence package; Figure 7 reports
+the separately frozen Stage-5 coordinated-development experiment.
 
 The evidence is strongly asymmetric. Of 106 treated Phase-Map cells in which
 continued direct assistance improved composite capability at 30 days, 96
@@ -178,10 +179,8 @@ displaces agency and influence theories of security assistance.
 The article is deliberately limited in one important respect. The experiments
 establish causal relationships inside a synthetic model. They do not estimate
 historical treatment effects or identify empirical threshold values for
-Afghanistan, Iraq, Mali, or another real partner force. The final manuscript
-will therefore treat historical evidence as a separate external-validation
-exercise rather than using historical anecdotes to retroactively validate the
-simulation.
+Afghanistan, Iraq, Mali, or another real partner force. Historical evidence is therefore treated as a separate external-validation
+exercise rather than as retrospective confirmation of the simulation.
 
 # 2. Security Assistance, Dependence, and the Missing Production Dynamic
 
@@ -609,7 +608,6 @@ requires logistics to be terminal. A structural environment in which command or
 force generation remains terminal would narrow the logistics-specific Stage-4
 interpretation without contradicting the broader constraint-migration mechanism.
 
-# 4. Research Design
 # 4. Research Design
 
 ## 4.1 Why use a synthetic experiment?
@@ -1341,7 +1339,6 @@ to coexist: a donor can correctly report higher readiness or operational reach
 while another assessment correctly finds continued external dependence because
 they are measuring different production frontiers.
 
-## 6.7 Distinguishing the mechanism from rival explanations
 ## 6.7 Distinguishing the mechanism from rival explanations
 
 Several established theories can produce weak autonomy after large amounts of
