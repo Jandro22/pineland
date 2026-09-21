@@ -3,39 +3,33 @@ title: "Suffering from Success: Security Assistance, Constraint Migration, and P
 author: "Alejandro Grenier"
 affiliation: "Virginia Tech"
 bibliography: references.bib
-status: "Working manuscript, Draft 0.3"
+status: "Working manuscript, Draft 0.4"
 date: "2026-09-21"
 keywords: "security assistance; military effectiveness; partner forces; autonomy; logistics; agent-based modeling"
 ---
 
 # Abstract
 
-Security assistance is often evaluated by whether external training, equipment,
-advising, or services improve a partner force's current performance. That
-criterion can obscure a different outcome: assistance may increase supported
-capability while reducing the share of the resulting military system that the
-partner can generate and sustain independently. This article develops a dynamic
-theory of the **autonomy trap** in which external assistance relieves a binding
-constraint, expands the supported operating envelope, and changes the service
-that limits indigenous military production. The theory is tested in Pineland, a
-partially observed agent-based model of insurgency, counterinsurgency, state
-capacity, logistics, command, and partner-force development. A prospectively
-frozen three-module experiment generated 2,808 production worlds. Among 106
-treated phase-map cells where continued direct assistance increased composite
-capability at 30 days, 96, or 90.6 percent, produced lower indigenous autonomy
-at 360 days. Fifty-three cells met the precommitted robust autonomy-trap
-criterion and none met the robust autonomy-building criterion. When assistance
-matched an observed command or force-generation bottleneck, persistent
-bottleneck migration occurred in 38 of 38 and 46 of 46 worlds respectively;
-matched logistics cases migrated in 0 of 85 worlds. Developmental logistics
-assistance improved terminal autonomy relative to direct substitution by 0.132
-to 0.433 on the capped indigenous-feasibility scale, with all four matched
-bootstrap intervals excluding zero. Yet force-generation development could
-substantially increase indigenous output while leaving whole-system autonomy
-unchanged because logistics became binding. The results identify a moving
-production constraint as a mechanism linking effective assistance to later
-dependence. The numerical thresholds are synthetic-model results, not empirical
-estimates for historical partner forces.
+Security assistance can work and still leave a partner unable to reproduce the
+capability that assistance helped create. This article separates three outcomes
+often treated as one: **constraint relief**, whether assistance fixes the
+problem initially limiting a force; **system yield**, how much whole-force
+capability that relief unlocks; and **retention**, how much resulting capability
+remains indigenously reproducible. Successful assistance can remove one binding
+limitation, expand the operating envelope, raise demand for complementary
+services, and expose another constraint. A prospectively frozen experiment in
+the Pineland agent-based model generated 2,808 worlds. Among 106 treated cells
+where continued direct assistance increased 30-day capability, 96, or 90.6
+percent, had lower indigenous autonomy at 360 days. Targeted support produced
+persistent constraint migration in 38 of 38 observed-matched command worlds and
+46 of 46 force-generation worlds, but 0 of 85 logistics worlds. Yet migration
+did not imply equal system gain: force-generation relief changed the binding
+service while producing virtually no short-run composite gain, whereas
+logistics support produced larger gains while deepening long-run dependence.
+Developmental logistics improved terminal autonomy relative to substitution by
+0.132 to 0.433, while substantial indigenous force-generation gains could leave
+whole-system autonomy unchanged. The results explain why successful assistance
+may stall rather than compound.
 
 # 1. Introduction
 
@@ -60,24 +54,45 @@ create dependency. A 2026 synthesis makes the novelty boundary especially
 clear: contemporary work already treats assistance as a relational practice
 that can generate dependency, fragmentation, and dissonance between intention
 and outcome [@rolandsen2026]. The contribution here is therefore not another
-claim that assistance can create dependency. It is a dynamic production
-mechanism linking successful assistance to later autonomy. If a partner force
-is initially constrained by command, training throughput, or logistics,
-successful assistance can raise the level of operations that the force is
-capable of attempting. That success changes service demand and can expose a
-different constraint. The relevant question becomes whether indigenous
-production grows at the service constraint that binds the system after it has
-adapted to assistance.
+claim that support can produce dependence. The article instead asks a narrower
+question that becomes important precisely when assistance works: **what happens
+after a real military constraint is successfully relieved?**
 
-This article calls that process **bottleneck migration**. The core claim is that
-partner-force autonomy is determined by indigenous service coverage at a
-moving binding constraint. External assistance can therefore produce an
-**autonomy trap**: supported capability rises in the short run while the
-partner's indigenous capacity covers a smaller share of the operating system in
-the long run. Conversely, developmental assistance can improve autonomy when it
-increases indigenous production at the constraint that remains binding. The
-same developmental intervention can have little system-level effect if it
-successfully removes one bottleneck only to reveal another.
+Three outcomes must be separated. **Constraint relief** asks whether the
+intervention actually fixes the service that limits the force. **System yield**
+asks how much additional whole-force capability that relief unlocks before some
+other limitation binds. **Retention** asks how much of the resulting capability
+the partner can continue to reproduce from indigenous production after
+additional donor input stops. These outcomes need not move together. A program
+can relieve the intended bottleneck yet produce little system gain because the
+next constraint was already close. It can produce a large supported gain yet
+leave little retained capacity because the new operating requirement depends on
+external service. It can also improve indigenous production substantially in a
+single subsystem while leaving whole-system autonomy unchanged because a
+different subsystem becomes limiting.
+
+The mechanism linking these outcomes is **constraint migration**. If a partner
+force is initially constrained by command, training throughput, or logistics,
+successful assistance can raise the level or complexity of operations the force
+is capable of attempting. That success changes demand for complementary
+services. The old bottleneck can disappear while another service becomes
+binding. The paper therefore uses bottleneck migration as a mechanism, not as a
+synonym for failure. Whether migration represents major progress or almost no
+progress depends in part on **headroom**, the distance between the most binding
+service and the next one, and on whether indigenous production grows fast
+enough to meet the new demand created by success.
+
+This dynamic creates the possibility captured by the title, **Suffering from
+Success**. Assistance can raise current performance and simultaneously make the
+resulting military system harder to reproduce independently. The corresponding
+autonomy trap occurs when supported capability rises while indigenous coverage
+of the adapted system falls. The same logic also identifies a possible escape
+condition. If indigenous production rises across the set of complementary
+services that are close to binding, the whole feasible frontier can move
+outward rather than merely shifting the identity of the bottleneck. That
+coordinated-development implication is tested prospectively in a separately
+frozen Stage-5 extension; the completed Stage-4 evidence establishes the causal
+problem that motivates it.
 
 The argument is evaluated using Pineland, a partially observed agent-based model
 that explicitly represents military personnel, formations, logistics,
@@ -108,13 +123,16 @@ logistics assistance substantially outperformed direct substitution on terminal
 autonomy, but force-generation development could create large indigenous gains
 without improving whole-system autonomy because logistics had become binding.
 
-These results make three contributions. First, they separate **supported
-capability** from **indigenous autonomy** and show why the former cannot be used
-as a sufficient proxy for the latter. Second, they introduce bottleneck
-migration as an endogenous consequence of successful assistance. Third, they
-distinguish local capacity development from system autonomy. A partner can
-become better at producing one military input without becoming more capable of
-sustaining the whole force independently.
+These results make four contributions. First, they separate **constraint
+relief, system yield, and retention**, showing why success on the first outcome
+does not establish success on the other two. Second, they distinguish
+**supported capability** from **indigenous autonomy** and show why the former
+cannot serve as a sufficient proxy for the latter. Third, they identify
+constraint migration as an endogenous consequence of successful assistance and
+show that migration can occur with very different amounts of system gain.
+Fourth, they distinguish local capacity development from system autonomy. A
+partner can become much better at producing one military input without becoming
+more capable of sustaining the whole force independently.
 
 The argument is not that politics ceases to matter once military production is
 modeled. Recipient incentives, donor leverage, organizational design, and
@@ -177,6 +195,18 @@ reviewed proposals did not fully document sustainment, absorptive capacity, or
 measurable objectives [@gao2023]. These literatures make it clear that durable
 capacity cannot be inferred from equipment delivery or tactical proficiency.
 
+An adjacent state-capacity literature sharpens the same warning. Pritchett,
+Woolcock, and Andrews describe **premature load bearing** as a condition in which
+organizations are asked to perform functions beyond the capabilities they have
+actually developed [@pritchett2013]. Andrews, Pritchett, and Woolcock develop
+that argument into a broader account of capability traps and problem-driven
+institution building [@andrews2017]. The present theory is narrower and more
+mechanistic. It asks how successful assistance can itself alter the service
+requirements placed on a military organization, and how the identity of the
+binding production constraint changes as a result. In that sense, support-
+enabled demand is not merely an external burden placed on a weak organization;
+it can be an endogenous consequence of prior success.
+
 The contribution here is therefore not the claim that assistance can create
 dependency. That point is well established. The unresolved theoretical problem
 is how dependency changes as assistance succeeds, indigenous production
@@ -190,6 +220,14 @@ coordinated action. Command without force generation cannot replace losses or
 expand the force. If these functions are complements, the effective capacity of
 the whole system depends disproportionately on the service channel with the
 lowest indigenous coverage of demand.
+
+This logic is consistent with a broader economics of organizational
+complementarity in which the return to one practice depends on the presence of
+others [@milgromroberts1990]. The military application adds a dynamic scarcity
+problem. A complementary input that is nonbinding today can become decisive
+after another input improves. The marginal value of capacity building therefore
+depends not only on the amount added to one subsystem, but on the configuration
+of the remaining constraints.
 
 Most assistance evaluations nevertheless measure inputs or outputs attached to
 the intervention itself. A training program is evaluated through graduates. An
@@ -252,7 +290,50 @@ This definition converts a static idea of "capacity" into a dynamic production
 problem. The relevant unit is not the amount of any one military input. It is
 indigenous coverage of the service that limits the whole system at time (t).
 
-## 3.2 The autonomy trap
+## 3.2 Relief, yield, and retention
+
+Assistance should not be evaluated as a single binary success or failure. Three
+distinct outcomes matter.
+
+**Constraint relief** asks whether the targeted limitation actually ceases to
+bind. If the initial bottleneck is service (j), relief occurs when intervention
+raises its effective coverage enough that another service becomes at least as
+restrictive.
+
+**System yield** asks how much whole-system capability is unlocked by that
+relief. A bottleneck can move after a very small gain if the next service was
+already almost equally restrictive. Let the ordered indigenous service coverage
+levels at time (t) be
+
+\[
+q_{(1),t}^{I} \leq q_{(2),t}^{I} \leq \cdots \leq q_{(J),t}^{I}.
+\]
+
+Define the initial **static headroom** above the binding service as
+
+\[
+H_t=q_{(2),t}^{I}-q_{(1),t}^{I}.
+\]
+
+Holding all other services and demands fixed, headroom approximates the maximum
+immediate whole-system gain available from improving only the currently binding
+service before the second constraint takes over. It is a structural diagnostic,
+not a fixed treatment-effect bound, because real interventions can also change
+demand, service interactions, and the ordering of constraints.
+
+**Retention** asks how much of the resulting gain remains reproducible from
+partner-owned production once additional donor-driven growth or substitution
+stops. Relief without yield means the intervention changed the identity of the
+problem without materially improving the force. Yield without retention means
+the intervention created useful capability that remains dependent on external
+production. Durable capacity building requires improvement on all three
+dimensions.
+
+This distinction prevents a common interpretive error. Bottleneck migration is
+evidence that the system changed. It is not, by itself, evidence that the system
+improved substantially or that the improvement became autonomous.
+
+## 3.3 The autonomy trap and constraint migration
 
 Suppose external assistance raises supported capability by supplying service at
 the current bottleneck. If the partner's indigenous production does not expand
@@ -270,19 +351,31 @@ I_{j,0}D_{j,1} < I_{j,1}D_{j,0}.
 
 This equivalence is formally verified in the model's Lean theory layer. It
 states that indigenous coverage improves only when indigenous service growth
-outruns the growth in the service requirement. In proportional terms, the
-autonomy-eroding case is
+outruns growth in the corresponding service requirement. In proportional terms,
+the autonomy-eroding case is
 
 \[
 \frac{\Delta I_{B,t}}{I_{B,t}} <
 \frac{\Delta D_{B,t}}{D_{B,t}},
 \]
 
-where (B) denotes the relevant binding service. In that case indigenous
-coverage (I/D) declines even if indigenous service does not decline in
-absolute terms. This distinction matters because assistance can expand both the
-numerator and the denominator. More indigenous capacity does not necessarily
-mean more autonomy if the supported force's requirements expand faster.
+where (B) denotes the relevant binding service. Indigenous coverage can
+therefore decline even while indigenous service increases in absolute terms.
+Assistance can enlarge both the numerator and the denominator of the capacity
+problem.
+
+Successful assistance can also eliminate the constraint that initially
+justified intervention. If service (j) binds at time (t), but assistance raises
+its effective coverage, another service (k) can become the minimum:
+
+\[
+B_t=j \quad \rightarrow \quad B_{t+h}=k.
+\]
+
+This is constraint migration. Migration is most consequential when relief opens
+substantial headroom and the expanded operating envelope then increases demand
+on the newly binding service. It can be nearly inconsequential when the first
+and second constraints are already close.
 
 **Proposition 1, Autonomy Trap.** External assistance can increase near-term
 operational capability while decreasing later indigenous autonomy when the
@@ -294,39 +387,25 @@ architecture, larger external support can deepen the autonomy penalty when it
 raises the supported operating envelope faster than it induces indigenous
 replacement.
 
-The second proposition is conditional rather than globally monotonic. Different
-starting structures and nonlinear responses can produce local exceptions.
-
-## 3.3 Bottleneck migration
-
-Successful assistance can eliminate the constraint that justified the
-intervention. If service (j) initially binds but assistance raises
-(q_{j,t}^{I}) or (q_{j,t}^{S}), another service (k) can become the new
-minimum:
-
-\[
-B_t=j \quad \rightarrow \quad B_{t+h}=k.
-\]
-
-This is bottleneck migration. It yields a strong implication for evaluation.
-An intervention can succeed on its target metric and still have little effect
-on whole-system autonomy if the target ceases to bind.
-
-**Proposition 3, Bottleneck Migration.** Assistance that successfully relieves a
+**Proposition 3, Constraint Migration.** Assistance that successfully relieves a
 nonterminal binding constraint increases the probability that a different
 service becomes the limiting constraint of the partner force.
 
-## 3.4 Substitution and development
+The intensity proposition is conditional rather than globally monotonic, and
+the migration proposition makes no claim that every migrated bottleneck implies
+the same amount of system gain.
+
+## 3.4 Substitution, development, and coordinated growth
 
 Direct substitution supplies (E). Developmental assistance instead seeks to
-raise the partner's own production function, increasing (I). These two
-approaches may generate similar near-term supported capability but have
-different autonomy implications.
+raise the partner's own production function, increasing (I). These approaches
+can generate similar near-term supported capability while producing very
+different retention.
 
 If development targets the service that remains binding, it should increase the
 partner's coverage of demand and therefore improve whole-system autonomy
-relative to substitution. If it targets a transient bottleneck, its local
-effect may be large while its system effect is small.
+relative to substitution. If it targets a transient bottleneck, its local effect
+may be large while its system effect remains small.
 
 **Proposition 4, Development at the Binding Constraint.** Developmental
 assistance should outperform direct substitution on terminal autonomy when it
@@ -336,9 +415,58 @@ increases indigenous production at a service that remains system-binding.
 large indigenous gains in a targeted subsystem without increasing whole-system
 autonomy when successful development causes another service to become binding.
 
-![Figure 1. The constraint-migration mechanism. Assistance relieves a current
-constraint, changes the supported operating envelope, and can alter which
-service ultimately limits indigenous autonomy.](figures/figure1_conceptual.png)
+The same complementarity that creates local-system divergence also implies a
+possible positive case. If several services are jointly or nearly binding,
+developing them together may raise the minimum more than developing any one in
+isolation. For two services, the system-level complementarity of coordinated
+development can be represented by the factorial interaction
+
+\[
+I_{AB}=Q_{AB}-Q_A-Q_B+Q_0,
+\]
+
+where (Q) is terminal whole-system indigenous feasibility. A positive
+(I_{AB}) means the combined intervention yields more autonomy than the additive
+effects of the two single-service interventions. This rising-tide implication
+is not inferred from Stage 4. It is tested prospectively in the separately
+frozen Stage-5 experiment described below.
+
+![Figure 1. Assistance should be evaluated as constraint relief, system yield,
+and retention. Constraint migration links these outcomes by changing which
+service limits the adapted force, while headroom determines how much immediate
+gain can be unlocked before the next constraint binds.](figures/figure1_conceptual.png)
+
+## 3.5 Falsifiable implications and scope conditions
+
+The theory is not a claim that every successful assistance program must produce
+constraint migration, dependence, or declining autonomy. Several observations
+would narrow or contradict its stronger forms.
+
+First, the migration mechanism is weakened if targeted assistance repeatedly
+relieves an observed binding service without changing the identity or relative
+importance of any complementary constraint, especially when operating scale and
+service demand rise substantially. Second, the autonomy-trap mechanism is
+weakened if increases in supported operating requirements are consistently
+matched or exceeded by indigenous service production at the binding channels.
+Third, the local-system divergence claim is weakened if improvements in a
+nonbinding subsystem continue to generate large whole-system autonomy gains
+after another service has clearly become limiting.
+
+The coordinated-development extension adds a sharper prospective test. Under a
+fixed total developmental effort, broad allocation is predicted to be most
+valuable when several services are close to binding. When one service is far
+more restrictive than all others, concentrating development on that dominant
+constraint can be more efficient than spreading the same effort across
+nonbinding functions. If Stage 5 instead shows that intervention breadth has no
+relationship to starting constraint structure, the rising-tide scope condition
+is not supported.
+
+Finally, nothing in the theory requires logistics to be the terminal constraint.
+The repeated emergence of logistics in Stage 4 is an empirical property of the
+current model architecture and treatment domain. A structural environment in
+which command or force generation remains terminal would narrow the logistics-
+specific interpretation without contradicting the more general claim that the
+identity of the binding constraint can change.
 
 # 4. Research Design
 
@@ -471,6 +599,50 @@ that supported capability and indigenous autonomy can diverge. It does not by
 itself identify bottleneck migration as the cause. The Migration and mechanism
 modules provide the stronger tests of the moving-constraint explanation.
 
+## 4.7 Prospectively frozen coordinated-development extension
+
+The completed Stage-4 findings raise an additional question that was not part of
+the original preregistration: can several complementary indigenous capacities
+be developed together so that the whole production frontier moves outward rather
+than one bottleneck simply replacing another? Because this question emerged
+after Stage-4 results were known, it is treated as a separate prospective
+extension rather than retrofitted into the original design.
+
+Stage 5 contains 92 cells and 16 matched seeds per cell, for 1,472 production
+worlds. It tests all nonempty combinations of indigenous force-generation,
+logistics, and command development across four starting structures: one
+force-generation bottleneck, one logistics bottleneck, one command bottleneck,
+and a low-capacity near-tie structure in which all three services begin close to
+binding. Two developmental intensities are used.
+
+The design deliberately separates two questions. Under **equal total effort**,
+a fixed normalized developmental dose is divided across the active channels.
+For two active services each receives one-half of the single-channel reference
+dose; for three active services each receives one-third. This tests whether
+breadth itself can improve allocation efficiency. Under **equal channel dose**,
+each active service receives the full single-channel dose. Multi-channel arms
+therefore use more total effort, allowing direct estimation of pairwise and
+three-way factorial interactions without interpreting raw outcome differences
+as cost efficiency.
+
+The primary Stage-5 endpoint is capped indigenous whole-system feasibility on
+the `SUPPORT_OFF` branch at +360 days. All arms receive the same 120-day
+developmental prehistory. At the branch split, additional donor-driven
+development stops in `SUPPORT_OFF` while the indigenous productive capacity
+already accumulated remains. The endpoint therefore measures retention of
+partner-owned capacity rather than continued donor input. The precommitted
+analyses include retained autonomy and capability gains, pairwise and three-way
+factorial interactions, equal-total-effort breadth premiums, and bottleneck
+migration or persistence.
+
+The Stage-5 protocol, contract, analysis code, execution wrappers, and inherited
+scientific foundation were cryptographically frozen before any Stage-5
+production outcome was observed. Stage 4 was explicitly used to motivate the
+question; Stage-5 outcomes were not used to select cells, doses, hypotheses, or
+estimands. At Draft 0.4, Stage-5 results are therefore intentionally omitted
+from the Results section. They will be inserted only after the frozen campaign
+and postprocessing checks complete.
+
 # 5. Results
 
 ## 5.1 Effective direct support usually reduces terminal autonomy
@@ -544,7 +716,7 @@ only 23 remained command-bottlenecked. These patterns establish an important
 measurement point: the target named in an assistance program or experimental
 design need not be the service that actually limits the system.
 
-## 5.4 Successful command and force-generation relief produces bottleneck migration
+## 5.4 Constraint migration and system yield are not the same outcome
 
 The dedicated Migration module provides the strongest direct evidence for the
 moving-constraint mechanism. Among worlds where the treatment target matched
@@ -577,6 +749,39 @@ Mean terminal autonomy effects were approximately -0.149 at 0.5 times support,
 These results reject a simplistic statement that relieving any bottleneck must
 cause migration. In the tested architecture, command and force generation are
 readily displaced constraints. Logistics is much more persistent.
+
+They also reject the opposite simplification that migration necessarily means a
+large material improvement. A post-completion descriptive aggregation of the
+precommitted observed-matched cell summaries shows sharply different system
+yields across the three targets. Matched command relief migrated in 38 of 38
+worlds and produced an average +30-day composite-capability effect of about
++0.00354. Its average +360-day indigenous-autonomy effect was about +0.0555.
+Matched force-generation relief migrated in 46 of 46 worlds, yet its average
++30-day composite-capability effect was approximately +0.00000021 and its
+average +360-day autonomy effect was exactly zero at the reported precision.
+The intervention changed which service bound the system without materially
+raising the composite outcome. By contrast, matched logistics support produced
+the largest mean +30-day gain of the three groups, about +0.0170, even though
+the logistics constraint did not migrate and the +360-day autonomy effect was
+strongly negative.
+
+| Observed-matched target | Persistent migration | Mean +30d capability effect | Mean +360d indigenous-autonomy effect |
+|---|---:|---:|---:|
+| Command | 38/38 | +0.00354 | +0.0555 |
+| Force generation | 46/46 | approximately 0.00000021 | 0.0000 |
+| Logistics | 0/85 | +0.01699 | -0.2215 |
+
+**Table 2. Relief, migration, system yield, and terminal autonomy in
+observed-matched Migration worlds.** The weighted means are a post-completion
+descriptive synthesis of frozen cell summaries. They were not themselves a
+precommitted primary estimand.
+
+The distinction is central to the theory. Moving from one bottleneck to another
+can represent large progress when substantial headroom is unlocked, or almost
+no progress when the next constraint was already close. Conversely, failure of
+the bottleneck to migrate does not imply failure of the intervention to raise
+supported capability. Relief, yield, migration, and retention must therefore be
+reported separately.
 
 ![Figure 4. Persistent bottleneck migration among treatments that matched the
 observed pre-withdrawal constraint.](figures/figure4_matched_migration.png)
@@ -665,7 +870,7 @@ autonomy.
 | Logistics development minus substitution on terminal autonomy | +0.1316 to +0.4328 | All four matched bootstrap intervals exclude zero |
 | Force-generation development minus substitution on whole-system autonomy | 0 in all four cells | Targeted indigenous output still rises by approximately +121 to +674 |
 
-**Table 2. Headline evidence from the integrated Stage-4 experiment.** Numerical
+**Table 3. Headline evidence from the integrated Stage-4 experiment.** Numerical
 values are synthetic-model effects. The table does not convert them into
 historical treatment-effect estimates.
 
@@ -684,7 +889,7 @@ worlds are one command-targeted world and one logistics-targeted world.
 | Logistics | 85 | 84/85, 98.8% | 84/85, 98.8% | 84/85, 98.8% |
 | **Total** | **169** | **167/169, 98.8%** | **167/169, 98.8%** | **167/169, 98.8%** |
 
-**Table 3. Sign robustness of terminal-autonomy effects to smooth feasibility
+**Table 4. Sign robustness of terminal-autonomy effects to smooth feasibility
 aggregation in observed-matched Migration worlds.** This check is specific to
 the Migration evidence package and should not be read as a robustness result
 for every Phase-Map or mechanism-module estimand.
@@ -700,22 +905,29 @@ problems [@biddle2018; @metz2023; @harkness2022; @sandnes2024]. The present
 results identify a production dynamic that can operate even when assistance
 does what donors intend at the targeted military function.
 
-The key distinction is between **relieving a constraint** and **building an
-autonomous system**. Direct service can relieve the current bottleneck and
-increase battlefield capability. Development can also improve the partner's
-own production of the targeted service. Neither outcome guarantees autonomy if
-the intervention changes the level and composition of demand enough to reveal a
-different limiting service.
+The central distinction is no longer simply between "assistance" and
+"dependence." It is between three stages of success. A donor can relieve the
+problem it intended to solve, obtain little or substantial system-level yield,
+and then retain little or much of that gain in indigenous production. The
+Stage-4 experiments demonstrate that those stages can separate sharply. Force
+generation provides the clearest example: treatment can change the binding
+constraint almost immediately while producing virtually no composite-capability
+gain because another service takes over. Logistics shows the reverse pattern:
+supported capability rises materially even though the bottleneck does not move,
+while long-run indigenous autonomy falls.
 
 This produces a recursive view of partner-force development:
 
 \[
 B_t \rightarrow \text{assistance} \rightarrow \text{relief} \rightarrow
-\text{system adaptation} \rightarrow B_{t+h}.
+\text{yield} \rightarrow \text{system adaptation} \rightarrow B_{t+h}
+\rightarrow \text{retention}.
 \]
 
-The central object of analysis is therefore the sequence of binding constraints,
-not a static list of capabilities.
+The central object of analysis is therefore not a static inventory of military
+capabilities. It is the evolving relationship among service coverage, the
+distance to the next constraint, the operating demand enabled by assistance,
+and the indigenous production needed to sustain the adapted force.
 
 ## 6.2 Why supported capability can be a misleading success metric
 
@@ -731,7 +943,42 @@ services that the higher operating level requires. In that sense, the autonomy
 trap is not merely a shortage of maintenance or funding. It is a mismatch
 between the supported operating envelope and the indigenous production system.
 
-## 6.3 Development should be evaluated at the system level
+The same logic also clarifies why conventional output metrics can overstate the
+value of a successful program. More trained personnel, more reliable command,
+or more delivered logistics are meaningful local achievements. Their marginal
+system value depends on whether the improved service still limits the force.
+Once another function binds, additional gains in the relieved subsystem can be
+real and measurable while adding almost nothing to whole-system autonomous
+capability.
+
+## 6.3 Headroom determines whether constraint relief matters
+
+The migration result should not be interpreted as a claim that a force returns
+to square one whenever the bottleneck moves. If the original bottleneck lies
+far below the next constraint, relieving it can unlock a large amount of system
+capability before the second service becomes limiting. If the first two
+constraints are almost tied, the same successful intervention can change the
+identity of the bottleneck while barely moving the system outcome.
+
+That distinction is captured by headroom. In a strongly complementary system,
+the gap between the lowest and second-lowest service coverage is the immediate
+space through which a single-channel improvement can raise the system before
+the next constraint takes over, absent induced changes elsewhere. The Stage-4
+force-generation migration results are consistent with very low realized
+headroom: the bottleneck moved in every observed-matched case while the average
+short-run composite-capability effect was effectively zero. Command relief
+produced modest positive yield. Logistics support produced larger supported
+yield despite no persistent migration. The identity of the next bottleneck and
+the distance to it therefore matter at least as much as whether migration occurs.
+
+This yields a straightforward measurement implication. Assistance evaluations
+should report the pre-intervention first and second constraints, the local
+improvement in the targeted service, the resulting whole-system gain, and the
+post-intervention binding service. Without those four quantities, a program can
+look highly successful or highly disappointing depending on which layer of the
+system is measured.
+
+## 6.4 Development should be evaluated at the system level
 
 The mechanism experiment warns against equating indigenous output with system
 autonomy. Developmental force generation clearly increases indigenous output.
@@ -744,18 +991,44 @@ should ask whether the targeted function remained binding after the increase,
 whether another constraint emerged, and whether the force can sustain the
 operating demand created by the improvement.
 
-## 6.4 A next-step implication: adaptive replacement
+The logistics-development result shows the positive side of the same mechanism.
+When logistics remains the system constraint, replacing external substitution
+with indigenous production has a large effect on terminal autonomy. Development
+works at the system level not merely because it is "local" or "owned," but
+because it raises indigenous production where whole-system feasibility is still
+being determined.
 
-The results motivate, but do not yet validate, a bottleneck-aware assistance
-strategy. A static package solves a problem defined at the beginning of an
-intervention. A moving-constraint theory implies a feedback process instead:
-observe the current bottleneck, develop indigenous production at that
-bottleneck, reduce external substitution as replacement emerges, detect
-migration, and redirect developmental effort if a new service becomes binding.
+## 6.5 When a rising tide can lift the whole system
 
-That controller is a logical next experiment rather than a result of the
-present paper. Testing it should be treated as a separate confirmatory policy
-experiment so that the current paper remains focused on the causal mechanism.
+The Stage-4 evidence establishes the failure mode of narrow development but does
+not imply that capacity building must chase bottlenecks indefinitely. In a
+complementary production system, several services can be jointly or nearly
+binding. Developing one alone may have little system effect because the next
+constraint immediately takes over. Developing several together can, in
+principle, move the minimum itself.
+
+This is the rising-tide possibility. Its strongest form predicts positive
+complementarity: the whole-system gain from developing two or three near-binding
+services together exceeds the additive gain expected from developing them one
+at a time. A weaker but policy-relevant form predicts an allocation benefit:
+even with the same total developmental effort, spreading resources across
+several near-binding services can outperform concentrating them in one when
+headroom is small.
+
+The theory does not predict that broad development is always superior. If one
+service is far more restrictive than all others, dividing a fixed budget across
+nonbinding functions should waste effort that could have been concentrated on
+the dominant constraint. The appropriate breadth of development should
+therefore depend on the breadth of the binding-constraint set. That scope
+condition is the central purpose of the prospectively frozen Stage-5 extension.
+
+The broader implication is a shift from static assistance packages toward
+constraint-aware development. A program should diagnose which services bind,
+how much headroom exists above them, how intervention changes demand, and
+whether partner-owned production is keeping pace across the set of services
+that become limiting. The model does not yet establish an optimal real-world
+allocation rule, but it identifies the variables such a rule would have to
+track.
 
 # 7. External Validity and Historical Validation
 
@@ -764,24 +1037,100 @@ explicit model assumptions. External validity requires a different evidentiary
 strategy. Historical validation should therefore test observable implications
 of the mechanism rather than search for cases that merely resemble the model.
 
-A structured historical test should ask, for each case:
+The historical unit of analysis is an **assistance episode by military-service
+constraint by time**. For each episode, the protocol asks whether seven
+observable implications can be identified: the initial limiting service, the
+assistance directed at it, improvement in the targeted function, expansion or
+change in the operating requirement, migration or persistence of the limiting
+constraint, the degree of indigenous replacement, and the response to a support
+reduction or withdrawal shock. The purpose is process validation. Historical
+evidence can show that the proposed sequence exists outside the model and can
+identify important scope conditions. It cannot convert the synthetic treatment
+effects into empirical causal estimates.
 
-1. What military service was plausibly binding before the assistance episode?
-2. What external service or developmental intervention was provided?
-3. Did the targeted function measurably improve?
-4. Did the partner's operating scale, tempo, or service demand increase?
-5. Did a different function subsequently become limiting?
-6. Was the new constraint supplied externally or developed indigenously?
-7. What happened when external support was reduced?
+The protocol freezes four cases before systematic coding is completed:
+Afghanistan, Iraq, Mali, and Colombia. They are selected for theoretical
+variation rather than because all four are expected to support the argument.
 
-The historical-validation protocol is now frozen before systematic coding. It
-specifies four cases: Afghanistan, Iraq, Mali, and Colombia. It also freezes the
-unit of analysis, observable implications, source hierarchy, coding fields, and
-disconfirming-evidence requirements. Because the synthetic results were already
-known and the researcher had broad prior familiarity with these cases, the
-historical exercise is described as structured external validation rather than
-an untouched confirmatory test. Historical claims will be added only after the
-case memos are coded under that protocol.
+| Case | Intended evidentiary role | Main question for the theory |
+|---|---|---|
+| Afghanistan | High-support, high-substitution episode with a major withdrawal shock | Can supported sophistication outrun indigenous replacement even when the externally supplied function remains the core constraint? |
+| Iraq | Force-generation and institutional expansion under heavy external assistance | Does improvement in force generation reveal sustainment or logistics as a subsequent system constraint? |
+| Mali | Politically fragmented, multi-provider and difficult case | Does the production mechanism survive where political fragmentation and provider diversity complicate a clean constraint sequence? |
+| Colombia | Comparatively durable long-run development case | Can indigenous institutions and sustainment grow fast enough for capability gains to become retained rather than externally reproduced? |
+
+Preliminary coding under that frozen protocol already produces meaningful
+variation. Afghanistan provides strong evidence of persistent external
+substitution in aviation maintenance and logistics rather than a clean migration
+away from the original constraint. SIGAR found that the Afghan Air Force
+remained heavily dependent on contractor maintenance and that the broader ANDSF
+had failed to become independent and self-sustaining before the 2021 withdrawal
+shock [@sigar2021air; @sigar2023collapse]. Iraq provides a clearer sequential
+case. By late 2006, DOD reported hundreds of thousands of trained and equipped
+Iraqi personnel, while GAO identified logistics and sustainment as a serious
+shortcoming and documented lagging national and regional support institutions
+[@gao2007iraqlog; @gao2007iraqcc; @gao2007iraqindependent].
+
+Mali is a harder and less supportive case. RAND's field research found that
+EUTM-trained GTIAs improved basic soldier skills, but logistics, maintenance,
+command, and coordinated operations remained major limits [@shurkin2017]. Those
+weaknesses were already present during the assistance effort, so the evidence is
+better interpreted as local-system divergence than as a clean case in which
+assistance caused a new bottleneck to emerge. Colombia provides the strongest
+positive retention case. U.S. assistance initially supplied contractor pilots,
+mechanics, maintenance, logistics, and training to an aviation system that
+Colombia could not yet sustain independently. Over a long phased transition,
+Colombian personnel and institutions assumed progressively more responsibility;
+GAO later reported that Colombia had taken over full maintenance and operations
+for the Army aviation program, while also noting slower nationalization in a
+related helicopter training center [@gao2009colombia; @gao2013colombia;
+@gao2018colombia].
+
+| Case | Preliminary constraint sequence | Indigenous replacement | Support-change evidence | Preliminary theory fit |
+|---|---|---|---|---|
+| Afghanistan | Aviation maintenance/logistics remained limiting beneath external substitution | Negative or incomplete | Abrupt contractor and U.S. support reduction followed by severe degradation | Strong for substitution/retention; partial for migration |
+| Iraq | Rapid force generation followed by lagging logistics and sustainment | Incomplete in coded 2005-2008 episode | No clean withdrawal shock in coded episode | Strongest migration analogue, with political confounding |
+| Mali | Basic unit skills improved while pre-existing logistics, maintenance, and C2 weaknesses remained | Mixed | No clean support shock in coded 2013-2015 episode | Partial; strongest for local-system divergence |
+| Colombia | Externally enabled aviation expansion initially outran pilots, mechanics, maintenance, and logistics, followed by phased nationalization | Positive and substantial over time | Phased transfer rather than abrupt withdrawal | Strong positive retention case; partial for discrete migration |
+
+**Table 5. Preliminary historical process evidence under the frozen external-
+validation protocol.** The table is a structured plausibility and process test,
+not a causal estimate of security-assistance effects. Coding remains subject to
+the protocol's source-audit and rival-explanation requirements.
+
+This case set allows the historical exercise to test more than simple
+similarity. Afghanistan can support the substitution and replacement mechanism
+even if constraint migration is weak. Iraq provides a stronger opportunity to
+observe sequential constraint change. Mali is useful precisely because rival
+political explanations may dominate. Colombia provides a positive case in which
+the theory should be able to accommodate sustained indigenous development
+rather than predicting dependency everywhere.
+
+Evidence is ranked in a frozen source hierarchy: oversight and audit material;
+contemporaneous official or declassified records; peer-reviewed research with
+primary evidence; major research institutions; and high-quality journalism.
+Every episode must also record the strongest plausible rival explanation.
+Political leadership, corruption, force design, morale, sectarian or factional
+control, donor strategy, adversary adaptation, and changes in the threat are not
+treated as residual noise. If they explain an episode better than the proposed
+production sequence, the case should count against the scope of the mechanism.
+
+The historical test therefore has three possible outcomes. **Process support**
+occurs when the initial constraint, targeted relief, demand change, subsequent
+constraint, and indigenous replacement pattern appear in the expected order.
+**Partial support** occurs when only part of that sequence is observable, such
+as persistent substitution without clear migration. **Disconfirmation** occurs
+when the targeted function improves but neither demand, the binding constraint,
+nor retention behaves as the mechanism predicts, or when an identified rival
+account better explains the sequence.
+
+Because the Stage-4 synthetic results were already known and the researcher had
+broad prior familiarity with these cases, the historical exercise is described
+as structured external validation rather than an untouched confirmatory test.
+Its coding protocol, case set, source hierarchy, and disconfirming-evidence rule
+were frozen before systematic case coding. The completed case table will report
+supportive, mixed, and adverse evidence rather than selecting only episodes that
+fit the model.
 
 # 8. Limitations
 
@@ -811,29 +1160,65 @@ Real-world institution building is slower, politically contested, and often
 nonlinear. The model therefore isolates the production consequence of
 development more cleanly than historical interventions usually can.
 
+Sixth, the relief-yield-retention framework and the weighted comparison of
+system yield across observed-matched Migration targets are post-completion
+syntheses of precommitted Stage-4 outputs. They sharpen the interpretation of
+the completed experiment but were not themselves named as primary Stage-4
+estimands before production. The manuscript labels them accordingly. The
+Stage-5 coordinated-development test is separate and prospective.
+
+Seventh, the static-headroom quantity is a local diagnostic rather than a full
+dynamic causal parameter. Assistance can change service demand, force size,
+operational tempo, stocks, and interactions among channels, so realized system
+yield can differ from the initial distance between the first and second
+constraints. Headroom is useful because it clarifies why relief can have very
+different returns; it should not be treated as a deterministic prediction by
+itself.
+
+Finally, the model isolates a production mechanism that can operate alongside
+political mechanisms, not instead of them. Real partner forces are organizations
+embedded in regimes, bureaucracies, patronage networks, coalitions, and wars.
+The value of the present framework is to identify one source of endogenous
+failure even under successful technical assistance. It does not imply that
+technical diagnosis can substitute for political analysis.
+
 # 9. Conclusion
 
-Security assistance can succeed operationally and fail autonomously. In the
-integrated Stage-4 experiment, direct external service provision produced a
-near-term capability gain in most treated phase-map cells, yet 90.6 percent of
-those effective cells had lower indigenous autonomy one year later. Successful
-relief also changed the system's constraint structure. Observed command and
-force-generation bottlenecks migrated consistently after targeted assistance,
-while logistics remained binding in the matched logistics cases. Developmental
-assistance substantially reduced the autonomy penalty when it expanded
-indigenous logistics production, but large local improvements in force
-generation could leave system autonomy unchanged when logistics became the new
-constraint.
+Security assistance should not be judged by a single question: did the program
+work? A program can work at the level it directly targets and still produce very
+different outcomes for the force as a whole. The central distinctions are
+whether the intervention **relieves** the original constraint, how much system
+**yield** that relief unlocks, and how much of the resulting capability the
+partner **retains** through indigenous production.
 
-These findings suggest that the core problem is not assistance volume alone.
-Nor is it enough to distinguish external substitution from indigenous capacity
-building in the abstract. The relevant question is whether indigenous
-production keeps pace with demand at the service that binds the adapted force.
+The integrated Stage-4 experiment shows why these outcomes diverge. Direct
+external service provision produced a near-term capability gain in most treated
+phase-map cells, yet 90.6 percent of those effective cells had lower indigenous
+autonomy one year later. Observed command and force-generation bottlenecks
+migrated consistently after targeted assistance, but the system gain associated
+with that migration varied sharply. Force-generation relief could change the
+binding service while producing essentially no composite-capability gain.
+Logistics support produced substantially more short-run capability while
+leaving logistics itself binding and reducing long-run indigenous autonomy.
+Developmental logistics substantially improved terminal autonomy relative to
+substitution, while large indigenous gains in force generation could remain
+stranded behind a logistics constraint.
 
-The resulting theory is a constraint-migration theory of partner-force autonomy.
-Assistance changes the force it supports, successful development changes what
-the force lacks, and autonomy depends on whether indigenous production can
-follow that moving constraint.
+The paper's core claim is therefore not that assistance creates dependence.
+That problem is already well established. The contribution is a production
+mechanism explaining why **successful** assistance can generate disappointing
+autonomy outcomes. Success changes what the force can do. What the force can do
+changes what it requires. Those changing requirements can move the constraint
+that determines the marginal value of further development.
+
+This mechanism also leaves room for a positive outcome. If indigenous
+production grows across the set of services that are jointly close to binding,
+the whole frontier may move outward rather than one bottleneck merely replacing
+another. The prospectively frozen Stage-5 extension tests that rising-tide
+possibility directly. Whatever its result, the Stage-4 evidence already implies
+a different standard for evaluating security assistance: measure the constraint
+that binds, the headroom above it, the whole-system yield created by relief, and
+the indigenous production that remains after support stops.
 
 # Data, Code, and Reproducibility
 
@@ -853,6 +1238,13 @@ commit is `9b0e975c7e4073f2f5abd94e72cd125beb75f20d`. The repository consolidati
 commit from which this manuscript branch begins is
 `73b92e5420a2929bdf8eaec8d570a181acf87870`.
 
+The separately prospective Stage-5 coordinated-development extension was frozen
+before production in repository commit
+`8d342c982e385699e76c766ec06ae991bc451876`. Its freeze re-hashes the inherited
+scientific foundation together with the Stage-5 protocol, 92-cell contract,
+analysis code, merge code, and ARC execution wrappers. Stage-5 results are not
+incorporated into Draft 0.4.
+
 # Disclosure
 
 The author designed and developed the Pineland simulation and conducted the
@@ -860,4 +1252,8 @@ analysis described here. The historical-validation exercise is being conducted
 after the synthetic Stage-4 results were observed and is therefore labeled as
 external validation rather than prospective confirmation. The manuscript makes
 no claim that synthetic numerical thresholds are empirical estimates for any
-historical security force.
+historical security force. The relief-yield-retention framing and the weighted
+cross-target yield comparison were developed after Stage-4 completion and are
+labeled as post-completion synthesis. The coordinated-development Stage-5
+experiment was motivated by those completed results but prospectively frozen
+before any Stage-5 production outcome was observed.

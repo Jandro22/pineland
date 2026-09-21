@@ -3,8 +3,9 @@
 Working title: **Suffering from Success: Security Assistance, Constraint Migration, and Partner-Force Autonomy**
 
 This directory contains the manuscript for the integrated Partner-Force Autonomy
-paper. It begins from the completed Stage-4 research state on Git commit
-`73b92e5420a2929bdf8eaec8d570a181acf87870`.
+paper. Draft 0.4 reframes the completed Stage-4 program around constraint
+relief, system yield, retention, headroom, and constraint migration while
+preserving the original Stage-4 evidentiary boundary.
 
 ## Scientific status
 
@@ -14,7 +15,7 @@ paper. It begins from the completed Stage-4 research state on Git commit
 - Compact evidence: tracked under
   `studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/`.
 - Historical validation: not yet complete and must remain separate from the synthetic causal claims.
-- Stage-5 coordinated-development follow-up: prospectively designed after Stage 4 and frozen separately before production. It tests whether multi-channel indigenous development can move the whole production frontier rather than merely shift the binding constraint.
+- Stage-5 coordinated-development follow-up: prospectively designed after Stage 4 and frozen separately before production at commit `8d342c982e385699e76c766ec06ae991bc451876`. It tests whether multi-channel indigenous development can move the whole production frontier rather than merely shift the binding constraint.
 
 ## Files
 
@@ -27,6 +28,11 @@ paper. It begins from the completed Stage-4 research state on Git commit
 - `historical_cases/`: case memos coded under the frozen external-validation protocol.
 - `generate_figures.py`: deterministic generator for manuscript figures from tracked evidence.
 - `figures/`: generated PDF and 300-dpi PNG manuscript figures.
+- `supplement_outline.md`: submission-ready supplement architecture with slots for complete cell results, formal details, robustness, Stage 5, and historical coding.
+- `reviewer_attack_matrix.md`: hostile-review checklist covering novelty,
+  metric artifacts, model architecture, post hoc inference, historical
+  validation, falsification, and policy overreach.
+- `submission_target.md`: current journal-fit and submission-shaping notes.
 
 ## Drafting rules
 

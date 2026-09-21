@@ -76,6 +76,19 @@ def main() -> None:
         assert int(group["n"].sum()) == expected_n
         assert int(group["persistent_migration_count"].sum()) == expected_events
 
+    expected_relief_yield = {
+        "command": (0.00353620531578948, 0.0555494112894737),
+        "forcegen": (2.07804347823507e-7, 0.0),
+        "logistics": (0.0169926201764706, -0.221527308552941),
+    }
+    for target, (expected_cap30, expected_q360) in expected_relief_yield.items():
+        group = matched[matched["factor_support_target"] == target]
+        n = float(group["n"].sum())
+        cap30 = float((group["mean_delta_capability_h30"] * group["n"]).sum() / n)
+        q360 = float((group["mean_delta_q_feasible_h360"] * group["n"]).sum() / n)
+        assert abs(cap30 - expected_cap30) < 1e-12
+        assert abs(q360 - expected_q360) < 1e-12
+
     mechanism = pd.read_csv(EVIDENCE / "mechanism_mode_contrasts_v1.csv")
     logistics = mechanism[
         mechanism["factor_target"].eq("logistics")
@@ -87,7 +100,8 @@ def main() -> None:
 
     print(
         "PASS manuscript validation: no em dashes; citations complete; "
-        "Stage-4 provenance and headline results match tracked evidence"
+        "Stage-4 provenance, headline results, and relief-yield synthesis "
+        "match tracked evidence"
     )
 
 

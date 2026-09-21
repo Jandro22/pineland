@@ -14,13 +14,17 @@ The manuscript's intended contribution is narrower:
 
 1. assistance can alter the identity of the military service that binds the
    partner system;
-2. short-run supported capability and long-run indigenous autonomy can move in
-   opposite directions through that process;
-3. indigenous development in one subsystem need not improve whole-system
-   autonomy if successful development causes a different service to bind; and
-4. the appropriate object of evaluation is therefore indigenous production at
-   the **moving binding constraint**, not only the output of the assisted
-   subsystem.
+2. constraint relief, whole-system yield, and retained indigenous capability are
+   analytically distinct outcomes;
+3. short-run supported capability and long-run indigenous autonomy can move in
+   opposite directions as successful assistance changes service demand;
+4. indigenous development in one subsystem need not improve whole-system
+   autonomy if successful development causes a different service to bind;
+5. the return to a single-channel intervention depends on headroom to the next
+   constraint; and
+6. coordinated development may produce system-level complementarity when
+   several services are jointly close to binding, a proposition tested
+   prospectively in Stage 5.
 
 ## Verified core sources
 
@@ -139,6 +143,44 @@ congressional notifications adequately documented absorptive capacity as of
 sample and avoid presenting the 2023 planning deficiency as an unchanged 2026
 condition.
 
+### Pritchett, Woolcock, and Andrews 2013
+
+**Citation:** Lant Pritchett, Michael Woolcock, and Matt Andrews. "Looking Like
+a State: Techniques of Persistent Failure in State Capability for
+Implementation." *The Journal of Development Studies* 49(1): 1-18.
+
+**DOI:** `10.1080/00220388.2012.709614`
+
+**Use:** State-capacity bridge, especially premature load bearing and the gap
+between formal or apparent capability and underlying implementation capacity.
+
+**Novelty implication:** The manuscript should not claim that asking weak
+organizations to perform beyond developed capacity is new. Its narrower claim
+is that successful assistance can endogenously expand the operating requirement
+and change which complementary service is binding.
+
+### Andrews, Pritchett, and Woolcock 2017
+
+**Citation:** Matt Andrews, Lant Pritchett, and Michael Woolcock. *Building
+State Capability: Evidence, Analysis, Action*. Oxford University Press.
+
+**DOI:** `10.1093/acprof:oso/9780198747482.001.0001`
+
+**Use:** Broader capability-trap and problem-driven adaptation literature. It
+provides a cross-domain vocabulary for distinguishing apparent performance from
+durable indigenous capability.
+
+### Milgrom and Roberts 1990
+
+**Citation:** Paul Milgrom and John Roberts. "The Economics of Modern
+Manufacturing: Technology, Strategy, and Organization." *American Economic
+Review* 80(3): 511-528.
+
+**Use:** General organizational-complementarity foundation. The paper does not
+import the manufacturing model directly; it uses complementarity as an adjacent
+theoretical basis for why the system return to one capacity can depend on the
+levels of other capacities.
+
 ## Positioning statement for the manuscript
 
 The literature already explains many reasons security assistance can fail to
@@ -148,5 +190,8 @@ assistance successfully changes the military production function it targets?**
 
 The answer proposed and tested here is that successful assistance can alter the
 partner's supported operating envelope and cause the binding service constraint
-to migrate. Autonomy then depends on whether indigenous production keeps pace
-with demand at the service that binds the adapted system.
+to migrate. The amount of progress depends on headroom to the next constraint,
+while durable autonomy depends on whether indigenous production keeps pace with
+demand at the services that bind the adapted system. Stage 5 separately tests
+whether coordinated indigenous development can move several complementary
+constraints outward together.

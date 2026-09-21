@@ -38,19 +38,18 @@ def save(fig: plt.Figure, name: str) -> None:
 
 
 def figure1_conceptual() -> None:
-    fig, ax = plt.subplots(figsize=(11, 3.6))
+    fig, ax = plt.subplots(figsize=(11, 4.4))
     ax.axis("off")
     boxes = [
-        (0.04, "External service\nor development"),
-        (0.23, "Relief of current\nbinding constraint"),
-        (0.42, "Supported operating\nenvelope changes"),
-        (0.61, "Indigenous supply and\nservice demand co-evolve"),
-        (0.80, "Binding constraint\nmay migrate"),
+        (0.08, "Targeted\nassistance"),
+        (0.31, "Constraint\nrelief"),
+        (0.56, "System\nyield"),
+        (0.82, "Retained indigenous\ncapability"),
     ]
     for x, label in boxes:
         ax.text(
             x,
-            0.58,
+            0.62,
             label,
             ha="center",
             va="center",
@@ -61,29 +60,40 @@ def figure1_conceptual() -> None:
     for i in range(len(boxes) - 1):
         ax.annotate(
             "",
-            xy=(boxes[i + 1][0] - 0.075, 0.58),
-            xytext=(boxes[i][0] + 0.075, 0.58),
+            xy=(boxes[i + 1][0] - 0.085, 0.62),
+            xytext=(boxes[i][0] + 0.085, 0.62),
             xycoords=ax.transAxes,
             arrowprops={"arrowstyle": "->", "lw": 1.2},
         )
     ax.text(
-        0.5,
-        0.17,
-        "Long-run autonomy depends on indigenous coverage at the constraint that binds the adapted system",
+        0.435,
+        0.39,
+        "Headroom to the next constraint\ndetermines immediate return",
         ha="center",
         va="center",
-        fontsize=11,
+        fontsize=9.5,
+        transform=ax.transAxes,
+    )
+    ax.text(
+        0.69,
+        0.39,
+        "Expansion changes demand;\nthe binding constraint may migrate",
+        ha="center",
+        va="center",
+        fontsize=9.5,
+        transform=ax.transAxes,
+    )
+    ax.text(
+        0.50,
+        0.14,
+        "Durable success requires indigenous production to keep pace across the services that become binding",
+        ha="center",
+        va="center",
+        fontsize=10.5,
         fontweight="bold",
         transform=ax.transAxes,
     )
-    ax.annotate(
-        "",
-        xy=(0.5, 0.29),
-        xytext=(0.80, 0.45),
-        xycoords=ax.transAxes,
-        arrowprops={"arrowstyle": "->", "lw": 1.0},
-    )
-    ax.set_title("How successful assistance exposes the next constraint", fontsize=14, pad=10)
+    ax.set_title("Suffering from Success: relief, yield, and retention can diverge", fontsize=14, pad=10)
     save(fig, "figure1_conceptual")
 
 
