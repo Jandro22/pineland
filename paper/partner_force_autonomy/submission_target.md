@@ -2,7 +2,7 @@
 
 Current primary target: **Security Studies**
 
-Status: working target for Draft 0.4. This is not a submission decision that
+Status: working target for Draft 0.5. This is not a submission decision that
 prevents later retargeting.
 
 ## Why the current manuscript fits
@@ -17,18 +17,17 @@ The journal's current author guidance explicitly welcomes methodological
 diversity and expects research articles to answer explanatory puzzles, develop a
 clear theoretical argument, use rigorous substantive analysis, engage work
 beyond the immediate subfield, and spell out implications for further research.
-That is the architecture Draft 0.4 is being built to satisfy.
+That is the architecture Draft 0.5 is being built to satisfy.
 
 ## Length target
 
 Security Studies normally caps research articles at 13,000 words excluding
 online-only supplementary information, while allowing review of manuscripts up
-to 15,000 words for rich qualitative research. The internal target for this
-paper is **10,500 to 12,000 words before final submission formatting**, leaving
-room for Stage-5 results and the full literature intervention without making the
-main argument depend on material better placed in the supplement.
-
-Draft 0.4 currently remains below that target before Stage-5 results are added.
+to 15,000 words for rich qualitative research. Draft 0.5 deliberately carries
+some material that can move to the online supplement. After Stage-5 results are
+inserted, the main-text compression pass should remove duplicated methods,
+robustness, and historical detail while preserving the full novelty boundary and
+headline evidence.
 
 ## Main-text material to preserve
 

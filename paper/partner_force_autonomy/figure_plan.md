@@ -136,6 +136,32 @@ The tracked Migration package supports direct hard-minimum versus arithmetic,
 geometric, and harmonic sign comparison. Across the 169 observed-matched worlds,
 167, or 98.8 percent, are sign-concordant under each smooth aggregator.
 
+## Table 5. Constraint-aware evaluation framework
+
+**Status:** Implemented in `manuscript.md`.
+
+Five diagnostic questions separate the observed binding service, local program
+effect, whole-system yield, post-intervention constraint, and indigenous
+replacement. This is a measurement framework rather than an optimal-allocation
+rule.
+
+## Table 6. Rival-mechanism comparison
+
+**Status:** Implemented in `manuscript.md`.
+
+Contrasts the observable sequence predicted by principal-agent failure, low
+absorptive capacity, institutional or relational dependence, inappropriate
+force design, and assistance-induced constraint migration.
+
+## Table 7. Historical process evidence
+
+**Status:** Implemented provisionally in `manuscript.md` from the four frozen-
+protocol case memos.
+
+The final table should preserve mixed and adverse evidence after source audit,
+especially Mali's pre-existing complementary weaknesses and Colombia's uneven
+nationalization across related aviation institutions.
+
 ## Figure 7. Coordinated development and the rising-tide test
 
 **Status:** Reserved until the prospectively frozen Stage-5 campaign completes.

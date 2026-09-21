@@ -168,11 +168,16 @@ Insert the final coded episode table and narrative synthesis after source audit.
 
 ### F.4 Mali
 
-**Pending systematic coding.**
+Preliminary coding is complete in `historical_cases/mali_v1.md`. Finalize the
+source-by-source audit, retain the pre-existing-constraint objection, and avoid
+upgrading the case to clean migration evidence unless the chronology supports
+it.
 
 ### F.5 Colombia
 
-**Pending systematic coding.**
+Preliminary coding is complete in `historical_cases/colombia_v1.md`. Finalize
+the source audit around contractor reduction, Army aviation nationalization,
+and the slower Regional Helicopter Training Center transition.
 
 ### F.6 Cross-case matrix
 
@@ -198,3 +203,22 @@ Provide exact commands for:
 The public replication package should exclude credentials, cluster-specific
 private paths, and publication-sensitive historical raw material while
 preserving enough frozen artifacts to reproduce every manuscript number.
+
+## Appendix H. Literature novelty map
+
+### H.1 Security-assistance antecedents
+
+Map principal-agent, influence, fragmentation, sustainability, autonomy, and
+security-cooperation evaluation literatures against the paper's causal sequence.
+
+### H.2 General systems and development antecedents
+
+Summarize Theory of Constraints, Hirschman's unbalanced growth, recurrent-cost
+and project-proliferation theories, premature load bearing, O-ring
+complementarity, and absorptive capacity.
+
+### H.3 Adversarial novelty scorecard
+
+Reproduce the four-component scorecard from `literature_audit.md` so the
+supplement makes explicit which component propositions are prior art and which
+conjunction the paper claims as its contribution.

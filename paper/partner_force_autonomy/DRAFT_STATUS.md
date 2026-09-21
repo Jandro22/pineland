@@ -1,6 +1,6 @@
 # Draft status
 
-## Draft 0.4 prepared pending Stage-5 and historical results
+## Draft 0.5 prepared pending Stage-5 results and final historical source audit
 
 The manuscript package now contains:
 
@@ -48,22 +48,30 @@ The manuscript package now contains:
   supported and independently reproducible capability;
 - simultaneous supported-capability and independently reproducible-capability
   production frontiers in the theory section;
+- a constraint-aware five-question evaluation framework separating local
+  program output, whole-system yield, post-intervention constraint identity,
+  and indigenous replacement;
+- a rival-mechanism comparison specifying observable differences from
+  principal-agent failure, low absorptive capacity, institutional dependence,
+  and inappropriate force design;
 - a hostile-review matrix and explicit theory falsifiers;
 - a submission architecture sized for *Security Studies* as the current primary
   target, while retaining straightforward retargeting to a broader IR journal.
 
-## Highest-priority work before Draft 0.5
+## Highest-priority work before Draft 0.6
 
 1. Complete and analyze the frozen Stage-5 coordinated-development experiment.
 2. Complete the source audit and final coding for the four preliminary
    historical case memos.
 3. Insert the Stage-5 results without changing its frozen hypotheses or analysis
    rules, and add the coordinated-development complementarity figure.
-4. Tighten the now-expanded literature intervention for journal word count
-   without weakening the explicit prior-art concessions.
-5. Decide the target journal and adapt word count, citation style, headings, and
-   disclosure/reproducibility statements to that journal.
-6. Refine Figures 1-6 for final journal layout and build the historical case table.
+4. Trim the main text after Stage-5 insertion so the final article preserves the
+   literature concessions and core historical evidence without duplicating the
+   supplement.
+5. Adapt final citation style, anonymization, word count, and disclosure package
+   to the chosen journal.
+6. Refine Figures 1-7 for final journal layout and complete the historical source
+   table after audit.
 
 ## Claims that remain prohibited
 

@@ -3,7 +3,7 @@
 Working title: **Suffering from Success: Security Assistance, Constraint Migration, and Partner-Force Autonomy**
 
 This directory contains the manuscript for the integrated Partner-Force Autonomy
-paper. Draft 0.4 reframes the completed Stage-4 program around constraint
+paper. Draft 0.5 reframes the completed Stage-4 program around constraint
 relief, system yield, retention, headroom, and constraint migration while
 preserving the original Stage-4 evidentiary boundary. The September 21
 adversarial novelty review further narrows the theoretical claim: bottleneck
@@ -19,7 +19,9 @@ selective external substitution.
 - Paper-level secondary analysis: precommitted before production completion and complete.
 - Compact evidence: tracked under
   `studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/`.
-- Historical validation: not yet complete and must remain separate from the synthetic causal claims.
+- Historical validation: preliminary coding is complete for all four frozen
+  cases; final source audit remains pending and historical claims remain
+  separate from the synthetic causal claims.
 - Stage-5 coordinated-development follow-up: prospectively designed after Stage 4 and frozen separately before production at commit `8d342c982e385699e76c766ec06ae991bc451876`. It tests whether multi-channel indigenous development can move the whole production frontier rather than merely shift the binding constraint.
 
 ## Files
