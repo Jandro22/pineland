@@ -259,7 +259,19 @@ the current bottleneck. If the partner's indigenous production does not expand
 at the same pace as the supported operating requirement, then supported
 capability can rise while indigenous autonomy falls.
 
-The simplest condition is
+For any service with positive demand before and after an intervention, the
+channel-level autonomy condition is exact:
+
+\[
+\frac{I_{j,0}}{D_{j,0}} < \frac{I_{j,1}}{D_{j,1}}
+\quad \Longleftrightarrow \quad
+I_{j,0}D_{j,1} < I_{j,1}D_{j,0}.
+\]
+
+This equivalence is formally verified in the model's Lean theory layer. It
+states that indigenous coverage improves only when indigenous service growth
+outruns the growth in the service requirement. In proportional terms, the
+autonomy-eroding case is
 
 \[
 \frac{\Delta I_{B,t}}{I_{B,t}} <
@@ -442,6 +454,23 @@ postprocessing commit is `7697e6eac83248c7bc03830e58d94a2d878c6635`; and the
 precommitted paper-analysis commit is
 `9b0e975c7e4073f2f5abd94e72cd125beb75f20d`.
 
+## 4.6 Proposition-to-test correspondence
+
+The three modules were designed to separate the existence of the autonomy trap
+from the mechanism that produces it. Proposition 1 is tested in the Phase Map
+by the joint sign of the +30-day capability effect and +360-day indigenous
+autonomy effect. Proposition 2 is evaluated as a conditional intensity pattern,
+not as a claim of global monotonicity. Proposition 3 is tested in the Migration
+module using the frozen persistent-migration definition and the observed
+pre-withdrawal bottleneck. Propositions 4 and 5 are tested in the mechanism
+module through matched development-minus-substitution contrasts and the
+relationship between targeted indigenous output and whole-system autonomy.
+
+This separation matters for inference. A Phase-Map autonomy trap establishes
+that supported capability and indigenous autonomy can diverge. It does not by
+itself identify bottleneck migration as the cause. The Migration and mechanism
+modules provide the stronger tests of the moving-constraint explanation.
+
 # 5. Results
 
 ## 5.1 Effective direct support usually reduces terminal autonomy
@@ -616,6 +645,49 @@ relieved subsystem cannot raise whole-system feasibility by themselves.
 whole-system terminal-autonomy gains for development relative to substitution.
 Force-generation cases illustrate that large local gains can coexist with zero
 system-autonomy gain.](figures/figure6_local_system_divergence.png)
+
+## 5.7 Integrated evidence across the three modules
+
+The modules converge on a single mechanism but contribute different forms of
+evidence. The Phase Map establishes the capability-autonomy divergence, the
+Migration module identifies the changing constraint, and the mechanism module
+shows when indigenous development does and does not translate into system
+autonomy.
+
+| Result | Estimate | Inference status |
+|---|---:|---|
+| Initially effective treated Phase-Map cells with lower terminal autonomy | 96/106, 90.6% | Precommitted sign classification |
+| Robust autonomy traps | 53 cells | Precommitted bootstrap and median rule |
+| Robust autonomy-building cells | 0 cells | Precommitted bootstrap and median rule |
+| Observed-matched command cases with persistent migration | 38/38 | Wilson 95% interval approximately 90.8% to 100%; median detection 7 days |
+| Observed-matched force-generation cases with persistent migration | 46/46 | Wilson 95% interval approximately 92.3% to 100%; median detection 7 days |
+| Observed-matched logistics cases with persistent migration | 0/85 | Wilson 95% upper bound approximately 4.3% |
+| Logistics development minus substitution on terminal autonomy | +0.1316 to +0.4328 | All four matched bootstrap intervals exclude zero |
+| Force-generation development minus substitution on whole-system autonomy | 0 in all four cells | Targeted indigenous output still rises by approximately +121 to +674 |
+
+**Table 2. Headline evidence from the integrated Stage-4 experiment.** Numerical
+values are synthetic-model effects. The table does not convert them into
+historical treatment-effect estimates.
+
+The moving-bottleneck result is also highly insensitive to replacing the hard
+minimum autonomy coordinate with smooth service aggregators in the Migration
+module. Across the 169 worlds in which the assistance target matched the
+observed pre-withdrawal bottleneck, the sign of the +360-day autonomy effect
+agrees between the hard-minimum measure and each of the arithmetic, geometric,
+and harmonic smooth measures in 167 worlds, or 98.8 percent. The two discordant
+worlds are one command-targeted world and one logistics-targeted world.
+
+| Observed-matched target | Worlds | Hard minimum vs arithmetic | Hard minimum vs geometric | Hard minimum vs harmonic |
+|---|---:|---:|---:|---:|
+| Command | 38 | 37/38, 97.4% | 37/38, 97.4% | 37/38, 97.4% |
+| Force generation | 46 | 46/46, 100% | 46/46, 100% | 46/46, 100% |
+| Logistics | 85 | 84/85, 98.8% | 84/85, 98.8% | 84/85, 98.8% |
+| **Total** | **169** | **167/169, 98.8%** | **167/169, 98.8%** | **167/169, 98.8%** |
+
+**Table 3. Sign robustness of terminal-autonomy effects to smooth feasibility
+aggregation in observed-matched Migration worlds.** This check is specific to
+the Migration evidence package and should not be read as a robustness result
+for every Phase-Map or mechanism-module estimand.
 
 # 6. Discussion
 

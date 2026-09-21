@@ -1,6 +1,6 @@
 # Draft status
 
-## Draft 0.2 in construction
+## Draft 0.3 in construction
 
 The manuscript package now contains:
 
@@ -19,16 +19,22 @@ The manuscript package now contains:
 - a frozen historical-validation protocol for Afghanistan, Iraq, Mali, and Colombia;
 - five initial empirical figures generated directly from tracked Stage-4 evidence;
 - data/code/reproducibility and disclosure sections.
+- an exact formal statement of the capacity-growth versus demand-growth condition,
+  synchronized with the Lean theory layer;
+- an explicit proposition-to-test correspondence section;
+- a manuscript-ready integrated headline-results table;
+- a manuscript-ready smooth-aggregator robustness table for the Migration module;
+- repository-wide branch consolidation, including the final command-floor theorem
+  and preserved exact-performance provenance.
 
-## Highest-priority work before Draft 0.3
+## Highest-priority work before Draft 0.4
 
 1. Conduct structured process tracing for Afghanistan, Iraq, Mali, and Colombia
    under the frozen protocol.
 2. Generate the conceptual Figure 1 and refine Figures 2-6 for journal layout.
-3. Complete the smooth-aggregator robustness table in manuscript-ready form.
-4. Decide the target journal and adapt word count, citation style, headings, and
+3. Decide the target journal and adapt word count, citation style, headings, and
    disclosure/reproducibility statements to that journal.
-5. Tighten the theory section after the historical evidence is coded, without
+4. Tighten the external-validity and theory sections after the historical evidence is coded, without
    changing the synthetic estimands or retrofitting the Stage-4 hypotheses.
 
 ## Claims that remain prohibited

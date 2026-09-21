@@ -105,12 +105,19 @@ autonomy when the bottleneck migrates.
 
 ## Table 2. Headline results
 
+**Status:** Implemented in `manuscript.md`.
+
 Compact table for the abstract/discussion numbers: 96/106 traps, 53 robust
 traps, 0 robust builders, 38/38 command migration, 46/46 force-generation
-migration, 0/85 logistics migration, and four logistics development contrasts.
+migration, 0/85 logistics migration, and the range of logistics development
+contrasts.
 
 ## Table 3. Robustness and evidentiary status
 
-Columns should include hard-minimum q result, arithmetic/geometric/harmonic
-aggregator direction, bootstrap/Wilson uncertainty, and whether the finding was
-precommitted or post-completion interpretation.
+**Status:** Smooth-aggregator sign robustness implemented in `manuscript.md` for
+the observed-matched Migration worlds. Evidentiary status remains explicit in
+Table 2 and `claim_evidence_matrix.md`.
+
+The tracked Migration package supports direct hard-minimum versus arithmetic,
+geometric, and harmonic sign comparison. Across the 169 observed-matched worlds,
+167, or 98.8 percent, are sign-concordant under each smooth aggregator.
