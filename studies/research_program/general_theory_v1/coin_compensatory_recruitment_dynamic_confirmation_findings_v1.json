@@ -1,0 +1,76 @@
+{
+  "schema_version": "pineland.coin_compensatory_recruitment_dynamic_confirmation_findings.v1",
+  "status": "fresh_seed_dynamic_confirmation_complete_mixed_primary_capital_confirmed",
+  "historical_outcomes_used": false,
+  "integrity": {
+    "passed": true,
+    "seed_count": 24,
+    "row_count": 144,
+    "missing": 0,
+    "duplicates": 0,
+    "factor_flag_errors": 0,
+    "anchor_identity_failures": 0
+  },
+  "primary_predictions": {
+    "passed": 4,
+    "failed": 2,
+    "all_passed": false,
+    "results": {
+      "mean_rooted_effect_day240_negative": true,
+      "mean_rooted_effect_day360_negative": true,
+      "mean_hazard_effect_day360_positive": false,
+      "mean_eligible_effect_day360_positive": true,
+      "post_flow_rooted_effect_correlation_above_0_50": false,
+      "positive_post_flow_has_higher_rebound_fraction": true
+    }
+  },
+  "primary_estimates": {
+    "mean_rooted_effect_day240": -10860.10848330163,
+    "normal_95_rooted_effect_day240": [-20828.902563920456, -891.3144026828031],
+    "mean_rooted_effect_day360": -10604.084475508125,
+    "normal_95_rooted_effect_day360": [-21386.443288752715, 178.27433773646226],
+    "mean_hazard_effect_day360": -2.8379775912843024,
+    "median_hazard_effect_day360": 0.4718771617028743,
+    "mean_eligible_recruitment_mass_effect_day360": 10606.377875702223,
+    "pearson_post_intervention_excess_recruitment_vs_day360_rooted_effect": 0.4949183042764344,
+    "positive_post_flow_rebound_fraction": 0.3333333333333333,
+    "nonpositive_post_flow_rebound_fraction": 0.08333333333333333,
+    "rebound_risk_difference": 0.25
+  },
+  "capital_addendum": {
+    "all_predictions_passed": true,
+    "day240_recruitment_vs_capital_correlation": -0.9967947650158118,
+    "day360_cumulative_recruitment_vs_capital_correlation": -0.9964828215934004,
+    "rebound_worlds_n": 5,
+    "rebound_mean_capital_effect_day360": -14641.954799805972,
+    "suppressed_worlds_n": 19,
+    "suppressed_mean_capital_effect_day360": 4153.90859290075,
+    "mean_capital_accounting_residual_day240": -206.81545067285094,
+    "median_capital_accounting_residual_day240": 0.09148775809735525,
+    "mean_capital_accounting_residual_day360": -348.5562757034691,
+    "median_capital_accounting_residual_day360": 1.067798546406948
+  },
+  "regime_diagnostic_post_primary": {
+    "baseline_collapses": 0,
+    "treatment_collapses": 1,
+    "treatment_only_collapses": 1,
+    "treatment_collapse_seed": 2026185002,
+    "treatment_collapse_final_capital": 66500.9,
+    "interpretation": "The one treatment-only organizational collapse was not a capital-exhaustion collapse. It creates an extreme negative rooted-stock and recruitment-hazard effect and demonstrates a direct-collapse branch distinct from the metabolic replacement branch.",
+    "both_live_pairs_n": 23,
+    "both_live_mean_rooted_effect_day360": -5389.773277723277,
+    "both_live_mean_hazard_effect_day360": -0.034609231332544746,
+    "both_live_median_hazard_effect_day360": 0.5120832837798872,
+    "both_live_post_flow_vs_rooted_effect_pearson": 0.5705557088801693,
+    "all_pair_post_flow_vs_rooted_effect_spearman_exploratory": 0.6408695652173914
+  },
+  "claim_updates": [
+    "Temporary underground disruption robustly lowers rooted membership at day240 on average; persistence through day360 is directionally negative but less precise.",
+    "A general positive endpoint recruitment-hazard effect is not supported and is demoted.",
+    "Positive realized post-intervention replacement flow raises rebound incidence on fresh seeds, but the preregistered Pearson correlation threshold narrowly failed and must not be reported as passed.",
+    "The replacement-capital accounting mechanism is strongly confirmed: compensatory recruitment is metabolically expensive in the implemented model.",
+    "The evidence now supports a conditional regeneration-runway tradeoff rather than a universal recruitment-rebound law."
+  ],
+  "next_test": "coin_pressure_regeneration_metabolic_phase_contract_v1.json",
+  "guard": "Synthetic Pineland mechanism findings only."
+}

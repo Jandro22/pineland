@@ -1,0 +1,66 @@
+{
+  "schema_version": "pineland.coin_pressure_regeneration_double_bind_identity.v1",
+  "status": "implemented_mechanism_identity_with_unconfirmed_phase_hypothesis",
+  "historical_outcomes_used": false,
+  "sources": [
+    "coin_compensatory_recruitment_identity_v1.json",
+    "coin_recruitment_access_redundancy_results_v1.json",
+    "coin_replacement_flow_decomposition_findings_v1.json",
+    "mobilization_two_timescale_identity_v1.json",
+    "rust/pineland-model/src/recruitment.rs",
+    "rust/pineland-model/src/state_regeneration.rs"
+  ],
+  "stock_flow_view": {
+    "rooted_stock": "M",
+    "recruitment_flow": "R",
+    "underground_disruption_flow": "D",
+    "other_membership_loss_or_transfer": "X",
+    "accounting_form": "Delta M = R - D - X, with X collecting ordinary exit, transfer, and any other membership-changing processes not represented by the two focal flows.",
+    "interpretation": "Underground disruption directly lowers M. Recruitment can offset that stock loss, while ordinary exit and other organization processes complete the accounting."
+  },
+  "replacement_pressure_feedback": {
+    "eligibility": "For an incumbent member with armed fraction x, recruitment eligibility contains (1-x). Partial disruption lowers x and therefore expands the eligible fraction.",
+    "access_redundancy": "Recruitment access is the maximum of social, formation, rooted-member, and foothold channels. Fresh static tests found compensatory hazard under every isolated surviving channel and zero hazard only when all access channels were removed.",
+    "conditional_effect": "When at least one access channel and the mobilization logit remain approximately stable, partial underground thinning raises replacement pressure mechanically."
+  },
+  "replacement_cost_feedback": {
+    "fighter_conversion_fraction": 0.08,
+    "formation_supply_days": 30.0,
+    "initial_supply_fraction": 0.8,
+    "unconstrained_equipment_cost_per_recruited_represented_person": 1.92,
+    "identity": "Delta K_replacement approximately equals -1.92 * R_excess until reserve saturation, capital constraints, or other endogenous capital flows materially change the marginal cost.",
+    "development_signature": "On the 16-world decomposition block, paired excess recruitment versus paired capital effect correlated -0.9986 at day240 and -0.9994 at day360."
+  },
+  "dimensionless_coordinates": {
+    "replacement_compensation_ratio": {
+      "symbol": "rho",
+      "definition": "rho = excess recruited represented population induced by pressure / direct underground-disruption mass",
+      "meaning": "rho near or above one indicates that replacement flow can offset a large share of direct underground losses; rho below zero means pressure coincides with less recruitment than baseline."
+    },
+    "metabolic_load": {
+      "symbol": "Lambda_K",
+      "definition": "Lambda_K = recruitment-linked capital burn / available liquid-capital runway",
+      "first_order_numerator": "1.92 * recruited represented population",
+      "meaning": "Higher Lambda_K means regeneration preserves manpower by consuming a larger share of organizational resource runway."
+    }
+  },
+  "phase_hypothesis": [
+    {
+      "region": "suppression",
+      "signature": "rho is too low to compensate for D; M remains below baseline while capital is relatively preserved.",
+      "mechanism": "Disruption outstrips regenerative flow."
+    },
+    {
+      "region": "regenerative rebound",
+      "signature": "rho is high enough to restore M while Lambda_K remains below the metabolic ceiling.",
+      "mechanism": "Redundant access permits costly but sustainable replacement."
+    },
+    {
+      "region": "overmobilization trap",
+      "signature": "rho is high but Lambda_K approaches the capital runway boundary.",
+      "mechanism": "The organization replaces losses successfully in the short run while accelerating capital exhaustion and eventual collapse risk."
+    }
+  ],
+  "important_nonclaim": "The phase boundaries are not established by this identity. The fresh dynamic confirmation tests the rebound-flow link; the separately preregistered pressure-regeneration metabolic phase map tests whether these regions are realized over the frozen recruitment-rate grid.",
+  "guard": "Synthetic Pineland theory identity only; not an empirical law or operational recommendation."
+}

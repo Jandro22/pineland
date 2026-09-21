@@ -1,0 +1,45 @@
+{
+  "schema_version": "pineland.coin_recruitment_access_redundancy_contract.v1",
+  "status": "preregistered_fresh_static_mechanism_assay",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "parent_identity": "coin_compensatory_recruitment_identity_v1.json",
+  "purpose": "Identify whether the compensatory recruitment response to partial underground thinning depends on one recruitment-access channel or survives through redundant access channels.",
+  "design": {
+    "seed_base": 2026184000,
+    "seeds": 16,
+    "agents": 300,
+    "localities": 34,
+    "state_time_day": 60,
+    "challenge_recruitment_multiplier": 0.0625,
+    "underground_disruption_rate": 0.0,
+    "armed_membership_scale_comparison": [1.0, 0.75],
+    "access_regimes": [
+      "all",
+      "social_only",
+      "formation_only",
+      "foothold_only",
+      "member_only",
+      "none"
+    ],
+    "method": "For each exact day-60 state and each access regime, compare instantaneous recruitment hazard before and after uniformly scaling canonical armed membership from 1.0 to 0.75. Access ablations are applied identically to both members of each within-regime pair."
+  },
+  "channel_definitions": {
+    "social": "stored canonical insurgent social_exposure",
+    "formation": "canonical insurgent formation personnel used by recruitment formation_access",
+    "foothold": "canonical insurgent foothold strength",
+    "member": "rooted-member access term; ablated by setting the minimum-proto denominator so large that member_access is effectively zero while retaining member composition for the recruitment logit"
+  },
+  "primary_outputs": [
+    "baseline hazard within each access regime",
+    "75%-membership hazard within each access regime",
+    "within-regime hazard ratio",
+    "number of seeds with hazard ratio > 1"
+  ],
+  "predictions": [
+    "The all-channel regime reproduces compensatory recruitment: mean hazard ratio > 1 and at least 14 of 16 seeds above 1.",
+    "The none regime has approximately zero hazard at both stock levels because recruitment_requires_access is enabled.",
+    "If more than one single-channel regime has mean hazard ratio > 1, compensatory recruitment is access-redundant rather than dependent on one unique channel."
+  ],
+  "interpretation_guard": "Static partial-equilibrium mechanism assay only. Channel isolation is not a real-world intervention or policy prescription."
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "pineland.coin_compensatory_recruitment_capital_preoutcome_addendum.v1",
+  "status": "preregistered_addendum_before_dynamic_confirmation_outcomes",
+  "registered_before_current_run_outcomes_were_inspected": true,
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_compensatory_recruitment_dynamic_confirmation_contract_v1.json",
+  "purpose": "Test the source-derived metabolic accounting link between compensatory recruitment and insurgent capital depletion on the already-running fresh 24-seed confirmation block.",
+  "source_identity": {
+    "fighter_conversion_fraction": 0.08,
+    "formation_supply_days": 30.0,
+    "initial_supply_fraction": 0.8,
+    "unconstrained_marginal_capital_cost_per_recruited_represented_person": 1.92,
+    "derivation": "0.08 * 30 * 0.8 = 1.92. Recruitment adds fighter-equivalent manpower and converts insurgent capital into supply reserve up to the required reserve level."
+  },
+  "development_evidence_used_only_to_set_fresh_predictions": {
+    "seed_count": 16,
+    "day240_excess_recruitment_vs_capital_effect_correlation": -0.9986101184073842,
+    "day360_cumulative_excess_recruitment_vs_capital_effect_correlation": -0.9993641826770382
+  },
+  "fresh_predictions": [
+    "Across 24 paired fresh worlds, treatment-minus-baseline cumulative recruitment and treatment-minus-baseline canonical insurgent capital are negatively correlated at day 240 with Pearson r <= -0.95.",
+    "The same correlation at day 360 is <= -0.95.",
+    "The mean capital effect among day-360 rebound worlds is negative.",
+    "The mean capital effect among rebound worlds is more negative than among worlds that remain suppressed.",
+    "A first-order predicted capital effect of -1.92 * excess recruited mass explains most paired capital variation; report residuals rather than forcing exact equality because reserve saturation, capital constraints, logistics, and other endogenous flows can alter realized cost."
+  ],
+  "interpretation_rules": [
+    "Passing the correlation predictions supports a resource-accounting pathway from replacement flow to capital depletion.",
+    "Passing the rebound-group predictions supports a regeneration-versus-runway tradeoff: worlds that replace disruption successfully do so at a greater capital cost.",
+    "This does not imply a real insurgent organization has the same fighter conversion or supply-cost coefficients."
+  ],
+  "guard": "Synthetic Pineland accounting mechanism only."
+}

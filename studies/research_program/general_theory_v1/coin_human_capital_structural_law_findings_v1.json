@@ -1,0 +1,29 @@
+{
+  "schema_version": "pineland.coin_human_capital_structural_law_findings.v1",
+  "status": "SL7_PROMOTED_PRODUCTION_EQUIVALENCE_VERIFIED",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_human_capital_structural_law_contract_v1.json",
+  "SL7_replacement_share_veterancy_dilution": {
+    "promotion": "PROMOTED",
+    "law": "E_plus=(P*E+R*E_R)/(P+R)=E-alpha*(E-E_R), alpha=R/(P+R). At fixed headcount, D_E=0.50*alpha*(E-E_R)/(0.75+0.50*E).",
+    "algebraic_stress_cases": 1050,
+    "maximum_closed_form_experience_residual": 2.220446049250313e-16,
+    "maximum_capability_deficit_residual_from_prior_math_verifier": 2.498001805406602e-16,
+    "convex_hull_failures": 0,
+    "sign_failures": 0,
+    "replacement_share_monotonicity_failures": 0,
+    "replacement_quality_monotonicity_failures": 0,
+    "production_deploy_military_update": "bitwise exact against the SL7 weighted-average helper",
+    "combat_survivor_memory_check": "Existing production regression confirms combat builds rather than erases survivor experience; replacement flow is the dilution path."
+  },
+  "fresh_dynamic_confirmation": {
+    "source": "human_capital_absorption_confirmation_results_v1.json",
+    "fresh_seeds": 16,
+    "fast_minus_slow_headcount_recovery": 0.3802381764902142,
+    "fast_minus_slow_experience": -0.24279678910775176,
+    "fast_minus_slow_veterancy_specific_capability_deficit": 0.10116532879489656,
+    "all_preregistered_primary_gates_passed": true,
+    "evidence_role": "Emergent dynamic consequence supporting the theorem's substantive relevance inside Pineland; not part of the algebraic proof."
+  },
+  "claim_boundary": "SL7 is an exact formation-memory law of Pineland. Replacement experience 0.10 and the combat return to experience are synthetic model coefficients, not empirical military constants."
+}

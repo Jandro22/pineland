@@ -1,0 +1,73 @@
+{
+  "schema_version": "pineland.coin_rootedness_feedback_fresh_confirmation_findings.v1",
+  "status": "fresh_confirmation_complete_rate_interaction_partial_rootedness_mechanism_failed",
+  "historical_outcomes_used": false,
+  "integrity": {
+    "passed": true,
+    "seed_count": 24,
+    "rates": [0.03125, 0.125],
+    "cells_per_seed": 4,
+    "timepoints_per_cell": 3,
+    "common_anchor_identity_passed": true
+  },
+  "prediction_results": {
+    "R1_rooted_stock_negative_day240_both_rates": true,
+    "R2_eligible_pool_positive_day240_both_rates": true,
+    "R3_high_rate_recruitment_effect_lower_day240": false,
+    "R4_high_rate_recruitment_effect_lower_day360": true,
+    "R5_high_rate_rooted_deficit_larger_day360": false,
+    "R6_high_rate_capital_effect_more_positive_day360": false,
+    "M1_high_rate_rootedness_logit_contribution_negative_day240": false,
+    "M2_rootedness_ablation_attenuates_high_rate_hazard_deficit": false,
+    "M3_rootedness_hazard_contribution_more_negative_high_vs_low": false,
+    "M4_rootedness_mean_magnitude_exceeds_compatibility_by_5x": true,
+    "K1_recruitment_capital_correlation_at_most_minus_0_95": true
+  },
+  "bundled_verdicts": {
+    "rate_conditioned_throttling_all_passed": false,
+    "rootedness_feedback_all_passed": false,
+    "capital_replication_passed": true
+  },
+  "fresh_estimates": {
+    "day240_low_rate_rooted_effect": -5964.9119,
+    "day240_high_rate_rooted_effect": -8581.9759,
+    "day240_low_rate_eligible_effect": 5963.8565,
+    "day240_high_rate_eligible_effect": 8579.001,
+    "day240_high_minus_low_recruitment_effect": -244.45137370417456,
+    "day240_high_minus_low_recruitment_95": [-2664.8710240319097, 2175.968276623561],
+    "day360_high_minus_low_recruitment_effect": -2994.461771794858,
+    "day360_high_minus_low_recruitment_95": [-5912.953686898445, -75.96985669127162],
+    "day360_high_minus_low_rooted_effect": -2553.4732742611172,
+    "day360_high_minus_low_rooted_95": [-19279.534266858413, 14172.587718336179],
+    "day360_high_minus_low_capital_effect": 5325.088977414645,
+    "day360_high_minus_low_capital_95": [-295.1555920280889, 10945.333546857379],
+    "day360_recruitment_vs_capital_pearson": -0.9925551935124932
+  },
+  "rootedness_mechanism_failure": {
+    "high_rate_rootedness_logit_mean": -0.0009389499556049769,
+    "high_rate_rootedness_logit_95": [-0.02467438247052776, 0.022796482559317804],
+    "high_rate_rootedness_log_hazard_mean": 0.00548915516842038,
+    "high_rate_rootedness_log_hazard_95": [-0.023122849306560122, 0.03410115964340088],
+    "high_minus_low_rootedness_log_hazard_mean": 0.0015692993573706926,
+    "high_minus_low_rootedness_log_hazard_95": [-0.040237314640707865, 0.04337591335544925],
+    "interpretation": "The post-outcome rootedness-composition explanation did not replicate prospectively. It is rejected as a general driver of the rate interaction."
+  },
+  "regime_context": {
+    "low_rate_baseline_collapses": "0/24",
+    "low_rate_disruption_collapses": "0/24",
+    "high_rate_baseline_collapses": "6/24",
+    "high_rate_disruption_collapses": "6/24",
+    "exploratory_live_live_high_rate_pairs": 17,
+    "exploratory_live_live_day360_high_minus_low_recruitment_effect": -5176.487391897541,
+    "exploratory_live_live_day360_high_minus_low_recruitment_95": [-8419.794410489132, -1933.1803733059496],
+    "interpretation": "The high-rate regime crosses the independently established mobilization ceiling, so stochastic organizational collapse contributes substantial endpoint variance. Live/live conditioning is descriptive only."
+  },
+  "claim_updates": [
+    "Direct underground stock suppression and the mirrored increase in recruitable population remain robust at day240.",
+    "A delayed high-rate recruitment deficit replicated at day360, but the broader six-prediction throttling package did not.",
+    "Spatial rootedness-composition feedback is rejected as the general explanation for the rate interaction.",
+    "The recruitment-capital relationship again replicated extremely strongly and remains the most stable cross-regime higher-level mechanism."
+  ],
+  "next_direction": "Prioritize exact stock-flow, hazard, and capital-accounting laws and stress-test them across broad synthetic states/configurations before proposing another emergent endpoint mechanism.",
+  "guard": "Synthetic Pineland mechanism findings only."
+}

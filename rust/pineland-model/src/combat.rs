@@ -149,6 +149,26 @@ pub fn formation_microzone(
         .unwrap_or_else(|| topology.primary_zone[locality] as usize)
 }
 
+fn experience_capability_multiplier(enabled: bool, experience: f64) -> f64 {
+    if enabled {
+        0.75 + 0.50 * experience.clamp(0.0, 1.0)
+    } else {
+        1.0
+    }
+}
+
+fn uncapped_attrition_fraction(
+    base_attrition_rate: f64,
+    exposure: f64,
+    advantage: f64,
+    stochastic_shock: f64,
+    advantage_coefficient: f64,
+) -> f64 {
+    base_attrition_rate
+        * exposure
+        * python_exp(advantage_coefficient * advantage + stochastic_shock)
+}
+
 fn capability(
     particle: &ParticleState,
     topology: &StaticTopology,
@@ -188,11 +208,10 @@ fn capability(
     // V2 separates accumulated field experience from structural quality.
     // At 0.5 experience the multiplier is exactly one; the extension is
     // gated so parity-era runs retain their historical capability equation.
-    let experience = if config.state_regeneration.enabled {
-        0.75 + 0.50 * particle.formations.experience[formation].clamp(0.0, 1.0)
-    } else {
-        1.0
-    };
+    let experience = experience_capability_multiplier(
+        config.state_regeneration.enabled,
+        particle.formations.experience[formation],
+    );
     let firepower = if formation_org == crate::MILITARY {
         config.combat.government_firepower_multiplier
     } else {
@@ -825,13 +844,21 @@ fn resolve_engagement(
         .copied()
         .unwrap_or(1.0);
     let exposure = (observability / terrain.max(0.55)).clamp(0.2, 1.35);
-    let mut frac_first = (config.combat.base_attrition_rate
-        * exposure
-        * python_exp(-0.45 * advantage + rng.normalvariate(0.0, config.combat.stochastic_sigma)))
+    let mut frac_first = uncapped_attrition_fraction(
+        config.combat.base_attrition_rate,
+        exposure,
+        advantage,
+        rng.normalvariate(0.0, config.combat.stochastic_sigma),
+        -0.45,
+    )
     .min(config.combat.max_loss_fraction);
-    let mut frac_second = (config.combat.base_attrition_rate
-        * exposure
-        * python_exp(0.45 * advantage + rng.normalvariate(0.0, config.combat.stochastic_sigma)))
+    let mut frac_second = uncapped_attrition_fraction(
+        config.combat.base_attrition_rate,
+        exposure,
+        advantage,
+        rng.normalvariate(0.0, config.combat.stochastic_sigma),
+        0.45,
+    )
     .min(config.combat.max_loss_fraction);
     if particle.formations.organization[first] as usize == crate::MILITARY
         && config.combat.government_protection_multiplier != 1.0
@@ -1163,4 +1190,254 @@ pub fn resolve_contact(
 
 pub fn effective_capability(particle: &ParticleState, formation: usize) -> f64 {
     particle.formations.effective_strength(formation)
+}
+
+#[cfg(test)]
+mod structural_law_tests {
+    use super::*;
+    use crate::SimulationEngine;
+    use pineland_core::rng::PyRandomCompat;
+
+    #[test]
+    fn structural_law_veterancy_exchange_elasticity_stress_battery() {
+        let experience_values = [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0];
+        let attrition_values = [0.002, 0.01, 0.03];
+        let exposure_values = [0.2, 0.5, 1.0, 1.35];
+        let shocks = [-1.0, -0.25, 0.0, 0.5, 1.0];
+        let base_advantages = [-1.0, -0.25, 0.0, 0.4, 1.0];
+        let mut cases = 0usize;
+        let mut max_own_residual = 0.0f64;
+        let mut max_opponent_residual = 0.0f64;
+        let mut max_exchange_residual = 0.0f64;
+
+        for baseline_experience in experience_values {
+            for higher_experience in experience_values {
+                if higher_experience <= baseline_experience {
+                    continue;
+                }
+                let g0 = experience_capability_multiplier(true, baseline_experience);
+                let g1 = experience_capability_multiplier(true, higher_experience);
+                let capability_ratio = g1 / g0;
+                let predicted_own = capability_ratio.powf(-0.45);
+                let predicted_opponent = capability_ratio.powf(0.45);
+                let predicted_exchange = capability_ratio.powf(0.90);
+
+                for attrition in attrition_values {
+                    for exposure in exposure_values {
+                        for shock in shocks {
+                            for base_advantage in base_advantages {
+                                let old_own = uncapped_attrition_fraction(
+                                    attrition,
+                                    exposure,
+                                    base_advantage,
+                                    shock,
+                                    -0.45,
+                                );
+                                let old_opponent = uncapped_attrition_fraction(
+                                    attrition,
+                                    exposure,
+                                    base_advantage,
+                                    shock,
+                                    0.45,
+                                );
+                                let new_advantage = base_advantage + capability_ratio.ln();
+                                let new_own = uncapped_attrition_fraction(
+                                    attrition,
+                                    exposure,
+                                    new_advantage,
+                                    shock,
+                                    -0.45,
+                                );
+                                let new_opponent = uncapped_attrition_fraction(
+                                    attrition,
+                                    exposure,
+                                    new_advantage,
+                                    shock,
+                                    0.45,
+                                );
+                                let observed_own = new_own / old_own;
+                                let observed_opponent = new_opponent / old_opponent;
+                                let observed_exchange =
+                                    (new_opponent / new_own) / (old_opponent / old_own);
+                                max_own_residual =
+                                    max_own_residual.max((observed_own - predicted_own).abs());
+                                max_opponent_residual = max_opponent_residual
+                                    .max((observed_opponent - predicted_opponent).abs());
+                                max_exchange_residual = max_exchange_residual
+                                    .max((observed_exchange - predicted_exchange).abs());
+                                assert!((observed_own - predicted_own).abs() <= 1.0e-14);
+                                assert!((observed_opponent - predicted_opponent).abs() <= 1.0e-14);
+                                assert!((observed_exchange - predicted_exchange).abs() <= 1.0e-14);
+                                assert!(observed_own < 1.0);
+                                assert!(observed_opponent > 1.0);
+                                assert!(observed_exchange > 1.0);
+                                cases += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 6300);
+        assert_eq!(
+            experience_capability_multiplier(true, 0.5).to_bits(),
+            1.0f64.to_bits()
+        );
+        assert_eq!(
+            experience_capability_multiplier(false, 0.1).to_bits(),
+            1.0f64.to_bits()
+        );
+        println!(
+            "STRUCTURAL_SL8 cases={cases} max_own_residual={max_own_residual:.17e} max_opponent_residual={max_opponent_residual:.17e} max_exchange_residual={max_exchange_residual:.17e}"
+        );
+    }
+
+    #[test]
+    fn structural_law_attrition_helper_preserves_inline_rng_semantics() {
+        let sigma = 0.18;
+        let base = 0.0125;
+        let exposure = 0.73;
+        let advantages = [-1.2, -0.3, 0.0, 0.45, 1.1];
+        for (index, advantage) in advantages.into_iter().enumerate() {
+            let seed = 2026192500u64 + index as u64;
+            let mut old_rng = PyRandomCompat::from_seed(seed);
+            let mut new_rng = PyRandomCompat::from_seed(seed);
+
+            let old_first =
+                base * exposure * python_exp(-0.45 * advantage + old_rng.normalvariate(0.0, sigma));
+            let old_second =
+                base * exposure * python_exp(0.45 * advantage + old_rng.normalvariate(0.0, sigma));
+            let new_first = uncapped_attrition_fraction(
+                base,
+                exposure,
+                advantage,
+                new_rng.normalvariate(0.0, sigma),
+                -0.45,
+            );
+            let new_second = uncapped_attrition_fraction(
+                base,
+                exposure,
+                advantage,
+                new_rng.normalvariate(0.0, sigma),
+                0.45,
+            );
+            assert_eq!(old_first.to_bits(), new_first.to_bits());
+            assert_eq!(old_second.to_bits(), new_second.to_bits());
+            assert_eq!(old_rng.random().to_bits(), new_rng.random().to_bits());
+        }
+    }
+
+    #[test]
+    fn structural_law_replacement_quantity_quality_matches_production_capability() {
+        let mut config = SimulationConfig::default();
+        config.seed = 2026192700;
+        config.initialization_seed = Some(config.seed);
+        config.agent_count = 120;
+        config.locality_count = 17;
+        config.state_regeneration.enabled = true;
+        let mut engine = SimulationEngine::new(config.clone()).expect("engine");
+        let formation = engine
+            .particle
+            .formations
+            .organization
+            .iter()
+            .enumerate()
+            .find(|(_, organization)| **organization as usize == crate::MILITARY)
+            .map(|(formation, _)| formation)
+            .expect("military formation");
+
+        engine.particle.formations.active[formation] = 1;
+        engine.particle.formations.operational_status[formation] = 1;
+        engine.particle.formations.moving[formation] = 0;
+        engine.particle.formations.outside_pineland[formation] = 0;
+        engine.particle.formations.availability[formation] = 1.0;
+        engine.particle.formations.readiness[formation] = 1.0;
+        engine.particle.formations.fatigue[formation] = 0.0;
+        engine.particle.formations.command[formation] = 1.0;
+        engine.particle.formations.supply_capacity[formation] = 1_000.0;
+        engine.particle.formations.supply_stock[formation] = 1_000.0;
+        engine.particle.formations.sustainment[formation] = 1.0;
+        let microzone = formation_microzone(&engine.particle, &engine.topology, formation);
+        let initiative = 1.0;
+        let original_personnel = 1_000.0;
+        let experience_values = [0.1, 0.25, 0.5, 0.75, 0.9, 1.0];
+        let replacement_experience_values = [0.0, 0.1, 0.25, 0.5, 0.9];
+        let loss_values = [0.05, 0.1, 0.25, 0.5, 0.75];
+        let replacement_values = [0.0, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0];
+        let mut cases = 0usize;
+        let mut maximum_residual = 0.0f64;
+        let mut maximum_one_for_one_residual = 0.0f64;
+
+        for experience in experience_values {
+            for replacement_experience in replacement_experience_values {
+                if replacement_experience > experience {
+                    continue;
+                }
+                let q = experience_capability_multiplier(true, replacement_experience)
+                    / experience_capability_multiplier(true, experience);
+                for loss in loss_values {
+                    let survivor_fraction = 1.0 - loss;
+                    engine.particle.formations.personnel[formation] = original_personnel;
+                    engine.particle.formations.experience[formation] = experience;
+                    let before = capability(
+                        &engine.particle,
+                        &engine.topology,
+                        &config,
+                        formation,
+                        microzone,
+                        initiative,
+                    );
+                    for replacement in replacement_values {
+                        let final_fraction = survivor_fraction + replacement;
+                        let final_experience = (survivor_fraction * experience
+                            + replacement * replacement_experience)
+                            / final_fraction;
+                        engine.particle.formations.personnel[formation] =
+                            original_personnel * final_fraction;
+                        engine.particle.formations.experience[formation] = final_experience;
+                        let after = capability(
+                            &engine.particle,
+                            &engine.topology,
+                            &config,
+                            formation,
+                            microzone,
+                            initiative,
+                        );
+                        let observed = after / before;
+                        let predicted =
+                            final_fraction.powf(-0.28) * (survivor_fraction + replacement * q);
+                        let residual = (observed - predicted).abs();
+                        maximum_residual = maximum_residual.max(residual);
+                        assert!(
+                            residual <= 1.0e-12,
+                            "E={experience} E_R={replacement_experience} loss={loss} replacement={replacement} observed={observed} predicted={predicted}"
+                        );
+                        cases += 1;
+                    }
+
+                    let final_experience =
+                        survivor_fraction * experience + loss * replacement_experience;
+                    engine.particle.formations.personnel[formation] = original_personnel;
+                    engine.particle.formations.experience[formation] = final_experience;
+                    let one_for_one_after = capability(
+                        &engine.particle,
+                        &engine.topology,
+                        &config,
+                        formation,
+                        microzone,
+                        initiative,
+                    );
+                    let observed_one_for_one = one_for_one_after / before;
+                    let predicted_one_for_one = 1.0 - loss * (1.0 - q);
+                    maximum_one_for_one_residual = maximum_one_for_one_residual
+                        .max((observed_one_for_one - predicted_one_for_one).abs());
+                    assert!((observed_one_for_one - predicted_one_for_one).abs() <= 1.0e-12);
+                }
+            }
+        }
+        assert_eq!(cases, 1035);
+        println!(
+            "STRUCTURAL_SL9 cases={cases} max_capability_residual={maximum_residual:.17e} max_one_for_one_residual={maximum_one_for_one_residual:.17e}"
+        );
+    }
 }

@@ -1,0 +1,21 @@
+{
+  "schema_version": "pineland.coin_disrupted_sympathy_retention_audit.v1",
+  "status": "demonstrated_semantic_mismatch_no_correction_applied",
+  "historical_outcomes_used": false,
+  "documented_semantics": "disrupted_sympathy_retention is documented as the fraction of disrupted membership retained as latent sympathy rather than erased from the social state.",
+  "observed_implementation": [
+    "Membership assignment writes rebel_sympathy equal to the armed membership fraction and insurgent_affinity equal to that fraction.",
+    "Underground disruption computes retained_sympathy = prior_armed_fraction * disrupted_sympathy_retention.",
+    "It then writes rebel_sympathy = max(existing_rebel_sympathy, retained_sympathy) and likewise maxes insurgent_affinity.",
+    "For a member whose existing sympathy/affinity already equals the prior armed fraction, any retention value <= 1 therefore cannot lower those continuous fields.",
+    "A fully disrupted armed participant is changed to the discrete insurgent-sympathy public behavior, whose social signal is 0.7 independent of disrupted_sympathy_retention."
+  ],
+  "targeted_test": {
+    "method": "Two exact clones of an armed insurgent member were fully disrupted with disrupted_sympathy_retention set to 0 and 1 respectively. The intended-semantics assertion required lower post-disruption rebel_sympathy and insurgent_affinity under retention=0.",
+    "result": "FAIL",
+    "failure": "retention=0 and retention=1 left identical rebel_sympathy; the first intended-semantics assertion failed.",
+    "test_disposition": "The temporary failing characterization test was removed after diagnosis so the committed test suite remains green."
+  },
+  "implication": "The retention parameter acts as a floor rather than a retained fraction in the tested one-insurgent membership path and does not control post-disruption continuous sympathy as documented.",
+  "decision": "Do not silently correct the mechanism inside the current evidence stream. Treat existing COIN findings as properties of the implemented model; any semantic correction requires a separately versioned mechanism change followed by re-running affected experiments."
+}

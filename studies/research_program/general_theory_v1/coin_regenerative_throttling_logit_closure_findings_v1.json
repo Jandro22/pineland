@@ -1,0 +1,63 @@
+{
+  "schema_version": "pineland.coin_regenerative_throttling_logit_closure_findings.v1",
+  "status": "post-outcome_mechanism_selection_rootedness_composition_dominant",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_regenerative_throttling_logit_closure_contract_v1.json",
+  "integrity": {
+    "passed": true,
+    "state_failures": 0,
+    "weighted_logit_identity_failures": 0,
+    "maximum_reference_hazard_absolute_difference": 0.0
+  },
+  "support": {
+    "seeds": 12,
+    "recruitment_multiplier": 0.125,
+    "paired_conditions": ["no underground disruption", "underground disruption"],
+    "post_anchor_seed_time_observations": 324
+  },
+  "pooled_post_anchor_mean_logit_contributions": {
+    "rootedness_congruence": -0.007965721319032015,
+    "social_exposure": -0.00048221147338041963,
+    "grievance": 0.000092803924512198,
+    "fear": 0.000006239495356102035,
+    "compatibility": -0.000005349692989005172,
+    "political_access": -0.0000029574188997232275,
+    "social_capital": 0.0
+  },
+  "day240_mean_logit_contributions": {
+    "rootedness_congruence": -0.02213462182645068,
+    "social_exposure": 0.000019196151139560618,
+    "grievance": 0.00020543150650806016,
+    "fear": 0.000023135633719600462,
+    "compatibility": -0.000032113245510390076,
+    "political_access": -0.000017686690345242173,
+    "social_capital": 0.0
+  },
+  "component_order_by_absolute_pooled_mean": [
+    "rootedness_congruence",
+    "social_exposure",
+    "grievance",
+    "fear",
+    "compatibility",
+    "political_access",
+    "social_capital"
+  ],
+  "associations": {
+    "rootedness_contribution_vs_total_logit_effect_pooled": 0.9892784348132364,
+    "compatibility_contribution_vs_total_logit_effect_pooled": -0.21234907069317913,
+    "total_logit_effect_vs_base_intensity_effect_pooled": 0.9963891507786852
+  },
+  "mechanism_selected_for_fresh_confirmation": {
+    "name": "spatial rootedness-composition feedback",
+    "description": "Spatially heterogeneous underground disruption changes the home-locality and home-district composition of the surviving armed underground. Recruitment rewards potential recruits whose local/district identity salience matches that current armed-member rootedness profile. In the known high-mobilization worlds, the resulting decline in recruitable-pool-weighted rootedness congruence dominates the enlarged eligibility pool and lowers mobilization intensity.",
+    "compatibility_alternative": "not_supported_as_primary_driver_on_known_support",
+    "access_loss_alternative": "not_supported_as_primary_average_driver_on_known_support"
+  },
+  "claim_boundary": [
+    "This is post-outcome mechanism selection on a known seed block, not fresh confirmation.",
+    "The result identifies an implemented synthetic feedback, not an empirical law of insurgent recruitment.",
+    "Fresh support must confirm both the high-vs-low rate contrast and the contribution of the rootedness term before promotion."
+  ],
+  "next_requirement": "Run a new-seed endpoint confirmation with low and high recruitment rates, paired underground disruption, exact logit decomposition, and a frozen-state no-rootedness diagnostic.",
+  "guard": "Synthetic Pineland mechanism selection only."
+}

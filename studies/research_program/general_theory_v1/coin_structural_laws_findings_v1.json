@@ -1,0 +1,68 @@
+{
+  "schema_version": "pineland.coin_structural_laws_findings.v1",
+  "status": "structural_laws_promoted_with_algebraic_derivation_and_stress_verification",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_structural_laws_contract_v1.json",
+  "numerical_amendment": "coin_structural_laws_numerical_tolerance_amendment_v1.json",
+  "promotion_result": {
+    "SL1": "PROMOTED",
+    "SL2": "PROMOTED",
+    "SL3": "PROMOTED",
+    "SL4": "PROMOTED"
+  },
+  "SL1_local_underground_exponential_survival": {
+    "theorem": "For one direct underground-disruption event in locality l, before other processes act, M_l^+ = M_l^- * exp(-h_l * dt), with h_l = lambda_U * I_l * (0.35 + 0.65 S_l) * (0.45 + 0.55 A_l).",
+    "derivation": "The implementation computes fraction_disrupted = 1 - exp(-h_l*dt) and multiplies every affected armed_fraction in the locality by the common surviving fraction.",
+    "stress_cases": 108,
+    "fresh_seed_base": 2026192000,
+    "fresh_seed_count": 12,
+    "maximum_stock_scaled_decay_residual": 1.9843520765954803e-16,
+    "maximum_stock_scaled_return_residual": 9.921760382977402e-17,
+    "maximum_stock_scaled_member_population_residual": 6.348053396074895e-17,
+    "verdict": "Verified to floating-point precision across the preregistered rate/duration/state battery."
+  },
+  "SL2_underground_fielded_force_separation": {
+    "theorem": "The direct underground-disruption event changes rooted membership and may remove unfielded fighter-equivalent manpower, but does not change already-fielded formation personnel or organization capital at that instant.",
+    "derivation": "disrupt_underground updates armed_fraction/member_population and calls remove_unfielded_manpower only; it never writes formation personnel or organization capital.",
+    "stress_cases": 108,
+    "fielded_personnel_invariance": "bitwise exact in every stress case",
+    "organization_capital_invariance": "bitwise exact in every stress case",
+    "unfielded_manpower_bound": "removed unfielded manpower never exceeded disrupted represented mass * fighter_conversion_fraction",
+    "verdict": "Verified."
+  },
+  "SL3_recruitment_hazard_factorization": {
+    "theorem": "At a frozen interval boundary for a live target organization, H = r * E * Ibar, where r is recruitment_rate, E is eligible represented population and Ibar is the E-weighted mean combined recruitment intensity.",
+    "derivation": "The per-person hazard diagnostic sums represented_mass * eligible_fraction * r * combined_intensity; factoring out r and the eligible-mass denominator yields the identity.",
+    "stress_cases": 720,
+    "fresh_seed_base": 2026192000,
+    "fresh_seed_count": 12,
+    "state_times_days": [21, 60, 120],
+    "recruitment_rate_multipliers": [0.015625, 0.03125, 0.0625, 0.125, 0.25],
+    "rootedness_weights": [0.0, 0.375, 0.75, 1.5],
+    "maximum_absolute_residual": 2.8421709430404007e-13,
+    "maximum_relative_residual": 9.699189078526593e-16,
+    "verdict": "Verified to floating-point precision."
+  },
+  "SL4_fighter_equipment_capital_conversion": {
+    "theorem": "For positive local fighter increment d, with supply-per-fighter s, pre-event unfielded pool P, reserve Q, and available capital K, immediate capital conversion is C = min(K, max((P+d)*s - Q, 0)).",
+    "derivation": "apply_local_fighter_change adds d to the unfielded pool, computes desired=(P+d)*s, and converts exactly the positive reserve shortfall capped by available capital before any fielding transfer occurs.",
+    "stress_cases": 16,
+    "supply_settings": [[10.0, 0.5], [30.0, 0.8], [45.0, 1.0]],
+    "capital_supply_regimes": ["balanced", "reserve_surplus", "reserve_deficit", "partially_binding_capital", "zero_capital"],
+    "maximum_absolute_residual": 0.0,
+    "balanced_fully_funded_special_case": {
+      "formula": "C = represented_recruits * fighter_conversion_fraction * formation_supply_days * initial_supply_fraction",
+      "default_coefficient": 1.92,
+      "test_represented_recruits": 1250.0,
+      "predicted_and_observed_capital_conversion": 2400.0
+    },
+    "verdict": "Verified exactly in all preregistered cases."
+  },
+  "combined_theory": {
+    "name": "Pineland underground-regeneration stock-flow architecture",
+    "statement": "Direct underground pressure obeys an exponential rooted-stock decay law and is instantaneously separated from fielded force. Regeneration pressure factors exactly into recruitment rate, recruitable stock, and mobilization/access intensity. Any realized fighter regeneration must pass through an explicit supply-capital conversion constraint.",
+    "importance": "This establishes the deterministic skeleton on which stochastic recruitment, organizational ecology, and eventual collapse operate. Endpoint divergence must arise from stochastic draws and endogenous state evolution around these exact laws rather than from ambiguity in the immediate stock-flow accounting."
+  },
+  "claim_boundary": "These are mathematical/implementation theorems of Pineland v1 mechanism semantics. They are not empirical laws of real insurgencies.",
+  "next_layer": "Test stochastic recruitment and organization-survival laws, then re-test the independently observed mobilization metabolic ceiling on a larger fresh seed block using the promoted capital identity."
+}

@@ -1,0 +1,114 @@
+{
+  "schema_version": "pineland.coin_pressure_admin_factorial_contract.v1",
+  "status": "preregistered_synthetic_development_mechanism_assay",
+  "registered_before_fresh_factor_outcomes": true,
+  "historical_outcomes_used": false,
+  "purpose": "Test whether state security regeneration and administrative rebuilding change the effectiveness and durability of underground-network disruption against a reproductively live synthetic insurgency.",
+  "scientific_question": "Do security presence and administrative reach complement underground disruption by building the intelligence penetration required to suppress rooted insurgent organization, and does any suppression persist after the intervention ends?",
+  "mechanism_hypotheses": {
+    "H1": "Turning on underground disruption should reduce rooted armed membership and recruitment hazard when intelligence penetration is nontrivial.",
+    "H2": "Security and administrative surges should increase the intelligence-penetration pathway and may make underground disruption more effective than the sum of separate effects.",
+    "H3": "If intervention-end suppression disappears after all factor surges are removed, the model exhibits temporary pressure rather than durable state recovery.",
+    "H4": "Fielded-force reduction without corresponding rooted-membership/recruitment reduction is not sufficient evidence of organizational suppression."
+  },
+  "design": {
+    "seed_base": 2026181000,
+    "development_seeds": 8,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 240,
+    "final_day": 360,
+    "challenge_recruitment_multiplier": 0.0625,
+    "foreign_affairs_enabled": false,
+    "state_regeneration_enabled": true,
+    "baseline_underground_disruption_rate": 0.0,
+    "common_random_number_anchor_clones": true,
+    "factor_order": ["S", "A", "U"],
+    "cells": ["000", "100", "010", "001", "110", "101", "011", "111"],
+    "factors": {
+      "S_security_surge": {
+        "low": "baseline state-regeneration security settings",
+        "high": "2x security recruitment rate, 2x training rate, 1.5x police target population fraction, 1.25x military personnel target"
+      },
+      "A_administrative_surge": {
+        "low": "baseline administrative rebuild rate",
+        "high": "2x administrative rebuild rate"
+      },
+      "U_underground_disruption": {
+        "low": "underground disruption rate = 0 during intervention",
+        "high": "underground disruption rate = SimulationConfig default (0.002/day) during intervention"
+      }
+    },
+    "post_intervention": "At day 240 every cell restores the same baseline configuration, including zero underground disruption, and runs to day 360."
+  },
+  "baseline_persistence_preflight": {
+    "must_run_before_full_factorial": true,
+    "profile": "baseline_only",
+    "cell": "000",
+    "live_definition": [
+      "canonical insurgent organization active = 1",
+      "canonical insurgent capital > 0",
+      "canonical rooted armed membership > 0",
+      "canonical active-owner fielded force > 0",
+      "canonical recruitment hazard mass > 0"
+    ],
+    "minimum_live_worlds": {
+      "anchor": 6,
+      "intervention_end": 6,
+      "final": 5
+    },
+    "failure_rule": "If any threshold fails, do not run or inspect factor-cell outcomes. Register a new support-regime preflight before changing challenge support."
+  },
+  "primary_outcomes": {
+    "insurgent_regeneration_lower_is_suppression": [
+      "rooted_armed_membership_mass",
+      "recruitment_hazard_mass",
+      "ecosystem_rooted_membership",
+      "ecosystem_recruitment_hazard"
+    ],
+    "insurgent_operational_lower_is_suppression": [
+      "fielded_force_personnel",
+      "ecosystem_operational_force",
+      "foothold_strength_sum",
+      "population_weighted_insurgent_control",
+      "cumulative_insurgent_actions_since_anchor"
+    ],
+    "state_pathway_higher_is_more_state_capacity": [
+      "population_weighted_government_control",
+      "mean_local_institution_capacity",
+      "mean_intelligence_penetration",
+      "cumulative_security_recruits",
+      "cumulative_security_deployments",
+      "cumulative_admin_rebuild",
+      "cumulative_underground_disruption"
+    ],
+    "cost_and_harm_report_without_single_utility_score": [
+      "government_capital_outflow_intervention",
+      "government_military_losses_since_anchor",
+      "population_loss_since_anchor",
+      "displaced_population_fraction"
+    ]
+  },
+  "primary_estimands": [
+    "Within-seed S, A, and U main effects at day 240 and day 360.",
+    "Within-seed SxA, SxU, AxU, and SxAxU factorial interactions at day 240 and day 360.",
+    "U marginal effect separately in each S/A stratum, especially on rooted membership, recruitment hazard, intelligence penetration, and cumulative underground disruption.",
+    "For each nonbaseline cell, cell-minus-baseline effect at day 240 and day 360.",
+    "Post-intervention relapse difference-in-differences: (cell_final-cell_day240) - (baseline_final-baseline_day240)."
+  ],
+  "interpretation_rules": [
+    "Negative interactions on lower-is-suppression insurgent outcomes indicate more-than-additive suppression; positive interactions do not.",
+    "A state-capacity pathway change is mechanistic support, not proof of mediation unless the linked insurgent outcome changes in the predicted direction.",
+    "Do not call a policy package universally superior and do not combine outcomes into one utility score.",
+    "Canonical and whole-insurgent-ecosystem outcomes must be reported together.",
+    "All claims describe mechanisms of the implemented synthetic model, not real-world operational prescriptions."
+  ],
+  "deferred_until_after_development": [
+    "confirmatory seed count",
+    "alternative surge intensities",
+    "historical transport",
+    "foreign-support interactions",
+    "real-world policy labels"
+  ]
+}

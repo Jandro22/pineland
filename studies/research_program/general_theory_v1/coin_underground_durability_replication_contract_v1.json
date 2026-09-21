@@ -1,0 +1,55 @@
+{
+  "schema_version": "pineland.coin_underground_durability_replication_contract.v1",
+  "status": "preregistered_fresh_seed_replication",
+  "registered_before_replication_outcomes": true,
+  "historical_outcomes_used": false,
+  "development_source": "coin_pressure_admin_factorial_contract_v1.json",
+  "purpose": "Replicate the development finding that temporary underground disruption changes the subsequent reproductive trajectory of a live insurgency before materially changing its already-fielded force.",
+  "design": {
+    "seed_base": 2026182000,
+    "seeds": 16,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 240,
+    "final_day": 360,
+    "challenge_recruitment_multiplier": 0.0625,
+    "cell_profile": "u_only",
+    "cells": ["000", "001"],
+    "common_random_number_anchor_clones": true,
+    "baseline_underground_disruption_rate": 0.0,
+    "treatment_underground_disruption_rate": 0.002,
+    "post_intervention": "Both branches run with underground disruption rate zero from day 240 through day 360."
+  },
+  "primary_predictions": [
+    "Mean cell-001 minus cell-000 rooted armed membership is negative at day 240.",
+    "At least 12 of 16 seeds have lower rooted armed membership under U at day 240.",
+    "Mean cell-001 minus cell-000 rooted armed membership remains negative at day 360.",
+    "At least 10 of 16 seeds have lower rooted armed membership under U at day 360.",
+    "At day 240, the absolute proportional effect on fielded force is smaller than the absolute proportional effect on rooted armed membership.",
+    "Mean proportional fielded-force effect becomes more negative from day 240 to day 360.",
+    "Among seeds with positive direct disruption mass, the median day-360 amplification ratio (-rooted_effect_day360 / cumulative_underground_disruption_day240) exceeds 1.0.",
+    "At least 8 of 16 seeds have a negative rooted-membership effect at both day 240 and day 360 with a larger absolute proportional gap at day 360."
+  ],
+  "secondary_descriptive_outcomes": [
+    "recruitment_hazard_mass",
+    "foothold_strength_sum",
+    "population_weighted_insurgent_control",
+    "ecosystem_rooted_membership",
+    "ecosystem_operational_force",
+    "ecosystem_recruitment_hazard",
+    "mean_intelligence_penetration",
+    "mean_local_institution_capacity"
+  ],
+  "heterogeneity_analysis": [
+    "Report the fraction of seeds that rebound past baseline by day 360.",
+    "Report seed-level day-240 and day-360 rooted effects, fielded-force effects, direct disruption mass, persistence ratio, and amplification ratio.",
+    "Report correlations between day-240 and day-360 rooted effects as exploratory diagnostics only; do not promote baseline-state predictors from the eight-seed development set to confirmatory status."
+  ],
+  "integrity_gate": [
+    "Exactly 16 seeds x 2 cells x 3 timepoints must be present once each.",
+    "Every within-seed day-60 scientific output must be identical across cells 000 and 001.",
+    "The treatment-factor flags must match the cell codes."
+  ],
+  "interpretation_guard": "This tests a synthetic Pineland mechanism: reproductive-pool suppression, lagged coercive-capacity response, and persistence after intervention removal. It is not a real-world operational recommendation."
+}

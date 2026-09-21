@@ -1,0 +1,45 @@
+{
+  "schema_version": "pineland.coin_security_throughput_structural_law_findings.v1",
+  "status": "SL12_PROMOTED_PRODUCTION_EQUIVALENCE_VERIFIED",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_security_throughput_structural_law_contract_v1.json",
+  "numerical_amendment": "coin_security_throughput_numerical_tolerance_amendment_v1.json",
+  "SL12_constant_intake_security_throughput": {
+    "promotion": "PROMOTED",
+    "law": {
+      "training_survival": "a=exp(-tau*Delta)",
+      "reserve_survival": "b=exp(-mu*Delta)",
+      "pipeline_recurrence": "G_m=a*(G_(m-1)+N)",
+      "pipeline_closed_form": "G_m=a^m*G0 + a*N*(1-a^m)/(1-a)",
+      "graduation_from_empty_pipeline": "D_m=N*(1-a^m)",
+      "steady_pipeline": "G_star=a*N/(1-a)",
+      "steady_graduation": "D_star=N",
+      "steady_reserve_under_constant_deployment": "R_star=(b*N-Y)/(1-b), for b<1",
+      "sustainable_deployment_ceiling": "Y<=b*N; if b=1 the non-drifting boundary is Y=N"
+    },
+    "pure_math_verification": {
+      "cases": 2240,
+      "maximum_pipeline_absolute_residual": 6.548361852765083e-11,
+      "maximum_pipeline_stock_scaled_residual": 2.4194714862881033e-14,
+      "maximum_graduation_stock_scaled_residual": 1.1346938499908401e-14,
+      "maximum_reserve_stock_scaled_residual": 2.220446049250313e-16,
+      "monotonicity_failures": 0,
+      "steady_limit_failures": 0,
+      "throughput_boundary_failures": 0
+    },
+    "production_equivalence": {
+      "cases": 2240,
+      "production_helper": "security_training_transition + security_reserve_after_attrition",
+      "closed_form_match": "passed at stock-scaled floating-point tolerance",
+      "steady_graduation_equals_recurring_intake": true,
+      "reserve_sustainability_boundary_matches_b_times_N": true
+    }
+  },
+  "synthetic_implications": [
+    "With recurring constant intake and positive training rate, faster training changes transient lag and trainee inventory but not long-run graduation throughput.",
+    "The long-run trained output ceiling is set by recurring intake; reserve attrition then reduces sustainable deployable throughput from N to b*N per interval.",
+    "A force-generation system can therefore be training-lag limited in the short run but intake/attrition limited in the long run.",
+    "Increasing training speed alone cannot raise the asymptotic throughput above recurring intake once the pipeline has equilibrated."
+  ],
+  "claim_boundary": "SL12 is an exact recurrence theorem of Pineland's synthetic security training/reserve mechanism, not an empirical force-generation throughput law."
+}

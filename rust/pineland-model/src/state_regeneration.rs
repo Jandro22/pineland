@@ -290,6 +290,39 @@ fn deploy_police(particle: &mut ParticleState, locality: usize, amount: f64) -> 
     deployed
 }
 
+fn replacement_weighted_experience(
+    old_personnel: f64,
+    old_experience: f64,
+    replacement: f64,
+    replacement_experience: f64,
+) -> f64 {
+    let new_personnel = (old_personnel + replacement).max(1.0e-12);
+    clamp01(
+        (old_personnel * clamp01(old_experience) + replacement * clamp01(replacement_experience))
+            / new_personnel,
+    )
+}
+
+fn security_training_transition(
+    pipeline_after_recruitment: f64,
+    training_rate: f64,
+    elapsed_days: f64,
+) -> (f64, f64) {
+    let graduation_fraction = clamp01(1.0 - python_exp(-training_rate.max(0.0) * elapsed_days));
+    let graduated = pipeline_after_recruitment * graduation_fraction;
+    (pipeline_after_recruitment - graduated, graduated)
+}
+
+fn security_reserve_after_attrition(
+    reserve_before_graduation: f64,
+    graduated: f64,
+    reserve_attrition_rate: f64,
+    elapsed_days: f64,
+) -> f64 {
+    let reserve_survival = python_exp(-reserve_attrition_rate.max(0.0) * elapsed_days);
+    (reserve_before_graduation + graduated) * reserve_survival
+}
+
 fn deploy_military(
     particle: &mut ParticleState,
     config: &SimulationConfig,
@@ -331,12 +364,11 @@ fn deploy_military(
         let old_personnel = particle.formations.personnel[formation].max(0.0);
         let old_experience = clamp01(particle.formations.experience[formation]);
         particle.formations.personnel[formation] += share;
-        let new_personnel = particle.formations.personnel[formation].max(1.0e-12);
         // Graduates are trained but not veterans.  Replacement therefore
         // dilutes experience in proportion to turnover instead of magically
         // inheriting the unit's combat history.
         particle.formations.experience[formation] =
-            clamp01((old_personnel * old_experience + share * 0.10) / new_personnel);
+            replacement_weighted_experience(old_personnel, old_experience, share, 0.10);
         particle.formations.active[formation] = 1;
         particle.formations.operational_status[formation] = 1;
         let added_capacity = share * config.logistics.formation_supply_days;
@@ -566,15 +598,15 @@ pub fn update(
             && partner_config.force_generation.enabled
             && !particle.partner_support.support_withdrawn;
 
-        let (total_graduation_fraction, indig_graduated, incremental_graduated, fg_cost) =
+        let cur_pipeline = particle.locality.government_security_recruit_pipeline[locality];
+        let (effective_training_rate, indig_graduated, incremental_graduated, fg_cost) =
             if partner_fg_active {
                 let boost = partner_config.force_generation.training_rate_boost.max(0.0);
                 let total_rate = base_rate + boost;
-                let indig_frac = clamp01(1.0 - python_exp(-base_rate * elapsed_days));
-                let total_frac = clamp01(1.0 - python_exp(-total_rate * elapsed_days));
-                let cur_pipeline = particle.locality.government_security_recruit_pipeline[locality];
-                let indig_grad = cur_pipeline * indig_frac;
-                let total_grad = cur_pipeline * total_frac;
+                let (_, indig_grad) =
+                    security_training_transition(cur_pipeline, base_rate, elapsed_days);
+                let (_, total_grad) =
+                    security_training_transition(cur_pipeline, total_rate, elapsed_days);
                 let inc_grad = (total_grad - indig_grad).max(0.0);
                 let cost = inc_grad * partner_config.force_generation.cost_per_incremental_trainee
                     + (partner_config
@@ -582,11 +614,11 @@ pub fn update(
                         .capacity_building_investment_rate
                         * elapsed_days
                         / locality_count as f64);
-                (total_frac, indig_grad, inc_grad, cost)
+                (total_rate, indig_grad, inc_grad, cost)
             } else {
-                let frac = clamp01(1.0 - python_exp(-base_rate * elapsed_days));
-                let cur_pipeline = particle.locality.government_security_recruit_pipeline[locality];
-                (frac, cur_pipeline * frac, 0.0, 0.0)
+                let (_, indig_grad) =
+                    security_training_transition(cur_pipeline, base_rate, elapsed_days);
+                (base_rate, indig_grad, 0.0, 0.0)
             };
 
         particle
@@ -604,15 +636,19 @@ pub fn update(
                 .cumulative_donor_cost += fg_cost;
         }
 
-        let graduated = particle.locality.government_security_recruit_pipeline[locality]
-            * total_graduation_fraction;
-        particle.locality.government_security_recruit_pipeline[locality] -= graduated;
-        particle.locality.government_security_reserve[locality] += graduated;
+        let reserve_before_graduation = particle.locality.government_security_reserve[locality];
+        let (pipeline_after_graduation, graduated) =
+            security_training_transition(cur_pipeline, effective_training_rate, elapsed_days);
+        particle.locality.government_security_recruit_pipeline[locality] =
+            pipeline_after_graduation;
         summary.graduated += graduated;
 
-        let reserve_survival =
-            python_exp(-config.state_regeneration.reserve_attrition_rate.max(0.0) * elapsed_days);
-        particle.locality.government_security_reserve[locality] *= reserve_survival;
+        particle.locality.government_security_reserve[locality] = security_reserve_after_attrition(
+            reserve_before_graduation,
+            graduated,
+            config.state_regeneration.reserve_attrition_rate,
+            elapsed_days,
+        );
 
         let (police_current, police_target, military_current, military_target) =
             local_force_status(particle, config, locality);
@@ -808,6 +844,418 @@ mod tests {
         }
     }
 
+    fn local_insurgent_rooted_mass(
+        particle: &pineland_core::state::ParticleState,
+        locality: usize,
+    ) -> f64 {
+        python_sum(
+            &(0..particle.people.residence.len())
+                .filter(|person| {
+                    particle.people.residence[*person] as usize == locality
+                        && (particle.people.organization[*person] as usize)
+                            < particle.organizations.kind.len()
+                        && particle.organizations.kind
+                            [particle.people.organization[*person] as usize]
+                            == 3
+                        && particle.people.armed_fraction[*person] > 0.0
+                })
+                .map(|person| {
+                    particle.people.represented_population[person]
+                        * particle.people.armed_fraction[person]
+                })
+                .collect::<Vec<_>>(),
+        )
+    }
+
+    fn insurgent_member_population_sum(particle: &pineland_core::state::ParticleState) -> f64 {
+        python_sum(
+            &(0..particle.organizations.kind.len())
+                .filter(|organization| particle.organizations.kind[*organization] == 3)
+                .map(|organization| particle.organizations.member_population[organization])
+                .collect::<Vec<_>>(),
+        )
+    }
+
+    fn local_insurgent_unfielded_pool(
+        particle: &pineland_core::state::ParticleState,
+        locality: usize,
+    ) -> f64 {
+        python_sum(
+            &(0..particle.manpower.pool.len())
+                .filter(|row| {
+                    particle.manpower.locality[*row] as usize == locality
+                        && (particle.manpower.organization[*row] as usize)
+                            < particle.organizations.kind.len()
+                        && particle.organizations.kind
+                            [particle.manpower.organization[*row] as usize]
+                            == 3
+                })
+                .map(|row| particle.manpower.pool[row].max(0.0))
+                .collect::<Vec<_>>(),
+        )
+    }
+
+    #[test]
+    fn structural_law_replacement_experience_identity_stress_battery() {
+        let personnel_values = [1.0, 10.0, 100.0, 1000.0, 10_000.0];
+        let replacement_values = [0.001, 0.1, 1.0, 10.0, 100.0, 1000.0, 10_000.0];
+        let experience_values = [0.1, 0.25, 0.5, 0.75, 0.9, 1.0];
+        let replacement_experience_values = [0.0, 0.1, 0.25, 0.5, 0.9];
+        let mut cases = 0usize;
+        let mut maximum_closed_form_residual = 0.0f64;
+
+        for personnel in personnel_values {
+            for replacement in replacement_values {
+                for experience in experience_values {
+                    for replacement_experience in replacement_experience_values {
+                        let helper = replacement_weighted_experience(
+                            personnel,
+                            experience,
+                            replacement,
+                            replacement_experience,
+                        );
+                        let legacy = clamp01(
+                            (personnel * clamp01(experience)
+                                + replacement * replacement_experience)
+                                / (personnel + replacement).max(1.0e-12),
+                        );
+                        assert_eq!(helper.to_bits(), legacy.to_bits());
+                        let alpha = replacement / (personnel + replacement);
+                        let closed = experience - alpha * (experience - replacement_experience);
+                        maximum_closed_form_residual =
+                            maximum_closed_form_residual.max((helper - closed).abs());
+                        assert!(
+                            (helper - closed).abs() <= 5.0e-16,
+                            "P={personnel} R={replacement} E={experience} ER={replacement_experience} helper={helper} closed={closed}"
+                        );
+                        let lo = experience.min(replacement_experience);
+                        let hi = experience.max(replacement_experience);
+                        assert!(helper >= lo - 1.0e-15 && helper <= hi + 1.0e-15);
+                        if replacement_experience < experience {
+                            assert!(helper < experience);
+                        }
+                        cases += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 1050);
+        println!(
+            "STRUCTURAL_SL7_MATH cases={cases} max_closed_form_residual={maximum_closed_form_residual:.17e}"
+        );
+    }
+
+    #[test]
+    fn structural_law_security_absorption_helpers_preserve_inline_arithmetic() {
+        let pipeline_values = [0.0, 1.0, 100.0, 10_000.0];
+        let recruit_values = [0.0, 1.0, 100.0, 10_000.0];
+        let training_rates = [0.0, 0.001, 1.0 / 90.0, 0.05, 1.0];
+        let reserve_values = [0.0, 10.0, 1_000.0];
+        let attrition_rates: [f64; 4] = [0.0, 0.0005, 0.01, 0.1];
+        let elapsed_values = [1.0, 7.0, 14.0, 30.0, 90.0];
+        let mut cases = 0usize;
+
+        for pipeline in pipeline_values {
+            for recruits in recruit_values {
+                let total_pipeline = pipeline + recruits;
+                for training_rate in training_rates {
+                    for reserve in reserve_values {
+                        for attrition_rate in attrition_rates {
+                            for elapsed in elapsed_values {
+                                let graduation_fraction =
+                                    clamp01(1.0 - python_exp(-training_rate * elapsed));
+                                let legacy_graduated = total_pipeline * graduation_fraction;
+                                let legacy_pipeline = total_pipeline - legacy_graduated;
+                                let mut legacy_reserve = reserve;
+                                legacy_reserve += legacy_graduated;
+                                let reserve_survival =
+                                    python_exp(-attrition_rate.max(0.0) * elapsed);
+                                legacy_reserve *= reserve_survival;
+
+                                let (helper_pipeline, helper_graduated) =
+                                    security_training_transition(
+                                        total_pipeline,
+                                        training_rate,
+                                        elapsed,
+                                    );
+                                let helper_reserve = security_reserve_after_attrition(
+                                    reserve,
+                                    helper_graduated,
+                                    attrition_rate,
+                                    elapsed,
+                                );
+                                assert_eq!(
+                                    helper_graduated.to_bits(),
+                                    legacy_graduated.to_bits(),
+                                    "graduation mismatch pipeline={pipeline} recruits={recruits} tau={training_rate} elapsed={elapsed}"
+                                );
+                                assert_eq!(
+                                    helper_pipeline.to_bits(),
+                                    legacy_pipeline.to_bits(),
+                                    "pipeline mismatch pipeline={pipeline} recruits={recruits} tau={training_rate} elapsed={elapsed}"
+                                );
+                                assert_eq!(
+                                    helper_reserve.to_bits(),
+                                    legacy_reserve.to_bits(),
+                                    "reserve mismatch reserve={reserve} graduated={legacy_graduated} mu={attrition_rate} elapsed={elapsed}"
+                                );
+                                cases += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 4_800);
+        println!("STRUCTURAL_SL10_INLINE_EQUIVALENCE cases={cases}");
+    }
+
+    #[test]
+    fn structural_law_security_absorption_matches_production_update() {
+        let mut config = small_config();
+        config.state_regeneration.enabled = true;
+        config.state_regeneration.security_recruitment_rate = 0.0;
+        config.state_regeneration.security_training_rate = 1.0 / 90.0;
+        config.state_regeneration.reserve_attrition_rate = 0.01;
+        config.state_regeneration.training_cost_per_person = 0.0;
+        config.state_regeneration.deployment_cost_per_person = 0.0;
+        config.state_regeneration.police_target_population_fraction = 0.0;
+        config.state_regeneration.military_target_multiplier = 0.0;
+        let mut engine = SimulationEngine::new(config.clone()).expect("engine");
+        let locality = 0usize;
+
+        // Ensure the locality has no deployable police deficit. The target is
+        // clamped to a minimum of 15, so overstaff the existing local post.
+        for post in 0..engine.particle.security_posts.personnel.len() {
+            if engine.particle.security_posts.organization[post] as usize == POLICE
+                && engine.particle.security_posts.locality[post] as usize == locality
+            {
+                engine.particle.security_posts.personnel[post] = 300.0;
+                engine.particle.security_posts.staffed[post] = 1;
+                engine.particle.security_posts.presence[post] = 1.0;
+            }
+        }
+
+        let pipeline_before = 100.0;
+        let reserve_before = 10.0;
+        engine
+            .particle
+            .locality
+            .government_security_recruit_pipeline[locality] = pipeline_before;
+        engine.particle.locality.government_security_reserve[locality] = reserve_before;
+        let elapsed = 14.0;
+        let (expected_pipeline, expected_graduated) = security_training_transition(
+            pipeline_before,
+            config.state_regeneration.security_training_rate,
+            elapsed,
+        );
+        let expected_reserve = security_reserve_after_attrition(
+            reserve_before,
+            expected_graduated,
+            config.state_regeneration.reserve_attrition_rate,
+            elapsed,
+        );
+
+        let summary = update(
+            &mut engine.particle,
+            &engine.topology,
+            &config,
+            elapsed,
+            elapsed,
+        );
+        assert_eq!(
+            engine
+                .particle
+                .locality
+                .government_security_recruit_pipeline[locality]
+                .to_bits(),
+            expected_pipeline.to_bits()
+        );
+        assert_eq!(
+            engine.particle.locality.government_security_reserve[locality].to_bits(),
+            expected_reserve.to_bits()
+        );
+        assert_eq!(summary.graduated.to_bits(), expected_graduated.to_bits());
+        assert_eq!(summary.recruited.to_bits(), 0.0f64.to_bits());
+        assert_eq!(summary.deployed_police.to_bits(), 0.0f64.to_bits());
+        assert_eq!(summary.deployed_military.to_bits(), 0.0f64.to_bits());
+        println!(
+            "STRUCTURAL_SL10_PRODUCTION pipeline_before={pipeline_before:.17} pipeline_after={expected_pipeline:.17} graduated={expected_graduated:.17} reserve_after={expected_reserve:.17}"
+        );
+    }
+
+    #[test]
+    fn structural_law_absorption_capability_authorized_strength_cap_is_exact() {
+        let mut config = small_config();
+        config.state_regeneration.enabled = true;
+        config.state_regeneration.military_target_multiplier = 1.0;
+        let mut engine = SimulationEngine::new(config.clone()).expect("engine");
+        let formation = engine
+            .particle
+            .formations
+            .organization
+            .iter()
+            .enumerate()
+            .find(|(formation, organization)| {
+                **organization as usize == crate::MILITARY
+                    && engine.particle.formations.outside_pineland[*formation] == 0
+            })
+            .map(|(formation, _)| formation)
+            .expect("military formation");
+        let locality = engine.particle.formations.locality[formation] as usize;
+        let target = military_target_per_formation(&engine.particle, &config);
+        assert!(target > 0.0);
+
+        // Remove all other local deficits so an oversized deployment offer can
+        // only be absorbed by the deliberately damaged formation.
+        for candidate in 0..engine.particle.formations.personnel.len() {
+            if engine.particle.formations.organization[candidate] as usize == crate::MILITARY
+                && engine.particle.formations.outside_pineland[candidate] == 0
+                && engine.particle.formations.locality[candidate] as usize == locality
+            {
+                engine.particle.formations.personnel[candidate] = target;
+            }
+        }
+
+        let loss_fraction = 0.25;
+        let experience_before = 0.90;
+        engine.particle.formations.personnel[formation] = target * (1.0 - loss_fraction);
+        engine.particle.formations.experience[formation] = experience_before;
+        let personnel_before = engine.particle.formations.personnel[formation];
+        let expected_deficit = (target - personnel_before).max(0.0);
+        let expected_experience = replacement_weighted_experience(
+            personnel_before,
+            experience_before,
+            expected_deficit,
+            0.10,
+        );
+
+        let deployed = deploy_military(&mut engine.particle, &config, locality, target * 10.0);
+        assert_eq!(
+            deployed.to_bits(),
+            expected_deficit.to_bits(),
+            "oversized replacement offer must be capped exactly at target deficit"
+        );
+        assert!(
+            (engine.particle.formations.personnel[formation] - target).abs()
+                <= 1.0e-12 * target.max(1.0)
+        );
+        assert_eq!(
+            engine.particle.formations.experience[formation].to_bits(),
+            expected_experience.to_bits()
+        );
+
+        let second = deploy_military(&mut engine.particle, &config, locality, target * 10.0);
+        assert_eq!(
+            second.to_bits(),
+            0.0f64.to_bits(),
+            "once authorized personnel target is full, additional replacements cannot be absorbed"
+        );
+        let q = (0.75 + 0.50 * 0.10) / (0.75 + 0.50 * experience_before);
+        let capability_ceiling = 1.0 - loss_fraction * (1.0 - q);
+        assert!(capability_ceiling < 1.0);
+        println!(
+            "STRUCTURAL_SL11 target={target:.17} loss_fraction={loss_fraction:.17} deployed={deployed:.17} E_before={experience_before:.17} E_after={expected_experience:.17} capability_ceiling={capability_ceiling:.17}"
+        );
+    }
+
+    #[test]
+    fn structural_law_constant_intake_security_throughput_matches_closed_form() {
+        let g0_values = [0.0, 10.0, 100.0, 1_000.0];
+        let intakes = [1.0, 10.0, 100.0, 1_000.0];
+        let training_rates = [0.001, 1.0 / 180.0, 1.0 / 90.0, 1.0 / 30.0, 0.1];
+        let attrition_rates: [f64; 4] = [0.0, 0.0005, 0.01, 0.05];
+        let elapsed_values = [1.0, 7.0, 14.0, 30.0];
+        let updates = [1usize, 2, 4, 8, 16, 32, 64];
+        let mut cases = 0usize;
+        let mut max_pipeline_residual = 0.0f64;
+        let mut max_graduation_residual = 0.0f64;
+        let mut max_reserve_residual = 0.0f64;
+
+        for g0 in g0_values {
+            for intake in intakes {
+                for training_rate in training_rates {
+                    for elapsed in elapsed_values {
+                        let a = python_exp(-training_rate * elapsed);
+                        for m in updates {
+                            let mut pipeline = g0;
+                            let mut graduated = 0.0;
+                            for _ in 0..m {
+                                let total = pipeline + intake;
+                                let (next, d) =
+                                    security_training_transition(total, training_rate, elapsed);
+                                pipeline = next;
+                                graduated = d;
+                            }
+                            let closed = a.powi(m as i32) * g0
+                                + a * intake * (1.0 - a.powi(m as i32)) / (1.0 - a);
+                            let prev = if m == 1 {
+                                g0
+                            } else {
+                                a.powi((m - 1) as i32) * g0
+                                    + a * intake * (1.0 - a.powi((m - 1) as i32)) / (1.0 - a)
+                            };
+                            let expected_graduated = (prev + intake) * (1.0 - a);
+                            max_pipeline_residual =
+                                max_pipeline_residual.max((pipeline - closed).abs());
+                            max_graduation_residual =
+                                max_graduation_residual.max((graduated - expected_graduated).abs());
+                            assert!(
+                                (pipeline - closed).abs()
+                                    <= 2.0e-12 * pipeline.abs().max(closed.abs()).max(1.0)
+                            );
+                            assert!(
+                                (graduated - expected_graduated).abs()
+                                    <= 2.0e-12
+                                        * graduated.abs().max(expected_graduated.abs()).max(1.0)
+                            );
+                            cases += 1;
+                        }
+
+                        let steady_pipeline = a * intake / (1.0 - a);
+                        let steady_graduation = (steady_pipeline + intake) * (1.0 - a);
+                        assert!((steady_graduation - intake).abs() <= 2.0e-12 * intake.max(1.0));
+
+                        for attrition_rate in attrition_rates {
+                            let b = python_exp(-attrition_rate * elapsed);
+                            if b < 1.0 - 1.0e-15 {
+                                for fraction in [0.5, 1.0, 1.25] {
+                                    let deployment = fraction * b * intake;
+                                    let reserve_star = (b * intake - deployment) / (1.0 - b);
+                                    let before_deployment = security_reserve_after_attrition(
+                                        reserve_star,
+                                        intake,
+                                        attrition_rate,
+                                        elapsed,
+                                    );
+                                    let recurrence = before_deployment - deployment;
+                                    max_reserve_residual =
+                                        max_reserve_residual.max((recurrence - reserve_star).abs());
+                                    assert!(
+                                        (recurrence - reserve_star).abs()
+                                            <= 2.0e-12
+                                                * recurrence.abs().max(reserve_star.abs()).max(1.0)
+                                    );
+                                    if fraction <= 1.0 {
+                                        assert!(reserve_star >= -1.0e-12);
+                                    } else {
+                                        assert!(reserve_star < 0.0);
+                                    }
+                                }
+                            } else {
+                                assert_eq!(b.to_bits(), 1.0f64.to_bits());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 4 * 4 * 5 * 4 * 7);
+        println!(
+            "STRUCTURAL_SL12 cases={cases} max_pipeline_residual={max_pipeline_residual:.17e} max_graduation_residual={max_graduation_residual:.17e} max_reserve_residual={max_reserve_residual:.17e}"
+        );
+    }
+
     #[test]
     fn disabled_process_is_exact_noop() {
         let config = small_config();
@@ -941,6 +1389,146 @@ mod tests {
     }
 
     #[test]
+    fn structural_laws_underground_decay_and_force_separation_stress_battery() {
+        let rates = [0.0005, 0.002, 0.01];
+        let elapsed_values = [1.0, 7.0, 30.0];
+        let intelligence_values = [0.2, 0.7, 1.0];
+        let security_values = [0.1, 0.6, 1.0];
+        let administrative_values = [0.0, 0.5, 1.0];
+        let mut checked = 0usize;
+        let mut maximum_decay_relative_residual = 0.0f64;
+        let mut maximum_return_relative_residual = 0.0f64;
+        let mut maximum_member_relative_residual = 0.0f64;
+
+        for offset in 0..12u64 {
+            let seed = 2026192000u64 + offset;
+            let mut config = small_config();
+            config.seed = seed;
+            config.initialization_seed = Some(seed);
+            config.agent_count = 120;
+            config.state_regeneration.enabled = true;
+            let engine = SimulationEngine::new(config.clone()).expect("engine");
+
+            let locality = (0..engine.topology.locality_count())
+                .max_by(|left, right| {
+                    local_insurgent_rooted_mass(&engine.particle, *left)
+                        .total_cmp(&local_insurgent_rooted_mass(&engine.particle, *right))
+                })
+                .expect("locality");
+            let initial_rooted = local_insurgent_rooted_mass(&engine.particle, locality);
+            assert!(
+                initial_rooted > 1.0e-9,
+                "fresh structural seed must contain rooted insurgent mass"
+            );
+
+            for (rate_index, rate) in rates.into_iter().enumerate() {
+                for (elapsed_index, elapsed) in elapsed_values.into_iter().enumerate() {
+                    let mut particle = engine.particle.clone();
+                    let mut case_config = config.clone();
+                    case_config.state_regeneration.underground_disruption_rate = rate;
+                    let intelligence = intelligence_values[elapsed_index];
+                    let security = security_values[rate_index];
+                    let administrative =
+                        administrative_values[(offset as usize + rate_index + elapsed_index) % 3];
+                    particle.locality.administrative_capacity[locality] = administrative;
+
+                    let rooted_before = local_insurgent_rooted_mass(&particle, locality);
+                    let member_before = insurgent_member_population_sum(&particle);
+                    let pool_before = local_insurgent_unfielded_pool(&particle, locality);
+                    let formations_before = particle.formations.personnel.clone();
+                    let capital_before = particle.organizations.capital.clone();
+
+                    let hazard = rate
+                        * intelligence
+                        * (0.35 + 0.65 * security)
+                        * (0.45 + 0.55 * administrative);
+                    let survival = python_exp(-hazard * elapsed);
+                    let predicted_after = rooted_before * survival;
+                    let predicted_removed = rooted_before - predicted_after;
+
+                    let returned = disrupt_underground(
+                        &mut particle,
+                        &case_config,
+                        locality,
+                        intelligence,
+                        security,
+                        elapsed,
+                    );
+                    let rooted_after = local_insurgent_rooted_mass(&particle, locality);
+                    let member_after = insurgent_member_population_sum(&particle);
+                    let pool_after = local_insurgent_unfielded_pool(&particle, locality);
+
+                    let decay_residual = (rooted_after - predicted_after).abs();
+                    let return_residual = (returned - predicted_removed).abs();
+                    let member_residual = ((member_before - member_after) - returned).abs();
+                    let decay_relative = decay_residual / rooted_before.abs().max(1.0);
+                    let return_relative = return_residual / rooted_before.abs().max(1.0);
+                    let member_relative = member_residual / member_before.abs().max(1.0);
+                    maximum_decay_relative_residual =
+                        maximum_decay_relative_residual.max(decay_relative);
+                    maximum_return_relative_residual =
+                        maximum_return_relative_residual.max(return_relative);
+                    maximum_member_relative_residual =
+                        maximum_member_relative_residual.max(member_relative);
+
+                    assert!(
+                        decay_relative <= 1.0e-12,
+                        "seed={seed} rate={rate} elapsed={elapsed} predicted_after={predicted_after} observed_after={rooted_after}"
+                    );
+                    assert!(
+                        return_relative <= 1.0e-12,
+                        "seed={seed} rate={rate} elapsed={elapsed} predicted_removed={predicted_removed} returned={returned}"
+                    );
+                    assert!(
+                        member_relative <= 1.0e-12,
+                        "seed={seed} rate={rate} elapsed={elapsed} member_delta={} returned={returned}",
+                        member_before - member_after
+                    );
+                    assert_eq!(
+                        formations_before
+                            .iter()
+                            .map(|value| value.to_bits())
+                            .collect::<Vec<_>>(),
+                        particle
+                            .formations
+                            .personnel
+                            .iter()
+                            .map(|value| value.to_bits())
+                            .collect::<Vec<_>>(),
+                        "direct underground disruption must not change fielded formations"
+                    );
+                    assert_eq!(
+                        capital_before
+                            .iter()
+                            .map(|value| value.to_bits())
+                            .collect::<Vec<_>>(),
+                        particle
+                            .organizations
+                            .capital
+                            .iter()
+                            .map(|value| value.to_bits())
+                            .collect::<Vec<_>>(),
+                        "direct underground disruption must not spend organization capital"
+                    );
+                    let removed_pool = (pool_before - pool_after).max(0.0);
+                    let fighter_equivalent =
+                        returned * case_config.organization_ecology.fighter_conversion_fraction;
+                    assert!(
+                        removed_pool <= fighter_equivalent + 1.0e-9,
+                        "unfielded pool removal {removed_pool} exceeded fighter equivalent {fighter_equivalent}"
+                    );
+                    checked += 1;
+                }
+            }
+        }
+
+        assert_eq!(checked, 108);
+        println!(
+            "STRUCTURAL_SL1_SL2 cases={checked} max_decay_rel={maximum_decay_relative_residual:.17e} max_return_rel={maximum_return_relative_residual:.17e} max_member_rel={maximum_member_relative_residual:.17e}"
+        );
+    }
+
+    #[test]
     fn police_professionalism_changes_effective_security_at_equal_headcount() {
         let mut config = small_config();
         config.state_regeneration.enabled = true;
@@ -983,10 +1571,19 @@ mod tests {
         let target = military_target_per_formation(&engine.particle, &config);
         engine.particle.formations.personnel[formation] = (target - 100.0).max(1.0);
         engine.particle.formations.experience[formation] = 0.90;
+        let personnel_before = engine.particle.formations.personnel[formation];
         let before = engine.particle.formations.experience[formation];
         let deployed = deploy_military(&mut engine.particle, &config, locality, 100.0);
         assert!(deployed > 0.0);
+        let personnel_after = engine.particle.formations.personnel[formation];
+        let replacement = personnel_after - personnel_before;
         let after = engine.particle.formations.experience[formation];
+        let expected = replacement_weighted_experience(personnel_before, before, replacement, 0.10);
+        assert_eq!(
+            after.to_bits(),
+            expected.to_bits(),
+            "production deploy_military must use the exact SL7 weighted-experience update"
+        );
         assert!(after < before);
         assert!(after > 0.10);
     }
