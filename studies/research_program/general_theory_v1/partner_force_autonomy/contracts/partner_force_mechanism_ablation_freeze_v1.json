@@ -1,0 +1,50 @@
+{
+  "engineering_calibration_outcomes_used_for_science": false,
+  "engineering_calibration_seed": 2026999902,
+  "frozen_artifacts": {
+    "analysis": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/analyze_mechanism_ablation.py",
+      "sha256": "ed521df136e304385e42b9d75bc5580aadda29aef179f1a245066f3fcba97c81"
+    },
+    "array_wrapper": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/arc/mechanism_ablation_array.sbatch",
+      "sha256": "1b34a79b61153a0c3e6c2c77d140681e53a125302bc097de1146dccab179c652"
+    },
+    "contract": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/mechanism_ablation_v1.json",
+      "sha256": "40ef96453a43a44ea4aa663ee33de1e5ba917bbf7f2bcf891695946ede846281"
+    },
+    "design_generator": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/generate_mechanism_ablation_design.py",
+      "sha256": "51f5baa845463bef7ff12b0f83a48da5c4522e52304efc3e7bb209550962b527"
+    },
+    "formal_adapter": {
+      "path": "rust/pineland-model/src/partner_force_formal.rs",
+      "sha256": "25cd0681f1c5d8a6d12503f65c7d3a3c36367ea7996341307d76362036645718"
+    },
+    "freeze_generator": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/generate_mechanism_ablation_freeze.py",
+      "sha256": "a68cefb57b77957410fff07968ad3472902256b14de9286ccf0f87d85e26d644"
+    },
+    "protocol": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/MECHANISM_ABLATION_PROTOCOL_v1.md",
+      "sha256": "bfdf44b0a909d3692f869db7b71932c729363ee0db0824f8d2682ee61af8b244"
+    },
+    "runner": {
+      "path": "rust/pineland-model/examples/partner_force_autonomy_stage3.rs",
+      "sha256": "00b9e9fedd6bac0a9ffe1e0b875aa964e47248329bba30c360b6bf2020c97d4a"
+    },
+    "source_stage4_contract": {
+      "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage4_autonomy_phase_map_v1.json",
+      "sha256": "5cbb82d73d70e6299fb2a8e008f3ed15cfad8c97a620ee44592fc74f542c52a2"
+    }
+  },
+  "hash_canonicalization": "crlf_to_lf_v1",
+  "production_outcomes_used_before_freeze": false,
+  "required_artifact_count": 9,
+  "reviewer_diagnostics_known_before_design": true,
+  "schema_version": "pineland.partner_force_mechanism_ablation_freeze.v1",
+  "stage4_results_known_before_design": true,
+  "stage5_results_known_before_design": true,
+  "status": "FROZEN_BEFORE_MECHANISM_ABLATION_PRODUCTION"
+}

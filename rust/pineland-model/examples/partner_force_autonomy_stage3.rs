@@ -86,6 +86,13 @@ struct Cell {
     /// When more than one developmental channel is active the cost is split
     /// evenly across the active channel ledgers.
     development_cost_per_day: f64,
+    /// Post-Stage-4 mechanism-ablation only. When true, the SUPPORT_ON branch
+    /// adaptively rescales military logistics-consumption coefficients each
+    /// post-withdrawal telemetry interval to match the realized SUPPORT_OFF
+    /// military logistics demand for that same interval as closely as
+    /// possible. Existing contracts omit this field and preserve the exact
+    /// historical execution path.
+    clamp_logistics_demand_to_withdrawal: bool,
     overrides: HoldoutOverrides,
 }
 
@@ -199,6 +206,7 @@ fn load_cells(path: &Path) -> Result<Vec<Cell>, String> {
             development_logistics_rate_per_30d: 0.0,
             development_command_rate_per_30d: 0.0,
             development_cost_per_day: 0.0,
+            clamp_logistics_demand_to_withdrawal: false,
             overrides: HoldoutOverrides::default(),
         });
     }
@@ -393,6 +401,7 @@ fn load_holdout_contract(path: &Path) -> Result<RunDesign, String> {
             development_logistics_rate_per_30d: 0.0,
             development_command_rate_per_30d: 0.0,
             development_cost_per_day: 0.0,
+            clamp_logistics_demand_to_withdrawal: false,
             overrides: HoldoutOverrides {
                 convoy_speed_factor: json_optional_f64(cell, "convoy_speed_factor")?,
                 shipment_loss_per_travel_hour: json_optional_f64(
@@ -577,6 +586,11 @@ fn load_stage4_contract(path: &Path) -> Result<RunDesign, String> {
             development_logistics_rate_per_30d: dev_logistics,
             development_command_rate_per_30d: dev_command,
             development_cost_per_day: dev_cost,
+            clamp_logistics_demand_to_withdrawal: json_optional_bool(
+                cell,
+                "clamp_logistics_demand_to_withdrawal",
+            )?
+            .unwrap_or(false),
             overrides: HoldoutOverrides {
                 convoy_speed_factor: json_optional_f64(cell, "convoy_speed_factor")?,
                 shipment_loss_per_travel_hour: json_optional_f64(
@@ -991,6 +1005,148 @@ fn advance_with_stage4_development(
         apply_stage4_development(engine, cell, elapsed);
         engine.advance_until(next).map_err(|e| e.to_string())?;
     }
+    Ok(())
+}
+
+#[derive(Clone, Copy, Debug)]
+struct MilitaryLogisticsDemandRates {
+    presence_consumption_per_person_day: f64,
+    movement_consumption_per_person_km: f64,
+    patrol_consumption_per_person_hour: f64,
+    combat_supply_per_person_hour: f64,
+}
+
+impl MilitaryLogisticsDemandRates {
+    fn from_engine(engine: &SimulationEngine) -> Self {
+        Self {
+            presence_consumption_per_person_day: engine
+                .config
+                .logistics
+                .presence_consumption_per_person_day,
+            movement_consumption_per_person_km: engine
+                .config
+                .logistics
+                .movement_consumption_per_person_km,
+            patrol_consumption_per_person_hour: engine
+                .config
+                .logistics
+                .patrol_consumption_per_person_hour,
+            combat_supply_per_person_hour: engine.config.combat.supply_per_person_hour,
+        }
+    }
+
+    fn apply_scaled(self, engine: &mut SimulationEngine, scale: f64) {
+        let s = scale.max(0.0);
+        engine.config.logistics.presence_consumption_per_person_day =
+            self.presence_consumption_per_person_day * s;
+        engine.config.logistics.movement_consumption_per_person_km =
+            self.movement_consumption_per_person_km * s;
+        engine.config.logistics.patrol_consumption_per_person_hour =
+            self.patrol_consumption_per_person_hour * s;
+        engine.config.combat.supply_per_person_hour = self.combat_supply_per_person_hour * s;
+    }
+
+    fn restore(self, engine: &mut SimulationEngine) {
+        self.apply_scaled(engine, 1.0);
+    }
+}
+
+fn logistics_demand_increment(before: FlowSnapshot, after: FlowSnapshot) -> f64 {
+    (after.military_logistics_demanded - before.military_logistics_demanded).max(0.0)
+}
+
+/// Advance one SUPPORT_ON interval while dynamically matching the realized
+/// military logistics demand of the paired SUPPORT_OFF interval.
+///
+/// This is intentionally implemented only in the experiment runner. It does
+/// not modify Pineland's core logistics equations. Each trial starts from the
+/// same cloned SUPPORT_ON state and therefore uses the same RNG state. The
+/// search rescales the four military logistics-consumption coefficients that
+/// enter presence, movement, patrol, and combat supply demand. The selected
+/// trial state is retained, after which the original coefficients are restored
+/// for the next interval's fresh search.
+fn advance_supported_with_logistics_demand_clamp(
+    engine: &mut SimulationEngine,
+    cell: &Cell,
+    target: f64,
+    target_demand: f64,
+) -> Result<(), String> {
+    let start = engine.clone();
+    let start_flow = flow_snapshot(&start);
+    let base_rates = MilitaryLogisticsDemandRates::from_engine(&start);
+
+    let run_trial = |scale: f64| -> Result<(SimulationEngine, f64), String> {
+        let mut trial = start.clone();
+        base_rates.apply_scaled(&mut trial, scale);
+        advance_with_stage4_development(&mut trial, cell, target)?;
+        let demand = logistics_demand_increment(start_flow, flow_snapshot(&trial));
+        Ok((trial, demand))
+    };
+
+    // Start with a broad deterministic bracket. A zero scale can still leave
+    // demand from movement orders whose costs were committed in the prior
+    // interval, so it is a genuine lower-bound trial rather than an assumed
+    // zero-demand state.
+    let mut candidates: Vec<(SimulationEngine, f64, f64)> = Vec::new();
+    for scale in [0.0, 1.0, 2.0, 4.0] {
+        let (trial, demand) = run_trial(scale)?;
+        candidates.push((trial, scale, demand));
+    }
+
+    let mut low_scale = 0.0;
+    let mut high_scale = 4.0;
+    let mut low_demand = candidates[0].2;
+    let mut high_demand = candidates[3].2;
+    if high_demand < low_demand {
+        std::mem::swap(&mut low_demand, &mut high_demand);
+        std::mem::swap(&mut low_scale, &mut high_scale);
+    }
+
+    // If the target is bracketed and the realized relation is monotone at the
+    // endpoints, refine with eight deterministic bisection trials. If it is
+    // outside the bracket, the closest endpoint/standard trial remains eligible.
+    if target_demand >= low_demand && target_demand <= high_demand && high_demand > low_demand {
+        let mut lo_s = low_scale;
+        let mut hi_s = high_scale;
+        let mut lo_d = low_demand;
+        let mut hi_d = high_demand;
+        for _ in 0..8 {
+            let mid = 0.5 * (lo_s + hi_s);
+            let (trial, demand) = run_trial(mid)?;
+            candidates.push((trial, mid, demand));
+            if demand < target_demand {
+                lo_s = mid;
+                lo_d = demand;
+            } else {
+                hi_s = mid;
+                hi_d = demand;
+            }
+            if (hi_d - lo_d).abs() <= 1.0e-9 {
+                break;
+            }
+        }
+    }
+
+    let mut best_index = 0usize;
+    let mut best_error = f64::INFINITY;
+    for (i, (_, _, demand)) in candidates.iter().enumerate() {
+        let error = (*demand - target_demand).abs();
+        if error < best_error {
+            best_error = error;
+            best_index = i;
+        }
+    }
+    let (mut best_engine, best_scale, best_demand) = candidates.swap_remove(best_index);
+    base_rates.restore(&mut best_engine);
+    let denom = target_demand.abs().max(1.0);
+    let relative_error = (best_demand - target_demand).abs() / denom;
+    if relative_error > 0.05 {
+        eprintln!(
+            "DEMAND_CLAMP_WARN cell={} target_time={:.3} target_demand={:.6} realized_demand={:.6} scale={:.6} rel_error={:.6}",
+            cell.cell_id, target, target_demand, best_demand, best_scale, relative_error
+        );
+    }
+    *engine = best_engine;
     Ok(())
 }
 
@@ -2238,8 +2394,25 @@ fn main() -> Result<(), String> {
             };
             for h in post_offsets {
                 let target = withdrawal + h;
-                advance_with_stage4_development(&mut on, cell, target)?;
-                advance_with_stage4_development(&mut off, cell, target)?;
+                if cell.clamp_logistics_demand_to_withdrawal {
+                    // The withdrawal branch defines the realized logistics
+                    // requirement for this interval. The supported branch is
+                    // then advanced under an adaptive demand clamp targeted to
+                    // that paired requirement. Existing cells never enter this
+                    // branch and preserve the historical ON-then-OFF order.
+                    advance_with_stage4_development(&mut off, cell, target)?;
+                    let off_flow_for_target = flow_snapshot(&off);
+                    let off_interval_for_target = diff(off_flow_previous, off_flow_for_target);
+                    advance_supported_with_logistics_demand_clamp(
+                        &mut on,
+                        cell,
+                        target,
+                        off_interval_for_target.military_logistics_demanded,
+                    )?;
+                } else {
+                    advance_with_stage4_development(&mut on, cell, target)?;
+                    advance_with_stage4_development(&mut off, cell, target)?;
+                }
                 let assay_on = on.capability_assay(&outcome_baseline);
                 let assay_off = off.capability_assay(&outcome_baseline);
                 let state_on = state_at_withdrawal(&on, assay_on.clone());
@@ -2516,6 +2689,7 @@ mod stage4_tests {
             development_logistics_rate_per_30d: 0.0,
             development_command_rate_per_30d: 0.0,
             development_cost_per_day: 0.0,
+            clamp_logistics_demand_to_withdrawal: false,
             overrides: HoldoutOverrides::default(),
         }
     }
