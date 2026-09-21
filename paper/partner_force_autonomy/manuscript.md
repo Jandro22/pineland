@@ -17,7 +17,13 @@ problem initially limiting a force; **system yield**, how much whole-force
 capability that relief unlocks; and **retention**, how much resulting capability
 remains indigenously reproducible. Successful assistance can remove one binding
 limitation, expand the operating envelope, raise demand for complementary
-services, and expose another constraint. A prospectively frozen experiment in
+services, and expose another constraint. The bottleneck logic, recurrent-cost
+problem, and distinction between supported and sustainable performance each
+have important antecedents in operations management, development economics,
+foreign-aid research, and security-assistance scholarship. The contribution is
+their dynamic integration in a military production system in which selective
+external substitution can itself change the identity of the binding indigenous
+service. A prospectively frozen experiment in
 the Pineland agent-based model generated 2,808 worlds. Among 106 treated cells
 where continued direct assistance increased 30-day capability, 96, or 90.6
 percent, had lower indigenous autonomy at 360 days. Targeted support produced
@@ -45,7 +51,7 @@ resources [@biddle2017; @biddle2018; @metz2023; @matisek2018; @knowlesmatisek201
 @harkness2022; @sandnes2024]. Recent scholarship has pushed further by treating
 security assistance as a relational practice that can reshape authority,
 alignment, and dependency rather than merely transfer technical capability
-[@rolandsen2026]. U.S. government evaluations similarly continue to identify
+[@rolandsen2021; @rolandsen2026]. U.S. government evaluations similarly continue to identify
 absorptive capacity and sustainment as recurring weaknesses in train-and-equip
 programs [@gao2023].
 
@@ -57,6 +63,23 @@ and outcome [@rolandsen2026]. The contribution here is therefore not another
 claim that support can produce dependence. The article instead asks a narrower
 question that becomes important precisely when assistance works: **what happens
 after a real military constraint is successfully relieved?**
+
+That question also has important antecedents outside security studies. Theory
+of Constraints treats whole-system throughput as governed by a binding
+constraint and expects successful improvement of that constraint to reveal
+another [@watson2007]. Hirschman's theory of unbalanced growth likewise treats
+successful expansion in one activity as a source of new shortages and demands
+for complementary investment [@hirschman1958]. Foreign-aid scholarship goes
+further by showing how donor-financed projects can increase claims on scarce
+recipient administrative or recurrent resources [@roodman2006;
+@arimotokono2009]. The argument here therefore does not claim bottleneck
+migration, complementarity, or aid-induced recurrent requirements as new
+general mechanisms. Its proposed contribution is the conjunction of those
+ideas in partner-force production: selective external assistance can relieve a
+real military constraint, expand feasible operational scale or complexity,
+increase demand for a different indigenous service, and thereby widen the gap
+between capability available under support and capability reproducible without
+it.
 
 Three outcomes must be separated. **Constraint relief** asks whether the
 intervention actually fixes the service that limits the force. **System yield**
@@ -123,16 +146,16 @@ logistics assistance substantially outperformed direct substitution on terminal
 autonomy, but force-generation development could create large indigenous gains
 without improving whole-system autonomy because logistics had become binding.
 
-These results make four contributions. First, they separate **constraint
-relief, system yield, and retention**, showing why success on the first outcome
-does not establish success on the other two. Second, they distinguish
-**supported capability** from **indigenous autonomy** and show why the former
-cannot serve as a sufficient proxy for the latter. Third, they identify
-constraint migration as an endogenous consequence of successful assistance and
-show that migration can occur with very different amounts of system gain.
-Fourth, they distinguish local capacity development from system autonomy. A
-partner can become much better at producing one military input without becoming
-more capable of sustaining the whole force independently.
+The paper makes one primary theoretical contribution and three related
+measurement contributions. The theoretical contribution is a dynamic theory of
+military production under external substitution: assistance can succeed on its
+proximate task and still create a new autonomy problem because success changes
+the production requirement. The measurement contributions separate
+**constraint relief, system yield, and retention**; distinguish **supported
+capability** from **independently reproducible capability** at the same point in
+time; and distinguish local indigenous output from whole-system autonomy. These
+claims are intentionally narrower than a general theory of dependency or
+bottlenecks.
 
 The argument is not that politics ceases to matter once military production is
 modeled. Recipient incentives, donor leverage, organizational design, and
@@ -186,6 +209,17 @@ Sandnes conceptualizes the G5 Sahel Joint Force's relationship with external
 actors as asymmetric interdependence and emphasizes the difficulty of reaching
 an autonomous endpoint under such a relationship [@sandnes2024].
 
+Security-assistance scholarship also already treats independence or
+sustainability as a distinct outcome from current battlefield performance.
+Karlin includes the ability to sustain a partner military without continuing
+U.S. support in the outcome concept for successful military building
+[@karlin2018]. Reynolds similarly proposes an explicit Security Autonomy Index
+for assessing whether recipient institutions can internalize and sustain
+security models [@reynolds2025]. These works occupy important conceptual ground
+that the present article does not claim as new. The contribution must therefore
+lie in the mechanism producing divergence between supported and autonomous
+capability, not in noticing that such divergence can exist.
+
 Policy and evaluation literatures make a related point in the language of
 absorptive capacity and sustainment. RAND research on defense institution
 building stresses the organizational and institutional foundations required to
@@ -212,7 +246,85 @@ dependency. That point is well established. The unresolved theoretical problem
 is how dependency changes as assistance succeeds, indigenous production
 changes, and the force's limiting constraint moves.
 
-## 2.3 From static capacity to a moving constraint
+It is also useful to separate three forms of dependence that are often collapsed
+into one label. **Operational dependence** means that a specified military
+output cannot be generated without continuing foreign service or input
+provision. **Institutional dependence** means that external provision weakens
+or displaces the development of indigenous organizations. **Relational
+dependence** means that reliance on an external actor creates asymmetric
+bargaining power. The mechanism tested here is fundamentally operational. It
+can coexist with the institutional and relational forms, but does not require
+them.
+
+## 2.3 Bottlenecks, recurrent costs, and complementary production
+
+The closest general antecedent is the Theory of Constraints. In that tradition,
+system throughput is governed by the active constraint; improving a
+nonconstraint yields little whole-system benefit, while successful elevation of
+the current constraint eventually causes another to become limiting
+[@watson2007]. That logic is almost an abstract statement of constraint
+migration. It should therefore be treated as a theoretical foundation rather
+than claimed as an original discovery.
+
+Hirschman's unbalanced-growth framework provides a second close precedent.
+Expansion in one sector creates shortages, pressures, and inducements for
+complementary investment elsewhere [@hirschman1958]. The key similarity is
+endogeneity: the next shortage is generated or made salient by successful
+expansion in the first activity. The difference is that Hirschman's mechanism
+is normally developmental and economy-wide, whereas the present argument
+focuses on selective foreign substitution inside a military production system
+and on the possibility that observed performance rises faster than indigenous
+reproduction.
+
+Foreign-aid research comes closer still to the support-induced demand problem.
+Roodman models donor aid and scarce recipient-side resources as complementary
+inputs and shows how project proliferation can overload the local resources
+needed to administer assistance [@roodman2006]. Arimoto and Kono model
+donor-financed investment that generates recurrent-cost obligations which the
+recipient must supply if project benefits are to persist
+[@arimotokono2009]. Morss's earlier work on donor and project proliferation
+similarly emphasizes the burden placed on scarce recipient administrative
+capacity [@morss1984]. These are direct precedents for the proposition that an
+external input can increase the requirement for a scarce indigenous complement.
+
+The military contribution is narrower. The relevant complement need not be a
+recurrent cost attached directly to the donated asset. Assistance to one
+service can enable a broader change in operating scale or complexity whose
+demands spill onto a different service. More reliable command can make larger
+formations usable. More force generation can increase logistics and
+replacement demand. More mobility can increase maintenance, fuel,
+communications, medical evacuation, and distribution requirements. The object
+of interest is therefore a changing constraint set in which the service that
+limits the whole force is itself endogenous to successful intervention.
+
+This point is consistent with mature theories of complementarity. Kremer's
+O-ring model shows why weak performance in one indispensable task can sharply
+reduce the return to excellence elsewhere [@kremer1993], while military
+effectiveness research has long treated armed forces as complex organizations
+whose aggregate performance cannot be inferred from isolated attributes
+[@millett1986]. Military logistics scholarship likewise demonstrates that
+movement and sustainment can delimit operational possibility [@vancreveld2004].
+The paper therefore makes no generic claim that militaries are systems, that
+logistics matters, or that nonbinding improvements can have low system returns.
+
+Absorptive capacity is adjacent but distinct. In its classic organizational
+form, absorptive capacity concerns the ability to recognize, assimilate, and
+exploit external knowledge [@cohenlevinthal1990]. A partner can display high
+absorptive capacity in an assisted subsystem and still fail to reproduce the
+larger military system that successful absorption makes possible. The most
+diagnostic cases for the present theory are therefore not failed absorption,
+but successful first-stage absorption followed by insufficient indigenous
+production in another complementary service.
+
+Aid-dependence research also offers a competing route to superficially similar
+outcomes. High external financing can weaken accountability, distort incentives,
+or inhibit long-run institution building [@knack2001; @brautigamknack2004;
+@moss2006]. Those mechanisms can also produce high supported output and weak
+autonomy. The empirical burden here is to show a different sequence: the
+assisted function improves, operations expand or change, a complementary service
+requirement rises, and that service then becomes limiting.
+
+## 2.4 From static capacity to a moving constraint
 
 Military capability is jointly produced. Personnel without logistics cannot
 operate. Logistics without command cannot reliably translate resources into
@@ -243,9 +355,56 @@ rise. If command assistance increases coordination, the force may begin to use
 personnel and supplies at a level that reveals a different shortage. The
 binding constraint is therefore endogenous to assistance.
 
+The resulting novelty claim is deliberately conjunctive. No individual link is
+new. The candidate contribution is a security-assistance theory that jointly
+specifies **selective external substitution, successful relief of a binding
+military-production constraint, endogenous expansion of operational
+requirements, migration of the binding constraint into another indigenous
+service, and divergence between supported and independently reproducible
+capability**.
+
 # 3. Theory
 
 ## 3.1 Indigenous autonomy as service coverage
+
+The theory begins by distinguishing the capability a force can generate with
+external support from the capability it can reproduce from indigenous
+production alone. Let an operation of scale or complexity \(x\) require
+service \(j\) in quantity \(r_j(x)\). Let \(I_{j,t}\) denote indigenous
+production and \(E_{j,t}\) external provision. Supported feasible capability is
+
+\[
+C_t^{S}=\max x
+\quad\text{s.t.}\quad
+r_j(x)\leq I_{j,t}+E_{j,t}
+\quad \forall j,
+\]
+
+while independently reproducible capability is
+
+\[
+C_t^{A}=\max x
+\quad\text{s.t.}\quad
+r_j(x)\leq I_{j,t}
+\quad \forall j.
+\]
+
+These are simultaneous state variables, not merely current success and future
+sustainability. Assistance can therefore produce
+
+\[
+\frac{dC^{S}}{dA}>0
+\quad\text{while}\quad
+\frac{dC^{A}}{dA}\approx 0,
+\]
+
+or a widening capability gap
+
+\[
+\frac{d(C^{S}-C^{A})}{dA}>0.
+\]
+
+The model operationalizes this production logic through service coverage.
 
 Let a partner force require a set of military services indexed by (j). For
 service (j) at time (t), let (D_{j,t}) denote demand, (I_{j,t}) denote
@@ -904,6 +1063,26 @@ fragmented security sectors, and donor-recipient dependence remain central
 problems [@biddle2018; @metz2023; @harkness2022; @sandnes2024]. The present
 results identify a production dynamic that can operate even when assistance
 does what donors intend at the targeted military function.
+
+The literature review also narrows the paper's novelty claim. Bottleneck
+migration is established in operations management [@watson2007]. Successful
+expansion generating new complementary shortages is central to Hirschman's
+unbalanced-growth logic [@hirschman1958]. Donor-financed activity creating
+recipient-side recurrent or administrative requirements is established in aid
+research [@roodman2006; @arimotokono2009]. Security-assistance scholarship
+already distinguishes current performance from sustainability or autonomy
+[@karlin2018; @sandnes2024; @reynolds2025]. None of those propositions should be
+presented individually as the paper's discovery.
+
+What the Stage-4 results add is evidence for their interaction inside a
+military production system. Selective external support can remove an actual
+constraint, change what the force is capable of doing, alter the demand placed
+on complementary services, and thereby change which indigenous service limits
+the adapted force. This creates a specific reason why supported capability and
+independently reproducible capability can diverge even when the original
+assistance succeeds. The novelty is therefore the causal sequence and the
+donor-recipient production boundary, not the existence of bottlenecks or
+dependency in the abstract.
 
 The central distinction is no longer simply between "assistance" and
 "dependence." It is between three stages of success. A donor can relieve the

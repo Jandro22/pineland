@@ -5,7 +5,12 @@ Working title: **Suffering from Success: Security Assistance, Constraint Migrati
 This directory contains the manuscript for the integrated Partner-Force Autonomy
 paper. Draft 0.4 reframes the completed Stage-4 program around constraint
 relief, system yield, retention, headroom, and constraint migration while
-preserving the original Stage-4 evidentiary boundary.
+preserving the original Stage-4 evidentiary boundary. The September 21
+adversarial novelty review further narrows the theoretical claim: bottleneck
+migration, recurrent-cost burdens, complementarity, and the
+supported-versus-sustainable distinction are treated as prior art. The candidate
+contribution is their interaction in a military production system under
+selective external substitution.
 
 ## Scientific status
 

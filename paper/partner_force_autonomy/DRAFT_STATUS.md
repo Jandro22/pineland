@@ -39,6 +39,15 @@ The manuscript package now contains:
 - preliminary protocol-consistent memos for all four historical cases, plus a
   cross-case matrix that retains mixed and adverse evidence;
 - adjacent state-capacity and organizational-complementarity literature bridges.
+- an adversarial novelty review extending into Theory of Constraints,
+  unbalanced growth, aid project proliferation, recurrent costs, aid
+  dependence, absorptive capacity, military effectiveness, and logistics;
+- an explicitly narrowed novelty claim centered on the conjunction of selective
+  external substitution, successful military constraint relief, induced
+  operating demand, cross-service constraint migration, and divergence between
+  supported and independently reproducible capability;
+- simultaneous supported-capability and independently reproducible-capability
+  production frontiers in the theory section;
 - a hostile-review matrix and explicit theory falsifiers;
 - a submission architecture sized for *Security Studies* as the current primary
   target, while retaining straightforward retargeting to a broader IR journal.
@@ -50,8 +59,8 @@ The manuscript package now contains:
    historical case memos.
 3. Insert the Stage-5 results without changing its frozen hypotheses or analysis
    rules, and add the coordinated-development complementarity figure.
-4. Complete the full literature intervention and novelty stress test, expanding
-   the current core bibliography only with sources that have a defined role.
+4. Tighten the now-expanded literature intervention for journal word count
+   without weakening the explicit prior-art concessions.
 5. Decide the target journal and adapt word count, citation style, headings, and
    disclosure/reproducibility statements to that journal.
 6. Refine Figures 1-6 for final journal layout and build the historical case table.
