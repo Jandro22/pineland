@@ -231,11 +231,11 @@
     },
     "stage5_contract": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage5_rising_tide_v1.json",
-      "sha256": "60f58f3586ee67448c797fa87b372941c9a667c41081831533736610f3908ea8"
+      "sha256": "71827ebb9c8e23ba3f3ffa2736c9d3af2a245dfa8fedb467d78cda96cd21b746"
     },
     "stage5_design_generator": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/generate_stage5_rising_tide_design.py",
-      "sha256": "5355af69973be2ef80f784969d5e894f359282f201e522a0664c6a7f825cf3ef"
+      "sha256": "df21e32098198971f3d2044898dd6d4f0f459e43a04e606a491ec04ea4a55df9"
     },
     "stage5_freeze_generator": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/analysis/generate_stage5_rising_tide_freeze.py",
@@ -255,7 +255,7 @@
     },
     "stage5_protocol": {
       "path": "studies/research_program/general_theory_v1/partner_force_autonomy/STAGE5_RISING_TIDE_PROTOCOL_v1.md",
-      "sha256": "c9221ca2c1992ecffbd984a169f7a1328c92bc2f6629d451eec386c71edeed10"
+      "sha256": "e4f7df774f69dda1e8efeb7b81571cdbc8a0a1f188d4fcae5e8396788480752f"
     }
   },
   "hash_canonicalization": "crlf_to_lf_v1",

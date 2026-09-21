@@ -149,7 +149,7 @@ def build_contract() -> dict:
         # already supports simultaneous developmental rates in all channels.
         "schema_version": "pineland.partner_force_stage4_contract.v1",
         "program_stage": "stage5_post_stage4_followup",
-        "status": "PROSPECTIVE_DESIGN_PENDING_CRYPTOGRAPHIC_FREEZE",
+        "status": "PROSPECTIVE_DESIGN_FROZEN_BEFORE_PRODUCTION",
         "historical_outcomes_used": False,
         "stage4_outcomes_used_for_motivation": True,
         "stage5_outcomes_used": False,

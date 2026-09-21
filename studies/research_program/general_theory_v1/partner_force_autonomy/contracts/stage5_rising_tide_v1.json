@@ -2815,5 +2815,5 @@
   "seed_namespace": "partner-force-stage5-rising-tide-crn-v1",
   "stage4_outcomes_used_for_motivation": true,
   "stage5_outcomes_used": false,
-  "status": "PROSPECTIVE_DESIGN_PENDING_CRYPTOGRAPHIC_FREEZE"
+  "status": "PROSPECTIVE_DESIGN_FROZEN_BEFORE_PRODUCTION"
 }

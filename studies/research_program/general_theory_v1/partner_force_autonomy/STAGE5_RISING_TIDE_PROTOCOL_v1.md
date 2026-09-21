@@ -1,6 +1,6 @@
 # Stage 5 Coordinated Indigenous Development Protocol v1
 
-Status: **PROSPECTIVE FOLLOW-UP, TO BE FROZEN BEFORE PRODUCTION**
+Status: **PROSPECTIVE FOLLOW-UP, FROZEN BEFORE PRODUCTION**
 
 Date: 2026-09-21
 
