@@ -1,0 +1,9 @@
+{
+  "analysis_status": "POST_COMPLETION_DESCRIPTIVE_SYNTHESIS",
+  "observed_matched_treated_worlds": 169,
+  "headroom_defined_worlds": 126,
+  "headroom_undefined_worlds": 43,
+  "pearson_headroom_vs_delta_capability_h30": -0.08267959790872006,
+  "spearman_headroom_vs_delta_capability_h30": 0.18738249198817408,
+  "interpretation": "Static pre-withdrawal headroom is not a monotonic predictor of realized +30-day system yield in the dynamic Stage-4 migration worlds."
+}
