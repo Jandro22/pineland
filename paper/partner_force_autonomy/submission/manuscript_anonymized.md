@@ -7,253 +7,118 @@ keywords: "security assistance; military effectiveness; partner forces; sustainm
 
 # Abstract
 
-Security assistance can improve a force while support is available without showing how much capability the partner can reproduce after external service stops. This article separates **relief**, whether assistance improves a limiting service; **yield**, how much whole-force capability follows; and **retention**, how much remains after support ends. I evaluate this framework in the Pineland agent-based model using a frozen 2,808-world Stage-4 campaign, a 1,472-world coordinated-development extension, matched no-aid controls, and a prospectively frozen post-review demand-clamp test. At +30 days, 26 of 120 treated Phase-Map cells show supported capability above matched no aid but post-withdrawal capability below no aid; 30 improve in both branches and 51 are below no aid in both. Frozen-telemetry decomposition associates terminal logistics-coverage gaps with both indigenous service and the supported operating requirement. A direct demand clamp passes its manipulation check but does not identify requirement expansion as the cause of those gaps because the fresh-seed normal arms reproduce positive capability effects but no coverage penalty to attenuate. Constraint displacement is better identified: command and force-generation bottlenecks migrate frequently but produce little system yield and do not explain the strongest retention penalties. Developmental assistance improves partner-owned service but lies on a capability-retention-cost frontier rather than uniformly dominating substitution. The contribution is therefore a diagnostic production framework for showing why local assistance success, whole-force performance, dependence on continuing support, and post-support retention need not coincide.
+Security assistance often improves partner performance during deployment without building durable capability. This article separates **relief** (improving a limiting service), **yield** (resulting whole-force capability), and **retention** (capability surviving withdrawal). I evaluate this framework in the Pineland agent-based simulation across a 2,808-world Stage-4 campaign, a 1,472-world coordinated-development extension, and matched no-aid controls. At +30 days post-withdrawal, 26 of 120 treated cells exhibit supported capability above no aid but retained capability below no aid; 30 improve in both branches and 51 fall below in both. Bottleneck migration readily occurs in command and force generation but generates little whole-force yield. A demand-clamp ablation confirms capability sensitivity to operational requirements, though harness measurement limitations leave coverage mediation unconfirmed. Developmental assistance builds partner-owned sustainment but trades off against immediate capability and cost. The contribution is a diagnostic production framework demonstrating why local assistance success, whole-force effectiveness, and autonomous retention diverge.
+
 # 1. Introduction
 
-Security assistance is often assessed through outcomes that are related but not identical. Did the donor fix the targeted military problem? Did the force become more capable? Could the partner reproduce that capability after external support stopped? Existing research explains disappointing assistance outcomes through provider-recipient interest misalignment, weak institutions, limited leverage, fragmented security sectors, poor absorptive capacity, fragile elite formations, and dependence on external resources [@biddle2017; @biddle2018; @metz2023; @matisek2018; @knowlesmatisek2019; @harkness2022; @sandnes2024]. Recent work also treats security assistance as a relational practice that can reshape authority, alignment, and dependency rather than merely transfer technical inputs [@rolandsen2021; @rolandsen2026].
+Security assistance is often evaluated through related but non-identical questions: Did the donor relieve the targeted military constraint? Did whole-force capability improve? Could the partner reproduce that capability after external assistance ended? Existing scholarship explains disappointing assistance outcomes through provider-recipient interest misalignment, weak institutions, limited leverage, fragmented security sectors, poor absorptive capacity, and dependence on foreign patronage [@biddle2017; @biddle2018; @metz2023; @matisek2018; @knowlesmatisek2019; @harkness2022; @sandnes2024]. Recent work also treats security assistance as a relational practice reshaping authority, alignment, and dependency [@rolandsen2021; @rolandsen2026].
 
-This article addresses a narrower production problem. Even when assistance changes the military function it targets, three outcomes can diverge. **Relief** concerns the targeted constraint. **Yield** concerns whole-force capability. **Retention** concerns what remains after the donor's additional service stops. Treating these as one outcome obscures both successful and unsuccessful assistance. A program can fix a training bottleneck without raising whole-force performance because logistics binds next. It can raise supported performance without creating a retained gain because the operating requirement grows faster than indigenous sustainment. It can also improve both supported and retained capability.
+This article addresses a narrower production problem: even when assistance succeeds in the function it targets, three outcomes can diverge. **Relief** concerns the targeted bottleneck. **Yield** concerns whole-force capability. **Retention** concerns what survives after external provision stops. Collapsing these into a single metric obscures assistance dynamics. A program can resolve a training deficit without raising force effectiveness because logistics binds next; it can raise supported output without creating a retained gain because operational requirements outpace indigenous sustainment; or it can improve both supported and retained capability.
 
-The underlying ideas are not individually new. Theory of Constraints expects relief of one bottleneck to expose another [@watson2007]. Hirschman's unbalanced-growth logic treats expansion in one activity as a source of new complementary shortages [@hirschman1958]. Foreign-aid research shows that donor-financed activity can increase claims on scarce recurrent or administrative resources [@roodman2006; @arimotokono2009]. Security-assistance scholarship has long distinguished current performance from sustainability and independent capacity. The contribution here is to translate those insights into a military-production framework that separates outcomes first and then assigns distinct empirical tests to candidate explanations for their divergence.
+These mechanisms draw on established theoretical foundations. Theory of Constraints notes that relieving one bottleneck exposes another [@watson2007]. Hirschman's unbalanced-growth framework treats expansion in one activity as inducing complementary shortages elsewhere [@hirschman1958]. Foreign-aid research demonstrates that external inputs often increase claims on scarce local administrative or recurrent resources [@roodman2006; @arimotokono2009]. The contribution here is translating these insights into a military production model that separates outcomes and subjects candidate mechanisms to distinct empirical tests.
 
-The first is **requirement expansion**. Assistance can enable a force to sustain more personnel, movement, patrols, combat, or command activity. Those operations generate service requirements. If the requirement for a complementary indigenous service grows faster than indigenous production, the partner's coverage of the supported operating requirement falls even if indigenous service itself increases. This is a numerator-denominator mechanism. It does not require the binding service to change.
+The first mechanism is **requirement expansion**. External aid enables larger formations, greater mobility, patrols, or combat, generating complementary service requirements. If demand for a complementary indigenous service expands faster than indigenous production, partner coverage of that requirement falls even as absolute delivery rises. This is a numerator-denominator dynamic that does not require the binding service to change. The second is **constraint displacement**: relieving the limiting service shifts the bottleneck to another channel, yielding little whole-system return until the new constraint is resolved.
 
-The second is **constraint displacement**. Assistance can successfully improve the service that currently limits the force, only for another service to become binding. Once that happens, further improvement of the relieved service can have little whole-system return. This is a bottleneck mechanism. It explains relief without yield, but it does not by itself imply a retention penalty.
+These mechanisms necessitate a rigorous benchmark. Comparing continued support to withdrawal after shared assistance isolates a dependency gap, but does not prove assistance improved performance relative to no aid. The revised analysis therefore evaluates supported effects relative to matched zero-support trajectories ($S_h = C_h^{ON} - C_h^0$), retained effects after withdrawal ($R_h = C_h^{OFF} - C_h^0$), and the dependency gap ($G_h = C_h^{ON} - C_h^{OFF}$). A strict "success without retention" case requires supported capability above no aid and retained capability below no aid.
 
-These mechanisms imply a stricter empirical standard than the original manuscript used. Comparing continued support with withdrawal after a common period of support identifies a dependency gap, but it does not establish that support improved capability relative to no aid. The revised analysis therefore distinguishes the supported effect relative to a matched zero-support trajectory, the retained effect after withdrawal relative to the same benchmark, and the gap between continued support and withdrawal. A strong success-without-retention case requires supported capability above no aid and post-withdrawal capability below no aid.
+I evaluate this framework using Pineland, a partially observed agent-based model simulating military formations, logistics, command, recruitment, and territorial control. Stage 4 comprises 2,808 prospectively frozen production worlds across a Phase Map, a targeted bottleneck-displacement module, and a substitution-versus-development module. Stage 5 adds 1,472 frozen worlds testing coordinated development. Post-review analyses use frozen telemetry for matched no-aid comparisons and supply-demand decompositions, while a separately frozen demand-clamp experiment tests whether requirement expansion causally mediates terminal coverage gaps.
 
-I evaluate the framework using Pineland, a partially observed agent-based model that represents military personnel, formations, readiness, logistics, command, external support, force generation, governance, armed organizations, and territorial competition. Stage 4 contains 2,808 prospectively frozen production worlds across a Phase Map, a targeted bottleneck-displacement module, and a substitution-versus-development module. Stage 5 adds 1,472 separately frozen worlds testing coordinated indigenous development. Post-review analyses use only frozen telemetry for matched no-aid comparisons and service-demand decomposition, while a separately frozen demand-clamp experiment tests whether requirement expansion actually mediates the terminal coverage gap.
+The revised evidence qualifies early headline claims. At +30 days, 26 of 120 treated Phase-Map cells exhibit the strict pattern: positive supported capability above no aid and negative retained capability after withdrawal. Thirty cells improve in both branches, 51 fall below no aid in both, one is negative under support but positive after withdrawal, and 12 are neutral. Support-induced dependence is thus a real, but not universal, regime.
 
-The revised evidence is more qualified than the original branch-contrast headline. At +30 days, 26 of 120 treated Phase-Map cells meet the strict pattern of positive supported capability relative to no aid and negative retained capability after withdrawal. Thirty cells improve relative to no aid in both branches, 51 are below no aid in both branches, one is negative under support but positive after withdrawal, and 12 are neutral on at least one contrast. Thus support-induced dependence is a meaningful regime in the model, not its universal outcome.
+Mechanism tests separate asymmetrically. Among worlds with negative terminal logistics coverage, supported branches face larger requirements, and descriptive standardization attributes more of the mean coverage gap to demand expansion than to indigenous production decline. However, the prospectively frozen demand clamp fails to validate that interpretation causally: while its manipulation succeeds, the ablation harness recorded a static pre-split baseline coordinate that structurally guaranteed a zero coverage branch difference, even as dynamic capability effects diverged. Requirement expansion remains descriptively plausible rather than causally identified. Conversely, the Migration module demonstrates that command and force-generation bottlenecks displace readily while logistics persists. Relieving force generation shifts the binding constraint while generating virtually zero capability gain. Constraint displacement thus explains relief without yield, not the terminal retention penalty.
 
-The mechanism evidence also separates, but asymmetrically. Among worlds with negative terminal logistics coverage, the continued-support branch usually faces a larger logistics requirement, and descriptive standardization attributes a larger share of the mean coverage gap to demand than to indigenous-service decline. The prospectively frozen clamp test, however, does not causally validate that interpretation. Its demand manipulation succeeds, but the fresh-seed normal arms reproduce positive capability effects without reproducing any indigenous-coverage branch gap, leaving no retention penalty to attenuate. Requirement expansion therefore remains a plausible production dynamic supported descriptively, not an identified cause of the Stage-4 retention pattern. By contrast, the Migration module directly shows that command and force-generation constraints are readily displaced while logistics is persistent. Force-generation relief can change the binding service while producing essentially no composite-capability gain. Constraint displacement therefore explains relief without yield, not the terminal retention penalty.
+Assistance architectures reveal further tradeoffs. Developmental logistics generates far more partner-owned capacity and superior terminal coverage than substitution, but requires higher modeled cost and does not dominate near-term capability, placing assistance modes on a capability-retention-cost frontier. Stage 5 detects selective two-way complementarities, but because its nominal near-tie worlds become logistics-bound before comparison, fixed-budget breadth findings apply to realized single bottlenecks rather than the intended multi-constraint condition.
 
-The treatment-mode results add a further qualification. Developmental logistics assistance produces much more partner-owned logistics service and much better terminal coverage than substitution, but it is somewhat more expensive in the model and does not uniformly dominate on near-term capability. Assistance design therefore lies on a capability-retention-cost frontier. Stage 5 likewise finds a small number of positive equal-dose complementarities, but its intended near-tie structure becomes logistics-bound before the main comparison. The fixed-budget breadth result consequently applies to the realized single-bottleneck regimes rather than cleanly testing the intended near-tie hypothesis.
-
-The paper makes three contributions. First, it provides a minimal production model separating supported capability, retained capability, service coverage, and the dependency gap. Second, it demonstrates why requirement growth and constraint displacement require different empirical tests and reports both supportive and failed tests rather than inferring mechanism from outcome patterns alone. Third, it offers a measurement framework for evaluating security assistance through relief, yield, retention, service demand, indigenous production, and cost rather than treating supported performance as a proxy for autonomous capacity.
-
-The scope is limited. Pineland is a synthetic laboratory, not a forecasting system. Numerical effects are model outcomes, not estimates for Afghanistan, Iraq, Mali, Colombia, or any other historical force. Historical cases are used only as structured external validation, with rival political explanations preserved rather than treated as noise.
+The paper makes three contributions. First, it formalizes a minimal military production model distinguishing supported capability, retained capability, service coverage, and dependency gaps. Second, it separates empirical tests for requirement growth and constraint displacement, reporting confirmatory and disconfirmatory findings alike. Third, it provides a diagnostic evaluation framework measuring relief, yield, retention, demand, and sustainment separately. The scope is bounded: Pineland is a causal laboratory, not an empirical forecasting engine. Case studies of South Vietnam, Afghanistan, Iraq, Colombia, and Mali serve as structured external validation, preserving historical and political explanations alongside production dynamics.
 
 # 2. Security Assistance, Dependence, and the Missing Production Dynamic
 
 ## 2.1 Interest misalignment and influence
 
-A major strand of security-force-assistance research treats poor outcomes as an
-agency problem. Biddle, Macdonald, and Baker argue that U.S. efforts frequently
-encounter systematic interest misalignment with recipients, which limits the
-military effectiveness achievable through small-footprint assistance
-[@biddle2017; @biddle2018]. Metz develops a related account centered on influence. Recipient
-leaders may have political incentives to preserve military practices that
-external advisers seek to reform, while U.S. organizations often prefer
-teaching and persuasion to more coercive forms of conditionality [@metz2023].
-
-This work explains why recipients may fail to adopt reforms even when donors
-possess technical expertise. It also guards against an overly technocratic
-interpretation of military weakness. A partner force can remain ineffective
-because the political system that produces it rewards behaviors that donors
-regard as pathologies. The present article accepts that insight. It asks a
-different question: conditional on assistance actually improving a targeted
-military function, what happens to the production structure of the partner
-force afterward?
+A prominent strand of security-force-assistance scholarship treats suboptimal outcomes as an agency problem. Biddle, Macdonald, and Baker argue that external assistance frequently confronts systematic interest misalignment with host governments, limiting the military effectiveness achievable through small-footprint advising [@biddle2017; @biddle2018]. Metz expands on this through the lens of influence: recipient regimes often possess domestic political incentives to protect corrupt or patrimonial military arrangements, while foreign advisers routinely default to teaching and persuasion over stringent conditionality [@metz2023]. This work demonstrates why recipients resist reforms even when donors possess technical expertise. This article accepts that political foundation and asks a distinct, complementary question: conditional on assistance successfully improving a targeted military function, how does the recipient's internal production structure adapt afterward?
 
 ## 2.2 Fragile forces, weak institutions, and dependence
 
-A second literature emphasizes the fragility of forces built without
-corresponding political and institutional foundations. Matisek describes
-externally constructed but brittle militaries as "Faberge Egg" forces whose
-apparent capability can collapse when external support is removed
-[@matisek2018]. Knowles and Matisek similarly argue that technical assistance
-cannot substitute for political settlement and local ownership in weak states
-[@knowlesmatisek2019]. Harkness shows that concentrating assistance in enclave
-units can create effective pockets of force while generating political and
-institutional consequences for the broader security system [@harkness2022].
-Sandnes conceptualizes the G5 Sahel Joint Force's relationship with external
-actors as asymmetric interdependence and emphasizes the difficulty of reaching
-an autonomous endpoint under such a relationship [@sandnes2024].
+A second literature highlights the vulnerability of forces constructed without durable political or institutional roots. Matisek characterizes externally constructed militaries as brittle "Faberge Egg" forces liable to collapse upon donor departure [@matisek2018]. Knowles and Matisek similarly observe that technical training cannot substitute for local political settlement [@knowlesmatisek2019]. Harkness demonstrates that concentrating assistance in elite enclave formations creates localized operational proficiency while distorting broader civil-military stability [@harkness2022]. Sandnes conceptualizes relations between donors and the G5 Sahel Joint Force as asymmetric interdependence, highlighting structural barriers to autonomous sustainability [@sandnes2024].
 
-Security-assistance scholarship also already treats independence or
-sustainability as a distinct outcome from current battlefield performance.
-Karlin includes the ability to sustain a partner military without continuing
-U.S. support in the outcome concept for successful military building
-[@karlin2018]. Reynolds similarly proposes an explicit Security Autonomy Index
-for assessing whether recipient institutions can internalize and sustain
-security models [@reynolds2025]. These works occupy important conceptual ground
-that the present article does not claim as new. The contribution must therefore
-lie in the production mechanisms separating supported from retained capability,
-not in noticing that such divergence can exist.
+Scholarship in international security has long distinguished immediate battlefield performance from long-term sustainability. Karlin incorporates the capacity to sustain forces independently into the core definition of successful military development [@karlin2018], while Reynolds proposes a Security Autonomy Index to assess whether recipients internalize external military models [@reynolds2025]. Policy and defense evaluations underscore similar themes. RAND analyses emphasize that converting foreign inputs into durable capacity requires institutional absorption [@mcnerney2016; @paul2013]. A GAO review of Section 333 train-and-equip proposals revealed that 42 of 46 proposals lacked documentation for sustainment or absorptive capacity [@gao2023].
 
-Policy and evaluation literatures make a related point in the language of
-absorptive capacity and sustainment. RAND research on defense institution
-building stresses the organizational and institutional foundations required to
-convert external assistance into durable partner capability [@mcnerney2016].
-Earlier RAND work on building partnership capacity likewise emphasizes that
-assistance effectiveness depends on context, recipient capacity, and the type of
-capability being built rather than the transfer of resources alone [@paul2013].
-GAO's review of Section 333 train-and-equip proposals found that 42 of 46
-reviewed proposals did not fully document sustainment, absorptive capacity, or
-measurable objectives [@gao2023]. These literatures make it clear that durable
-capacity cannot be inferred from equipment delivery or tactical proficiency.
+State-capacity research sharpens this diagnosis. Pritchett, Woolcock, and Andrews define **premature load bearing** as placing operational demands on organizations that outstrip their institutional capabilities [@pritchett2013; @andrews2017]. The present theory operationalizes this dynamic mechanistically: successful external assistance can itself expand the operational requirements placed on a partner military, shifting which complementary service limits the force.
 
-An adjacent state-capacity literature sharpens the same warning. Pritchett,
-Woolcock, and Andrews describe **premature load bearing** as a condition in which
-organizations are asked to perform functions beyond the capabilities they have
-actually developed [@pritchett2013]. Andrews, Pritchett, and Woolcock develop
-that argument into a broader account of capability traps and problem-driven
-institution building [@andrews2017]. The present theory is narrower and more
-mechanistic. It asks how successful assistance can itself alter the service
-requirements placed on a military organization, and how the identity of the
-binding production constraint changes as a result. In that sense, support-
-enabled demand is not merely an external burden placed on a weak organization;
-it can be an endogenous consequence of prior success.
-
-The contribution here is therefore not the claim that assistance can create
-dependency. That point is well established. The narrower problem is how to
-separate current supported performance from retained capability while identifying
-whether a gap arises because operating requirements expand, because indigenous
-production changes, or because a different complementary service becomes
-binding.
-
-It is also useful to separate three forms of dependence that are often collapsed
-into one label. **Operational dependence** means that a specified military
-output cannot be generated without continuing foreign service or input
-provision. **Institutional dependence** means that external provision weakens
-or displaces the development of indigenous organizations. **Relational
-dependence** means that reliance on an external actor creates asymmetric
-bargaining power. The production framework here is fundamentally operational.
-Requirement expansion and constraint displacement can coexist with the
-institutional and relational forms, but neither mechanism logically requires
-them.
+To clarify mechanisms, I distinguish three forms of dependency. **Operational dependence** occurs when military output cannot be sustained without continuing foreign service inputs. **Institutional dependence** arises when external provision displaces the development of indigenous administrative bodies. **Relational dependence** stems from unequal bargaining leverage. The framework here is fundamentally operational: while institutional and relational dynamics frequently interact with operational dependence, requirement expansion and constraint displacement do not require them.
 
 ## 2.3 Bottlenecks, recurrent costs, and complementary production
 
-The closest general antecedent is the Theory of Constraints. In that tradition,
-system throughput is governed by the active constraint; improving a
-nonconstraint yields little whole-system benefit, while successful elevation of
-the current constraint eventually causes another to become limiting
-[@watson2007]. That logic is almost an abstract statement of constraint
-migration. It should therefore be treated as a theoretical foundation rather
-than claimed as an original discovery.
+The primary theoretical antecedent is the Theory of Constraints: system output is determined by the active bottleneck; relieving a non-binding constraint yields little whole-system gain, while elevating the binding constraint inevitably exposes another [@watson2007]. Hirschman's unbalanced-growth framework provides a parallel macroeconomic logic: expansion in one activity induces bottlenecks and shortages across complementary sectors [@hirschman1958]. Development economics similarly explores recurrent-cost burdens. Roodman shows how donor projects overload recipient administrative capacity [@roodman2006], Arimoto and Kono model how donor capital investments generate recurrent liabilities that recipients cannot sustain [@arimotokono2009], and Morss highlights institutional decay under donor project proliferation [@morss1984].
 
-Hirschman's unbalanced-growth framework provides a second close precedent.
-Expansion in one sector creates shortages, pressures, and inducements for
-complementary investment elsewhere [@hirschman1958]. The key similarity is
-endogeneity: the next shortage is generated or made salient by successful
-expansion in the first activity. The difference is that Hirschman's mechanism
-is normally developmental and economy-wide, whereas the present argument
-focuses on selective foreign substitution inside a military production system
-and on the possibility that observed performance rises faster than indigenous
-reproduction.
+In military production, this problem operates across functional domains. Upgrading command enables larger tactical formations; expanding recruitment increases logistics demands; and providing tactical mobility multiplies fuel, maintenance, and distribution requirements. This logic aligns with foundational theories of complementary production: Kremer's O-ring model demonstrates how failure in one indispensable task diminishes returns across all others [@kremer1993], and organizational economics demonstrates how returns to one practice depend on complementary capabilities [@milgromroberts1990]. Military scholarship has long recognized that combat power depends on complex organizational synthesis [@millett1986], operational employment [@biddle2004], and sustainment throughput [@vancreveld2004].
 
-Foreign-aid research comes closer still to the support-induced demand problem.
-Roodman models donor aid and scarce recipient-side resources as complementary
-inputs and shows how project proliferation can overload the local resources
-needed to administer assistance [@roodman2006]. Arimoto and Kono model
-donor-financed investment that generates recurrent-cost obligations which the
-recipient must supply if project benefits are to persist
-[@arimotokono2009]. Morss's earlier work on donor and project proliferation
-similarly emphasizes the burden placed on scarce recipient administrative
-capacity [@morss1984]. These are direct precedents for the proposition that an
-external input can increase the requirement for a scarce indigenous complement.
-
-The military contribution is narrower. The relevant complement need not be a
-recurrent cost attached directly to the donated asset. Assistance to one
-service can enable a broader change in operating scale or complexity whose
-demands spill onto a different service. More reliable command can make larger
-formations usable. More force generation can increase logistics and
-replacement demand. More mobility can increase maintenance, fuel,
-communications, medical evacuation, and distribution requirements. The object
-of interest is therefore a changing constraint set in which the service that
-limits the whole force is itself endogenous to successful intervention.
-
-This point is consistent with mature theories of complementarity. Kremer's
-O-ring model shows why weak performance in one indispensable task can sharply
-reduce the return to excellence elsewhere [@kremer1993], and organizational
-complementarity research shows how returns to one practice can depend on the
-presence of others [@milgromroberts1990], while military
-effectiveness research has long treated armed forces as complex organizations
-whose aggregate performance cannot be inferred from isolated attributes
-[@millett1986]. Biddle's force-employment account similarly demonstrates that
-material inputs do not map mechanically into military capability because their
-effect depends on how forces employ them [@biddle2004]. Military logistics
-scholarship likewise demonstrates that
-movement and sustainment can delimit operational possibility [@vancreveld2004].
-The paper therefore makes no generic claim that militaries are systems, that
-logistics matters, or that nonbinding improvements can have low system returns.
-
-Absorptive capacity is adjacent but distinct. In its classic organizational
-form, absorptive capacity concerns the ability to recognize, assimilate, and
-exploit external knowledge [@cohenlevinthal1990]. A partner can display high
-absorptive capacity in an assisted subsystem and still fail to reproduce the
-larger military system that successful absorption makes possible. The most
-diagnostic cases for the present theory are therefore not failed absorption,
-but successful first-stage absorption followed by insufficient indigenous
-production in another complementary service.
-
-Aid-dependence research also offers a competing route to superficially similar
-outcomes. High external financing can weaken accountability, distort incentives,
-or inhibit long-run institution building [@knack2001; @brautigamknack2004;
-@moss2006]. Those mechanisms can also produce high supported output and weak
-post-support retention. The empirical burden here is to show a different production sequence:
-assistance changes supported operations and service requirements, indigenous
-production may fail to keep pace, and local constraint relief may or may not
-translate into whole-system yield.
+This focus separates the theory from standard accounts of absorptive capacity and aid dependence. Absorptive capacity concerns assimilating external knowledge [@cohenlevinthal1990]; here, a recipient can successfully assimilate assistance in one subsystem while failing to sustain the broader operational demands that success unlocks. Similarly, aid-dependence theories emphasize political distortions and weakened accountability [@knack2001; @brautigamknack2004; @moss2006]. The operational sequence examined here is distinct: assistance expands supported operations, service requirements outpace indigenous delivery, and local relief shifts the binding constraint without guaranteeing whole-system yield.
 
 ## 2.4 From static capacity to endogenous production dynamics
 
-Military capability is jointly produced: personnel, logistics, command, and
-force generation are complements, so improving one function need not increase
-whole-force output. Assistance can also change the system it evaluates by
-enabling more personnel, movement, coordination, or operations, which can alter
-service requirements and the identity of the binding constraint. The narrow
-contribution is therefore a measurement framework that places **supported
-capability, retained capability, service requirements, indigenous production,
-and changing constraints** in one production system while keeping candidate
-mechanisms empirically separable.
+Military capability is jointly produced across force generation, logistics, and command. Assistance alters this production surface by enabling operations that enlarge complementary service demands. The analytical task is therefore developing a framework that models **supported capability, retained capability, service demand, indigenous delivery, and constraint migration** within an integrated production system.
 
 # 3. Theory
 
 ## 3.1 A minimal complementary-production model
 
-Consider a military system that requires services indexed by \(j\). An
-operation of scale or complexity \(x\) requires \(r_j(x)\) units of service
-\(j\). Indigenous production is \(I_j\) and external provision is \(E_j\).
+Consider a military system that requires services indexed by $j$. An
+operation of scale or complexity $x$ requires $r_j(x)$ units of service
+$j$. Indigenous production is $I_j$ and external provision is $E_j$.
 Supported feasible capability and independently reproducible capability are
 
-\[
+
+
+$$
 C^{S}=\max x \quad \text{s.t.} \quad r_j(x)\le I_j+E_j \quad \forall j,
-\]
+$$
+
+
 
 and
 
-\[
+
+
+$$
 C^{A}=\max x \quad \text{s.t.} \quad r_j(x)\le I_j \quad \forall j.
-\]
+$$
 
-For the useful special case \(r_j(x)=a_jx\), these reduce to
 
-\[
+
+For the useful special case $r_j(x)=a_jx$, these reduce to
+
+
+
+$$
 C^{S}=\min_j\frac{I_j+E_j}{a_j},
 \qquad
 C^{A}=\min_j\frac{I_j}{a_j}.
-\]
+$$
+
+
 
 The result is elementary but important. A force can possess a high supported
 capability and a much lower independently reproducible capability at the same
-point in time. The gap \(C^S-C^A\) is therefore a production property, not a
+point in time. The gap $C^S-C^A$ is therefore a production property, not a
 claim that indigenous capability has necessarily been destroyed.
 
 The empirical analysis also records **indigenous coverage** of an observed
-service requirement. For any active service with demand \(D_j>0\),
+service requirement. For any active service with demand $D_j>0$,
 
-\[
+
+
+$$
 q_j^I=\frac{I_j}{D_j},
 \qquad
 q_j^S=\frac{I_j+E_j}{D_j}.
-\]
+$$
 
-The structural coverage coordinate is \(q^I=\min_j q_j^I\), and the observed
-binding service is \(B=\arg\min_j q_j^I\). Coverage is deliberately kept
-distinct from absolute capability. A lower \(I/D\) ratio can reflect lower
+
+
+The structural coverage coordinate is $q^I=\min_j q_j^I$, and the observed
+binding service is $B=\arg\min_j q_j^I$. Coverage is deliberately kept
+distinct from absolute capability. A lower $I/D$ ratio can reflect lower
 indigenous service, a larger requirement, or both. It should not be described
 as indigenous capability loss without decomposing its numerator and
 denominator.
@@ -268,29 +133,41 @@ intervention produces. **Retention** asks how much of that capability remains
 after the additional external service stops.
 
 These quantities can be represented against a common no-aid benchmark. Let
-\(C_h^0\) be capability at horizon \(h\) under matched no aid, \(C_h^{ON}\)
-capability with continued support after the split, and \(C_h^{OFF}\) capability
+$C_h^0$ be capability at horizon $h$ under matched no aid, $C_h^{ON}$
+capability with continued support after the split, and $C_h^{OFF}$ capability
 after the same supported prehistory followed by withdrawal. Then
 
-\[
+
+
+$$
 S_h=C_h^{ON}-C_h^0
-\]
+$$
+
+
 
 is the supported effect,
 
-\[
+
+
+$$
 R_h=C_h^{OFF}-C_h^0
-\]
+$$
+
+
 
 is the retained effect, and
 
-\[
+
+
+$$
 G_h=C_h^{ON}-C_h^{OFF}=S_h-R_h
-\]
+$$
+
+
 
 is the dependency gap between continued support and withdrawal. A strong
-success-without-retention case requires \(S_h>0\) and \(R_h<0\). This is a
-stricter condition than simply observing \(C_h^{ON}>C_h^{OFF}\), because the
+success-without-retention case requires $S_h>0$ and $R_h<0$. This is a
+stricter condition than simply observing $C_h^{ON}>C_h^{OFF}$, because the
 latter can arise when withdrawal harms a force that was not outperforming the
 matched no-aid trajectory.
 
@@ -302,50 +179,62 @@ Neither mechanism logically requires the other.
 ## 3.3 Requirement expansion and indigenous coverage
 
 Suppose assistance allows the force to operate at a higher supported scale
-\(C^S\). Service demand may then rise with that operating scale. Write the
-requirement for service \(j\) as \(D_j=g_j(C^S)\), with \(g_j'\ge0\). Indigenous
+$C^S$. Service demand may then rise with that operating scale. Write the
+requirement for service $j$ as $D_j=g_j(C^S)$, with $g_j'\ge0$. Indigenous
 coverage is
 
-\[
+
+
+$$
 q_j^I=\frac{I_j}{g_j(C^S)}.
-\]
+$$
+
+
 
 For positive values, the change in log coverage decomposes exactly as
 
-\[
+
+
+$$
 \Delta\ln q_j^I=\Delta\ln I_j-\Delta\ln D_j.
-\]
+$$
+
+
 
 Coverage therefore falls whenever proportional growth in the service
 requirement exceeds proportional growth in indigenous service. This can occur
-even when \(I_j\) increases in absolute terms. It can also occur while the same
+even when $I_j$ increases in absolute terms. It can also occur while the same
 service remains binding throughout. Requirement expansion is therefore a
 distinct mechanism from bottleneck migration.
 
 **Proposition 1, Requirement Expansion.** Conditional on an assistance-induced
-increase in operating requirements, indigenous coverage of service \(j\) falls
-when \(D_j\) grows faster than \(I_j\).
+increase in operating requirements, indigenous coverage of service $j$ falls
+when $D_j$ grows faster than $I_j$.
 
 **Proposition 2, Supported-Retained Divergence.** Assistance can generate a
-positive supported effect \(S_h\) while producing a smaller or negative retained
-effect \(R_h\) when the supported system depends on service production that the
+positive supported effect $S_h$ while producing a smaller or negative retained
+effect $R_h$ when the supported system depends on service production that the
 partner does not reproduce after withdrawal.
 
 ## 3.4 Constraint displacement and system yield
 
 Requirement expansion is not the only reason local improvement can fail to
 translate into system performance. In the linear special case, suppose service
-\(k\) is the unique supported bottleneck. Increasing external service \(E_k\)
-raises \(C^S\) only until
+$k$ is the unique supported bottleneck. Increasing external service $E_k$
+raises $C^S$ only until
 
-\[
+
+
+$$
 \frac{I_k+E_k}{a_k}
 =
 \min_{j\ne k}\frac{I_j+E_j}{a_j}.
-\]
+$$
+
+
 
 Beyond that threshold, another service binds and the marginal system return to
-additional service \(k\) is zero unless the new constraint is also relieved.
+additional service $k$ is zero unless the new constraint is also relieved.
 This is **constraint displacement**. It is the standard bottleneck logic applied
 to a partner force whose service levels can be altered selectively by external
 assistance.
@@ -365,8 +254,8 @@ positive, zero, or negative retained outcomes.
 
 ## 3.5 Substitution, development, and coordinated growth
 
-Direct substitution increases \(E_j\). Developmental assistance seeks to raise
-\(I_j\). Development at a persistently binding service can therefore improve
+Direct substitution increases $E_j$. Developmental assistance seeks to raise
+$I_j$. Development at a persistently binding service can therefore improve
 indigenous coverage, but it need not dominate substitution on near-term
 capability or modeled donor cost. The relevant policy object is a frontier among
 supported capability, retained capability, indigenous service, time, and cost,
@@ -376,11 +265,15 @@ If several services are genuinely near binding, coordinated development may
 generate technical complementarity. For two services, the equal-dose factorial
 interaction is
 
-\[
-I_{AB}=Q_{AB}-Q_A-Q_B+Q_0,
-\]
 
-where \(Q\) is the prespecified terminal system coordinate. A positive
+
+$$
+I_{AB}=Q_{AB}-Q_A-Q_B+Q_0,
+$$
+
+
+
+where $Q$ is the prespecified terminal system coordinate. A positive
 interaction identifies complementarity on that outcome. A different question
 is whether spreading a fixed total developmental dose across services beats
 concentrating it on the best single channel. The latter requires a valid
@@ -411,85 +304,43 @@ them into a single migration-mediated theory of dependence.
 
 ## 4.1 Why use a synthetic experiment?
 
-The central quantities in the theory are difficult to identify directly in
-historical data. Donor service, indigenous service, latent demand, and the
-counterfactual state of the same force after withdrawal are rarely observed at
-the same temporal and functional resolution. Historical forces also select into
-assistance nonrandomly, donor packages change with battlefield conditions, and
-the withdrawal of support is usually endogenous to political events.
+The primary variables in the theory are difficult to isolate observationally. External inputs, indigenous outputs, operational requirements, and counterfactual trajectories following withdrawal are rarely observed at comparable temporal and functional granularity. Partner forces also select into foreign assistance non-randomly, donor packages fluctuate with tactical conditions, and withdrawal decisions reflect political calculations.
 
-Pineland is used here as a causal laboratory rather than a forecasting system.
-The model makes service flows explicit, permits exact cloning at withdrawal,
-and allows one component of external support to be removed while preserving the
-rest of the simulated state and random streams. This provides causal leverage
-over mechanisms that are difficult to isolate observationally. It does not by
-itself provide empirical estimates for real-world cases.
+Pineland functions as a causal laboratory rather than an empirical forecasting engine. It explicitly tracks service flows, enables exact cloning of world states at withdrawal, and allows researchers to manipulate individual assistance components while holding background environments and stochastic sequences constant. This design provides causal identification of mechanisms that remain unobservable in historical records, though it does not directly estimate historical effect magnitudes.
 
 ## 4.2 Pineland partner-force architecture
 
-Pineland is a partially observed agent-based model of insurgency,
-counterinsurgency, political order, logistics, information, mobility, and
-foreign assistance. The complete model is documented using the ODD structure
-for agent-based model reporting [@grimm2020odd] in the replication materials.
-The present paper uses a narrower partner-force
-layer with three service channels: force generation, logistics, and command.
-Each channel records demand, indigenous service, and removable external service
-in like-for-like units.
+Pineland is a partially observed agent-based simulation of insurgency, governance, logistics, command, and foreign assistance, documented under the ODD protocol [@grimm2020odd]. This paper analyzes an embedded partner-force production layer comprising three complementary service channels: force generation, logistics, and command. Each channel tracks demand, indigenous capacity, and external provision in common units.
 
-| Channel | Demand | Indigenous service | External service |
+| Channel | Demand Functional Form | Indigenous Service Form | External Service Form |
 |---|---|---|---|
-| Force generation | military losses during the measurement window | indigenous training graduates | externally enabled incremental graduates |
-| Logistics | military logistics demanded | indigenous logistics delivered | external logistics delivered |
-| Command | command opportunities multiplied by a fixed 0.5 service requirement per opportunity | indigenous command service | supported command service above the indigenous amount |
+| Force generation | $D_{\text{fg}} = L_{\Delta t}$ (realized military losses) | $I_{\text{fg}} = \mu_{\text{fg}} K_{\text{fg}}$ (training pipeline throughput) | $E_{\text{fg}}$ (externally enabled incremental graduates) |
+| Logistics | $D_{\text{log}} = \sum_t (c_{\text{pres}} P_t \Delta t + c_{\text{move}} M_t + c_{\text{patrol}} H_t^{\text{patrol}} + c_{\text{combat}} H_t^{\text{combat}})$ | $I_{\text{log}} = \min(S_t^{\text{depot}}, \mu_{\text{log}} K_{\text{log}})$ (depot deliveries) | $E_{\text{log}}$ (direct external logistics delivered) |
+| Command | $D_{\text{cmd}} = \kappa O_{\Delta t}$ ($\kappa = 0.5$ per order opportunity) | $I_{\text{cmd}} = \mu_{\text{cmd}} O_{\Delta t}$ (indigenous headquarters execution) | $E_{\text{cmd}}$ (external advisory / C2 service) |
 
-The structural coverage coordinate is computed only for channels with positive
-demand. A zero-demand channel is inactive rather than assigned an arbitrary
-coverage value. The binding service is the active channel with the lowest
-indigenous service-to-demand ratio.
+Structural coverage is evaluated across active channels with positive demand ($D_j > 0$). The binding bottleneck is the active channel with the lowest indigenous coverage ratio:
 
-Logistics demand is endogenous to the simulated force. It accumulates through
-presence consumption, movement, patrol activity, and combat supply
-requirements. Force generation demand is realized military loss. Command demand
-is generated by command opportunities. Assistance can therefore alter service
-requirements indirectly by changing personnel survival, readiness, movement,
-patrols, combat, and other operational states. The demand side of the coverage
-ratio is not an exogenous treatment label.
+$$
+q^I = \min_{j \in \{\text{fg}, \text{log}, \text{cmd}\}} \frac{I_j}{D_j}, \qquad B = \arg\min_j \frac{I_j}{D_j}.
+$$
 
-Whole-force capability is measured separately from service coverage. Let
-\(g\), \(p\), \(f\), \(c\), and \(r\) denote government-control retention,
-military-personnel retention, operational-formation survival, geographic
-coverage retention, and operational-readiness retention, each bounded to
-\([0,1]\) relative to the split-time reference state. The primary composite is
+Logistics demand $D_{\text{log}} = g_{\text{log}}(C^S)$ is endogenous, accumulating through presence consumption ($c_{\text{pres}}$ per person-day for active forces $P_t$), movement ($c_{\text{move}}$ per person-km for maneuvers $M_t$), patrols ($c_{\text{patrol}}$ per patrol hour $H_t^{\text{patrol}}$), and combat consumption ($c_{\text{combat}}$ per contact hour $H_t^{\text{combat}}$). Force generation demand $D_{\text{fg}}$ equals realized casualties $L_{\Delta t}$. Command demand $D_{\text{cmd}}$ reflects order opportunities $O_{\Delta t}$ with $\kappa = 0.5$. Because external aid expands force size, mobility, patrols, and engagements, service demand is an endogenous system outcome.
 
-\[
-C=(gpfcr)^{1/5}.
-\]
+Whole-force capability is measured separately via composite retention. Let $g$, $p$, $f$, $c$, and $r$ denote government control, personnel retention, formation survival, geographic coverage, and operational readiness, each bounded to $[0,1]$ relative to the pre-split baseline. The primary composite is
 
-Thus a reported capability difference of 0.02 is a two-hundredths difference on
-a unit-scale geometric retention index, not a two-percent estimate of historical
-combat effectiveness. An earlier four-component version excluding readiness is
-retained in telemetry for audit but is not the paper's primary capability
-coordinate.
+$$
+C = (gpfcr)^{1/5}.
+$$
 
-Developmental assistance alters partner-owned productive capacity on a weekly
-cadence. Direct substitution instead supplies removable external service. The
-specific treatment coefficients and all model parameters used in production are
-reported in the archived contracts and parameter table. The formal adapter is
-also checked against a small Lean specification for nonnegativity and service
-feasibility. That verification establishes implementation consistency, not the
-empirical validity of the model.
+Reported capability differences reflect changes on this unit-scale geometric index rather than percentage changes in combat effectiveness.
 
-At simulated day 120, each Stage-4 world is cloned into continued-support and
-withdrawal branches. The branches are identical at the split. The withdrawal
-branch removes the designated external continuation while preserving indigenous
-formations, personnel, accumulated developmental capacity, stocks, governance
-state, topology, and random streams. Outcomes are measured 7, 30, 90, 180, and
-360 days after the split.
+Developmental assistance augments partner productive capacity ($I_j$) on a weekly schedule; direct substitution supplies removable external service ($E_j$). At simulated day 120, each world branches into continued-support (`SUPPORT_ON`) and withdrawal (`SUPPORT_OFF`) arms. The withdrawal branch removes foreign assistance while preserving accumulated indigenous capacity, stocks, and random seeds. Outcomes are recorded at +7, +30, +90, +180, and +360 days.
 
 ## 4.3 Integrated Stage-4 design
 
-The experiment contains 234 cells and 2,808 production worlds, with 12 seeds
-per cell.
+Stage 4 comprises 234 cells and 2,808 production worlds (12 seeds per cell).
+
+**Table 1. Integrated Stage-4 experimental design.** Each production world executes one frozen seed in a prospectively frozen cell, separating branch divergence, bottleneck migration, and assistance architecture.
 
 | Module | Cells | Seeds per cell | Worlds | Purpose |
 |---|---:|---:|---:|---|
@@ -498,154 +349,36 @@ per cell.
 | Substitution vs Development | 42 | 12 | 504 | Compare no aid, direct substitution, indigenous development, and hybrid assistance |
 | **Total** | **234** | **12** | **2,808** | Integrated test of phenomenon, dynamics, and mechanism |
 
-**Table 1. Integrated Stage-4 experimental design.** Each production world uses
-one frozen seed within a prospectively frozen cell. The three modules separate
-branch divergence, constraint displacement, and the assistance-architecture
-contrast between substitution and indigenous development.
-
-The Phase Map crosses four starting structural families with five indigenous
-capacity levels and seven direct-support intensities from 0 to 2 times the
-balanced service package. The Migration module contains force-generation,
-logistics, command, balanced-targeted, and no-support conditions across three
-treatment intensities. The treatment target is evaluated against the **observed
-pre-withdrawal bottleneck**, not assumed to be correct because of the nominal
-cell label.
-
-The mechanism module varies force-generation, logistics, and command weakness;
-moderate and severe starting conditions; treatment mode; and low or high
-intensity. Direct substitution provides external service. Developmental
-assistance increases partner-owned productive capacity on a fixed treatment
-cadence. Hybrid assistance combines both. Development accumulated before
-withdrawal remains in the withdrawal branch, while future donor-funded
-development stops.
+The Phase Map crosses four starting structural families with five capacity levels and seven support intensities (0 to 2.0). The Migration module evaluates force-generation, logistics, command, balanced, and no-support packages across three intensities, identifying targets by observed pre-withdrawal bottlenecks. The Mechanism module contrasts direct substitution, indigenous development, and hybrid assistance across moderate and severe weakness.
 
 ## 4.4 Estimands and uncertainty
 
-The original Stage-4 estimands were frozen before production. The early branch
-contrast is continued support minus withdrawal in composite capability at +30
-days. The terminal structural contrast is continued support minus withdrawal in
-capped indigenous coverage at +360 days. The original analysis called the joint
-pattern of a positive early branch contrast and a negative terminal coverage
-contrast an autonomy trap. The revised analysis retains those results as
-frozen branch contrasts but does not equate them with net benefit over no
-aid.
+The preregistered Stage-4 estimands evaluate early composite capability branch divergence ($C_{30}^{ON} - C_{30}^{OFF}$) and terminal indigenous coverage divergence ($q_{360}^{I,ON} - q_{360}^{I,OFF}$). Post-review analyses add two diagnostics on frozen telemetry: matching treated worlds to zero-support controls ($S_h$, $R_h$, $G_h$), and decomposing terminal coverage into demand and indigenous service components. For logistics-bound terminal worlds, descriptive standardizations evaluate supported production under withdrawal demand and vice versa.
 
-Two post-completion analyses were added after external review and are labeled as
-such throughout. First, each treated Phase-Map world is matched by structure,
-capacity, seed, and horizon to its zero-support control. This yields the
-supported effect \(S_h\), retained effect \(R_h\), and dependency gap \(G_h\)
-defined in Section 3.2. Second, the terminal coverage contrast is decomposed
-into indigenous-service and demand components. For worlds in which logistics
-binds in both terminal branches, two standardized quantities are also reported:
-continued-support indigenous service evaluated at withdrawal-branch demand, and
-withdrawal-branch indigenous service evaluated at continued-support demand.
-These standardizations are descriptive counterfactual calculations, not runtime
-interventions.
-
-The revised paper therefore distinguishes three classes of evidence: frozen
-Stage-4 estimands, explicitly labeled post-completion diagnostics from frozen
-telemetry, and a separately frozen post-review mechanism ablation that directly
-intervenes on logistics demand.
-
-Cell summaries report means, medians, 10th and 90th percentiles, and directional
-seed fractions because prior experiments showed material heavy-tail behavior.
-Bootstrap intervals are retained as descriptive stability summaries, not as
-population-sampling significance tests. No world is removed as an outlier and
-no primary result is winsorized. The revised text emphasizes effect sizes,
-directions, and robustness across conditions rather than treating the number of
-simulation seeds as inferential sample size.
-
-For the mechanism experiment, development-minus-substitution and
-hybrid-minus-substitution contrasts use matched seed indices within the same
-target, severity, and intensity condition. These are common-random-number
-contrasts, not exact cloned counterfactuals across treatment modes because the
-pre-withdrawal treatment histories differ.
+Analyses report cell means, medians, 10th-90th percentiles, and directional fractions. Bootstrap intervals serve as descriptive sampling dispersion metrics rather than population hypothesis tests.
 
 ## 4.5 Reproducibility and production integrity
 
-The production simulator, contracts, and selected runtime artifacts were locked
-under a cryptographic freeze before production. Engineering calibration used a
-disjoint seed namespace from the production experiment. All 2,808 production
-worlds completed. An independent final audit re-hashed every primary and
-trajectory shard and verified exact logical-task coverage, row counts,
-filenames, production commit, freeze hash, and contract hash. The audit found
-zero missing task IDs, zero duplicate task IDs, and zero integrity errors.
-
-Postprocessing repairs were isolated from production. Exact commits, artifact
-hashes, seed namespaces, task ledgers, and reproduction commands are reported
-in the online replication appendix rather than in the substantive argument.
+Simulation code, parameters, and analysis contracts were locked under cryptographic freeze prior to execution. An independent audit confirmed complete task coverage, row counts, and checksum hashes across all 2,808 worlds with zero missing or duplicate records. Full provenance and replication instructions are detailed in Appendix A.
 
 ## 4.6 Proposition-to-test correspondence
 
-The revised theory assigns different tests to the two mechanisms. The Phase Map
-establishes branch divergence and supplies the frozen telemetry for the
-post-review supply-demand decomposition. A separate prospectively frozen
-demand-clamp experiment directly tests Proposition 1 by preventing the
-continued-support branch from generating a larger logistics requirement than
-its matched withdrawal branch. The no-aid controls in the Phase Map identify
-the supported effect, retained effect, and dependency gap in Proposition 2.
-
-The Migration module tests Proposition 3. Its purpose is not to explain the
-coverage penalty. It asks whether successful relief displaces the binding
-service and whether such displacement is associated with material system yield.
-The substitution-versus-development module then shows how local indigenous
-production, system capability, terminal coverage, and modeled donor cost move
-together under different assistance architectures.
-
-This mapping is intentionally asymmetric. Requirement expansion can reduce
-coverage without migration, and migration can occur without a negative terminal
-coverage effect. The empirical analysis treats those possibilities as competing
-observations rather than forcing them into one causal chain.
+The research design maps distinct tests to theoretical propositions. The Phase Map establishes branch divergence and supplies telemetry for supply-demand decomposition. A separately frozen demand-clamp experiment tests Proposition 1 by dynamically constraining supported logistics demand to match withdrawal requirements. Control-matched contrasts evaluate Proposition 2 ($S_h$, $R_h$, $G_h$). The Migration module tests Proposition 3, establishing whether relieving a bottleneck displaces the limiting constraint and how displacement affects system yield. The Mechanism module evaluates the capability-retention-cost frontier under alternative assistance modes.
 
 ## 4.7 Prospectively frozen coordinated-development extension
 
-The completed Stage-4 findings raise an additional question that was not part of
-the original preregistration: can several complementary indigenous capacities
-be developed together so that the whole production frontier moves outward rather
-than one bottleneck simply replacing another? Because this question emerged
-after Stage-4 results were known, it was treated as a separate prospective
-extension rather than retrofitted into the original design.
+Stage 5 evaluates whether developing multiple complementary capacities simultaneously expands whole-force output more effectively than single-channel interventions. The campaign comprises 92 cells and 16 matched seeds per cell (1,472 worlds), testing all combinations of force-generation, logistics, and command development across four starting structures under two dose allocations:
 
-Stage 5 contains 92 cells and 16 matched seeds per cell, for 1,472 production
-worlds. It tests all nonempty combinations of indigenous force-generation,
-logistics, and command development across four nominal starting structures: one
-force-generation bottleneck, one logistics bottleneck, one command bottleneck,
-and a low-capacity near-tie structure in which all three service multipliers begin
-at the same level. Two developmental intensities are used.
+1. **Equal total effort:** Divides a fixed developmental investment across active channels to test allocation breadth efficiency.
+2. **Equal channel dose:** Provides the full single-channel dose to each active service, enabling direct estimation of factorial interactions ($I_{AB} = Q_{AB} - Q_A - Q_B + Q_0$).
 
-The design deliberately separates two questions. Under **equal total effort**,
-a fixed normalized developmental dose is divided across the active channels.
-This tests whether breadth itself improves allocation efficiency. Under **equal
-channel dose**, each active service receives the full single-channel dose.
-Multi-channel arms therefore use more total effort, allowing direct estimation
-of pairwise and three-way factorial interactions without interpreting raw outcome
-differences as cost efficiency.
+All arms undergo 120 days of development before donor support ceases. Pre-registered endpoints measure retained feasibility ($Q$) at +360 days.
 
-The primary endpoint is capped indigenous whole-system feasibility on the
-`SUPPORT_OFF` branch at +360 days. All arms receive the same 120-day developmental
-prehistory. At the split, additional donor-driven development stops while the
-indigenous productive capacity accumulated during the prehistory remains. The
-prospectively frozen analyses therefore estimate retained coverage and capability gains,
-pairwise and three-way factorial interactions, equal-total-effort breadth
-premiums, and bottleneck dynamics.
-
-The Stage-5 protocol, contract, analysis code, and inherited scientific
-foundation were prospectively frozen before any Stage-5 production outcome was
-observed. The campaign completed all 1,472 worlds. Exact source commits, hashes,
-and execution provenance are reported in the replication appendix.
-
-A manipulation check is essential for interpretation. The nominal multiplier
-structures do not always remain the observed formal bottleneck after the common
-120-day developmental prehistory. At the split, logistics is the observed
-bottleneck in all 368 nominal force-generation-constrained worlds, all 368
-logistics-constrained worlds, and 365 of 368 nominal near-tie worlds. The nominal
-command-constrained structure preserves command as the split-point bottleneck in
-100 of 368 worlds and logistics in the remainder. Stage-5 structure labels are therefore reported as **nominal design factors**,
-not as validated observed bottleneck identities. This weakens any causal
-interpretation of the intended near-tie scope-condition test while leaving the
-paired treatment contrasts themselves intact.
+A manipulation check reveals that nominal design structures do not uniformly persist as active bottlenecks at split: logistics binds at day 120 in all 368 nominal force-generation worlds, all 368 logistics worlds, and 365 of 368 near-tie worlds, while command binds in 100 of 368 command-constrained worlds. Nominal structures are therefore reported as design factors rather than verified bottleneck states, qualifying the scope condition for multi-constraint near-ties.
 
 # 5. Results
+
+Throughout this section, cell-level classifications aggregate across simulation seeds to characterize experimental factor combinations ($n = 120$ treated cells; 20 zero-support control cells), whereas world-level statistics describe individual seed runs (up to $n = 1,440$ treated seed runs in the Phase Map, or 1,680 across all 140 cells) to preserve full distributional variation.
 
 ## 5.1 Supported effect, retained effect, and dependency gap are different quantities
 
@@ -672,6 +405,10 @@ The strong success-without-retention pattern therefore appears in 26 of 120
 treated cells at +30 days, not in 96 of 106 cells. The latter count describes a
 different quantity: whether continued support outperforms withdrawal after a
 common supported prehistory.
+
+The 51 cells in which assistance fails to outperform no aid in either branch (42.5 percent of treated cells) represent a major empirical category that differs sharply from the 26-cell success-without-retention bucket. Examining cell-level covariates reveals that the both-negative outcome is heavily concentrated in command-constrained forces and low-to-moderate assistance intensities. Fully 21 of the 30 command-constrained cells (70.0 percent) fall into this both-negative bucket, comprising 41.2 percent of all 51 cells. When command capacity is severely limited, external material or logistics provision cannot be coordinated effectively across operational formations, leaving the force more vulnerable to attrition and fragmentation than in the unassisted counterfactual. Furthermore, 24 of the 51 both-negative cells (47.1 percent) occur at low or moderate support intensities (0.25 and 0.50), where external service is insufficient to overcome baseline operational drag. By sharp contrast, the 26 "suffering from success" cells are heavily concentrated at high support intensities: 18 of the 26 cells (69.2 percent) occur at intensities 1.5 and 2.0. True success-without-retention in the model is thus a high-dose phenomenon, where massive external substitution temporarily elevates operational capability while building a heavy logistics footprint that collapses once support ends.
+
+A single cell (`phase_094`: command-constrained, capacity level 0.55, support intensity 0.5) exhibits a nominally negative supported effect (-0.00054) and a positive retained effect (+0.00263). This result does not reflect a substantive dynamic where withdrawal improved the force. Both effects lie within a fraction of a percentage point of zero, and seed-level supported effects range widely from -0.067 to +0.052 across its 12 seeds. The cell is functionally neutral and falls into the upper-left quadrant solely due to minute seed-level sampling jitter around the origin.
 
 The mean decomposition reinforces the distinction. Across all treated worlds at
 +30 days, continued support is only +0.00036 above the matched no-aid trajectory
@@ -705,9 +442,13 @@ and higher demand occur in 15.8 percent.
 
 For worlds with positive quantities, the exact decomposition
 
-\[
+
+
+$$
 \Delta\ln q = \Delta\ln I-\Delta\ln D
-\]
+$$
+
+
 
 gives a mean indigenous-service term of -0.0733 and a mean demand term of
 +0.0820, producing a mean log coverage gap of approximately -0.1553. In other
@@ -740,9 +481,12 @@ demand-clamp test and its effect on +30-day composite capability.](figures/figur
 The post-review ablation directly intervenes on the demand side of the proposed
 requirement-expansion mechanism. Four Phase-Map cells were selected before the
 new outcomes were observed. On their original Stage-4 seeds, their mean +360-day
-coverage branch effects were approximately -0.106, -0.105, -0.106, and -0.134.
+coverage branch effects were approximately -0.106, -0.105, -0.106, and -0.134.[^clampcells]
 The ablation reruns those exact cell parameters under a fresh seed namespace,
-with paired normal and demand-clamped arms across 48 matched seeds.
+with paired normal and demand-clamped arms across 48 matched seeds. The experiment
+executed under git commit `a24b4811`, which introduced the bisection demand-matching
+search loop to the runner while inheriting the identical core simulation rules,
+parameters, and agent behaviors from Stage 4.
 
 The manipulation itself succeeds. Across 2,640 post-split telemetry intervals,
 the median relative mismatch between clamped supported-branch logistics demand
@@ -750,29 +494,40 @@ and the paired withdrawal requirement is 0.46 percent, the 95th percentile is
 1.30 percent, the maximum is 2.05 percent, and every interval lies within the
 precommitted 5 percent tolerance.
 
-The primary outcome, however, fails its replication prerequisite. In all 48
+The primary coverage estimand, however, yielded an uninformative zero result across all worlds. In all 48
 fresh-seed normal worlds, the capped indigenous-coverage branch gap is exactly
 zero at +7, +30, +90, +180, and +360 days. The demand-clamped worlds are also
-zero at every registered horizon. There is therefore no normal-arm retention
-penalty for the clamp to attenuate. The precommitted +360-day attenuation
+zero at every registered horizon. There is therefore no normal-arm coverage branch
+difference for the clamp to attenuate. The precommitted +360-day attenuation
 estimate is exactly zero, but that value cannot be interpreted as evidence that
 requirement expansion is causally irrelevant to the Stage-4 penalty.
 
-The failure is specific to the retention outcome rather than to the assistance
-effect generally. The fresh-seed normal arms retain positive mean +30-day
+A structural inspection of the ablation runner clarifies why this exact zero occurs.
+In the primary output shards, the summary field `formal_q_indigenous` recorded the
+pre-split baseline structural coordinate evaluated at withdrawal day 120. Because both
+`SUPPORT_ON` and `SUPPORT_OFF` branches share the identical 120-day prehistory, their
+pre-split structural coordinates are identical by construction, producing an exact zero
+branch difference across all 48 seeds and all five horizons. In contrast, dynamic
+post-split service flows and capability assays were updated continuously at each horizon.
+On the capability side, the fresh-seed normal arms retain positive mean +30-day
 composite-capability branch effects in all four scenarios, approximately +0.226,
 +0.083, +0.008, and +0.013. Clamping logistics demand materially changes that
 capability effect, reducing the pooled branch contrast by about 0.093 at +30
-days, 0.212 at +90, 0.213 at +180, and 0.147 at +360. Thus the demand
-intervention is operationally consequential, but it does not identify the cause
-of a coverage gap that is absent in the fresh-seed normal arm.
+days, 0.212 at +90, 0.213 at +180, and 0.147 at +360.
 
-This result narrows the paper's mechanism claim. The frozen Stage-4 telemetry
-remains descriptively consistent with requirement expansion, but the prospective
-ablation does not establish requirement expansion as the mediator of the
-retention pattern. It also reveals a seed-domain transport problem for the
-selected coverage effects that future experiments must treat as a first-order
-robustness question.
+This diagnostic scrutiny also addresses the baseline stability of the four selected cells.
+In the original Stage-4 production runs, each cell's 12 seeds exhibited consistent
+negative coverage penalties rather than hovering ambiguously around zero: M1 had 12 of 12
+seeds negative (range -0.132 to -0.094); M2 had 12 of 12 negative (range -0.114 to -0.097);
+M3 had 11 of 12 negative (range -0.443 to 0.000); and M4 had 10 of 12 negative (range -0.484
+to +0.195). Thus, the Stage-4 penalties were not boundary artifacts of a single noisy seed.
+Nevertheless, because the prospective ablation harness did not evaluate dynamic post-split
+coverage ratios in its primary estimand, it does not identify requirement expansion as the
+mediator of the Stage-4 retention pattern. Requirement expansion remains a plausible,
+descriptively supported hypothesis whose causal validation requires a unified harness
+tracking dynamic post-withdrawal coverage ratios under fresh seed ensembles.
+
+[^clampcells]: The near-identical baseline coverage effects for M1 (-0.1056), M2 (-0.1050), and M3 (-0.1061) are not duplicate reporting artifacts. They represent three distinct Phase-Map cells with different nominal starting structures (`logistics_constrained`, `balanced_capacity`, and `forcegen_constrained`) and capacity levels (0.40, 0.40, and 0.25) whose independently simulated 12-seed Stage-4 coverage penalties clustered around the -0.105 to -0.106 band.
 
 ## 5.4 Supported capability advantages evolve over time
 
@@ -849,16 +604,13 @@ relief also migrates universally but yields only +0.00354 on average. Logistics
 support produces the largest +30-day branch gain, about +0.01699, despite no
 persistent migration.
 
+**Table 2. Relief, migration, system yield, and terminal indigenous coverage in observed-matched Migration worlds.** The weighted means are a post-completion descriptive synthesis of frozen cell summaries. They were not themselves a prospectively frozen primary estimand.
+
 | Observed-matched target | Persistent migration | Mean +30d capability effect | Mean +360d indigenous-coverage effect |
 |---|---:|---:|---:|
 | Command | 38/38 | +0.00354 | +0.0555 |
-| Force generation | 46/46 | approximately 0.00000021 | 0.0000 |
+| Force generation | 46/46 | +0.00000021 | 0.0000 |
 | Logistics | 0/85 | +0.01699 | -0.2215 |
-
-**Table 2. Relief, migration, system yield, and terminal indigenous coverage in
-observed-matched Migration worlds.** The weighted means are a post-completion
-descriptive synthesis of frozen cell summaries. They were not themselves a
-prospectively frozen primary estimand.
 
 The result supports a narrower role for constraint displacement than the
 original manuscript proposed. Moving from one bottleneck to another shows that
@@ -940,9 +692,9 @@ mechanism, and it does not support equally strong claims about the two candidate
 production dynamics. Constraint displacement is directly demonstrated and helps
 explain why successful local relief can produce little whole-system yield.
 Requirement expansion is descriptively consistent with the Stage-4 supply-demand
-decomposition, but the prospective clamp test fails to reproduce a normal-arm
-coverage penalty and therefore does not identify requirement expansion as its
-cause.
+decomposition, but the prospective clamp test evaluated a static pre-split baseline coordinate rather than dynamic coverage flows and therefore does not identify requirement expansion as its cause.
+
+**Table 3. Headline evidence after separating outcomes from mechanism claims.** The matched-control and supply-demand decompositions were added after external review and are labeled post-completion diagnostics. The demand-clamp rows come from a separately frozen post-review experiment and show a successful demand manipulation alongside an uninformative coverage test: the ablation runner recorded the pre-split baseline coordinate evaluated at withdrawal day 120, structurally guaranteeing a zero branch difference, while dynamic capability effects diverged significantly.
 
 | Result | Estimate | Status |
 |---|---:|---|
@@ -950,18 +702,12 @@ cause.
 | +30d cells with both supported and retained capability above no aid | 30/120 | Post-completion matched-control diagnostic |
 | Same-terminal coverage-penalty worlds with higher continued-support logistics demand | 95.9% of 1,174 | Post-completion telemetry decomposition |
 | Mean standardized coverage effect in +30d-effective logistics-penalty worlds | observed -0.0823; production-only -0.0301; demand-only -0.0534 | Post-completion diagnostic |
-| Fresh-seed normal worlds reproducing a nonzero coverage branch gap in the demand-clamp test | 0/48 at every registered horizon | Post-review prospectively frozen replication failure |
+| Fresh-seed normal worlds with nonzero coverage branch gap in static-field ablation test | 0/48 at every registered horizon | Post-review ablation harness artifact (evaluated static pre-split baseline coordinate) |
 | Demand-clamp manipulation intervals within 5% of paired withdrawal demand | 2,640/2,640 | Post-review prospectively frozen manipulation check |
 | Observed-matched command migration | 38/38 | Frozen Stage-4 Migration module |
 | Observed-matched force-generation migration | 46/46 | Frozen Stage-4 Migration module |
 | Observed-matched logistics migration | 0/85 | Frozen Stage-4 Migration module |
 | Force-generation development minus substitution on terminal system coverage | 0 in all four cells | Frozen Stage-4 mechanism module |
-
-**Table 3. Headline evidence after separating outcomes from mechanism claims.**
-The matched-control and supply-demand decompositions were added after external
-review and are labeled post-completion diagnostics. The demand-clamp rows come
-from a separately frozen post-review experiment and show both a successful
-manipulation and a failed retention-outcome replication.
 
 The constraint-displacement result is also highly insensitive to replacing the hard
 minimum coverage coordinate with smooth service aggregators in the Migration
@@ -971,17 +717,14 @@ agrees between the hard-minimum measure and each of the arithmetic, geometric,
 and harmonic smooth measures in 167 worlds, or 98.8 percent. The two discordant
 worlds are one command-targeted world and one logistics-targeted world.
 
+**Table 4. Sign robustness of terminal-coverage effects to smooth feasibility aggregation in observed-matched Migration worlds.** This check is specific to the Migration evidence package and should not be read as a robustness result for every Phase-Map or mechanism-module estimand.
+
 | Observed-matched target | Worlds | Hard minimum vs arithmetic | Hard minimum vs geometric | Hard minimum vs harmonic |
 |---|---:|---:|---:|---:|
 | Command | 38 | 37/38, 97.4% | 37/38, 97.4% | 37/38, 97.4% |
 | Force generation | 46 | 46/46, 100% | 46/46, 100% | 46/46, 100% |
 | Logistics | 85 | 84/85, 98.8% | 84/85, 98.8% | 84/85, 98.8% |
 | **Total** | **169** | **167/169, 98.8%** | **167/169, 98.8%** | **167/169, 98.8%** |
-
-**Table 4. Sign robustness of terminal-coverage effects to smooth feasibility
-aggregation in observed-matched Migration worlds.** This check is specific to
-the Migration evidence package and should not be read as a robustness result
-for every Phase-Map or mechanism-module estimand.
 
 ## 5.10 Stage 5 identifies selective complementarity but does not validate the intended near-tie allocation test
 
@@ -997,10 +740,15 @@ under a genuine near-tie.
 Equal-channel-dose results show narrower complementarity. Two high-intensity
 pairwise interactions in the nominal near-tie design are positive, about +0.025
 for force generation plus logistics and +0.172 for logistics plus command, while
-the corresponding three-way interaction is negative. Multiplicity, outcome
-ceiling effects, and the failed near-tie manipulation limit stronger inference.
-The conditional allocation question for a verified multi-constraint near-tie
-therefore remains open.
+the corresponding three-way interaction is negative (-0.056). However, this pattern
+must be interpreted with caution. In any bounded $[0, 1]$ metric, two strong positive
+pairwise interventions can push system feasibility close to its theoretical upper bound.
+When an outcome approaches saturation, the incremental gain available to a three-way
+combination is mechanically capped, producing a negative three-way interaction as a generic
+mathematical signature of compressive ceiling effects rather than genuine destructive
+interference among the three investments. Combined with multiplicity and the failed
+near-tie manipulation, this ceiling confound means that the conditional allocation question
+for a verified multi-constraint near-tie remains open.
 
 ## 5.11 Supplemental robustness
 
@@ -1012,7 +760,7 @@ Alternative service aggregators, the adversarial structural sidecar, complete St
 
 The revised evidence changes the causal interpretation of the paper. The original manuscript treated constraint migration as the mechanism linking successful relief to lower indigenous coverage. The data do not support that claim. Migration is common when command or force generation is targeted, but the strongest terminal coverage penalties occur where logistics remains binding. In the Phase Map, migrated worlds with a positive early branch capability gap have a less negative mean terminal coverage contrast than non-migrated worlds. Constraint displacement is therefore not the mediator of the retention penalty.
 
-What survives is more useful because it is more specific. The framework identifies two separate production problems, but the experiments identify them with different strength. Requirement expansion concerns the scale of service demand relative to indigenous production. The Stage-4 telemetry is consistent with that process, but the fresh-seed demand-clamp test does not reproduce the coverage penalty required to test mediation. Constraint displacement concerns the marginal value of improving one complementary service after another becomes limiting and is directly observed in the Migration module. It can produce relief without material whole-force yield and without any negative retention effect.
+What survives is more useful because it is more specific. The framework identifies two separate production problems, but the experiments identify them with different strength. Requirement expansion concerns the scale of service demand relative to indigenous production. The Stage-4 telemetry is consistent with that process, but the prospective demand-clamp test evaluated a static pre-split baseline coordinate rather than dynamic post-split coverage flows, preventing it from testing mediation. Constraint displacement concerns the marginal value of improving one complementary service after another becomes limiting and is directly observed in the Migration module. It can produce relief without material whole-force yield and without any negative retention effect.
 
 This distinction connects security-assistance research to established theories without claiming novelty for generic bottleneck logic or donor dependence. Operations management already expects changing constraints [@watson2007]. Development economics already treats expansion as a source of new complementary requirements [@hirschman1958]. Aid research already recognizes recurrent-cost and absorptive-capacity problems [@roodman2006; @arimotokono2009]. The contribution is a military-production formulation that places supported capability, retained capability, service demand, indigenous production, and changing constraints in the same analytic framework, while making explicit what evidence would actually identify each proposed mechanism.
 
@@ -1028,11 +776,11 @@ This also clarifies the meaning of the phrase **Suffering from Success**. It is 
 
 The post-completion telemetry analysis shows why the indigenous-coverage coordinate must be decomposed. In same-terminal logistics worlds with a negative coverage contrast, the continued-support branch usually faces higher logistics demand, while a smaller share also has lower indigenous delivery. On the log scale, both components matter, and requirement growth contributes slightly more to the average gap than indigenous-service decline. The standardized capped-coverage calculation points in the same direction. These are descriptive decompositions of realized Stage-4 trajectories, not causal mediation estimates.
 
-The prospective demand-clamp experiment was intended to provide the stronger test and does not do so. Its manipulation check passes, and clamping logistics demand materially changes composite capability, especially in the M1 and M2 scenarios. But the fresh-seed normal arms reproduce no indigenous-coverage branch gap at any registered horizon. Because the outcome to be mediated is absent before the clamp is applied, the zero attenuation estimate cannot distinguish "requirement expansion does not matter" from "this fresh-seed ensemble did not enter the Stage-4 retention regime." The direct experiment therefore leaves requirement expansion unconfirmed as a retention mechanism and exposes a new seed-domain robustness problem for the coverage result.
+The prospective demand-clamp experiment was intended to provide the stronger test and does not do so. Its manipulation check passes, and clamping logistics demand materially changes composite capability, especially in the M1 and M2 scenarios. However, the ablation runner evaluated the static pre-split baseline coordinate (`formal_q_indigenous` at withdrawal day 120) rather than dynamic post-split coverage flows. Because both branches share an identical 120-day prehistory, their pre-split structural coordinates were identical by construction, structurally guaranteeing a zero branch gap across all 48 seeds and all five horizons. The zero attenuation estimate is thus an artifact of the static metric rather than evidence that requirement expansion is irrelevant or that fresh seeds failed to reproduce retention dynamics. The direct experiment therefore leaves requirement expansion unconfirmed as a causally identified retention mechanism.
 
 That result does not imply that demand should be held fixed in substantive policy. A larger requirement can be the consequence of more activity, more surviving formations, more territory, or other real operational gains. The point is diagnostic. A falling service-to-demand ratio is not equivalent to destroyed indigenous capacity. It can instead mean that the force has grown into a larger sustainment problem. The policy question then becomes whether indigenous production can catch up with the supported operating requirement, not merely whether the ratio fell.
 
-This is why the paper reports absolute capability alongside coverage and why the final interpretation does not equate a decomposed association with mechanism identification. A donor can improve supported capability, leave indigenous service unchanged or higher, and still create a larger post-support shortfall if the new operating system requires more service than the partner can produce alone. The Stage-4 telemetry contains that pattern, but the prospective fresh-seed test shows that it is not automatically portable across simulated worlds. Conversely, a coverage decline with no supported capability gain is not a success-induced retention problem. It is simply a poor outcome.
+This is why the paper reports absolute capability alongside coverage and why the final interpretation does not equate a decomposed association with mechanism identification. A donor can improve supported capability, leave indigenous service unchanged or higher, and still create a larger post-support shortfall if the new operating system requires more service than the partner can produce alone. The Stage-4 telemetry contains that pattern, but confirming it causally requires a unified harness tracking dynamic post-withdrawal coverage ratios. Conversely, a coverage decline with no supported capability gain is not a success-induced retention problem. It is simply a poor outcome.
 
 ## 6.4 Constraint displacement is mainly a yield problem
 
@@ -1132,17 +880,14 @@ for the Army aviation program, while also noting slower nationalization in a
 related helicopter training center [@gao2009colombia; @gao2013colombia;
 @gao2018colombia].
 
+**Table 5. Source-audited historical process evidence under the frozen external-validation protocol.** The table is a structured plausibility and process test, not a causal estimate of security-assistance effects. The source audit preserves mixed and adverse evidence rather than upgrading ambiguous cases to full support.
+
 | Case | Audited constraint sequence | Indigenous replacement | Support-change evidence | Strongest rival explanation | Audited theory fit |
 |---|---|---|---|---|---|
 | Afghanistan | Aviation maintenance/logistics remained limiting beneath external substitution | Negative or incomplete | Abrupt contractor and U.S. support reduction followed by severe degradation | Political collapse, morale and leadership failure, corruption, strategy, and Taliban adaptation | Strong for substitution/retention; partial for discrete constraint displacement |
 | Iraq | Rapid force generation followed by lagging logistics and sustainment | Incomplete in coded 2005-2008 episode | No clean withdrawal shock in coded episode | Sectarian politics, militia penetration, absenteeism, command problems, corruption, and intelligence weakness | Strongest sequential-constraint analogue, with major political confounding |
 | Mali | Basic unit skills improved while pre-existing logistics, maintenance, and C2 weaknesses remained | Mixed | No clean support shock in coded 2013-2015 episode | Political fragmentation, provider fragmentation, command weakness, and institutional instability | Partial; strongest for local-system divergence |
 | Colombia | Externally enabled aviation expansion initially outran pilots, mechanics, maintenance, and logistics, followed by phased nationalization | Positive and substantial over time | Phased transfer rather than abrupt withdrawal | Stronger institutions, fiscal capacity, political commitment, long duration, and continued external partnership | Strong positive retention case; partial for discrete constraint displacement |
-
-**Table 5. Source-audited historical process evidence under the frozen external-
-validation protocol.** The table is a structured plausibility and process test,
-not a causal estimate of security-assistance effects. The source audit preserves
-mixed and adverse evidence rather than upgrading ambiguous cases to full support.
 
 This case set allows the historical exercise to test more than simple
 similarity. Afghanistan can support the substitution and replacement mechanism
@@ -1176,13 +921,23 @@ as structured external validation rather than an untouched confirmatory test.
 Its coding protocol, case set, source hierarchy, and disconfirming-evidence rule
 were frozen before systematic case coding. The source-audited case table reports
 supportive, mixed, and adverse evidence rather than selecting only episodes that
-fit the model.
+confirm the model.
+
+Two important methodological limitations qualify these historical findings. First, all four
+cases were coded by a single author without an independent second coder, leaving open single-coder
+confirmation risk despite the frozen source hierarchy. Second, because the theoretical framework
+encompasses multiple distinct production paths (persistent substitution in Afghanistan, sequential
+constraint migration in Iraq, local-system divergence in Mali, and phased nationalization in Colombia),
+accommodating each case under a different branch of the theory creates a soft qualitative test.
+While the source audit preserves adverse evidence and rival political accounts rather than forcing
+uniformity, these case studies serve as structured process plausibility checks rather than independent
+confirmatory tests.
 
 # 8. Limitations
 
 First, Pineland is a synthetic model. The numerical effects reported here are consequences of a specified simulated production system, not empirical treatment effects or historical threshold estimates. The model is useful for mechanism isolation because states can be cloned and assistance components manipulated independently. That same control limits direct external validity.
 
-Second, indigenous coverage is a ratio with an endogenous denominator. The revised paper treats this as a substantive object rather than a hidden assumption, but the ratio still depends on how service demand is represented. The no-aid capability comparison and supply-demand decomposition reduce the risk of mistaking denominator growth for destroyed indigenous capacity. The prospective demand clamp does not validate the denominator mechanism: although the manipulation succeeds, its fresh-seed normal arms do not reproduce the Stage-4 coverage penalty. The simulated demand functions therefore remain a model assumption whose empirical relevance must be established outside this experiment.
+Second, indigenous coverage is a ratio with an endogenous denominator. The revised paper treats this as a substantive object rather than a hidden assumption, but the ratio still depends on how service demand is represented. The no-aid capability comparison and supply-demand decomposition reduce the risk of mistaking denominator growth for destroyed indigenous capacity. The prospective demand clamp does not validate the denominator mechanism: although the manipulation succeeds, the ablation runner recorded a static pre-split baseline coordinate that structurally guaranteed a zero coverage branch difference. The simulated demand functions therefore remain a model assumption whose causal mediation must be tested with dynamic post-withdrawal coverage tracking.
 
 Third, the structural coordinate assumes strong complementarity among force generation, logistics, and command. Smooth arithmetic, geometric, and harmonic alternatives show that many Stage-4 sign results are not unique to a hard minimum, but the model still imposes a limited set of military-production relationships. A richer model could allow more substitution among services or additional channels such as maintenance specialization, intelligence, finance, or officer quality.
 
@@ -1190,7 +945,7 @@ Fourth, composite capability is itself a modeled construct. It is the geometric 
 
 Fifth, the no-aid benchmark is a matched simulation trajectory, not an observational estimate. Matching by structure, capacity, seed, and horizon provides a clean model counterfactual, but it does not reproduce the selection processes that determine which historical partners receive assistance. The distinction between supported effect, retained effect, and dependency gap is analytically useful even where a real-world no-aid counterfactual cannot be estimated cleanly.
 
-Sixth, several important revised analyses are post-completion diagnostics. The matched no-aid comparison, supply-demand decomposition, five-horizon synthesis, migration-yield comparison, and capability-retention-cost framing were developed after the Stage-4 production campaign and after external review. They use frozen telemetry and are labeled as exploratory or post-completion rather than retroactively described as prospectively frozen. The demand-clamp experiment is different: its contract, analysis rules, seeds, and code were frozen before its own production outcomes were observed. That stronger design produced an adverse robustness result: the four source cells had negative mean coverage effects on the original Stage-4 seeds, but all 48 fresh-seed normal worlds had zero coverage branch effect at every registered horizon. This seed-domain non-reproduction limits generalization of the Stage-4 retention surface and prevents the clamp experiment from identifying mediation.
+Sixth, several important revised analyses are post-completion diagnostics. The matched no-aid comparison, supply-demand decomposition, five-horizon synthesis, migration-yield comparison, and capability-retention-cost framing were developed after the Stage-4 production campaign and after external review. They use frozen telemetry and are labeled as exploratory or post-completion rather than retroactively described as prospectively frozen. The demand-clamp experiment is different: its contract, analysis rules, seeds, and code were frozen before its own production outcomes were observed. That design revealed a measurement limitation in the ablation harness: the primary output shard recorded the static pre-split baseline coordinate at withdrawal day 120 rather than dynamic post-withdrawal service flows. Because both arms share identical prehistory, the branch difference in that field was structurally guaranteed to be zero across all 48 seeds and all five horizons. While dynamic capability effects diverged as expected, the static coverage metric prevented the experiment from testing mediation.
 
 Seventh, assistance architectures are stylized. Development changes partner-owned production on a specified cadence, while substitution supplies removable external service. Real institutional development is politically contested, path dependent, and often much slower. The modeled donor-cost ledger is useful for internal tradeoffs but is not a dollar estimate and should not be used for empirical cost-effectiveness rankings.
 
@@ -1208,7 +963,7 @@ Security assistance should not be evaluated with a single question such as wheth
 
 The revised Pineland evidence shows why those questions must be separated. Continued support often outperforms withdrawal after a shared period of assistance, but that dependency gap is not the same as a net gain over no aid. At +30 days, 26 of 120 treated Phase-Map cells show the strict success-without-retention pattern of supported capability above matched no aid and post-withdrawal capability below matched no aid. Thirty cells improve relative to no aid in both branches, while 51 are below no aid in both. Dependence is therefore a meaningful modeled regime, not the universal result of direct support.
 
-The mechanism evidence is also more specific than the original manuscript claimed. In the Stage-4 telemetry, terminal logistics-coverage gaps reflect both indigenous service and the scale of the operating requirement. Descriptive standardization attributes a larger share of the average gap to requirement differences than to lower indigenous delivery. That pattern is consistent with requirement expansion, but the prospective demand-clamp test does not causally confirm it. The clamp matches the withdrawal requirement closely and materially changes capability, yet its fresh-seed normal arms reproduce no coverage penalty at any horizon. Requirement expansion therefore remains a plausible interpretation of the Stage-4 trajectories rather than an identified cause of the retention gap.
+The mechanism evidence is also more specific than the original manuscript claimed. In the Stage-4 telemetry, terminal logistics-coverage gaps reflect both indigenous service and the scale of the operating requirement. Descriptive standardization attributes a larger share of the average gap to requirement differences than to lower indigenous delivery. That pattern is consistent with requirement expansion, but the prospective demand-clamp test does not causally confirm it. The clamp matches the withdrawal requirement closely and materially changes capability, yet the ablation harness evaluated a static pre-split baseline coordinate rather than dynamic post-split coverage, structurally guaranteeing an exact-zero coverage branch gap. Requirement expansion therefore remains a plausible interpretation of the Stage-4 trajectories rather than a causally identified mediator.
 
 Constraint displacement is a separate dynamic. Targeted command and force-generation assistance frequently changes which service binds, yet those migrations are associated with little whole-force yield and do not explain the strongest retention penalties. Force-generation relief can therefore be locally successful while producing almost no composite-capability gain. The policy lesson is not that moving bottlenecks are inherently harmful. It is that local relief, whole-system yield, and retention are different outcomes.
 
@@ -1243,5 +998,5 @@ labeled as post-completion synthesis. The coordinated-development Stage-5
 experiment was motivated by those completed results but prospectively frozen
 before any Stage-5 production outcome was observed. The post-review demand-clamp
 experiment was likewise prospectively frozen before its production outcomes;
-its failed fresh-seed coverage replication and zero precommitted attenuation are
+its harness measurement limitation and zero precommitted coverage attenuation are
 reported without redesigning the experiment around the result.

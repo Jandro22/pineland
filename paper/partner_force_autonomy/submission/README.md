@@ -5,8 +5,9 @@ Generated from the canonical manuscript by `prepare_submission.py`.
 - Working target: Security Studies
 - Canonical manuscript: `../manuscript.md`
 - Anonymized review manuscript: `manuscript_anonymized.md`
-- Separate author/title page: `title_page.md`
-- Canonical manuscript source word count: 12,999
+- ScholarOne submission metadata & cover letter: `SCHOLARONE_METADATA.md`
+- Citation style: Chicago numbered notes without end bibliography (`chicago-notes.csl`)
+- Canonical manuscript source word count: 12,086
 - Main figures: regenerated from tracked evidence before packaging
 - Bibliography: closed and validated by `../validate_manuscript.py`
 

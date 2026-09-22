@@ -23,8 +23,9 @@ The final scientific interpretation is bounded deliberately. Constraint displace
 The canonical manuscript is scientifically closed for this revision and passes
 the repository evidence validator. The five main figures have been regenerated
 from tracked evidence, and `prepare_submission.py` creates a reproducible review
-package containing an anonymized manuscript, separate title page, bibliography,
-model/reproducibility appendix, main figures, and SHA-256 manifest.
+package containing an anonymized manuscript, ScholarOne metadata and cover
+letter, bibliography, model/reproducibility appendix, main figures, citation
+style, and SHA-256 manifest.
 `render_submission.py` converts those review sources to editable DOCX files and
 matching Word-exported PDFs while stripping author metadata from the anonymous
 manuscript. `qa_submission.py` then checks every rendered page for document size,
@@ -32,7 +33,7 @@ blank pages, footer numbering, text/image bounds, unresolved citations,
 minimum readable prose text, missing figure/table captions, and blind-review
 identity leaks.
 
-The rendered anonymous manuscript is 59 US-letter pages and passes submission
+The rendered anonymous manuscript is 54 US-letter pages and passes submission
 QA. Remaining work is limited to venue-specific formatting changes requested at
 upload time and any changes requested by reviewers or coauthors, not unresolved
 Stage-4/Stage-5 analysis.

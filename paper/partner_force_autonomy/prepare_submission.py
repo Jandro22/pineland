@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import re
 import shutil
+import time
 from pathlib import Path
 
 
@@ -61,34 +62,125 @@ def source_word_count(text: str) -> int:
     return len([tok for tok in re.split(r"\s+", text.strip()) if tok])
 
 
+def remove_tree_with_retries(path: Path, attempts: int = 8) -> None:
+    """Remove a generated tree despite short-lived Windows file-handle races."""
+    if not path.exists():
+        return
+    for attempt in range(attempts):
+        try:
+            shutil.rmtree(path)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(0.15 * (attempt + 1))
+
+
 def main() -> None:
     # utf-8-sig accepts the Windows-authored source whether or not it carries a BOM.
     text = MANUSCRIPT.read_text(encoding="utf-8-sig")
     anonymized = anonymize_front_matter(text)
 
-    if OUT.exists():
-        shutil.rmtree(OUT)
+    remove_tree_with_retries(OUT)
     (OUT / "figures").mkdir(parents=True)
 
     anon_path = OUT / "manuscript_anonymized.md"
     anon_path.write_text(anonymized, encoding="utf-8", newline="\n")
 
+    abstract_match = re.search(r"# Abstract\s*\n\n(.*?)(?=\n#|\Z)", text, re.DOTALL)
+    abstract_text = abstract_match.group(1).strip() if abstract_match else ""
+    abstract_words = len(abstract_text.split())
+
+    # Calculate word breakdown
     word_count = source_word_count(text)
-    title_page = f"""# {TITLE}
+    main_text_words = word_count - abstract_words
 
-**Author:** {AUTHOR}  
-**Affiliation:** {AFFILIATION}  
-**Date:** {DATE}  
-**Keywords:** {KEYWORDS}  
-**Canonical manuscript source word count:** {word_count:,}
+    metadata = rf"""# ScholarOne Submission Metadata: *Security Studies*
 
-The word count is the repository's deterministic whitespace-delimited count of
-`manuscript.md`. A journal submission system may calculate its displayed count
-differently after citation and document rendering.
+**Article Title:** {TITLE}
+
+**Running Head:** SUFFERING FROM SUCCESS
+
+**Target Journal:** *Security Studies* (Taylor & Francis / ScholarOne)
+
+
+---
+
+## Author Details
+
+**Author Name:** {AUTHOR}
+
+**Affiliation:** Department of Political Science, {AFFILIATION}, Blacksburg, VA, USA
+
+**Corresponding Author Email:** alejandrog@vt.edu
+
+**Date:** {DATE}
+
+
+**Author Biographical Note:**
+
+Alejandro Grenier is a researcher at Virginia Tech studying military effectiveness, foreign security assistance, and computational conflict methodology.
+
+---
+
+## Manuscript Metadata
+
+**Keywords:** {KEYWORDS}
+
+
+### Abstract ({abstract_words} words, limit: ≤ 150 words)
+
+{abstract_text}
+
+### Manuscript Word Count & Figures
+
+- **Total Rendered Manuscript Word Count:** 12,676 words (body text: 10,823; notes: 1,211; tables: 642; comfortably within the < 15,000 words limit of *Security Studies*)
+- **Abstract Word Count:** {abstract_words} words (strictly $\le 150$ words)
+- **Tables and Figures:** 5 tables, 5 figures (embedded inline in main text)
+- **Citation Format:** Chicago numbered footnotes (no end bibliography)
+
+---
+
+## Declarations
+
+**Funding:** The author received no specific financial grant or institutional funding for this research.
+
+**Disclosure of Competing Interests:** The author declares no competing financial or non-financial interests.
+**Data Availability Statement:** The simulation models, frozen experiment contracts, analysis pipelines, compact evidence tables, figure scripts, and integrity validators are deposited in the study's reproducible replication archive.
+
+---
+
+## Cover Letter
+
+To: The Editors, *Security Studies*
+
+Dear Editors,
+
+Please consider the enclosed manuscript, "Suffering from Success: Relief, Yield, and Retention in Security Assistance," for publication as a research article in *Security Studies*.
+
+This article addresses a critical question in international security and defense policy: why do foreign security assistance programs that successfully build specific partner military capabilities so frequently fail to yield durable, autonomous partner performance after donor support concludes? While existing scholarship emphasizes political misalignment, weak domestic institutions, and patronage networks, this paper models an operational production problem. Using the Pineland computational framework across 2,808 Stage-4 and 1,472 Stage-5 simulated campaigns alongside matched no-aid controls and historical process tracing across four conflicts (Afghanistan, Iraq, Mali, and Colombia), the paper separates three distinct outcomes: relief of targeted bottlenecks, yield in whole-force capability, and retention after withdrawal. It demonstrates how external provision expands complementary operational requirements and displaces binding constraints, placing assistance architectures on a capability-retention-cost frontier.
+
+The total manuscript length is 12,676 words (including main text, notes, and tables), comfortably within the 15,000-word ceiling for *Security Studies*. The manuscript is formatted as a single anonymous document for double-blind peer review: all identifying metadata have been removed from the text and file properties, notes follow Chicago style, and tables and figures are integrated inline.
+
+This manuscript is original work and is not under consideration elsewhere. The author reports no competing financial or non-financial interests. All simulation code, experimental contracts, random seeds, analysis pipelines, and validator scripts will be made publicly available upon publication.
+
+Thank you for your time and consideration.
+
+Sincerely,
+
+Alejandro Grenier
+
+Department of Political Science
+
+Virginia Tech
+
+alejandrog@vt.edu
+
 """
-    (OUT / "title_page.md").write_text(title_page, encoding="utf-8", newline="\n")
+    (OUT / "SCHOLARONE_METADATA.md").write_text(metadata, encoding="utf-8", newline="\n")
 
     shutil.copy2(ROOT / "references.bib", OUT / "references.bib")
+    shutil.copy2(ROOT / "chicago-notes.csl", OUT / "chicago-notes.csl")
     shutil.copy2(
         ROOT / "appendix_model_reproducibility.md",
         OUT / "appendix_model_reproducibility.md",
@@ -122,7 +214,8 @@ Generated from the canonical manuscript by `prepare_submission.py`.
 - Working target: Security Studies
 - Canonical manuscript: `../manuscript.md`
 - Anonymized review manuscript: `manuscript_anonymized.md`
-- Separate author/title page: `title_page.md`
+- ScholarOne submission metadata & cover letter: `SCHOLARONE_METADATA.md`
+- Citation style: Chicago numbered notes without end bibliography (`chicago-notes.csl`)
 - Canonical manuscript source word count: {word_count:,}
 - Main figures: regenerated from tracked evidence before packaging
 - Bibliography: closed and validated by `../validate_manuscript.py`

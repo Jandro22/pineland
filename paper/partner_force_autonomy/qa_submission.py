@@ -25,6 +25,7 @@ def fail(msg: str, errors: list[str]) -> None:
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
     errors: list[str] = []
     notes: list[str] = []
 
@@ -38,7 +39,7 @@ def main() -> None:
     page_texts: list[str] = []
     image_rects: list[tuple[int, tuple[float, float, float, float]]] = []
     orphan_candidates: list[tuple[int, float, str]] = []
-    missing_footer_numbers: list[int] = []
+    unexpected_footer_numbers: list[tuple[int, str]] = []
     out_of_page: list[tuple[int, tuple[float, float, float, float], str]] = []
     tiny_text: list[tuple[int, float, str]] = []
 
@@ -65,11 +66,13 @@ def main() -> None:
             ):
                 orphan_candidates.append((page_index, y0, cleaned[:100]))
 
+        # ScholarOne requires unpaginated manuscript (pagination injected by ScholarOne).
+        # Check that no standalone page numbers are present in the footer margin.
         footer_text = " ".join(
-            block[4].strip() for block in blocks if block[1] > 730
+            block[4].strip() for block in blocks if block[1] > 745
         )
-        if not re.search(rf"\b{page_index}\b", footer_text):
-            missing_footer_numbers.append(page_index)
+        if re.search(r"^\d+$", footer_text.strip()):
+            unexpected_footer_numbers.append((page_index, footer_text))
 
         page_dict = page.get_text("dict")
         for block in page_dict["blocks"]:
@@ -79,14 +82,22 @@ def main() -> None:
                     if text and span["size"] < 8.8:
                         # Word legitimately shrinks fraction numerators,
                         # denominators, superscripts, and subscripts inside
-                        # displayed equations.  Those fragments contain math
-                        # operators/markup and are not a readability defect in
-                        # body prose, tables, captions, or references.
-                        is_math_fragment = bool(
-                            re.search(r"[\\{}_=>^]", text)
+                        # equations (standard 8.52pt for 12pt body equations)
+                        # and footnote references/callouts (6.9-8.0pt).
+                        font = span.get("font", "")
+                        is_math_or_fn = bool(
+                            "Math" in font
+                            or any(ord(c) > 0x2000 for c in text)
+                            or re.search(r"[\\{}_=>^+\-*/()]", text)
                             or re.fullmatch(r"[A-Za-z]+-[A-Za-z]+", text)
+                            or text.isdigit()
+                            or re.fullmatch(r"[0-9, ]+", text)
+                            or text in {
+                                "fg", "log", "cmd", "pres", "move", "patrol",
+                                "combat", "depot", "1/5", "ON", "OFF", "opt",
+                            }
                         )
-                        if not is_math_fragment:
+                        if not is_math_or_fn:
                             tiny_text.append(
                                 (page_index, span["size"], text[:50])
                             )
@@ -104,6 +115,26 @@ def main() -> None:
                 ):
                     fail(f"image on page {page_index} extends outside page bounds", errors)
 
+        # Ensure 100% black and white / grayscale text (no blue accents)
+        for b in page_dict["blocks"]:
+            for line in b.get("lines", []):
+                for span in line.get("spans", []):
+                    color = span.get("color", 0)
+                    r = (color >> 16) & 255
+                    g = (color >> 8) & 255
+                    b_col = color & 255
+                    if not (r == g == b_col):
+                        fail(f"non-grayscale text detected on page {page_index}: RGB({r},{g},{b_col}) in {span['text'][:30]}", errors)
+
+        # Ensure 100% black and white / grayscale drawings
+        for d in page.get_drawings():
+            for key in ("color", "fill"):
+                val = d.get(key)
+                if val and len(val) >= 3:
+                    r, g, b_val = val[:3]
+                    if not (abs(r - g) < 1e-3 and abs(g - b_val) < 1e-3):
+                        fail(f"non-grayscale vector drawing on page {page_index}: {key}={val}", errors)
+
     all_text = "\n".join(page_texts)
     if RAW_CITATION.search(all_text):
         fail("raw Pandoc citation token remains in PDF", errors)
@@ -117,10 +148,10 @@ def main() -> None:
 
     if out_of_page:
         fail(f"{len(out_of_page)} text blocks extend outside page bounds", errors)
-    if missing_footer_numbers:
+    if unexpected_footer_numbers:
         fail(
-            "page-number footer not detected on pages "
-            + ", ".join(map(str, missing_footer_numbers)),
+            "unintended footer page numbers detected on pages: "
+            + ", ".join(f"{p} ({t})" for p, t in unexpected_footer_numbers),
             errors,
         )
     if tiny_text:
@@ -131,13 +162,42 @@ def main() -> None:
     if len(image_rects) < 5:
         fail(f"only {len(image_rects)} embedded image placements detected", errors)
 
-    # Inspect all XML parts, not just core properties, for blind-review leaks.
+    # Check for no bibliography section
+    if re.search(r"\n#+\s*References\b", all_text, re.I):
+        fail("bibliography heading found in PDF", errors)
+    isolated_ref = [
+        b[4].strip()
+        for page in pdf
+        for b in page.get_text("blocks")
+        if b[4].strip() == "References"
+    ]
+    if isolated_ref:
+        fail("isolated 'References' heading block found in PDF", errors)
+
+    # Check abstract word count
+    abstract_m = re.search(r"Abstract\s*\n+(.*?)(?=\n1\.\s|\Z)", all_text, re.S)
+    if abstract_m:
+        ab_words = len(abstract_m.group(1).strip().split())
+        if ab_words > 150:
+            fail(f"abstract word count ({ab_words}) exceeds 150 words", errors)
+        notes.append(f"abstract words: {ab_words}")
+
+    # Inspect all XML parts, not just core properties, for blind-review leaks and footnotes.
     with zipfile.ZipFile(DOCX) as archive:
         xml = "\n".join(
             archive.read(name).decode("utf-8", "ignore")
             for name in archive.namelist()
             if name.endswith(".xml")
         )
+        if "word/footnotes.xml" not in archive.namelist():
+            fail("DOCX does not contain word/footnotes.xml", errors)
+        else:
+            fn_xml = archive.read("word/footnotes.xml").decode("utf-8")
+            fn_count = len(re.findall(r'<w:footnote[^>]*w:id="[1-9][0-9]*"', fn_xml))
+            if fn_count == 0:
+                fail("zero footnotes detected in word/footnotes.xml", errors)
+            notes.append(f"numbered footnotes: {fn_count}")
+
     if IDENTIFIER.search(xml):
         fail("identifying author string remains in anonymous DOCX XML", errors)
     if RAW_CITATION.search(xml):

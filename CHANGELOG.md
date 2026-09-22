@@ -8,6 +8,10 @@ contracts, manifests, and study-specific ledgers.
 
 ### Added
 
+- Finalized the first Partner-Force paper cycle, including the review-rebuilt
+  relief-yield-retention manuscript, deterministic figure set, anonymized
+  submission package, manuscript evidence validator, rendered-document QA, and
+  paper-facing freeze documentation.
 - Completed Partner-Force Autonomy Stage 4: 2,808 production worlds across the
   autonomy phase map, bottleneck-migration, and substitution-versus-development
   modules, with complete cryptographic task/shard provenance.
@@ -25,6 +29,9 @@ contracts, manifests, and study-specific ledgers.
 
 ### Changed
 
+- Put the repository into maintenance mode after the 2026-09-21 scientific
+  freeze; future changes should be corrections, reproducibility/packaging
+  repairs, or peer-review revisions rather than new exploratory development.
 - Partner-Force Autonomy is now documented as a completed integrated Stage-4
   research program rather than an active Stage-3-only discovery program.
 - The default development branch is now `main`.

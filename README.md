@@ -30,10 +30,16 @@ checkpoint/restart, and HPC execution. The current package version is
 > experiments can identify mechanisms inside the model; historical comparisons
 > are external tests and do not turn latent simulated quantities into observed
 > historical facts.
+>
+> **Repository status (2026-09-21):** the first major research/paper cycle is
+> scientifically frozen and the repository is in maintenance mode for the
+> foreseeable future. New experiments are not currently planned. Changes after
+> the freeze should be limited to documented corrections, reproducibility or
+> packaging repairs, and changes required by peer review.
 
-## Current research program
+## Frozen research program
 
-The active work is organized around three connected layers.
+The frozen research snapshot is organized around three connected layers.
 
 ### 1. General Theory v1
 
@@ -43,7 +49,7 @@ competitive local reproduction without losing the dynamics that matter. The
 program uses prospective contracts, rival reduced-form architectures, closure
 tests, holdouts, and falsification ledgers before historical transport.
 
-### 2. Partner-Force Autonomy — integrated Stage 4 complete
+### 2. Partner-Force Autonomy — integrated Stages 4 and 5 complete
 
 [Partner-Force Autonomy](studies/research_program/general_theory_v1/partner_force_autonomy/)
 is the completed integrated Stage-4 mechanistic program on a narrower question:
@@ -54,24 +60,27 @@ is the completed integrated Stage-4 mechanistic program on a narrower question:
 The design uses paired ON/OFF counterfactual branches, common random numbers,
 removable assistance channels, formal indigenous-service accounting, and
 explicit separation of supported performance from organic regenerative
-capacity. The integrated campaign completed **2,808/2,808 production worlds**
-across an autonomy phase map, bottleneck-migration experiment, and
-substitution-versus-development experiment. The final production dataset was
-independently re-hashed with zero task-coverage, provenance, row-count, or
-content-hash errors.
+capacity. Stage 4 completed **2,808/2,808 production worlds** across an
+autonomy phase map, bottleneck-migration experiment, and
+substitution-versus-development experiment. Stage 5 then completed
+**1,472/1,472 worlds** in the coordinated-development follow-up. The paper
+cycle also includes the prospectively frozen 96-world demand-clamp experiment
+and a 32-world terminal-constraint sidecar. The tracked production datasets
+and paper-facing evidence have passed their integrity and manuscript
+validation checks.
 
-The headline synthetic finding is a moving-constraint result: among 106 treated
-phase-map cells where direct service assistance improved capability at +30d,
-**96 (90.6%)** had lower indigenous autonomy at +360d; **53** met the robust
-autonomy-trap rule and **0** met the robust autonomy-building rule. At the same
-time, developmental logistics assistance sharply reduced the autonomy penalty
-relative to substitution, while command and force-generation development often
-shifted the binding constraint to logistics rather than improving whole-system
-autonomy.
+The final paper interpretation is narrower than the initial autonomy-trap
+framing. Successful assistance can produce **relief** without corresponding
+indigenous **yield**, leaving supported capability above what the partner can
+retain after withdrawal. Constraint displacement is directly demonstrated as
+one mechanism for that pattern. Requirement expansion remains plausible but is
+not claimed as causally identified by the post-review clamp experiment because
+its fresh-seed normal arms did not reproduce the registered coverage penalty.
 
 See the [post-completion interpretation](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_RESULTS_INTERPRETATION_2026-09-20.md),
 the [precommitted paper-analysis plan](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_PAPER_SECONDARY_ANALYSIS_PLAN_2026-09-20.md),
-and the tracked [compact Stage-4 evidence](studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/).
+the tracked [compact Stage-4 evidence](studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/),
+and the [final paper package](paper/partner_force_autonomy/).
 
 ### 3. State estimation and historical confrontation
 
@@ -163,7 +172,7 @@ and
 | [tests/](tests/) | Regression, invariant, exactness, and scientific-method tests |
 | [scenarios/](scenarios/) | Hand-authored model configurations |
 | [docs/](docs/) | Model, validation, audit, and research-method documentation |
-| [studies/](studies/) | Historical case packages and the active research program |
+| [studies/](studies/) | Historical case packages and frozen research-program artifacts |
 | [scripts/](scripts/) | Repository, evidence, and research maintenance utilities |
 
 The complete evidence/retention policy is in
