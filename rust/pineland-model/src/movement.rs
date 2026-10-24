@@ -974,9 +974,18 @@ fn destination_score(
         let territorial_need = 1.0 - own_control * (1.0 - opponent_adjusted);
         let _gap = 1.0 - own_control;
         let _ = threatened_control;
-        ((1.0 - config.logistics.reallocation_exploration_weight) * territorial_need
+        let territorial = ((1.0 - config.logistics.reallocation_exploration_weight)
+            * territorial_need
             + config.logistics.reallocation_exploration_weight * uncertainty)
-            .clamp(0.0, 1.0)
+            .clamp(0.0, 1.0);
+        let pursuit = config.logistics.security_pursuit_weight.clamp(0.0, 1.0);
+        let hostile = crate::actions::opponent_presence_belief(
+            particle,
+            organization,
+            true,
+            destination,
+        );
+        (1.0 - pursuit) * territorial + pursuit * hostile
     };
     let _ = (own_raw, opponent_raw);
     config.logistics.reallocation_strategic_weight * strategic

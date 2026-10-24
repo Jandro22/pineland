@@ -280,6 +280,8 @@ fn create_foreign_intervention(
         .extend_from_slice(&[0.5, 0.0]);
     particle.organizations.external_sanctuary.push(0.0);
     particle.organizations.adaptation_rate.push(0.12);
+    particle.organizations.losses_seen.push(0.0);
+    particle.organizations.loss_memory.push(0.0);
     particle.organizations.leader.push(u32::MAX);
 
     append_foothold_rows(particle, topology.locality_count(), organization);

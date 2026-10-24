@@ -72,6 +72,43 @@ pub fn update(
         }
     }
     deliver_partner_logistics(particle, config, dt);
+    if crate::trace_env!("PINELAND_FUNNEL") && (time % 10.0) < dt.max(1.0e-9) {
+        for org in [crate::MILITARY, crate::INSURGENT] {
+            let (mut stock, mut cap, mut n, mut mv) = (0.0, 0.0, 0, 0);
+            for f in 0..particle.formations.personnel.len() {
+                if particle.formations.organization[f] as usize == org && particle.formations.personnel[f] > 0.0 {
+                    stock += particle.formations.supply_stock[f];
+                    cap += particle.formations.supply_capacity[f];
+                    n += 1;
+                    mv += (particle.formations.moving[f] != 0) as usize;
+                }
+            }
+            let (mut sstock, mut sprod, mut sn) = (0.0, 0.0, 0);
+            for src in 0..particle.logistics.source_stock.len() {
+                if particle.logistics.organization[src] as usize == org {
+                    sstock += particle.logistics.source_stock[src];
+                    sprod += particle.logistics.source_production[src];
+                    sn += 1;
+                }
+            }
+            if org == crate::MILITARY {
+                let n_loc = particle.locality.population.len().max(1);
+                let dims = pineland_core::state::CONTROL_DIMENSIONS;
+                let mut g = vec![0.0; dims];
+                let mut i = vec![0.0; dims];
+                for l in 0..n_loc {
+                    for d in 0..dims {
+                        g[d] += particle.locality.government_control[l * dims + d] / n_loc as f64;
+                        i[d] += particle.locality.insurgent_control[l * dims + d] / n_loc as f64;
+                    }
+                }
+                eprintln!("CONTROL t={:.1} gov={:?} ins={:?}", time,
+                    g.iter().map(|v| (v * 1000.0).round() / 1000.0).collect::<Vec<_>>(),
+                    i.iter().map(|v| (v * 1000.0).round() / 1000.0).collect::<Vec<_>>());
+            }
+            eprintln!("LEDGER t={:.1} org={} moving={} formations={} stock={:.0} cap={:.0} sources={} source_stock={:.0} production_per_day={:.1}", time, org, mv, n, stock, cap, sn, sstock, sprod);
+        }
+    }
 
     // Deliver shipments that have reached their destination before evaluating
     // new demand.  The Python world retains the complete shipment archive but
@@ -212,7 +249,7 @@ pub fn update(
         // sees the reactivated formation when renewing local footholds.
         if particle.formations.operational_status[formation] == 0
             && particle.formations.cohesion[formation] > config.combat.ineffective_cohesion * 1.35
-            && particle.formations.effective_readiness(formation)
+            && particle.formations.combat_readiness(formation)
                 > config.combat.ineffective_readiness * 1.35
         {
             particle.formations.operational_status[formation] = 1;
@@ -527,12 +564,21 @@ fn reconcile_source_production(
         } else {
             1.0
         };
+        // The partner-capacity treatment scales only the security forces'
+        // sustainment; it must not starve the insurgency as well.
+        let security_multiplier =
+            if organization == crate::GOVERNMENT || organization == crate::MILITARY {
+                config.logistics.security_sustainment_multiplier
+            } else {
+                1.0
+            };
         let requirement = round_binary64(
             round_binary64(
                 personnel
                     * config.logistics.presence_consumption_per_person_day
                     * equipment_supply_burden,
-            ) * config.logistics.organization_sustainment_coverage,
+            ) * config.logistics.organization_sustainment_coverage
+                * security_multiplier,
         );
         let territorial = particle
             .organizations

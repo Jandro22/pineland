@@ -168,6 +168,11 @@ pub struct LogisticsConfig {
     pub reallocation_strategic_weight: f64,
     pub reallocation_importance_weight: f64,
     pub reallocation_travel_time_weight: f64,
+    /// Share of a security formation's strategic score given to believed
+    /// hostile presence at the destination (pursuit).
+    pub security_pursuit_weight: f64,
+    /// Partner-capacity multiplier on security-force sustainment production.
+    pub security_sustainment_multiplier: f64,
     pub route_interdiction_enabled: bool,
     pub route_interdiction_rate: f64,
 }
@@ -201,6 +206,8 @@ impl Default for LogisticsConfig {
             reallocation_strategic_weight: 2.0,
             reallocation_importance_weight: 0.5,
             reallocation_travel_time_weight: 0.03,
+            security_pursuit_weight: 0.5,
+            security_sustainment_multiplier: 1.0,
             route_interdiction_enabled: false,
             route_interdiction_rate: 0.0,
         }
@@ -361,6 +368,13 @@ pub struct CombatConfig {
     pub accidental_contact_fraction: f64,
     pub contact_opportunity_model: String,
     pub organized_action_architecture: String,
+    /// multichannel_v6 only: fraction of a formation committed to one strike.
+    pub strike_fraction: f64,
+    /// multichannel_v6 only: share of hostile-presence belief removed for the
+    /// target locality after a strike finds nothing there.
+    pub strike_dry_hole_downgrade: f64,
+    /// Age constant (days) discounting presence reports used to aim strikes.
+    pub strike_report_decay_days: f64,
     /// Post-baseline stylized government equipment effects. Neutral defaults
     /// preserve the certified combat/movement equations exactly. These are
     /// mechanism axes, not empirical claims about any named platform class.
@@ -397,7 +411,10 @@ impl Default for CombatConfig {
             contact_ammunition_floor: 0.05,
             accidental_contact_fraction: 0.05,
             contact_opportunity_model: "directional_pairwise".to_string(),
-            organized_action_architecture: "multichannel_v5".to_string(),
+            organized_action_architecture: "multichannel_v6".to_string(),
+            strike_fraction: 0.1,
+            strike_dry_hole_downgrade: 0.75,
+            strike_report_decay_days: 7.0,
             government_firepower_multiplier: 1.0,
             government_protection_multiplier: 1.0,
             government_supply_burden_multiplier: 1.0,
@@ -1416,6 +1433,45 @@ impl SimulationConfig {
                 "combat.government_air_support_intensity must be finite and in [0,1]".to_string(),
             ));
         }
+        if !self.combat.strike_fraction.is_finite()
+            || self.combat.strike_fraction <= 0.0
+            || self.combat.strike_fraction > 1.0
+        {
+            return Err(ConfigError::Invalid(
+                "combat.strike_fraction must be finite and in (0,1]".to_string(),
+            ));
+        }
+        for (name, value) in [
+            (
+                "combat.strike_dry_hole_downgrade",
+                self.combat.strike_dry_hole_downgrade,
+            ),
+            (
+                "logistics.security_pursuit_weight",
+                self.logistics.security_pursuit_weight,
+            ),
+        ] {
+            if !value.is_finite() || !(0.0..=1.0).contains(&value) {
+                return Err(ConfigError::Invalid(format!(
+                    "{name} must be finite and in [0,1]"
+                )));
+            }
+        }
+        if !self.combat.strike_report_decay_days.is_finite()
+            || self.combat.strike_report_decay_days <= 0.0
+        {
+            return Err(ConfigError::Invalid(
+                "combat.strike_report_decay_days must be finite and positive".to_string(),
+            ));
+        }
+        if !self.logistics.security_sustainment_multiplier.is_finite()
+            || self.logistics.security_sustainment_multiplier < 0.0
+        {
+            return Err(ConfigError::Invalid(
+                "logistics.security_sustainment_multiplier must be finite and non-negative"
+                    .to_string(),
+            ));
+        }
         for (name, value) in [
             (
                 "combat.government_firepower_multiplier",
@@ -1826,7 +1882,7 @@ impl GeographyConfig {
 }
 impl LogisticsConfig {
     fn to_json(&self) -> JsonValue {
-        let mut o = object_f64! {"formation_supply_days"=>self.formation_supply_days,"initial_supply_fraction"=>self.initial_supply_fraction,"presence_consumption_per_person_day"=>self.presence_consumption_per_person_day,"movement_consumption_per_person_km"=>self.movement_consumption_per_person_km,"patrol_consumption_per_person_hour"=>self.patrol_consumption_per_person_hour,"source_capacity_per_resident"=>self.source_capacity_per_resident,"source_daily_production_fraction"=>self.source_daily_production_fraction,"organization_sustainment_coverage"=>self.organization_sustainment_coverage,"resupply_trigger_fraction"=>self.resupply_trigger_fraction,"resupply_target_fraction"=>self.resupply_target_fraction,"shipment_loss_per_travel_hour"=>self.shipment_loss_per_travel_hour,"convoy_speed_factor"=>self.convoy_speed_factor,"readiness_degradation_rate"=>self.readiness_degradation_rate,"readiness_recovery_near_source"=>self.readiness_recovery_near_source,"readiness_recovery_remote"=>self.readiness_recovery_remote,"availability_recovery_rate"=>self.availability_recovery_rate,"reallocation_rate"=>self.reallocation_rate,"insurgent_frontier_weight"=>self.insurgent_frontier_weight,"insurgent_foothold_weight"=>self.insurgent_foothold_weight,"insurgent_stronghold_weight"=>self.insurgent_stronghold_weight,"reallocation_exploration_weight"=>self.reallocation_exploration_weight,"reallocation_strategic_weight"=>self.reallocation_strategic_weight,"reallocation_importance_weight"=>self.reallocation_importance_weight,"reallocation_travel_time_weight"=>self.reallocation_travel_time_weight,"route_interdiction_rate"=>self.route_interdiction_rate};
+        let mut o = object_f64! {"formation_supply_days"=>self.formation_supply_days,"initial_supply_fraction"=>self.initial_supply_fraction,"presence_consumption_per_person_day"=>self.presence_consumption_per_person_day,"movement_consumption_per_person_km"=>self.movement_consumption_per_person_km,"patrol_consumption_per_person_hour"=>self.patrol_consumption_per_person_hour,"source_capacity_per_resident"=>self.source_capacity_per_resident,"source_daily_production_fraction"=>self.source_daily_production_fraction,"organization_sustainment_coverage"=>self.organization_sustainment_coverage,"resupply_trigger_fraction"=>self.resupply_trigger_fraction,"resupply_target_fraction"=>self.resupply_target_fraction,"shipment_loss_per_travel_hour"=>self.shipment_loss_per_travel_hour,"convoy_speed_factor"=>self.convoy_speed_factor,"readiness_degradation_rate"=>self.readiness_degradation_rate,"readiness_recovery_near_source"=>self.readiness_recovery_near_source,"readiness_recovery_remote"=>self.readiness_recovery_remote,"availability_recovery_rate"=>self.availability_recovery_rate,"reallocation_rate"=>self.reallocation_rate,"insurgent_frontier_weight"=>self.insurgent_frontier_weight,"insurgent_foothold_weight"=>self.insurgent_foothold_weight,"insurgent_stronghold_weight"=>self.insurgent_stronghold_weight,"reallocation_exploration_weight"=>self.reallocation_exploration_weight,"reallocation_strategic_weight"=>self.reallocation_strategic_weight,"reallocation_importance_weight"=>self.reallocation_importance_weight,"reallocation_travel_time_weight"=>self.reallocation_travel_time_weight,"security_pursuit_weight"=>self.security_pursuit_weight,"security_sustainment_multiplier"=>self.security_sustainment_multiplier,"route_interdiction_rate"=>self.route_interdiction_rate};
         o.insert(
             "source_capacity_model",
             JsonValue::string(&self.source_capacity_model),
@@ -1868,6 +1924,18 @@ impl CombatConfig {
             "organized_action_architecture",
             JsonValue::string(&self.organized_action_architecture),
         );
+        // v6-only fields are omitted for v5 so frozen config hashes persist.
+        if self.organized_action_architecture == "multichannel_v6" {
+            o.insert("strike_fraction", JsonValue::number(self.strike_fraction));
+            o.insert(
+                "strike_dry_hole_downgrade",
+                JsonValue::number(self.strike_dry_hole_downgrade),
+            );
+            o.insert(
+                "strike_report_decay_days",
+                JsonValue::number(self.strike_report_decay_days),
+            );
+        }
         o
     }
 }
@@ -2250,7 +2318,7 @@ fn apply_force(v: &JsonValue, t: &mut ForceStructureConfig) -> Result<(), Config
 fn apply_logistics(v: &JsonValue, t: &mut LogisticsConfig) -> Result<(), ConfigError> {
     let o = object(v, "logistics")?;
     macro_rules! fs{($($k:literal=>$f:ident:$knd:ident),*$(,)?)=>{$(if let Some(x)=o.get($k){t.$f=$knd(x,$k)?})*}}
-    fs!("formation_supply_days"=>formation_supply_days:required_f64,"initial_supply_fraction"=>initial_supply_fraction:required_f64,"presence_consumption_per_person_day"=>presence_consumption_per_person_day:required_f64,"movement_consumption_per_person_km"=>movement_consumption_per_person_km:required_f64,"patrol_consumption_per_person_hour"=>patrol_consumption_per_person_hour:required_f64,"source_capacity_per_resident"=>source_capacity_per_resident:required_f64,"source_daily_production_fraction"=>source_daily_production_fraction:required_f64,"organization_sustainment_coverage"=>organization_sustainment_coverage:required_f64,"resupply_trigger_fraction"=>resupply_trigger_fraction:required_f64,"resupply_target_fraction"=>resupply_target_fraction:required_f64,"shipment_loss_per_travel_hour"=>shipment_loss_per_travel_hour:required_f64,"convoy_speed_factor"=>convoy_speed_factor:required_f64,"readiness_degradation_rate"=>readiness_degradation_rate:required_f64,"readiness_recovery_near_source"=>readiness_recovery_near_source:required_f64,"readiness_recovery_remote"=>readiness_recovery_remote:required_f64,"availability_recovery_rate"=>availability_recovery_rate:required_f64,"reallocation_rate"=>reallocation_rate:required_f64,"insurgent_frontier_weight"=>insurgent_frontier_weight:required_f64,"insurgent_foothold_weight"=>insurgent_foothold_weight:required_f64,"insurgent_stronghold_weight"=>insurgent_stronghold_weight:required_f64,"reallocation_exploration_weight"=>reallocation_exploration_weight:required_f64,"reallocation_strategic_weight"=>reallocation_strategic_weight:required_f64,"reallocation_importance_weight"=>reallocation_importance_weight:required_f64,"reallocation_travel_time_weight"=>reallocation_travel_time_weight:required_f64,"route_interdiction_enabled"=>route_interdiction_enabled:required_bool,"route_interdiction_rate"=>route_interdiction_rate:required_f64);
+    fs!("formation_supply_days"=>formation_supply_days:required_f64,"initial_supply_fraction"=>initial_supply_fraction:required_f64,"presence_consumption_per_person_day"=>presence_consumption_per_person_day:required_f64,"movement_consumption_per_person_km"=>movement_consumption_per_person_km:required_f64,"patrol_consumption_per_person_hour"=>patrol_consumption_per_person_hour:required_f64,"source_capacity_per_resident"=>source_capacity_per_resident:required_f64,"source_daily_production_fraction"=>source_daily_production_fraction:required_f64,"organization_sustainment_coverage"=>organization_sustainment_coverage:required_f64,"resupply_trigger_fraction"=>resupply_trigger_fraction:required_f64,"resupply_target_fraction"=>resupply_target_fraction:required_f64,"shipment_loss_per_travel_hour"=>shipment_loss_per_travel_hour:required_f64,"convoy_speed_factor"=>convoy_speed_factor:required_f64,"readiness_degradation_rate"=>readiness_degradation_rate:required_f64,"readiness_recovery_near_source"=>readiness_recovery_near_source:required_f64,"readiness_recovery_remote"=>readiness_recovery_remote:required_f64,"availability_recovery_rate"=>availability_recovery_rate:required_f64,"reallocation_rate"=>reallocation_rate:required_f64,"insurgent_frontier_weight"=>insurgent_frontier_weight:required_f64,"insurgent_foothold_weight"=>insurgent_foothold_weight:required_f64,"insurgent_stronghold_weight"=>insurgent_stronghold_weight:required_f64,"reallocation_exploration_weight"=>reallocation_exploration_weight:required_f64,"reallocation_strategic_weight"=>reallocation_strategic_weight:required_f64,"reallocation_importance_weight"=>reallocation_importance_weight:required_f64,"reallocation_travel_time_weight"=>reallocation_travel_time_weight:required_f64,"security_pursuit_weight"=>security_pursuit_weight:required_f64,"security_sustainment_multiplier"=>security_sustainment_multiplier:required_f64,"route_interdiction_enabled"=>route_interdiction_enabled:required_bool,"route_interdiction_rate"=>route_interdiction_rate:required_f64);
     if let Some(x) = o.get("source_capacity_model") {
         t.source_capacity_model = required_string(x, "source_capacity_model")?
     }
@@ -2285,7 +2353,7 @@ fn apply_information(v: &JsonValue, t: &mut InformationConfig) -> Result<(), Con
 fn apply_combat(v: &JsonValue, t: &mut CombatConfig) -> Result<(), ConfigError> {
     let o = object(v, "combat")?;
     macro_rules! ff{($($k:literal=>$f:ident),*$(,)?)=>{$(if let Some(x)=o.get($k){t.$f=required_f64(x,$k)?})*}}
-    ff!("interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction,"government_firepower_multiplier"=>government_firepower_multiplier,"government_protection_multiplier"=>government_protection_multiplier,"government_supply_burden_multiplier"=>government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>government_terrain_mobility_penalty,"government_air_support_intensity"=>government_air_support_intensity,"government_air_support_firepower_bonus"=>government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>government_air_support_civilian_harm_multiplier);
+    ff!("strike_fraction"=>strike_fraction,"strike_dry_hole_downgrade"=>strike_dry_hole_downgrade,"strike_report_decay_days"=>strike_report_decay_days,"interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction,"government_firepower_multiplier"=>government_firepower_multiplier,"government_protection_multiplier"=>government_protection_multiplier,"government_supply_burden_multiplier"=>government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>government_terrain_mobility_penalty,"government_air_support_intensity"=>government_air_support_intensity,"government_air_support_firepower_bonus"=>government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>government_air_support_civilian_harm_multiplier);
     for (k, f) in [
         ("contact_supply_rule", &mut t.contact_supply_rule),
         (

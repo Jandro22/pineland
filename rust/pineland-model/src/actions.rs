@@ -184,7 +184,37 @@ fn evidenced_hostile_physical(
         .max_by(f64::total_cmp)
 }
 
-fn opponent_presence_belief(
+/// Highest evidenced presence-report estimate of the target side in a
+/// locality, ignoring any control-based prior.
+/// Reports are discounted by age, `exp(-age / report_decay_days)`, so a
+/// sighting from weeks ago no longer draws strikes.
+fn evidenced_presence(
+    particle: &ParticleState,
+    observer: usize,
+    target_side_insurgent: bool,
+    locality: usize,
+    time: f64,
+    report_decay_days: f64,
+) -> Option<f64> {
+    let mut evidenced = None;
+    for state in [&particle.presence_beliefs, &particle.node_presence_beliefs] {
+        for (index, key) in state.keys.iter().enumerate() {
+            if observer_matches_organization(particle, key.observer, observer)
+                && key.locality as usize == locality
+                && state.evidence_count.get(index).copied().unwrap_or(0) > 0
+                && target_matches_side(particle, key.target as usize, target_side_insurgent)
+            {
+                let age = (time - state.updated_at.get(index).copied().unwrap_or(time)).max(0.0);
+                let value = clamp01(state.estimate[index])
+                    * python_exp(-age / report_decay_days.max(1.0e-9));
+                evidenced = Some(evidenced.map_or(value, |old: f64| old.max(value)));
+            }
+        }
+    }
+    evidenced
+}
+
+pub(crate) fn opponent_presence_belief(
     particle: &ParticleState,
     observer: usize,
     target_side_insurgent: bool,
@@ -410,6 +440,28 @@ fn operational_reach_enabled(config: &SimulationConfig) -> bool {
     config.combat.organized_action_architecture == "multichannel_v6"
 }
 
+/// The strongest staffed standalone (police-style) post of the opposing side
+/// in a locality. Formation-attached posts are fought through their formation.
+fn hostile_post(particle: &ParticleState, organization: usize, locality: usize) -> Option<usize> {
+    let target_side_insurgent = !is_insurgent(particle, organization);
+    let posts = &particle.security_posts;
+    (0..posts.personnel.len())
+        .filter(|&post| {
+            posts.locality[post] as usize == locality
+                && posts.staffed[post] != 0
+                && posts.formation[post] == u32::MAX
+                && posts.personnel[post] > 0.0
+                && target_matches_side(particle, posts.organization[post] as usize, target_side_insurgent)
+                && organizations_hostile(particle, organization, posts.organization[post] as usize)
+        })
+        .max_by(|a, b| posts.presence[*a].total_cmp(&posts.presence[*b]).then(b.cmp(a)))
+}
+
+fn hostile_post_presence(particle: &ParticleState, organization: usize, locality: usize) -> f64 {
+    hostile_post(particle, organization, locality)
+        .map_or(0.0, |post| clamp01(particle.security_posts.presence[post]))
+}
+
 /// Hostile presence the actor believes it can reach this interval: its own
 /// locality, or an evidenced neighbor discounted by `locality_reach`.
 fn reachable_presence(
@@ -424,7 +476,8 @@ fn reachable_presence(
         opponent_presence_belief(particle, organization, target_side_insurgent, locality).max(
             evidenced_hostile_physical(particle, organization, target_side_insurgent, locality)
                 .unwrap_or(0.0),
-        );
+        )
+        .max(hostile_post_presence(particle, organization, locality));
     let mut neighbors = topology
         .locality_edges
         .neighbors(locality)
@@ -451,7 +504,8 @@ fn reachable_presence(
                     organization,
                     target_side_insurgent,
                     destination,
-                ),
+                )
+                .max(hostile_post_presence(particle, organization, destination)),
         );
     }
     clamp01(best)
@@ -466,6 +520,7 @@ fn armed_strike_target(
     config: &SimulationConfig,
     organization: usize,
     locality: usize,
+    time: f64,
     rng: &mut PyRandomCompat,
 ) -> Option<(usize, f64)> {
     let target_side_insurgent = !is_insurgent(particle, organization);
@@ -476,9 +531,17 @@ fn armed_strike_target(
     neighbors.sort_by_key(|(destination, _)| *destination);
     let mut candidates = Vec::new();
     let mut weights = Vec::new();
+    let local_post = hostile_post_presence(particle, organization, locality);
+    if local_post > 0.0 {
+        candidates.push((locality, 0.0));
+        weights.push(local_post);
+    }
     for (destination, cost) in neighbors {
         let destination = destination as usize;
-        if !has_target_evidence(particle, organization, target_side_insurgent, destination) {
+        let post = hostile_post_presence(particle, organization, destination);
+        if post <= 0.0
+            && !has_target_evidence(particle, organization, target_side_insurgent, destination)
+        {
             continue;
         }
         let reach = locality_reach(
@@ -490,8 +553,18 @@ fn armed_strike_target(
             destination,
             cost,
         );
+        // Strike only on actual presence reports, never on a control prior.
         let weight = reach
-            * opponent_presence_belief(particle, organization, target_side_insurgent, destination);
+            * evidenced_presence(
+                particle,
+                organization,
+                target_side_insurgent,
+                destination,
+                time,
+                config.combat.strike_report_decay_days,
+            )
+            .unwrap_or(0.0)
+            .max(post);
         if weight > 0.0 {
             candidates.push((destination, cost));
             weights.push(weight);
@@ -504,6 +577,47 @@ fn armed_strike_target(
         .choices_indices(candidates.len(), Some(&weights), 1)
         .ok()?[0];
     Some(candidates[selected])
+}
+
+/// v6 only: a strike that finds no opponent removes `downgrade` of the
+/// observer's presence-belief estimate for the target locality, so stale
+/// beliefs stop attracting repeated dry holes until fresh evidence arrives.
+fn downgrade_presence_belief(
+    particle: &mut ParticleState,
+    observer: usize,
+    target_side_insurgent: bool,
+    locality: usize,
+    downgrade: f64,
+) {
+    let keep = 1.0 - downgrade.clamp(0.0, 1.0);
+    for node in [false, true] {
+        let matches = {
+            let state = if node {
+                &particle.node_presence_beliefs
+            } else {
+                &particle.presence_beliefs
+            };
+            state
+                .keys
+                .iter()
+                .enumerate()
+                .filter(|(_, key)| {
+                    observer_matches_organization(particle, key.observer, observer)
+                        && key.locality as usize == locality
+                        && target_matches_side(particle, key.target as usize, target_side_insurgent)
+                })
+                .map(|(index, _)| index)
+                .collect::<Vec<_>>()
+        };
+        let state = if node {
+            &mut particle.node_presence_beliefs
+        } else {
+            &mut particle.presence_beliefs
+        };
+        for index in matches {
+            state.estimate[index] *= keep;
+        }
+    }
 }
 
 fn bump_event(particle: &mut ParticleState, name: &str) {
@@ -1225,7 +1339,6 @@ pub fn opportunities(
                 particle.formations.personnel[formation] > 0.0
                     && particle.formations.moving[formation] == 0
                     && particle.formations.outside_pineland[formation] == 0
-                    && particle.formations.operational_status[formation] == 1
                     && particle
                         .organizations
                         .active
@@ -1615,7 +1728,7 @@ fn armed_strike(
     funnel: bool,
 ) {
     let Some((target, edge_cost)) =
-        armed_strike_target(particle, topology, config, organization, locality, rng)
+        armed_strike_target(particle, topology, config, organization, locality, time, rng)
     else {
         bump_event(particle, "armed_strike_no_target");
         return;
@@ -1630,8 +1743,32 @@ fn armed_strike(
     } else {
         1.0
     };
+    // A strike commits a detachment, not the whole formation.
+    let base_fraction = config.combat.strike_fraction.clamp(0.0, 1.0);
+    // A planned assault on a post (no reported enemy formation there) masses
+    // force for roughly 3:1 over the garrison instead of a raiding detachment.
+    let target_side_insurgent = !is_insurgent(particle, organization);
+    let planned_post = hostile_post(particle, organization, target).filter(|_| {
+        evidenced_presence(
+            particle,
+            organization,
+            target_side_insurgent,
+            target,
+            time,
+            config.combat.strike_report_decay_days,
+        )
+        .unwrap_or(0.0)
+            < 0.05
+    });
+    let fraction = match planned_post {
+        Some(post) => (3.0 * particle.security_posts.personnel[post]
+            / particle.formations.personnel[actor].max(1.0e-9))
+        .clamp(base_fraction, 1.0),
+        None => base_fraction,
+    };
     let moving = particle.formations.personnel[actor].max(0.0)
-        * particle.formations.availability[actor].clamp(0.0, 1.0);
+        * particle.formations.availability[actor].clamp(0.0, 1.0)
+        * fraction;
     let cost = moving * distance_km * config.logistics.movement_consumption_per_person_km * burden;
     if cost > particle.formations.supply_stock[actor] + 1.0e-12 {
         bump_event(particle, "armed_strike_unaffordable");
@@ -1651,7 +1788,6 @@ fn armed_strike(
                 && particle.formations.personnel[formation] > 0.0
                 && particle.formations.moving[formation] == 0
                 && particle.formations.outside_pineland[formation] == 0
-                && particle.formations.operational_status[formation] == 1
                 && particle
                     .organizations
                     .active
@@ -1662,11 +1798,70 @@ fn armed_strike(
         })
         .collect::<Vec<_>>();
     if opponents.is_empty() {
+        if let Some(post) = hostile_post(particle, organization, target) {
+            let garrison = particle.security_posts.personnel[post];
+            let advantage = assault_post(particle, config, rng, actor, post, fraction, target);
+            if funnel {
+                eprintln!(
+                    "FUNNEL t={:.3} org={} loc={} stage=strike outcome=post_assault target={} staffed={} fraction={:.3} garrison={:.1} after={:.1} advantage={:.3}",
+                    time, organization, locality, target, particle.security_posts.staffed[post],
+                    fraction, garrison, particle.security_posts.personnel[post], advantage
+                );
+            }
+            return;
+        }
         bump_event(particle, "armed_strike_dry_hole");
+        downgrade_presence_belief(
+            particle,
+            organization,
+            !is_insurgent(particle, organization),
+            target,
+            config.combat.strike_dry_hole_downgrade,
+        );
         if funnel {
+            let mut present = 0;
+            let mut in_transit = 0;
+            let mut not_operational = 0;
+            let mut outside = 0;
+            let mut inactive = 0;
+            for formation in 0..particle.formations.personnel.len() {
+                let target_organization = particle.formations.organization[formation] as usize;
+                if particle.formations.locality[formation] as usize == target
+                    && particle.formations.personnel[formation] > 0.0
+                    && organizations_hostile(particle, organization, target_organization)
+                {
+                    present += 1;
+                    if particle.formations.moving[formation] != 0 {
+                        in_transit += 1;
+                    }
+                    if particle.formations.operational_status[formation] != 1 {
+                        not_operational += 1;
+                        let f = &particle.formations;
+                        eprintln!(
+                            "FUNNEL nonop formation={} org={} personnel={:.1} cohesion={:.3} readiness={:.3} eff_readiness={:.3} stock={:.1} cap={:.1} avail={:.3} active={}",
+                            formation, target_organization, f.personnel[formation], f.cohesion[formation],
+                            f.readiness[formation], f.effective_readiness(formation), f.supply_stock[formation],
+                            f.supply_capacity[formation], f.availability[formation], f.active[formation]
+                        );
+                    }
+                    if particle.formations.outside_pineland[formation] != 0 {
+                        outside += 1;
+                    }
+                    if particle.organizations.active.get(target_organization).copied() != Some(1) {
+                        inactive += 1;
+                        eprintln!(
+                            "FUNNEL inactive_org={} actor_org={} active={:?} kind={:?}",
+                            target_organization,
+                            organization,
+                            particle.organizations.active.get(target_organization),
+                            particle.organizations.kind.get(target_organization)
+                        );
+                    }
+                }
+            }
             eprintln!(
-                "FUNNEL t={:.3} org={} loc={} stage=strike outcome=dry_hole target={}",
-                time, organization, locality, target
+                "FUNNEL t={:.3} org={} loc={} stage=strike outcome=dry_hole target={} hostile_present={} in_transit={} not_operational={} outside={} inactive={}",
+                time, organization, locality, target, present, in_transit, not_operational, outside, inactive
             );
         }
         return;
@@ -1705,6 +1900,19 @@ fn armed_strike(
     particle.formations.locality[actor] = target as u32;
     particle.formations.microzone[actor] = opponent_microzone as u32;
     let contacts_before = particle.counters.contacts;
+    // Resolve at detachment strength: scale the actor down, then restore the
+    // uncommitted remainder and apply only `fraction` of the cohesion and
+    // readiness damage to the parent formation.
+    let full_personnel = particle.formations.personnel[actor];
+    let detachment = full_personnel * fraction;
+    let reserve = full_personnel - detachment;
+    let cohesion_before = particle.formations.cohesion[actor];
+    let readiness_before = particle.formations.readiness[actor];
+    let availability_before = particle.formations.availability[actor];
+    let experience_before = particle.formations.experience[actor];
+    let status_before = particle.formations.operational_status[actor];
+    particle.formations.personnel[actor] = detachment;
+    crate::combat::RAIDING_FORMATION.with(|cell| cell.set(actor));
     crate::combat::resolve_organized_engagement(
         particle,
         topology,
@@ -1716,6 +1924,25 @@ fn armed_strike(
         organization,
         defender_aware,
     );
+    crate::combat::RAIDING_FORMATION.with(|cell| cell.set(usize::MAX));
+    // Only the committed detachment fought: blend every state change back
+    // into the parent formation in proportion to `fraction`, then re-judge
+    // combat effectiveness on the blended state.
+    particle.formations.personnel[actor] += reserve;
+    let f = &mut particle.formations;
+    let blend = |before: f64, after: f64| before + fraction * (after - before);
+    f.cohesion[actor] = blend(cohesion_before, f.cohesion[actor]);
+    f.readiness[actor] = blend(readiness_before, f.readiness[actor]);
+    f.availability[actor] = blend(availability_before, f.availability[actor]);
+    f.experience[actor] = blend(experience_before, f.experience[actor]);
+    f.operational_status[actor] = status_before;
+    if f.personnel[actor] <= 0.0
+        || f.cohesion[actor] <= config.combat.ineffective_cohesion
+        || f.combat_readiness(actor) <= config.combat.ineffective_readiness
+    {
+        f.operational_status[actor] = 0;
+        f.availability[actor] = f.availability[actor].min(0.08);
+    }
     particle.formations.locality[actor] = origin_locality;
     particle.formations.microzone[actor] = origin_microzone;
     bump_event(particle, "armed_strikes");
@@ -1729,6 +1956,82 @@ fn armed_strike(
             particle.counters.contacts - contacts_before
         );
     }
+}
+
+/// A detachment assaults a fixed post. Attrition uses the engagement form
+/// (`base_attrition_rate * exp(+-0.45 * advantage + noise)`, capped); the post
+/// is lightly armed but fights from cover (x1.25). A decisive advantage (>2:1) can overrun the post
+/// outright; a post reduced below 10 personnel is abandoned. Overrun posts stay
+/// unstaffed until the state re-deploys police there.
+fn assault_post(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    actor: usize,
+    post: usize,
+    fraction: f64,
+    locality: usize,
+) -> f64 {
+    let f = &particle.formations;
+    let detachment = f.personnel[actor].max(0.0) * fraction;
+    let experience = if config.state_regeneration.enabled {
+        0.75 + 0.50 * f.experience[actor].clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+    let attack = (detachment * f.combat_readiness(actor)).max(1.0e-9).powf(0.72)
+        * f.quality[actor]
+        * experience
+        * f.cohesion[actor].max(0.05);
+    let posts = &particle.security_posts;
+    let defense = (posts.personnel[post] * posts.available_fraction[post].max(0.3))
+        .max(1.0e-9)
+        .powf(0.72)
+        // Lightly armed constabulary: weaker per head than an armed formation
+        // even when professional, partly offset by fighting from cover.
+        * (0.25 + 0.35 * clamp01(posts.professionalism[post]))
+        * 1.25;
+    let advantage = attack.max(1.0e-9).ln() - defense.max(1.0e-9).ln();
+    if crate::trace_env!("PINELAND_FUNNEL") {
+        let f = &particle.formations;
+        let posts = &particle.security_posts;
+        eprintln!(
+            "ASSAULT detach={:.1} cr={:.3} ready={:.3} supply={:.3} fatigue_r={:.3} q={:.3} coh={:.3} exp={:.3} attack={:.2} garrison={:.1} avail={:.2} prof={:.3} defense={:.2}",
+            detachment, f.combat_readiness(actor), f.readiness[actor], f.supply_fraction(actor),
+            f.fatigue_adjusted_readiness(actor), f.quality[actor], f.cohesion[actor], experience, attack,
+            posts.personnel[post], posts.available_fraction[post], posts.professionalism[post], defense
+        );
+    }
+    let sigma = config.combat.stochastic_sigma;
+    let frac_post = (config.combat.base_attrition_rate
+        * python_exp(0.45 * advantage + rng.normalvariate(0.0, sigma)))
+    .min(config.combat.max_loss_fraction);
+    let frac_attacker = (config.combat.base_attrition_rate
+        * python_exp(-0.45 * advantage + rng.normalvariate(0.0, sigma)))
+    .min(config.combat.max_loss_fraction);
+    let overrun = advantage > 2.0f64.ln() && rng.random() < 0.5;
+
+    let attacker_loss = detachment * frac_attacker;
+    particle.formations.personnel[actor] -= attacker_loss;
+    particle.formations.cumulative_losses[actor] += attacker_loss;
+    let posts = &mut particle.security_posts;
+    let post_loss = posts.personnel[post] * if overrun { 0.5 } else { frac_post };
+    posts.personnel[post] -= post_loss;
+    if overrun || posts.personnel[post] < 10.0 {
+        // Survivors of an overrun post disperse; the state must re-deploy.
+        posts.personnel[post] = 0.0;
+        posts.staffed[post] = 0;
+        posts.presence[post] = 0.0;
+        bump_event(particle, "posts_overrun");
+    } else {
+        posts.presence[post] = clamp01(posts.personnel[post] / 250.0);
+    }
+    let intensity = (frac_post + frac_attacker) / (2.0 * config.combat.base_attrition_rate).max(0.001);
+    particle.locality.violence[locality] =
+        clamp01(particle.locality.violence[locality] * 0.85 + 0.25 * intensity.min(1.0));
+    particle.counters.contacts += 1;
+    bump_event(particle, "post_assaults");
+    advantage
 }
 
 pub fn apply_nonviolent_coercion(particle: &mut ParticleState, locality: usize, amount: f64) {
@@ -1765,25 +2068,44 @@ pub fn schedule_typed_contact(
 
 #[cfg(test)]
 mod tests {
-    use super::{armed_strike, operational_reach_enabled};
+    use super::{armed_strike, assault_post, operational_reach_enabled};
     use pineland_core::config::SimulationConfig;
     use pineland_core::rng::{PyRandomCompat, RngStreams};
     use pineland_core::state::{ParticleState, PresenceKey, PresenceState};
     use pineland_core::topology::StaticTopology;
 
     #[test]
-    fn multichannel_v5_keeps_operational_reach_disabled() {
-        let config = SimulationConfig::default();
-        assert_eq!(
-            config.combat.organized_action_architecture,
-            "multichannel_v5"
-        );
-        assert_eq!(config.organized_action_rate, 0.08);
+    fn operational_reach_is_the_default_architecture() {
+        let mut config = SimulationConfig::default();
+        assert_eq!(config.combat.organized_action_architecture, "multichannel_v6");
+        assert!(operational_reach_enabled(&config));
+        config.combat.organized_action_architecture = "multichannel_v5".to_string();
         assert!(!operational_reach_enabled(&config));
     }
 
     #[test]
     fn multichannel_v6_neighbor_strike_resolves_and_applies_losses() {
+        let (before, after, contacts, strikes) = run_neighbor_strike(1.0);
+        assert_eq!(contacts, 1);
+        assert_eq!(strikes, Some(1));
+        assert!(after[0] < before[0]);
+        assert!(after[1] < before[1]);
+    }
+
+    #[test]
+    fn multichannel_v6_strike_commits_only_the_detachment() {
+        let fraction = 0.1;
+        let (before, after, contacts, _) = run_neighbor_strike(fraction);
+        assert_eq!(contacts, 1);
+        // max_loss_fraction caps a single engagement at 12% of the committed
+        // detachment, so the parent formation keeps at least the reserve.
+        let floor = before[0] - 0.12 * fraction * before[0];
+        assert!(after[0] >= floor - 1.0e-9, "{} < {}", after[0], floor);
+        assert!(after[0] <= before[0]);
+        assert!(after[1] < before[1]);
+    }
+
+    fn run_neighbor_strike(fraction: f64) -> ([f64; 2], [f64; 2], u64, Option<u64>) {
         let topology = StaticTopology::new(2);
         let mut config = SimulationConfig {
             locality_count: 2,
@@ -1792,6 +2114,7 @@ mod tests {
         };
         config.combat.organized_action_architecture = "multichannel_v6".to_string();
         config.combat.stochastic_sigma = 0.0;
+        config.combat.strike_fraction = fraction;
         let mut particle = ParticleState::new(
             2,
             topology.microzones.len(),
@@ -1836,7 +2159,10 @@ mod tests {
         particle.presence_beliefs.confidence[0] = 1.0;
         particle.presence_beliefs.evidence_count[0] = 1;
 
-        let personnel_before = particle.formations.personnel.clone();
+        let personnel_before = [
+            particle.formations.personnel[0],
+            particle.formations.personnel[1],
+        ];
         let mut rng = PyRandomCompat::from_seed(2026);
         armed_strike(
             &mut particle,
@@ -1850,13 +2176,39 @@ mod tests {
             false,
         );
 
-        assert_eq!(particle.counters.contacts, 1);
-        assert_eq!(
-            particle.counters.event_counts.get("armed_strikes"),
-            Some(&1)
-        );
-        assert!(particle.formations.personnel[0] < personnel_before[0]);
-        assert!(particle.formations.personnel[1] < personnel_before[1]);
         assert_eq!(particle.formations.locality, vec![0, 1]);
+        (
+            personnel_before,
+            [
+                particle.formations.personnel[0],
+                particle.formations.personnel[1],
+            ],
+            particle.counters.contacts as u64,
+            particle.counters.event_counts.get("armed_strikes").map(|v| *v as u64),
+        )
+    }
+
+    #[test]
+    fn massed_assault_damages_a_small_post() {
+        let config = SimulationConfig::default();
+        let mut particle = ParticleState::new(1, 1, 7, 1, 1, RngStreams::new(7, "post-assault-test"));
+        particle.organizations.kind[crate::INSURGENT] = 3;
+        particle.formations.organization = vec![crate::INSURGENT as u32];
+        particle.formations.personnel = vec![900.0];
+        particle.formations.supply_stock = vec![27_000.0];
+        particle.formations.supply_capacity = vec![27_000.0];
+        particle.security_posts = pineland_core::state::SecurityPostState::new(1);
+        particle.security_posts.organization[0] = crate::POLICE as u32;
+        particle.security_posts.personnel[0] = 40.0;
+        particle.security_posts.presence[0] = 0.16;
+        particle.security_posts.available_fraction[0] = 0.65;
+        particle.security_posts.professionalism[0] = 0.5;
+        particle.security_posts.staffed[0] = 1;
+        let mut rng = PyRandomCompat::from_seed(11);
+        let advantage = assault_post(&mut particle, &config, &mut rng, 0, 0, 1.0, 0);
+        assert!(advantage > 0.0, "advantage {advantage}");
+        assert!(particle.security_posts.personnel[0] < 40.0);
+        assert_eq!(particle.counters.contacts, 1);
+        assert!(particle.formations.personnel[0] < 900.0);
     }
 }

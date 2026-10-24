@@ -22,7 +22,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const CHECKPOINT_MAGIC: &[u8; 8] = b"PINELAND";
-pub const CHECKPOINT_VERSION: u32 = 17;
+pub const CHECKPOINT_VERSION: u32 = 18;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CheckpointManifest {
@@ -182,7 +182,7 @@ impl CheckpointStore {
             return Err(CheckpointError::Invalid("bad magic".to_string()));
         }
         let version = reader.u32()?;
-        if version != 15 && version != 16 && version != CHECKPOINT_VERSION {
+        if version != 15 && version != 16 && version != 17 && version != CHECKPOINT_VERSION {
             return Err(CheckpointError::Invalid(
                 "unsupported checkpoint version".to_string(),
             ));
@@ -217,10 +217,13 @@ impl CheckpointStore {
         decode_zones(&mut reader, &mut particle).map_err(|e| section_error("zones", e))?;
         decode_zone_beliefs(&mut reader, &mut particle)
             .map_err(|e| section_error("zone_beliefs", e))?;
-        decode_organizations(&mut reader, &mut particle)
+        decode_organizations(&mut reader, &mut particle, version)
             .map_err(|e| section_error("organizations", e))?;
         decode_formations(&mut reader, &mut particle)
             .map_err(|e| section_error("formations", e))?;
+        if version < 18 {
+            backfill_organization_losses(&mut particle);
+        }
         decode_patrols(&mut reader, &mut particle).map_err(|e| section_error("patrols", e))?;
         decode_security_posts(&mut reader, &mut particle)
             .map_err(|e| section_error("security_posts", e))?;
@@ -569,7 +572,9 @@ impl CheckpointStore {
                 .unwrap_or(0),
         };
         if !manifest.complete
-            || (manifest.schema_version != CHECKPOINT_VERSION && manifest.schema_version != 16)
+            || (manifest.schema_version != CHECKPOINT_VERSION
+                && manifest.schema_version != 17
+                && manifest.schema_version != 16)
         {
             return Err(CheckpointError::Invalid(
                 "manifest is incomplete or unsupported".to_string(),
@@ -1177,6 +1182,8 @@ fn encode_organizations(b: &mut Vec<u8>, p: &ParticleState) {
         &x.ideology,
         &x.external_sanctuary,
         &x.adaptation_rate,
+        &x.losses_seen,
+        &x.loss_memory,
     ] {
         put_f64_vec(b, v)
     }
@@ -1186,6 +1193,7 @@ fn encode_organizations(b: &mut Vec<u8>, p: &ParticleState) {
 fn decode_organizations(
     r: &mut ByteReader<'_>,
     p: &mut ParticleState,
+    version: u32,
 ) -> Result<(), CheckpointError> {
     let x = &mut p.organizations;
     x.kind = read_u8_vec(r)?;
@@ -1209,9 +1217,31 @@ fn decode_organizations(
     x.ideology = read_f64_vec(r)?;
     x.external_sanctuary = read_f64_vec(r)?;
     x.adaptation_rate = read_f64_vec(r)?;
+    if version >= 18 {
+        x.losses_seen = read_f64_vec(r)?;
+        x.loss_memory = read_f64_vec(r)?;
+    } else {
+        // Pre-v18 checkpoints lack these vectors; backfilled after formations decode.
+        let n = x.adaptation_rate.len();
+        x.losses_seen = vec![0.0; n];
+        x.loss_memory = vec![0.0; n];
+    }
     x.succession_count = read_u32_vec(r)?;
     x.leader = read_u32_vec(r)?;
     Ok(())
+}
+/// Pre-v18 backfill: `losses_seen[o]` = sum of formation cumulative losses owned by `o`.
+fn backfill_organization_losses(p: &mut ParticleState) {
+    let n = p.organizations.losses_seen.len();
+    let mut seen = vec![0.0; n];
+    for (f, &org) in p.formations.organization.iter().enumerate() {
+        let o = org as usize;
+        if o < n {
+            seen[o] += p.formations.cumulative_losses.get(f).copied().unwrap_or(0.0);
+        }
+    }
+    p.organizations.losses_seen = seen;
+    p.organizations.loss_memory = vec![0.0; n];
 }
 fn encode_formations(b: &mut Vec<u8>, p: &ParticleState) {
     let x = &p.formations;

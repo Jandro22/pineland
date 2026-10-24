@@ -42,6 +42,9 @@ struct HoldoutOverrides {
     accidental_contact_fraction: Option<f64>,
     organized_action_architecture: Option<String>,
     organized_action_rate: Option<f64>,
+    strike_fraction: Option<f64>,
+    strike_dry_hole_downgrade: Option<f64>,
+    security_pursuit_weight: Option<f64>,
 }
 
 #[derive(Clone, Debug)]
@@ -434,6 +437,9 @@ fn load_holdout_contract(path: &Path) -> Result<RunDesign, String> {
                     "organized_action_architecture",
                 )?,
                 organized_action_rate: json_optional_f64(cell, "organized_action_rate")?,
+                strike_fraction: json_optional_f64(cell, "strike_fraction")?,
+                strike_dry_hole_downgrade: json_optional_f64(cell, "strike_dry_hole_downgrade")?,
+                security_pursuit_weight: json_optional_f64(cell, "security_pursuit_weight")?,
             },
         });
     }
@@ -623,6 +629,9 @@ fn load_stage4_contract(path: &Path) -> Result<RunDesign, String> {
                     "organized_action_architecture",
                 )?,
                 organized_action_rate: json_optional_f64(cell, "organized_action_rate")?,
+                strike_fraction: json_optional_f64(cell, "strike_fraction")?,
+                strike_dry_hole_downgrade: json_optional_f64(cell, "strike_dry_hole_downgrade")?,
+                security_pursuit_weight: json_optional_f64(cell, "security_pursuit_weight")?,
             },
         });
     }
@@ -917,15 +926,23 @@ fn check_git_clean() -> Result<(), String> {
 }
 
 fn apply_indigenous_command_multiplier(engine: &mut SimulationEngine, multiplier: f64) {
+    // The partner-capacity treatment applies to the security forces only.
     let m = multiplier.max(0.05);
-    for r in &mut engine.particle.command_edges.reliability {
-        *r = (*r * m).clamp(0.0, 1.0);
+    let security = |org: u32| {
+        org as usize == pineland_model::GOVERNMENT || org as usize == pineland_model::MILITARY
+    };
+    let edges = &mut engine.particle.command_edges;
+    for edge in 0..edges.organization.len() {
+        if security(edges.organization[edge]) {
+            edges.reliability[edge] = (edges.reliability[edge] * m).clamp(0.0, 1.0);
+            edges.latency_hours[edge] = (edges.latency_hours[edge] / m).max(0.05);
+        }
     }
-    for l in &mut engine.particle.command_edges.latency_hours {
-        *l = (*l / m).max(0.05);
-    }
-    for c in &mut engine.particle.formations.command {
-        *c = (*c * m).clamp(0.0, 1.0);
+    let formations = &mut engine.particle.formations;
+    for f in 0..formations.command.len() {
+        if security(formations.organization[f]) {
+            formations.command[f] = (formations.command[f] * m).clamp(0.0, 1.0);
+        }
     }
 }
 
@@ -982,7 +999,7 @@ fn apply_stage4_development(engine: &mut SimulationEngine, cell: &Cell, elapsed_
     }
     if cell.development_logistics_rate_per_30d > 0.0 {
         let factor = development_factor(cell.development_logistics_rate_per_30d, elapsed_days);
-        engine.config.logistics.organization_sustainment_coverage *= factor;
+        engine.config.logistics.security_sustainment_multiplier *= factor;
         engine
             .particle
             .partner_support
@@ -1096,10 +1113,25 @@ fn build_config(
     if let Some(v) = cell.overrides.organized_action_rate {
         config.organized_action_rate = v;
     }
+    if let Some(v) = cell.overrides.strike_fraction {
+        if !(v > 0.0 && v <= 1.0) {
+            return Err(format!("strike_fraction {v} must be in (0, 1]"));
+        }
+        config.combat.strike_fraction = v;
+    }
+    if let Some(v) = cell.overrides.strike_dry_hole_downgrade {
+        if !(0.0..=1.0).contains(&v) {
+            return Err(format!("strike_dry_hole_downgrade {v} must be in [0, 1]"));
+        }
+        config.combat.strike_dry_hole_downgrade = v;
+    }
+    if let Some(v) = cell.overrides.security_pursuit_weight {
+        config.logistics.security_pursuit_weight = v;
+    }
 
     config.state_regeneration.security_recruitment_rate *= cell.forcegen_mult;
     config.state_regeneration.security_training_rate *= cell.forcegen_mult;
-    config.logistics.organization_sustainment_coverage *= cell.logistics_mult;
+    config.logistics.security_sustainment_multiplier *= cell.logistics_mult;
 
     let p = &mut config.partner_force_support;
     p.enabled = false;
@@ -1426,7 +1458,7 @@ fn external_air_share(window: FlowSnapshot) -> f64 {
 fn csv_header(include_contract_action_settings: bool) -> String {
     let base = "schema_version,experiment_id,design_version,git_commit,world_id,pair_id,run_id,cell_id,support_profile,seed,withdrawal_time_days,horizon_days,branch,indigenous_forcegen_multiplier,indigenous_logistics_multiplier,indigenous_command_multiplier,pre_insurgent_personnel,pre_insurgent_active_formations,pre_insurgent_territorial_control,pre_recent_actions,pre_contested_localities,pre_supported_capability,pre_government_control,pre_military_personnel,pre_trained_reserve,pre_recruit_pipeline,pre_readiness,pre_experience,pre_supply_stock,pre_supply_capacity,pre_command_reliability,pre_command_latency_hours,window_indigenous_recruits,window_indigenous_graduates,window_military_losses,window_indigenous_logistics_produced,window_indigenous_logistics_delivered,window_indigenous_logistics_consumed,window_military_logistics_demanded,window_external_air_opportunities,window_external_air_assisted_contacts,window_external_air_intensity,window_external_logistics_offered,window_external_logistics_delivered,window_external_logistics_rejected,window_external_logistics_lost,window_command_opportunities,window_command_indigenous_service,window_command_supported_service,window_external_command_events,window_command_latency_hours_saved,window_external_forcegen_graduates,window_donor_cost_air,window_donor_cost_logistics,window_donor_cost_command,window_donor_cost_forcegen,window_donor_cost,support_air_intensity,support_air_bonus,support_logistics_rate,support_command_reliability_boost,support_command_latency_reduction_fraction,support_forcegen_training_rate_boost,c_government_control,c_military_personnel_retention,c_operational_formation_survival,c_geographic_coverage_retention,c_operational_readiness_retention,composite_capability,composite_capability_v1,post_indigenous_recruits,post_indigenous_graduates,post_military_losses,post_indigenous_logistics_produced,post_indigenous_logistics_consumed,post_donor_cost_air,post_donor_cost_logistics,post_donor_cost_command,post_donor_cost_forcegen,post_donor_cost,external_share_logistics,external_share_forcegen,external_share_command,external_share_air,formal_q_indigenous,formal_q_supported,formal_support_lift,formal_regime,formal_bottleneck,formal_forcegen_ratio_indigenous,formal_logistics_ratio_indigenous,formal_command_ratio_indigenous,formal_forcegen_demand,formal_forcegen_indigenous_service,formal_forcegen_external_service,formal_forcegen_deficit,formal_forcegen_useful_external,formal_logistics_demand,formal_logistics_indigenous_service,formal_logistics_external_service,formal_logistics_deficit,formal_logistics_useful_external,formal_command_demand,formal_command_indigenous_service,formal_command_external_service,formal_command_deficit,formal_command_useful_external,command_service_requirement_per_order,manpower_burden,logistics_burden,omega_flow,t_c_deficit_90,t_readiness_collapse,t_supply_exhaustion,t_first_formation_loss";
     if include_contract_action_settings {
-        format!("{base},organized_action_architecture,organized_action_rate,config_hash")
+        format!("{base},organized_action_architecture,organized_action_rate,strike_fraction,strike_dry_hole_downgrade,config_hash")
     } else {
         base.to_string()
     }
@@ -1595,6 +1627,8 @@ fn write_row(
     if include_contract_action_settings {
         row.push(engine.config.combat.organized_action_architecture.clone());
         row.push(f9(engine.config.organized_action_rate));
+        row.push(f9(engine.config.combat.strike_fraction));
+        row.push(f9(engine.config.combat.strike_dry_hole_downgrade));
         row.push(config_hash.to_string());
     }
     writeln!(out, "{}", row.join(",")).map_err(|e| e.to_string())
@@ -1603,7 +1637,7 @@ fn write_row(
 fn trajectory_csv_header(include_contract_action_settings: bool) -> String {
     let base = "schema_version,experiment_id,design_version,git_commit,world_id,cell_id,support_profile,seed,withdrawal_time_days,time_days,days_from_withdrawal,phase,capability_reference,state_hash,decision_hash,government_control,military_personnel_retention,operational_formation_survival,geographic_coverage_retention,operational_readiness_retention,composite_capability,composite_capability_v1,military_personnel,operational_formations,covered_localities,trained_reserve,recruit_pipeline,readiness,experience,supply_stock,supply_capacity,command_reliability,command_latency_hours,insurgent_personnel,insurgent_active_formations,insurgent_territorial_control,contested_localities,interval_indigenous_recruits,interval_indigenous_graduates,interval_security_deployments,interval_military_losses,interval_indigenous_logistics_produced,interval_indigenous_logistics_delivered,interval_indigenous_logistics_consumed,interval_military_logistics_demanded,interval_logistics_system_lost,interval_contacts,interval_organized_actions,interval_external_air_opportunities,interval_external_air_assisted_contacts,interval_external_air_intensity,interval_external_air_firepower_bonus,interval_external_logistics_offered,interval_external_logistics_delivered,interval_external_logistics_rejected,interval_external_logistics_lost,interval_command_opportunities,interval_command_indigenous_service,interval_command_supported_service,interval_external_command_events,interval_command_reliability_boost,interval_command_latency_hours_saved,interval_external_forcegen_graduates,interval_donor_cost_air,interval_donor_cost_logistics,interval_donor_cost_command,interval_donor_cost_forcegen,interval_donor_cost,interval_formal_active_services,interval_formal_q_indigenous,interval_formal_q_supported,interval_formal_support_lift,interval_formal_regime,interval_formal_bottleneck";
     if include_contract_action_settings {
-        format!("{base},organized_action_architecture,organized_action_rate,config_hash")
+        format!("{base},organized_action_architecture,organized_action_rate,strike_fraction,strike_dry_hole_downgrade,config_hash")
     } else {
         base.to_string()
     }
@@ -1731,6 +1765,8 @@ fn write_trajectory_row(
     if include_contract_action_settings {
         row.push(engine.config.combat.organized_action_architecture.clone());
         row.push(f9(engine.config.organized_action_rate));
+        row.push(f9(engine.config.combat.strike_fraction));
+        row.push(f9(engine.config.combat.strike_dry_hole_downgrade));
         row.push(config_hash.to_string());
     }
     writeln!(out, "{}", row.join(",")).map_err(|e| e.to_string())
@@ -2177,6 +2213,9 @@ fn main() -> Result<(), String> {
     let include_contract_action_settings = run_design.cells.iter().any(|cell| {
         cell.overrides.organized_action_architecture.is_some()
             || cell.overrides.organized_action_rate.is_some()
+            || cell.overrides.strike_fraction.is_some()
+            || cell.overrides.strike_dry_hole_downgrade.is_some()
+            || cell.overrides.security_pursuit_weight.is_some()
     });
 
     if let Some(parent) = output.parent() {
@@ -2642,12 +2681,12 @@ mod contract_tests {
             .canonical_hash();
 
         let mut architecture = baseline.clone();
-        architecture.overrides.organized_action_architecture = Some("multichannel_v6".to_string());
+        architecture.overrides.organized_action_architecture = Some("multichannel_v5".to_string());
         let architecture_config =
             build_config(&architecture, 7, 120.0, 100, 4, "contract-test").unwrap();
         assert_eq!(
             architecture_config.combat.organized_action_architecture,
-            "multichannel_v6"
+            "multichannel_v5"
         );
         assert_ne!(architecture_config.canonical_hash(), baseline_hash);
 
@@ -2659,10 +2698,10 @@ mod contract_tests {
 
         assert!(!csv_header(false).contains("organized_action_architecture"));
         assert!(csv_header(true)
-            .ends_with(",organized_action_architecture,organized_action_rate,config_hash"));
+            .ends_with(",organized_action_architecture,organized_action_rate,strike_fraction,strike_dry_hole_downgrade,config_hash"));
         assert!(!trajectory_csv_header(false).contains("organized_action_rate"));
         assert!(trajectory_csv_header(true)
-            .ends_with(",organized_action_architecture,organized_action_rate,config_hash"));
+            .ends_with(",organized_action_architecture,organized_action_rate,strike_fraction,strike_dry_hole_downgrade,config_hash"));
     }
 }
 
@@ -2719,13 +2758,13 @@ mod stage4_tests {
 
         let mut engine = make_engine(&cell, 2026990002, 90.0, 300, 34, "stage4-dev").unwrap();
         let base_training = engine.config.state_regeneration.security_training_rate;
-        let base_logistics = engine.config.logistics.organization_sustainment_coverage;
+        let base_logistics = engine.config.logistics.security_sustainment_multiplier;
         let base_command_reliability = engine.particle.command_edges.reliability[0];
         let base_command_latency = engine.particle.command_edges.latency_hours[0];
 
         advance_with_stage4_development(&mut engine, &cell, 30.0).unwrap();
         assert!(engine.config.state_regeneration.security_training_rate > base_training);
-        assert!(engine.config.logistics.organization_sustainment_coverage > base_logistics);
+        assert!(engine.config.logistics.security_sustainment_multiplier > base_logistics);
         assert!(engine.particle.command_edges.reliability[0] >= base_command_reliability);
         assert!(engine.particle.command_edges.latency_hours[0] <= base_command_latency);
 
@@ -2735,7 +2774,7 @@ mod stage4_tests {
         let withdrawn_training_at_split =
             withdrawn.config.state_regeneration.security_training_rate;
         let withdrawn_logistics_at_split =
-            withdrawn.config.logistics.organization_sustainment_coverage;
+            withdrawn.config.logistics.security_sustainment_multiplier;
         let withdrawn_cost_at_split = withdrawn.particle.partner_support.cumulative_donor_cost();
 
         advance_with_stage4_development(&mut continued, &cell, 60.0).unwrap();
@@ -2746,15 +2785,15 @@ mod stage4_tests {
                 > withdrawn.config.state_regeneration.security_training_rate
         );
         assert!(
-            continued.config.logistics.organization_sustainment_coverage
-                > withdrawn.config.logistics.organization_sustainment_coverage
+            continued.config.logistics.security_sustainment_multiplier
+                > withdrawn.config.logistics.security_sustainment_multiplier
         );
         assert_eq!(
             withdrawn.config.state_regeneration.security_training_rate,
             withdrawn_training_at_split
         );
         assert_eq!(
-            withdrawn.config.logistics.organization_sustainment_coverage,
+            withdrawn.config.logistics.security_sustainment_multiplier,
             withdrawn_logistics_at_split
         );
         assert_eq!(

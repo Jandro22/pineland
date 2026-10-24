@@ -904,6 +904,10 @@ pub struct OrganizationState {
     pub ideology: Vec<f64>,
     pub external_sanctuary: Vec<f64>,
     pub adaptation_rate: Vec<f64>,
+    /// Lifetime formation losses already folded into `loss_memory`.
+    pub losses_seen: Vec<f64>,
+    /// Recent loss fraction, decayed with a 30-day time constant.
+    pub loss_memory: Vec<f64>,
     pub leader: Vec<u32>,
 }
 
@@ -940,6 +944,8 @@ impl OrganizationState {
             ideology,
             external_sanctuary: vec![0.0; count],
             adaptation_rate: vec![0.12; count],
+            losses_seen: vec![0.0; count],
+            loss_memory: vec![0.0; count],
             leader: vec![u32::MAX; count],
         }
     }
@@ -1056,6 +1062,15 @@ impl FormationState {
                 * supply_effect
                 * clamp01(self.command[formation]),
         )
+    }
+
+    /// Physical fighting readiness (fatigue and supply) without the command
+    /// multiplier. Poor command degrades capability through
+    /// `effective_readiness`, but does not by itself render a fresh,
+    /// supplied unit combat-ineffective.
+    pub fn combat_readiness(&self, formation: usize) -> f64 {
+        let supply_effect = 0.2 + 0.8 * self.supply_fraction(formation);
+        clamp01(self.fatigue_adjusted_readiness(formation) * supply_effect)
     }
 
     pub fn deployable_personnel(&self, formation: usize) -> f64 {
@@ -2433,6 +2448,8 @@ impl ParticleState {
         append_f64s(material, &self.organizations.ideology);
         append_f64s(material, &self.organizations.external_sanctuary);
         append_f64s(material, &self.organizations.adaptation_rate);
+        append_f64s(material, &self.organizations.losses_seen);
+        append_f64s(material, &self.organizations.loss_memory);
         append_u32s(material, &self.organizations.leader);
         append_u32s(material, &self.formations.organization);
         append_u32s(material, &self.formations.locality);
@@ -3334,6 +3351,8 @@ impl ParticleState {
                 self.organizations.adaptation_rate.len(),
                 "organization adaptation rate",
             ),
+            (self.organizations.losses_seen.len(), "organization losses seen"),
+            (self.organizations.loss_memory.len(), "organization loss memory"),
             (self.organizations.leader.len(), "organization leader"),
         ] {
             if length != organization_count {
@@ -5137,6 +5156,8 @@ impl ParticleState {
                 &self.organizations.adaptation_rate,
                 "organization adaptation rate",
             ),
+            (&self.organizations.losses_seen, "organization losses seen"),
+            (&self.organizations.loss_memory, "organization loss memory"),
             (&self.leaders.competence, "leader competence"),
             (&self.leaders.charisma, "leader charisma"),
             (&self.leaders.risk_tolerance, "leader risk tolerance"),

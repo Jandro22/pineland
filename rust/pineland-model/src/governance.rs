@@ -10,6 +10,7 @@ use pineland_core::rng::python_exp;
 use pineland_core::state::{clamp01, ParticleState, CONTROL_DIMENSIONS};
 use pineland_core::topology::StaticTopology;
 
+const PHYSICAL: usize = 1;
 const ADMINISTRATIVE: usize = 2;
 const LEGAL: usize = 3;
 const FISCAL: usize = 4;
@@ -185,15 +186,35 @@ pub fn update(
         let allocation = (particle.organizations.capital[government]
             / locality_count.max(1) as f64)
             .min(interval_need);
+        let offset = locality * CONTROL_DIMENSIONS;
+        // Institutions need physical security: production scales with the
+        // government's share of armed presence, and insurgent physical control
+        // erodes the non-physical dimensions it can contest.
+        let government_physical = particle.locality.government_control[offset + PHYSICAL];
+        let insurgent_physical = particle.locality.insurgent_control[offset + PHYSICAL];
+        let security_access =
+            government_physical / (government_physical + insurgent_physical).max(1.0e-9);
+        let security_access = if government_physical + insurgent_physical <= 1.0e-9 {
+            1.0
+        } else {
+            security_access
+        };
         let production = if cycle_scale > 0.0 {
-            (allocation / interval_need.max(1.0e-12)).min(capacity) * (1.0 - leakage)
+            (allocation / interval_need.max(1.0e-12)).min(capacity)
+                * (1.0 - leakage)
+                * security_access
         } else {
             0.0
         };
+        let erosion = 0.03 * insurgent_physical * cycle_scale;
+        for dimension in [ADMINISTRATIVE, LEGAL, FISCAL, SOCIAL, EXPECTED] {
+            particle.locality.government_control[offset + dimension] = clamp01(
+                particle.locality.government_control[offset + dimension] * (1.0 - erosion),
+            );
+        }
         let cost = allocation * 0.02;
         particle.organizations.capital[government] =
             (particle.organizations.capital[government] - cost).max(0.0);
-        let offset = locality * CONTROL_DIMENSIONS;
         particle.locality.government_control[offset + ADMINISTRATIVE] = clamp01(
             particle.locality.government_control[offset + ADMINISTRATIVE]
                 + 0.006 * production * cycle_scale,

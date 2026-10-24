@@ -91,6 +91,16 @@ fn organization_is_insurgent(particle: &ParticleState, organization: usize) -> b
     particle.organizations.kind.get(organization).copied() == Some(3)
 }
 
+thread_local! {
+    /// Formation currently fighting as a temporary raid detachment. Combat
+    /// must not issue movement orders for it: the raid returns to its origin.
+    pub(crate) static RAIDING_FORMATION: std::cell::Cell<usize> = const { std::cell::Cell::new(usize::MAX) };
+}
+
+fn is_raiding(formation: usize) -> bool {
+    RAIDING_FORMATION.with(|cell| cell.get() == formation)
+}
+
 pub fn organizations_hostile(particle: &ParticleState, first: usize, second: usize) -> bool {
     if first == second {
         return false;
@@ -198,9 +208,16 @@ fn capability(
     } else {
         1.0
     };
-    (particle
-        .formations
-        .available_personnel(formation)
+    // A combat-ineffective unit is not deployable but still defends itself
+    // with whatever ready personnel it has.
+    let fighting = if particle.formations.operational_status[formation] == 1 {
+        particle.formations.available_personnel(formation)
+    } else {
+        particle.formations.personnel[formation].max(0.0)
+            * particle.formations.availability[formation].clamp(0.0, 1.0)
+            * particle.formations.effective_readiness(formation)
+    };
+    (fighting
         .max(0.0)
         .powf(0.72)
         * particle.formations.quality[formation]
@@ -705,8 +722,9 @@ fn resolve_engagement(
         }
         return;
     }
+    // Only the initiator must be combat-effective; a broken defender can
+    // still be attacked (and is the most vulnerable target on the map).
     if particle.formations.operational_status[first] != 1
-        || particle.formations.operational_status[second] != 1
     {
         if crate::trace_env!("PINELAND_COMBAT_TRACE") {
             eprintln!(
@@ -968,7 +986,7 @@ fn resolve_engagement(
         }
         if particle.formations.personnel[formation] <= 0.0
             || particle.formations.cohesion[formation] <= config.combat.ineffective_cohesion
-            || particle.formations.effective_readiness(formation)
+            || particle.formations.combat_readiness(formation)
                 <= config.combat.ineffective_readiness
         {
             particle.formations.operational_status[formation] = 0;
@@ -1019,12 +1037,18 @@ fn resolve_engagement(
     for (slot, disengaged_slot) in disengaged.iter().copied().enumerate() {
         if disengaged_slot {
             let formation = if slot == 0 { first } else { second };
+            if is_raiding(formation) {
+                continue;
+            }
             let _ = crate::movement::issue_withdrawal_order(
                 particle, topology, config, formation, time, rng,
             );
         }
     }
     for (formation, loss) in [(first, loss_first), (second, loss_second)] {
+        if is_raiding(formation) {
+            continue;
+        }
         let loss_fraction = loss / (particle.formations.personnel[formation] + loss).max(1.0e-12);
         let _ = crate::movement::issue_reinforcement_order(
             particle,

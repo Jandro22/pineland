@@ -375,7 +375,7 @@ pub fn build_gate_config(
 
     config.state_regeneration.security_recruitment_rate *= spec.forcegen_mult;
     config.state_regeneration.security_training_rate *= spec.forcegen_mult;
-    config.logistics.organization_sustainment_coverage *= spec.logistics_mult;
+    config.logistics.security_sustainment_multiplier *= spec.logistics_mult;
 
     let p = &mut config.partner_force_support;
     p.enabled = false;

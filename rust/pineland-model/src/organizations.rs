@@ -626,6 +626,8 @@ fn materialize_proto_birth(
         .organizations
         .adaptation_rate
         .push(config.organization_ecology.adaptation_rate);
+    particle.organizations.losses_seen.push(0.0);
+    particle.organizations.loss_memory.push(0.0);
 
     // This is the native equivalent of _set_armed_membership: an armed
     // founder exposes only the newly created franchise affinity.
@@ -1031,6 +1033,27 @@ pub(crate) fn record_foothold_action(
     particle.footholds.embeddedness[index] = particle.footholds.strength[index];
 }
 
+/// Whether an empty treasury collapses an organization.
+///
+/// Recruitment converts capital into supply reserve capped at the balance
+/// (`recruitment.rs`), so a recruiting organization routinely rests at exactly
+/// zero capital. Under `multichannel_v5` that alone collapsed the organization,
+/// which left its fielded formations alive but excluded from every combat
+/// filter (a frozen "zombie" insurgency). `multichannel_v6` collapses on
+/// capital exhaustion only when no fielded force remains.
+fn capital_exhaustion_collapses(
+    config: &SimulationConfig,
+    capital: f64,
+    operational_fielded: f64,
+) -> bool {
+    capital <= 0.0
+        && operational_fielded
+            < config
+                .organization_ecology
+                .minimum_formation_personnel
+                .max(1.0e-9)
+}
+
 /// Collapse an insurgent organization at the same boundary as Python's
 /// ``collapse_organization``.  The native state uses an active bit and fixed
 /// numeric organization table where Python uses a status string and mutable
@@ -1080,8 +1103,13 @@ fn collapse_organization(particle: &mut ParticleState, organization: usize) {
         if particle.formations.organization[formation] as usize != organization {
             continue;
         }
+        // Retire the formation outright: a collapsed organization's units
+        // must not linger as unattackable, revivable shells.
         particle.formations.operational_status[formation] = 0;
         particle.formations.availability[formation] = 0.0;
+        particle.formations.active[formation] = 0;
+        particle.formations.personnel[formation] = 0.0;
+        particle.formations.supply_stock[formation] = 0.0;
     }
 }
 
@@ -1130,7 +1158,20 @@ pub fn update(
                     + particle.formations.cumulative_losses[formation]
             })
             .collect::<Vec<_>>();
-        let losses = python_sum(&loss_values) / python_sum(&personnel_plus_losses).max(1.0);
+        // Cohesion and collapse respond to *recent* losses: the loss fraction
+        // incurred since the last cycle, folded into a 30-day decaying memory.
+        // (A lifetime loss fraction never decays and made every organization
+        // collapse on a clock once it had lost a few percent of its strength.)
+        let lifetime = python_sum(&loss_values);
+        let delta = (lifetime - particle.organizations.losses_seen[organization]).max(0.0);
+        let current = python_sum(&personnel_plus_losses) - lifetime;
+        let fresh = delta / (current.max(0.0) + delta).max(1.0);
+        particle.organizations.losses_seen[organization] = lifetime;
+        particle.organizations.loss_memory[organization] = particle.organizations.loss_memory
+            [organization]
+            * python_exp(-elapsed_days.max(0.0) / 30.0)
+            + fresh;
+        let losses = particle.organizations.loss_memory[organization];
 
         let mut represented_values = Vec::new();
         let mut identity_weighted_values = Vec::new();
@@ -1266,12 +1307,14 @@ pub fn update(
                     / 7.0,
             );
         let collapse_draw = rng.random();
+        // Live fielded force: any active in-country formation with personnel, regardless of
+        // operational_status (temporarily ineffective units are still a live force).
         let operational_fielded = (0..particle.formations.personnel.len())
             .filter(|&formation| {
                 particle.formations.organization[formation] as usize == organization
                     && particle.formations.active[formation] != 0
-                    && particle.formations.operational_status[formation] == 1
                     && particle.formations.outside_pineland[formation] == 0
+                    && particle.formations.personnel[formation] > 0.0
             })
             .map(|formation| particle.formations.personnel[formation].max(0.0))
             .sum::<f64>();
@@ -1288,12 +1331,30 @@ pub fn update(
         } else {
             represented_weight <= 1e-9
         };
+        let capital_exhausted = capital_exhaustion_collapses(
+            config,
+            particle.organizations.capital[organization],
+            operational_fielded,
+        );
         let collapse_realized = !conditioned
-            && (particle.organizations.capital[organization] <= 0.0
+            && (capital_exhausted
                 || particle.organizations.cohesion[organization] < 0.12
                 || rooted_exhaustion_collapse
                 || collapse_draw < collapse_hazard);
         if collapse_realized {
+            if crate::trace_env!("PINELAND_FUNNEL") {
+                eprintln!(
+                    "FUNNEL t={:.3} stage=org_collapse org={} capital={:.3} cohesion={:.4} rooted={} draw={:.4} hazard={:.4} fielded={:.1}",
+                    time,
+                    organization,
+                    particle.organizations.capital[organization],
+                    particle.organizations.cohesion[organization],
+                    rooted_exhaustion_collapse,
+                    collapse_draw,
+                    collapse_hazard,
+                    operational_fielded
+                );
+            }
             collapse_organization(particle, organization);
         }
         let _ = (formation_values, _split_realized);
@@ -1313,4 +1374,18 @@ pub fn onset_hazard(
     config.organization_ecology.birth_base_hazard
         * (1.0 - particle.locality.government_control[offset + 5])
         * (1.0 + particle.locality.violence[locality])
+}
+
+#[cfg(test)]
+mod collapse_tests {
+    use super::capital_exhaustion_collapses;
+    use pineland_core::config::SimulationConfig;
+
+    #[test]
+    fn fielded_organization_survives_zero_capital() {
+        let config = SimulationConfig::default();
+        assert!(!capital_exhaustion_collapses(&config, 0.0, 11_000.0));
+        assert!(capital_exhaustion_collapses(&config, 0.0, 0.0));
+        assert!(!capital_exhaustion_collapses(&config, 1.0, 0.0));
+    }
 }

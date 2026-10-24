@@ -996,7 +996,12 @@ impl SimulationEngine {
             );
             let organization_daily_requirement = organization_personnel
                 * self.config.logistics.presence_consumption_per_person_day
-                * self.config.logistics.organization_sustainment_coverage;
+                * self.config.logistics.organization_sustainment_coverage
+                * if organization == GOVERNMENT || organization == MILITARY {
+                    self.config.logistics.security_sustainment_multiplier
+                } else {
+                    1.0
+                };
             let catchment_weights = if organization == MILITARY {
                 source_rows
                     .iter()
