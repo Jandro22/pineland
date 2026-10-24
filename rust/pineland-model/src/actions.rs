@@ -463,13 +463,18 @@ fn hostile_post_presence(particle: &ParticleState, organization: usize, locality
 }
 
 /// Hostile presence the actor believes it can reach this interval: its own
-/// locality, or an evidenced neighbor discounted by `locality_reach`.
+/// locality, or an evidenced neighbor discounted by `locality_reach`. In v6 a
+/// neighbor only counts when the actor holds actionable intelligence there
+/// (see `actionable_hit_probability`) or a fixed hostile post is there, so the
+/// armed channel is not chosen on stale or uncorroborated sightings.
+#[allow(clippy::too_many_arguments)]
 fn reachable_presence(
     particle: &ParticleState,
     topology: &StaticTopology,
     config: &SimulationConfig,
     organization: usize,
     locality: usize,
+    time: f64,
 ) -> f64 {
     let target_side_insurgent = !is_insurgent(particle, organization);
     let mut best =
@@ -483,9 +488,13 @@ fn reachable_presence(
         .neighbors(locality)
         .collect::<Vec<_>>();
     neighbors.sort_by_key(|(destination, _)| *destination);
+    let prior = hostile_presence_prior(particle, topology, organization);
     for (destination, cost) in neighbors {
         let destination = destination as usize;
-        if !has_target_evidence(particle, organization, target_side_insurgent, destination) {
+        let post = hostile_post_presence(particle, organization, destination);
+        if post <= 0.0
+            && !has_target_evidence(particle, organization, target_side_insurgent, destination)
+        {
             continue;
         }
         let reach = locality_reach(
@@ -497,23 +506,145 @@ fn reachable_presence(
             destination,
             cost,
         );
-        best = best.max(
-            reach
-                * opponent_presence_belief(
-                    particle,
-                    organization,
-                    target_side_insurgent,
-                    destination,
-                )
-                .max(hostile_post_presence(particle, organization, destination)),
+        let formation = actionable_hit_probability(
+            particle,
+            topology,
+            config,
+            organization,
+            destination,
+            time,
+            prior,
         );
+        best = best.max(reach * formation.max(post));
     }
     clamp01(best)
 }
 
-/// Pick the locality an armed strike is aimed at. Candidates are the source
-/// and evidenced neighbors, weighted by reach times believed presence. The
-/// returned edge cost is zero for the source locality.
+/// Order-of-battle prior that a given locality hosts at least one hostile
+/// formation: `N` active hostile formations spread over `K` localities gives
+/// `1 - (1 - 1/K)^N`. Actors know roughly how many enemy formations exist,
+/// not where they are.
+fn hostile_presence_prior(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    organization: usize,
+) -> f64 {
+    let localities = topology.locality_count().max(1) as f64;
+    let f = &particle.formations;
+    let hostile = (0..f.personnel.len())
+        .filter(|&formation| {
+            let target = f.organization[formation] as usize;
+            f.personnel[formation] > 0.0
+                && f.outside_pineland[formation] == 0
+                && particle.organizations.active.get(target).copied() == Some(1)
+                && organizations_hostile(particle, organization, target)
+        })
+        .count() as f64;
+    (1.0 - (1.0 - 1.0 / localities).powf(hostile)).clamp(0.01, 0.95)
+}
+
+/// Believed probability that a strike into `locality` finds a hostile
+/// formation, from the actor's own presence reports.
+///
+/// Each microzone starts at the order-of-battle prior (split so the locality
+/// total equals `prior`). Every evidenced wildcard presence row the actor or
+/// one of its formations holds for that microzone adds the log-likelihood
+/// ratio of its estimate under the nominal source reliability
+/// (`information.true_positive_rate` / `false_positive_rate`), weighted by
+/// freshness `exp(-age / strike_report_decay_days)`, the expected dwell time
+/// of a reported formation. The locality probability is the chance that at
+/// least one microzone holds the enemy. A single uncorroborated positive
+/// among fresh negative reports therefore stays unlikely, while repeated
+/// independent sightings compound, as with the two-source rule for acting on
+/// human intelligence.
+fn strike_hit_probability(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    organization: usize,
+    locality: usize,
+    time: f64,
+    prior: f64,
+) -> f64 {
+    let target_side_insurgent = !is_insurgent(particle, organization);
+    let start = topology
+        .locality_zone_offsets
+        .get(locality)
+        .copied()
+        .unwrap_or(0) as usize;
+    let end = topology
+        .locality_zone_offsets
+        .get(locality + 1)
+        .copied()
+        .map_or(start + 1, |value| (value as usize).max(start + 1));
+    let zones = end - start;
+    let primary = topology
+        .primary_zone
+        .get(locality)
+        .map_or(0, |zone| (*zone as usize).saturating_sub(start).min(zones - 1));
+    let prior = prior.clamp(1.0e-6, 1.0 - 1.0e-6);
+    let zone_prior = 1.0 - (1.0 - prior).powf(1.0 / zones as f64);
+    let base = (zone_prior / (1.0 - zone_prior)).ln();
+    let tpr = config.information.true_positive_rate.clamp(0.01, 0.99);
+    let fpr = config.information.false_positive_rate.clamp(1.0e-4, tpr - 1.0e-3);
+    let positive = (tpr / fpr).ln();
+    let negative = ((1.0 - tpr) / (1.0 - fpr)).ln();
+    let decay = config.combat.strike_report_decay_days.max(1.0e-9);
+    let mut evidence = vec![0.0; zones];
+    for state in [&particle.presence_beliefs, &particle.node_presence_beliefs] {
+        for (index, key) in state.keys.iter().enumerate() {
+            if key.locality as usize != locality
+                || key.target_formation != u32::MAX
+                || state.evidence_count.get(index).copied().unwrap_or(0) == 0
+                || !observer_matches_organization(particle, key.observer, organization)
+                || !target_matches_side(particle, key.target as usize, target_side_insurgent)
+            {
+                continue;
+            }
+            let zone = (key.microzone as usize)
+                .checked_sub(start)
+                .filter(|zone| *zone < zones)
+                .unwrap_or(primary);
+            let age = (time - state.updated_at.get(index).copied().unwrap_or(time)).max(0.0);
+            let estimate = clamp01(state.estimate[index]);
+            evidence[zone] += python_exp(-age / decay)
+                * (estimate * positive + (1.0 - estimate) * negative);
+        }
+    }
+    let miss = evidence
+        .iter()
+        .map(|log_ratio| 1.0 - 1.0 / (1.0 + python_exp(-(base + log_ratio))))
+        .product::<f64>();
+    clamp01(1.0 - miss)
+}
+
+/// The hit probability of a formation strike into `locality`, or zero when
+/// launching is not worth it: the actor's intelligence must raise the odds
+/// above the order-of-battle prior, and the expected value of the strike,
+/// `p * gain - (1 - p) * dry-hole loss`, must be non-negative, i.e.
+/// `p >= combat.strike_min_hit_probability`.
+fn actionable_hit_probability(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    organization: usize,
+    locality: usize,
+    time: f64,
+    prior: f64,
+) -> f64 {
+    let probability =
+        strike_hit_probability(particle, topology, config, organization, locality, time, prior);
+    if probability > prior && probability >= config.combat.strike_min_hit_probability {
+        probability
+    } else {
+        0.0
+    }
+}
+
+/// Pick the locality an armed strike is aimed at. Candidates are fixed hostile
+/// posts (known, predictable targets) and neighbors where the actor holds
+/// actionable intelligence of an enemy formation, weighted by reach times hit
+/// probability. The returned edge cost is zero for the source locality.
 fn armed_strike_target(
     particle: &ParticleState,
     topology: &StaticTopology,
@@ -536,6 +667,7 @@ fn armed_strike_target(
         candidates.push((locality, 0.0));
         weights.push(local_post);
     }
+    let prior = hostile_presence_prior(particle, topology, organization);
     for (destination, cost) in neighbors {
         let destination = destination as usize;
         let post = hostile_post_presence(particle, organization, destination);
@@ -553,18 +685,18 @@ fn armed_strike_target(
             destination,
             cost,
         );
-        // Strike only on actual presence reports, never on a control prior.
-        let weight = reach
-            * evidenced_presence(
-                particle,
-                organization,
-                target_side_insurgent,
-                destination,
-                time,
-                config.combat.strike_report_decay_days,
-            )
-            .unwrap_or(0.0)
-            .max(post);
+        // Strike a formation only on actionable presence reports, never on a
+        // control prior or a stale or uncorroborated sighting.
+        let formation = actionable_hit_probability(
+            particle,
+            topology,
+            config,
+            organization,
+            destination,
+            time,
+            prior,
+        );
+        let weight = reach * formation.max(post);
         if weight > 0.0 {
             candidates.push((destination, cost));
             weights.push(weight);
@@ -579,17 +711,103 @@ fn armed_strike_target(
     Some(candidates[selected])
 }
 
-/// v6 only: a strike that finds no opponent removes `downgrade` of the
-/// observer's presence-belief estimate for the target locality, so stale
-/// beliefs stop attracting repeated dry holes until fresh evidence arrives.
+/// Trace-only (`PINELAND_FUNNEL`) description of the intelligence behind a
+/// strike: hit probability, the freshest best presence row, the last positive
+/// report (`pos_p` is that report's detection probability; ~0.04 marks a
+/// false positive), and how many hostile formations left the target since.
+fn strike_intel_trace(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    organization: usize,
+    target: usize,
+    time: f64,
+) -> String {
+    let side = !is_insurgent(particle, organization);
+    let decay = config.combat.strike_report_decay_days.max(1.0e-9);
+    let mut best: Option<(f64, f64, f64, f64, u32)> = None;
+    for state in [&particle.presence_beliefs, &particle.node_presence_beliefs] {
+        for (index, key) in state.keys.iter().enumerate() {
+            if observer_matches_organization(particle, key.observer, organization)
+                && key.locality as usize == target
+                && state.evidence_count[index] > 0
+                && target_matches_side(particle, key.target as usize, side)
+            {
+                let age = (time - state.updated_at[index]).max(0.0);
+                let value = clamp01(state.estimate[index]) * python_exp(-age / decay);
+                if best.map_or(true, |b| value > b.0) {
+                    best = Some((
+                        value,
+                        age,
+                        state.estimate[index],
+                        state.confidence[index],
+                        state.evidence_count[index],
+                    ));
+                }
+            }
+        }
+    }
+    let last_positive = particle
+        .information_observations
+        .iter()
+        .rev()
+        .find(|o| {
+            o.observation_type == 0
+                && o.detected == 1
+                && o.locality as usize == target
+                && o.observer as usize == organization
+                && target_matches_side(particle, o.target as usize, side)
+        })
+        .map(|o| (o.time, o.source_type, o.detection_probability));
+    let since = last_positive.map_or(time - decay, |p| p.0);
+    let f = &particle.formations;
+    let moved_away = (0..f.personnel.len())
+        .filter(|&x| {
+            f.personnel[x] > 0.0
+                && f.movement_origin.get(x).copied() == Some(target as u32)
+                && f.movement_execute_at.get(x).copied().unwrap_or(-1.0) >= since - 0.25
+                && f.locality[x] as usize != target
+                && organizations_hostile(particle, organization, f.organization[x] as usize)
+        })
+        .count();
+    let prior = hostile_presence_prior(particle, topology, organization);
+    let p_hit = strike_hit_probability(particle, topology, config, organization, target, time, prior);
+    let (value, age, estimate, confidence, evidence) = best.unwrap_or((0.0, -1.0, 0.0, 0.0, 0));
+    format!(
+        "side={} p_hit={:.3} prior={:.3} value={:.3} age={:.2} est={:.3} conf={:.3} ev={} pos_age={:.2} pos_src={} pos_p={:.3} moved_away={}",
+        if is_insurgent(particle, organization) { "ins" } else { "gov" },
+        p_hit,
+        prior,
+        value,
+        age,
+        estimate,
+        confidence,
+        evidence,
+        last_positive.map_or(-1.0, |p| time - p.0),
+        last_positive.map_or(255, |p| p.1),
+        last_positive.map_or(-1.0, |p| p.2),
+        moved_away
+    )
+}
+
+/// v6 only: a strike that sweeps a locality and finds no opponent is itself a
+/// strong negative presence report. It is fused (weight
+/// `combat.strike_dry_hole_downgrade`) into every presence row the actor and
+/// its formations hold for that locality, refreshing their timestamps, so the
+/// failed sweep keeps outweighing a later single uncorroborated sighting
+/// instead of being erased by it.
 fn downgrade_presence_belief(
     particle: &mut ParticleState,
+    config: &SimulationConfig,
     observer: usize,
     target_side_insurgent: bool,
     locality: usize,
-    downgrade: f64,
+    time: f64,
 ) {
-    let keep = 1.0 - downgrade.clamp(0.0, 1.0);
+    let weight = config.combat.strike_dry_hole_downgrade.clamp(0.0, 1.0);
+    if weight <= 0.0 {
+        return;
+    }
     for node in [false, true] {
         let matches = {
             let state = if node {
@@ -615,9 +833,95 @@ fn downgrade_presence_belief(
             &mut particle.presence_beliefs
         };
         for index in matches {
-            state.estimate[index] *= keep;
+            state.fuse(
+                index,
+                time,
+                weight,
+                0.0,
+                0.0,
+                config.information.contradiction_memory_days,
+                config.information.contradiction_penalty,
+            );
         }
     }
+}
+
+/// v6 only: what a dry hole still yields. Residents questioned during the
+/// sweep may say where an enemy formation that recently left went. With
+/// probability equal to the locality's cooperation with the actor (government
+/// cooperation, or insurgent sympathy for insurgents), the most recent such
+/// departure becomes a fresh presence report on the formation's current
+/// locality. Returns that locality when a lead was produced.
+fn sweep_exploitation_lead(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    organization: usize,
+    locality: usize,
+    time: f64,
+) -> Option<usize> {
+    let insurgent = is_insurgent(particle, organization);
+    let communities = &particle.communities;
+    let (sum, count) = (0..communities.locality.len())
+        .filter(|&community| communities.locality[community] as usize == locality)
+        .fold((0.0, 0usize), |(sum, count), community| {
+            let value = if insurgent {
+                communities.insurgent_sympathy.get(community)
+            } else {
+                communities.government_cooperation.get(community)
+            };
+            (sum + clamp01(value.copied().unwrap_or(0.0)), count + 1)
+        });
+    if count == 0 {
+        return None;
+    }
+    let cooperation = sum / count as f64;
+    let window = config.combat.strike_report_decay_days.max(0.0);
+    let f = &particle.formations;
+    let departed = (0..f.personnel.len())
+        .filter(|&formation| {
+            let target = f.organization[formation] as usize;
+            f.personnel[formation] > 0.0
+                && f.outside_pineland[formation] == 0
+                && f.locality[formation] as usize != locality
+                && f.movement_origin.get(formation).copied() == Some(locality as u32)
+                && f.movement_execute_at.get(formation).copied().unwrap_or(f64::NEG_INFINITY)
+                    >= time - window
+                && particle.organizations.active.get(target).copied() == Some(1)
+                && organizations_hostile(particle, organization, target)
+        })
+        .max_by(|a, b| {
+            f.movement_execute_at[*a]
+                .total_cmp(&f.movement_execute_at[*b])
+                .then(b.cmp(a))
+        })?;
+    if rng.random() >= cooperation {
+        return None;
+    }
+    let key = pineland_core::state::PresenceKey {
+        observer: organization as u32,
+        target: particle.formations.organization[departed],
+        locality: particle.formations.locality[departed],
+        microzone: particle.formations.microzone[departed],
+        target_formation: u32::MAX,
+    };
+    let destination = key.locality as usize;
+    let personnel = particle.formations.personnel[departed];
+    let state = &mut particle.presence_beliefs;
+    let index = state.ensure_key(key);
+    if state.confidence[index] == 0.0 && state.evidence_count[index] == 0 {
+        state.confidence[index] = config.information.prior_confidence;
+    }
+    state.fuse(
+        index,
+        time,
+        config.information.positive_report_confidence * cooperation,
+        1.0,
+        personnel,
+        config.information.contradiction_memory_days,
+        config.information.contradiction_penalty,
+    );
+    Some(destination)
 }
 
 fn bump_event(particle: &mut ParticleState, name: &str) {
@@ -1050,6 +1354,7 @@ fn control_weights(
     locality: usize,
     unfielded: f64,
     fielded: f64,
+    time: f64,
 ) -> [f64; 6] {
     let total = unfielded + fielded;
     if total <= 0.0 {
@@ -1064,7 +1369,7 @@ fn control_weights(
     let physical = belief_control(particle, organization, target, locality, PHYSICAL);
     let social = belief_control(particle, organization, target, locality, SOCIAL);
     let perceived_presence = if operational_reach_enabled(config) {
-        reachable_presence(particle, topology, config, organization, locality)
+        reachable_presence(particle, topology, config, organization, locality, time)
     } else {
         opponent_presence_belief(particle, organization, !insurgent, locality).max(
             evidenced_hostile_physical(particle, organization, !insurgent, locality).unwrap_or(0.0),
@@ -1247,6 +1552,7 @@ pub fn opportunities(
         locality,
         unfielded,
         fielded,
+        _time,
     );
     if topology.locality_edges.neighbors(locality).next().is_none() {
         weights[ACCESS_RESTRICTION] = 0.0;
@@ -1733,6 +2039,16 @@ fn armed_strike(
         bump_event(particle, "armed_strike_no_target");
         return;
     };
+    if funnel {
+        eprintln!(
+            "FUNNEL t={:.3} org={} loc={} stage=strike_intel target={} {}",
+            time,
+            organization,
+            locality,
+            target,
+            strike_intel_trace(particle, topology, config, organization, target, time)
+        );
+    }
     let actor = match rng.choice_index(own.len()) {
         Ok(index) => own[index],
         Err(_) => return,
@@ -1813,11 +2129,16 @@ fn armed_strike(
         bump_event(particle, "armed_strike_dry_hole");
         downgrade_presence_belief(
             particle,
+            config,
             organization,
             !is_insurgent(particle, organization),
             target,
-            config.combat.strike_dry_hole_downgrade,
+            time,
         );
+        let lead = sweep_exploitation_lead(particle, config, rng, organization, target, time);
+        if lead.is_some() {
+            bump_event(particle, "armed_strike_sweep_leads");
+        }
         if funnel {
             let mut present = 0;
             let mut in_transit = 0;
@@ -1860,8 +2181,9 @@ fn armed_strike(
                 }
             }
             eprintln!(
-                "FUNNEL t={:.3} org={} loc={} stage=strike outcome=dry_hole target={} hostile_present={} in_transit={} not_operational={} outside={} inactive={}",
-                time, organization, locality, target, present, in_transit, not_operational, outside, inactive
+                "FUNNEL t={:.3} org={} loc={} stage=strike outcome=dry_hole target={} hostile_present={} in_transit={} not_operational={} outside={} inactive={} lead={}",
+                time, organization, locality, target, present, in_transit, not_operational, outside, inactive,
+                lead.map_or(-1, |value| value as i64)
             );
         }
         return;
