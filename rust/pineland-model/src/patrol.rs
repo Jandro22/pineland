@@ -245,7 +245,10 @@ fn advance_patrol_presence_memory(
     let age = (time - updated_values[zone]).max(0.0);
     memory_values[zone] *= python_exp(-age / memory);
     updated_values[zone] = time;
-    memory_values[zone] += target * (1.0 - python_exp(-duration / memory));
+    // Presence is a bounded share: overlapping patrols saturate it rather
+    // than pushing it past full coverage.
+    memory_values[zone] =
+        (memory_values[zone] + target * (1.0 - python_exp(-duration / memory))).min(1.0);
     particle.patrols.presence_accounted_at[patrol] = time;
 }
 
