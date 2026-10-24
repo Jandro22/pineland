@@ -5,7 +5,7 @@ use pineland_model::{
         external_service_from_supported_total, ServiceChannel, StructuralAutonomyMetrics,
         StructuralServiceWindow,
     },
-    CapabilityAssayBaseline, CapabilityAssayResult, SimulationEngine, INSURGENT, MILITARY,
+    CapabilityAssayBaseline, CapabilityAssayResult, SimulationEngine, MILITARY,
 };
 use std::collections::BTreeSet;
 use std::env;
@@ -1328,7 +1328,9 @@ fn state_at_withdrawal(
     let mut pre_insurgent_personnel = 0.0;
     let mut pre_insurgent_active_formations = 0u64;
     for formation in 0..p.formations.personnel.len() {
-        if p.formations.organization[formation] as usize == INSURGENT
+        // Count every insurgent-kind organization: after a split the legacy
+        // INSURGENT row is retired and its formations belong to the children.
+        if p.organizations.kind[p.formations.organization[formation] as usize] == 3
             && p.formations.active[formation] != 0
             && p.formations.outside_pineland[formation] == 0
         {

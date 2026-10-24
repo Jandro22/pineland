@@ -23,8 +23,9 @@ fn organization_matches_side(particle: &ParticleState, organization: usize, acto
         return false;
     }
     if actor == 1 {
-        return organization == crate::INSURGENT
-            && particle.organizations.kind[organization] == INSURGENT_KIND;
+        // Python maps every insurgent-kind organization (including split
+        // children and dynamic births) to the insurgent side.
+        return particle.organizations.kind[organization] == INSURGENT_KIND;
     }
     if matches!(
         particle.organizations.kind[organization],
@@ -532,7 +533,12 @@ pub fn record_presence(
             particle.formations.personnel[formation] / 1000.0
                 * particle.formations.availability[formation],
         );
-        let insurgent = particle.formations.organization[formation] as usize == crate::INSURGENT;
+        let insurgent = particle
+            .organizations
+            .kind
+            .get(particle.formations.organization[formation] as usize)
+            .copied()
+            == Some(INSURGENT_KIND);
         let target = if insurgent {
             &mut particle.zones.insurgent_presence
         } else {
