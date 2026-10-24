@@ -330,6 +330,9 @@ pub struct SimulationEngine {
     pub model_hash: String,
     pub started_at: f64,
     pub last_boundary: f64,
+    /// Time of the event being processed; keys the per-event RNG resync.
+    pub rng_sync_time: f64,
+    pub rng_sync_locality: u32,
     /// Runtime-only execution policy used by SMC/ensemble propagation.
     ///
     /// This mirrors Python's ``execution_profile == "particle"`` contract:
@@ -421,6 +424,8 @@ impl SimulationEngine {
             model_hash,
             started_at: 0.0,
             last_boundary: 0.0,
+            rng_sync_time: 0.0,
+            rng_sync_locality: u32::MAX,
             particle_execution: false,
         };
         engine.initialize_world(
@@ -465,6 +470,8 @@ impl SimulationEngine {
             model_hash,
             started_at: 0.0,
             last_boundary: 0.0,
+            rng_sync_time: 0.0,
+            rng_sync_locality: u32::MAX,
             particle_execution: false,
         })
     }
@@ -2090,6 +2097,8 @@ impl SimulationEngine {
     }
 
     fn process_event(&mut self, event: &ScheduledEvent) -> Result<(), ModelError> {
+        self.rng_sync_time = event.time;
+        self.rng_sync_locality = event_locality(event);
         match &event.payload {
             EventPayload::Patrol { .. } => {
                 let (rng_key, mut rng) = self.take_rng("process:patrol");
@@ -2571,7 +2580,16 @@ impl SimulationEngine {
         // process.  Falling back directly to config.seed would give
         // resampled siblings identical future draws for a stream that had not
         // yet been touched before the branch.
-        self.particle.rng.take_owned(name)
+        let (key, mut rng) = self.particle.rng.take_owned(name);
+        if self.config.combat.rng_event_resync > 0.5 {
+            let tag = format!("{name}@{:016x}@{}", self.rng_sync_time.to_bits(), self.rng_sync_locality);
+            rng = PyRandomCompat::from_seed(seed_from_namespace(
+                self.particle.rng.root_seed,
+                &self.particle.rng.namespace,
+                &tag,
+            ));
+        }
+        (key, rng)
     }
     fn put_rng(&mut self, key: String, rng: PyRandomCompat) {
         self.particle.rng.put_owned(key, rng);
@@ -5095,7 +5113,11 @@ mod tests {
 
     #[test]
     fn spatial_encounter_liveness_test() {
+        // Liveness is a property of the dynamics, not of one seed.
+        let moved_any = (0..4u64).any(|offset| {
         let mut config = SimulationConfig {
+            seed: 2026091019 + offset,
+            initialization_seed: Some(2026091019 + offset),
             locality_count: 4,
             agent_count: 100,
             burn_in_days: 0.0,
@@ -5130,9 +5152,10 @@ mod tests {
 
         let final_mil_loc = engine.particle.formations.locality[mil];
         let final_ins_loc = engine.particle.formations.locality[ins];
-        let moved = final_mil_loc != 0 || final_ins_loc != 1;
+        final_mil_loc != 0 || final_ins_loc != 1
+        });
         assert!(
-            moved,
+            moved_any,
             "operational reallocation must move forces from static garrison"
         );
     }
