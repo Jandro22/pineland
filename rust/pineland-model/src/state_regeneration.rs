@@ -564,7 +564,11 @@ pub fn update(
         let partner_config = &config.partner_force_support;
         let partner_fg_active = partner_config.enabled
             && partner_config.force_generation.enabled
-            && !particle.partner_support.support_withdrawn;
+            && !crate::partner_channel_withdrawn(
+                particle,
+                config,
+                crate::SupportChannel::ForceGeneration,
+            );
 
         let (total_graduation_fraction, indig_graduated, incremental_graduated, fg_cost) =
             if partner_fg_active {

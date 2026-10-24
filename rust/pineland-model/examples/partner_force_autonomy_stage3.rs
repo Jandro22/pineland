@@ -42,6 +42,9 @@ struct HoldoutOverrides {
     accidental_contact_fraction: Option<f64>,
     organized_action_architecture: Option<String>,
     organized_action_rate: Option<f64>,
+    /// Arbitrary partial SimulationConfig JSON applied after the named
+    /// overrides and before the indigenous capacity multipliers.
+    config_patch: Option<JsonValue>,
     strike_fraction: Option<f64>,
     strike_dry_hole_downgrade: Option<f64>,
     security_pursuit_weight: Option<f64>,
@@ -437,6 +440,7 @@ fn load_holdout_contract(path: &Path) -> Result<RunDesign, String> {
                     "organized_action_architecture",
                 )?,
                 organized_action_rate: json_optional_f64(cell, "organized_action_rate")?,
+                config_patch: cell.as_object().and_then(|o| o.get("config_patch")).cloned(),
                 strike_fraction: json_optional_f64(cell, "strike_fraction")?,
                 strike_dry_hole_downgrade: json_optional_f64(cell, "strike_dry_hole_downgrade")?,
                 security_pursuit_weight: json_optional_f64(cell, "security_pursuit_weight")?,
@@ -629,6 +633,7 @@ fn load_stage4_contract(path: &Path) -> Result<RunDesign, String> {
                     "organized_action_architecture",
                 )?,
                 organized_action_rate: json_optional_f64(cell, "organized_action_rate")?,
+                config_patch: cell.as_object().and_then(|o| o.get("config_patch")).cloned(),
                 strike_fraction: json_optional_f64(cell, "strike_fraction")?,
                 strike_dry_hole_downgrade: json_optional_f64(cell, "strike_dry_hole_downgrade")?,
                 security_pursuit_weight: json_optional_f64(cell, "security_pursuit_weight")?,
@@ -1127,6 +1132,12 @@ fn build_config(
     }
     if let Some(v) = cell.overrides.security_pursuit_weight {
         config.logistics.security_pursuit_weight = v;
+    }
+
+    if let Some(patch) = cell.overrides.config_patch.as_ref() {
+        config
+            .apply_json(patch)
+            .map_err(|e| format!("invalid config_patch for {}: {e:?}", cell.cell_id))?;
     }
 
     config.state_regeneration.security_recruitment_rate *= cell.forcegen_mult;
@@ -1644,6 +1655,98 @@ fn trajectory_csv_header(include_contract_action_settings: bool) -> String {
 }
 
 #[allow(clippy::too_many_arguments)]
+const LOCALITY_HEADER: &str = "cell_id,seed,branch,time_days,locality,gov_control,ins_control,gov_physical,ins_physical,police_personnel,police_staffed,military_personnel,insurgent_personnel,violence";
+
+/// Per-locality snapshot for maps (enabled by --locality-output).
+fn write_locality_rows(
+    out: &mut Option<BufWriter<File>>,
+    cell: &Cell,
+    seed: u64,
+    branch: &str,
+    time_days: f64,
+    engine: &SimulationEngine,
+) -> Result<(), String> {
+    let Some(out) = out.as_mut() else {
+        return Ok(());
+    };
+    let p = &engine.particle;
+    let n = engine.topology.locality_count();
+    let dims = pineland_core::state::CONTROL_DIMENSIONS;
+    for l in 0..n {
+        let (mut police, mut staffed) = (0.0, 0u32);
+        for post in 0..p.security_posts.personnel.len() {
+            if p.security_posts.locality[post] as usize == l
+                && p.security_posts.formation[post] == u32::MAX
+            {
+                police += p.security_posts.personnel[post].max(0.0);
+                staffed += u32::from(p.security_posts.staffed[post] != 0);
+            }
+        }
+        let (mut military, mut insurgent) = (0.0, 0.0);
+        for f in 0..p.formations.personnel.len() {
+            if p.formations.locality[f] as usize != l
+                || p.formations.active[f] == 0
+                || p.formations.outside_pineland[f] != 0
+            {
+                continue;
+            }
+            let org = p.formations.organization[f] as usize;
+            if org == MILITARY {
+                military += p.formations.personnel[f].max(0.0);
+            } else if p.organizations.kind.get(org).copied() == Some(3) {
+                insurgent += p.formations.personnel[f].max(0.0);
+            }
+        }
+        writeln!(
+            out,
+            "{},{},{},{:.1},{},{:.4},{:.4},{:.4},{:.4},{:.1},{},{:.1},{:.1},{:.4}",
+            cell.cell_id,
+            seed,
+            branch,
+            time_days,
+            l,
+            p.locality.effective_control(l, 0),
+            p.locality.effective_control(l, 1),
+            p.locality.government_control[l * dims + 1],
+            p.locality.insurgent_control[l * dims + 1],
+            police,
+            staffed,
+            military,
+            insurgent,
+            p.locality.violence.get(l).copied().unwrap_or(0.0),
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+fn write_locality_topology(path: &Path, engine: &SimulationEngine) -> Result<(), String> {
+    let t = &engine.topology;
+    let mut out = BufWriter::new(File::create(path).map_err(|e| e.to_string())?);
+    writeln!(out, "locality,name,district,x_km,y_km,population,neighbors").map_err(|e| e.to_string())?;
+    for l in 0..t.locality_count() {
+        let neighbors = t
+            .locality_edges
+            .neighbors(l)
+            .map(|(d, _)| d.to_string())
+            .collect::<Vec<_>>()
+            .join(";");
+        writeln!(
+            out,
+            "{},{},{},{:.3},{:.3},{:.0},{}",
+            l,
+            t.locality_names[l].replace(',', " "),
+            t.locality_to_district[l],
+            t.x_km[l],
+            t.y_km[l],
+            t.locality_population.get(l).copied().unwrap_or(0.0),
+            neighbors
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 fn write_trajectory_row(
     out: &mut BufWriter<File>,
     experiment_id: &str,
@@ -1947,6 +2050,7 @@ fn main() -> Result<(), String> {
     let mut freeze = PathBuf::from("studies/research_program/general_theory_v1/partner_force_autonomy/contracts/partner_force_autonomy_preregistration_freeze_v3.json");
     let mut output: Option<PathBuf> = None;
     let mut trajectory_output: Option<PathBuf> = None;
+    let mut locality_output: Option<PathBuf> = None;
     let mut seed_count_override: Option<usize> = None;
     let mut seed_base_override: Option<u64> = None;
     let mut single_seed: Option<u64> = None;
@@ -1974,6 +2078,7 @@ fn main() -> Result<(), String> {
             | "--freeze"
             | "--output"
             | "--trajectory-output"
+            | "--locality-output"
             | "--seed-count"
             | "--seed-base"
             | "--seed"
@@ -1995,6 +2100,7 @@ fn main() -> Result<(), String> {
                     "--freeze" => freeze = PathBuf::from(&args[i + 1]),
                     "--output" => output = Some(PathBuf::from(&args[i + 1])),
                     "--trajectory-output" => trajectory_output = Some(PathBuf::from(&args[i + 1])),
+                    "--locality-output" => locality_output = Some(PathBuf::from(&args[i + 1])),
                     "--seed-count" => {
                         seed_count_override =
                             Some(args[i + 1].parse().map_err(|_| "invalid --seed-count")?)
@@ -2213,6 +2319,7 @@ fn main() -> Result<(), String> {
     let include_contract_action_settings = run_design.cells.iter().any(|cell| {
         cell.overrides.organized_action_architecture.is_some()
             || cell.overrides.organized_action_rate.is_some()
+            || cell.overrides.config_patch.is_some()
             || cell.overrides.strike_fraction.is_some()
             || cell.overrides.strike_dry_hole_downgrade.is_some()
             || cell.overrides.security_pursuit_weight.is_some()
@@ -2229,6 +2336,15 @@ fn main() -> Result<(), String> {
     writeln!(out, "{}", csv_header(include_contract_action_settings)).map_err(|e| e.to_string())?;
     let trajectory_file = File::create(&trajectory_output).map_err(|e| e.to_string())?;
     let mut trajectory_out = BufWriter::new(trajectory_file);
+    let mut locality_out: Option<BufWriter<File>> = match locality_output.as_ref() {
+        Some(path) => {
+            let mut w = BufWriter::new(File::create(path).map_err(|e| e.to_string())?);
+            writeln!(w, "{LOCALITY_HEADER}").map_err(|e| e.to_string())?;
+            Some(w)
+        }
+        None => None,
+    };
+    let mut locality_topology_written = false;
     writeln!(
         trajectory_out,
         "{}",
@@ -2315,6 +2431,11 @@ fn main() -> Result<(), String> {
                         include_contract_action_settings,
                     )?;
                 }
+                if let (Some(path), false) = (locality_output.as_ref(), locality_topology_written) {
+                    write_locality_topology(&path.with_extension("topology.csv"), &engine)?;
+                    locality_topology_written = true;
+                }
+                write_locality_rows(&mut locality_out, cell, seed, "PRE_SUPPORTED", target, &engine)?;
                 pre_flow_previous = flow_now;
             }
             let pre_assay = engine.capability_assay(&obs_baseline);
@@ -2412,6 +2533,8 @@ fn main() -> Result<(), String> {
                         include_contract_action_settings,
                     )?;
                 }
+                write_locality_rows(&mut locality_out, cell, seed, "SUPPORT_ON", target, &on)?;
+                write_locality_rows(&mut locality_out, cell, seed, "SUPPORT_OFF", target, &off)?;
 
                 on_flow_previous = flow_on;
                 off_flow_previous = flow_off;
@@ -2617,6 +2740,9 @@ fn main() -> Result<(), String> {
 
     out.flush().map_err(|e| e.to_string())?;
     trajectory_out.flush().map_err(|e| e.to_string())?;
+    if let Some(w) = locality_out.as_mut() {
+        w.flush().map_err(|e| e.to_string())?;
+    }
     println!("Wrote raw paired branch data: {}", output.display());
     println!(
         "Wrote diagnostic trajectory data: {}",

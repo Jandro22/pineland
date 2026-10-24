@@ -11,6 +11,7 @@ pub mod actions;
 pub mod assays;
 pub mod beliefs;
 pub mod combat;
+pub mod defection;
 pub mod economy;
 pub mod foreign;
 pub mod governance;
@@ -2194,6 +2195,16 @@ impl SimulationEngine {
                     event.time,
                 );
                 self.put_rng(rng_key, rng);
+                let (rng_key, mut rng) = self.take_rng("process:defection");
+                defection::update(
+                    &mut self.particle,
+                    &self.topology,
+                    &self.config,
+                    &mut rng,
+                    event.elapsed_days,
+                    event.time,
+                );
+                self.put_rng(rng_key, rng);
             }
             EventPayload::Command => {
                 let (rng_key, mut rng) = self.take_rng("process:command");
@@ -2748,6 +2759,7 @@ impl SimulationEngine {
     }
 
     pub fn withdraw_external_partner_support(&mut self) {
+        // (Channels may stay on for a configured delay: see partner_channel_withdrawn.)
         let p = &self.config.partner_force_support;
         if !p.enabled
             || !(p.air.enabled
@@ -5066,4 +5078,34 @@ mod tests {
             "operational reallocation must move forces from static garrison"
         );
     }
+}
+
+/// Partner support channels, for sequenced withdrawal.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum SupportChannel {
+    Air,
+    Logistics,
+    Command,
+    ForceGeneration,
+}
+
+/// True once `channel` has actually stopped: support was withdrawn and that
+/// channel's configured delay after the withdrawal decision has elapsed.
+pub(crate) fn partner_channel_withdrawn(
+    particle: &pineland_core::state::ParticleState,
+    config: &SimulationConfig,
+    channel: SupportChannel,
+) -> bool {
+    if !particle.partner_support.support_withdrawn {
+        return false;
+    }
+    let p = &config.partner_force_support;
+    let delay = match channel {
+        SupportChannel::Air => p.air_withdrawal_delay_days,
+        SupportChannel::Logistics => p.logistics_withdrawal_delay_days,
+        SupportChannel::Command => p.command_withdrawal_delay_days,
+        SupportChannel::ForceGeneration => p.force_generation_withdrawal_delay_days,
+    };
+    let at = particle.partner_support.withdrawal_time.unwrap_or(particle.time);
+    particle.time >= at + delay.max(0.0)
 }

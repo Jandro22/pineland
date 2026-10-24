@@ -717,7 +717,7 @@ fn deliver_partner_logistics(particle: &mut ParticleState, config: &SimulationCo
     let partner_config = &config.partner_force_support;
     if !partner_config.enabled
         || !partner_config.logistics.enabled
-        || particle.partner_support.support_withdrawn
+        || crate::partner_channel_withdrawn(particle, config, crate::SupportChannel::Logistics)
         || dt <= 0.0
     {
         return;

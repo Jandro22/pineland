@@ -901,6 +901,28 @@ pub(crate) fn committed_fighter_equivalents(
     total * (total / (total + minimum))
 }
 
+/// Insurgent operational tempo multiplier (multichannel_v6). Insurgents press
+/// harder when the balance of fielded strength moves their way and once the
+/// government's external air support has actually stopped (as the Taliban
+/// offensive did in 2021); they husband forces when losing. Bounded to
+/// [0.5, 2.5]; exactly 1 for non-insurgents, v5, or zero sensitivity.
+pub fn insurgent_tempo(particle: &ParticleState, config: &SimulationConfig, organization: usize) -> f64 {
+    let sensitivity = config.combat.insurgent_tempo_sensitivity;
+    if sensitivity == 0.0
+        || config.combat.organized_action_architecture != "multichannel_v6"
+        || particle.organizations.kind.get(organization).copied() != Some(3)
+    {
+        return 1.0;
+    }
+    let momentum = crate::defection::national_momentum(particle);
+    let air = &config.partner_force_support;
+    let air_gone = air.enabled
+        && air.air.enabled
+        && crate::partner_channel_withdrawn(particle, config, crate::SupportChannel::Air);
+    (1.0 + sensitivity * (2.0 * (momentum - 0.5) + if air_gone { 0.3 } else { 0.0 }))
+        .clamp(0.5, 2.5)
+}
+
 pub fn action_attempt_hazard(
     particle: &ParticleState,
     config: &SimulationConfig,
@@ -919,7 +941,9 @@ pub fn action_attempt_hazard(
         .organization_ecology
         .minimum_formation_personnel
         .max(1e-9);
-    (config.organized_action_rate.max(0.0) * committed / minimum).max(0.0)
+    (config.organized_action_rate.max(0.0) * committed / minimum
+        * insurgent_tempo(particle, config, organization))
+    .max(0.0)
 }
 
 pub fn action_attempt_probability(

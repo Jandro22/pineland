@@ -375,6 +375,16 @@ pub struct CombatConfig {
     pub strike_dry_hole_downgrade: f64,
     /// Age constant (days) discounting presence reports used to aim strikes.
     pub strike_report_decay_days: f64,
+    /// Security-force breaking (surrender/desertion) daily hazard at the
+    /// pressure midpoint; 0 disables defection.
+    pub defection_base_hazard_per_day: f64,
+    /// Exponential slope of the hazard in breaking pressure.
+    pub defection_pressure_slope: f64,
+    /// Breaking pressure at which the hazard equals the base hazard.
+    pub defection_pressure_midpoint: f64,
+    /// How strongly insurgent operational tempo follows momentum and the end
+    /// of hostile air support (0 = fixed tempo).
+    pub insurgent_tempo_sensitivity: f64,
     /// Post-baseline stylized government equipment effects. Neutral defaults
     /// preserve the certified combat/movement equations exactly. These are
     /// mechanism axes, not empirical claims about any named platform class.
@@ -415,6 +425,10 @@ impl Default for CombatConfig {
             strike_fraction: 0.1,
             strike_dry_hole_downgrade: 0.75,
             strike_report_decay_days: 7.0,
+            defection_base_hazard_per_day: 0.002,
+            defection_pressure_slope: 8.0,
+            defection_pressure_midpoint: 0.6,
+            insurgent_tempo_sensitivity: 1.0,
             government_firepower_multiplier: 1.0,
             government_protection_multiplier: 1.0,
             government_supply_burden_multiplier: 1.0,
@@ -817,6 +831,12 @@ pub struct PartnerForceSupportConfig {
     pub logistics: LogisticsSupportChannelConfig,
     pub command: CommandSupportChannelConfig,
     pub force_generation: ForceGenSupportChannelConfig,
+    /// Sequenced withdrawal: days each channel stays on after the
+    /// withdrawal decision (0 = withdrawn immediately with the rest).
+    pub air_withdrawal_delay_days: f64,
+    pub logistics_withdrawal_delay_days: f64,
+    pub command_withdrawal_delay_days: f64,
+    pub force_generation_withdrawal_delay_days: f64,
 }
 
 impl Default for PartnerForceSupportConfig {
@@ -828,6 +848,10 @@ impl Default for PartnerForceSupportConfig {
             logistics: LogisticsSupportChannelConfig::default(),
             command: CommandSupportChannelConfig::default(),
             force_generation: ForceGenSupportChannelConfig::default(),
+            air_withdrawal_delay_days: 0.0,
+            logistics_withdrawal_delay_days: 0.0,
+            command_withdrawal_delay_days: 0.0,
+            force_generation_withdrawal_delay_days: 0.0,
         }
     }
 }
@@ -1078,10 +1102,19 @@ impl SimulationConfig {
     }
 
     pub fn from_json(value: &JsonValue) -> Result<Self, ConfigError> {
+        let mut config = Self::default();
+        config.apply_json(value)?;
+        Ok(config)
+    }
+
+    /// Apply a (possibly partial) JSON configuration document on top of the
+    /// current values, then validate. Keys absent from the document keep
+    /// their current values.
+    pub fn apply_json(&mut self, value: &JsonValue) -> Result<(), ConfigError> {
         let object = value
             .as_object()
             .ok_or_else(|| ConfigError::Invalid("root must be an object".to_string()))?;
-        let mut config = Self::default();
+        let config = self;
         if let Some(v) = object.get("seed") {
             config.seed = required_u64(v, "seed")?;
         }
@@ -1224,7 +1257,7 @@ impl SimulationConfig {
             }
         }
         config.validate()?;
-        Ok(config)
+        Ok(())
     }
 
     pub fn validate(&self) -> Result<(), ConfigError> {
@@ -1935,6 +1968,14 @@ impl CombatConfig {
                 "strike_report_decay_days",
                 JsonValue::number(self.strike_report_decay_days),
             );
+            for (key, value) in [
+                ("defection_base_hazard_per_day", self.defection_base_hazard_per_day),
+                ("defection_pressure_slope", self.defection_pressure_slope),
+                ("defection_pressure_midpoint", self.defection_pressure_midpoint),
+                ("insurgent_tempo_sensitivity", self.insurgent_tempo_sensitivity),
+            ] {
+                o.insert(key, JsonValue::number(value));
+            }
         }
         o
     }
@@ -2070,6 +2111,20 @@ impl PartnerForceSupportConfig {
         let mut root = JsonValue::object();
         root.insert("schema_version", JsonValue::string(&self.schema_version));
         root.insert("enabled", JsonValue::Bool(self.enabled));
+        // Delays are written only when used so immediate-withdrawal hashes persist.
+        for (key, value) in [
+            ("air_withdrawal_delay_days", self.air_withdrawal_delay_days),
+            ("logistics_withdrawal_delay_days", self.logistics_withdrawal_delay_days),
+            ("command_withdrawal_delay_days", self.command_withdrawal_delay_days),
+            (
+                "force_generation_withdrawal_delay_days",
+                self.force_generation_withdrawal_delay_days,
+            ),
+        ] {
+            if value != 0.0 {
+                root.insert(key, JsonValue::number(value));
+            }
+        }
 
         let mut air = JsonValue::object();
         air.insert("enabled", JsonValue::Bool(self.air.enabled));
@@ -2353,7 +2408,7 @@ fn apply_information(v: &JsonValue, t: &mut InformationConfig) -> Result<(), Con
 fn apply_combat(v: &JsonValue, t: &mut CombatConfig) -> Result<(), ConfigError> {
     let o = object(v, "combat")?;
     macro_rules! ff{($($k:literal=>$f:ident),*$(,)?)=>{$(if let Some(x)=o.get($k){t.$f=required_f64(x,$k)?})*}}
-    ff!("strike_fraction"=>strike_fraction,"strike_dry_hole_downgrade"=>strike_dry_hole_downgrade,"strike_report_decay_days"=>strike_report_decay_days,"interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction,"government_firepower_multiplier"=>government_firepower_multiplier,"government_protection_multiplier"=>government_protection_multiplier,"government_supply_burden_multiplier"=>government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>government_terrain_mobility_penalty,"government_air_support_intensity"=>government_air_support_intensity,"government_air_support_firepower_bonus"=>government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>government_air_support_civilian_harm_multiplier);
+    ff!("strike_fraction"=>strike_fraction,"strike_dry_hole_downgrade"=>strike_dry_hole_downgrade,"strike_report_decay_days"=>strike_report_decay_days,"defection_base_hazard_per_day"=>defection_base_hazard_per_day,"defection_pressure_slope"=>defection_pressure_slope,"defection_pressure_midpoint"=>defection_pressure_midpoint,"insurgent_tempo_sensitivity"=>insurgent_tempo_sensitivity,"interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction,"government_firepower_multiplier"=>government_firepower_multiplier,"government_protection_multiplier"=>government_protection_multiplier,"government_supply_burden_multiplier"=>government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>government_terrain_mobility_penalty,"government_air_support_intensity"=>government_air_support_intensity,"government_air_support_firepower_bonus"=>government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>government_air_support_civilian_harm_multiplier);
     for (k, f) in [
         ("contact_supply_rule", &mut t.contact_supply_rule),
         (
@@ -2640,6 +2695,19 @@ fn apply_partner_force_support(
     t: &mut PartnerForceSupportConfig,
 ) -> Result<(), ConfigError> {
     let o = object(v, "partner_force_support")?;
+    for (key, target) in [
+        ("air_withdrawal_delay_days", &mut t.air_withdrawal_delay_days),
+        ("logistics_withdrawal_delay_days", &mut t.logistics_withdrawal_delay_days),
+        ("command_withdrawal_delay_days", &mut t.command_withdrawal_delay_days),
+        (
+            "force_generation_withdrawal_delay_days",
+            &mut t.force_generation_withdrawal_delay_days,
+        ),
+    ] {
+        if let Some(x) = o.get(key) {
+            *target = required_f64(x, key)?;
+        }
+    }
     if let Some(x) = o.get("enabled") {
         t.enabled = required_bool(x, "enabled")?;
     }

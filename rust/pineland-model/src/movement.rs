@@ -400,7 +400,7 @@ pub fn command(
     let partner_config = &config.partner_force_support;
     if partner_config.enabled
         && partner_config.command.enabled
-        && !particle.partner_support.support_withdrawn
+        && !crate::partner_channel_withdrawn(particle, config, crate::SupportChannel::Command)
     {
         let active_military = particle
             .formations
@@ -1673,7 +1673,7 @@ fn issue_movement_order(
     if partner_config.enabled
         && partner_config.command.enabled
         && direct_command_advisory_active
-        && !particle.partner_support.support_withdrawn
+        && !crate::partner_channel_withdrawn(particle, config, crate::SupportChannel::Command)
         && organization == crate::MILITARY
     {
         let (boosted, reduced) =

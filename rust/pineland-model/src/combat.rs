@@ -281,7 +281,7 @@ fn partner_air_support_level(
     let partner_config = &config.partner_force_support;
     if !partner_config.enabled
         || !partner_config.air.enabled
-        || particle.partner_support.support_withdrawn
+        || crate::partner_channel_withdrawn(particle, config, crate::SupportChannel::Air)
         || particle.formations.organization[formation] as usize != crate::MILITARY
     {
         return (0.0, 0.0);
