@@ -2127,7 +2127,10 @@ impl SimulationEngine {
             EventPayload::ContactScan => {
                 let (rng_key, mut rng) = self.take_rng("process:contact_scan");
                 let exposure_days = self.config.intervals.contact;
-                if self.config.combat.organized_action_architecture == "multichannel_v5" {
+                if matches!(
+                    self.config.combat.organized_action_architecture.as_str(),
+                    "multichannel_v5" | "multichannel_v6"
+                ) {
                     self.schedule_organized_actions(event.time + exposure_days, exposure_days)?;
                 } else {
                     combat::schedule_contacts(

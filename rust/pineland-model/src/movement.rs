@@ -469,6 +469,12 @@ pub fn command(
         if decision_draw >= decision_probability {
             continue;
         }
+        if crate::trace_env!("PINELAND_FUNNEL") {
+            eprintln!(
+                "MOVEFUNNEL t={:.3} formation={} org={} stage=considered loc={} personnel={:.1}",
+                time, formation, particle.formations.organization[formation], particle.formations.locality[formation], particle.formations.personnel[formation]
+            );
+        }
 
         let organization = particle.formations.organization[formation] as usize;
         let route_metrics = all_route_metrics(
@@ -540,6 +546,12 @@ pub fn command(
             if destination != origin
                 && movement_cost > particle.formations.supply_stock[formation] + 1.0e-12
             {
+                if crate::trace_env!("PINELAND_FUNNEL") {
+                    eprintln!(
+                        "MOVEFUNNEL t={:.3} formation={} org={} stage=unaffordable dest={} cost={:.3} stock={:.3}",
+                        time, formation, organization, destination, movement_cost, particle.formations.supply_stock[formation]
+                    );
+                }
                 continue;
             }
             let score = destination_score(
@@ -587,6 +599,12 @@ pub fn command(
                 origin,
                 candidates.len(),
                 selected,
+            );
+        }
+        if crate::trace_env!("PINELAND_FUNNEL") {
+            eprintln!(
+                "MOVEFUNNEL t={:.3} formation={} org={} stage=decision origin={} dest={} candidates={} stock={:.3}",
+                time, formation, organization, origin, destination, candidates.len(), particle.formations.supply_stock[formation]
             );
         }
         if destination == origin {

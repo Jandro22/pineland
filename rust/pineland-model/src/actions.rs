@@ -400,6 +400,114 @@ fn reachable_target_belief(
     clamp01(best)
 }
 
+/// True when the action layer runs the operational-reach armed channel.
+///
+/// `multichannel_v5` is the frozen Stage-4 architecture and is left
+/// byte-identical. `multichannel_v6` lets an armed confrontation be launched
+/// from a formation's locality into an adjacent locality where the actor holds
+/// evidence of hostile presence, as a strike that returns to its origin.
+fn operational_reach_enabled(config: &SimulationConfig) -> bool {
+    config.combat.organized_action_architecture == "multichannel_v6"
+}
+
+/// Hostile presence the actor believes it can reach this interval: its own
+/// locality, or an evidenced neighbor discounted by `locality_reach`.
+fn reachable_presence(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    organization: usize,
+    locality: usize,
+) -> f64 {
+    let target_side_insurgent = !is_insurgent(particle, organization);
+    let mut best = opponent_presence_belief(particle, organization, target_side_insurgent, locality)
+        .max(
+            evidenced_hostile_physical(particle, organization, target_side_insurgent, locality)
+                .unwrap_or(0.0),
+        );
+    let mut neighbors = topology
+        .locality_edges
+        .neighbors(locality)
+        .collect::<Vec<_>>();
+    neighbors.sort_by_key(|(destination, _)| *destination);
+    for (destination, cost) in neighbors {
+        let destination = destination as usize;
+        if !has_target_evidence(particle, organization, target_side_insurgent, destination) {
+            continue;
+        }
+        let reach = locality_reach(
+            particle,
+            topology,
+            config,
+            organization,
+            locality,
+            destination,
+            cost,
+        );
+        best = best.max(
+            reach * opponent_presence_belief(particle, organization, target_side_insurgent, destination),
+        );
+    }
+    clamp01(best)
+}
+
+/// Pick the locality an armed strike is aimed at. Candidates are the source
+/// and evidenced neighbors, weighted by reach times believed presence. The
+/// returned edge cost is zero for the source locality.
+fn armed_strike_target(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    organization: usize,
+    locality: usize,
+    rng: &mut PyRandomCompat,
+) -> Option<(usize, f64)> {
+    let target_side_insurgent = !is_insurgent(particle, organization);
+    let mut neighbors = topology
+        .locality_edges
+        .neighbors(locality)
+        .collect::<Vec<_>>();
+    neighbors.sort_by_key(|(destination, _)| *destination);
+    let mut candidates = Vec::new();
+    let mut weights = Vec::new();
+    for (destination, cost) in neighbors {
+        let destination = destination as usize;
+        if !has_target_evidence(particle, organization, target_side_insurgent, destination) {
+            continue;
+        }
+        let reach = locality_reach(
+            particle,
+            topology,
+            config,
+            organization,
+            locality,
+            destination,
+            cost,
+        );
+        let weight = reach
+            * opponent_presence_belief(particle, organization, target_side_insurgent, destination);
+        if weight > 0.0 {
+            candidates.push((destination, cost));
+            weights.push(weight);
+        }
+    }
+    if candidates.is_empty() {
+        return None;
+    }
+    let selected = rng
+        .choices_indices(candidates.len(), Some(&weights), 1)
+        .ok()?[0];
+    Some(candidates[selected])
+}
+
+fn bump_event(particle: &mut ParticleState, name: &str) {
+    *particle
+        .counters
+        .event_counts
+        .entry(name.to_string())
+        .or_insert(0) += 1;
+}
+
 fn local_information(
     particle: &ParticleState,
     topology: &StaticTopology,
@@ -835,10 +943,13 @@ fn control_weights(
     };
     let physical = belief_control(particle, organization, target, locality, PHYSICAL);
     let social = belief_control(particle, organization, target, locality, SOCIAL);
-    let perceived_presence = opponent_presence_belief(particle, organization, !insurgent, locality)
-        .max(
+    let perceived_presence = if operational_reach_enabled(config) {
+        reachable_presence(particle, topology, config, organization, locality)
+    } else {
+        opponent_presence_belief(particle, organization, !insurgent, locality).max(
             evidenced_hostile_physical(particle, organization, !insurgent, locality).unwrap_or(0.0),
-        );
+        )
+    };
     let risk = particle.organizations.phenotype[organization * 8 + 4].clamp(0.0, 1.0);
     let governance = particle.organizations.phenotype[organization * 8 + 2].clamp(0.0, 1.0);
     let fielded_share = (fielded / total).clamp(0.0, 1.0);
@@ -984,6 +1095,13 @@ pub fn opportunities(
     let probability =
         action_attempt_probability(particle, config, organization, locality, interval_days);
     let attempt_draw = rng.random();
+    let funnel = crate::trace_env!("PINELAND_FUNNEL");
+    if funnel {
+        eprintln!(
+            "FUNNEL t={:.3} org={} loc={} stage=opportunity unfielded={:.3} fielded={:.3} p={:.6} attempted={}",
+            _time, organization, locality, unfielded, fielded, probability, (attempt_draw < probability) as u8
+        );
+    }
     if trace {
         eprintln!(
             "ACTION before time={:.17} org={} loc={} interval={:.17} total={:.17} committed={:.17} probability={:.17} draw={:.17}",
@@ -1021,6 +1139,12 @@ pub fn opportunities(
         eprintln!(
             "ACTION choice org={} loc={} weights={:?} channel={}",
             organization, locality, weights, channel
+        );
+    }
+    if funnel {
+        eprintln!(
+            "FUNNEL t={:.3} org={} loc={} stage=channel channel={} w={:.4},{:.4},{:.4},{:.4},{:.4},{:.4}",
+            _time, organization, locality, channel, weights[0], weights[1], weights[2], weights[3], weights[4], weights[5]
         );
     }
     if channel == WAIT {
@@ -1136,6 +1260,26 @@ pub fn opportunities(
                 opponents.len(),
                 pairs.len()
             );
+        }
+        if funnel {
+            eprintln!(
+                "FUNNEL t={:.3} org={} loc={} stage=armed own={} opponents={} pairs={} local_formations={}",
+                _time, organization, locality, own.len(), opponents.len(), pairs.len(), local_formations.len()
+            );
+        }
+        if pairs.is_empty() && !own.is_empty() && operational_reach_enabled(config) {
+            armed_strike(
+                particle,
+                topology,
+                config,
+                rng,
+                _time,
+                organization,
+                locality,
+                &own,
+                funnel,
+            );
+            return;
         }
         if pairs.is_empty() {
             return;
@@ -1443,6 +1587,142 @@ pub fn opportunities(
         COERCION,
         ADMINISTRATIVE,
     );
+}
+
+/// Operational-reach armed confrontation (`multichannel_v6` only).
+///
+/// A formation with no co-located opponent strikes into an adjacent locality
+/// where its organization holds evidence of hostile presence. The strike pays a
+/// round-trip movement cost from the formation's own supply stock, fights in
+/// the target locality, and returns the formation to its origin. A strike that
+/// finds no opponent ("dry hole") still pays its cost.
+#[allow(clippy::too_many_arguments)]
+fn armed_strike(
+    particle: &mut ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    time: f64,
+    organization: usize,
+    locality: usize,
+    own: &[usize],
+    funnel: bool,
+) {
+    let Some((target, edge_cost)) =
+        armed_strike_target(particle, topology, config, organization, locality, rng)
+    else {
+        bump_event(particle, "armed_strike_no_target");
+        return;
+    };
+    let actor = match rng.choice_index(own.len()) {
+        Ok(index) => own[index],
+        Err(_) => return,
+    };
+    let distance_km = 2.0 * (18.0 + 22.0 * edge_cost.max(0.0));
+    let burden = if organization == crate::MILITARY {
+        config.combat.government_supply_burden_multiplier
+    } else {
+        1.0
+    };
+    let moving = particle.formations.personnel[actor].max(0.0)
+        * particle.formations.availability[actor].clamp(0.0, 1.0);
+    let cost = moving * distance_km * config.logistics.movement_consumption_per_person_km * burden;
+    if cost > particle.formations.supply_stock[actor] + 1.0e-12 {
+        bump_event(particle, "armed_strike_unaffordable");
+        if funnel {
+            eprintln!(
+                "FUNNEL t={:.3} org={} loc={} stage=strike outcome=unaffordable target={} cost={:.3} stock={:.3}",
+                time, organization, locality, target, cost, particle.formations.supply_stock[actor]
+            );
+        }
+        return;
+    }
+    particle.formations.supply_stock[actor] -= cost;
+    let opponents = (0..particle.formations.personnel.len())
+        .filter(|&formation| {
+            let target_organization = particle.formations.organization[formation] as usize;
+            particle.formations.locality[formation] as usize == target
+                && particle.formations.personnel[formation] > 0.0
+                && particle.formations.moving[formation] == 0
+                && particle.formations.outside_pineland[formation] == 0
+                && particle.formations.operational_status[formation] == 1
+                && particle
+                    .organizations
+                    .active
+                    .get(target_organization)
+                    .copied()
+                    == Some(1)
+                && organizations_hostile(particle, organization, target_organization)
+        })
+        .collect::<Vec<_>>();
+    if opponents.is_empty() {
+        bump_event(particle, "armed_strike_dry_hole");
+        if funnel {
+            eprintln!(
+                "FUNNEL t={:.3} org={} loc={} stage=strike outcome=dry_hole target={}",
+                time, organization, locality, target
+            );
+        }
+        return;
+    }
+    let opponent = match rng.choice_index(opponents.len()) {
+        Ok(index) => opponents[index],
+        Err(_) => return,
+    };
+    let opponent_organization = particle.formations.organization[opponent] as usize;
+    let defender_aware = particle
+        .presence_beliefs
+        .keys
+        .iter()
+        .enumerate()
+        .any(|(index, key)| {
+            key.observer as usize == opponent_organization
+                && key.locality as usize == target
+                && particle
+                    .presence_beliefs
+                    .evidence_count
+                    .get(index)
+                    .copied()
+                    .unwrap_or(0)
+                    > 0
+                && particle
+                    .presence_beliefs
+                    .estimate
+                    .get(index)
+                    .copied()
+                    .unwrap_or(0.0)
+                    >= 0.5
+        });
+    let origin_locality = particle.formations.locality[actor];
+    let origin_microzone = particle.formations.microzone[actor];
+    let opponent_microzone = crate::combat::formation_microzone(particle, topology, opponent);
+    particle.formations.locality[actor] = target as u32;
+    particle.formations.microzone[actor] = opponent_microzone as u32;
+    let contacts_before = particle.counters.contacts;
+    crate::combat::resolve_organized_engagement(
+        particle,
+        topology,
+        config,
+        rng,
+        time,
+        actor,
+        opponent,
+        organization,
+        defender_aware,
+    );
+    particle.formations.locality[actor] = origin_locality;
+    particle.formations.microzone[actor] = origin_microzone;
+    bump_event(particle, "armed_strikes");
+    if funnel {
+        eprintln!(
+            "FUNNEL t={:.3} org={} loc={} stage=strike outcome=engaged target={} resolved={}",
+            time,
+            organization,
+            locality,
+            target,
+            particle.counters.contacts - contacts_before
+        );
+    }
 }
 
 pub fn apply_nonviolent_coercion(particle: &mut ParticleState, locality: usize, amount: f64) {
