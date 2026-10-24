@@ -9,6 +9,7 @@ Blocks (all at production scale from the frozen design: 1000 agents, 72 localiti
   B  support duration         withdrawal day {90, 240, 360} x learning {0, .25}
   C  reference share          learning .25 x reference share {.75, .95}
   D  dose extension           support dose x{4, 16} x learning {0, .25}
+  S  sequenced exit         one channel kept 180 days after the rest, learning .25
   G  development remedy       developmental assistance on the binding channel x learning {0, .25}
   E  showcase maps            locality output for map figures
 Blocks B-D and G use the support-intensity-1.0 cells (one per structure x capacity).
@@ -81,6 +82,7 @@ def main() -> None:
     def add(name: str, cells: list[dict], withdrawal: float | None = None, locality: bool = False):
         d = copy.deepcopy(design)
         d["cells"] = cells
+        d["cells_count"] = len(cells)
         d["experiment_id"] = f"{design['experiment_id']}__{name}"
         if withdrawal is not None:
             d["environment"]["withdrawal_time_days"] = withdrawal
@@ -96,6 +98,9 @@ def main() -> None:
     for k in (4.0, 16.0):
         for lr in (0.0, 0.25):
             add(f"D_dose{k:g}_lr{lr:g}", [patch(dose(c, k), learning_rate_per_30d=lr) for c in core])
+    for channel in ("logistics", "command", "force_generation"):
+        add(f"S_keep_{channel}", [patch(c, learning_rate_per_30d=0.25, **{f"{channel}_withdrawal_delay_days": 180.0})
+                                  for c in core])
     for lr in (0.0, 0.25):
         add(f"G_dev_lr{lr:g}", [patch(develop(c, 0.05), learning_rate_per_30d=lr) for c in core])
     showcase = []

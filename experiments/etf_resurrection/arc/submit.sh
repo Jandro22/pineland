@@ -4,7 +4,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${HERE}/../../.." && pwd)"
-DRY=0; PART=normal_q; QOS=tc_normal_base; SEEDS=64; MAXN=100; ROUNDS=3; CORES=128; WALL=03:00:00
+DRY=0; PART=normal_q; QOS=tc_normal_base; SEEDS=64; MAXN=100; ROUNDS=3; CORES=128; WALL=01:30:00
 while [[ $# -gt 0 ]]; do case "$1" in
   --dry-run) DRY=1;; --preemptable) PART=preemptable_q; QOS=tc_preemptable_base;;
   --seeds) SEEDS=$2; shift;; --max-nodes) MAXN=$2; shift;; --per-node-rounds) ROUNDS=$2; shift;;
