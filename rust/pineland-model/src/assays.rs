@@ -181,8 +181,13 @@ pub fn run_outcome_sensitivity_assay(
                 }
                 for (i, p) in engine.particle.formations.personnel.iter_mut().enumerate() {
                     if engine.particle.formations.organization[i] as usize == MILITARY {
-                        *p *= 0.10;
+                        *p *= 0.03;
                         engine.particle.formations.operational_status[i] = 0;
+                        // Operational status is re-judged from cohesion each
+                        // interval, so a command collapse must break cohesion.
+                        engine.particle.formations.cohesion[i] = 0.05;
+                        engine.particle.formations.readiness[i] = 0.05;
+                        engine.particle.formations.availability[i] = 0.1;
                     }
                 }
                 engine
@@ -238,10 +243,17 @@ pub fn run_outcome_sensitivity_assay(
         && c_logistics > c_command;
 
     let pass = non_saturated && strictly_monotonic;
-    let detail = format!(
+    let mut detail = format!(
         "Healthy: {:.3}, Nominal: {:.3}, Manpower: {:.3}, Logistics: {:.3}, Command: {:.3}",
         c_healthy, c_nominal, c_manpower, c_logistics, c_command
     );
+    for r in &results {
+        detail.push_str(&format!(
+            " | {} gov={:.3} pers={:.3} form={:.3} cov={:.3}",
+            r.scenario, r.government_control, r.personnel_retention, r.formation_survival,
+            r.coverage_retention
+        ));
+    }
 
     Ok(SensitivityAssaySummary {
         results,
