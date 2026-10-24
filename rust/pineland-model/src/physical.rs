@@ -221,6 +221,138 @@ fn response_distances(
     distances
 }
 
+/// Per-head armed strength of a staffed security post, in the same
+/// fighter-equivalent units as `FormationState::effective_strength`.  A
+/// constabulary is lightly armed, so professionalism matters more than
+/// headcount; posts that are an outstation of a formation inherit that
+/// formation's availability and readiness (a hollow parent unit cannot hold
+/// ground through its posts).
+pub(crate) fn post_armed_strength(particle: &ParticleState, post: usize) -> f64 {
+    let posts = &particle.security_posts;
+    if posts.staffed.get(post).copied().unwrap_or(1) == 0 || posts.personnel[post] <= 0.0 {
+        return 0.0;
+    }
+    let mut strength = posts.personnel[post].max(0.0)
+        * clamp01(posts.available_fraction[post])
+        * (0.25 + 0.35 * clamp01(posts.professionalism[post]));
+    let formation = posts.formation[post];
+    if formation != u32::MAX {
+        let formation = formation as usize;
+        if formation >= particle.formations.personnel.len()
+            || particle.formations.moving[formation] != 0
+            || particle.formations.outside_pineland[formation] != 0
+            || particle.formations.operational_status[formation] == 0
+            || particle.formations.locality[formation] != posts.locality[post]
+        {
+            return 0.0;
+        }
+        strength *= particle.formations.availability[formation]
+            * particle.formations.effective_readiness(formation);
+    }
+    strength
+}
+
+/// Weight of an unfielded (pooled, supplied) armed insurgent relative to a
+/// fielded fighter: dispersed cells coerce and tax but cannot hold ground
+/// like a formed unit.
+const UNDERGROUND_FIGHTER_STRENGTH: f64 = 0.08;
+
+/// Local coercive strength of each side in a locality, in fighter-equivalent
+/// units: formation effective strength (readiness, supply, cohesion and
+/// quality adjusted), staffed security posts, government patrols routed into
+/// the locality, and the armed insurgent underground.
+pub fn local_coercive_strength(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    config: &SimulationConfig,
+    locality: usize,
+) -> (f64, f64) {
+    let mut government = 0.0;
+    let mut insurgent = 0.0;
+    for formation in 0..particle.formations.personnel.len() {
+        if particle.formations.locality[formation] as usize != locality
+            || particle.formations.active[formation] == 0
+            || particle.formations.moving[formation] != 0
+            || particle.formations.outside_pineland[formation] != 0
+            || particle.formations.operational_status[formation] == 0
+            || particle.formations.personnel[formation] <= 0.0
+        {
+            continue;
+        }
+        let organization = particle.formations.organization[formation] as usize;
+        if organization_matches_side(particle, organization, 0) {
+            government += particle.formations.effective_strength(formation);
+        } else if organization_matches_side(particle, organization, 1) {
+            insurgent += particle.formations.effective_strength(formation);
+        }
+    }
+    for post in 0..particle.security_posts.locality.len() {
+        if particle.security_posts.locality[post] as usize != locality {
+            continue;
+        }
+        let organization = particle.security_posts.organization[post] as usize;
+        if organization_matches_side(particle, organization, 0) {
+            government += post_armed_strength(particle, post);
+        } else if organization_matches_side(particle, organization, 1) {
+            insurgent += post_armed_strength(particle, post);
+        }
+    }
+    for patrol in 0..particle.patrols.formation.len() {
+        let formation = particle.patrols.formation[patrol] as usize;
+        let target = particle.patrols.route_target[patrol] as usize;
+        if formation >= particle.formations.personnel.len()
+            || particle.patrols.active.get(patrol).copied().unwrap_or(0) == 0
+            || target >= topology.microzone_count()
+            || topology.microzone_to_locality[target] as usize != locality
+            || particle.formations.locality[formation] as usize == locality
+            || particle.formations.moving[formation] != 0
+            || particle.formations.outside_pineland[formation] != 0
+            || particle.formations.operational_status[formation] == 0
+            || !organization_matches_side(
+                particle,
+                particle.formations.organization[formation] as usize,
+                0,
+            )
+        {
+            continue;
+        }
+        government += clamp01(particle.patrols.response_fraction[patrol])
+            * particle.formations.effective_strength(formation);
+    }
+    if crate::INSURGENT < particle.organizations.active.len()
+        && particle.organizations.active[crate::INSURGENT] != 0
+    {
+        let (unfielded, _) =
+            crate::actions::local_fighter_equivalents(particle, crate::INSURGENT, locality, config);
+        insurgent += UNDERGROUND_FIGHTER_STRENGTH * unfielded.max(0.0);
+    }
+    (government.max(0.0), insurgent.max(0.0))
+}
+
+/// Share of local coercive dominance held by each side.  Area-control
+/// contests are decided by concentrated, aimed fire, so the balance follows a
+/// Lanchester square law: a 2:1 force advantage yields 4:1 dominance.  With no
+/// armed presence on either side the balance is neutral.
+pub fn coercive_balance(government_strength: f64, insurgent_strength: f64) -> (f64, f64) {
+    let government = government_strength.max(0.0).powi(2);
+    let insurgent = insurgent_strength.max(0.0).powi(2);
+    let total = government + insurgent;
+    if !(total > 1.0e-12) || !total.is_finite() {
+        return (0.5, 0.5);
+    }
+    let government_share = clamp01(government / total);
+    (government_share, 1.0 - government_share)
+}
+
+/// Contested zone control.  Each side's reach in a zone is discounted by the
+/// opponent's reach there, scaled by how outgunned the side is locally.  At
+/// parity (balance 0.5) this reproduces the historical symmetric 0.35
+/// cross-discount; a dominant side is barely discounted while an outgunned
+/// side keeps only what the opponent cannot reach.
+pub fn contested_zone_control(own_reach: f64, opponent_reach: f64, own_balance: f64) -> f64 {
+    clamp01(own_reach * (1.0 - 0.70 * (1.0 - clamp01(own_balance)) * clamp01(opponent_reach)))
+}
+
 pub fn refresh(
     particle: &mut ParticleState,
     topology: &StaticTopology,
@@ -264,6 +396,7 @@ pub fn refresh(
     // separate prevents iteration order from changing the result.
     let mut raw_government = vec![0.0; zone_count];
     let mut raw_insurgent = vec![0.0; zone_count];
+    let mut locality_balance = vec![1.0; topology.locality_count()];
     for locality in 0..topology.locality_count() {
         // The locality zone count is small and fixed in Pineland.  Use a
         // temporary vector rather than a map so the fold order is explicit.
@@ -288,6 +421,17 @@ pub fn refresh(
         }
         let government_response = response_distances(particle, topology, config, locality, 0, time);
         let insurgent_response = response_distances(particle, topology, config, locality, 1, time);
+        // Local coercive balance: an outgunned force stays in its stations
+        // rather than patrolling and responding across the locality, so each
+        // side's response reach is scaled by its share of local dominance.
+        let (government_strength, insurgent_strength) =
+            local_coercive_strength(particle, topology, config, locality);
+        let (government_balance, insurgent_balance) = if has_active_insurgents {
+            coercive_balance(government_strength, insurgent_strength)
+        } else {
+            (1.0, 0.0)
+        };
+        locality_balance[locality] = government_balance;
         let mut post_values = vec![[0.0f64; 2]; zone_count];
         for post in 0..particle.security_posts.locality.len() {
             if particle.security_posts.locality[post] as usize != locality
@@ -386,6 +530,7 @@ pub fn refresh(
             raw_government[zone] = clamp01(
                 0.55 * government_presence
                     + 0.45
+                        * government_balance
                         * if government_response.is_infinite() {
                             0.0
                         } else {
@@ -395,6 +540,7 @@ pub fn refresh(
             raw_insurgent[zone] = clamp01(
                 0.55 * insurgent_presence
                     + 0.45
+                        * insurgent_balance
                         * if insurgent_response.is_infinite() {
                             0.0
                         } else {
@@ -468,10 +614,17 @@ pub fn refresh(
         let mut government = 0.0;
         let mut insurgent = 0.0;
         for zone in topology.zones_for_locality(locality.into()) {
-            let government_value =
-                clamp01(raw_government[zone] * (1.0 - 0.35 * raw_insurgent[zone]));
-            let insurgent_value =
-                clamp01(raw_insurgent[zone] * (1.0 - 0.35 * raw_government[zone]));
+            let government_balance = locality_balance[locality];
+            let government_value = contested_zone_control(
+                raw_government[zone],
+                raw_insurgent[zone],
+                government_balance,
+            );
+            let insurgent_value = contested_zone_control(
+                raw_insurgent[zone],
+                raw_government[zone],
+                1.0 - government_balance,
+            );
             particle.zones.government_control[zone] = government_value;
             if has_active_insurgents {
                 particle.zones.insurgent_control[zone] = insurgent_value;
@@ -584,4 +737,63 @@ pub fn response_time(
     .max(0.0);
     distance * particle.locality.terrain_friction[locality] / (1.0 + source)
         + age * config.physical.response_decay_hours / 24.0
+}
+
+#[cfg(test)]
+mod contestation_tests {
+    use super::*;
+    use crate::SimulationEngine;
+
+    #[test]
+    fn coercive_balance_follows_square_law_and_is_neutral_when_empty() {
+        let (government, insurgent) = coercive_balance(200.0, 100.0);
+        assert!((government - 0.8).abs() < 1.0e-12);
+        assert!((insurgent - 0.2).abs() < 1.0e-12);
+        assert_eq!(coercive_balance(0.0, 0.0), (0.5, 0.5));
+        assert_eq!(coercive_balance(10.0, 0.0), (1.0, 0.0));
+        assert_eq!(coercive_balance(0.0, 10.0), (0.0, 1.0));
+        let (government, insurgent) = coercive_balance(f64::INFINITY, 1.0);
+        assert!(government.is_finite() && insurgent.is_finite());
+    }
+
+    #[test]
+    fn contested_zone_control_reproduces_parity_and_rewards_dominance() {
+        let parity = contested_zone_control(0.4, 0.3, 0.5);
+        assert!((parity - 0.4 * (1.0 - 0.35 * 0.3)).abs() < 1.0e-12);
+        assert_eq!(contested_zone_control(0.4, 0.9, 1.0), 0.4);
+        let outgunned = contested_zone_control(0.4, 0.9, 0.0);
+        assert!(outgunned < 0.4 * 0.4);
+        for (own, other, balance) in [(1.5, 2.0, -1.0), (-0.5, 0.5, 0.5), (1.0, 1.0, 2.0)] {
+            let value = contested_zone_control(own, other, balance);
+            assert!((0.0..=1.0).contains(&value));
+        }
+    }
+
+    #[test]
+    fn overrun_post_removes_its_strength_from_the_local_balance() {
+        let config = SimulationConfig {
+            seed: 2026091019,
+            initialization_seed: Some(2026091019),
+            agent_count: 300,
+            locality_count: 17,
+            horizon_days: 60.0,
+            output_mode: "ensemble".to_string(),
+            ..SimulationConfig::default()
+        };
+        let mut engine = SimulationEngine::new(config.clone()).expect("engine");
+        let post = (0..engine.particle.security_posts.locality.len())
+            .find(|post| engine.particle.security_posts.organization[*post] as usize == crate::POLICE)
+            .expect("police post");
+        let locality = engine.particle.security_posts.locality[post] as usize;
+        let strength = post_armed_strength(&engine.particle, post);
+        assert!(strength > 0.0);
+        let (before, _) =
+            local_coercive_strength(&engine.particle, &engine.topology, &config, locality);
+        engine.particle.security_posts.personnel[post] = 0.0;
+        engine.particle.security_posts.staffed[post] = 0;
+        assert_eq!(post_armed_strength(&engine.particle, post), 0.0);
+        let (after, _) =
+            local_coercive_strength(&engine.particle, &engine.topology, &config, locality);
+        assert!((before - after - strength).abs() < 1.0e-9 * before.max(1.0));
+    }
 }

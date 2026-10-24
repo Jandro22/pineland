@@ -237,6 +237,14 @@ pub fn update(
         particle.political.institution_resources[institution] -= effective_public;
 
         let offset = locality * CONTROL_DIMENSIONS;
+        // Services reach only the share of the locality the state can
+        // physically access; where insurgents dominate, spending does not
+        // become administration, justice or services on the ground.
+        let access = 1.0 - crate::governance::insurgent_dominance(particle, locality);
+        let administration = administration * access;
+        let justice = justice * access;
+        let services = services * access;
+        let representation = representation * access;
         particle.locality.government_control[offset] =
             clamp01(particle.locality.government_control[offset] + 0.0);
         particle.locality.government_control[offset + 2] = clamp01(
