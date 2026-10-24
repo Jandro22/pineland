@@ -18,8 +18,10 @@ pub fn schedule_contacts(
     }
     let mut candidates = Vec::new();
     for first in 0..particle.formations.personnel.len() {
+        let first_organization = particle.formations.organization[first] as usize;
         if particle.formations.active[first] == 0
-            || particle.formations.organization[first] as usize != crate::INSURGENT
+            || !organization_is_insurgent(particle, first_organization)
+            || particle.organizations.active[first_organization] == 0
         {
             continue;
         }

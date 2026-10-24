@@ -331,13 +331,23 @@ pub fn collect_and_fuse(
             );
         }
 
-        if particle.organizations.active.get(crate::INSURGENT).copied() == Some(1) {
+        // Python samples a civilian report for every active insurgent
+        // organization.  The legacy INSURGENT row keeps its historical slot
+        // first; split children and dynamic franchises follow in index order.
+        let civilian_observers = std::iter::once(crate::INSURGENT)
+            .chain(crate::INSURGENT + 1..particle.organizations.kind.len())
+            .filter(|organization| {
+                particle.organizations.kind.get(*organization).copied() == Some(3)
+                    && particle.organizations.active.get(*organization).copied() == Some(1)
+            })
+            .collect::<Vec<_>>();
+        for observer in civilian_observers {
             observe_from_source(
                 particle,
                 topology,
                 config,
                 rng,
-                crate::INSURGENT,
+                observer,
                 &community_id,
                 &community_id,
                 SourceType::Civilian,
@@ -2163,7 +2173,14 @@ fn target_actors(particle: &ParticleState, observer: usize) -> Vec<usize> {
         }
         return Vec::new();
     }
-    if particle.organizations.active.get(crate::INSURGENT).copied() == Some(1) {
+    // INSURGENT is the aggregate insurgent-side target (formation matching
+    // admits every kind-3 organization), so it stays visible while any
+    // insurgent organization, e.g. a split child, remains active.
+    let any_active_insurgent = (0..particle.organizations.kind.len()).any(|organization| {
+        particle.organizations.kind[organization] == 3
+            && particle.organizations.active[organization] != 0
+    });
+    if any_active_insurgent {
         vec![crate::INSURGENT]
     } else {
         Vec::new()
@@ -2450,7 +2467,7 @@ fn source_trust(
     ) && community_index(source_id).is_some()
     {
         let community = community_index(source_id).unwrap();
-        let cooperation = if observer == crate::INSURGENT {
+        let cooperation = if particle.organizations.kind.get(observer).copied() == Some(3) {
             particle
                 .communities
                 .insurgent_sympathy
@@ -2510,7 +2527,7 @@ fn report_probability(
         probability *= (0.45 + 0.65 * 0.5) * elite_access;
     }
     if let Some(community) = community_index(source_id) {
-        let cooperation = if observer == crate::INSURGENT {
+        let cooperation = if particle.organizations.kind.get(observer).copied() == Some(3) {
             particle
                 .communities
                 .insurgent_sympathy
