@@ -259,6 +259,14 @@ fn locality_institution_index(
     }
 }
 
+/// Fraction of a planned police deployment that can actually be inserted
+/// into a locality, given insurgent physical dominance there.  Uncontested
+/// localities are fully accessible; an insurgent-held locality is not.
+pub(crate) fn police_access(particle: &ParticleState, locality: usize) -> f64 {
+    let dominance = crate::governance::insurgent_dominance(particle, locality);
+    clamp01(1.0 - dominance).powi(2)
+}
+
 fn deploy_police(particle: &mut ParticleState, locality: usize, amount: f64) -> f64 {
     let mut remaining = amount.max(0.0);
     let mut deployed = 0.0;
@@ -651,6 +659,10 @@ pub fn update(
                 military_budget += extra;
             }
 
+            // Re-staffing a police station requires the state to reach it:
+            // where insurgents dominate the ground, replacements cannot be
+            // inserted and remain in the reserve.
+            let police_budget = police_access(particle, locality) * police_budget;
             let deployed_police = deploy_police(particle, locality, police_budget);
             let deployed_military = deploy_military(particle, config, locality, military_budget);
             let deployed = deployed_police + deployed_military;
@@ -806,6 +818,23 @@ mod tests {
             output_mode: "ensemble".to_string(),
             ..SimulationConfig::default()
         }
+    }
+
+    #[test]
+    fn police_cannot_be_reinserted_into_insurgent_held_localities() {
+        let config = small_config();
+        let mut engine = SimulationEngine::new(config).expect("engine");
+        let dims = pineland_core::state::CONTROL_DIMENSIONS;
+        engine.particle.locality.government_control[1] = 0.3;
+        engine.particle.locality.insurgent_control[1] = 0.0;
+        assert_eq!(police_access(&engine.particle, 0), 1.0);
+        engine.particle.locality.government_control[dims + 1] = 0.15;
+        engine.particle.locality.insurgent_control[dims + 1] = 0.15;
+        let contested = police_access(&engine.particle, 1);
+        assert!(contested > 0.2 && contested < 0.4, "{contested}");
+        engine.particle.locality.government_control[1] = 0.01;
+        engine.particle.locality.insurgent_control[1] = 0.4;
+        assert!(police_access(&engine.particle, 0) < 0.05);
     }
 
     #[test]
