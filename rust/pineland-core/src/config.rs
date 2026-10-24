@@ -857,6 +857,16 @@ pub struct PartnerForceSupportConfig {
     pub logistics_withdrawal_delay_days: f64,
     pub command_withdrawal_delay_days: f64,
     pub force_generation_withdrawal_delay_days: f64,
+    /// Use-it-or-lose-it institutional learning (per 30 days): indigenous
+    /// capacity grows when the partner does the work itself and atrophies
+    /// when external services substitute for it. 0 disables.
+    pub learning_rate_per_30d: f64,
+    /// Indigenous share of delivered service at which capacity is stable.
+    pub learning_reference_share: f64,
+    /// Learned indigenous capacity indices (1 = initial capacity).
+    pub capacity_index_forcegen: f64,
+    pub capacity_index_logistics: f64,
+    pub capacity_index_command: f64,
 }
 
 impl Default for PartnerForceSupportConfig {
@@ -872,6 +882,11 @@ impl Default for PartnerForceSupportConfig {
             logistics_withdrawal_delay_days: 0.0,
             command_withdrawal_delay_days: 0.0,
             force_generation_withdrawal_delay_days: 0.0,
+            learning_rate_per_30d: 0.0,
+            learning_reference_share: 0.9,
+            capacity_index_forcegen: 1.0,
+            capacity_index_logistics: 1.0,
+            capacity_index_command: 1.0,
         }
     }
 }
@@ -2166,6 +2181,19 @@ impl PartnerForceSupportConfig {
                 root.insert(key, JsonValue::number(value));
             }
         }
+        if self.learning_rate_per_30d != 0.0 {
+            root.insert("learning_rate_per_30d", JsonValue::number(self.learning_rate_per_30d));
+            root.insert("learning_reference_share", JsonValue::number(self.learning_reference_share));
+        }
+        for (key, value) in [
+            ("capacity_index_forcegen", self.capacity_index_forcegen),
+            ("capacity_index_logistics", self.capacity_index_logistics),
+            ("capacity_index_command", self.capacity_index_command),
+        ] {
+            if value != 1.0 {
+                root.insert(key, JsonValue::number(value));
+            }
+        }
 
         let mut air = JsonValue::object();
         air.insert("enabled", JsonValue::Bool(self.air.enabled));
@@ -2745,6 +2773,11 @@ fn apply_partner_force_support(
             "force_generation_withdrawal_delay_days",
             &mut t.force_generation_withdrawal_delay_days,
         ),
+        ("learning_rate_per_30d", &mut t.learning_rate_per_30d),
+        ("learning_reference_share", &mut t.learning_reference_share),
+        ("capacity_index_forcegen", &mut t.capacity_index_forcegen),
+        ("capacity_index_logistics", &mut t.capacity_index_logistics),
+        ("capacity_index_command", &mut t.capacity_index_command),
     ] {
         if let Some(x) = o.get(key) {
             *target = required_f64(x, key)?;

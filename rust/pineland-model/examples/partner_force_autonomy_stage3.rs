@@ -1030,16 +1030,89 @@ fn advance_with_stage4_development(
     cell: &Cell,
     target: f64,
 ) -> Result<(), String> {
-    if !has_stage4_development(cell) || engine.particle.partner_support.support_withdrawn {
+    let learning = engine.config.partner_force_support.learning_rate_per_30d > 0.0;
+    if !learning
+        && (!has_stage4_development(cell) || engine.particle.partner_support.support_withdrawn)
+    {
         return engine.advance_until(target).map_err(|e| e.to_string());
     }
     while engine.particle.time + 1.0e-12 < target {
         let next = (engine.particle.time + TELEMETRY_STEP_DAYS).min(target);
         let elapsed = next - engine.particle.time;
         apply_stage4_development(engine, cell, elapsed);
+        let before = flow_snapshot(engine);
         engine.advance_until(next).map_err(|e| e.to_string())?;
+        if learning {
+            apply_institutional_learning(engine, before, flow_snapshot(engine), elapsed);
+        }
     }
     Ok(())
+}
+
+/// Use-it-or-lose-it institutional learning. Over each cadence step the
+/// partner's share of the service it actually received (indigenous over
+/// indigenous plus external) moves each channel's capacity index: above the
+/// reference share the institution learns by doing, below it the skills,
+/// staff and routines it is not using atrophy. The index scales the same
+/// partner-owned parameters that developmental assistance builds, so
+/// substitution by external services erodes exactly what development grows.
+fn apply_institutional_learning(
+    engine: &mut SimulationEngine,
+    before: FlowSnapshot,
+    after: FlowSnapshot,
+    elapsed_days: f64,
+) {
+    let pf = &engine.config.partner_force_support;
+    let rate = pf.learning_rate_per_30d;
+    let reference = pf.learning_reference_share;
+    let step = |index: f64, indigenous: f64, external: f64| -> f64 {
+        let indigenous = indigenous.max(0.0);
+        let external = external.max(0.0);
+        if indigenous + external <= 1.0e-9 {
+            return index;
+        }
+        let share = indigenous / (indigenous + external);
+        (index * (rate * (share - reference) * elapsed_days / 30.0).exp()).clamp(0.25, 1.5)
+    };
+    let command_indigenous = after.command_indigenous_service - before.command_indigenous_service;
+    let command_supported = after.command_supported_service - before.command_supported_service;
+    let old = (pf.capacity_index_forcegen, pf.capacity_index_logistics, pf.capacity_index_command);
+    let new = (
+        step(
+            old.0,
+            after.indigenous_graduates - before.indigenous_graduates,
+            after.external_forcegen_graduates - before.external_forcegen_graduates,
+        ),
+        step(
+            old.1,
+            after.indigenous_logistics_delivered - before.indigenous_logistics_delivered,
+            after.external_logistics_delivered - before.external_logistics_delivered,
+        ),
+        step(
+            old.2,
+            command_indigenous,
+            external_service_from_supported_total(command_indigenous, command_supported),
+        ),
+    );
+    engine.config.state_regeneration.security_training_rate *= new.0 / old.0;
+    engine.config.logistics.security_sustainment_multiplier *= new.1 / old.1;
+    if new.2 != old.2 {
+        apply_indigenous_command_multiplier(engine, new.2 / old.2);
+    }
+    let pf = &mut engine.config.partner_force_support;
+    pf.capacity_index_forcegen = new.0;
+    pf.capacity_index_logistics = new.1;
+    pf.capacity_index_command = new.2;
+    if std::env::var_os("PINELAND_LEARNING").is_some() {
+        eprintln!(
+            "LEARN t={:.1} withdrawn={} fg={:.3} lg={:.3} cmd={:.3}",
+            engine.particle.time,
+            engine.particle.partner_support.support_withdrawn as u8,
+            new.0,
+            new.1,
+            new.2
+        );
+    }
 }
 
 fn build_config(
