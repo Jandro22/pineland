@@ -1181,7 +1181,9 @@ fn make_engine(
         locality_count,
         rng_namespace,
     )?;
+    let _pgn = pineland_model::perfprof::guard("engine_new");
     let mut engine = SimulationEngine::new(config).map_err(|e| e.to_string())?;
+    drop(_pgn);
     apply_indigenous_command_multiplier(&mut engine, cell.command_mult);
     Ok(engine)
 }
@@ -1826,6 +1828,7 @@ fn usage() {
 }
 
 fn main() -> Result<(), String> {
+    let _pgm = pineland_model::perfprof::guard("main_total_excl_dump");
     let args: Vec<String> = env::args().skip(1).collect();
     if args.iter().any(|x| x == "--help" || x == "-h") {
         usage();
@@ -2622,6 +2625,8 @@ fn main() -> Result<(), String> {
         "Wrote diagnostic trajectory data: {}",
         trajectory_output.display()
     );
+    drop(_pgm);
+    pineland_model::perfprof::dump();
     Ok(())
 }
 
