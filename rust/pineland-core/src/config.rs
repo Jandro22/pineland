@@ -391,6 +391,11 @@ pub struct CombatConfig {
     /// is worthwhile when p * gain >= (1 - p) * dry-hole loss; 1/3 encodes a
     /// hit worth twice a dry hole (which still yields sweep intelligence).
     pub strike_min_hit_probability: f64,
+    /// multichannel_v6 only: share of armed actions that are speculative
+    /// cordon-and-search sweeps of a neighboring locality on the
+    /// order-of-battle prior alone (reconnaissance by fire). They are the
+    /// source of empty strikes that real intelligence cannot avoid.
+    pub strike_speculative_fraction: f64,
     /// Post-baseline stylized government equipment effects. Neutral defaults
     /// preserve the certified combat/movement equations exactly. These are
     /// mechanism axes, not empirical claims about any named platform class.
@@ -436,6 +441,7 @@ impl Default for CombatConfig {
             defection_pressure_midpoint: 0.6,
             insurgent_tempo_sensitivity: 1.0,
             strike_min_hit_probability: 1.0 / 3.0,
+            strike_speculative_fraction: 0.4,
             government_firepower_multiplier: 1.0,
             government_protection_multiplier: 1.0,
             government_supply_burden_multiplier: 1.0,
@@ -1491,6 +1497,10 @@ impl SimulationConfig {
                 self.combat.strike_min_hit_probability,
             ),
             (
+                "combat.strike_speculative_fraction",
+                self.combat.strike_speculative_fraction,
+            ),
+            (
                 "logistics.security_pursuit_weight",
                 self.logistics.security_pursuit_weight,
             ),
@@ -1991,6 +2001,10 @@ impl CombatConfig {
                 "strike_min_hit_probability",
                 JsonValue::number(self.strike_min_hit_probability),
             );
+            o.insert(
+                "strike_speculative_fraction",
+                JsonValue::number(self.strike_speculative_fraction),
+            );
         }
         o
     }
@@ -2424,7 +2438,7 @@ fn apply_combat(v: &JsonValue, t: &mut CombatConfig) -> Result<(), ConfigError> 
     let o = object(v, "combat")?;
     macro_rules! ff{($($k:literal=>$f:ident),*$(,)?)=>{$(if let Some(x)=o.get($k){t.$f=required_f64(x,$k)?})*}}
     ff!("strike_fraction"=>strike_fraction,"strike_dry_hole_downgrade"=>strike_dry_hole_downgrade,"strike_report_decay_days"=>strike_report_decay_days,"defection_base_hazard_per_day"=>defection_base_hazard_per_day,"defection_pressure_slope"=>defection_pressure_slope,"defection_pressure_midpoint"=>defection_pressure_midpoint,"insurgent_tempo_sensitivity"=>insurgent_tempo_sensitivity,"interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction,"government_firepower_multiplier"=>government_firepower_multiplier,"government_protection_multiplier"=>government_protection_multiplier,"government_supply_burden_multiplier"=>government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>government_terrain_mobility_penalty,"government_air_support_intensity"=>government_air_support_intensity,"government_air_support_firepower_bonus"=>government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>government_air_support_civilian_harm_multiplier);
-    ff!("strike_fraction"=>strike_fraction,"strike_dry_hole_downgrade"=>strike_dry_hole_downgrade,"strike_report_decay_days"=>strike_report_decay_days,"strike_min_hit_probability"=>strike_min_hit_probability,"interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction,"government_firepower_multiplier"=>government_firepower_multiplier,"government_protection_multiplier"=>government_protection_multiplier,"government_supply_burden_multiplier"=>government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>government_terrain_mobility_penalty,"government_air_support_intensity"=>government_air_support_intensity,"government_air_support_firepower_bonus"=>government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>government_air_support_civilian_harm_multiplier);
+    ff!("strike_fraction"=>strike_fraction,"strike_dry_hole_downgrade"=>strike_dry_hole_downgrade,"strike_report_decay_days"=>strike_report_decay_days,"strike_min_hit_probability"=>strike_min_hit_probability,"strike_speculative_fraction"=>strike_speculative_fraction,"interval_hours"=>interval_hours,"base_attrition_rate"=>base_attrition_rate,"stochastic_sigma"=>stochastic_sigma,"max_loss_fraction"=>max_loss_fraction,"cohesion_loss_multiplier"=>cohesion_loss_multiplier,"readiness_cost_multiplier"=>readiness_cost_multiplier,"supply_per_person_hour"=>supply_per_person_hour,"ineffective_cohesion"=>ineffective_cohesion,"ineffective_readiness"=>ineffective_readiness,"disengagement_base"=>disengagement_base,"surprise_initiative"=>surprise_initiative,"civilian_exposure_rate"=>civilian_exposure_rate,"momentum_learning_rate"=>momentum_learning_rate,"reinforcement_threshold"=>reinforcement_threshold,"contact_ammunition_floor"=>contact_ammunition_floor,"accidental_contact_fraction"=>accidental_contact_fraction,"government_firepower_multiplier"=>government_firepower_multiplier,"government_protection_multiplier"=>government_protection_multiplier,"government_supply_burden_multiplier"=>government_supply_burden_multiplier,"government_terrain_mobility_penalty"=>government_terrain_mobility_penalty,"government_air_support_intensity"=>government_air_support_intensity,"government_air_support_firepower_bonus"=>government_air_support_firepower_bonus,"government_air_support_cost_per_contact"=>government_air_support_cost_per_contact,"government_air_support_civilian_harm_multiplier"=>government_air_support_civilian_harm_multiplier);
     for (k, f) in [
         ("contact_supply_rule", &mut t.contact_supply_rule),
         (

@@ -668,10 +668,14 @@ fn armed_strike_target(
         weights.push(local_post);
     }
     let prior = hostile_presence_prior(particle, topology, organization);
+    // A speculative sweep goes on the order-of-battle prior alone.
+    let speculative = config.combat.strike_speculative_fraction > 0.0
+        && rng.random() < config.combat.strike_speculative_fraction;
     for (destination, cost) in neighbors {
         let destination = destination as usize;
         let post = hostile_post_presence(particle, organization, destination);
         if post <= 0.0
+            && !speculative
             && !has_target_evidence(particle, organization, target_side_insurgent, destination)
         {
             continue;
@@ -696,7 +700,7 @@ fn armed_strike_target(
             time,
             prior,
         );
-        let weight = reach * formation.max(post);
+        let weight = reach * formation.max(post).max(if speculative { prior } else { 0.0 });
         if weight > 0.0 {
             candidates.push((destination, cost));
             weights.push(weight);

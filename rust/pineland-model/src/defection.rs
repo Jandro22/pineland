@@ -209,6 +209,63 @@ pub fn update(
             );
         }
     }
+    abandon_posts(particle, config, rng, elapsed_days, time);
+}
+
+/// Posts in insurgent-dominated localities bleed their garrisons: isolated
+/// constables desert or cut local deals, and an outpost that falls below a
+/// viable garrison is abandoned.  Pressure is the insurgent physical
+/// dominance where the post stands, national momentum, and withdrawn
+/// support; the same hazard curve as formations applies.
+fn abandon_posts(
+    particle: &mut ParticleState,
+    config: &SimulationConfig,
+    rng: &mut PyRandomCompat,
+    elapsed_days: f64,
+    time: f64,
+) {
+    let combat = &config.combat;
+    let momentum = national_momentum(particle);
+    let trace = crate::trace_env!("PINELAND_FUNNEL");
+    for post in 0..particle.security_posts.personnel.len() {
+        let organization = particle.security_posts.organization[post] as usize;
+        if particle.security_posts.staffed[post] == 0
+            || particle.security_posts.personnel[post] <= 0.0
+            || is_insurgent(particle, organization)
+        {
+            continue;
+        }
+        let locality = particle.security_posts.locality[post] as usize;
+        let dominance = crate::governance::insurgent_dominance(particle, locality);
+        let abandonment = if particle.partner_support.support_withdrawn { 1.0 } else { 0.0 };
+        let pressure = clamp01(0.55 * dominance + 0.30 * clamp01(momentum) + 0.15 * abandonment);
+        let rate = combat.defection_base_hazard_per_day
+            * python_exp(combat.defection_pressure_slope * (pressure - combat.defection_pressure_midpoint));
+        if rng.random() >= 1.0 - python_exp(-rate * elapsed_days) {
+            continue;
+        }
+        let share = 0.2 + 0.4 * rng.random();
+        let posts = &mut particle.security_posts;
+        posts.personnel[post] *= 1.0 - share;
+        if posts.personnel[post] < 25.0 {
+            posts.personnel[post] = 0.0;
+            posts.staffed[post] = 0;
+            posts.presence[post] = 0.0;
+        } else {
+            posts.presence[post] = clamp01(posts.personnel[post] / 250.0);
+        }
+        *particle
+            .counters
+            .event_counts
+            .entry("post_desertions".to_string())
+            .or_insert(0) += 1;
+        if trace {
+            eprintln!(
+                "FUNNEL t={:.3} stage=post_desertion post={} locality={} dominance={:.3} pressure={:.3} left={:.1}",
+                time, post, locality, dominance, pressure, particle.security_posts.personnel[post]
+            );
+        }
+    }
 }
 
 #[cfg(test)]
