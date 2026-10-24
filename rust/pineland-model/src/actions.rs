@@ -420,8 +420,8 @@ fn reachable_presence(
     locality: usize,
 ) -> f64 {
     let target_side_insurgent = !is_insurgent(particle, organization);
-    let mut best = opponent_presence_belief(particle, organization, target_side_insurgent, locality)
-        .max(
+    let mut best =
+        opponent_presence_belief(particle, organization, target_side_insurgent, locality).max(
             evidenced_hostile_physical(particle, organization, target_side_insurgent, locality)
                 .unwrap_or(0.0),
         );
@@ -445,7 +445,13 @@ fn reachable_presence(
             cost,
         );
         best = best.max(
-            reach * opponent_presence_belief(particle, organization, target_side_insurgent, destination),
+            reach
+                * opponent_presence_belief(
+                    particle,
+                    organization,
+                    target_side_insurgent,
+                    destination,
+                ),
         );
     }
     clamp01(best)
@@ -1755,4 +1761,102 @@ pub fn schedule_typed_contact(
             microzone: (microzone as u32).into(),
         },
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{armed_strike, operational_reach_enabled};
+    use pineland_core::config::SimulationConfig;
+    use pineland_core::rng::{PyRandomCompat, RngStreams};
+    use pineland_core::state::{ParticleState, PresenceKey, PresenceState};
+    use pineland_core::topology::StaticTopology;
+
+    #[test]
+    fn multichannel_v5_keeps_operational_reach_disabled() {
+        let config = SimulationConfig::default();
+        assert_eq!(
+            config.combat.organized_action_architecture,
+            "multichannel_v5"
+        );
+        assert_eq!(config.organized_action_rate, 0.08);
+        assert!(!operational_reach_enabled(&config));
+    }
+
+    #[test]
+    fn multichannel_v6_neighbor_strike_resolves_and_applies_losses() {
+        let topology = StaticTopology::new(2);
+        let mut config = SimulationConfig {
+            locality_count: 2,
+            agent_count: 100,
+            ..SimulationConfig::default()
+        };
+        config.combat.organized_action_architecture = "multichannel_v6".to_string();
+        config.combat.stochastic_sigma = 0.0;
+        let mut particle = ParticleState::new(
+            2,
+            topology.microzones.len(),
+            7,
+            2,
+            2,
+            RngStreams::new(1847, "v6-neighbor-strike-test"),
+        );
+        particle.organizations.kind[crate::MILITARY] = 1;
+        particle.organizations.kind[crate::INSURGENT] = 3;
+        particle
+            .relations
+            .organization_a
+            .push(crate::MILITARY as u32);
+        particle
+            .relations
+            .organization_b
+            .push(crate::INSURGENT as u32);
+        particle.relations.status.push(4);
+        particle.relations.rivalry_memory.push(0.0);
+        particle.relations.hostility_memory.push(1.0);
+        particle.relations.cooperation_memory.push(0.0);
+        particle.relations.updated_at.push(0.0);
+        particle.relations.last_interaction_at.push(0.0);
+        particle.relations.has_last_interaction.push(0);
+
+        particle.formations.organization = vec![crate::MILITARY as u32, crate::INSURGENT as u32];
+        particle.formations.locality = vec![0, 1];
+        particle.formations.microzone = vec![topology.primary_zone[0], topology.primary_zone[1]];
+        particle.formations.personnel = vec![500.0, 500.0];
+        particle.formations.supply_stock = vec![1.0e9, 1.0e9];
+        particle.formations.supply_capacity = vec![1.0e9, 1.0e9];
+
+        particle.presence_beliefs = PresenceState::with_keys(vec![PresenceKey {
+            observer: crate::MILITARY as u32,
+            target: crate::INSURGENT as u32,
+            locality: 1,
+            microzone: u32::MAX,
+            target_formation: u32::MAX,
+        }]);
+        particle.presence_beliefs.estimate[0] = 1.0;
+        particle.presence_beliefs.confidence[0] = 1.0;
+        particle.presence_beliefs.evidence_count[0] = 1;
+
+        let personnel_before = particle.formations.personnel.clone();
+        let mut rng = PyRandomCompat::from_seed(2026);
+        armed_strike(
+            &mut particle,
+            &topology,
+            &config,
+            &mut rng,
+            12.0,
+            crate::MILITARY,
+            0,
+            &[0],
+            false,
+        );
+
+        assert_eq!(particle.counters.contacts, 1);
+        assert_eq!(
+            particle.counters.event_counts.get("armed_strikes"),
+            Some(&1)
+        );
+        assert!(particle.formations.personnel[0] < personnel_before[0]);
+        assert!(particle.formations.personnel[1] < personnel_before[1]);
+        assert_eq!(particle.formations.locality, vec![0, 1]);
+    }
 }

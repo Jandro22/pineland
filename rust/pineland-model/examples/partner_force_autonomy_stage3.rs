@@ -15,8 +15,11 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_raw_branch.v4";
+const CONTRACT_SETTINGS_SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_raw_branch.v5";
 const DISCOVERY_DESIGN_VERSION: &str = "pineland.partner_force_autonomy_stage3_discovery_design.v3";
 const TRAJECTORY_SCHEMA_VERSION: &str = "pineland.partner_force_autonomy_trajectory.v2";
+const CONTRACT_SETTINGS_TRAJECTORY_SCHEMA_VERSION: &str =
+    "pineland.partner_force_autonomy_trajectory.v3";
 const TELEMETRY_STEP_DAYS: f64 = 7.0;
 /// Reference-mission command requirement per military order. Indigenous and
 /// supported command service are reliability * exp(-latency_hours / 24).
@@ -37,6 +40,8 @@ struct HoldoutOverrides {
     insurgent_target_personnel: Option<f64>,
     surprise_initiative: Option<f64>,
     accidental_contact_fraction: Option<f64>,
+    organized_action_architecture: Option<String>,
+    organized_action_rate: Option<f64>,
 }
 
 #[derive(Clone, Debug)]
@@ -232,6 +237,17 @@ fn json_optional_f64(value: &JsonValue, key: &str) -> Result<Option<f64>, String
     }
 }
 
+fn json_optional_str(value: &JsonValue, key: &str) -> Result<Option<String>, String> {
+    match value.get(key) {
+        None | Some(JsonValue::Null) => Ok(None),
+        Some(v) => v
+            .as_str()
+            .map(str::to_string)
+            .map(Some)
+            .ok_or_else(|| format!("invalid string field '{key}'")),
+    }
+}
+
 fn json_optional_bool(value: &JsonValue, key: &str) -> Result<Option<bool>, String> {
     match value.get(key) {
         None | Some(JsonValue::Null) => Ok(None),
@@ -413,6 +429,11 @@ fn load_holdout_contract(path: &Path) -> Result<RunDesign, String> {
                     cell,
                     "accidental_contact_fraction",
                 )?,
+                organized_action_architecture: json_optional_str(
+                    cell,
+                    "organized_action_architecture",
+                )?,
+                organized_action_rate: json_optional_f64(cell, "organized_action_rate")?,
             },
         });
     }
@@ -597,6 +618,11 @@ fn load_stage4_contract(path: &Path) -> Result<RunDesign, String> {
                     cell,
                     "accidental_contact_fraction",
                 )?,
+                organized_action_architecture: json_optional_str(
+                    cell,
+                    "organized_action_architecture",
+                )?,
+                organized_action_rate: json_optional_f64(cell, "organized_action_rate")?,
             },
         });
     }
@@ -1059,6 +1085,17 @@ fn build_config(
     if let Some(v) = cell.overrides.accidental_contact_fraction {
         config.combat.accidental_contact_fraction = v;
     }
+    if let Some(v) = cell.overrides.organized_action_architecture.as_deref() {
+        if !matches!(v, "multichannel_v5" | "multichannel_v6") {
+            return Err(format!(
+                "unsupported organized_action_architecture '{v}'; expected multichannel_v5 or multichannel_v6"
+            ));
+        }
+        config.combat.organized_action_architecture = v.to_string();
+    }
+    if let Some(v) = cell.overrides.organized_action_rate {
+        config.organized_action_rate = v;
+    }
 
     config.state_regeneration.security_recruitment_rate *= cell.forcegen_mult;
     config.state_regeneration.security_training_rate *= cell.forcegen_mult;
@@ -1386,8 +1423,13 @@ fn external_air_share(window: FlowSnapshot) -> f64 {
     }
 }
 
-fn csv_header() -> &'static str {
-    "schema_version,experiment_id,design_version,git_commit,world_id,pair_id,run_id,cell_id,support_profile,seed,withdrawal_time_days,horizon_days,branch,indigenous_forcegen_multiplier,indigenous_logistics_multiplier,indigenous_command_multiplier,pre_insurgent_personnel,pre_insurgent_active_formations,pre_insurgent_territorial_control,pre_recent_actions,pre_contested_localities,pre_supported_capability,pre_government_control,pre_military_personnel,pre_trained_reserve,pre_recruit_pipeline,pre_readiness,pre_experience,pre_supply_stock,pre_supply_capacity,pre_command_reliability,pre_command_latency_hours,window_indigenous_recruits,window_indigenous_graduates,window_military_losses,window_indigenous_logistics_produced,window_indigenous_logistics_delivered,window_indigenous_logistics_consumed,window_military_logistics_demanded,window_external_air_opportunities,window_external_air_assisted_contacts,window_external_air_intensity,window_external_logistics_offered,window_external_logistics_delivered,window_external_logistics_rejected,window_external_logistics_lost,window_command_opportunities,window_command_indigenous_service,window_command_supported_service,window_external_command_events,window_command_latency_hours_saved,window_external_forcegen_graduates,window_donor_cost_air,window_donor_cost_logistics,window_donor_cost_command,window_donor_cost_forcegen,window_donor_cost,support_air_intensity,support_air_bonus,support_logistics_rate,support_command_reliability_boost,support_command_latency_reduction_fraction,support_forcegen_training_rate_boost,c_government_control,c_military_personnel_retention,c_operational_formation_survival,c_geographic_coverage_retention,c_operational_readiness_retention,composite_capability,composite_capability_v1,post_indigenous_recruits,post_indigenous_graduates,post_military_losses,post_indigenous_logistics_produced,post_indigenous_logistics_consumed,post_donor_cost_air,post_donor_cost_logistics,post_donor_cost_command,post_donor_cost_forcegen,post_donor_cost,external_share_logistics,external_share_forcegen,external_share_command,external_share_air,formal_q_indigenous,formal_q_supported,formal_support_lift,formal_regime,formal_bottleneck,formal_forcegen_ratio_indigenous,formal_logistics_ratio_indigenous,formal_command_ratio_indigenous,formal_forcegen_demand,formal_forcegen_indigenous_service,formal_forcegen_external_service,formal_forcegen_deficit,formal_forcegen_useful_external,formal_logistics_demand,formal_logistics_indigenous_service,formal_logistics_external_service,formal_logistics_deficit,formal_logistics_useful_external,formal_command_demand,formal_command_indigenous_service,formal_command_external_service,formal_command_deficit,formal_command_useful_external,command_service_requirement_per_order,manpower_burden,logistics_burden,omega_flow,t_c_deficit_90,t_readiness_collapse,t_supply_exhaustion,t_first_formation_loss"
+fn csv_header(include_contract_action_settings: bool) -> String {
+    let base = "schema_version,experiment_id,design_version,git_commit,world_id,pair_id,run_id,cell_id,support_profile,seed,withdrawal_time_days,horizon_days,branch,indigenous_forcegen_multiplier,indigenous_logistics_multiplier,indigenous_command_multiplier,pre_insurgent_personnel,pre_insurgent_active_formations,pre_insurgent_territorial_control,pre_recent_actions,pre_contested_localities,pre_supported_capability,pre_government_control,pre_military_personnel,pre_trained_reserve,pre_recruit_pipeline,pre_readiness,pre_experience,pre_supply_stock,pre_supply_capacity,pre_command_reliability,pre_command_latency_hours,window_indigenous_recruits,window_indigenous_graduates,window_military_losses,window_indigenous_logistics_produced,window_indigenous_logistics_delivered,window_indigenous_logistics_consumed,window_military_logistics_demanded,window_external_air_opportunities,window_external_air_assisted_contacts,window_external_air_intensity,window_external_logistics_offered,window_external_logistics_delivered,window_external_logistics_rejected,window_external_logistics_lost,window_command_opportunities,window_command_indigenous_service,window_command_supported_service,window_external_command_events,window_command_latency_hours_saved,window_external_forcegen_graduates,window_donor_cost_air,window_donor_cost_logistics,window_donor_cost_command,window_donor_cost_forcegen,window_donor_cost,support_air_intensity,support_air_bonus,support_logistics_rate,support_command_reliability_boost,support_command_latency_reduction_fraction,support_forcegen_training_rate_boost,c_government_control,c_military_personnel_retention,c_operational_formation_survival,c_geographic_coverage_retention,c_operational_readiness_retention,composite_capability,composite_capability_v1,post_indigenous_recruits,post_indigenous_graduates,post_military_losses,post_indigenous_logistics_produced,post_indigenous_logistics_consumed,post_donor_cost_air,post_donor_cost_logistics,post_donor_cost_command,post_donor_cost_forcegen,post_donor_cost,external_share_logistics,external_share_forcegen,external_share_command,external_share_air,formal_q_indigenous,formal_q_supported,formal_support_lift,formal_regime,formal_bottleneck,formal_forcegen_ratio_indigenous,formal_logistics_ratio_indigenous,formal_command_ratio_indigenous,formal_forcegen_demand,formal_forcegen_indigenous_service,formal_forcegen_external_service,formal_forcegen_deficit,formal_forcegen_useful_external,formal_logistics_demand,formal_logistics_indigenous_service,formal_logistics_external_service,formal_logistics_deficit,formal_logistics_useful_external,formal_command_demand,formal_command_indigenous_service,formal_command_external_service,formal_command_deficit,formal_command_useful_external,command_service_requirement_per_order,manpower_burden,logistics_burden,omega_flow,t_c_deficit_90,t_readiness_collapse,t_supply_exhaustion,t_first_formation_loss";
+    if include_contract_action_settings {
+        format!("{base},organized_action_architecture,organized_action_rate,config_hash")
+    } else {
+        base.to_string()
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1401,6 +1443,9 @@ fn write_row(
     withdrawal: f64,
     horizon: f64,
     branch: &str,
+    engine: &SimulationEngine,
+    config_hash: &str,
+    include_contract_action_settings: bool,
     pre: StateAtWithdrawal,
     pre_window: FlowSnapshot,
     assay: &CapabilityAssayResult,
@@ -1425,8 +1470,13 @@ fn write_row(
     let f9 = |x: f64| format!("{x:.9}");
     let f6 = |x: f64| format!("{x:.6}");
     let f1 = |x: f64| format!("{x:.1}");
-    let row = vec![
-        SCHEMA_VERSION.to_string(),
+    let mut row = vec![
+        if include_contract_action_settings {
+            CONTRACT_SETTINGS_SCHEMA_VERSION
+        } else {
+            SCHEMA_VERSION
+        }
+        .to_string(),
         experiment_id.to_string(),
         design_version.to_string(),
         commit.to_string(),
@@ -1542,11 +1592,21 @@ fn write_row(
         f1(t_supply_exhaustion),
         f1(t_first_formation_loss),
     ];
+    if include_contract_action_settings {
+        row.push(engine.config.combat.organized_action_architecture.clone());
+        row.push(f9(engine.config.organized_action_rate));
+        row.push(config_hash.to_string());
+    }
     writeln!(out, "{}", row.join(",")).map_err(|e| e.to_string())
 }
 
-fn trajectory_csv_header() -> &'static str {
-    "schema_version,experiment_id,design_version,git_commit,world_id,cell_id,support_profile,seed,withdrawal_time_days,time_days,days_from_withdrawal,phase,capability_reference,state_hash,decision_hash,government_control,military_personnel_retention,operational_formation_survival,geographic_coverage_retention,operational_readiness_retention,composite_capability,composite_capability_v1,military_personnel,operational_formations,covered_localities,trained_reserve,recruit_pipeline,readiness,experience,supply_stock,supply_capacity,command_reliability,command_latency_hours,insurgent_personnel,insurgent_active_formations,insurgent_territorial_control,contested_localities,interval_indigenous_recruits,interval_indigenous_graduates,interval_security_deployments,interval_military_losses,interval_indigenous_logistics_produced,interval_indigenous_logistics_delivered,interval_indigenous_logistics_consumed,interval_military_logistics_demanded,interval_logistics_system_lost,interval_contacts,interval_organized_actions,interval_external_air_opportunities,interval_external_air_assisted_contacts,interval_external_air_intensity,interval_external_air_firepower_bonus,interval_external_logistics_offered,interval_external_logistics_delivered,interval_external_logistics_rejected,interval_external_logistics_lost,interval_command_opportunities,interval_command_indigenous_service,interval_command_supported_service,interval_external_command_events,interval_command_reliability_boost,interval_command_latency_hours_saved,interval_external_forcegen_graduates,interval_donor_cost_air,interval_donor_cost_logistics,interval_donor_cost_command,interval_donor_cost_forcegen,interval_donor_cost,interval_formal_active_services,interval_formal_q_indigenous,interval_formal_q_supported,interval_formal_support_lift,interval_formal_regime,interval_formal_bottleneck"
+fn trajectory_csv_header(include_contract_action_settings: bool) -> String {
+    let base = "schema_version,experiment_id,design_version,git_commit,world_id,cell_id,support_profile,seed,withdrawal_time_days,time_days,days_from_withdrawal,phase,capability_reference,state_hash,decision_hash,government_control,military_personnel_retention,operational_formation_survival,geographic_coverage_retention,operational_readiness_retention,composite_capability,composite_capability_v1,military_personnel,operational_formations,covered_localities,trained_reserve,recruit_pipeline,readiness,experience,supply_stock,supply_capacity,command_reliability,command_latency_hours,insurgent_personnel,insurgent_active_formations,insurgent_territorial_control,contested_localities,interval_indigenous_recruits,interval_indigenous_graduates,interval_security_deployments,interval_military_losses,interval_indigenous_logistics_produced,interval_indigenous_logistics_delivered,interval_indigenous_logistics_consumed,interval_military_logistics_demanded,interval_logistics_system_lost,interval_contacts,interval_organized_actions,interval_external_air_opportunities,interval_external_air_assisted_contacts,interval_external_air_intensity,interval_external_air_firepower_bonus,interval_external_logistics_offered,interval_external_logistics_delivered,interval_external_logistics_rejected,interval_external_logistics_lost,interval_command_opportunities,interval_command_indigenous_service,interval_command_supported_service,interval_external_command_events,interval_command_reliability_boost,interval_command_latency_hours_saved,interval_external_forcegen_graduates,interval_donor_cost_air,interval_donor_cost_logistics,interval_donor_cost_command,interval_donor_cost_forcegen,interval_donor_cost,interval_formal_active_services,interval_formal_q_indigenous,interval_formal_q_supported,interval_formal_support_lift,interval_formal_regime,interval_formal_bottleneck";
+    if include_contract_action_settings {
+        format!("{base},organized_action_architecture,organized_action_rate,config_hash")
+    } else {
+        base.to_string()
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1565,6 +1625,8 @@ fn write_trajectory_row(
     assay: &CapabilityAssayResult,
     state: StateAtWithdrawal,
     interval: FlowSnapshot,
+    config_hash: &str,
+    include_contract_action_settings: bool,
 ) -> Result<(), String> {
     let world_id = format!("{}_s{}", cell.cell_id, seed);
     let structural_window = structural_service_window(interval);
@@ -1585,8 +1647,13 @@ fn write_trajectory_row(
         formal.bottleneck.as_str().to_string(),
     );
     let f9 = |x: f64| format!("{x:.9}");
-    let row = vec![
-        TRAJECTORY_SCHEMA_VERSION.to_string(),
+    let mut row = vec![
+        if include_contract_action_settings {
+            CONTRACT_SETTINGS_TRAJECTORY_SCHEMA_VERSION
+        } else {
+            TRAJECTORY_SCHEMA_VERSION
+        }
+        .to_string(),
         experiment_id.to_string(),
         design_version.to_string(),
         commit.to_string(),
@@ -1661,6 +1728,11 @@ fn write_trajectory_row(
         regime,
         bottleneck,
     ];
+    if include_contract_action_settings {
+        row.push(engine.config.combat.organized_action_architecture.clone());
+        row.push(f9(engine.config.organized_action_rate));
+        row.push(config_hash.to_string());
+    }
     writeln!(out, "{}", row.join(",")).map_err(|e| e.to_string())
 }
 
@@ -2102,6 +2174,11 @@ fn main() -> Result<(), String> {
         check_git_clean()?;
     }
 
+    let include_contract_action_settings = run_design.cells.iter().any(|cell| {
+        cell.overrides.organized_action_architecture.is_some()
+            || cell.overrides.organized_action_rate.is_some()
+    });
+
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
@@ -2110,10 +2187,15 @@ fn main() -> Result<(), String> {
     }
     let file = File::create(&output).map_err(|e| e.to_string())?;
     let mut out = BufWriter::new(file);
-    writeln!(out, "{}", csv_header()).map_err(|e| e.to_string())?;
+    writeln!(out, "{}", csv_header(include_contract_action_settings)).map_err(|e| e.to_string())?;
     let trajectory_file = File::create(&trajectory_output).map_err(|e| e.to_string())?;
     let mut trajectory_out = BufWriter::new(trajectory_file);
-    writeln!(trajectory_out, "{}", trajectory_csv_header()).map_err(|e| e.to_string())?;
+    writeln!(
+        trajectory_out,
+        "{}",
+        trajectory_csv_header(include_contract_action_settings)
+    )
+    .map_err(|e| e.to_string())?;
     let commit = git_commit();
     let withdrawal = run_design.withdrawal_time_days;
     let observation_start = run_design.observation_start_days;
@@ -2133,6 +2215,7 @@ fn main() -> Result<(), String> {
                 locality_count,
                 &run_design.rng_namespace,
             )?;
+            let config_hash = engine.config.canonical_hash();
             advance_with_stage4_development(&mut engine, cell, observation_start)?;
             let obs_baseline: CapabilityAssayBaseline = engine.capability_assay_baseline();
             let flow_start = flow_snapshot(&engine);
@@ -2154,6 +2237,8 @@ fn main() -> Result<(), String> {
                     &assay_start,
                     state_start,
                     FlowSnapshot::default(),
+                    &config_hash,
+                    include_contract_action_settings,
                 )?;
             }
             let mut pre_flow_previous = flow_start;
@@ -2187,6 +2272,8 @@ fn main() -> Result<(), String> {
                         &assay,
                         state,
                         interval,
+                        &config_hash,
+                        include_contract_action_settings,
                     )?;
                 }
                 pre_flow_previous = flow_now;
@@ -2264,6 +2351,8 @@ fn main() -> Result<(), String> {
                         &assay_on,
                         state_on,
                         interval_on,
+                        &config_hash,
+                        include_contract_action_settings,
                     )?;
                     write_trajectory_row(
                         &mut trajectory_out,
@@ -2280,6 +2369,8 @@ fn main() -> Result<(), String> {
                         &assay_off,
                         state_off,
                         interval_off,
+                        &config_hash,
+                        include_contract_action_settings,
                     )?;
                 }
 
@@ -2358,6 +2449,9 @@ fn main() -> Result<(), String> {
                     withdrawal,
                     h,
                     "SUPPORT_ON",
+                    &on,
+                    &config_hash,
+                    include_contract_action_settings,
                     pre_state,
                     pre_window,
                     &assay_on,
@@ -2386,6 +2480,9 @@ fn main() -> Result<(), String> {
                     withdrawal,
                     h,
                     "SUPPORT_OFF",
+                    &off,
+                    &config_hash,
+                    include_contract_action_settings,
                     pre_state,
                     pre_window,
                     &assay_off,
@@ -2487,6 +2584,86 @@ fn main() -> Result<(), String> {
         trajectory_output.display()
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod contract_tests {
+    use super::{
+        build_config, csv_header, json_optional_str, trajectory_csv_header, Cell, HoldoutOverrides,
+    };
+    use pineland_core::json::parse as parse_json;
+
+    fn minimal_cell() -> Cell {
+        Cell {
+            cell_id: "test".to_string(),
+            support_profile: "none".to_string(),
+            forcegen_mult: 1.0,
+            logistics_mult: 1.0,
+            command_mult: 1.0,
+            air_intensity: 0.0,
+            air_bonus: 0.0,
+            air_cost_per_contact: 0.0,
+            logistics_rate: 0.0,
+            logistics_capacity: 0.0,
+            logistics_cost_per_unit: 0.0,
+            command_reliability_boost: 0.0,
+            command_latency_reduction_fraction: 0.0,
+            command_floor_hours: 0.0,
+            command_cost_per_formation_day: 0.0,
+            forcegen_training_rate_boost: 0.0,
+            forcegen_cost_per_incremental_trainee: 0.0,
+            development_forcegen_rate_per_30d: 0.0,
+            development_logistics_rate_per_30d: 0.0,
+            development_command_rate_per_30d: 0.0,
+            development_cost_per_day: 0.0,
+            overrides: HoldoutOverrides::default(),
+        }
+    }
+
+    #[test]
+    fn contract_optional_architecture_string_is_parsed() {
+        let absent = parse_json("{}").unwrap();
+        let present = parse_json(r#"{"organized_action_architecture":"multichannel_v6"}"#).unwrap();
+        assert_eq!(
+            json_optional_str(&absent, "organized_action_architecture").unwrap(),
+            None
+        );
+        assert_eq!(
+            json_optional_str(&present, "organized_action_architecture").unwrap(),
+            Some("multichannel_v6".to_string())
+        );
+    }
+
+    #[test]
+    fn organized_action_settings_apply_to_config_hash_and_output_schema() {
+        let baseline = minimal_cell();
+        let baseline_hash = build_config(&baseline, 7, 120.0, 100, 4, "contract-test")
+            .unwrap()
+            .canonical_hash();
+
+        let mut architecture = baseline.clone();
+        architecture.overrides.organized_action_architecture = Some("multichannel_v6".to_string());
+        let architecture_config =
+            build_config(&architecture, 7, 120.0, 100, 4, "contract-test").unwrap();
+        assert_eq!(
+            architecture_config.combat.organized_action_architecture,
+            "multichannel_v6"
+        );
+        assert_ne!(architecture_config.canonical_hash(), baseline_hash);
+
+        let mut rate = baseline;
+        rate.overrides.organized_action_rate = Some(0.16);
+        let rate_config = build_config(&rate, 7, 120.0, 100, 4, "contract-test").unwrap();
+        assert_eq!(rate_config.organized_action_rate, 0.16);
+        assert_ne!(rate_config.canonical_hash(), baseline_hash);
+
+        assert!(!csv_header(false).contains("organized_action_architecture"));
+        assert!(csv_header(true)
+            .ends_with(",organized_action_architecture,organized_action_rate,config_hash"));
+        assert!(!trajectory_csv_header(false).contains("organized_action_rate"));
+        assert!(trajectory_csv_header(true)
+            .ends_with(",organized_action_architecture,organized_action_rate,config_hash"));
+    }
 }
 
 #[cfg(test)]

@@ -472,7 +472,11 @@ pub fn command(
         if crate::trace_env!("PINELAND_FUNNEL") {
             eprintln!(
                 "MOVEFUNNEL t={:.3} formation={} org={} stage=considered loc={} personnel={:.1}",
-                time, formation, particle.formations.organization[formation], particle.formations.locality[formation], particle.formations.personnel[formation]
+                time,
+                formation,
+                particle.formations.organization[formation],
+                particle.formations.locality[formation],
+                particle.formations.personnel[formation]
             );
         }
 
