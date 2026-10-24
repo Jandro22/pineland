@@ -57,6 +57,33 @@ macro_rules! trace_env {
     }};
 }
 
+
+// PERF-PROFILE-BEGIN (temporary)
+pub mod perfprof {
+    use std::collections::BTreeMap;
+    use std::sync::Mutex;
+    use std::time::Instant;
+    pub static ACC: Mutex<BTreeMap<String, (f64, u64)>> = Mutex::new(BTreeMap::new());
+    pub fn enabled() -> bool { crate::trace_env!("PINELAND_PROFILE") }
+    pub fn add(name: &str, start: Instant) {
+        let d = start.elapsed().as_secs_f64();
+        let mut m = ACC.lock().unwrap();
+        let e = m.entry(name.to_string()).or_insert((0.0, 0));
+        e.0 += d; e.1 += 1;
+    }
+    pub struct Guard(pub &'static str, pub Option<Instant>);
+    impl Drop for Guard { fn drop(&mut self) { if let Some(s) = self.1 { add(self.0, s); } } }
+    pub fn guard(name: &'static str) -> Guard { Guard(name, if enabled() { Some(Instant::now()) } else { None }) }
+    pub fn dump() {
+        if !enabled() { return; }
+        let m = ACC.lock().unwrap();
+        let mut v: Vec<_> = m.iter().collect();
+        v.sort_by(|a, b| b.1 .0.partial_cmp(&a.1 .0).unwrap());
+        for (k, (t, n)) in v { eprintln!("PROFILE {:>10.3}s {:>9} {}", t, n, k); }
+    }
+}
+// PERF-PROFILE-END
+
 pub const GOVERNMENT: usize = 0;
 pub const MILITARY: usize = 1;
 pub const POLICE: usize = 2;
@@ -239,8 +266,25 @@ pub fn organization_index_for_particle(
     particle: &pineland_core::state::ParticleState,
     name: &str,
 ) -> Option<usize> {
-    (0..particle.organizations.kind.len())
-        .find(|&i| organization_name_for_particle(particle, i) == name)
+    (0..particle.organizations.kind.len()).find(|&i| organization_name_matches(particle, i, name))
+}
+
+/// Equivalent to `organization_name_for_particle(particle, index) == name`
+/// without rendering a string for the fixed organization table.  Dynamic
+/// organizations are always named `armed-NNN` or `foreign-neighbor-N`, so any
+/// other name can be rejected before rendering.
+pub fn organization_name_matches(
+    particle: &pineland_core::state::ParticleState,
+    index: usize,
+    name: &str,
+) -> bool {
+    if index <= INSURGENT {
+        return organization_name(index) == name;
+    }
+    if !(name.starts_with("armed-") || name.starts_with("foreign-neighbor-")) {
+        return false;
+    }
+    organization_name_for_particle(particle, index) == name
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1811,6 +1855,7 @@ impl SimulationEngine {
         until: f64,
         max_events: Option<usize>,
     ) -> Result<usize, ModelError> {
+        let _pgau = crate::perfprof::guard("advance_until_total");
         if !until.is_finite() {
             return Err(ModelError::Invalid(
                 "target time must be finite".to_string(),
@@ -1881,6 +1926,7 @@ impl SimulationEngine {
                     | EventPayload::PeaceProcess
             );
             if closes_patrol_memory {
+                let _pg = crate::perfprof::guard("pre:patrol_presence_memory");
                 patrol::advance_all_presence_memory(
                     &mut self.particle,
                     &self.topology,
@@ -1897,6 +1943,7 @@ impl SimulationEngine {
                     | EventPayload::PhysicalRefresh
             );
             if advances_footholds {
+                let _pg = crate::perfprof::guard("pre:advance_footholds");
                 organizations::advance_footholds(
                     &mut self.particle,
                     &self.topology,
@@ -1928,7 +1975,10 @@ impl SimulationEngine {
                     | EventPayload::OrganizedAction { .. }
                     | EventPayload::Contact { .. }
             );
-            self.process_event(&event)?;
+            {
+                let _pg = crate::perfprof::guard(event.payload.kind());
+                self.process_event(&event)?;
+            }
             if crate::trace_env!("PINELAND_LOGISTICS_FORMATION_TRACE")
                 && self
                     .particle
@@ -1975,6 +2025,7 @@ impl SimulationEngine {
             // locality.population; initialization writes occur before the
             // event loop and are handled during world construction.
             if refresh_foothold_membership {
+                let _pg = crate::perfprof::guard("post:refresh_foothold_memberships");
                 recruitment::refresh_foothold_memberships(&mut self.particle, &self.topology);
             }
             if crate::trace_env!("PINELAND_BELIEF_TRACE")
@@ -1996,6 +2047,7 @@ impl SimulationEngine {
                 }
             }
             if advances_footholds {
+                let _pg = crate::perfprof::guard("pre:advance_footholds");
                 organizations::advance_footholds(
                     &mut self.particle,
                     &self.topology,
@@ -2012,7 +2064,10 @@ impl SimulationEngine {
                     value: 1.0,
                 });
             }
-            self.reschedule_recurring(&event)?;
+            {
+                let _pg = crate::perfprof::guard("post:reschedule");
+                self.reschedule_recurring(&event)?;
+            }
             processed += 1;
         }
         let stopped_at_limit = max_events.is_some_and(|limit| {
@@ -2028,6 +2083,7 @@ impl SimulationEngine {
         }
         self.last_boundary = until;
         if !self.particle_execution {
+            let _pg = crate::perfprof::guard("validate");
             self.particle.validate()?;
         }
         Ok(processed)
@@ -2752,9 +2808,11 @@ impl SimulationEngine {
     }
 
     pub fn state_hash(&self) -> String {
+        let _pg = crate::perfprof::guard("state_hash");
         self.particle.state_hash()
     }
     pub fn decision_hash(&self) -> String {
+        let _pg = crate::perfprof::guard("decision_hash");
         self.particle.decision_hash()
     }
 

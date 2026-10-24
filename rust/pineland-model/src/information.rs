@@ -119,6 +119,7 @@ pub fn collect_and_fuse(
     // decay applied by an individual fusion: an untouched prior still loses
     // confidence as calendar time advances.  Keep the last boundary on the
     // particle so restart and same-time events remain exact.
+    let _g0 = crate::perfprof::guard("info:decay");
     let elapsed = (time - particle.last_information_decay_at).max(0.0);
     if elapsed > 0.0 {
         let default_factor = python_exp(-config.information.default_decay_rate * elapsed);
@@ -144,11 +145,17 @@ pub fn collect_and_fuse(
     // particular, a report at t=0.25 must remain available to a relay whose
     // observation timestamp is t=3.25 even if no new local report for that
     // key was generated at the delivery event.
-    let mut history = particle.information_history.clone();
+    drop(_g0);
+    let _g1 = crate::perfprof::guard("info:posts");
+    //
+    // Nothing reachable from this event reads `particle.information_history`
+    // directly (every consumer receives `history`), and the working copy is
+    // written back at the end, so it can be moved out instead of cloned.
+    let mut history = std::mem::take(&mut particle.information_history);
     let mut post_indices = (0..particle.security_posts.organization.len()).collect::<Vec<_>>();
-    post_indices.sort_by(|left, right| {
-        post_name(particle, topology, *left).cmp(&post_name(particle, topology, *right))
-    });
+    // Stable sort on the rendered name: identical order to a `sort_by` that
+    // re-renders both names in every comparison.
+    post_indices.sort_by_cached_key(|post| post_name(particle, topology, *post));
 
     for post in post_indices {
         if particle
@@ -197,6 +204,8 @@ pub fn collect_and_fuse(
         );
     }
 
+    drop(_g1);
+    let _g2 = crate::perfprof::guard("info:localities");
     for locality in 0..topology.locality_count() {
         let communities = communities_for_locality(particle, locality);
         if communities.is_empty() {
@@ -380,10 +389,10 @@ pub fn collect_and_fuse(
         }
     }
 
+    drop(_g2);
+    let _g3 = crate::perfprof::guard("info:formations");
     let mut formation_indices = (0..particle.formations.personnel.len()).collect::<Vec<_>>();
-    formation_indices.sort_by(|left, right| {
-        formation_name(particle, *left).cmp(&formation_name(particle, *right))
-    });
+    formation_indices.sort_by_cached_key(|formation| formation_name(particle, *formation));
     for formation in formation_indices {
         if crate::trace_env!("PINELAND_PRF17_TRACE")
             && formation_name(particle, formation) == "PRF-17"
@@ -433,8 +442,11 @@ pub fn collect_and_fuse(
     // clock has matured, in relay-id order, before flushing the information
     // event.  Keep that boundary explicit: without it the native engine can
     // generate the right reports while silently omitting headquarters beliefs.
+    drop(_g3);
+    let _g4 = crate::perfprof::guard("info:relays");
     deliver_due_relays(particle, topology, config, rng, time, &history);
     particle.information_history = history;
+    if crate::perfprof::enabled() { eprintln!("SIZES t={time} obs={} relays={} hist={} beliefs={} presence={} nodepresence={} zone={}", particle.information_observations.len(), particle.information_relays.len(), particle.information_history.len(), particle.beliefs.keys.len(), particle.presence_beliefs.keys.len(), particle.node_presence_beliefs.keys.len(), particle.zone_beliefs.keys.len()); }
 }
 
 fn corroboration_weight(
@@ -447,6 +459,7 @@ fn corroboration_weight(
     config: &SimulationConfig,
     source_type: SourceType,
 ) -> f64 {
+    let _pgf = crate::perfprof::guard("fn:corroboration_weight");
     if crate::trace_env!("PINELAND_HISTORY_TRACE")
         && (target == 0
             && (matches!(locality, 15 | 25 | 27)
@@ -557,6 +570,27 @@ fn source_type_from_code(code: u8) -> Option<SourceType> {
     })
 }
 
+/// Locate the first observation carrying `sequence`.
+///
+/// Observations are only ever appended with a monotonically increasing
+/// sequence counter, so the ledger is sorted by sequence and a binary search
+/// returns the same row as a front-to-back scan.  The linear scan remains as a
+/// fallback so an unexpected ordering can never change which row is chosen.
+fn find_information_observation(
+    observations: &[InformationObservation],
+    sequence: u64,
+) -> Option<&InformationObservation> {
+    if let Ok(mut index) = observations.binary_search_by_key(&sequence, |row| row.sequence) {
+        while index > 0 && observations[index - 1].sequence == sequence {
+            index -= 1;
+        }
+        return Some(&observations[index]);
+    }
+    observations
+        .iter()
+        .find(|observation| observation.sequence == sequence)
+}
+
 fn deliver_due_relays(
     particle: &mut ParticleState,
     topology: &StaticTopology,
@@ -605,11 +639,9 @@ fn deliver_due_relays(
                 delivered,
             );
         }
-        let Some(observation) = particle
-            .information_observations
-            .iter()
-            .find(|observation| observation.sequence == observation_sequence)
-            .cloned()
+        let Some(observation) =
+            find_information_observation(&particle.information_observations, observation_sequence)
+                .cloned()
         else {
             particle.information_relays[relay_index].status = 2;
             continue;
@@ -715,7 +747,7 @@ fn presence_observer_code(
     recipient: usize,
     recipient_name: &str,
 ) -> u32 {
-    if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+    if crate::organization_name_matches(particle, recipient, recipient_name) {
         recipient as u32
     } else {
         dynamic_observer_code(particle, topology, recipient_name)
@@ -750,6 +782,7 @@ fn fuse_presence_observation(
     time: f64,
     history: &[ControlHistoryEntry],
 ) {
+    let _pgf = crate::perfprof::guard("fn:fuse_presence_observation");
     if observation.observation_type != 0 || observation.target == INFORMATION_NONE {
         return;
     }
@@ -759,7 +792,7 @@ fn fuse_presence_observation(
         return;
     }
     let recipient_actor =
-        if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+        if crate::organization_name_matches(particle, recipient, recipient_name) {
             recipient
         } else {
             observation.observer as usize
@@ -802,7 +835,7 @@ fn fuse_presence_observation(
     } else {
         1
     };
-    let state = if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+    let state = if crate::organization_name_matches(particle, recipient, recipient_name) {
         &mut particle.presence_beliefs
     } else {
         &mut particle.node_presence_beliefs
@@ -851,6 +884,7 @@ fn fuse_recorded_observation(
     time: f64,
     history: &[ControlHistoryEntry],
 ) {
+    let _pgf = crate::perfprof::guard("fn:fuse_recorded_observation");
     if !matches!(observation.observation_type, 0 | 1) {
         return;
     }
@@ -881,7 +915,7 @@ fn fuse_recorded_observation(
         return;
     }
     let recipient_actor =
-        if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+        if crate::organization_name_matches(particle, recipient, recipient_name) {
             recipient
         } else {
             observation.observer as usize
@@ -935,7 +969,7 @@ fn fuse_recorded_observation(
         );
     }
     let (observer_code, kind) = if recipient < 7
-        && recipient_name == crate::organization_name_for_particle(particle, recipient)
+        && crate::organization_name_matches(particle, recipient, recipient_name)
     {
         let own_target = if particle.organizations.kind.get(recipient).copied() == Some(3) {
             crate::INSURGENT
@@ -973,7 +1007,7 @@ fn fuse_recorded_observation(
     // rows intentionally have no zone-local mirror.
     let zone_organization = if let Some(formation) = formation_index(particle, recipient_name) {
         Some(particle.formations.organization[formation] as usize)
-    } else if recipient_name == crate::organization_name_for_particle(particle, recipient) {
+    } else if crate::organization_name_matches(particle, recipient, recipient_name) {
         // Python treats an organization-level relay as the organization
         // actor when updating its locality/microzone auxiliary belief.  A
         // headquarters command node is deliberately excluded because its
@@ -1118,16 +1152,48 @@ fn command_node_code(
     topology: &StaticTopology,
     node: &str,
 ) -> Option<u32> {
-    if !node.starts_with("CMD:") {
+    let organization_name = node.strip_prefix("CMD:")?;
+    command_node_code_for_organization_name(particle, topology, organization_name)
+}
+
+/// Organization name without allocating for the fixed organization table.
+fn organization_name_cow(particle: &ParticleState, index: usize) -> std::borrow::Cow<'static, str> {
+    if index <= crate::INSURGENT {
+        std::borrow::Cow::Borrowed(crate::organization_name(index))
+    } else {
+        std::borrow::Cow::Owned(crate::organization_name_for_particle(particle, index))
+    }
+}
+
+/// Code of the `CMD:{organization_name}` node.
+///
+/// The command node registry is the sorted list of `CMD:{name}` identifiers.
+/// The first position of a present identifier in that sorted list equals the
+/// number of identifiers strictly smaller than it, so neither the list nor
+/// the sort has to be materialized.  The shared `CMD:` prefix does not affect
+/// the ordering.
+fn command_node_code_for_organization_name(
+    particle: &ParticleState,
+    topology: &StaticTopology,
+    organization_name: &str,
+) -> Option<u32> {
+    let mut present = false;
+    let mut position = 0usize;
+    for organization in 0..particle.organizations.kind.len() {
+        let name = organization_name_cow(particle, organization);
+        match name.as_ref().cmp(organization_name) {
+            std::cmp::Ordering::Less => position += 1,
+            std::cmp::Ordering::Equal => present = true,
+            std::cmp::Ordering::Greater => {}
+        }
+    }
+    if !present {
         return None;
     }
-    let mut commands = command_node_ids(particle);
-    let position = commands.iter().position(|value| value == node)?;
     let base = particle.organizations.kind.len()
         + particle.formations.personnel.len()
         + particle.security_posts.organization.len()
         + auxiliary_node_count(particle, topology);
-    commands.shrink_to_fit();
     Some((base + position) as u32)
 }
 
@@ -1162,6 +1228,7 @@ fn source_identity_code(
     topology: &StaticTopology,
     source_id: &str,
 ) -> u32 {
+    let _pgf = crate::perfprof::guard("fn:source_id_code");
     if source_id.starts_with("PATROL-") {
         return 0x2000_0000u32 | stable_hash_code(source_id);
     }
@@ -1224,6 +1291,7 @@ fn publish_information_observation(
     detection_probability: f64,
     detected: bool,
 ) -> InformationObservation {
+    let _pgf = crate::perfprof::guard("fn:publish_information_observation");
     let sequence = particle.next_information_observation_sequence;
     particle.next_information_observation_sequence = sequence.saturating_add(1);
     let observer_node_code = dynamic_observer_code(particle, topology, observer_node);
@@ -1453,7 +1521,9 @@ pub(crate) fn record_patrol_target_observation(
         detection_probability,
         detected,
     );
-    let history = particle.information_history.clone();
+    // The fusion reads the history only through its argument, so the ledger
+    // can be borrowed out of the particle for the call and restored unchanged.
+    let history = std::mem::take(&mut particle.information_history);
     fuse_presence_observation(
         particle,
         topology,
@@ -1466,6 +1536,7 @@ pub(crate) fn record_patrol_target_observation(
         time,
         &history,
     );
+    particle.information_history = history;
     record_presence_history(particle, &observation);
 }
 
@@ -1480,11 +1551,11 @@ fn queue_information_relay(
     time: f64,
     source_type: SourceType,
 ) {
-    let destination_name = format!(
-        "CMD:{}",
-        crate::organization_name_for_particle(particle, observer)
-    );
-    let Some(destination_node) = command_node_code(particle, topology, &destination_name) else {
+    let _pgf = crate::perfprof::guard("fn:queue_information_relay");
+    let destination_organization = organization_name_cow(particle, observer);
+    let Some(destination_node) =
+        command_node_code_for_organization_name(particle, topology, &destination_organization)
+    else {
         return;
     };
     if source_node == destination_node {
@@ -1552,6 +1623,7 @@ fn observe_from_source(
     time: f64,
     history: &mut Vec<ControlHistoryEntry>,
 ) {
+    let _g = crate::perfprof::guard("info:observe_from_source");
     let targets = target_actors(particle, observer);
     let report_probability =
         report_probability(particle, config, observer, source_type, source_id, locality);
@@ -1688,6 +1760,7 @@ fn observe_target(
     time: f64,
     history: &mut Vec<ControlHistoryEntry>,
 ) {
+    let _pgf = crate::perfprof::guard("fn:observe_target");
     let (present, personnel, actual_formation) =
         actual_target_presence(particle, target, locality, target_formation, microzone);
     let probability = if present {
@@ -1867,6 +1940,7 @@ fn observe_control(
     time: f64,
     history: &mut Vec<ControlHistoryEntry>,
 ) {
+    let _pgf = crate::perfprof::guard("fn:observe_control");
     let quality = source_quality(particle, config, rng, source_type, locality);
     let trust = source_trust(particle, config, observer, source_type, source_id);
     let language = language_comprehension(
@@ -2125,6 +2199,7 @@ fn fuse_zone(
     weight: f64,
     observed: f64,
 ) {
+    let _pgf = crate::perfprof::guard("fn:fuse_zone");
     let prior_confidence = particle.zone_beliefs.confidence[index];
     let prior = prior_confidence.max(0.02);
     let denominator = prior + weight;
@@ -2202,6 +2277,8 @@ fn actual_target_presence(
     target_formation: Option<usize>,
     microzone: usize,
 ) -> (bool, f64, Option<usize>) {
+    let _pgf = crate::perfprof::guard("fn:target_actors");
+    let _pgf = crate::perfprof::guard("fn:actual_target_presence");
     let mut personnel = 0.0;
     let mut chosen = None;
     for formation in 0..particle.formations.personnel.len() {
@@ -2284,6 +2361,7 @@ fn detection_probability(
     source_type: SourceType,
     microzone: usize,
 ) -> f64 {
+    let _pgf = crate::perfprof::guard("fn:detection_probability");
     let observer_formation = formation_index(particle, observer_node);
     let observer_actor = observer_formation
         .map(|formation| particle.formations.organization[formation] as usize)
@@ -2363,6 +2441,7 @@ fn false_positive_probability(
     source_type: SourceType,
     microzone: usize,
 ) -> f64 {
+    let _pgf = crate::perfprof::guard("fn:false_positive_probability");
     let observability = topology
         .zone_observability
         .get(microzone)
@@ -2395,6 +2474,7 @@ fn source_quality(
     source_type: SourceType,
     locality: usize,
 ) -> f64 {
+    let _pgf = crate::perfprof::guard("fn:source_quality");
     let mut coverage = config
         .information
         .source_coverage
@@ -2446,6 +2526,7 @@ fn source_trust(
     source_type: SourceType,
     source_id: &str,
 ) -> f64 {
+    let _pgf = crate::perfprof::guard("fn:source_trust");
     let mut trust = config
         .information
         .source_trust
@@ -2495,6 +2576,7 @@ fn report_probability(
     source_id: &str,
     locality: usize,
 ) -> f64 {
+    let _pgf = crate::perfprof::guard("fn:report_probability");
     let mut probability = match source_type {
         SourceType::Civilian => config.information.civilian_report_rate,
         SourceType::SocialNetwork => config.information.social_report_rate,
@@ -2556,6 +2638,7 @@ fn language_comprehension(
     source_type: SourceType,
     source_id: &str,
 ) -> f64 {
+    let _pgf = crate::perfprof::guard("fn:language_comprehension");
     if observer >= particle.organizations.kind.len() {
         return 0.25;
     }
@@ -2611,6 +2694,7 @@ fn local_organizational_embeddedness(
     organization: usize,
     locality: usize,
 ) -> f64 {
+    let _pgf = crate::perfprof::guard("fn:local_organizational_embeddedness");
     if organization >= particle.organizations.kind.len() || locality >= topology.locality_count() {
         return 0.0;
     }
@@ -2776,9 +2860,61 @@ fn control_values(
     result
 }
 
+/// Parse a `PRF-{rank:02}` / `FDF-{rank:02}` identifier into
+/// `(is_insurgent_prefix, rank)`, accepting exactly the strings that
+/// `formation_name` can render for a non-foreign formation.
+fn parse_formation_rank(identifier: &str) -> Option<(bool, usize)> {
+    let (insurgent, digits) = if let Some(rest) = identifier.strip_prefix("PRF-") {
+        (true, rest)
+    } else if let Some(rest) = identifier.strip_prefix("FDF-") {
+        (false, rest)
+    } else {
+        return None;
+    };
+    let bytes = digits.as_bytes();
+    // `{rank:02}` renders at least two digits and never pads beyond two.
+    if bytes.len() < 2 || !bytes.iter().all(u8::is_ascii_digit) {
+        return None;
+    }
+    if bytes.len() > 2 && bytes[0] == b'0' {
+        return None;
+    }
+    digits.parse::<usize>().ok().map(|rank| (insurgent, rank))
+}
+
+/// Return the first formation whose `formation_name` equals `identifier`.
+///
+/// Equivalent to scanning `formation_name(particle, index) == identifier` in
+/// index order, but computes the per-organization rank incrementally and
+/// avoids rendering a string for every non-foreign formation.
 fn formation_index(particle: &ParticleState, identifier: &str) -> Option<usize> {
-    (0..particle.formations.personnel.len())
-        .find(|index| formation_name(particle, *index) == identifier)
+    let wanted = parse_formation_rank(identifier);
+    let organizations = &particle.formations.organization;
+    let mut ranks: Vec<usize> = Vec::new();
+    for (index, organization) in organizations
+        .iter()
+        .take(particle.formations.personnel.len())
+        .enumerate()
+    {
+        let organization = *organization as usize;
+        if ranks.len() <= organization {
+            ranks.resize(organization + 1, 0);
+        }
+        ranks[organization] += 1;
+        let kind = particle.organizations.kind.get(organization).copied();
+        if kind == Some(crate::foreign::FOREIGN_KIND) {
+            if formation_name(particle, index) == identifier {
+                return Some(index);
+            }
+            continue;
+        }
+        if let Some((insurgent, rank)) = wanted {
+            if insurgent == (kind == Some(3)) && rank == ranks[organization] {
+                return Some(index);
+            }
+        }
+    }
+    None
 }
 
 pub(crate) fn formation_name(particle: &ParticleState, formation: usize) -> String {
@@ -2849,6 +2985,7 @@ pub(crate) fn auxiliary_node_ids(
     particle: &ParticleState,
     topology: &StaticTopology,
 ) -> Vec<String> {
+    let _pgf = crate::perfprof::guard("fn:dynamic_observer_code");
     let mut values = Vec::new();
     for community in 0..particle.communities.locality.len() {
         values.push(community_name(community));
