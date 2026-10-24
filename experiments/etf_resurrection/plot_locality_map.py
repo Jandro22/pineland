@@ -31,6 +31,7 @@ import matplotlib.patches
 import matplotlib.patheffects as pe
 
 matplotlib.use("Agg")
+matplotlib.rcParams["hatch.linewidth"] = 0.6
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
@@ -115,17 +116,23 @@ def territories(topo: pd.DataFrame):
 
 
 def badge_positions(dgeoms, anchors):
-    """District badge at the open spot farthest from borders and from every unit symbol."""
+    """District badge in the open spot farthest from borders (weighted) and unit symbols."""
     out = []
     for d, g in dgeoms:
-        minx, miny, maxx, maxy = g.bounds
-        best, score = g.representative_point().coords[0], -1.0
-        for x in np.linspace(minx, maxx, 28):
-            for y in np.linspace(miny, maxy, 28):
+        margin = 0.06 * float(np.sqrt(g.area))
+        inner = g.buffer(-margin)
+        if inner.is_empty:
+            inner = g
+        if inner.geom_type == "MultiPolygon":
+            inner = max(inner.geoms, key=lambda q: q.area)
+        minx, miny, maxx, maxy = inner.bounds
+        best, score = inner.representative_point().coords[0], -1.0
+        for x in np.linspace(minx, maxx, 32):
+            for y in np.linspace(miny, maxy, 32):
                 pt = Point(x, y)
-                if not g.contains(pt):
+                if not inner.contains(pt):
                     continue
-                sc = min(g.exterior.distance(pt), float(np.min(np.hypot(anchors[:, 0] - x, anchors[:, 1] - y))))
+                sc = min(1.6 * g.exterior.distance(pt), float(np.min(np.hypot(anchors[:, 0] - x, anchors[:, 1] - y))))
                 if sc > score:
                     best, score = (x, y), sc
         out.append((d, best))
@@ -211,15 +218,15 @@ def echelon(n: float) -> str:
 class Unit:
     """APP-6 style symbol: friendly rectangle / hostile diamond, infantry X, echelon mark."""
 
-    def __init__(self, ax, hostile: bool, z=8):
+    def __init__(self, ax, hostile: bool, z=8, ps=1.0):
         self.hostile = hostile
         fill, edge = (HOSTILE_FILL, HOSTILE_EDGE) if hostile else (FRIEND_FILL, FRIEND_EDGE)
-        self.frame = matplotlib.patches.Polygon(np.zeros((4, 2)), closed=True, fc=fill, ec=edge, lw=1.1, zorder=z, path_effects=[pe.withStroke(linewidth=2.4, foreground="white")])
+        self.frame = matplotlib.patches.Polygon(np.zeros((4, 2)), closed=True, fc=fill, ec=edge, lw=1.1 * ps, zorder=z, path_effects=[pe.withStroke(linewidth=2.4 * ps, foreground="white")])
         ax.add_patch(self.frame)
-        self.x1, = ax.plot([], [], color=edge, lw=0.9, zorder=z + 1)
-        self.x2, = ax.plot([], [], color=edge, lw=0.9, zorder=z + 1)
-        self.mark = ax.text(0, 0, "", color=INK, fontsize=6.5, ha="center", va="bottom", fontweight="bold",
-                            zorder=z + 2, path_effects=[pe.withStroke(linewidth=2, foreground="white")])
+        self.x1, = ax.plot([], [], color=edge, lw=0.9 * ps, zorder=z + 1)
+        self.x2, = ax.plot([], [], color=edge, lw=0.9 * ps, zorder=z + 1)
+        self.mark = ax.text(0, 0, "", color=INK, fontsize=6.5 * ps, ha="center", va="bottom", fontweight="bold",
+                            zorder=z + 2, path_effects=[pe.withStroke(linewidth=2 * ps, foreground="white")])
         self.artists = [self.frame, self.x1, self.x2, self.mark]
 
     def set(self, cx, cy, size, personnel):
@@ -245,8 +252,11 @@ class Unit:
 
 # ---------------------------------------------------------------- panel
 class MapPanel:
-    def __init__(self, ax, topo, geo, norm, title, compact=False):
+    def __init__(self, ax, topo, geo, norm, title, compact=False, chrome=True, labels_on=True, units=True):
         cells, outline, districts, labels, segs, anchors, sym = geo
+        ps = 0.62 if compact else 1.0
+        self.ps, self.units = ps, units
+        sym = sym * (0.8 if compact else 1.0)
         self.ax, self.topo, self.title, self.anchors, self.sym = ax, topo, title, anchors, sym
         xy = topo[["x_km", "y_km"]].to_numpy()
         self.xy = xy
@@ -258,23 +268,25 @@ class MapPanel:
         self.terr.set_array(np.zeros(len(cells)))
         ax.add_collection(self.terr)
         ax.add_collection(LineCollection(segs, colors="#444444", linewidths=0.6, alpha=0.25, zorder=1.5))
-        ax.add_collection(PolyCollection(districts, facecolors="none", edgecolors="white", linewidths=2.8,
+        ax.add_collection(PolyCollection(districts, facecolors="none", edgecolors="white", linewidths=2.8 * ps,
                                          zorder=2))
-        ax.add_collection(PolyCollection(districts, facecolors="none", edgecolors="#333333", linewidths=1.1,
+        ax.add_collection(PolyCollection(districts, facecolors="none", edgecolors="#333333", linewidths=1.1 * ps,
                                          zorder=2.2))
-        ax.plot(ox, oy, color="#1a1a1a", lw=2.4, zorder=2.5)
-        for name, (lx, ly) in labels:
-            ax.text(lx, ly, f"D{name}", color="#222222", fontsize=7 if compact else 9, ha="center", va="center",
+        ax.plot(ox, oy, color="#1a1a1a", lw=2.4 * ps, zorder=2.5)
+        for name, (lx, ly) in (labels if labels_on else []):
+            ax.text(lx, ly, f"D{name}", color="#222222", fontsize=7.5 if compact else 9, ha="center", va="center",
                     fontweight="bold", zorder=7,
                     path_effects=[pe.withStroke(linewidth=2.5, foreground=(1, 1, 1, 0.75))])
         lead = [[xy[i], anchors[i]] for i in range(len(xy)) if np.hypot(*(xy[i] - anchors[i])) > 0.2 * sym]
-        ax.add_collection(LineCollection(lead, colors="#333333", linewidths=0.7, alpha=0.7, zorder=4))
-        ax.scatter(xy[:, 0], xy[:, 1], s=4, c="#444444", zorder=4.5, linewidths=0)
+        if units:
+            ax.add_collection(LineCollection(lead, colors="#333333", linewidths=0.7 * ps, alpha=0.7, zorder=4))
+            ax.scatter(xy[:, 0], xy[:, 1], s=4 * ps, c="#444444", zorder=4.5, linewidths=0)
         self.ring = ax.scatter(anchors[:, 0], anchors[:, 1], s=0, facecolors="none", edgecolors="#9b1c1c",
-                               linewidths=1.3, linestyles=(0, (3, 2)), zorder=6)
-        self.army_units = [Unit(ax, False) for _ in range(len(xy))]
-        self.ins_units = [Unit(ax, True) for _ in range(len(xy))]
-        self.lost = ax.scatter([], [], s=36, marker="X", c="#d62828", edgecolors="white", linewidths=0.6, zorder=7)
+                               linewidths=1.3 * ps, linestyles=(0, (3, 2)), zorder=6)
+        self.army_units = [Unit(ax, False, ps=ps) for _ in range(len(xy))] if units else []
+        self.ins_units = [Unit(ax, True, ps=ps) for _ in range(len(xy))] if units else []
+        self.lost = ax.scatter([], [], s=36 * ps, marker="X", c="#d62828", edgecolors="white", linewidths=0.6,
+                               zorder=7)
         self.head = ax.text(0.02, 0.985, title, transform=ax.transAxes, color=INK, fontsize=11 if compact else 13,
                             fontweight="bold", va="top")
         self.stats = ax.text(0.02, 0.94, "", transform=ax.transAxes, color=MUTED,
@@ -282,13 +294,14 @@ class MapPanel:
         pad = 0.06 * span
         x0, x1 = xy[:, 0].min() - 2.4 * pad, xy[:, 0].max() + 2.4 * pad
         y0, y1 = xy[:, 1].min() - 2.4 * pad, xy[:, 1].max() + 5 * pad
-        bar = 10 ** np.floor(np.log10(span / 3))
-        bx, by = x0 + pad, y0 + 0.9 * pad
-        ax.plot([bx, bx + bar], [by, by], color=INK, lw=2.2, zorder=11)
-        ax.text(bx + bar / 2, by + 0.3 * pad, f"{bar:g} km", color=INK, fontsize=7, ha="center", zorder=11)
-        ax.annotate("", xy=(x1 - pad, y0 + 2.4 * pad), xytext=(x1 - pad, y0 + 0.6 * pad),
-                    arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.2), zorder=11)
-        ax.text(x1 - pad, y0 + 2.6 * pad, "N", color=INK, fontsize=8, ha="center", fontweight="bold")
+        if chrome:
+            bar = 10 ** np.floor(np.log10(span / 3))
+            bx, by = x0 + pad, y0 + 0.9 * pad
+            ax.plot([bx, bx + bar], [by, by], color=INK, lw=2.2, zorder=11)
+            ax.text(bx + bar / 2, by + 0.3 * pad, f"{bar:g} km", color=INK, fontsize=7, ha="center", zorder=11)
+            ax.annotate("", xy=(x1 - pad, y0 + 2.4 * pad), xytext=(x1 - pad, y0 + 0.6 * pad),
+                        arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.2), zorder=11)
+            ax.text(x1 - pad, y0 + 2.6 * pad, "N", color=INK, fontsize=8, ha="center", fontweight="bold")
         ax.set_xlim(x0, x1)
         ax.set_ylim(y0, y1)
         ax.set_aspect("equal")
@@ -297,9 +310,11 @@ class MapPanel:
         for sp in ax.spines.values():
             sp.set_color("#8b8f94")
 
-    def update(self, s, scale):
+    def update(self, s, scale, ref=None):
         self.terr.set_array(s["net"])
-        a, sym = self.anchors, self.sym
+        if not self.units:
+            return
+        a, sym, ps = self.anchors, self.sym, self.ps
         for i in range(len(a)):
             m, e = s["military_personnel"][i], s["insurgent_personnel"][i]
             dx = 0.55 * sym if (m >= 15 and e >= 15) else 0.0
@@ -307,15 +322,23 @@ class MapPanel:
             self.army_units[i].set(a[i, 0] - dx, a[i, 1], size, m)
             self.ins_units[i].set(a[i, 0] + dx, a[i, 1], size, e)
         heat = np.clip((s["violence"] - 0.5) / 0.5, 0, 1)
-        self.ring.set_sizes(380 * heat)
+        fighting = heat > 0.05
+        # fixed visible floor; intensity is carried by stroke opacity
+        self.ring.set_sizes(np.where(fighting, np.maximum(380 * heat, 150), 0.0) * ps ** 2)
+        colors = np.tile(np.array([0.608, 0.110, 0.110, 1.0]), (len(a), 1))
+        colors[:, 3] = 0.45 + 0.5 * heat
+        self.ring.set_edgecolors(colors)
         staffed = s["police_staffed"] > 0
         off = np.array([0.0, -0.95 * sym])
         self.lost.set_offsets(a[~staffed] + off if (~staffed).any() else np.empty((0, 2)))
-        gov, ins = s["gov_control"].mean(), s["ins_control"].mean()
+        army, ins = s["military_personnel"].sum(), s["insurgent_personnel"].sum()
+        da = f" ({army - ref['military_personnel'].sum():+,.0f} vs cont.)" if ref is not None else ""
+        di = f" ({ins - ref['insurgent_personnel'].sum():+,.0f})" if ref is not None else ""
+        gov, insc = s["gov_control"].mean(), s["ins_control"].mean()
         self.stats.set_text(
-            f"Army {s['military_personnel'].sum():,.0f}   Insurgents {s['insurgent_personnel'].sum():,.0f}\n"
-            f"Mean control: government {gov:.1%}, insurgent {ins:.1%}\n"
-            f"Police posts overrun: {int((~staffed).sum())} of {len(a)}"
+            f"Army {army:,.0f}{da}   Insurgents {ins:,.0f}{di}\n"
+            f"Mean control: government {gov:.1%}, insurgent {insc:.1%}\n"
+            f"Heavy-fighting localities: {int(fighting.sum())}   Posts overrun: {int((~staffed).sum())}"
         )
 
 
@@ -338,6 +361,46 @@ def legend(ax, note=None):
             " symbol size also grows with strength.", va="center", fontsize=8, color=MUTED)
     if note:
         ax.text(0.012, -0.08, note, va="center", fontsize=8, color=MUTED)
+
+
+def legend_panel(ax, norm, dnorm, dl):
+    """Shared key for the key-moment grid: colour bars, symbols, scale bar, north arrow."""
+    fig = ax.figure
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    ax.text(0.04, 0.97, "HOW TO READ", fontsize=10, fontweight="bold", color=INK, va="top")
+    ax.text(0.04, 0.925, "Rows 1-2: net control (insurgent minus government)", fontsize=8, color=MUTED, va="top")
+    cax = ax.inset_axes([0.12, 0.855, 0.76, 0.025])
+    cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=CONTROL), cax=cax, orientation="horizontal")
+    cb.set_ticks([norm.vmin, 0, norm.vmax])
+    cb.set_ticklabels(["government", "contested", "insurgent"])
+    cb.ax.tick_params(colors=INK, labelsize=7.5, length=0)
+    cb.outline.set_visible(False)
+    ax.text(0.04, 0.78, "Row 3: withdrawal effect (withdrawn minus continued)", fontsize=8, color=MUTED, va="top")
+    cax2 = ax.inset_axes([0.12, 0.71, 0.76, 0.025])
+    cb2 = fig.colorbar(plt.cm.ScalarMappable(norm=dnorm, cmap=CONTROL), cax=cax2, orientation="horizontal")
+    cb2.set_ticks([-dl, 0, dl])
+    cb2.set_ticklabels([f"+{dl * 100:.0f} pp Gov", "0", f"+{dl * 100:.0f} pp Insurgent"])
+    cb2.ax.tick_params(colors=INK, labelsize=7.5, length=0)
+    cb2.outline.set_visible(False)
+    y = 0.60
+    ax.scatter([0.06], [y], s=120, marker="s", c=FRIEND_FILL, edgecolors=FRIEND_EDGE, linewidths=1.1)
+    ax.text(0.12, y, "Army (friendly)", fontsize=8.5, color=INK, va="center")
+    ax.scatter([0.06], [y - 0.06], s=120, marker="D", c=HOSTILE_FILL, edgecolors=HOSTILE_EDGE, linewidths=1.1)
+    ax.text(0.12, y - 0.06, "Insurgent force (hostile)", fontsize=8.5, color=INK, va="center")
+    ax.scatter([0.06], [y - 0.12], s=150, facecolors="none", edgecolors="#9b1c1c", linewidths=1.3,
+               linestyles=(0, (3, 2)))
+    ax.text(0.12, y - 0.12, "Heavy fighting", fontsize=8.5, color=INK, va="center")
+    ax.scatter([0.06], [y - 0.18], s=40, marker="X", c="#d62828", edgecolors="white", linewidths=0.6)
+    ax.text(0.12, y - 0.18, "Police post overrun", fontsize=8.5, color=INK, va="center")
+    ax.text(0.04, y - 0.27, "Echelon: \u2022 squad  I company  II battalion\nIII regiment  X brigade.\n"
+            "Symbol size grows with strength.\nDistrict badges D0-D16 shown on the\nreference map only.",
+            fontsize=8, color=MUTED, va="top", linespacing=1.5)
+    ax.plot([0.06, 0.26], [0.08, 0.08], color=INK, lw=2.2)
+    ax.text(0.16, 0.10, "10 km", fontsize=8, color=INK, ha="center")
+    ax.annotate("", xy=(0.88, 0.17), xytext=(0.88, 0.05), arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.2))
+    ax.text(0.88, 0.185, "N", fontsize=9, ha="center", fontweight="bold", color=INK)
 
 
 def build_figure(topo, geo, norm):
@@ -425,17 +488,36 @@ def main() -> None:
                   savefig_kwargs={"facecolor": PAPER})
     plt.close(fig)
 
-    picks = [withdrawal] + [withdrawal + d for d in (90, 180, 360) if withdrawal + d <= t1]
-    fig, axes = plt.subplots(2, len(picks), figsize=(4.6 * len(picks), 9.4), facecolor=PAPER)
-    axes = np.atleast_2d(axes).reshape(2, len(picks))
-    for j, day in enumerate(picks):
-        for i, b in enumerate(BRANCHES):
-            p = MapPanel(axes[i, j], topo, geo, norm, f"{TITLES[b].title()}, day +{day - withdrawal:.0f}",
-                         compact=True)
-            p.update(at(*data[b], day), scale)
-    fig.savefig(out_dir / f"{stem}_panels.png", dpi=170, facecolor=PAPER, bbox_inches="tight")
+    # ---- key-moment grid: absolute state (rows 1-2) and the withdrawal effect (row 3)
+    days_pick = [d for d in (90, 180, 360) if withdrawal + d <= t1]
+    ncol = 1 + len(days_pick)
+    fig = plt.figure(figsize=(4.5 * ncol, 4.6 * 3 + 0.4), facecolor=PAPER)
+    gs = fig.add_gridspec(3, ncol, hspace=0.06, wspace=0.03, left=0.01, right=0.99, top=0.96, bottom=0.01)
+
+    def snap(branch, d):
+        return at(*data[branch], withdrawal + d)
+
+    ref0 = MapPanel(fig.add_subplot(gs[0, 0]), topo, geo, norm, "Decision day (both branches identical)",
+                    compact=True, chrome=False, labels_on=True)
+    ref0.update(snap("SUPPORT_ON", 0), scale)
+    diffs = {d: snap("SUPPORT_OFF", d)["net"] - snap("SUPPORT_ON", d)["net"] for d in days_pick}
+    dl2 = max(0.02, float(np.quantile(np.abs(np.concatenate(list(diffs.values()))), 0.92)))
+    dn2 = TwoSlopeNorm(vmin=-dl2, vcenter=0, vmax=dl2)
+    for j, d in enumerate(days_pick, start=1):
+        on_s, off_s = snap("SUPPORT_ON", d), snap("SUPPORT_OFF", d)
+        MapPanel(fig.add_subplot(gs[0, j]), topo, geo, norm, f"Support continued, +{d} days", compact=True,
+                 chrome=False, labels_on=False).update(on_s, scale)
+        MapPanel(fig.add_subplot(gs[1, j]), topo, geo, norm, f"Support withdrawn, +{d} days", compact=True,
+                 chrome=False, labels_on=False).update(off_s, scale, ref=on_s)
+        p3 = MapPanel(fig.add_subplot(gs[2, j]), topo, geo, dn2, f"Withdrawal effect, +{d} days", compact=True,
+                      chrome=False, labels_on=False, units=False)
+        p3.update({**off_s, "net": diffs[d]}, scale)
+        p3.stats.set_text(f"Mean net-control shift {100 * diffs[d].mean():+.1f} pp\n(+ = toward insurgents)")
+    legend_panel(fig.add_subplot(gs[1:, 0]), norm, dn2, dl2)
+    fig.savefig(out_dir / f"{stem}_panels.png", dpi=150, facecolor=PAPER, bbox_inches="tight")
     plt.close(fig)
 
+    # ---- divergence at the end
     on, off = at(*data["SUPPORT_ON"], t1), at(*data["SUPPORT_OFF"], t1)
     diff = off["net"] - on["net"]
     dl = max(0.02, float(np.quantile(np.abs(diff), 0.92)))
@@ -445,38 +527,42 @@ def main() -> None:
     p = MapPanel(ax, topo, geo, dnorm, f"Day {t1:.0f}: what withdrawing support changed")
     p.update({**off, "net": diff}, scale)
     p.stats.set_text("Colour = change in net control caused by the withdrawal\n(withdrawn branch minus continued branch)")
-    # absolute state: hatch where insurgents out-control the government at the end (withdrawn branch)
     majority = [cells[i] for i in range(n) if off["ins_control"][i] > off["gov_control"][i]]
     if majority:
-        ax.add_collection(PolyCollection(majority, facecolors="none", edgecolors=(0.15, 0.15, 0.15, 0.6),
+        ax.add_collection(PolyCollection(majority, facecolors="none", edgecolors=(0.55, 0.29, 0.27, 0.55),
                                          hatch="////", linewidths=0, zorder=1.2))
-    # primary shock sites: localities garrisoned by the army at the withdrawal decision
     garrison = at(*data["SUPPORT_OFF"], withdrawal)["military_personnel"]
-    shock = [cells[i] for i in range(n) if garrison[i] >= 15]
-    if shock:
-        ax.add_collection(PolyCollection(shock, facecolors="none", edgecolors="#111111", linewidths=1.8,
-                                         linestyles=(0, (1, 1.6)), zorder=2.6))
-    # timeline inset: national control shift caused by the withdrawal
+    for i in range(n):
+        if garrison[i] >= 15:
+            ring = polys[i].buffer(-0.012 * span)
+            if ring.is_empty:
+                continue
+            if ring.geom_type == "MultiPolygon":
+                ring = max(ring.geoms, key=lambda q: q.area)
+            rx, ry = ring.exterior.xy
+            ax.plot(rx, ry, linestyle=(0, (1.5, 2)), color="#1A1A1A", lw=1.1, zorder=4.5)
     grid = np.arange(t0, t1 + 1e-9, 2.0)
     mean_net = {b: np.array([at(*data[b], d)["net"].mean() for d in grid]) for b in BRANCHES}
-    inset = ax.inset_axes([0.60, 0.80, 0.37, 0.14], facecolor="white")
-    inset.plot(grid, 100 * (mean_net["SUPPORT_OFF"] - mean_net["SUPPORT_ON"]), color=INS, lw=1.6)
+    inset = ax.inset_axes([0.60, 0.72, 0.36, 0.15], facecolor="white")
+    inset.plot(grid, 100 * (mean_net["SUPPORT_OFF"] - mean_net["SUPPORT_ON"]), color="#333333", lw=1.4)
     inset.axhline(0, color="#999999", lw=0.6)
     inset.axvline(withdrawal, color="#b45309", lw=1, ls="--")
-    inset.set_title("national shift (pp)", fontsize=7, color=INK, pad=2)
+    inset.text(withdrawal + 4, 0.97, "withdrawal", transform=inset.get_xaxis_transform(), fontsize=6,
+               color="#b45309", va="top")
+    inset.set_title("national shift (pp): + toward insurgents, - toward government", fontsize=6.5, color=INK, pad=3)
+    inset.set_xlabel("day", fontsize=6.5, color=MUTED, labelpad=1)
     inset.tick_params(labelsize=6, colors=MUTED, length=2)
     for side in inset.spines.values():
         side.set_color("#bbbbbb")
-    # footer: diverging colour bar, symbol key
     cax = fig.add_axes([0.10, 0.125, 0.30, 0.014])
     cb = fig.colorbar(plt.cm.ScalarMappable(norm=dnorm, cmap=CONTROL), cax=cax, orientation="horizontal")
     cb.set_ticks([-dl, 0, dl])
-    cb.set_ticklabels([f"-{dl * 100:.0f} pp gov", "0", f"+{dl * 100:.0f} pp insurgent"])
+    cb.set_ticklabels([f"+{dl * 100:.0f} pp Gov", "0", f"+{dl * 100:.0f} pp Insurgent"])
     cb.ax.tick_params(colors=INK, labelsize=7.5, length=0)
     cb.outline.set_visible(False)
     foot = fig.add_axes([0.02, 0.01, 0.96, 0.09])
     legend(foot, "Hatch = insurgent-majority at the end; dotted outline = army garrison at withdrawal. "
-                 "Symbols show forces in the withdrawn branch.")
+                 "Symbols = forces in the withdrawn branch.")
     fig.savefig(out_dir / f"{stem}_divergence.png", dpi=170, facecolor=PAPER, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {stem}.gif, {stem}_panels.png, {stem}_divergence.png to {out_dir}")
