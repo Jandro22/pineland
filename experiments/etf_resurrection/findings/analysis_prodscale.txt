@@ -1,0 +1,42 @@
+tasks loaded: 48; horizon +360 days
+cells: mean effect (* p<0.05), seeds positive / n
+
+== 1 trap: continued minus withdrawn, by learning rate
+  [capability]             command
+    A_lr0                        -0.048  11/24
+    A_lr0.25                     -0.090*  5/24
+  [army]             command
+    A_lr0                        -0.009  12/24
+    A_lr0.25                     -0.006  12/24
+  [coverage]             command
+    A_lr0                        -0.069   3/24
+    A_lr0.25                     +0.008   7/24
+  [gov ctrl]             command
+    A_lr0                        +0.004  17/24
+    A_lr0.25                     -0.000   9/24
+
+== 2 duration: continued minus withdrawn, by withdrawal day
+  [capability]             command
+    T120 lr0                     -0.048  11/24
+    T120 lr0.25                  -0.090*  5/24
+  [army]             command
+    T120 lr0                     -0.009  12/24
+    T120 lr0.25                  -0.006  12/24
+  [coverage]             command
+    T120 lr0                     -0.069   3/24
+    T120 lr0.25                  +0.008   7/24
+  [gov ctrl]             command
+    T120 lr0                     +0.004  17/24
+    T120 lr0.25                  -0.000   9/24
+
+== 3 exit: withdrawn branch with one channel kept 180 d, minus immediate exit (learning .25)
+  [capability]  
+  [army]  
+  [coverage]  
+  [gov ctrl]  
+
+== 4 remedy: continued minus withdrawn with developmental assistance
+  [capability]  
+  [army]  
+  [coverage]  
+  [gov ctrl]  

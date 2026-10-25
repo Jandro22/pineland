@@ -69,6 +69,7 @@ def main() -> None:
     ap.add_argument("--devsweep", action="store_true", help="with --local --robust: development-dose sweep instead")
     ap.add_argument("--confirm", action="store_true", help="with --local --robust: A_lr0 / A_lr0.25 only (use with many seeds)")
     ap.add_argument("--allcore", action="store_true", help="with --local: keep every capacity level of the intensity-1.0 cells")
+    ap.add_argument("--prodscale", action="store_true", help="with --local: keep the frozen production environment (1000 agents) and run only the command-constrained low-capacity cell")
     ap.add_argument("--quick", action="store_true", help="tiny local smoke campaign (2 cells, 1 seed, 300 agents)")
     a = ap.parse_args()
 
@@ -91,7 +92,10 @@ def main() -> None:
         base_cells, learning = core, [0.0, 0.25, 1.0]
     if a.local and a.allcore:
         base_cells = core
-    if a.local:
+    if a.local and a.prodscale:
+        core = [c for c in core if c["factor_structure"] == "command_constrained"][1:2]
+        base_cells = core
+    elif a.local:
         design["environment"].update(agent_count=300, locality_count=34)
 
     variants: dict[str, dict] = {}

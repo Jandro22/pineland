@@ -62,3 +62,10 @@ Capability effect, day +360, learning off -> learning 0.25 (p in parentheses for
 - **Force-generation**: small positive without learning (+0.04..+0.08), ~0 with learning: erodes toward zero, no flip.
 - **Logistics**: noisy, negative at high capacity (-0.12 at 0.80, n.s.).
 => Robust headline: the command-constrained trap holds across the capacity range; other structures are weaker and capacity-dependent.
+
+## Production-scale spot check (1000 agents, 72 localities; command-constrained cap 0.30; 24 fresh seeds x 2; `analysis_prodscale.txt`)
+Capability, continued minus withdrawn, day +360: no learning -0.048 (n.s., 11/24 positive); learning 0.25 -0.090* (5/24 positive).
+- The learning-induced **harm replicates at production scale** (direction and significance of the learning arm).
+- The **sign flip does not**: at this scale the no-learning baseline is already slightly negative, not positive, so the claim
+  should be "learning by doing makes continued support harmful for weak-command partners" (harm of ~0.04 further),
+  not "support helps then flips". One cell, 24 seeds: indicative, not a full production phase map.
