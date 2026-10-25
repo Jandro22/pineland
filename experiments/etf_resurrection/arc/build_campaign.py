@@ -124,6 +124,13 @@ def main() -> None:
                 tasks.append(dict(id=len(tasks), variant=name, contract=f"contracts/{name}.json",
                                   contract_sha=digest, cell_index=i, cell_id=v["design"]["cells"][i]["cell_id"],
                                   seed=s, locality=v["locality"]))
+    # Task ids are fixed by generation order (they name the scratch directories, so
+    # finished work is recognised across resubmissions); the run order is a fixed
+    # shuffle so any partially finished campaign samples every block evenly.
+    import random
+    order = list(tasks)
+    random.Random(20261024).shuffle(order)
+    tasks = order
     with (out / "tasks.jsonl").open("w") as fh:
         for t in tasks:
             fh.write(json.dumps(t) + "\n")
