@@ -66,6 +66,7 @@ def main() -> None:
     ap.add_argument("--seed-base", type=int, default=2026700000)
     ap.add_argument("--local", action="store_true", help="4 core cells at 300-agent scale, no C/D blocks")
     ap.add_argument("--robust", action="store_true", help="with --local: only the learning-rate x reference-share robustness block")
+    ap.add_argument("--devsweep", action="store_true", help="with --local --robust: development-dose sweep instead")
     ap.add_argument("--quick", action="store_true", help="tiny local smoke campaign (2 cells, 1 seed, 300 agents)")
     a = ap.parse_args()
 
@@ -102,7 +103,9 @@ def main() -> None:
         variants[name] = dict(design=d, locality=locality)
 
     if a.local and a.robust:
-        for lr, ref in ((0.1, 0.9), (0.5, 0.9), (0.25, 0.7), (0.25, 0.8), (0.25, 0.95)):
+        for rate in ((0.0125, 0.025, 0.1, 0.2) if a.devsweep else ()):
+            add(f"G_dev{rate:g}_lr0.25", [patch(develop(c, rate), learning_rate_per_30d=0.25) for c in core])
+        for lr, ref in (() if a.devsweep else ((0.1, 0.9), (0.5, 0.9), (0.25, 0.7), (0.25, 0.8), (0.25, 0.95))):
             add(f"R_lr{lr:g}_ref{ref:g}", [patch(c, learning_rate_per_30d=lr, learning_reference_share=ref) for c in core])
         learning = []
     for lr in learning:

@@ -30,3 +30,17 @@ as a threshold in (rate, standard), with 0.25/0.9 as the central scenario.
 Single mid-capacity cell per constraint type, 300-agent scale; development dose uncalibrated;
 logistics-cell composite near floor (use army/coverage); pre-existing failing test
 `test_binding_constraint_assay` untouched.
+
+## Development-dose sweep (learning 0.25; capability, continued minus withdrawn; `analysis_devsweep.txt`)
+| dev rate /30d | balanced | command | forcegen | logistics |
+|---|---|---|---|---|
+| 0.0125 | -0.084 | -0.077* | -0.015 | -0.125 |
+| 0.025 | -0.046 | -0.038 | -0.005 | +0.115 |
+| 0.05 (earlier run) | see analysis_360 | -0.067* | | +0.28..0.35* |
+| 0.1 | +0.061 | -0.029 | -0.013 | +0.334* (army +0.63*) |
+| 0.2 | +0.142* (army +0.30*) | -0.022 | -0.013 | +0.062* |
+- The rescue is dose-dependent: too little assistance leaves the trap in place (all cells negative at 0.0125);
+  the balanced force needs the most (positive only from 0.1, significant at 0.2).
+- Logistics peaks near 0.1 and shrinks at 0.2 (the withdrawn branch catches up on its own: diminishing returns).
+- Command-constrained forces are never rescued by the development channel at any dose tested: the trap there is robust.
+- So the "remedy" claim is a dose threshold, not an arbitrary single-dose artefact; the absolute dose scale is still uncalibrated.
