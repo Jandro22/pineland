@@ -53,3 +53,12 @@ Capability, continued minus withdrawn, day +360 (seeds positive / 64):
 | learning 0.25 | **-0.103\*** (20) | **-0.108\*** (8) | -0.011 (29) | -0.028 (8) |
 The command-cell sign flip replicates on unseen seeds (+0.035 -> -0.108*, 56% -> 13% of seeds positive);
 the balanced cell flip now also significant. Coverage: logistics -0.155*, balanced -0.116*.
+
+## Local phase map across capacity levels (20 cells x 16 seeds x {no learning, 0.25}; 640 worlds; `phase_allcap_summary.csv`)
+Capability effect, day +360, learning off -> learning 0.25 (p in parentheses for learning):
+- **Command-constrained, all five capacity levels**: +0.086/+0.027/+0.114/+0.014/+0.053 -> -0.121 (p<.001), -0.121 (.001), -0.141 (<.001), -0.029 (n.s.), -0.051 (.011);
+  only ~6% of seeds positive at the three weakest capacity levels. The trap is strongest where the partner command is weakest.
+- **Balanced**: mostly mixed/null by capacity level (only 0.55 clearly negative, -0.107 n.s.): the pooled balanced effect in the one-cell runs is not capacity-robust.
+- **Force-generation**: small positive without learning (+0.04..+0.08), ~0 with learning: erodes toward zero, no flip.
+- **Logistics**: noisy, negative at high capacity (-0.12 at 0.80, n.s.).
+=> Robust headline: the command-constrained trap holds across the capacity range; other structures are weaker and capacity-dependent.

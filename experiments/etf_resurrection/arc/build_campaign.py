@@ -68,6 +68,7 @@ def main() -> None:
     ap.add_argument("--robust", action="store_true", help="with --local: only the learning-rate x reference-share robustness block")
     ap.add_argument("--devsweep", action="store_true", help="with --local --robust: development-dose sweep instead")
     ap.add_argument("--confirm", action="store_true", help="with --local --robust: A_lr0 / A_lr0.25 only (use with many seeds)")
+    ap.add_argument("--allcore", action="store_true", help="with --local: keep every capacity level of the intensity-1.0 cells")
     ap.add_argument("--quick", action="store_true", help="tiny local smoke campaign (2 cells, 1 seed, 300 agents)")
     a = ap.parse_args()
 
@@ -81,13 +82,16 @@ def main() -> None:
         base_cells, core, seeds = base_cells[4:5], core[:1], seeds[:1]
         design["environment"].update(agent_count=300, locality_count=34)
     learning = LEARNING
-    if a.local:
+    if a.local and not a.allcore:
         # One mid-capacity, design-intensity cell per structure, at local (300-agent) scale.
         core = [cand[len(cand) // 2] for cand in
                 ([c for c in core if c["factor_structure"] == st] for st in
                  ("forcegen_constrained", "command_constrained", "logistics_constrained", "balanced_capacity"))
                 if cand]
         base_cells, learning = core, [0.0, 0.25, 1.0]
+    if a.local and a.allcore:
+        base_cells = core
+    if a.local:
         design["environment"].update(agent_count=300, locality_count=34)
 
     variants: dict[str, dict] = {}
@@ -105,7 +109,7 @@ def main() -> None:
 
     if a.local and a.robust:
         for lr in ((0.0, 0.25) if a.confirm else ()):
-            add(f"A_lr{lr:g}", [patch(c, learning_rate_per_30d=lr) for c in core])
+            add(f"A_lr{lr:g}", [patch(c, learning_rate_per_30d=lr) for c in base_cells])
         for rate in ((0.0125, 0.025, 0.1, 0.2) if a.devsweep and not a.confirm else ()):
             add(f"G_dev{rate:g}_lr0.25", [patch(develop(c, rate), learning_rate_per_30d=0.25) for c in core])
         for lr, ref in (() if (a.devsweep or a.confirm) else ((0.1, 0.9), (0.5, 0.9), (0.25, 0.7), (0.25, 0.8), (0.25, 0.95))):
