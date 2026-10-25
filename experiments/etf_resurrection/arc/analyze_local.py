@@ -98,6 +98,9 @@ def main() -> None:
         table("3 exit: withdrawn branch with one channel kept 180 d, minus immediate exit (learning .25)",
               {v: (branch(df, v, h, "SUPPORT_OFF") - base).dropna()
                for v in sorted(v for v in variants if v.startswith("S_"))})
+    if any(v.startswith("R_") for v in variants):
+        table("5 robustness: continued minus withdrawn across learning rate / reference share",
+              {v: effect(df, v, h) for v in sorted(v for v in variants if v.startswith("R_"))})
     table("4 remedy: continued minus withdrawn with developmental assistance",
           {v: effect(df, v, h) for v in sorted(v for v in variants if v.startswith("G_"))})
 

@@ -1,0 +1,46 @@
+tasks loaded: 320; horizon +360 days
+cells: mean effect (* p<0.05), seeds positive / n
+
+== 1 trap: continued minus withdrawn, by learning rate
+  [capability]  
+  [army]  
+  [coverage]  
+  [gov ctrl]  
+
+== 2 duration: continued minus withdrawn, by withdrawal day
+  [capability]  
+  [army]  
+  [coverage]  
+  [gov ctrl]  
+
+== 5 robustness: continued minus withdrawn across learning rate / reference share
+  [capability]            balanced             command            forcegen           logistics
+    R_lr0.1_ref0.9               +0.091  10/16       +0.020   7/16       +0.011  10/16       -0.010   3/16
+    R_lr0.25_ref0.7              +0.047   9/16       -0.006   8/16       -0.023   5/16       -0.041   6/16
+    R_lr0.25_ref0.8              +0.040  11/16       -0.004   6/16       +0.019   9/16       -0.016   4/16
+    R_lr0.25_ref0.95             -0.176   6/16       -0.133*  2/16       +0.011   7/16       -0.031   0/16
+    R_lr0.5_ref0.9               -0.111*  2/16       -0.138*  0/16       +0.015   9/16       -0.072   0/16
+  [army]            balanced             command            forcegen           logistics
+    R_lr0.1_ref0.9               +0.042  11/16       +0.023   5/16       +0.022  10/16       +0.005   5/16
+    R_lr0.25_ref0.7              +0.100   9/16       -0.011   8/16       -0.001  11/16       +0.047   7/16
+    R_lr0.25_ref0.8              +0.058  10/16       +0.097* 10/16       +0.046  10/16       -0.038   7/16
+    R_lr0.25_ref0.95             -0.155   6/16       -0.063   5/16       +0.005   7/16       -0.024   3/16
+    R_lr0.5_ref0.9               -0.173   4/16       -0.035   6/16       +0.049   7/16       -0.124*  3/16
+  [coverage]            balanced             command            forcegen           logistics
+    R_lr0.1_ref0.9               +0.085   6/16       +0.076   6/16       +0.033   5/16       -0.042   1/16
+    R_lr0.25_ref0.7              +0.101*  5/16       +0.033   4/16       -0.114*  3/16       +0.016   5/16
+    R_lr0.25_ref0.8              +0.105   6/16       +0.119*  7/16       -0.001   3/16       +0.026   5/16
+    R_lr0.25_ref0.95             -0.217   6/16       -0.069   3/16       -0.036   3/16       -0.052   2/16
+    R_lr0.5_ref0.9               -0.203   2/16       -0.030   3/16       -0.044   2/16       -0.172   2/16
+  [gov ctrl]            balanced             command            forcegen           logistics
+    R_lr0.1_ref0.9               +0.004   9/16       +0.002  10/16       +0.004* 13/16       +0.001   7/16
+    R_lr0.25_ref0.7              +0.002  10/16       -0.002   8/16       +0.002  10/16       +0.002  11/16
+    R_lr0.25_ref0.8              +0.007* 13/16       +0.001   8/16       +0.009* 11/16       -0.000   8/16
+    R_lr0.25_ref0.95             +0.002   8/16       -0.004   7/16       +0.004  13/16       +0.002   9/16
+    R_lr0.5_ref0.9               +0.001   9/16       -0.001   7/16       +0.001   9/16       +0.001   8/16
+
+== 4 remedy: continued minus withdrawn with developmental assistance
+  [capability]  
+  [army]  
+  [coverage]  
+  [gov ctrl]  

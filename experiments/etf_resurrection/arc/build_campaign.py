@@ -65,6 +65,7 @@ def main() -> None:
     ap.add_argument("--seeds", type=int, default=64)
     ap.add_argument("--seed-base", type=int, default=2026700000)
     ap.add_argument("--local", action="store_true", help="4 core cells at 300-agent scale, no C/D blocks")
+    ap.add_argument("--robust", action="store_true", help="with --local: only the learning-rate x reference-share robustness block")
     ap.add_argument("--quick", action="store_true", help="tiny local smoke campaign (2 cells, 1 seed, 300 agents)")
     a = ap.parse_args()
 
@@ -88,6 +89,8 @@ def main() -> None:
         design["environment"].update(agent_count=300, locality_count=34)
 
     variants: dict[str, dict] = {}
+    if a.local and a.robust:
+        learning = []
 
     def add(name: str, cells: list[dict], withdrawal: float | None = None, locality: bool = False):
         d = copy.deepcopy(design)
@@ -98,9 +101,13 @@ def main() -> None:
             d["environment"]["withdrawal_time_days"] = withdrawal
         variants[name] = dict(design=d, locality=locality)
 
+    if a.local and a.robust:
+        for lr, ref in ((0.1, 0.9), (0.5, 0.9), (0.25, 0.7), (0.25, 0.8), (0.25, 0.95)):
+            add(f"R_lr{lr:g}_ref{ref:g}", [patch(c, learning_rate_per_30d=lr, learning_reference_share=ref) for c in core])
+        learning = []
     for lr in learning:
         add(f"A_lr{lr:g}", [patch(c, learning_rate_per_30d=lr) for c in base_cells])
-    for t in (90.0, 240.0, 360.0):
+    for t in (() if a.robust else (90.0, 240.0, 360.0)):
         for lr in (0.0, 0.25):
             add(f"B_T{t:g}_lr{lr:g}", [patch(c, learning_rate_per_30d=lr) for c in core], withdrawal=t)
     for ref in (() if a.local else (0.75, 0.95)):
@@ -108,17 +115,17 @@ def main() -> None:
     for k in (() if a.local else (4.0, 16.0)):
         for lr in (0.0, 0.25):
             add(f"D_dose{k:g}_lr{lr:g}", [patch(dose(c, k), learning_rate_per_30d=lr) for c in core])
-    for channel in ("logistics", "command", "force_generation"):
+    for channel in (() if a.robust else ("logistics", "command", "force_generation")):
         add(f"S_keep_{channel}", [patch(c, learning_rate_per_30d=0.25, **{f"{channel}_withdrawal_delay_days": 180.0})
                                   for c in core])
-    for lr in (0.0, 0.25):
+    for lr in (() if a.robust else (0.0, 0.25)):
         add(f"G_dev_lr{lr:g}", [patch(develop(c, 0.05), learning_rate_per_30d=lr) for c in core])
     showcase = []
     for structure in ("forcegen_constrained", "command_constrained", "logistics_constrained", "balanced_capacity"):
         cand = [c for c in core if c["factor_structure"] == structure]
         if cand:
             showcase.append(cand[len(cand) // 2])
-    for lr in (0.0, 0.25):
+    for lr in (() if a.robust else (0.0, 0.25)):
         add(f"E_map_lr{lr:g}", [patch(c, learning_rate_per_30d=lr) for c in showcase], locality=True)
 
     out = a.out
