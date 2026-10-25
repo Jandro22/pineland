@@ -4,11 +4,11 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${HERE}/../../.." && pwd)"
-DRY=0; PART=normal_q; QOS=tc_normal_base; SEEDS=64; MAXN=100; ROUNDS=3; CORES=128; WALL=01:30:00
+DRY=0; PART=normal_q; QOS=tc_normal_base; SEEDS=64; MAXN=320; ROUNDS=3; CORES=32; WALL=01:30:00
 while [[ $# -gt 0 ]]; do case "$1" in
   --dry-run) DRY=1;; --preemptable) PART=preemptable_q; QOS=tc_preemptable_base;;
   --seeds) SEEDS=$2; shift;; --max-nodes) MAXN=$2; shift;; --per-node-rounds) ROUNDS=$2; shift;;
-  --walltime) WALL=$2; shift;; *) echo "unknown $1"; exit 2;; esac; shift; done
+  --walltime) WALL=$2; shift;; --cores) CORES=$2; shift;; *) echo "unknown $1"; exit 2;; esac; shift; done
 CAMPAIGN="${ROOT}/campaigns/autonomy_trap_v1"
 SCRATCH="/scratch/${USER}/pineland/autonomy_trap_v1"
 BIN="${ROOT}/rust/target/release/examples/partner_force_autonomy_stage3"

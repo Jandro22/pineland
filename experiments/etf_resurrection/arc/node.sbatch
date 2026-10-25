@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# One array element = one whole node running a bundle of autonomy-trap tasks in parallel.
+# One array element = one multi-core allocation running a bundle of autonomy-trap tasks in parallel.
 #SBATCH --job-name=pineland-trap
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --exclusive
 #SBATCH --requeue
 #SBATCH --open-mode=append
 set -euo pipefail
@@ -14,4 +13,4 @@ export RAYON_NUM_THREADS=1 OMP_NUM_THREADS=1
 python3 "${TRAP_HERE}/run_bundle.py" \
   --campaign "${TRAP_CAMPAIGN}" --binary "${TRAP_BINARY}" --scratch "${TRAP_SCRATCH}" \
   --bundle "${SLURM_ARRAY_TASK_ID}" --bundle-size "${TRAP_BUNDLE_SIZE}" \
-  --workers "${SLURM_CPUS_ON_NODE:-$(nproc)}"
+  --workers "${SLURM_CPUS_PER_TASK:-$(nproc)}"
