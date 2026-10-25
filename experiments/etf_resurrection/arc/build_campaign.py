@@ -93,7 +93,8 @@ def main() -> None:
     if a.local and a.allcore:
         base_cells = core
     if a.local and a.prodscale:
-        core = [c for c in core if c["factor_structure"] == "command_constrained"][1:2]
+        core = [[c for c in core if c["factor_structure"] == st][1] for st in
+                ("command_constrained", "balanced_capacity", "forcegen_constrained", "logistics_constrained")]
         base_cells = core
     elif a.local:
         design["environment"].update(agent_count=300, locality_count=34)

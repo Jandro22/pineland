@@ -69,3 +69,13 @@ Capability, continued minus withdrawn, day +360: no learning -0.048 (n.s., 11/24
 - The **sign flip does not**: at this scale the no-learning baseline is already slightly negative, not positive, so the claim
   should be "learning by doing makes continued support harmful for weak-command partners" (harm of ~0.04 further),
   not "support helps then flips". One cell, 24 seeds: indicative, not a full production phase map.
+
+## Production-scale, all four structures (1000 agents, 72 localities; one cell per structure, cap index 1; 16 fresh seeds x 2; `analysis_prod4.txt`)
+Capability, continued minus withdrawn, day +360: no learning -> learning 0.25 (seeds positive /16)
+| | balanced | command | forcegen | logistics |
+|---|---|---|---|---|
+| no learning | +0.092 (7) | +0.005 (9) | +0.051 (12) | +0.023 (1) |
+| learning 0.25 | **-0.112\*** (2) | **-0.087\*** (3) | -0.078 (6) | 0.000 (0) |
+At production scale the learning arm lowers the effect in three of four structures (balanced and command significant,
+forcegen same direction); logistics is flat near zero. Together with the 24-seed command spot check (-0.090*) this supports:
+**learning by doing turns neutral-to-mildly-helpful support into harm of ~0.08-0.2 capability for balanced and command-weak partners.**

@@ -1,0 +1,42 @@
+tasks loaded: 128; horizon +360 days
+cells: mean effect (* p<0.05), seeds positive / n
+
+== 1 trap: continued minus withdrawn, by learning rate
+  [capability]            balanced             command            forcegen           logistics
+    A_lr0                        +0.092   7/16       +0.005   9/16       +0.051  12/16       +0.023   1/16
+    A_lr0.25                     -0.112*  2/16       -0.087*  3/16       -0.078   6/16       +0.000   0/16
+  [army]            balanced             command            forcegen           logistics
+    A_lr0                        +0.136  10/16       +0.083  12/16       +0.101  10/16       +0.048   8/16
+    A_lr0.25                     +0.064   8/16       +0.038   9/16       -0.042   6/16       +0.010   6/16
+  [coverage]            balanced             command            forcegen           logistics
+    A_lr0                        +0.167   9/16       +0.026   5/16       +0.054   7/16       +0.005   5/16
+    A_lr0.25                     -0.056   4/16       -0.034   5/16       -0.068   4/16       +0.031   2/16
+  [gov ctrl]            balanced             command            forcegen           logistics
+    A_lr0                        +0.001  10/16       +0.002  10/16       +0.001   8/16       +0.003* 14/16
+    A_lr0.25                     +0.002  12/16       +0.001   8/16       +0.000   8/16       +0.001  10/16
+
+== 2 duration: continued minus withdrawn, by withdrawal day
+  [capability]            balanced             command            forcegen           logistics
+    T120 lr0                     +0.092   7/16       +0.005   9/16       +0.051  12/16       +0.023   1/16
+    T120 lr0.25                  -0.112*  2/16       -0.087*  3/16       -0.078   6/16       +0.000   0/16
+  [army]            balanced             command            forcegen           logistics
+    T120 lr0                     +0.136  10/16       +0.083  12/16       +0.101  10/16       +0.048   8/16
+    T120 lr0.25                  +0.064   8/16       +0.038   9/16       -0.042   6/16       +0.010   6/16
+  [coverage]            balanced             command            forcegen           logistics
+    T120 lr0                     +0.167   9/16       +0.026   5/16       +0.054   7/16       +0.005   5/16
+    T120 lr0.25                  -0.056   4/16       -0.034   5/16       -0.068   4/16       +0.031   2/16
+  [gov ctrl]            balanced             command            forcegen           logistics
+    T120 lr0                     +0.001  10/16       +0.002  10/16       +0.001   8/16       +0.003* 14/16
+    T120 lr0.25                  +0.002  12/16       +0.001   8/16       +0.000   8/16       +0.001  10/16
+
+== 3 exit: withdrawn branch with one channel kept 180 d, minus immediate exit (learning .25)
+  [capability]  
+  [army]  
+  [coverage]  
+  [gov ctrl]  
+
+== 4 remedy: continued minus withdrawn with developmental assistance
+  [capability]  
+  [army]  
+  [coverage]  
+  [gov ctrl]  
