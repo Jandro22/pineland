@@ -44,3 +44,12 @@ logistics-cell composite near floor (use army/coverage); pre-existing failing te
 - Logistics peaks near 0.1 and shrinks at 0.2 (the withdrawn branch catches up on its own: diminishing returns).
 - Command-constrained forces are never rescued by the development channel at any dose tested: the trap there is robust.
 - So the "remedy" claim is a dose threshold, not an arbitrary single-dose artefact; the absolute dose scale is still uncalibrated.
+
+## Fresh-seed confirmation (64 new seeds per cell, 512 worlds, withdrawal day 120; `analysis_confirm64.txt`)
+Capability, continued minus withdrawn, day +360 (seeds positive / 64):
+| | balanced | command | forcegen | logistics |
+|---|---|---|---|---|
+| no learning | +0.020 (32) | +0.035 (36) | +0.033 (40) | +0.002 (8) |
+| learning 0.25 | **-0.103\*** (20) | **-0.108\*** (8) | -0.011 (29) | -0.028 (8) |
+The command-cell sign flip replicates on unseen seeds (+0.035 -> -0.108*, 56% -> 13% of seeds positive);
+the balanced cell flip now also significant. Coverage: logistics -0.155*, balanced -0.116*.
