@@ -79,3 +79,26 @@ Capability, continued minus withdrawn, day +360: no learning -> learning 0.25 (s
 At production scale the learning arm lowers the effect in three of four structures (balanced and command significant,
 forcegen same direction); logistics is flat near zero. Together with the 24-seed command spot check (-0.090*) this supports:
 **learning by doing turns neutral-to-mildly-helpful support into harm of ~0.08-0.2 capability for balanced and command-weak partners.**
+
+## PRODUCTION CAMPAIGN (ARC, 66,576 paired worlds, 1000 agents, 72 localities, 64 seeds; `analysis_production.txt`, `production_*`)
+Composite capability, continued minus withdrawn, day +360, pooled over the 140-cell design (2,240 worlds per structure x variant; * p<0.05):
+
+| learning rate (per 30 d) | balanced | command | forcegen | logistics |
+|---|---|---|---|---|
+| 0 | +0.002 | +0.019* | +0.013* | -0.006 |
+| 0.1 | -0.017* | -0.020* | +0.005 | -0.014* |
+| 0.25 | -0.072* | -0.068* | -0.019* | -0.034* |
+| 0.5 | -0.085* | -0.079* | -0.036* | -0.052* |
+| 1.0 | -0.089* | -0.050* | -0.018* | -0.040* |
+
+1. **A monotone dose-response in learning**, in all four structures: harm deepens with the learning rate and saturates around 0.5.
+   Command and force-generation constraints flip from small gains to harm. Only 10-23% of worlds show a positive effect at 0.25-0.5.
+2. **The self-reliance standard matters**: reference share 0.75 is benign (balanced +0.018, forcegen +0.019*), 0.95 is harmful in every structure (command -0.097*).
+3. **Duration**: with learning 0.25 the harm is present at every withdrawal day (T=90/120/240/360), largest at T=90 in the command cell (-0.094*); no learning gives ~0.
+4. **Dose is non-monotone under learning** (the "valley of dependency"): without learning, raising support dose 4x/16x gives +0.03..+0.11 / +0.34..+0.45 capability.
+   With learning 0.25: 4x gives -0.206 (balanced), -0.204 (command); 16x recovers to +0.056 / -0.072. Intermediate support is the worst case:
+   enough to displace the partner's own production, not enough to replace it. Learning removes 85-100% of the 16x benefit in command, forcegen, balanced.
+5. **Development assistance** (5%/30d on the binding channel): without learning +0.03..+0.19 everywhere; with learning only the logistics-constrained force is still
+   rescued (+0.082*), balanced is neutral (+0.010), command and forcegen stay negative (-0.027*, -0.015*): the remedy does not undo the trap for command-weak forces.
+6. **Staggered exit does not rescue** under learning (all S variants negative in balanced/command/logistics).
+Production scale thus confirms the local findings and, with 2,240 worlds per cell, makes the learning dose-response statistically unambiguous.
