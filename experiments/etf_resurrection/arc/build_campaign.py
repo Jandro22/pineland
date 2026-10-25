@@ -64,6 +64,7 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--seeds", type=int, default=64)
     ap.add_argument("--seed-base", type=int, default=2026700000)
+    ap.add_argument("--local", action="store_true", help="4 core cells at 300-agent scale, no C/D blocks")
     ap.add_argument("--quick", action="store_true", help="tiny local smoke campaign (2 cells, 1 seed, 300 agents)")
     a = ap.parse_args()
 
@@ -75,6 +76,15 @@ def main() -> None:
     seeds = [a.seed_base + i for i in range(a.seeds)]
     if a.quick:
         base_cells, core, seeds = base_cells[4:5], core[:1], seeds[:1]
+        design["environment"].update(agent_count=300, locality_count=34)
+    learning = LEARNING
+    if a.local:
+        # One mid-capacity, design-intensity cell per structure, at local (300-agent) scale.
+        core = [cand[len(cand) // 2] for cand in
+                ([c for c in core if c["factor_structure"] == st] for st in
+                 ("forcegen_constrained", "command_constrained", "logistics_constrained", "balanced_capacity"))
+                if cand]
+        base_cells, learning = core, [0.0, 0.25, 1.0]
         design["environment"].update(agent_count=300, locality_count=34)
 
     variants: dict[str, dict] = {}
@@ -88,14 +98,14 @@ def main() -> None:
             d["environment"]["withdrawal_time_days"] = withdrawal
         variants[name] = dict(design=d, locality=locality)
 
-    for lr in LEARNING:
+    for lr in learning:
         add(f"A_lr{lr:g}", [patch(c, learning_rate_per_30d=lr) for c in base_cells])
     for t in (90.0, 240.0, 360.0):
         for lr in (0.0, 0.25):
             add(f"B_T{t:g}_lr{lr:g}", [patch(c, learning_rate_per_30d=lr) for c in core], withdrawal=t)
-    for ref in (0.75, 0.95):
+    for ref in (() if a.local else (0.75, 0.95)):
         add(f"C_ref{ref:g}", [patch(c, learning_rate_per_30d=0.25, learning_reference_share=ref) for c in core])
-    for k in (4.0, 16.0):
+    for k in (() if a.local else (4.0, 16.0)):
         for lr in (0.0, 0.25):
             add(f"D_dose{k:g}_lr{lr:g}", [patch(dose(c, k), learning_rate_per_30d=lr) for c in core])
     for channel in ("logistics", "command", "force_generation"):
