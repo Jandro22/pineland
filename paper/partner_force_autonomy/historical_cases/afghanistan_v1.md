@@ -1,6 +1,6 @@
 # Afghanistan historical-validation memo v1
 
-Status: **PRELIMINARY CODING UNDER FROZEN PROTOCOL**
+Status: **SOURCE-AUDITED CODING UNDER FROZEN PROTOCOL**
 
 Case: Afghan National Defense and Security Forces, with primary attention to
 Afghan Air Force maintenance and the logistics dependence of conventional
@@ -150,3 +150,6 @@ portion** of the theory. It is weaker as clean evidence of bottleneck migration
 because maintenance and logistics never appear to have been autonomously solved.
 The case is especially useful for showing that high supported operational output
 can coexist with a service system that remains externally produced.
+
+Source-audit status: **retained without upgrading the migration claim**. See
+`source_audit_v1.md`.

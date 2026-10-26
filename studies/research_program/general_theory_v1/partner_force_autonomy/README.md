@@ -1,19 +1,31 @@
-# Partner-Force Autonomy — integrated Stage 4
+# Partner-Force Autonomy, frozen integrated Stage 4 and Stage 5 program
 
 > **Research question:** When does external security assistance create
 > autonomous partner capability, and when does it create performance that
 > depends on continued external support?
 
-This directory contains the completed Stage-3/Stage-4 synthetic research
-program for partner-force autonomy inside Pineland General Theory v1. The core
-design separates **supported operational performance** from **indigenous service
-production and regeneration**, then follows how the binding constraint changes
-after assistance alters the system.
+This directory contains the completed Stage-3/Stage-4/Stage-5 synthetic
+research program for partner-force autonomy inside Pineland General Theory v1.
+The core design separates **supported operational performance** from
+**indigenous service production and regeneration**, then follows how the
+binding constraint changes after assistance alters the system.
 
 ## Current status
 
-**Stage 4 is complete.** The integrated campaign produced and verified
-**2,808/2,808 production worlds**:
+**The program is scientifically frozen as of 2026-09-21.** Stage 4 produced
+and verified **2,808/2,808 production worlds**. Stage 5 subsequently completed
+**1,472/1,472 worlds** across the coordinated-development follow-up. Stage 5
+was designed after Stage-4 outcomes were known and remains a motivated
+follow-up rather than part of the original Stage-4 preregistration. Its
+fixed-effort breadth result is manipulation-limited for the intended near-tie
+allocation claim and is reported with that limitation.
+
+The final paper cycle also includes a completed **96/96-world** post-review
+demand-clamp experiment under a prospectively frozen design and a
+**32/32-world** structural terminal-constraint sidecar. The clamp successfully
+manipulated demand, but its fresh-seed normal arms reproduced no indigenous
+coverage branch gap at the registered horizons, so it does not identify
+requirement expansion as the mediator of the Stage-4 retention pattern.
 
 | Module | Cells | Seeds | Worlds | Purpose |
 |---|---:|---:|---:|---|
@@ -29,6 +41,10 @@ provenance matched with **zero integrity errors**.
 
 The final integrated READY artifact is tracked under
 [`evidence/stage4/READY_STAGE4_INTEGRATED.json`](evidence/stage4/READY_STAGE4_INTEGRATED.json).
+
+The paper-facing interpretation, claim boundaries, and reproducible submission
+package are frozen under
+[`paper/partner_force_autonomy/`](../../../../paper/partner_force_autonomy/).
 
 ## Main synthetic findings
 

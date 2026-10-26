@@ -1,0 +1,35 @@
+{
+  "schema_version": "pineland.insurgent_mobilization_risk_frontier_instrumentation_repair.v1",
+  "status": "frozen_before_repair_rerun",
+  "historical_outcomes_used": false,
+  "parent_contract": "insurgent_mobilization_risk_frontier_contract_v1.json",
+  "original_raw_output": "outputs/coin-mechanisms/mobilization_risk_frontier_24seed_v1.csv",
+  "original_raw_sha256": "87446668ec9c89d9953cba99541e63fbb422e229dfcd7435899f3aa861578b8b",
+  "integrity_observation": {
+    "rows": 288,
+    "seeds": 24,
+    "rates": 12,
+    "balanced_rows_per_rate": 24,
+    "final_inactive_cases": 78,
+    "final_active_cases": 210
+  },
+  "instrumentation_bug": {
+    "description": "The probe optimized expensive pre-collapse diagnostics by capturing them only when event.payload.kind() == 'organization'. The current scheduler's actual OrganizationEcology kind string is 'organization_ecology'. Therefore genuine active-to-inactive transitions were not intercepted, leaving collapse_time/collapse_event/collapse_cause at survivor defaults and allowing already-collapsed cases to continue to the horizon.",
+    "model_semantics_affected": false,
+    "simulation_seed_or_configuration_affected": false,
+    "frozen_scientific_inference_rules_affected": false
+  },
+  "repair_plan": {
+    "event_kind_fix": "organization -> organization_ecology",
+    "rerun_scope": "Only the 78 seed/rate pairs whose original final collapsed flag is true. Survivor collapse metadata is correctly undefined and need not be recomputed.",
+    "merge_rule": "Replace the 78 original collapsed rows wholesale with their corrected deterministic reruns; retain the 210 original survivor rows at the parsed field level.",
+    "required_checks": [
+      "Every selected repair case remains collapsed under the corrected probe.",
+      "Every corrected collapsed row has finite collapse_time, collapse_event='organization_ecology', and a non-'survived' cause.",
+      "Seed/rate support after merge remains exactly 24x12=288.",
+      "No original survivor row is modified.",
+      "The frozen Sept. 12 analyzer is applied unchanged to the repaired merged CSV."
+    ]
+  },
+  "guard": "This is an instrumentation repair, not a new hypothesis test. The original malformed raw file and hash remain preserved."
+}

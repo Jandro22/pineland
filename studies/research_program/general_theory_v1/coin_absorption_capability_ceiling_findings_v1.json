@@ -1,0 +1,43 @@
+{
+  "schema_version": "pineland.coin_absorption_capability_ceiling_findings.v1",
+  "status": "SL11_PROMOTED_PRODUCTION_EQUIVALENCE_VERIFIED",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_absorption_capability_ceiling_contract_v1.json",
+  "SL11_absorption_limited_authorized_strength_capability_ceiling": {
+    "promotion": "PROMOTED",
+    "law": {
+      "training_survival_per_interval": "a=exp(-tau*Delta)",
+      "reserve_survival_per_interval": "b=exp(-mu*Delta)",
+      "cumulative_absorbed_replacement_fraction": "r_m=min(n*b*(1-a^m), ell)",
+      "capability_recovery_path": "C_m/C_0=(1-ell+r_m)^(-0.28)*((1-ell)+r_m*q), q=(0.75+0.50*E_R)/(0.75+0.50*E)",
+      "authorized_strength_capability_ceiling": "At full headcount refill r_m=ell, C_infinity/C_0=1-ell*(1-q)<1 whenever E_R<E.",
+      "finite_refill_condition": "A one-time intake cohort can reach nominal headcount in finite time only when n*b>ell."
+    },
+    "pure_math_verification": {
+      "cases": 34992,
+      "maximum_absorption_closed_form_residual": 1.6653345369377348e-16,
+      "maximum_capability_composition_residual": 3.3306690738754696e-16,
+      "monotonicity_failures": 0,
+      "ceiling_failures": 0,
+      "refill_formula_failures": 0
+    },
+    "production_equivalence": {
+      "real_initialized_formation_target": 500.0,
+      "induced_loss_fraction": 0.25,
+      "induced_personnel_deficit": 125.0,
+      "oversized_replacement_offer": 5000.0,
+      "actual_first_deployment": 125.0,
+      "actual_second_deployment_after_target_refill": 0.0,
+      "experience_before": 0.9,
+      "experience_after": 0.7,
+      "predicted_and_observed_authorized_strength_capability_ceiling": 0.9166666666666667
+    }
+  },
+  "synthetic_implications": [
+    "Training throughput and reserve survival determine how quickly a force can refill authorized personnel, but authorized-strength capping prevents indefinite absorption into a fully refilled formation.",
+    "When replacements are less experienced than incumbents, restoring nominal headcount does not restore the original modeled combat capability.",
+    "A one-time recruit intake exactly equal to personnel losses cannot produce finite-time full headcount recovery if trained-reserve attrition is positive; intake must exceed the loss fraction after reserve survival.",
+    "Faster training can shorten the time to headcount recovery but cannot remove the veterancy-limited capability ceiling created by lower-experience replacements."
+  ],
+  "claim_boundary": "SL11 is an exact composite theorem of Pineland's synthetic training, reserve, target-strength, replacement-memory, and combat-capability equations. It is not an empirical force-generation or replacement-policy law."
+}

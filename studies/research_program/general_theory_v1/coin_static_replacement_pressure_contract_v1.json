@@ -1,0 +1,31 @@
+{
+  "schema_version": "pineland.coin_static_replacement_pressure_contract.v1",
+  "status": "preregistered_mechanism_diagnostic",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "purpose": "Test whether a ceteris-paribus reduction in rooted insurgent armed membership can raise instantaneous recruitment hazard because the eligible pool expands while fielded-force, foothold, and social-access channels remain available.",
+  "design": {
+    "seed_base": 2026183000,
+    "seeds": 16,
+    "agents": 300,
+    "localities": 34,
+    "state_time_day": 60,
+    "challenge_recruitment_multiplier": 0.0625,
+    "underground_disruption_rate": 0.0,
+    "foreign_affairs_enabled": false,
+    "armed_membership_scale": [1.0, 0.9, 0.75, 0.5, 0.25, 0.0],
+    "shock_definition": "Clone the exact day-60 state and multiply armed_fraction only for members of the canonical insurgent organization. Do not advance time and do not alter formations, foothold strength, social exposure, behavior, grievance, fear, capital, or political access."
+  },
+  "primary_outputs": [
+    "rooted armed membership mass after shock",
+    "eligible represented population mass",
+    "instantaneous canonical recruitment hazard mass",
+    "hazard ratio versus the unshocked state"
+  ],
+  "interpretation": [
+    "This is a partial-equilibrium diagnostic, not a realistic intervention.",
+    "If hazard rises as rooted membership is reduced, Pineland contains an endogenous replacement-pressure mechanism: stock removal expands recruitment eligibility faster than it removes access.",
+    "If hazard instead falls, the dynamic day-360 hazard increase in the U replication must come from evolved access, grievance, foothold, or other state changes rather than the immediate eligibility term alone."
+  ],
+  "guard": "Synthetic model mechanism only; no real-world operational claim."
+}

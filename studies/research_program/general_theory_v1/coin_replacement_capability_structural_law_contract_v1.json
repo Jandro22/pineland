@@ -1,0 +1,37 @@
+{
+  "schema_version": "pineland.coin_replacement_capability_structural_law_contract.v1",
+  "status": "preregistered_before_math_and_production_capability_tests",
+  "historical_outcomes_used": false,
+  "depends_on": [
+    "SL7 replacement-share veterancy dilution",
+    "SL8 experience capability factor",
+    "combat capability personnel exponent 0.72"
+  ],
+  "candidate_law": {
+    "id": "SL9",
+    "name": "replacement quantity-quality capability law",
+    "setup": "A formation begins with personnel P0 and experience E. It loses fraction ell, leaving p=1-ell of original personnel with survivor experience E. It then receives r*P0 replacements of experience E_R. All non-personnel/non-experience capability factors and effective-readiness fractions are held fixed.",
+    "replacement_quality_ratio": "q=(0.75+0.50*E_R)/(0.75+0.50*E)",
+    "capability_ratio": "C_after/C_before=(p+r)^(-0.28)*(p+r*q)",
+    "one_for_one_corollary": "If r=ell, headcount is fully restored but C_after/C_before=1-ell*(1-q).",
+    "full_restoration_condition": "The replacement amount r_star that restores pre-loss capability is the unique nonnegative solution of (p+r_star)^(-0.28)*(p+r_star*q)=1."
+  },
+  "analytic_predictions": [
+    "If E_R<E and ell>0, one-for-one headcount replacement leaves a strictly positive capability deficit ell*(1-q).",
+    "Because E and E_R are clamped to [0,1], q is at least 0.6. Therefore the capability ratio is strictly increasing in replacement amount r for all valid Pineland experience values.",
+    "The full-capability replacement requirement is unique and exceeds the one-for-one replacement amount whenever E_R<E.",
+    "At equal loss fraction, lower replacement experience requires more replacement personnel to restore the same capability."
+  ],
+  "stress_grid": {
+    "baseline_experience": [0.1, 0.25, 0.5, 0.75, 0.9, 1.0],
+    "replacement_experience": [0.0, 0.1, 0.25, 0.5, 0.9],
+    "loss_fraction": [0.05, 0.1, 0.25, 0.5, 0.75],
+    "replacement_fraction_of_original": [0.0, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
+  },
+  "production_equivalence_required": [
+    "For valid E_R<=E cases with positive remaining personnel, direct production capability() ratios must match the closed-form law at floating-point tolerance when all other factors are fixed.",
+    "One-for-one replacement cases must match the exact 1-ell*(1-q) corollary.",
+    "Numerical root solutions for r_star must reproduce capability ratio 1 within 1e-12 and must exceed ell whenever E_R<E."
+  ],
+  "claim_boundary": "SL9 is a conditional theorem of Pineland's synthetic replacement-memory and combat-capability equations. It does not state a real military replacement ratio."
+}

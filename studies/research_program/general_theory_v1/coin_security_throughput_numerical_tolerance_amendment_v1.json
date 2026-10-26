@@ -1,0 +1,22 @@
+{
+  "schema_version": "pineland.coin_security_throughput_numerical_tolerance_amendment.v1",
+  "status": "transparent_post_first-run_numerical_amendment",
+  "parent_contract": "coin_security_throughput_structural_law_contract_v1.json",
+  "reason": "The first pure-math pass used fixed absolute tolerances on closed-form versus iterated stock recurrences. The largest pipeline discrepancy was 6.55e-11 on large stocks, while all directional, steady-limit, and throughput-boundary checks passed and the production test passed the identical recurrence with stock-scaled tolerance. Repeated multiply/add versus exponent/geometric-series evaluation has normal floating-point cancellation at large scale.",
+  "first_run": {
+    "cases": 2240,
+    "maximum_pipeline_absolute_residual": 6.548361852765083e-11,
+    "maximum_graduation_absolute_residual": 3.410605131648481e-13,
+    "maximum_reserve_absolute_residual": 7.275957614183426e-12,
+    "monotonicity_failures": 0,
+    "steady_limit_failures": 0,
+    "throughput_boundary_failures": 0
+  },
+  "amended_rule": {
+    "pipeline_and_graduation": "residual / max(abs(iterated), abs(closed), 1) <= 2e-12",
+    "reserve": "residual / max(abs(recurrence), abs(fixed_point), 1) <= 2e-12",
+    "scientific_equations_changed": false,
+    "production_code_changed": false
+  },
+  "guard": "Only numerical acceptance scaling changes. Any structural or directional failure still blocks promotion."
+}

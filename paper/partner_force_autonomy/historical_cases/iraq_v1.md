@@ -1,6 +1,6 @@
 # Iraq historical-validation memo v1
 
-Status: **PRELIMINARY CODING UNDER FROZEN PROTOCOL**
+Status: **SOURCE-AUDITED CODING UNDER FROZEN PROTOCOL**
 
 Case: Iraqi Security Forces, with primary attention to the rapid generation of
 trained and equipped forces and the slower development of logistics and
@@ -144,3 +144,6 @@ trained, and equipped force with lagging logistics and sustainment institutions.
 The case is most useful if the manuscript limits the claim to that production
 sequence rather than attempting to explain the total effectiveness of the Iraqi
 military or the 2014 collapse with one mechanism.
+
+Source-audit status: **retained as the strongest migration analogue with explicit
+political and organizational confounding**. See `source_audit_v1.md`.

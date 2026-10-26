@@ -1,0 +1,42 @@
+{
+  "schema_version": "pineland.coin_replacement_flow_decomposition_contract.v1",
+  "status": "registered_post-outcome_mechanistic_decomposition",
+  "registered_before_new_flow_measurements": true,
+  "historical_outcomes_used": false,
+  "parent_result": "coin_underground_durability_replication_findings_v1.json",
+  "purpose": "Explain the replicated combination of lower rooted armed membership with higher recruitment hazard and foothold strength by measuring actual recruited population flow and the recruitment-state terms that were not present in the original replication output.",
+  "design": {
+    "reuse_seed_block": "2026182000-2026182015",
+    "reason_for_reuse": "This is a mechanistic decomposition of already-known replication outcomes, not an independent confirmation.",
+    "cells": ["000", "001"],
+    "same_simulation_configuration_as_parent": true,
+    "no_model_semantic_changes": true,
+    "new_measurements_only": [
+      "cumulative_recruitment_mass_since_anchor",
+      "eligible_recruitment_mass",
+      "mean_social_exposure_to_canonical",
+      "mean_grievance",
+      "mean_fear",
+      "mean_political_access",
+      "canonical_insurgent_social_capital"
+    ]
+  },
+  "primary_decomposition": [
+    "Treatment-minus-baseline cumulative recruited mass at day 240.",
+    "Treatment-minus-baseline recruited mass accumulated from day 240 to day 360.",
+    "Excess recruited mass through day 240 divided by direct underground disruption mass through day 240.",
+    "Treatment-minus-baseline eligible recruitment mass and recruitment hazard at day 240 and day 360."
+  ],
+  "secondary_decomposition": [
+    "Treatment-minus-baseline social exposure, grievance, fear, political access, foothold strength, and insurgent social capital at day 240 and day 360.",
+    "Compare the five known day-360 rebound seeds against the eleven suppressed seeds descriptively.",
+    "Correlate excess recruitment-flow ratios with day-360 rooted-membership effects as exploratory diagnostics only."
+  ],
+  "interpretation_rules": [
+    "Because endpoint outcomes on this seed block are already known, no relationship discovered here is confirmatory.",
+    "If U produces positive excess recruited mass, that directly supports compensatory replacement flow rather than merely a higher instantaneous hazard.",
+    "If rebound seeds have greater post-intervention excess recruitment than suppressed seeds, promote that predictor only through a future fresh-seed contract.",
+    "Do not attribute the effect to disrupted_sympathy_retention; that parameter has a separately documented semantic mismatch and is unchanged here."
+  ],
+  "guard": "Synthetic Pineland mechanism decomposition only."
+}

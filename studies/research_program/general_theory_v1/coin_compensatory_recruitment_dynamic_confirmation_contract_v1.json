@@ -1,0 +1,58 @@
+{
+  "schema_version": "pineland.coin_compensatory_recruitment_dynamic_confirmation_contract.v1",
+  "status": "preregistered_fresh_seed_dynamic_confirmation",
+  "registered_before_fresh_outcomes": true,
+  "historical_outcomes_used": false,
+  "development_sources": [
+    "coin_underground_durability_replication_findings_v1.json",
+    "coin_replacement_flow_decomposition_findings_v1.json",
+    "coin_recruitment_access_redundancy_results_v1.json",
+    "coin_compensatory_recruitment_identity_v1.json"
+  ],
+  "purpose": "Confirm on fresh worlds that temporary underground disruption can create a persistent rooted-stock deficit while increasing replacement pressure, and that realized post-intervention replacement flow predicts rebound.",
+  "design": {
+    "seed_base": 2026185000,
+    "seeds": 24,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 240,
+    "final_day": 360,
+    "challenge_recruitment_multiplier": 0.0625,
+    "cells": ["000", "001"],
+    "cell_profile": "u_only",
+    "common_random_number_anchor_clones": true,
+    "baseline_underground_disruption_rate": 0.0,
+    "treatment_underground_disruption_rate": 0.002,
+    "post_intervention": "Both branches use underground disruption rate zero from day 240 through day 360.",
+    "model_semantics": "Current implemented semantics are frozen; the documented disrupted_sympathy_retention mismatch is not corrected inside this evidence stream."
+  },
+  "primary_predictions": [
+    "Mean treatment-minus-baseline rooted armed membership is negative at day 240.",
+    "Mean treatment-minus-baseline rooted armed membership remains negative at day 360.",
+    "Mean treatment-minus-baseline recruitment hazard is positive at day 360.",
+    "Mean treatment-minus-baseline eligible recruitment mass is positive at day 360.",
+    "The Pearson correlation across paired worlds between post-intervention excess recruited mass (day 240 to day 360) and day-360 rooted-membership effect exceeds +0.50.",
+    "The day-360 rebound fraction is higher among worlds with positive post-intervention excess recruited mass than among worlds with nonpositive post-intervention excess recruited mass."
+  ],
+  "secondary_predictions": [
+    "Mean treatment-minus-baseline foothold strength is positive at day 360.",
+    "The sign of the mean fielded-force effect is not preregistered; it is reported descriptively because the earlier lagged-force claim failed replication.",
+    "Treatment-minus-baseline recruitment hazard and eligible recruitment mass are reported at both day 240 and day 360."
+  ],
+  "rebound_definition": "Treatment day-360 rooted armed membership exceeds paired baseline day-360 rooted armed membership.",
+  "replacement_flow_definition": "Treatment cumulative recruited represented population minus paired baseline cumulative recruited represented population over the same interval.",
+  "integrity_gate": [
+    "Exactly 24 seeds x 2 cells x 3 timepoints must occur once each.",
+    "Every within-seed day-60 scientific output must be identical across 000 and 001.",
+    "The factor flags must match cell codes.",
+    "All 38 legacy outcome columns must remain measurement-compatible with the existing runner semantics."
+  ],
+  "interpretation_rules": [
+    "Passing the stock and pressure predictions supports a dynamic stock-pressure divergence in the implemented model.",
+    "Passing the flow-correlation and rebound-risk predictions supports compensatory recruitment as a discriminator of rebound versus durable suppression.",
+    "Failure of either flow prediction means the 16-seed post-outcome decomposition did not generalize and must be demoted.",
+    "No operational or historical claim follows from this synthetic confirmation."
+  ],
+  "guard": "Synthetic Pineland mechanism confirmation only."
+}

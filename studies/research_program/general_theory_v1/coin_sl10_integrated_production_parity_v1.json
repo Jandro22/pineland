@@ -1,0 +1,30 @@
+{
+  "schema_version": "pineland.coin_sl10_integrated_production_parity.v1",
+  "status": "BYTE_EXACT_CROSS_TREE_PARITY",
+  "historical_outcomes_used": false,
+  "baseline_commit": "a6c5afb",
+  "design": {
+    "runner": "insurgent_mobilization_metabolic_ceiling",
+    "profile": "confirm_low",
+    "seeds": 2,
+    "seed_base": 2026192800,
+    "agents": 120,
+    "localities": 17,
+    "horizon_days": 90,
+    "rates": [0.0, 0.03125, 0.0625, 0.125, 0.25],
+    "complete_worlds": 10,
+    "worker_threads": 4
+  },
+  "comparison": {
+    "baseline_tree": "detached clean worktree at a6c5afb",
+    "refactored_tree": "coin-mechanisms-v1 with SL10 training/reserve helpers",
+    "baseline_sha256": "e67b49850e4356d7975ab9438720c86c9605b55738d95f2923dcb40bfed5a21f",
+    "refactored_sha256": "e67b49850e4356d7975ab9438720c86c9605b55738d95f2923dcb40bfed5a21f",
+    "byte_equal": true,
+    "dataframe_exact": true,
+    "shape": [10, 23],
+    "maximum_numeric_absolute_residual": 0.0
+  },
+  "interpretation": "Factoring training graduation and reserve attrition into SL10 helpers changes no integrated simulation semantics on the matched-seed support.",
+  "guard": "Synthetic implementation-parity evidence only."
+}

@@ -1,0 +1,18 @@
+{
+  "status": "POST_COMPLETION_REVIEW_DRIVEN_DESCRIPTIVE_ANALYSIS",
+  "treated_worlds": 1440,
+  "h30_effective_worlds": 1064,
+  "negative_coverage_worlds": 1189,
+  "negative_coverage_same_terminal_bottleneck_worlds": 1174,
+  "same_terminal_bottleneck": {
+    "logistics": 1174
+  },
+  "lower_indigenous_service_fraction": 0.19846678023850084,
+  "higher_demand_fraction": 0.959114139693356,
+  "both_lower_I_and_higher_D_fraction": 0.1575809199318569,
+  "mean_delta_I": -3138.330293165299,
+  "mean_delta_D": 1497.2603445135844,
+  "mean_delta_log_I": -0.07333817675798945,
+  "mean_delta_log_D": 0.08195976795925565,
+  "mean_delta_log_coverage_decomposition": -0.15529794471724512
+}

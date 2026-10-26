@@ -1,0 +1,44 @@
+{
+  "schema_version": "pineland.coin_replacement_capability_structural_law_findings.v1",
+  "status": "SL9_PROMOTED_PRODUCTION_CAPABILITY_EQUIVALENCE_VERIFIED",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_replacement_capability_structural_law_contract_v1.json",
+  "SL9_replacement_quantity_quality_capability": {
+    "promotion": "PROMOTED",
+    "law": "With p=1-ell, replacement fraction r, q=(0.75+0.50*E_R)/(0.75+0.50*E), and all other capability factors fixed, C_after/C_before=(p+r)^(-0.28)*(p+r*q).",
+    "one_for_one_corollary": "If r=ell, headcount is restored exactly but C_after/C_before=1-ell*(1-q). If E_R<E and ell>0, capability remains below its pre-loss level.",
+    "full_restoration": "The full-capability replacement fraction r_star is the unique nonnegative solution of (p+r_star)^(-0.28)*(p+r_star*q)=1. For E_R<E, r_star>ell.",
+    "pure_math_verification": {
+      "cases": 1035,
+      "maximum_closed_form_identity_residual": 6.661338147750939e-16,
+      "maximum_one_for_one_corollary_residual": 1.1102230246251565e-16,
+      "maximum_full_restoration_root_residual": 2.220446049250313e-16,
+      "monotonicity_failures": 0,
+      "root_order_failures": 0
+    },
+    "production_capability_verification": {
+      "cases": 1035,
+      "maximum_capability_ratio_residual": 8.881784197001252e-16,
+      "maximum_one_for_one_residual": 2.220446049250313e-16,
+      "tested_against": "production combat::capability() on an initialized military formation with all non-personnel/non-experience factors frozen"
+    }
+  },
+  "default_synthetic_example_E_0_9_E_R_0_1": {
+    "replacement_quality_ratio_q": 0.6666666666666667,
+    "loss_10_percent": {
+      "one_for_one_capability_ratio": 0.9666666666666667,
+      "full_capability_replacement_fraction_of_original": 0.18443353860724043,
+      "replacements_per_loss_for_full_capability": 1.8443353860724043,
+      "uncapped_exchange_ratio_multiplier_after_one_for_one_replacement": 0.9699493779682662
+    },
+    "loss_25_percent": {
+      "one_for_one_capability_ratio": 0.9166666666666667,
+      "full_capability_replacement_fraction_of_original": 0.4556355864470957,
+      "replacements_per_loss_for_full_capability": 1.8225423457883827,
+      "uncapped_exchange_ratio_multiplier_after_one_for_one_replacement": 0.9246775107445347
+    },
+    "interpretation": "With Pineland's default synthetic experience values, restoring veteran losses one-for-one restores nominal headcount but not modeled combat capability. More than one low-experience replacement per veteran loss is required to restore the pre-loss capability component."
+  },
+  "SL8_corollary": "Under the uncapped matched-contact conditions of SL8, any SL9 capability ratio m maps to own-loss multiplier m^-0.45, opponent-loss multiplier m^0.45, and exchange-ratio multiplier m^0.90.",
+  "claim_boundary": "SL9 is an exact conditional theorem of Pineland's synthetic personnel, replacement-memory, and combat-capability equations. The numerical replacement ratios are not empirical military estimates."
+}

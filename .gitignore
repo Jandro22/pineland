@@ -11,6 +11,7 @@ __pycache__/
 htmlcov/
 .venv/
 .docx-render/
+/paper/partner_force_autonomy/scratch/
 build/
 dist/
 

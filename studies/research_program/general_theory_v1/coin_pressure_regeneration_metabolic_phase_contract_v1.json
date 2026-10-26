@@ -1,0 +1,61 @@
+{
+  "schema_version": "pineland.coin_pressure_regeneration_metabolic_phase_contract.v1",
+  "status": "preregistered_fresh_phase_map_not_yet_run",
+  "registered_before_phase_map_outcomes": true,
+  "historical_outcomes_used": false,
+  "purpose": "Map the interaction between temporary underground disruption, insurgent regenerative rate, and capital exhaustion from a common live-insurgency anchor. Test whether pressure produces a double bind in which weak regeneration cannot replace underground losses while aggressive regeneration preserves stock at the cost of capital runway.",
+  "theory_basis": [
+    "Fresh static assays show that partial underground thinning raises recruitment pressure when any one of several access channels survives.",
+    "Source accounting implies an unconstrained marginal equipment cost of 1.92 insurgent capital units per recruited represented person.",
+    "Prior independent mobilization confirmation established a high-recruitment metabolic ceiling: multiplier 0.25 collapsed 16/16 worlds from capital exhaustion, while 0.125 collapsed 4/16.",
+    "The current dynamic-confirmation run is independent of this phase-map contract; this phase map uses a new seed block."
+  ],
+  "design": {
+    "seed_base": 2026186000,
+    "seeds": 12,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 240,
+    "final_day": 360,
+    "common_anchor_recruitment_multiplier": 0.0625,
+    "post_anchor_recruitment_multipliers": [0.03125, 0.0625, 0.125],
+    "underground_disruption": [false, true],
+    "cells_per_seed": 6,
+    "common_random_number_anchor_clones": true,
+    "post_anchor_recruitment_rate_persists_through_day360": true,
+    "underground_disruption_active_only_day60_to_day240": true,
+    "foreign_affairs_enabled": false,
+    "model_semantics": "Current implemented semantics remain frozen, including the documented disrupted_sympathy_retention mismatch."
+  },
+  "primary_phase_outputs": [
+    "rooted armed membership at day240 and day360",
+    "fielded force at day240 and day360",
+    "canonical insurgent capital at day240 and day360",
+    "cumulative recruited represented population since anchor",
+    "cumulative underground disruption",
+    "recruitment hazard",
+    "eligible recruitment mass",
+    "foothold strength",
+    "canonical insurgent active status"
+  ],
+  "predeclared_contrasts": [
+    "Within each recruitment multiplier, U-on minus U-off effects on rooted membership, capital, cumulative recruitment, recruitment hazard, footholds, and fielded force.",
+    "Within U-off and U-on separately, compare the three recruitment multipliers on final rooted membership, final capital, and cumulative recruitment.",
+    "Estimate the paired capital cost per excess recruited represented person wherever excess recruitment is nonzero.",
+    "Report canonical collapse/zero-capital fractions by cell without selecting a best strategy."
+  ],
+  "directional_predictions": [
+    "Cumulative recruited represented population increases with post-anchor recruitment multiplier in the U-off cells.",
+    "The U-on rooted-membership effect at day240 is negative at all three tested recruitment multipliers.",
+    "The magnitude of the day240 rooted-membership deficit under U is larger at recruitment multiplier 0.03125 than at 0.0625 because replacement capacity is lower.",
+    "Where U induces positive excess recruitment, its paired capital effect is negative and approximately tracks the source-derived 1.92-unit marginal equipment cost until capital constraints bind."
+  ],
+  "exploratory_phase_questions": [
+    "Does 0.125 recruitment absorb more underground loss but incur enough capital depletion to increase collapse risk?",
+    "Is there a middle regenerative band that best preserves both rooted stock and capital runway under pressure?",
+    "Does disruption move worlds toward the previously confirmed metabolic ceiling by inducing extra replacement flow?"
+  ],
+  "stop_rule": "Do not add more recruitment-rate cells to this seed block after outcomes. If the transition lies outside the frozen grid, expand on new seeds under a new contract.",
+  "guard": "Synthetic mechanism phase map only; no real-world policy ranking or operational recommendation."
+}

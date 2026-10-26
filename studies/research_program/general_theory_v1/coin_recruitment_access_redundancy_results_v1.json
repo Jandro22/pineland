@@ -1,0 +1,91 @@
+{
+  "schema_version": "pineland.coin_recruitment_access_redundancy_results.v1",
+  "status": "fresh_static_mechanism_assay",
+  "historical_outcomes_used": false,
+  "seed_count": 16,
+  "summary": [
+    {
+      "access_regime": "all",
+      "n": 16,
+      "mean_baseline_hazard": 40.14835936734241,
+      "mean_thinned_hazard": 40.65236935040823,
+      "mean_hazard_ratio": 1.0128914343865831,
+      "median_hazard_ratio": 1.011922552328186,
+      "hazard_ratio_above_one": 16,
+      "hazard_ratio_equal_one": 0,
+      "min_ratio": 1.010320951044871,
+      "max_ratio": 1.018610308690677
+    },
+    {
+      "access_regime": "social_only",
+      "n": 16,
+      "mean_baseline_hazard": 10.708228037596722,
+      "mean_thinned_hazard": 10.749385415988597,
+      "mean_hazard_ratio": 1.0038020038211155,
+      "median_hazard_ratio": 1.0035807531210206,
+      "hazard_ratio_above_one": 16,
+      "hazard_ratio_equal_one": 0,
+      "min_ratio": 1.000090157315486,
+      "max_ratio": 1.0106171759125508
+    },
+    {
+      "access_regime": "formation_only",
+      "n": 16,
+      "mean_baseline_hazard": 16.749270072427386,
+      "mean_thinned_hazard": 16.980634985730294,
+      "mean_hazard_ratio": 1.0147991485330303,
+      "median_hazard_ratio": 1.0164465473083961,
+      "hazard_ratio_above_one": 16,
+      "hazard_ratio_equal_one": 0,
+      "min_ratio": 1.005535384499799,
+      "max_ratio": 1.0246973679068527
+    },
+    {
+      "access_regime": "foothold_only",
+      "n": 16,
+      "mean_baseline_hazard": 26.726698159618675,
+      "mean_thinned_hazard": 27.113666142183614,
+      "mean_hazard_ratio": 1.0150310618618026,
+      "median_hazard_ratio": 1.0137703502649114,
+      "hazard_ratio_above_one": 16,
+      "hazard_ratio_equal_one": 0,
+      "min_ratio": 1.0097648557199463,
+      "max_ratio": 1.0253722253973587
+    },
+    {
+      "access_regime": "member_only",
+      "n": 16,
+      "mean_baseline_hazard": 24.599934878840504,
+      "mean_thinned_hazard": 25.082412951263297,
+      "mean_hazard_ratio": 1.0207716384528596,
+      "median_hazard_ratio": 1.020324608245764,
+      "hazard_ratio_above_one": 16,
+      "hazard_ratio_equal_one": 0,
+      "min_ratio": 1.0140196428636252,
+      "max_ratio": 1.0348904245341086
+    },
+    {
+      "access_regime": "none",
+      "n": 16,
+      "mean_baseline_hazard": 0.0,
+      "mean_thinned_hazard": 0.0,
+      "mean_hazard_ratio": 1.0,
+      "median_hazard_ratio": 1.0,
+      "hazard_ratio_above_one": 0,
+      "hazard_ratio_equal_one": 16,
+      "min_ratio": 1.0,
+      "max_ratio": 1.0
+    }
+  ],
+  "prediction_results": {
+    "all_compensatory_mean_gt1": true,
+    "all_compensatory_at_least_14_of_16": true,
+    "none_approximately_zero": true,
+    "multiple_single_channels_compensatory": true
+  },
+  "all_predictions_passed": true,
+  "interpretation": [
+    "Compensatory recruitment survives under multiple isolated access channels, so the mechanism is access-redundant rather than uniquely dependent on one access pathway.",
+    "This is a static partial-equilibrium result; dynamic combined-access denial requires a separate fresh-seed experiment."
+  ]
+}

@@ -12,10 +12,19 @@ studies/research_program/general_theory_v1/partner_force_autonomy_exclusion_mani
 studies/research_program/general_theory_v1/partner_force_complexity_levers_audit_v1.json text eol=lf
 rust/pineland-model/examples/partner_force_autonomy_stage3.rs text eol=lf
 
+# The paper submission package is regenerated and checksummed. Keep all
+# text sources byte-stable across Windows/Linux checkouts; binary extensions
+# below remain binary.
+paper/partner_force_autonomy/** text eol=lf
+
 # Generated/binary research artifacts must never be newline-normalized or
 # presented as text diffs. This also prevents core.autocrlf from corrupting
 # byte-stable PDFs and columnar data on Windows checkouts.
 *.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.docx binary
 *.parquet binary
 *.zip binary
 *.pstats binary

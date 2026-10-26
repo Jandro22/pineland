@@ -1,0 +1,53 @@
+{
+  "schema_version": "pineland.coin_structural_laws_findings.v4",
+  "status": "TEN_IMPLEMENTED_MECHANISM_LAWS_PROMOTED",
+  "historical_outcomes_used": false,
+  "supersedes": "coin_structural_laws_findings_v3.json",
+  "promotion_result": {
+    "SL1_local_underground_exponential_survival": "PROMOTED",
+    "SL2_underground_fielded_force_separation": "PROMOTED",
+    "SL3_recruitment_hazard_factorization": "PROMOTED",
+    "SL4_fighter_equipment_capital_conversion": "PROMOTED",
+    "SL5_finite_subcohort_recruitment_sampling": "PROMOTED",
+    "SL6_conditional_organization_collapse_hazard": "PROMOTED",
+    "SL7_replacement_share_veterancy_dilution": "PROMOTED",
+    "SL8_experience_to_exchange_elasticity": "PROMOTED",
+    "SL9_replacement_quantity_quality_capability": "PROMOTED",
+    "SL10_state_security_absorption_pipeline": "PROMOTED"
+  },
+  "evidence_files": {
+    "SL1_to_SL4": "coin_structural_laws_findings_v1.json",
+    "SL5_to_SL6": "coin_stochastic_laws_findings_v1.json",
+    "SL7": "coin_human_capital_structural_law_findings_v1.json",
+    "SL8": "coin_veterancy_exchange_structural_law_findings_v1.json",
+    "SL9": "coin_replacement_capability_structural_law_findings_v1.json",
+    "SL10": "coin_security_absorption_pipeline_findings_v1.json"
+  },
+  "structural_theory": {
+    "insurgent_pressure_regeneration": [
+      "Underground disruption obeys exact exponential stock decay while remaining instantaneously separated from fielded force.",
+      "Recruitment hazard factors exactly into configured rate, eligible stock, and mean mobilization/access intensity.",
+      "Recruitment realization is finite-subcohort stochastic sampling.",
+      "Fighter regeneration generates an exact supply-capital burden and high mobilization produces a replicated leverage/ruin frontier."
+    ],
+    "state_absorption_and_human_capital": [
+      "State security recruits pass through an exact exponential training pipeline and trained reserve before deployment.",
+      "Lower-experience replacements dilute unit veterancy by exact weighted memory.",
+      "One-for-one headcount replacement does not restore modeled capability after veteran losses when replacements are less experienced.",
+      "Experience-induced capability changes map to uncapped combat exchange through exact elasticities."
+    ],
+    "organizational_stochasticity": [
+      "Conditional recruitment and organization-collapse distributions are exactly specified, explaining why exact local mechanisms can still yield stochastic world-level branches."
+    ],
+    "emergent_phase_result": "The fresh 24-seed mobilization frontier supports a probabilistic leverage/ruin regime rather than a universal deterministic threshold."
+  },
+  "verification": {
+    "pineland_model_unit_tests_with_SL10": "31/31 passed",
+    "structural_law_tests_with_SL10": "14/14 registered structural-law tests",
+    "SL10_math_cases": 4800,
+    "SL10_inline_helper_equivalence_cases": 4800,
+    "SL10_integrated_parity_worlds": 10,
+    "SL10_integrated_parity_maximum_numeric_residual": 0.0
+  },
+  "claim_boundary": "All ten laws are mathematical/stochastic laws of implemented Pineland mechanisms. Their coefficients, timescales, and synthetic phase boundaries are not empirical laws of real conflict."
+}

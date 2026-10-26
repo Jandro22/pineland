@@ -1,0 +1,93 @@
+{
+  "schema_version": "pineland.coin_rootedness_feedback_fresh_confirmation_contract.v1",
+  "status": "preregistered_before_fresh_seed_outcomes",
+  "historical_outcomes_used": false,
+  "development_seed_support_excluded": "2026186000-2026186011",
+  "fresh_seed_block": "2026191000-2026191023",
+  "purpose": "Independently test the rate-conditioned regenerative-throttling effect and then test whether the spatial rootedness-congruence term explains the high-rate recruitment deficit.",
+  "design": {
+    "seeds": 24,
+    "agents": 300,
+    "localities": 34,
+    "anchor_day": 60,
+    "intervention_end_day": 240,
+    "final_day": 360,
+    "anchor_recruitment_multiplier": 0.0625,
+    "post_anchor_recruitment_multipliers": [0.03125, 0.125],
+    "underground_disruption": [false, true],
+    "foreign_affairs_enabled": false,
+    "state_regeneration_enabled": true,
+    "model_semantics_changed": false
+  },
+  "frozen_state_rootedness_ablation": {
+    "definition": "At each stored state, recompute recruitment hazard with local_rootedness_weight set to zero while leaving the particle state and every other parameter unchanged.",
+    "causal_scope": "This isolates the instantaneous contribution of the rootedness term to recruitment hazard at a fixed state; it is not a dynamic intervention."
+  },
+  "primary_rate_interaction_predictions": [
+    {
+      "id": "R1",
+      "prediction": "Mean day240 treatment-minus-control rooted-membership effect is negative at both recruitment rates.",
+      "pass_gate": "Both normal 95% upper bounds are below zero."
+    },
+    {
+      "id": "R2",
+      "prediction": "Mean day240 treatment-minus-control eligible-recruitment-mass effect is positive at both recruitment rates.",
+      "pass_gate": "Both normal 95% lower bounds are above zero."
+    },
+    {
+      "id": "R3",
+      "prediction": "The day240 treatment-minus-control cumulative-recruitment effect is lower at 0.125 than at 0.03125.",
+      "pass_gate": "The paired high-minus-low normal 95% upper bound is below zero."
+    },
+    {
+      "id": "R4",
+      "prediction": "The day360 treatment-minus-control cumulative-recruitment effect is lower at 0.125 than at 0.03125.",
+      "pass_gate": "The paired high-minus-low normal 95% upper bound is below zero."
+    },
+    {
+      "id": "R5",
+      "prediction": "The day360 rooted-stock deficit is larger at 0.125 than at 0.03125.",
+      "pass_gate": "The paired high-minus-low normal 95% upper bound is below zero."
+    },
+    {
+      "id": "R6",
+      "prediction": "The day360 capital effect is more positive at 0.125 than at 0.03125 because fewer realized recruits consume less equipment capital.",
+      "pass_gate": "The paired high-minus-low normal 95% lower bound is above zero."
+    }
+  ],
+  "rootedness_mechanism_predictions": [
+    {
+      "id": "M1",
+      "prediction": "At day240, the high-rate treatment-minus-control rootedness-congruence logit contribution is negative.",
+      "definition": "0.75 * (mean_local_congruence_treatment - mean_local_congruence_control)",
+      "pass_gate": "Normal 95% upper bound below zero."
+    },
+    {
+      "id": "M2",
+      "prediction": "At day240, removing the rootedness term from the frozen-state hazard makes the high-rate treatment/control log-hazard contrast less negative.",
+      "definition": "rootedness_log_hazard_contribution = log(H1_native/H0_native) - log(H1_no_root/H0_no_root)",
+      "pass_gate": "Normal 95% upper bound of rootedness_log_hazard_contribution below zero."
+    },
+    {
+      "id": "M3",
+      "prediction": "The rootedness hazard contribution is more negative at the high rate than at the low rate.",
+      "pass_gate": "Paired high-minus-low normal 95% upper bound below zero."
+    },
+    {
+      "id": "M4",
+      "prediction": "The high-rate rootedness logit contribution is larger in absolute mean magnitude than the compatibility contribution.",
+      "pass_gate": "abs(mean rootedness contribution) > 5 * abs(mean compatibility contribution)."
+    }
+  ],
+  "capital_replication": {
+    "prediction": "Across paired cells, treatment-minus-control cumulative recruitment and capital effects remain strongly negatively associated.",
+    "pass_gate": "Pearson r <= -0.95 at day360 across the 48 rate-by-seed paired effects."
+  },
+  "promotion_rule": {
+    "rate_conditioned_throttling_confirmed_if": ["R1", "R2", "R3", "R4", "R5", "R6"],
+    "rootedness_feedback_confirmed_if": ["R1", "R2", "R3", "R4", "M1", "M2", "M3", "M4"],
+    "if_rate_interaction_passes_but_rootedness_fails": "Retain rate-conditioned regenerative throttling and reject or narrow the rootedness explanation.",
+    "if_rate_interaction_fails": "Do not promote regenerative throttling; preserve the development result as non-replicated."
+  },
+  "guard": "Synthetic Pineland mechanism confirmation only; no empirical irregular-warfare claim is licensed by this test."
+}

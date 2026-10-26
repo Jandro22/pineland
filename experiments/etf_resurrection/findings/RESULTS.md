@@ -1,3 +1,21 @@
+# Autonomy-trap findings
+
+**Headline.** If a partner force's capacity grows when it serves itself and fades
+when outsiders serve for it (an *assumption* of the experiment), continued support
+turns from neutral-to-mildly-helpful into harmful. The harm deepens with the
+learning rate, is worst at intermediate support doses, and is reversed only by
+very large support or by building the partner's own binding capacity. The
+production campaign (66,576 paired worlds) is the primary evidence; the earlier
+sections below are the local, smaller-scale runs that motivated and replicated it.
+
+**Read this first:** the production campaign section near the end of this file.
+Figures: `learning_response.png`, `dose_valley.png`, `mechanism_displacement.png`,
+`production_phase_capability_360.png`. Limits: the learning rate is bounded, not
+measured; the reference share and development dose are uncalibrated; the capability
+index is constructed; nothing is validated against a real case.
+
+---
+
 # Autonomy-trap results (local campaigns, 300 agents, 34 localities, 16 seeds, day +360)
 
 Effect = continued support minus withdrawn, paired by seed (Wilcoxon). Raw tables: `analysis_*.txt`, `branch_outcomes*.csv`.
@@ -28,8 +46,7 @@ as a threshold in (rate, standard), with 0.25/0.9 as the central scenario.
 
 ## Limits
 Single mid-capacity cell per constraint type, 300-agent scale; development dose uncalibrated;
-logistics-cell composite near floor (use army/coverage); pre-existing failing test
-`test_binding_constraint_assay` untouched.
+logistics-cell composite near floor (use army/coverage).
 
 ## Development-dose sweep (learning 0.25; capability, continued minus withdrawn; `analysis_devsweep.txt`)
 | dev rate /30d | balanced | command | forcegen | logistics |

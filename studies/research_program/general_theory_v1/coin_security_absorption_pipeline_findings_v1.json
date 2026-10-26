@@ -1,0 +1,51 @@
+{
+  "schema_version": "pineland.coin_security_absorption_pipeline_findings.v1",
+  "status": "SL10_PROMOTED_PRODUCTION_EQUIVALENCE_VERIFIED",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_security_absorption_pipeline_contract_v1.json",
+  "numerical_amendment": "coin_security_absorption_pipeline_numerical_tolerance_amendment_v1.json",
+  "SL10_state_security_absorption_pipeline": {
+    "promotion": "PROMOTED",
+    "law": {
+      "graduation": "D=(G0+N)*(1-exp(-tau*dt))",
+      "pipeline_after": "G1=(G0+N)*exp(-tau*dt)",
+      "reserve_before_deployment": "R_star=(R0+D)*exp(-mu*dt)",
+      "reserve_after_deployment": "R1=R_star-Y"
+    },
+    "pure_math_verification": {
+      "cases": 4800,
+      "maximum_pipeline_balance_residual": 0.0,
+      "maximum_closed_form_pipeline_stock_scaled_residual": 1.8009796074711451e-16,
+      "maximum_training_semigroup_stock_scaled_residual": 1.8189894035458566e-16,
+      "monotonicity_failures": 0
+    },
+    "production_equivalence": {
+      "inline_vs_helper_cases": 4800,
+      "arithmetic_equivalence": "bitwise exact",
+      "isolated_update_pipeline_before": 100.0,
+      "isolated_update_pipeline_after": 85.59395234122653,
+      "isolated_update_graduated": 14.40604765877348,
+      "isolated_update_reserve_before": 10.0,
+      "isolated_update_reserve_after": 21.21759852569047
+    },
+    "integrated_parity": {
+      "evidence": "coin_sl10_integrated_production_parity_v1.json",
+      "baseline_commit": "a6c5afb",
+      "complete_worlds": 10,
+      "horizon_days": 90,
+      "byte_equal": true,
+      "maximum_numeric_absolute_residual": 0.0,
+      "sha256": "e67b49850e4356d7975ab9438720c86c9605b55738d95f2923dcb40bfed5a21f"
+    }
+  },
+  "default_synthetic_timescale": {
+    "security_training_rate_per_day": 0.011111111111111112,
+    "graduation_fraction_per_14_day_update": 0.1440604765877348,
+    "trainee_fraction_remaining_after_14_days": 0.8559395234122652,
+    "continuous_training_half_life_days": 62.383246250395075,
+    "continuous_90_percent_completion_days": 207.23265836946413,
+    "reserve_survival_per_14_days": 0.9930244429332351
+  },
+  "interpretation": "State recruitment is not synonymous with immediately deployable coercive capacity. Recruits enter a first-order training stock, graduate into a reserve stock, incur reserve attrition, and only then can fill force deficits subject to deployment constraints.",
+  "claim_boundary": "SL10 is an exact stock-flow law of Pineland's synthetic security-regeneration process, not an empirical police or military training-time estimate."
+}

@@ -1,0 +1,85 @@
+{
+  "analysis_rules": {
+    "distribution_rule": "Report median, mean, quantiles, and tail outcomes; do not rely on means alone.",
+    "early_effect_horizon_days": 30.0,
+    "neutral_tolerance": 1e-06,
+    "phase_boundary": "Estimate autonomy-building / neutral / autonomy-eroding regions using paired SUPPORT_ON minus SUPPORT_OFF outcomes; always report Delta I and Delta D alongside Delta(I/D).",
+    "primary_horizon_days": 360.0
+  },
+  "cells": [
+    {
+      "air_bonus": 0.0,
+      "air_cost_per_contact": 0.0,
+      "air_intensity": 0.0,
+      "cell_id": "phase_101",
+      "command_cost_per_formation_day": 80.0,
+      "command_floor_hours": 1.0,
+      "command_latency_reduction_fraction": 0.1,
+      "command_mult": 0.7,
+      "command_reliability_boost": 0.09,
+      "development_command_rate_per_30d": 0.0,
+      "development_cost_per_day": 0.0,
+      "development_forcegen_rate_per_30d": 0.0,
+      "development_logistics_rate_per_30d": 0.0,
+      "factor_capacity_level": 0.7,
+      "factor_capacity_level_index": 5,
+      "factor_structure": "command_constrained",
+      "factor_support_intensity": 0.5,
+      "forcegen_cost_per_incremental_trainee": 80.0,
+      "forcegen_mult": 1.4,
+      "forcegen_training_rate_boost": 0.003,
+      "logistics_capacity": 350.0,
+      "logistics_cost_per_unit": 8.0,
+      "logistics_mult": 1.4,
+      "logistics_rate": 225.0,
+      "organized_action_architecture": "multichannel_v6",
+      "organized_action_rate": 0.04,
+      "support_profile": "stage4_balanced_service_support"
+    }
+  ],
+  "cells_count": 1,
+  "default_seed_count": 1,
+  "description": "Maps the sign and magnitude of continued-assistance effects across indigenous constraint severity and balanced support intensity.",
+  "engineering_calibration": {
+    "canonical_slurm_job_id": 886011,
+    "decision": "retain the originally specified developmental rate scale unchanged; do not tune to calibration effect direction or magnitude",
+    "excluded_from_production_inference": true,
+    "purpose": "correctness and treatment-relevance only",
+    "seed_namespace": "2026290000-series"
+  },
+  "environment": {
+    "agent_count": 300,
+    "development_cadence_days": 7.0,
+    "locality_count": 34,
+    "observation_start_days": 60.0,
+    "withdrawal_time_days": 120.0
+  },
+  "experiment_id": "stage4_v6_smoke_phase_101_rate_004",
+  "historical_outcomes_used": false,
+  "horizons_days": [
+    7.0,
+    30.0,
+    90.0,
+    180.0,
+    360.0
+  ],
+  "hypotheses": {
+    "H_A1": "Continued assistance has heterogeneous effects on terminal indigenous autonomy even when it improves near-term operational capability.",
+    "H_A2": "The sign of the autonomy effect varies systematically with starting indigenous constraint severity and support intensity.",
+    "H_A3": "Relative indigenous-service growth versus induced demand growth predicts the autonomy-building/autonomy-eroding boundary better than support intensity alone."
+  },
+  "name": "Stage 4A: Autonomy-Trap Phase Map",
+  "primary_estimands": [
+    "delta_composite_capability_h",
+    "delta_q_indigenous_h",
+    "delta_indigenous_service_by_channel_h",
+    "delta_service_demand_by_channel_h",
+    "autonomy_regime_class_360",
+    "indigenous_response_to_demand_ratio"
+  ],
+  "production_outcomes_used": false,
+  "schema_version": "pineland.partner_force_stage4_contract.v1",
+  "seed_base": 2026200000,
+  "seed_namespace": "partner_force_stage4_autonomy_phase_map_v1-crn-v1",
+  "status": "FROZEN_FOR_PRODUCTION_PENDING_CRYPTOGRAPHIC_FREEZE"
+}

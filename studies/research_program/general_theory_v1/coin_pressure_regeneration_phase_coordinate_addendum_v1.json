@@ -1,0 +1,37 @@
+{
+  "schema_version": "pineland.coin_pressure_regeneration_phase_coordinate_addendum.v1",
+  "status": "registered_before_phase_map_outcomes",
+  "registered_before_current_phase_map_outcomes_were_inspected": true,
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_pressure_regeneration_metabolic_phase_contract_v1.json",
+  "purpose": "Fix the dimensionless coordinates used to describe the pressure-regeneration phase map before outcomes are inspected.",
+  "coordinates": {
+    "replacement_compensation_ratio": {
+      "symbol": "rho",
+      "definition": "(treatment cumulative recruited represented population since anchor - paired no-disruption cumulative recruited represented population since anchor) / treatment cumulative underground disruption since anchor",
+      "reported_at": ["day240", "day360"],
+      "undefined_rule": "If direct disruption mass is zero, report null rather than dividing by zero.",
+      "interpretation": "Positive rho means pressure induced extra recruitment; negative rho means the disrupted branch recruited less than its paired no-disruption branch."
+    },
+    "pressure_induced_metabolic_load": {
+      "symbol": "Delta_Lambda_K",
+      "definition": "1.92 * (treatment cumulative recruited represented population - paired no-disruption cumulative recruited represented population) / anchor canonical insurgent capital",
+      "reported_at": ["day240", "day360"],
+      "interpretation": "First-order fraction of anchor liquid-capital runway consumed or saved by pressure-induced replacement flow under the source-derived equipment-cost coefficient."
+    },
+    "total_recruitment_metabolic_load": {
+      "symbol": "Lambda_K",
+      "definition": "1.92 * cumulative recruited represented population since anchor / anchor canonical insurgent capital",
+      "reported_for": ["u0", "u1"],
+      "reported_at": ["day240", "day360"],
+      "interpretation": "First-order recruitment-linked load on anchor capital runway; it is an accounting coordinate, not a claim that all capital movement is caused by recruitment."
+    }
+  },
+  "predeclared_descriptives": [
+    "Report mean, median, range, and normal 95% interval for rho and Delta_Lambda_K at each recruitment multiplier.",
+    "Report total Lambda_K by rate and disruption condition.",
+    "Report phase coordinates separately for active and collapsed final organizations if any collapses occur.",
+    "Do not select a universal rho or Lambda_K threshold from this 12-seed grid."
+  ],
+  "guard": "Synthetic dimensionless bookkeeping coordinates only."
+}

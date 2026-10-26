@@ -1,0 +1,63 @@
+{
+  "schema_version": "pineland.coin_structural_laws_contract.v1",
+  "status": "preregistered_before_structural_stress_battery",
+  "historical_outcomes_used": false,
+  "purpose": "Replace fragile endpoint narratives with implementation-level causal/accounting laws that can be proved algebraically and stress-tested across fresh synthetic states and parameter settings.",
+  "laws": [
+    {
+      "id": "SL1",
+      "name": "local underground exponential survival",
+      "statement": "For one direct underground-disruption event in locality l, before any other process acts, rooted armed membership obeys M_l^+ = M_l^- * exp(-h_l * dt), where h_l = lambda_U * I_l * (0.35 + 0.65 S_l) * (0.45 + 0.55 A_l), subject only to the implementation clamp/roundoff boundary.",
+      "required_checks": [
+        "returned disrupted mass equals M_l^- - M_l^+",
+        "M_l^+ matches the exponential prediction",
+        "organization member_population falls by the same disrupted represented mass"
+      ]
+    },
+    {
+      "id": "SL2",
+      "name": "underground-fielded-force separation",
+      "statement": "The direct underground-disruption event does not alter already-fielded formation personnel; it only reduces rooted membership and removes up to fighter_conversion_fraction times disrupted represented mass from the unfielded manpower pool.",
+      "required_checks": [
+        "fielded formation personnel are bitwise unchanged by the direct event",
+        "organization capital is unchanged by the direct event",
+        "unfielded manpower removal never exceeds the fighter-equivalent of disrupted membership"
+      ]
+    },
+    {
+      "id": "SL3",
+      "name": "recruitment hazard factorization",
+      "statement": "For a live target organization at a frozen interval boundary, total instantaneous recruitment hazard satisfies H = r * E * Ibar exactly up to floating-point summation tolerance, where E is eligible represented mass and Ibar is the eligible-mass-weighted mean combined recruitment intensity.",
+      "required_checks": [
+        "stress across fresh seeds",
+        "stress across recruitment-rate multipliers",
+        "stress across rootedness-weight settings",
+        "stress across multiple simulation times"
+      ]
+    },
+    {
+      "id": "SL4",
+      "name": "fighter equipment capital conversion",
+      "statement": "For a positive local fighter increment d, let s = formation_supply_days * initial_supply_fraction, P be the pre-event unfielded fighter pool, Q the pre-event supply reserve, and K available organization capital. The immediate capital conversion is C = min(K, max((P+d)*s - Q, 0)).",
+      "required_checks": [
+        "capital_before - capital_after equals C across pool/reserve/capital cases",
+        "fully funded balanced-reserve special case reduces to C = d*s",
+        "represented-recruit special case reduces to C = recruited_mass * fighter_conversion_fraction * s when reserve is balanced and capital is nonbinding"
+      ]
+    }
+  ],
+  "stress_design": {
+    "fresh_seed_base": 2026192000,
+    "fresh_seed_count": 12,
+    "recruitment_rate_multipliers": [0.015625, 0.03125, 0.0625, 0.125, 0.25],
+    "rootedness_weights": [0.0, 0.375, 0.75, 1.5],
+    "state_times_days": [21, 60, 120],
+    "disruption_rates": [0.0005, 0.002, 0.01],
+    "elapsed_days": [1, 7, 30],
+    "capital_regimes": ["nonbinding", "partially_binding", "zero"],
+    "supply_regimes": ["balanced", "reserve_surplus", "reserve_deficit"]
+  },
+  "promotion_rule": "A structural law is promoted only if its algebraic derivation matches the implementation and every preregistered stress case passes within explicit numerical tolerance. One failure blocks promotion and is entered in the falsification ledger.",
+  "claim_boundary": "These are theorems of the implemented Pineland model, not empirical laws of real insurgency.",
+  "guard": "Synthetic model-structure verification only."
+}

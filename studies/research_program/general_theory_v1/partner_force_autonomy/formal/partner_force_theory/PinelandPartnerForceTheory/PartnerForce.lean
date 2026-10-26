@@ -343,6 +343,24 @@ the corresponding theorems. -/
 def serviceRatio (supply demand : Service → Nat) (i : Service) : Rat :=
   (supply i : Rat) / (demand i : Rat)
 
+/-- Exact dynamic condition for channel-level autonomy improvement.  Between
+two states with positive demand, the later indigenous service-to-demand ratio
+is larger exactly when indigenous service growth outruns demand growth in the
+cross-multiplied sense.  This is the formal core of the empirical distinction
+between capacity-building support and a demand ratchet. -/
+theorem serviceRatio_lt_iff_capacity_growth_beats_demand
+    {supplyBefore demandBefore supplyAfter demandAfter : Service → Nat}
+    {i : Service}
+    (hBefore : 0 < demandBefore i) (hAfter : 0 < demandAfter i) :
+    serviceRatio supplyBefore demandBefore i <
+        serviceRatio supplyAfter demandAfter i ↔
+      supplyBefore i * demandAfter i < supplyAfter i * demandBefore i := by
+  unfold serviceRatio
+  have hdb : (0 : Rat) < (demandBefore i : Rat) := Nat.cast_pos.2 hBefore
+  have hda : (0 : Rat) < (demandAfter i : Rat) := Nat.cast_pos.2 hAfter
+  rw [div_lt_div_iff₀ hdb hda]
+  exact_mod_cast Iff.rfl
+
 /-- `i` is a bottleneck exactly when it has positive demand and no other
 positively demanded service has a smaller supply/requirement ratio. -/
 def Bottleneck (supply demand : Service → Nat) (i : Service) : Prop :=

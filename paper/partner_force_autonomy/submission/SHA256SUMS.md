@@ -1,0 +1,20 @@
+# SHA-256 manifest
+
+`b1c9093bb4259c3f592a75ac07b66fedaf20862116b0e783664a0b38cea70531`  `appendix_model_reproducibility.md`
+`841e9204b6c063dc62476155d64256c647130d6e114aac8e2b2ecefac76980fa`  `chicago-notes.csl`
+`3aa5a3d88e60b24be2dcac10ce652d2ac9a6944cd091d7d4a3a32abef7922c85`  `figures/figure1_conceptual.pdf`
+`12295c697dbc5b2bb078769cad16b334cbfdf031f86c7989cd25a0447e088c1c`  `figures/figure1_conceptual.png`
+`7546d8e12af793c2d916bb88159dca143c6aae3a49ca68b50307c688f3ba64fb`  `figures/figure2_supported_retained.pdf`
+`23e92d629676261cc88d6538d66a2a7bd34ccc387766b93147efc27182b5d7e4`  `figures/figure2_supported_retained.png`
+`692ed6c2e013dd0267bd2fec9e591f3804f97601b2b9bde17fa73614770e0a19`  `figures/figure3_requirement_expansion.pdf`
+`2dec3842f74ccdb6521c91a08f0c3227fb19b57689204256f6254f70e2606b2a`  `figures/figure3_requirement_expansion.png`
+`f9c41391ff8ac26b5e694fc45efdf7016e6981f9318581cc3f2cd12ba9f419af`  `figures/figure4_capability_trajectories.pdf`
+`a6014a87f6b611c4990ab92eaa0f3844413785dda837cdf0ec1b787c62b61c3e`  `figures/figure4_capability_trajectories.png`
+`2c3d283fdb06f58ba2b754e98b2222ed26ca0074e292f065f0b11bf73106b970`  `figures/figure5_assistance_frontier.pdf`
+`3e7f5eaff9e3891806ebd97396f6369c49036dc8960fb150903235ee4d1211b9`  `figures/figure5_assistance_frontier.png`
+`ed19cf107e82dfeff36354764dbbe1635534467dad50bebfeb0a5e9ef320bf77`  `manuscript_anonymized.docx`
+`0bfe6507d456494fc5be6f2df83347b436bf85d25bc0cce81d47e1b1286e70b6`  `manuscript_anonymized.md`
+`368ba9dd02c1a619e5848749d9a1213d4ab8047867d9c3b3756cfc4e75842602`  `manuscript_anonymized.pdf`
+`029817284036481e78f3d76943459c4af654291a80b62f2609b3c0e25c8a5264`  `README.md`
+`8aeaba8560e6316042a1644bedd42f749dabbe0b2385319f0d14abeb9e572e09`  `references.bib`
+`51b8fcb9c47272d6bd033b3e670cab3dc5b1ce3c3fb0cc7ace1238d2d637d800`  `SCHOLARONE_METADATA.md`

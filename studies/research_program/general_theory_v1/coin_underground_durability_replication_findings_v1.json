@@ -1,0 +1,43 @@
+{
+  "schema_version": "pineland.coin_underground_durability_replication_findings.v1",
+  "status": "fresh_seed_replication_complete",
+  "historical_outcomes_used": false,
+  "integrity_gate_passed": true,
+  "seed_count": 16,
+  "preregistered_predictions": {
+    "passed": 6,
+    "failed": 2,
+    "all_passed": false,
+    "failed_predictions": [
+      "median day-360 amplification ratio exceeds 1.0",
+      "at least 8 of 16 seeds show a deeper proportional rooted-membership gap after intervention removal"
+    ]
+  },
+  "replicated_findings": {
+    "mean_rooted_effect_day240": -5037.556640162378,
+    "mean_rooted_effect_day360": -5657.169072006248,
+    "mean_rooted_proportional_effect_day240": -0.044744645258902614,
+    "mean_rooted_proportional_effect_day360": -0.048137554766767995,
+    "rooted_suppression_seeds_day240": "13/16",
+    "rooted_suppression_seeds_day360": "11/16",
+    "rebound_above_baseline_day360": "5/16",
+    "mean_fielded_force_effect_day240": 151.068485,
+    "mean_fielded_force_effect_day360": 115.695726
+  },
+  "new_secondary_pattern": {
+    "mean_recruitment_hazard_effect_day360": 10.024731980815552,
+    "recruitment_hazard_relative_to_baseline_mean": 0.1776726671695954,
+    "recruitment_hazard_positive_effect_seeds_day360": "13/16",
+    "mean_foothold_strength_effect_day360": 1.712236473577903,
+    "foothold_strength_relative_to_baseline_mean": 0.1057381799287161,
+    "foothold_strength_positive_effect_seeds_day360": "12/16"
+  },
+  "interpretation": [
+    "Temporary underground disruption robustly reduces the rooted armed-membership stock on average through day 360, but does not robustly reduce already-fielded force over the same horizon.",
+    "The development claim of a reliable lagged fielded-force decline did not replicate and is dropped.",
+    "The fresh replication instead reveals a stock-pressure divergence: lower rooted membership coexists with higher recruitment hazard and stronger footholds after disruption is removed.",
+    "This motivates a direct test of whether reducing armed membership expands recruitment eligibility faster than it removes access to recruitment channels."
+  ],
+  "next_test": "coin_static_replacement_pressure_contract_v1.json",
+  "guard": "Synthetic Pineland mechanism result only."
+}

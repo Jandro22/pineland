@@ -7,5 +7,6 @@ import PinelandPartnerForceTheory.PartnerForce
 #print axioms PartnerForce.one_le_missionScale_iff_requirementFeasible
 #print axioms PartnerForce.feasibleScale_iff_ratio_le_missionScale
 #print axioms PartnerForce.missionScale_rescale_invariant
+#print axioms PartnerForce.serviceRatio_lt_iff_capacity_growth_beats_demand
 #print axioms PartnerForce.structuralSupportLift_pos_of_dependent
 #print axioms PartnerForce.horizonAutonomous_iff_all_scales_ge_one

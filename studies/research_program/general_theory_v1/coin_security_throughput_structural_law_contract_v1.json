@@ -1,0 +1,48 @@
+{
+  "schema_version": "pineland.coin_security_throughput_structural_law_contract.v1",
+  "status": "preregistered_before_math_and_production_recurrence_tests",
+  "historical_outcomes_used": false,
+  "depends_on": [
+    "SL10 state security absorption pipeline",
+    "production security_training_transition",
+    "production security_reserve_after_attrition"
+  ],
+  "candidate_law": {
+    "id": "SL12",
+    "name": "constant-intake security throughput and reserve ceiling",
+    "setup": "A locality receives the same recruit intake N at the start of every update interval Delta. Training rate tau and reserve attrition mu are constant. Ignore deployment cost/target constraints while deriving the stock-flow ceiling.",
+    "training_survival": "a=exp(-tau*Delta)",
+    "reserve_survival": "b=exp(-mu*Delta)",
+    "pipeline_recurrence": "G_m=a*(G_(m-1)+N)",
+    "pipeline_closed_form_from_G0": "G_m=a^m*G0 + a*N*(1-a^m)/(1-a), for a!=1",
+    "graduation_from_empty_pipeline": "D_m=N*(1-a^m)",
+    "steady_pipeline": "G_star=a*N/(1-a), for 0<=a<1",
+    "steady_graduation": "D_star=N",
+    "reserve_recurrence_with_constant_deployment_Y": "R_m=b*(R_(m-1)+D_m)-Y",
+    "steady_reserve_after_training_converges": "R_star=(b*N-Y)/(1-b), for 0<=b<1",
+    "sustainable_long_run_deployment_ceiling": "Y<=b*N",
+    "zero_attrition_case": "If b=1, reserve changes by N-Y per steady-state interval; Y=N is the non-drifting throughput boundary."
+  },
+  "predictions": [
+    "For tau>0 and constant intake, graduation throughput converges monotonically from below to N regardless of tau.",
+    "Higher tau shortens the time required to reach any fixed fraction of steady graduation but does not raise D_star.",
+    "The steady trainee stock G_star decreases as training becomes faster.",
+    "With reserve attrition and no other inflow, constant deployment Y>b*N eventually depletes reserve, whereas Y<=b*N is sustainable after the training transient given sufficient initial reserve.",
+    "The production transition helpers reproduce the closed-form recurrence to floating-point tolerance."
+  ],
+  "stress_grid": {
+    "initial_pipeline": [0, 10, 100, 1000],
+    "constant_intake": [1, 10, 100, 1000],
+    "training_rate_per_day": [0.001, 0.005555555555555556, 0.011111111111111112, 0.03333333333333333, 0.1],
+    "reserve_attrition_rate_per_day": [0.0, 0.0005, 0.01, 0.05],
+    "interval_days": [1, 7, 14, 30],
+    "updates": [1, 2, 4, 8, 16, 32, 64]
+  },
+  "production_equivalence_required": [
+    "Iterating security_training_transition with recurring N must match the closed-form G_m and D_m recurrence.",
+    "Iterating security_reserve_after_attrition and a constant deployment subtraction must match the closed-form reserve recurrence.",
+    "The long-run graduation limit must be independent of tau for tau>0.",
+    "The sustainable deployment boundary must match b*N in the production arithmetic."
+  ],
+  "claim_boundary": "SL12 is an exact theorem of Pineland's synthetic training/reserve recurrence. It does not estimate real recruiting, training, attrition, or deployment throughput."
+}

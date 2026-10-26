@@ -1,0 +1,46 @@
+{
+  "schema_version": "pineland.coin_replacement_flow_decomposition_findings.v1",
+  "status": "post-outcome_exploratory_mechanistic_decomposition",
+  "historical_outcomes_used": false,
+  "seed_count": 16,
+  "dynamics_identity_check": {
+    "common_columns_compared": 38,
+    "row_count_each": 96,
+    "differences": 0,
+    "interpretation": "Adding flow instrumentation did not alter any previously measured replication dynamics."
+  },
+  "all_seed_summary": {
+    "mean_excess_recruited_mass_day240": 1008.3315468349876,
+    "normal_95_excess_recruited_mass_day240": [-804.4326035317915, 2821.0956972017666],
+    "mean_excess_recruited_mass_day240_to_day360": -1099.995064165458,
+    "normal_95_excess_recruited_mass_day240_to_day360": [-2549.2568268292093, 349.2666984982934],
+    "mean_excess_recruitment_to_direct_disruption_ratio_day240": 0.15580379486625826,
+    "mean_eligible_recruitment_mass_effect_day240": 5037.159138826886,
+    "mean_eligible_recruitment_mass_effect_day360": 5656.965574815054
+  },
+  "known_outcome_split": {
+    "rebound_worlds_n": 5,
+    "rebound_mean_excess_recruited_mass_day240": 4399.992667046362,
+    "rebound_mean_excess_recruited_mass_day240_to_day360": 1466.6679198060872,
+    "rebound_mean_excess_recruitment_to_disruption_ratio_day240": 0.6606160347606144,
+    "suppressed_worlds_n": 11,
+    "suppressed_mean_excess_recruited_mass_day240": -533.3325987156369,
+    "suppressed_mean_excess_recruited_mass_day240_to_day360": -2266.6600568797967,
+    "suppressed_mean_excess_recruitment_to_disruption_ratio_day240": -0.07365631417663092
+  },
+  "exploratory_associations_with_day360_rooted_effect": {
+    "excess_recruited_mass_day240": 0.5502161725302785,
+    "excess_recruited_mass_day240_to_day360": 0.7656961155794689,
+    "excess_recruitment_to_disruption_ratio_day240": 0.5551199172104124,
+    "recruitment_hazard_effect_day360": 0.4636758084777153,
+    "foothold_strength_effect_day360": 0.3737947781623612
+  },
+  "interpretation": [
+    "The previously observed rebound split is realized in actual recruitment flow, not merely in an instantaneous hazard diagnostic.",
+    "Known rebound worlds generated substantial excess recruitment during the disruption period and continued to generate excess recruitment after disruption ended.",
+    "Known suppressed worlds generated less recruitment than their paired baselines on average, especially after intervention removal.",
+    "Because the endpoint rebound labels were known before these flow measurements were generated, these differences are mechanistic hypotheses rather than independent confirmation."
+  ],
+  "next_requirement": "Confirm on fresh seeds that excess replacement flow, especially after disruption removal, discriminates rebound from durable suppression.",
+  "guard": "Synthetic Pineland mechanism decomposition only."
+}

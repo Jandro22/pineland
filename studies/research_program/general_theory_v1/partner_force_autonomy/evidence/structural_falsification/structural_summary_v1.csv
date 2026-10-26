@@ -1,0 +1,5 @@
+cell_id,factor_path,n,target_match_n,designated_post_n,designated_post_fraction_among_matched,post_forcegen_n,post_logistics_n,post_command_n,post_none_n
+structural_001,forcegen_to_command,8,8,0,0.0,8,0,0,0
+structural_002,command_to_forcegen,8,8,0,0.0,0,0,8,0
+structural_003,logistics_to_command,8,3,0,0.0,0,3,0,0
+structural_004,logistics_to_forcegen,8,5,0,0.0,0,5,0,0

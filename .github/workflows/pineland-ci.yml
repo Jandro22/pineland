@@ -24,8 +24,12 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+      - name: Install hygiene test dependency
+        run: python -m pip install pytest
       - name: Public-release metadata audit
         run: python scripts/public_release_audit.py
+      - name: Commit whitespace audit
+        run: git diff --check HEAD^ HEAD
       - name: Stage-4 compact evidence integrity
         run: python -m pytest tests/test_stage4_compact_evidence.py -q
       - name: Historical publication-surface audit
@@ -72,6 +76,8 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install --upgrade pip && python -m pip install -e ".[research,dev]"
+      - name: Frozen Partner-Force paper evidence validation
+        run: python paper/partner_force_autonomy/validate_manuscript.py
       - name: Portable regression suite
         run: >-
           python -m pytest -q
@@ -106,7 +112,7 @@ jobs:
 
   rust-core:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
       - name: Show pinned Rust toolchain

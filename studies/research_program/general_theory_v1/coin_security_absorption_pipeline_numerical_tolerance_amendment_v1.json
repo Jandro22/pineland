@@ -1,0 +1,22 @@
+{
+  "schema_version": "pineland.coin_security_absorption_pipeline_numerical_tolerance_amendment.v1",
+  "status": "transparent_post_first-run_numerical-amendment_before_complete-rerun",
+  "parent_contract": "coin_security_absorption_pipeline_contract_v1.json",
+  "reason": "The first pure-math run exceeded the preregistered 2e-12 absolute tolerance only for large stocks. Maximum closed-form discrepancy was 2.0345e-12 and maximum semigroup discrepancy was 3.6380e-12 on stocks up to 10000, i.e. approximately 1e-16 of stock scale. Mass balance was exactly zero and there were no monotonicity failures.",
+  "first_run": {
+    "status": "PURE_MATH_LAYER_FAILED",
+    "cases": 4800,
+    "maximum_pipeline_balance_residual": 0.0,
+    "maximum_closed_form_pipeline_absolute_residual": 2.0344918841972734e-12,
+    "maximum_training_semigroup_absolute_residual": 3.637978807091713e-12,
+    "monotonicity_failures": 0
+  },
+  "amended_rule": {
+    "pipeline_balance": "absolute residual <= 1e-12 * max(G0+N,1)",
+    "closed_form_pipeline": "absolute residual <= 1e-12 * max(G0+N,1)",
+    "training_semigroup": "absolute residual <= 1e-12 * max(G0+N,1)",
+    "scientific_equations_changed": false,
+    "production_behavior_changed": false
+  },
+  "guard": "This amendment changes only floating-point acceptance scaling. Any residual exceeding the stock-scaled tolerance still blocks SL10 promotion."
+}

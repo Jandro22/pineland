@@ -1,0 +1,41 @@
+{
+  "schema_version": "pineland.coin_compensatory_recruitment_identity.v1",
+  "status": "source_derived_conditional_identity",
+  "historical_outcomes_used": false,
+  "mechanism": "For canonical insurgent recruitment, each represented cohort contributes hazard proportional to represented_mass * eligible_fraction * recruitment_rate * intensity, where eligible_fraction = 1 - current_armed_fraction and intensity contains recruitment access and the recruitment logit.",
+  "uniform_thinning_parameterization": {
+    "definition": "Let s in [0,1] multiply every canonical member's armed fraction x_i while holding all other state fixed.",
+    "cohort_hazard_form": "h_i(s) = W_i * (1 - s*x_i) * r * A_i(s) * L_i(s)",
+    "terms": {
+      "W_i": "represented population mass",
+      "x_i": "pre-shock armed fraction",
+      "r": "configured recruitment rate",
+      "A_i(s)": "access strength = max(social exposure, formation access, member access, foothold access), including language factors where implemented",
+      "L_i(s)": "logistic mobilization intensity from grievance, exposure, compatibility, insurgent social capital, fear, political access, and local rootedness"
+    }
+  },
+  "conditional_derivative": {
+    "condition": "Over any range of s where A_i(s) and L_i(s) are unchanged for a cohort.",
+    "identity": "d h_i / d s = -W_i * x_i * r * A_i * L_i <= 0",
+    "implication": "Within that range, decreasing armed membership necessarily increases instantaneous recruitment hazard for cohorts with positive x_i and positive recruitment intensity."
+  },
+  "why_a_constant_intensity_region_can_exist": [
+    "Uniform positive scaling of armed fractions leaves home-locality and home-district rootedness shares unchanged because their numerators and denominator scale together.",
+    "Uniform positive scaling leaves member-derived language profiles unchanged for the same reason.",
+    "Member access is clipped at one and can remain saturated after moderate thinning.",
+    "Recruitment access is a maximum across social exposure, formation access, member access, and foothold access, so non-member channels can hold access constant even when member access weakens."
+  ],
+  "regime_break": [
+    "At sufficiently deep thinning, member access can leave saturation and cease to dominate the max.",
+    "At s=0, member access vanishes and rootedness/member language profiles become undefined/neutral in the implementation.",
+    "The access/logit loss can then dominate the enlarged eligible pool and make total recruitment hazard fall."
+  ],
+  "empirical_signature_in_static_diagnostic": {
+    "10_percent_thinning": "hazard ratio above 1 in 16/16 fresh worlds",
+    "25_percent_thinning": "hazard ratio above 1 in 16/16 fresh worlds",
+    "complete_removal": "mean hazard ratio 0.86399 and above 1 in 0/16 worlds",
+    "interpretation": "The six-point static grid is consistent with the conditional identity plus an access-collapse regime change, but does not locate a universal threshold."
+  },
+  "dynamic_test": "Measure actual treatment-minus-baseline recruited population flow and compare it with direct disruption mass and endpoint rebound in the already-registered replacement-flow decomposition, followed by fresh-seed confirmation if the relationship is strong.",
+  "guard": "Identity describes the implemented synthetic recruitment mechanism; it is not a real-world law of counterinsurgency."
+}

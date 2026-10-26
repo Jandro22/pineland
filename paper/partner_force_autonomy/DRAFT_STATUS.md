@@ -1,40 +1,39 @@
-# Draft status
+﻿# Draft status
 
-## Draft 0.2 in construction
+## Final review and submission package
 
-The manuscript package now contains:
+The paper has been substantively rebuilt after external review. It now centers on the relief-yield-retention framework rather than a migration-mediated autonomy-trap claim.
 
-- working title and abstract;
-- introduction and literature-positioning argument;
-- formal moving-bottleneck theory;
-- five testable propositions;
-- complete Stage-4 research design and inference description;
-- first-pass Results section using the frozen paper-level estimates;
-- discussion, limitations, and conclusion;
-- bibliography with verified core security-assistance literature;
-- figure and table plan;
-- claim-to-evidence matrix;
-- automated manuscript/evidence validation.
-- a verified literature audit and explicit novelty boundary;
-- a frozen historical-validation protocol for Afghanistan, Iraq, Mali, and Colombia;
-- five initial empirical figures generated directly from tracked Stage-4 evidence;
-- data/code/reproducibility and disclosure sections.
+Completed work:
 
-## Highest-priority work before Draft 0.3
+- Stage 4, 2,808 worlds;
+- Stage 5, 1,472 worlds;
+- matched no-aid control analysis and five-horizon trajectories;
+- indigenous-service versus service-demand decomposition;
+- prospectively frozen 96-world demand-clamp experiment;
+- explicit reporting of the demand clamp's successful manipulation and failed fresh-seed coverage replication;
+- revised theory, model description, Results, Discussion, Limitations, and Conclusion;
+- four-case source-audited historical validation with rival explanations;
+- five-figure grayscale article set;
+- model/reproducibility appendix;
+- closed bibliography and manuscript evidence validator.
 
-1. Conduct structured process tracing for Afghanistan, Iraq, Mali, and Colombia
-   under the frozen protocol.
-2. Generate the conceptual Figure 1 and refine Figures 2-6 for journal layout.
-3. Complete the smooth-aggregator robustness table in manuscript-ready form.
-4. Decide the target journal and adapt word count, citation style, headings, and
-   disclosure/reproducibility statements to that journal.
-5. Tighten the theory section after the historical evidence is coded, without
-   changing the synthetic estimands or retrofitting the Stage-4 hypotheses.
+The final scientific interpretation is bounded deliberately. Constraint displacement is directly demonstrated as a mechanism for relief without yield. Requirement expansion remains theoretically plausible and descriptively consistent with the Stage-4 telemetry, but the prospective clamp does not identify it as the cause of the retention gap because its fresh-seed normal arms reproduce no coverage penalty to mediate.
 
-## Claims that remain prohibited
+The canonical manuscript is scientifically closed for this revision and passes
+the repository evidence validator. The five main figures have been regenerated
+from tracked evidence, and `prepare_submission.py` creates a reproducible review
+package containing an anonymized manuscript, ScholarOne metadata and cover
+letter, bibliography, model/reproducibility appendix, main figures, citation
+style, and SHA-256 manifest.
+`render_submission.py` converts those review sources to editable DOCX files and
+matching Word-exported PDFs while stripping author metadata from the anonymous
+manuscript. `qa_submission.py` then checks every rendered page for document size,
+blank pages, footer numbering, text/image bounds, unresolved citations,
+minimum readable prose text, missing figure/table captions, and blind-review
+identity leaks.
 
-- treating Pineland's numerical thresholds as real-world estimates;
-- claiming logistics is universally the terminal military bottleneck;
-- claiming the model proves an optimal assistance policy;
-- presenting a historical case as validation before the case protocol is frozen;
-- describing post-completion exploratory synthesis as preregistered.
+The rendered anonymous manuscript is 54 US-letter pages and passes submission
+QA. Remaining work is limited to venue-specific formatting changes requested at
+upload time and any changes requested by reviewers or coauthors, not unresolved
+Stage-4/Stage-5 analysis.

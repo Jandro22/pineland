@@ -1,0 +1,32 @@
+{
+  "schema_version": "pineland.coin_veterancy_exchange_structural_law_findings.v1",
+  "status": "SL8_PROMOTED_PRODUCTION_EQUIVALENCE_VERIFIED",
+  "historical_outcomes_used": false,
+  "parent_contract": "coin_veterancy_exchange_structural_law_contract_v1.json",
+  "SL8_experience_to_exchange_elasticity": {
+    "promotion": "PROMOTED",
+    "law": "For one-sided experience-induced capability ratio m=g(E1)/g(E0), g(E)=0.75+0.50E, uncapped matched-contact own losses scale as m^-0.45, opponent losses as m^0.45, and the loss-exchange ratio as m^0.90.",
+    "algebraic_stress_cases": 6300,
+    "maximum_own_loss_multiplier_residual": 4.440892098500626e-16,
+    "maximum_opponent_loss_multiplier_residual": 4.440892098500626e-16,
+    "maximum_exchange_multiplier_residual": 8.881784197001252e-16,
+    "direction_failures": 0,
+    "production_rng_equivalence": "Old inline and helper attrition calculations are bitwise identical under matched PyRandomCompat states, including the next RNG draw."
+  },
+  "fresh_matched_engagement_confirmation": {
+    "source": "veterancy_matched_engagement_results_v1.json",
+    "worlds": 6,
+    "replicates_per_world": 128,
+    "experience_change": "0.1 to 0.9",
+    "capability_ratio": 1.5,
+    "observed_own_loss_multiplier": 0.8332185563593784,
+    "analytic_own_loss_multiplier": 0.8332185563593787,
+    "observed_opponent_loss_multiplier": 1.2001653016098786,
+    "analytic_opponent_loss_multiplier": 1.200165301609877,
+    "observed_exchange_multiplier": 1.4403967511883269,
+    "analytic_exchange_multiplier": 1.440396751188327,
+    "all_preregistered_gates_passed": true
+  },
+  "piecewise_boundary": "The simple elasticity applies only when compared loss fractions do not hit combat.max_loss_fraction. Capped cases follow the production min-cap equation.",
+  "claim_boundary": "SL8 is an exact law of Pineland's uncapped synthetic combat equation, not an empirical casualty elasticity."
+}

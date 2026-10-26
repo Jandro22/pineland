@@ -1,0 +1,41 @@
+{
+  "schema_version": "pineland.coin_security_absorption_pipeline_contract.v1",
+  "status": "preregistered_before_math_and_production_equivalence_tests",
+  "historical_outcomes_used": false,
+  "candidate_law": {
+    "id": "SL10",
+    "name": "state security absorption pipeline",
+    "setup": "Conditional on N recruits admitted in one state-regeneration interval, G0 trainee stock, R0 trained reserve, training rate tau, reserve attrition mu, interval dt, and final deployment Y.",
+    "graduation": "D=(G0+N)*(1-exp(-tau*dt))",
+    "pipeline_after": "G1=(G0+N)*exp(-tau*dt)",
+    "reserve_before_deployment": "R_star=(R0+D)*exp(-mu*dt)",
+    "reserve_after_deployment": "R1=R_star-Y"
+  },
+  "exact_accounting_predictions": [
+    "G0+N=G1+D to floating-point summation tolerance.",
+    "Before deployment, R_star=(R0+D)*exp(-mu*dt).",
+    "After deployment, R1+Y=R_star.",
+    "At fixed G0+N and dt, graduated mass increases monotonically with tau while remaining trainee stock decreases monotonically.",
+    "With no additional recruitment, trainee survival composes exactly across adjacent intervals: exp(-tau*(dt1+dt2))=exp(-tau*dt1)*exp(-tau*dt2)."
+  ],
+  "stress_grid": {
+    "pipeline_stock": [0, 1, 100, 10000],
+    "new_recruits": [0, 1, 100, 10000],
+    "training_rate": [0, 0.001, 0.011111111111111112, 0.05, 1.0],
+    "reserve_stock": [0, 10, 1000],
+    "reserve_attrition_rate": [0, 0.0005, 0.01, 0.1],
+    "elapsed_days": [1, 7, 14, 30, 90]
+  },
+  "production_equivalence_required": [
+    "Pure pipeline/reserve helpers must be bitwise equivalent to the current inline production arithmetic across the stress grid.",
+    "The production state-regeneration path must use those helpers without changing event order.",
+    "An isolated no-recruitment/no-deployment state test must match the analytic pipeline and reserve transition.",
+    "Existing security_recruitment_flows_through_training_before_replacement regression must continue to pass."
+  ],
+  "default_parameter_descriptives": {
+    "security_training_rate_per_day": 0.011111111111111112,
+    "state_regeneration_interval_days": 14,
+    "reserve_attrition_rate_per_day": 0.0005
+  },
+  "claim_boundary": "SL10 is a stock-flow theorem of Pineland's synthetic state-security regeneration process. It is not an empirical estimate of real police or military training times."
+}

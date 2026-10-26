@@ -1,0 +1,26 @@
+{
+  "seconds": 65.18811770016328,
+  "decision_state": "4aa46d016ad25ff4238cf3f43b6029c74b7b3a1644387ffa604c6ec148ddf983",
+  "trajectory": "5f7f67e4e7b1d657832168d1cbe8fb66cd45a47fb9f70d73f2a6cd12cfc5226c",
+  "records": "ae9c73b0e64eb4a407d4d5d88ccc98818a7c5d6d3ae2c20e31b779ab6b7f2585",
+  "event_counts": {
+    "command": 181,
+    "force_movement": 721,
+    "logistics": 181,
+    "patrol": 12257,
+    "physical_refresh": 721,
+    "information": 721,
+    "beliefs": 181,
+    "social_influence": 181,
+    "mobility": 181,
+    "political_order": 7,
+    "organization_ecology": 26,
+    "foreign_affairs": 7,
+    "recruitment": 26,
+    "peace_process": 7,
+    "governance": 7,
+    "economy": 7,
+    "checkpoint": 7,
+    "organized_action": 14263
+  }
+}

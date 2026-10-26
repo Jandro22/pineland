@@ -1,0 +1,10 @@
+{
+  "interpretation_rule": "Reject unique-logistics-hard-code interpretation if at least one observed-target-matched world ends in command and at least one ends in forcegen.",
+  "matched_command_terminal_worlds": 8,
+  "matched_forcegen_terminal_worlds": 8,
+  "matched_logistics_terminal_worlds": 8,
+  "schema_version": "pineland.partner_force_structural_falsification_result.v1",
+  "target_matched_worlds": 24,
+  "unique_logistics_hard_code_rejected": true,
+  "worlds": 32
+}

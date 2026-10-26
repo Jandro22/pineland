@@ -1,0 +1,43 @@
+{
+  "schema_version": "pineland.coin_veterancy_exchange_structural_law_contract.v1",
+  "status": "preregistered_before_math_and_production_equivalence_battery",
+  "historical_outcomes_used": false,
+  "purpose": "Elevate the prospectively confirmed matched-engagement veterancy effect into an exact uncapped combat-exchange law.",
+  "candidate_law": {
+    "id": "SL8",
+    "name": "experience-to-exchange elasticity",
+    "experience_capability_factor": "g(E)=0.75+0.50*E",
+    "one_sided_capability_ratio": "m=g(E1)/g(E0)",
+    "own_fractional_loss_multiplier": "m^-0.45",
+    "opponent_fractional_loss_multiplier": "m^0.45",
+    "loss_exchange_ratio_multiplier": "m^0.90"
+  },
+  "conditions": [
+    "All non-experience formation state, detection, initiative, air support, terrain, observability, and actor protection terms are held fixed.",
+    "The same stochastic normal draws are used in the compared engagements.",
+    "Neither compared loss fraction hits combat.max_loss_fraction.",
+    "Personnel is positive so realized loss fraction equals the computed attrition fraction."
+  ],
+  "stress_grid": {
+    "baseline_experience": [0.0, 0.1, 0.25, 0.5, 0.75, 0.9],
+    "higher_experience": [0.1, 0.25, 0.5, 0.75, 0.9, 1.0],
+    "base_attrition_rates": [0.002, 0.01, 0.03],
+    "exposure": [0.2, 0.5, 1.0, 1.35],
+    "stochastic_shocks": [-1.0, -0.25, 0.0, 0.5, 1.0]
+  },
+  "fresh_confirmation_already_observed": {
+    "source": "veterancy_matched_engagement_results_v1.json",
+    "worlds": 6,
+    "replicates_per_world": 128,
+    "government_0_1_to_0_9_own_loss_multiplier": 0.8332185563593784,
+    "analytic": 0.8332185563593787,
+    "government_0_1_to_0_9_opponent_loss_multiplier": 1.2001653016098786,
+    "analytic_opponent": 1.200165301609877,
+    "government_exchange_multiplier": 1.4403967511883269,
+    "analytic_exchange": 1.440396751188327,
+    "insurgent_side_symmetric_match": true,
+    "all_preregistered_gates_passed": true
+  },
+  "promotion_rule": "Promote SL8 only after the algebraic grid and production-equivalence tests pass. Capped-loss cases are explicitly outside the simple elasticity law and must be handled by the min-cap piecewise equation.",
+  "claim_boundary": "Exact law of Pineland's uncapped synthetic combat equation, not an empirical casualty elasticity."
+}

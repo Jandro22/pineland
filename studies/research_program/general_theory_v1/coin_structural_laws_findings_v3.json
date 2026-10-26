@@ -1,0 +1,51 @@
+{
+  "schema_version": "pineland.coin_structural_laws_findings.v3",
+  "status": "NINE_IMPLEMENTED_MECHANISM_LAWS_PROMOTED",
+  "historical_outcomes_used": false,
+  "supersedes": "coin_structural_laws_findings_v2.json",
+  "promotion_result": {
+    "SL1_local_underground_exponential_survival": "PROMOTED",
+    "SL2_underground_fielded_force_separation": "PROMOTED",
+    "SL3_recruitment_hazard_factorization": "PROMOTED",
+    "SL4_fighter_equipment_capital_conversion": "PROMOTED",
+    "SL5_finite_subcohort_recruitment_sampling": "PROMOTED",
+    "SL6_conditional_organization_collapse_hazard": "PROMOTED",
+    "SL7_replacement_share_veterancy_dilution": "PROMOTED",
+    "SL8_experience_to_exchange_elasticity": "PROMOTED",
+    "SL9_replacement_quantity_quality_capability": "PROMOTED"
+  },
+  "evidence_files": {
+    "SL1_to_SL4": "coin_structural_laws_findings_v1.json",
+    "SL5_to_SL6": "coin_stochastic_laws_findings_v1.json",
+    "SL7": "coin_human_capital_structural_law_findings_v1.json",
+    "SL8": "coin_veterancy_exchange_structural_law_findings_v1.json",
+    "SL9": "coin_replacement_capability_structural_law_findings_v1.json",
+    "SL5_to_SL8_integrated_parity": "coin_sl5_sl8_integrated_production_parity_v1.json"
+  },
+  "structural_theory": {
+    "pressure_and_regeneration": [
+      "Direct underground pressure obeys exact local exponential stock decay and does not directly erase fielded force.",
+      "Recruitment propensity factors exactly into configured rate, eligible stock, and mobilization/access intensity.",
+      "Realized fighter regeneration creates an exact supply-capital burden."
+    ],
+    "human_capital": [
+      "Replacement flow is an exact weighted-memory process: lower-experience replacement dilutes unit veterancy in proportion to replacement share.",
+      "Experience changes map to uncapped loss exchange through exact combat elasticities.",
+      "Combining personnel diminishing returns with replacement-memory yields SL9: restoring headcount one-for-one does not restore combat capability when replacements are less experienced."
+    ],
+    "stochastic_layer": [
+      "Recruitment realization follows an exact finite-subcohort binomial law conditional on frozen state.",
+      "Organization stochastic collapse follows an exact continuous-hazard Bernoulli law conditional on frozen state, alongside deterministic collapse gates."
+    ],
+    "emergent_phase_result": "The independently repaired 24-seed mobilization frontier shows the structural laws combining into a leverage/ruin regime: mobilization initially grows organizational stock and fielded force while consuming runway, then capital-triggered collapse rises sharply. The result remains probabilistic rather than pathwise deterministic."
+  },
+  "verification": {
+    "structural_law_tests_with_SL9": "12/12 passed",
+    "pineland_model_unit_tests_with_SL9": "29/29 passed",
+    "SL9_math_cases": 1035,
+    "SL9_production_capability_cases": 1035,
+    "SL9_maximum_production_residual": 8.881784197001252e-16,
+    "integrated_cross_tree_SL5_to_SL8_parity": "byte-exact over 10 complete 90-day worlds against b3a9e07"
+  },
+  "claim_boundary": "These are mathematical/stochastic laws and synthetic phase results of Pineland's implemented mechanisms. They do not establish real-world military or insurgency coefficients."
+}

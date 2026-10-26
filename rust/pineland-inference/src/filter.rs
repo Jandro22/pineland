@@ -312,6 +312,8 @@ impl NativeParticleFilter {
                     started_at: source_engine.started_at,
                     last_boundary: source_engine.last_boundary,
                     particle_execution: source_engine.particle_execution,
+                    rng_sync_time: 0.0,
+                    rng_sync_locality: u32::MAX,
                 };
                 next.push(engine);
             }

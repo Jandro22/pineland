@@ -1,38 +1,45 @@
-# Partner-Force Autonomy paper
+﻿# Partner-Force Retention paper
 
-Working title: **The Moving Bottleneck: Security Assistance, Indigenous Capacity, and the Autonomy Trap**
+Working title: **Suffering from Success: Relief, Yield, and Retention in Security Assistance**
 
-This directory contains the manuscript for the integrated Partner-Force Autonomy
-paper. It begins from the completed Stage-4 research state on Git commit
-`73b92e5420a2929bdf8eaec8d570a181acf87870`.
+This directory contains the revised manuscript and replication controls for the integrated Partner-Force production paper. The final review revision separates relief, yield, retention, supported effects, retained effects, and dependency gaps before testing candidate mechanisms.
 
 ## Scientific status
 
-- Stage-4 production: complete, 2,808/2,808 worlds.
-- Production integrity: complete, zero final integrity errors.
-- Paper-level secondary analysis: precommitted before production completion and complete.
-- Compact evidence: tracked under
-  `studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/`.
-- Historical validation: not yet complete and must remain separate from the synthetic causal claims.
+- Stage 4: complete, 2,808/2,808 worlds.
+- Stage 5: complete, 1,472/1,472 worlds; manipulation-limited for the intended near-tie allocation claim.
+- Structural terminal-constraint sidecar: complete, 32/32 worlds; supplemental architecture check only.
+- Historical validation: four cases source-audited under the frozen protocol.
+- Review-driven Stage-4 diagnostics: complete and reproducible from frozen Phase-Map shards.
+- Post-review demand-clamp experiment: complete, 96/96 worlds under a prospectively frozen design. The demand manipulation passes, but the fresh-seed normal arms reproduce no indigenous-coverage branch gap at any registered horizon. The experiment therefore does not identify requirement expansion as the mediator of the Stage-4 retention pattern.
 
-## Files
+## Main files
 
-- `manuscript.md`: main working manuscript.
-- `references.bib`: verified core bibliography for the first draft.
-- `claim_evidence_matrix.md`: mapping from manuscript claims to frozen evidence.
-- `figure_plan.md`: figure and table plan tied to precommitted outputs.
-- `literature_audit.md`: verified novelty boundary and source-positioning record.
-- `historical_validation_protocol.md`: frozen case-selection and process-tracing protocol.
-- `historical_cases/`: case memos coded under the frozen external-validation protocol.
-- `generate_figures.py`: deterministic generator for manuscript figures from tracked evidence.
-- `figures/`: generated PDF and 300-dpi PNG manuscript figures.
+- `manuscript.md`: final review manuscript.
+- `appendix_model_reproducibility.md`: technical model and provenance appendix.
+- `references.bib`: closed bibliography; every entry is cited.
+- `claim_evidence_matrix.md`: current claim/evidence/status map.
+- `figure_plan.md`: five-figure/five-table article plan.
+- `generate_figures.py`: deterministic grayscale main-figure generator.
+- `prepare_submission.py`: builds the anonymized review package from the canonical manuscript.
+- `render_submission.py`: resolves citations/figures into DOCX and exports matching PDFs through Microsoft Word.
+- `qa_submission.py`: checks every rendered page for page size, blank pages, footer numbering, image/text bounds, minimum text size, unresolved citations, and blind-review leaks.
+- `submission/`: generated review manuscript, title page, bibliography, appendix, figures, and SHA-256 manifest.
+- `historical_validation_protocol.md` and `historical_cases/`: source-audited external-validation materials.
 
-## Drafting rules
+## Evidence-status vocabulary
 
-1. Numerical claims must trace to the tracked Stage-4 compact evidence or a frozen protocol/ledger.
-2. Literature claims must trace to a verified source in `references.bib`.
-3. Synthetic effect sizes are not empirical estimates for a historical partner force.
-4. Exploratory post-completion findings must be labeled as such.
-5. Historical examples must be added only after a separate source audit and process-tracing protocol.
-6. Do not use em dashes in manuscript prose.
-7. Historical coding must follow `historical_validation_protocol.md`; later amendments must be dated and disclosed.
+1. **Prospectively frozen:** design/analysis artifacts fixed before the corresponding outcomes were observed.
+2. **Precommitted:** an estimand or rule contained in those frozen artifacts.
+3. **Post-completion diagnostic:** later analysis computed only from frozen telemetry.
+4. **Post-review prospectively frozen:** a new experiment motivated by review but fixed before its own outcomes were observed.
+
+## Drafting constraints
+
+- Do not call an indigenous coverage decline a capability loss without decomposing service and demand.
+- Do not treat continued-support minus withdrawal as a net treatment effect over no aid.
+- Do not claim migration causes the retention gap.
+- Do not claim requirement expansion is causally identified by the demand-clamp experiment.
+- Do not generalize Stage-5 fixed-effort breadth results to genuine near-ties.
+- Do not treat synthetic effect sizes as empirical estimates for historical forces.
+- Do not use em dashes in manuscript prose.

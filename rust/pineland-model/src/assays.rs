@@ -682,7 +682,7 @@ pub fn run_binding_constraint_assay(options: &GateOptions) -> Result<BindingAssa
         let spec = GateCellSpec {
             cell_id: "forcegen_binding",
             support_profile: "forcegen_heavy",
-            forcegen_mult: 0.15,
+            forcegen_mult: 0.35,
             logistics_mult: 1.0,
             command_mult: 1.0,
             air_intensity: 0.0,
@@ -695,7 +695,12 @@ pub fn run_binding_constraint_assay(options: &GateOptions) -> Result<BindingAssa
             command_latency_reduction_fraction: 0.0,
             command_floor_hours: 0.0,
             command_cost_per_formation_day: 0.0,
-            forcegen_training_rate_boost: 0.05,
+            // The stress cell must let external support close the replacement
+            // deficit while the partner's own training still falls short. The
+            // repaired model has realistic combat losses (several times the old
+            // combat-dead world's), so the original 0.15 capacity and 0.05
+            // boost could no longer cover the deficit they were meant to cross.
+            forcegen_training_rate_boost: 0.12,
             forcegen_cost_per_incremental_trainee: 120.0,
             seed: 2026120000,
         };

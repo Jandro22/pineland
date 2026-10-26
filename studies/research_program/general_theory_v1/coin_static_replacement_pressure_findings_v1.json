@@ -1,0 +1,69 @@
+{
+  "schema_version": "pineland.coin_static_replacement_pressure_findings.v1",
+  "status": "fresh_static_mechanism_diagnostic",
+  "historical_outcomes_used": false,
+  "seed_count": 16,
+  "summary": [
+    {
+      "armed_membership_scale": 1.0,
+      "mean_rooted_armed_membership_mass": 109541.67,
+      "mean_eligible_represented_mass": 8690454.25,
+      "mean_recruitment_hazard_mass": 46.1246,
+      "mean_hazard_ratio": 1.0,
+      "hazard_ratio_above_one": "0/16"
+    },
+    {
+      "armed_membership_scale": 0.9,
+      "mean_rooted_armed_membership_mass": 98587.50,
+      "mean_eligible_represented_mass": 8701408.41,
+      "mean_recruitment_hazard_mass": 46.3347,
+      "mean_hazard_ratio": 1.00472,
+      "hazard_ratio_above_one": "16/16"
+    },
+    {
+      "armed_membership_scale": 0.75,
+      "mean_rooted_armed_membership_mass": 82156.25,
+      "mean_eligible_represented_mass": 8717839.66,
+      "mean_recruitment_hazard_mass": 46.6499,
+      "mean_hazard_ratio": 1.01181,
+      "hazard_ratio_above_one": "16/16"
+    },
+    {
+      "armed_membership_scale": 0.5,
+      "mean_rooted_armed_membership_mass": 54770.83,
+      "mean_eligible_represented_mass": 8745225.08,
+      "mean_recruitment_hazard_mass": 46.2582,
+      "mean_hazard_ratio": 1.00631,
+      "hazard_ratio_above_one": "10/16"
+    },
+    {
+      "armed_membership_scale": 0.25,
+      "mean_rooted_armed_membership_mass": 27385.42,
+      "mean_eligible_represented_mass": 8772610.50,
+      "mean_recruitment_hazard_mass": 46.6858,
+      "mean_hazard_ratio": 1.01585,
+      "hazard_ratio_above_one": "10/16"
+    },
+    {
+      "armed_membership_scale": 0.0,
+      "mean_rooted_armed_membership_mass": 0.0,
+      "mean_eligible_represented_mass": 8799995.91,
+      "mean_recruitment_hazard_mass": 39.7610,
+      "mean_hazard_ratio": 0.86399,
+      "hazard_ratio_above_one": "0/16"
+    }
+  ],
+  "finding": "The instantaneous recruitment response to rooted-stock removal is hump-shaped rather than monotonic. Modest partial reductions consistently increase recruitment hazard, while complete removal reduces it.",
+  "mechanism_interpretation": [
+    "Partial stock removal increases the eligible fraction of represented population while fielded formations, foothold strength, social exposure, capital, grievance, fear, and political access remain fixed.",
+    "The decline at complete removal shows that eligibility alone is not sufficient: member/rootedness-related access also contributes to recruitment intensity.",
+    "Pineland therefore contains a compensatory-recruitment window in which thinning an underground can increase replacement pressure before sufficiently deep destruction removes enough organizational access to reverse the effect."
+  ],
+  "limits": [
+    "This is a partial-equilibrium day-60 diagnostic, not a realistic intervention.",
+    "The shocked state deliberately leaves downstream access variables frozen, so it identifies arithmetic/mechanistic pressure rather than a full dynamic causal effect.",
+    "The exact location of the peak is not identified by the preregistered six-point grid and should be mapped on fresh seeds before making a threshold claim."
+  ],
+  "next_question": "Does the same hump-shaped replacement-pressure mechanism predict actual recruited mass and rebound under dynamic temporary disruption?",
+  "guard": "Synthetic Pineland mechanism only; no real-world operational prescription."
+}

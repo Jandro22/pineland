@@ -1,24 +1,28 @@
-# Claim to evidence matrix
+﻿# Claim to evidence matrix
 
-This file is a drafting control. It distinguishes precommitted results from
-post-completion interpretation and prevents later prose from outrunning the
-evidence.
+This file controls drafting and keeps frozen results, post-completion diagnostics, and post-review experiments distinct.
 
 | Claim | Evidence | Status | Manuscript use |
 |---|---|---|---|
-| Direct service substitution can improve near-term capability while reducing later indigenous autonomy | `evidence/stage4/phase_cell_summary_v1.csv`; paper secondary READY | Precommitted estimand and completed analysis | Primary result |
-| 96 of 106 initially effective treated Phase-Map cells are autonomy traps | `phase_cell_summary_v1.csv` aggregated under frozen +30d/+360d rule | Precommitted classification | Primary result |
-| 53 robust trap cells and 0 robust building cells | `phase_cell_summary_v1.csv` bootstrap and median robust labels | Precommitted inference | Primary result |
-| Mean terminal autonomy penalty becomes more negative as support intensity rises from 0.25 to 2.0 | `phase_cell_summary_v1.csv` | Precommitted cell summaries; intensity aggregation is descriptive | Primary result with non-monotonicity caveat |
-| Observed-matched command worlds migrate 38/38 and force-generation worlds 46/46 | `migration_target_match_summary_v1.csv` plus world summary audit | Precommitted migration definition | Primary dynamic result |
-| Observed-matched logistics worlds migrate 0/85 | `migration_target_match_summary_v1.csv` | Precommitted migration definition | Primary dynamic result |
-| Median persistent migration detection is 7 days for matched command and force generation | Migration world summaries and paper analysis | Precommitted definition | Primary dynamic result |
-| Developmental logistics assistance improves terminal autonomy relative to substitution by about +0.132 to +0.433 q | `mechanism_mode_contrasts_v1.csv` | Precommitted matched-seed contrast | Primary mechanism result |
-| All four development-minus-substitution logistics q intervals exclude zero | `mechanism_mode_contrasts_v1.csv` | Precommitted 10,000-resample bootstrap | Primary inference result |
-| Force-generation development can substantially increase indigenous output with zero system q improvement | `mechanism_mode_contrasts_v1.csv`; `mechanism_cell_summary_v1.csv` | Precommitted contrast plus post-completion synthesis | Mechanism illustration |
-| Command development often shifts the bottleneck to logistics | Module-C world summaries; Stage-4 interpretation memo | Post-completion interpretation of frozen trajectories | Label as post-completion synthesis |
-| Logistics behaves as a terminal or sink constraint in the tested architecture | Modules B and C jointly | Post-completion synthesis, model-specific | Discussion, not universal law |
-| The general theoretical contribution is moving bottleneck dependence | Joint interpretation of Modules A-C | Theory induced from completed program | Main theoretical synthesis, explicitly model-derived |
-| SFA dependency, interest misalignment, weak sustainment, and recipient political distortions are already established concerns | Biddle et al. 2018; Metz 2023; Matisek 2018; Harkness 2022; Sandnes 2024; GAO 2023; Rolandsen et al. 2026 | External literature | Novelty boundary |
-| Numerical Stage-4 thresholds apply directly to Afghanistan, Iraq, Mali, or another historical force | No current evidence | Unsupported | Do not claim |
-| The model identifies an optimal real-world donor policy | No current evidence | Unsupported | Do not claim |
+| Continued support minus withdrawal is not the same estimand as support minus no aid | `evidence/review_revision/stage4_control_matched_*` | Post-completion matched-control diagnostic | Core measurement result |
+| At +30d, 26/120 treated Phase-Map cells have supported capability above no aid and retained capability below no aid | `stage4_control_matched_summary_v1.csv` | Post-completion diagnostic | Strong success-without-retention regime |
+| At +30d, 30/120 treated cells improve both supported and retained capability relative to no aid, while 51/120 are below no aid in both | Same matched-control evidence | Post-completion diagnostic | Heterogeneity result |
+| The original frozen branch contrast gives 106/120 positive +30d continued-support-vs-withdrawal cells; 96/106 also have negative +360d indigenous coverage | Stage-4 Phase-Map evidence | Frozen Stage-4 estimand | Branch-gap result only, not net success vs no aid |
+| Terminal logistics-coverage gaps reflect both indigenous service and service demand | `stage4_supply_demand_decomposition_v1.json` | Post-completion telemetry decomposition | Core mechanism diagnostic |
+| In 1,174 same-terminal penalty worlds, 95.9% have higher supported-branch logistics demand and 19.8% have lower indigenous logistics delivery | Same evidence | Post-completion diagnostic | Requirement-expansion evidence |
+| In +30d-effective logistics-penalty worlds, mean observed coverage gap is about -0.0823, production-only -0.0301, demand-only -0.0534 | `stage4_demand_standardization_summary_v1.csv` | Post-completion descriptive standardization | Not a runtime causal intervention |
+| The 96-world demand clamp passes its manipulation check but all 48 fresh-seed normal pairs reproduce zero coverage branch gap at every registered horizon | `evidence/mechanism_ablation/` | Post-review prospectively frozen experiment | Failed outcome-replication prerequisite; does not identify requirement expansion as retention mediator |
+| Matched command migrates 38/38, force generation 46/46, logistics 0/85 | `migration_target_match_summary_v1.csv` | Frozen Stage-4 Migration result | Constraint-displacement result |
+| Constraint displacement does not explain the strongest terminal coverage penalty | Migration evidence plus `stage4_migration_penalty_summary_v1.csv` | Frozen result plus post-completion synthesis | Core revision |
+| Force-generation relief can migrate universally while yielding approximately zero +30d composite-capability gain | Migration compact evidence | Post-completion aggregation of frozen summaries | Relief-without-yield illustration |
+| Static headroom does not monotonically predict dynamic yield | `stage4_headroom_*` | Post-completion reconstruction | Qualifying negative result |
+| Developmental logistics improves partner-owned service and terminal coverage relative to substitution but does not uniformly dominate on early capability or modeled donor cost | Stage-4 mechanism evidence | Frozen result plus frontier synthesis | Capability-retention-cost tradeoff |
+| Force-generation development can raise local indigenous output with zero whole-system coverage improvement | Stage-4 mechanism evidence | Frozen contrast | Local-system divergence |
+| Smooth aggregators agree in sign with the hard minimum in 167/169 observed-matched Migration worlds | Stage-4 robustness evidence | Frozen robustness analysis | Metric robustness |
+| Stage 5 finds selective equal-dose pairwise complementarity | Stage-5 factorial interactions | Prospectively frozen result | Secondary result with multiplicity/ceiling caveats |
+| Stage 5 does not cleanly test fixed-budget breadth under true near-ties because 365/368 nominal near-tie worlds are logistics-bound at the split | Stage-5 bottleneck paths | Prospectively frozen manipulation check | Scope limitation |
+| Structural sidecar shows all three services are reachable terminal constraints but none of four intended migration paths occurs | structural-falsification evidence | Prospectively frozen sidecar | Supplemental architecture check only |
+| Historical cases provide structured process plausibility and scope conditions, not causal estimates | source-audited case memos | Frozen case protocol plus source audit | External validation |
+| Generic bottleneck migration, complementarity, recurrent-cost burdens, and supported-vs-sustainable distinctions are prior art | literature audit | External literature | Novelty boundary |
+| Pineland numerical thresholds directly estimate real partner forces | none | Unsupported | Prohibited |
+| The model identifies an optimal real-world donor allocation rule | none | Unsupported | Prohibited |

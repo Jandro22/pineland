@@ -30,10 +30,20 @@ checkpoint/restart, and HPC execution. The current package version is
 > experiments can identify mechanisms inside the model; historical comparisons
 > are external tests and do not turn latent simulated quantities into observed
 > historical facts.
+>
+> **Repository status (2026-10-26):** the first major research/paper cycle is
+> scientifically frozen at the git tag `paper-freeze-2026-09-21` (the exact code
+> that produced the frozen Stage-4 and Stage-5 datasets). A second, post-freeze
+> line of work (see [Post-freeze research](#post-freeze-research-the-dependency-valley))
+> repaired model failures and ran a follow-up autonomy-trap campaign. The model
+> on `main` therefore **differs** from the frozen one and does not reproduce the
+> frozen datasets bit for bit; check out the tag to reproduce them. Changes to
+> the frozen paper material are still limited to documented corrections,
+> reproducibility or packaging repairs, and changes required by peer review.
 
-## Current research program
+## Frozen research program
 
-The active work is organized around three connected layers.
+The frozen research snapshot is organized around three connected layers.
 
 ### 1. General Theory v1
 
@@ -43,7 +53,7 @@ competitive local reproduction without losing the dynamics that matter. The
 program uses prospective contracts, rival reduced-form architectures, closure
 tests, holdouts, and falsification ledgers before historical transport.
 
-### 2. Partner-Force Autonomy — integrated Stage 4 complete
+### 2. Partner-Force Autonomy — integrated Stages 4 and 5 complete
 
 [Partner-Force Autonomy](studies/research_program/general_theory_v1/partner_force_autonomy/)
 is the completed integrated Stage-4 mechanistic program on a narrower question:
@@ -54,24 +64,27 @@ is the completed integrated Stage-4 mechanistic program on a narrower question:
 The design uses paired ON/OFF counterfactual branches, common random numbers,
 removable assistance channels, formal indigenous-service accounting, and
 explicit separation of supported performance from organic regenerative
-capacity. The integrated campaign completed **2,808/2,808 production worlds**
-across an autonomy phase map, bottleneck-migration experiment, and
-substitution-versus-development experiment. The final production dataset was
-independently re-hashed with zero task-coverage, provenance, row-count, or
-content-hash errors.
+capacity. Stage 4 completed **2,808/2,808 production worlds** across an
+autonomy phase map, bottleneck-migration experiment, and
+substitution-versus-development experiment. Stage 5 then completed
+**1,472/1,472 worlds** in the coordinated-development follow-up. The paper
+cycle also includes the prospectively frozen 96-world demand-clamp experiment
+and a 32-world terminal-constraint sidecar. The tracked production datasets
+and paper-facing evidence have passed their integrity and manuscript
+validation checks.
 
-The headline synthetic finding is a moving-constraint result: among 106 treated
-phase-map cells where direct service assistance improved capability at +30d,
-**96 (90.6%)** had lower indigenous autonomy at +360d; **53** met the robust
-autonomy-trap rule and **0** met the robust autonomy-building rule. At the same
-time, developmental logistics assistance sharply reduced the autonomy penalty
-relative to substitution, while command and force-generation development often
-shifted the binding constraint to logistics rather than improving whole-system
-autonomy.
+The final paper interpretation is narrower than the initial autonomy-trap
+framing. Successful assistance can produce **relief** without corresponding
+indigenous **yield**, leaving supported capability above what the partner can
+retain after withdrawal. Constraint displacement is directly demonstrated as
+one mechanism for that pattern. Requirement expansion remains plausible but is
+not claimed as causally identified by the post-review clamp experiment because
+its fresh-seed normal arms did not reproduce the registered coverage penalty.
 
 See the [post-completion interpretation](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_RESULTS_INTERPRETATION_2026-09-20.md),
 the [precommitted paper-analysis plan](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_PAPER_SECONDARY_ANALYSIS_PLAN_2026-09-20.md),
-and the tracked [compact Stage-4 evidence](studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/).
+the tracked [compact Stage-4 evidence](studies/research_program/general_theory_v1/partner_force_autonomy/evidence/stage4/),
+and the [final paper package](paper/partner_force_autonomy/).
 
 ### 3. State estimation and historical confrontation
 
@@ -81,6 +94,57 @@ process, recover it with particle filtering and calibrated uncertainty, test
 misspecification, and only then confront held-out historical cases. Historical
 case packages for Afghanistan, Nepal, Colombia, Iraq, and Vietnam are retained
 under [studies](studies/).
+
+## Post-freeze research: the dependency valley
+
+After the freeze, the Partner-Force question was revisited with a repaired model
+and a much larger paired-counterfactual campaign. The question: **when does
+continued external support leave a partner force weaker than withdrawing it?**
+
+The design forks each simulated world at a withdrawal decision (day 120) into
+two twins, support continued and support withdrawn, that share their random
+draws event by event, and compares partner capability a year later (an index
+from 0 to 1 combining army retention, formation survival, geographic coverage,
+readiness and government control). The campaign is **66,576 paired production
+worlds** (1,000 agents, 72 localities, 64 seeds per condition, four partner
+types, 140 design cells, 24 variants), run on a university cluster in about
+1,800 service units.
+
+One mechanism is *assumed*: partner institutions **learn by doing**. A channel's
+capacity (force generation, logistics, command) grows when the partner serves
+itself and fades when outsiders serve for it. Under that assumption:
+
+| Learning rate (per 30 days) | Balanced | Command | Force generation | Logistics |
+|---|---|---|---|---|
+| 0 (no learning) | +0.002 | +0.019* | +0.013* | -0.006 |
+| 0.25 | -0.072* | -0.068* | -0.019* | -0.034* |
+| 0.5 | -0.085* | -0.079* | -0.036* | -0.052* |
+
+Capability effect of continued minus withdrawn support at day +360, pooled over
+the design (2,240 worlds per cell); `*` marks p < 0.05. More:
+
+- the harm **deepens with the learning rate** and levels off near 0.5, and it
+  needs fast learning or a strict self-reliance standard to appear;
+- **dose is non-monotone** (the *dependency valley*): with learning, 4 times the
+  design dose is the worst case (about -0.2 for balanced and command partners)
+  and 16 times recovers, because outsiders then replace the partner's output
+  (its own supply production keeps falling);
+- continued support **saves military lives** at every dose, so the harm to
+  capability is the price of lives saved now;
+- **building the binding capacity** rescues logistics-limited forces (+0.08
+  under learning) but not command-limited ones, and staggering the exit does
+  not help.
+
+These are consequences of an assumed mechanism, not an empirical finding: the
+learning rate is only bounded (about 0.1 to 0.5) by a plausibility check, and
+the reference share and development dose are uncalibrated. Details, tables,
+replications at two scales and limits are in
+[experiments/etf_resurrection/findings/RESULTS.md](experiments/etf_resurrection/findings/RESULTS.md);
+how to reproduce (local and cluster) is in
+[experiments/etf_resurrection/README.md](experiments/etf_resurrection/README.md).
+
+The post-freeze model repairs are summarized in the same README and in the
+[CHANGELOG](CHANGELOG.md).
 
 ## What the model contains
 
@@ -108,6 +172,22 @@ Pineland's implemented scientific core includes:
   diagnostics;
 - deterministic random-stream namespaces, causal ledgers, stock transactions,
   sparse state deltas, checkpoints, and reproducibility metadata.
+
+Added after the freeze:
+
+- territorial contestation with institutional erosion under insurgent
+  dominance, shadow governance, a Lanchester-style coercive balance, and police
+  reinsertion gating;
+- insurgent organization splits, defection cascades, and abandonment of
+  government posts under insurgent pressure;
+- the `multichannel_v6` organized-action architecture: operational-reach armed
+  strikes with intelligence-gated targeting, speculative sweeps, and insurgent
+  tempo;
+- partner-force support with removable channels, per-channel withdrawal delays,
+  developmental assistance, and (in the Stage-4 harness) use-it-or-lose-it
+  institutional learning;
+- event-keyed random streams (`combat.rng_event_resync`) that keep paired
+  counterfactual twins synchronized after their histories diverge.
 
 The implementation-synchronized model description is
 [docs/odd-model.md](docs/odd-model.md). Subsystem documentation lives under
@@ -154,6 +234,15 @@ Computing (ARC) scheduler layout, and postprocessing chain are documented in
 and
 [STAGE4_RUN_LEDGER_2026-09-20.md](studies/research_program/general_theory_v1/partner_force_autonomy/STAGE4_RUN_LEDGER_2026-09-20.md).
 
+### Autonomy-trap campaign (post-freeze)
+
+    python experiments/etf_resurrection/arc/build_campaign.py --design studies/research_program/general_theory_v1/partner_force_autonomy/contracts/stage4_autonomy_phase_map_v1.json --out experiments/etf_resurrection/results/local --local --seeds 16
+    python experiments/etf_resurrection/arc/analyze_local.py --campaign experiments/etf_resurrection/results/local
+
+The first command builds a small local campaign; see
+[experiments/etf_resurrection/README.md](experiments/etf_resurrection/README.md)
+for running it, for the production-scale cluster run, and for the figures.
+
 ## Repository map
 
 | Path | Purpose |
@@ -163,7 +252,8 @@ and
 | [tests/](tests/) | Regression, invariant, exactness, and scientific-method tests |
 | [scenarios/](scenarios/) | Hand-authored model configurations |
 | [docs/](docs/) | Model, validation, audit, and research-method documentation |
-| [studies/](studies/) | Historical case packages and the active research program |
+| [studies/](studies/) | Historical case packages and frozen research-program artifacts |
+| [experiments/etf_resurrection/](experiments/etf_resurrection/) | Post-freeze model repair, the autonomy-trap campaign, findings and figures |
 | [scripts/](scripts/) | Repository, evidence, and research maintenance utilities |
 
 The complete evidence/retention policy is in
@@ -193,6 +283,11 @@ Repository cleanup is dry-run first:
 The utility refuses to delete tracked files, skips recently modified work, and
 on Windows transparently compresses stale scientific output rather than
 deleting it.
+
+The frozen paper cycle is pinned to the git tag `paper-freeze-2026-09-21`.
+The model on `main` includes post-freeze repairs and its default behavior
+differs from that tag, so frozen-paper numbers should be reproduced from the
+tag, and post-freeze numbers from `main`.
 
 Important reproducibility contracts include deterministic event ordering,
 namespace-derived random streams, paired common-random-number branches,

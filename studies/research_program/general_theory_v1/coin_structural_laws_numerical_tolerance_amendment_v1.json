@@ -1,0 +1,22 @@
+{
+  "schema_version": "pineland.coin_structural_laws_numerical_tolerance_amendment.v1",
+  "status": "transparent_post_first-run_numerical-amendment_before_complete-rerun",
+  "parent_contract": "coin_structural_laws_contract_v1.json",
+  "reason": "The first SL1 stress case failed a relative-to-removed-mass tolerance even though the absolute discrepancy was 1.91e-12 represented persons. The aggregate prediction computes a small difference between large summed stocks while the implementation sums per-person removals directly, so normal floating-point cancellation is magnified when divided by a very small disrupted mass.",
+  "observed_first_failure": {
+    "seed": 2026192000,
+    "disruption_rate": 0.0005,
+    "elapsed_days": 1.0,
+    "predicted_removed": 0.6847436061871122,
+    "observed_returned": 0.6847436061852007,
+    "absolute_difference": 1.9115e-12
+  },
+  "amended_rule": {
+    "decay_and_return_checks": "absolute residual <= 1e-12 * max(pre_event_local_rooted_mass, 1)",
+    "member_population_check": "absolute residual <= 1e-12 * max(pre_event_total_insurgent_member_population, 1)",
+    "rationale": "Scale numerical tolerance to the stock being summed rather than to a near-zero difference of large sums.",
+    "scientific_thresholds_changed": false,
+    "model_behavior_changed": false
+  },
+  "guard": "This amendment only changes floating-point acceptance scaling. Any residual exceeding the stock-scaled tolerance still blocks promotion."
+}
