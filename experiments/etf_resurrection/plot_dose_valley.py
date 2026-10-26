@@ -34,9 +34,7 @@ for ax, st in zip(axes, structs):
     ax.tick_params(colors=MUTED, labelsize=8.5)
 axes[0].set_ylabel("Capability effect of continued support\nvs. withdrawal, day +360", fontsize=9, color=INK)
 axes[0].legend(fontsize=8, frameon=False, loc="upper left")
-fig.suptitle("The dependency valley: with learning by doing, intermediate support is worse than none",
-             x=0.01, ha="left", fontsize=12.5, fontweight="bold", color=INK)
-fig.tight_layout(rect=(0, 0, 1, 0.93))
+fig.tight_layout()
 out = root / "findings/dose_valley.png"
 fig.savefig(out, dpi=170, facecolor=BG)
 print(out)
